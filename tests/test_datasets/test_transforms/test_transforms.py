@@ -6,9 +6,9 @@ import unittest
 import mmcv
 import numpy as np
 import torch
+
 from mmdet.structures.bbox import HorizontalBoxes
 from mmdet.structures.mask import BitmapMasks
-
 from mmyolo.datasets.transforms import (LetterResize, LoadAnnotations,
                                         YOLOv5HSVRandomAug,
                                         YOLOv5KeepRatioResize,

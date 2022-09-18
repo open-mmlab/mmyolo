@@ -4,10 +4,10 @@ from typing import Sequence
 
 import torch
 import torch.nn as nn
-from mmdet.utils import ConfigType, OptMultiConfig
 from mmengine.model import BaseModule
 from torch.nn.modules.batchnorm import _BatchNorm
 
+from mmdet.utils import ConfigType, OptMultiConfig
 from mmyolo.registry import MODELS
 
 

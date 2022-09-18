@@ -5,9 +5,9 @@ import unittest
 
 import numpy as np
 import torch
+
 from mmdet.structures.bbox import HorizontalBoxes
 from mmdet.structures.mask import BitmapMasks
-
 from mmyolo.datasets import YOLOv5CocoDataset
 from mmyolo.datasets.transforms import Mosaic, YOLOv5MixUp, YOLOXMixUp
 

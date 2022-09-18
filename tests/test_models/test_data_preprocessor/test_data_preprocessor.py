@@ -2,8 +2,8 @@
 from unittest import TestCase
 
 import torch
-from mmdet.structures import DetDataSample
 
+from mmdet.structures import DetDataSample
 from mmyolo.models.data_preprocessors import YOLOv5DetDataPreprocessor
 
 

@@ -8,11 +8,11 @@ import numpy as np
 import torch
 from mmcv.transforms import BaseTransform
 from mmcv.transforms.utils import cache_randomness
+from numpy import random
+
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import autocast_box_type, get_box_type
-from numpy import random
-
 from mmyolo.registry import TRANSFORMS
 
 
@@ -253,9 +253,9 @@ class LetterResize(MMDET_Resize):
 
         # resize the gt_masks
         gt_mask_height = results['gt_masks'].height * \
-                         results['scale_factor'][0]
+            results['scale_factor'][0]
         gt_mask_width = results['gt_masks'].width * \
-                        results['scale_factor'][1]
+            results['scale_factor'][1]
         gt_masks = results['gt_masks'].rescale((gt_mask_height, gt_mask_width))
 
         # padding the gt_masks

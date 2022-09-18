@@ -3,9 +3,9 @@ import sys
 from unittest import TestCase
 
 import mmcv
-import mmdet
 import mmengine
 
+import mmdet
 from mmyolo.utils import collect_env
 
 

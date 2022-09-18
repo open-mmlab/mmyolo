@@ -2,8 +2,8 @@
 from typing import Union
 
 import torch
-from mmdet.models.task_modules.coders.base_bbox_coder import BaseBBoxCoder
 
+from mmdet.models.task_modules.coders.base_bbox_coder import BaseBBoxCoder
 from mmyolo.registry import TASK_UTILS
 
 

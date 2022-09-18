@@ -4,9 +4,9 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
-from mmdet.models.layers import ExpMomentumEMA as MMDET_ExpMomentumEMA
 from torch import Tensor
 
+from mmdet.models.layers import ExpMomentumEMA as MMDET_ExpMomentumEMA
 from mmyolo.registry import MODELS
 
 

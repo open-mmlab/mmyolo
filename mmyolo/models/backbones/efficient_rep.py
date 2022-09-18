@@ -3,8 +3,8 @@ from typing import Tuple
 
 import torch
 import torch.nn as nn
-from mmdet.utils import ConfigType, OptMultiConfig
 
+from mmdet.utils import ConfigType, OptMultiConfig
 from mmyolo.models.layers.yolo_bricks import SPPFBottleneck
 from mmyolo.registry import MODELS
 from ..layers import RepStageBlock, RepVGGBlock

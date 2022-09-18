@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from mmdet.models.detectors.single_stage import SingleStageDetector
-from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmengine.dist import get_world_size
 from mmengine.logging import print_log
 
+from mmdet.models.detectors.single_stage import SingleStageDetector
+from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmyolo.registry import MODELS
 
 

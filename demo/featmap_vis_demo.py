@@ -4,9 +4,9 @@ from typing import Sequence
 
 import mmcv
 import numpy as np
-from mmdet.apis import inference_detector, init_detector
 from mmengine import Config, DictAction
 
+from mmdet.apis import inference_detector, init_detector
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
 
@@ -45,8 +45,9 @@ def parse_args():
         help='Select topk channel to show by the sum of each channel')
     parser.add_argument(
         '--arrangement',
-        type=tuple,
-        default=(2, 2),
+        nargs='+',
+        type=int,
+        default=[2, 2],
         help='The arrangement of featmap when channel_reduction is '
         'not None and topk > 0')
     parser.add_argument(
@@ -87,6 +88,27 @@ class ActivationsWrapper:
             handle.remove()
 
 
+def auto_arrange_imgs(imgs):
+    len_img = len(imgs)
+    col = 2
+    if len_img <= col:
+        imgs = np.concatenate(imgs, axis=1)
+    else:
+        row = len_img // col + 1
+        fill_img_list = [np.ones(imgs[0].shape, dtype=np.uint8) * 255] * (
+            row * col - len_img)
+        imgs.extend(fill_img_list)
+        merge_imgs_col = []
+        for i in range(row):
+            start = col * i
+            end = col * (i + 1)
+            merge_col = np.hstack(imgs[start:end])
+            merge_imgs_col.append(merge_col)
+
+        imgs = np.vstack(merge_imgs_col)
+    return imgs
+
+
 def main(args):
     # register all modules in mmdet into the registries
     register_all_modules()
@@ -98,6 +120,7 @@ def main(args):
     channel_reduction = args.channel_reduction
     if channel_reduction == 'None':
         channel_reduction = None
+    assert len(args.arrangement) == 2
 
     model = init_detector(args.config, args.checkpoint, device=args.device)
 
@@ -154,7 +177,7 @@ def main(args):
                 pred_score_thr=args.score_thr)
             shown_imgs.append(visualizer.get_image())
 
-        shown_imgs = np.concatenate(shown_imgs, axis=1)
+        shown_imgs = auto_arrange_imgs(shown_imgs)
 
         if args.out_file is not None:
             mmcv.imwrite(shown_imgs[..., ::-1], args.out_file)

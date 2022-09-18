@@ -5,10 +5,6 @@ from typing import List, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
-from mmdet.models.dense_heads.base_dense_head import BaseDenseHead
-from mmdet.models.utils import filter_scores_and_topk, multi_apply
-from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
-                         OptMultiConfig)
 from mmengine.config import ConfigDict
 from mmengine.dist import get_dist_info
 from mmengine.logging import print_log
@@ -16,6 +12,10 @@ from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import Tensor
 
+from mmdet.models.dense_heads.base_dense_head import BaseDenseHead
+from mmdet.models.utils import filter_scores_and_topk, multi_apply
+from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
+                         OptMultiConfig)
 from mmyolo.registry import MODELS, TASK_UTILS
 from ..utils import make_divisible
 

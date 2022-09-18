@@ -3,11 +3,11 @@ import argparse
 import os.path as osp
 
 import numpy as np
-from mmdet.models.utils import mask2ndarray
-from mmdet.structures.bbox import BaseBoxes
 from mmengine.config import Config, DictAction
 from mmengine.utils import ProgressBar
 
+from mmdet.models.utils import mask2ndarray
+from mmdet.structures.bbox import BaseBoxes
 from mmyolo.registry import DATASETS, VISUALIZERS
 from mmyolo.utils import register_all_modules
 
