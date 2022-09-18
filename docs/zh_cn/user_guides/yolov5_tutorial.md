@@ -155,3 +155,11 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 ```
 
 ![](https://cdn.vansin.top/img/20220913213221.png)
+
+### 模型推理
+
+```shell
+python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/epoch_300.pth --show-dir show_results
+```
+
+运行以上推理命令，推理结果图片会自动保存至 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/show_results` 文件夹中。下面为其中一张结果图片，左图为实际标注，右图为模型推理结果。
