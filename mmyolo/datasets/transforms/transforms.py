@@ -8,11 +8,11 @@ import numpy as np
 import torch
 from mmcv.transforms import BaseTransform
 from mmcv.transforms.utils import cache_randomness
-from numpy import random
-
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import autocast_box_type, get_box_type
+from numpy import random
+
 from mmyolo.registry import TRANSFORMS
 
 
@@ -46,13 +46,14 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
     def __init__(self,
                  scale: Union[int, Tuple[int, int]],
                  keep_ratio: bool = True,
-                 **kwargs) -> None:
+                 **kwargs):
         assert keep_ratio is True
         super().__init__(scale=scale, keep_ratio=True, **kwargs)
 
     @staticmethod
-    def _get_rescale_ratio(old_size, scale) -> float:
-        """Calculate the rescale ratio.
+    def _get_rescale_ratio(old_size: Tuple[int, int],
+                           scale: Union[float, Tuple[int]]) -> float:
+        """Calculate the ratio for rescaling.
 
         Args:
             old_size (tuple[int]): The old size (w, h) of image.
@@ -81,7 +82,7 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
 
         return scale_factor
 
-    def _resize_img(self, results: dict) -> None:
+    def _resize_img(self, results: dict):
         """Resize images with ``results['scale']``."""
         assert self.keep_ratio is True
 
@@ -144,7 +145,7 @@ class LetterResize(MMDET_Resize):
                  use_mini_pad: bool = False,
                  stretch_only: bool = False,
                  allow_scale_up: bool = True,
-                 **kwargs) -> None:
+                 **kwargs):
         super().__init__(scale=scale, keep_ratio=True, **kwargs)
 
         self.pad_val = pad_val
@@ -156,9 +157,8 @@ class LetterResize(MMDET_Resize):
         self.use_mini_pad = use_mini_pad
         self.stretch_only = stretch_only
         self.allow_scale_up = allow_scale_up
-        self.padded_val = None
 
-    def _resize_img(self, results: dict) -> None:
+    def _resize_img(self, results: dict):
         """Resize images with ``results['scale']``."""
         image = results.get('img', None)
         if image is None:
@@ -233,31 +233,29 @@ class LetterResize(MMDET_Resize):
 
             pad_val = self.pad_val.get('img', 0)
             if isinstance(pad_val, int) and image.ndim == 3:
-                self.padded_val = tuple(pad_val for _ in range(image.shape[2]))
-            else:
-                self.padded_val = pad_val
+                pad_val = tuple(pad_val for _ in range(image.shape[2]))
 
             image = mmcv.impad(
                 img=image,
                 padding=(padding_list[2], padding_list[0], padding_list[3],
                          padding_list[1]),
-                pad_val=self.padded_val,
+                pad_val=pad_val,
                 padding_mode='constant')
 
         results['img'] = image
         results['img_shape'] = image.shape
         results['pad_param'] = np.array(padding_list, dtype=np.float32)
 
-    def _resize_masks(self, results: dict) -> None:
+    def _resize_masks(self, results: dict):
         """Resize masks with ``results['scale']``"""
         if results.get('gt_masks', None) is None:
             return
 
         # resize the gt_masks
         gt_mask_height = results['gt_masks'].height * \
-            results['scale_factor'][0]
+                         results['scale_factor'][0]
         gt_mask_width = results['gt_masks'].width * \
-            results['scale_factor'][1]
+                        results['scale_factor'][1]
         gt_masks = results['gt_masks'].rescale((gt_mask_height, gt_mask_width))
 
         # padding the gt_masks
@@ -279,7 +277,7 @@ class LetterResize(MMDET_Resize):
         results['gt_masks'] = type(results['gt_masks'])(
             padded_masks, *results['img_shape'][:2])
 
-    def _resize_bboxes(self, results: dict) -> None:
+    def _resize_bboxes(self, results: dict):
         """Resize bounding boxes with ``results['scale_factor']``."""
         if results.get('gt_bboxes', None) is None:
             return
@@ -347,7 +345,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
     time being, in order to speed up the pipeline, it can be excluded in
     advance."""
 
-    def _load_bboxes(self, results: dict) -> None:
+    def _load_bboxes(self, results: dict):
         """Private function to load bounding box annotations.
 
         Note: BBoxes with ignore_flag of 1 is not considered.
@@ -373,7 +371,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
             _, box_type_cls = get_box_type(self.box_type)
             results['gt_bboxes'] = box_type_cls(gt_bboxes, dtype=torch.float32)
 
-    def _load_labels(self, results: dict) -> None:
+    def _load_labels(self, results: dict):
         """Private function to load label annotations.
 
         Note: BBoxes with ignore_flag of 1 is not considered.
@@ -443,9 +441,9 @@ class YOLOv5RandomAffine(BaseTransform):
                  border: Tuple[int, int] = (0, 0),
                  border_val: Tuple[int, int, int] = (114, 114, 114),
                  bbox_clip_border: bool = True,
-                 min_bbox_size=2,
-                 min_area_ratio=0.1,
-                 max_aspect_ratio=20) -> None:
+                 min_bbox_size: int = 2,
+                 min_area_ratio: float = 0.1,
+                 max_aspect_ratio: int = 20):
         assert 0 <= max_translate_ratio <= 1
         assert scaling_ratio_range[0] <= scaling_ratio_range[1]
         assert scaling_ratio_range[0] > 0
@@ -462,7 +460,7 @@ class YOLOv5RandomAffine(BaseTransform):
         self.max_aspect_ratio = max_aspect_ratio
 
     @cache_randomness
-    def _get_random_homography_matrix(self, height, width):
+    def _get_random_homography_matrix(self, height: int, width: int):
         # Rotation
         rotation_degree = random.uniform(-self.max_rotate_degree,
                                          self.max_rotate_degree)
@@ -553,7 +551,7 @@ class YOLOv5RandomAffine(BaseTransform):
         aspect_ratio_valid_idx = aspect_ratio < self.max_aspect_ratio
         return wh_valid_idx & area_valid_idx & aspect_ratio_valid_idx
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         repr_str = self.__class__.__name__
         repr_str += f'(max_rotate_degree={self.max_rotate_degree}, '
         repr_str += f'max_translate_ratio={self.max_translate_ratio}, '
