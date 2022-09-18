@@ -4,11 +4,11 @@ import unittest
 from unittest import TestCase
 
 import torch
+from mmdet.structures import DetDataSample
+from mmdet.testing import demo_mm_inputs, get_detector_cfg
 from mmengine.logging import MessageHub
 from parameterized import parameterized
 
-from mmdet.structures import DetDataSample
-from mmdet.testing import demo_mm_inputs, get_detector_cfg
 from mmyolo.utils import register_all_modules
 
 

@@ -4,9 +4,9 @@ from typing import Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
-
 from mmdet.models.losses.utils import weight_reduce_loss
 from mmdet.structures.bbox import HorizontalBoxes
+
 from mmyolo.registry import MODELS
 
 
@@ -96,6 +96,7 @@ def bbox_overlaps(pred: torch.Tensor,
 @MODELS.register_module()
 class IoULoss(nn.Module):
     """IoULoss.
+
     Computing the IoU loss between a set of predicted bboxes and target bboxes.
     Args:
         iou_mode (str): Options are "ciou".
@@ -134,6 +135,7 @@ class IoULoss(nn.Module):
         reduction_override: Optional[Union[str, bool]] = None
     ) -> Tuple[Union[torch.Tensor, torch.Tensor], torch.Tensor]:
         """Forward function.
+
         Args:
             pred (Tensor): Predicted bboxes of format (x1, y1, x2, y2)
                 or (x, y, w, h),shape (n, 4).

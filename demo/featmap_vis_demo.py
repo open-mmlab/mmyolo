@@ -4,9 +4,9 @@ from typing import Sequence
 
 import mmcv
 import numpy as np
+from mmdet.apis import inference_detector, init_detector
 from mmengine import Config, DictAction
 
-from mmdet.apis import inference_detector, init_detector
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
 

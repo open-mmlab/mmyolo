@@ -2,8 +2,8 @@
 from argparse import ArgumentParser
 
 import mmcv
-
 from mmdet.apis import inference_detector, init_detector
+
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
 
