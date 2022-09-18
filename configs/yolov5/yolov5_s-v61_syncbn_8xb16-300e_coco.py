@@ -10,9 +10,9 @@ deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 300
 save_epoch_intervals = 10
-train_batch_size_pre_gpu = 16
+train_batch_size_per_gpu = 16
 train_num_workers = 8
-val_batch_size_pre_gpu = 1
+val_batch_size_per_gpu = 1
 val_num_workers = 2
 
 # persistent_workers must be False if num_workers is 0.
@@ -21,7 +21,7 @@ persistent_workers = True
 # only on Val
 batch_shapes_cfg = dict(
     type='BatchShapePolicy',
-    batch_size=val_batch_size_pre_gpu,
+    batch_size=val_batch_size_per_gpu,
     img_size=img_scale[0],
     size_divisor=32,
     extra_pad_ratio=0.5)
@@ -144,7 +144,7 @@ train_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=train_batch_size_pre_gpu,
+    batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
     persistent_workers=persistent_workers,
     pin_memory=True,
@@ -175,7 +175,7 @@ test_pipeline = [
 ]
 
 val_dataloader = dict(
-    batch_size=val_batch_size_pre_gpu,
+    batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
     persistent_workers=persistent_workers,
     pin_memory=True,
@@ -190,7 +190,7 @@ val_dataloader = dict(
         pipeline=test_pipeline,
         batch_shapes_cfg=dict(
             type='BatchShapePolicy',
-            batch_size=val_batch_size_pre_gpu,
+            batch_size=val_batch_size_per_gpu,
             img_size=img_scale[0],
             size_divisor=32,
             extra_pad_ratio=0.5)))
@@ -206,7 +206,7 @@ optim_wrapper = dict(
         momentum=0.937,
         weight_decay=0.0005,
         nesterov=True,
-        batch_size_pre_gpu=train_batch_size_pre_gpu),
+        batch_size_per_gpu=train_batch_size_per_gpu),
     constructor='YOLOv5OptimizerConstructor')
 
 default_hooks = dict(

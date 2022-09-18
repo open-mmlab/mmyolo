@@ -8,9 +8,9 @@ deepen_factor = 0.33
 widen_factor = 0.5
 
 save_epoch_intervals = 10
-train_batch_size_pre_gpu = 8
+train_batch_size_per_gpu = 8
 train_num_workers = 8
-val_batch_size_pre_gpu = 1
+val_batch_size_per_gpu = 1
 val_num_workers = 2
 
 max_epochs = 300
@@ -154,7 +154,7 @@ train_pipeline_stage2 = [
 ]
 
 train_dataloader = dict(
-    batch_size=train_batch_size_pre_gpu,
+    batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
     persistent_workers=True,
     pin_memory=True,
@@ -184,7 +184,7 @@ test_pipeline = [
 ]
 
 val_dataloader = dict(
-    batch_size=val_batch_size_pre_gpu,
+    batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
     persistent_workers=True,
     pin_memory=True,

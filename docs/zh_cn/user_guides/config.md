@@ -16,9 +16,9 @@ deepen_factor = 0.33              # 控制网络结构深度的缩放因子，YO
 widen_factor = 0.5                # 控制网络结构宽度的缩放因子，YOLOv5-s 为 0.5
 max_epochs = 300                  # 最大训练轮次 300 轮
 save_epoch_intervals = 10         # 验证间隔，每 10 个 epoch 验证一次
-train_batch_size_pre_gpu = 16     # 训练时单个 GPU 的 Batch size
+train_batch_size_per_gpu = 16     # 训练时单个 GPU 的 Batch size
 train_num_workers = 8             # 训练时单个 GPU 分配的数据加载线程数
-val_batch_size_pre_gpu = 1        # 验证时单个 GPU 的 Batch size
+val_batch_size_per_gpu = 1        # 验证时单个 GPU 的 Batch size
 val_num_workers = 2               # 验证时单个 GPU 分配的数据加载线程数
 ```
 
@@ -135,7 +135,7 @@ train_pipeline = [				# 训练数据处理流程
                    'flip_direction'))
 ]
 train_dataloader = dict( # 训练 dataloader 配置
-    batch_size=train_batch_size_pre_gpu, # 训练时单个 GPU 的 Batch size
+    batch_size=train_batch_size_per_gpu, # 训练时单个 GPU 的 Batch size
     num_workers=train_num_workers, # 训练时单个 GPU 分配的数据加载线程数
     persistent_workers=True, # 如果设置为 True，dataloader 在迭代完一轮之后不会关闭数据读取的子进程，可以加速训练
     pin_memory=True, # 开启锁页内存，节省 CPU 内存拷贝时间
@@ -173,7 +173,7 @@ test_pipeline = [ # 测试数据处理流程
 ]
 
 val_dataloader = dict(
-    batch_size=val_batch_size_pre_gpu, # 验证时单个 GPU 的 Batch size
+    batch_size=val_batch_size_per_gpu, # 验证时单个 GPU 的 Batch size
     num_workers=val_num_workers, # 验证时单个 GPU 分配的数据加载线程数
     persistent_workers=True, # 如果设置为 True，dataloader 在迭代完一轮之后不会关闭数据读取的子进程，可以加速训练
     pin_memory=True, # 开启锁页内存，节省 CPU 内存拷贝时间
@@ -190,7 +190,7 @@ val_dataloader = dict(
         pipeline=test_pipeline, # 这是由之前创建的 test_pipeline 定义的数据处理流程
         batch_shapes_cfg=dict(  # batch shapes 配置
             type='BatchShapePolicy', # 确保在 batch 推理过程中同一个 batch 内的图像 pad 像素最少，不要求整个验证过程中所有 batch 的图像尺度一样
-            batch_size=val_batch_size_pre_gpu, # batch shapes 策略的 batch size，等于验证时单个 GPU 的 Batch size
+            batch_size=val_batch_size_per_gpu, # batch shapes 策略的 batch size，等于验证时单个 GPU 的 Batch size
             img_size=img_scale[0], # 图像的尺寸
             size_divisor=32, # padding 后的图像的大小应该可以被 pad_size_divisor 整除
             extra_pad_ratio=0.5))) # 额外需要 pad 的像素比例
@@ -281,7 +281,7 @@ optim_wrapper = dict(  # 优化器封装的配置
         momentum=0.937, # 带动量的随机梯度下降
         weight_decay=0.0005, # 权重衰减
         nesterov=True, # 开启Nesterov momentum，公式详见 http://www.cs.toronto.edu/~hinton/absps/momentum.pdf
-        batch_size_pre_gpu=train_batch_size_pre_gpu),  # 该选项实现了自动权重衰减系数缩放
+        batch_size_per_gpu=train_batch_size_per_gpu),  # 该选项实现了自动权重衰减系数缩放
     clip_grad=None,  # 梯度裁剪的配置，设置为 None 关闭梯度裁剪。使用方法请见 https://mmengine.readthedocs.io/en/latest/tutorials/optimizer.html
     constructor='YOLOv5OptimizerConstructor') # YOLOv5 优化器构建器
 
