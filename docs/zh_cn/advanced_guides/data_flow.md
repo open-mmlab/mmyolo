@@ -117,4 +117,5 @@ def prepare_data(self, idx) -> Any:
         data_info['dataset'] = self
         return self.pipeline(data_info)
     else:
-        return super().prepare_data(id
+        return super().prepare_data(idx)
+```
