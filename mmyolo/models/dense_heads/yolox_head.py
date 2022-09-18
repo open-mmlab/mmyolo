@@ -229,7 +229,7 @@ class YOLOXHead(YOLOv5Head):
                      type='mmdet.L1Loss', reduction='sum', loss_weight=1.0),
                  train_cfg: OptConfigType = None,
                  test_cfg: OptConfigType = None,
-                 init_cfg: OptMultiConfig = None) -> None:
+                 init_cfg: OptMultiConfig = None):
         self.use_bbox_aux = False
         self.loss_bbox_aux = loss_bbox_aux
 

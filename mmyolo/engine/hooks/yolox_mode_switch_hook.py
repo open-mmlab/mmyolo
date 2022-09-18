@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+from typing import Sequence
 
 from mmengine.hooks import Hook
 from mmengine.model import is_model_wrapper
@@ -23,11 +24,11 @@ class YOLOXModeSwitchHook(Hook):
 
     def __init__(self,
                  num_last_epochs: int = 15,
-                 new_train_pipeline=None) -> None:
+                 new_train_pipeline: Sequence[dict] = None):
         self.num_last_epochs = num_last_epochs
         self.new_train_pipeline_cfg = new_train_pipeline
 
-    def before_train_epoch(self, runner) -> None:
+    def before_train_epoch(self, runner: Runner):
         """Close mosaic and mixup augmentation and switches to use L1 loss."""
         epoch = runner.epoch
         model = runner.model

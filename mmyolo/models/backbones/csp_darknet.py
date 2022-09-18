@@ -71,7 +71,7 @@ class YOLOv5CSPDarknet(BaseBackbone):
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  norm_eval: bool = False,
-                 init_cfg: OptMultiConfig = None) -> None:
+                 init_cfg: OptMultiConfig = None):
         super().__init__(
             self.arch_settings[arch],
             deepen_factor,

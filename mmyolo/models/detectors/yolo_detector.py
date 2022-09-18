@@ -1,10 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
+from mmdet.models.detectors.single_stage import SingleStageDetector
+from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmengine.dist import get_world_size
 from mmengine.logging import print_log
 
-from mmdet.models.detectors.single_stage import SingleStageDetector
-from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmyolo.registry import MODELS
 
 
@@ -37,7 +37,7 @@ class YOLODetector(SingleStageDetector):
                  test_cfg: OptConfigType = None,
                  data_preprocessor: OptConfigType = None,
                  init_cfg: OptMultiConfig = None,
-                 use_syncbn: bool = True) -> None:
+                 use_syncbn: bool = True):
         super().__init__(
             backbone=backbone,
             neck=neck,

@@ -4,9 +4,9 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
+from mmdet.models.layers import ExpMomentumEMA as MMDET_ExpMomentumEMA
 from torch import Tensor
 
-from mmdet.models.layers import ExpMomentumEMA as MMDET_ExpMomentumEMA
 from mmyolo.registry import MODELS
 
 
@@ -40,7 +40,7 @@ class ExpMomentumEMA(MMDET_ExpMomentumEMA):
                  gamma: int = 2000,
                  interval=1,
                  device: Optional[torch.device] = None,
-                 update_buffers: bool = False) -> None:
+                 update_buffers: bool = False):
         super().__init__(
             model=model,
             momentum=momentum,

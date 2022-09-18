@@ -33,7 +33,7 @@ class YOLOv5ParamSchedulerHook(ParamSchedulerHook):
                  warmup_bias_lr: float = 0.1,
                  warmup_momentum: float = 0.8,
                  warmup_mim_iter: int = 1000,
-                 **kwargs) -> None:
+                 **kwargs):
 
         assert scheduler_type in self.scheduler_maps
 
@@ -49,7 +49,7 @@ class YOLOv5ParamSchedulerHook(ParamSchedulerHook):
         self._base_lr = None
         self._base_momentum = None
 
-    def before_train(self, runner: Runner) -> None:
+    def before_train(self, runner: Runner):
         optimizer = runner.optim_wrapper.optimizer
         for group in optimizer.param_groups:
             # If the param is never be scheduled, record the current value
@@ -67,7 +67,7 @@ class YOLOv5ParamSchedulerHook(ParamSchedulerHook):
     def before_train_iter(self,
                           runner: Runner,
                           batch_idx: int,
-                          data_batch: Optional[dict] = None) -> None:
+                          data_batch: Optional[dict] = None):
         cur_iters = runner.iter
         cur_epoch = runner.epoch
         optimizer = runner.optim_wrapper.optimizer
@@ -100,7 +100,7 @@ class YOLOv5ParamSchedulerHook(ParamSchedulerHook):
         else:
             self._warmup_end = True
 
-    def after_train_epoch(self, runner: Runner) -> None:
+    def after_train_epoch(self, runner: Runner):
         if not self._warmup_end:
             return
 
