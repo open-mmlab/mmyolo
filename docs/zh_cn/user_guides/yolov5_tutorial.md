@@ -55,6 +55,7 @@ metainfo = {
 
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
+    num_workers=train_num_workers,
     dataset=dict(
         data_root=data_root,
         metainfo=metainfo,
