@@ -57,7 +57,7 @@ optim_wrapper = dict(
         momentum=0.937,
         weight_decay=0.0005,
         nesterov=True,
-        batch_size_pre_gpu=1),
+        batch_size_per_gpu=1),
     constructor='YOLOv5OptimizerConstructor')
 
 register_all_modules()

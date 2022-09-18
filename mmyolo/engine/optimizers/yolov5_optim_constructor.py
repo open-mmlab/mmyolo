@@ -21,7 +21,7 @@ class YOLOv5OptimizerConstructor:
         Conv, Bias and BN
 
         - support `weight_decay` parameter adaption based on
-        `batch_size_pre_gpu`
+        `batch_size_per_gpu`
 
     Args:
         optim_wrapper_cfg (dict): The config dict of the optimizer wrapper.
@@ -53,7 +53,7 @@ class YOLOv5OptimizerConstructor:
         >>> model = torch.nn.modules.Conv1d(1, 1, 1)
         >>> optim_wrapper_cfg = dict(
         >>>     dict(type='OptimWrapper', optimizer=dict(type='SGD', lr=0.01,
-        >>>         momentum=0.9, weight_decay=0.0001, batch_size_pre_gpu=16))
+        >>>         momentum=0.9, weight_decay=0.0001, batch_size_per_gpu=16))
         >>> paramwise_cfg = dict(base_total_batch_size=64)
         >>> optim_wrapper_builder = YOLOv5OptimizerConstructor(
         >>>     optim_wrapper_cfg, paramwise_cfg)
@@ -83,11 +83,11 @@ class YOLOv5OptimizerConstructor:
         optimizer_cfg = self.optimizer_cfg.copy()
         weight_decay = optimizer_cfg.pop('weight_decay', 0)
 
-        if 'batch_size_pre_gpu' in optimizer_cfg:
-            batch_size_pre_gpu = optimizer_cfg.pop('batch_size_pre_gpu')
+        if 'batch_size_per_gpu' in optimizer_cfg:
+            batch_size_per_gpu = optimizer_cfg.pop('batch_size_per_gpu')
             # No scaling if total_batch_size is less than
             # base_total_batch_size, otherwise linear scaling.
-            total_batch_size = get_world_size() * batch_size_pre_gpu
+            total_batch_size = get_world_size() * batch_size_per_gpu
             accumulate = max(
                 round(self.base_total_batch_size / total_batch_size), 1)
             scale_factor = total_batch_size * \

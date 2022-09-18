@@ -206,7 +206,7 @@ optim_wrapper = dict(
         momentum=0.937,
         weight_decay=0.0005,
         nesterov=True,
-        batch_size_pre_gpu=train_batch_size_per_gpu),
+        batch_size_per_gpu=train_batch_size_per_gpu),
     constructor='YOLOv5OptimizerConstructor')
 
 default_hooks = dict(

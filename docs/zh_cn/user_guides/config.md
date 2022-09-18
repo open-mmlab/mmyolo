@@ -281,7 +281,7 @@ optim_wrapper = dict(  # 优化器封装的配置
         momentum=0.937, # 带动量的随机梯度下降
         weight_decay=0.0005, # 权重衰减
         nesterov=True, # 开启Nesterov momentum，公式详见 http://www.cs.toronto.edu/~hinton/absps/momentum.pdf
-        batch_size_pre_gpu=train_batch_size_per_gpu),  # 该选项实现了自动权重衰减系数缩放
+        batch_size_per_gpu=train_batch_size_per_gpu),  # 该选项实现了自动权重衰减系数缩放
     clip_grad=None,  # 梯度裁剪的配置，设置为 None 关闭梯度裁剪。使用方法请见 https://mmengine.readthedocs.io/en/latest/tutorials/optimizer.html
     constructor='YOLOv5OptimizerConstructor') # YOLOv5 优化器构建器
 
