@@ -73,27 +73,27 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
             self.out_layers.append(self.build_out_layer(idx))
 
     @abstractmethod
-    def build_reduce_layer(self, idx):
+    def build_reduce_layer(self, idx: int):
         pass
 
     @abstractmethod
-    def build_upsample_layer(self, idx):
+    def build_upsample_layer(self, idx: int):
         pass
 
     @abstractmethod
-    def build_top_down_layer(self, idx):
+    def build_top_down_layer(self, idx: int):
         pass
 
     @abstractmethod
-    def build_downsample_layer(self, idx):
+    def build_downsample_layer(self, idx: int):
         pass
 
     @abstractmethod
-    def build_bottom_up_layer(self, idx):
+    def build_bottom_up_layer(self, idx: int):
         pass
 
     @abstractmethod
-    def build_out_layer(self, idx):
+    def build_out_layer(self, idx: int):
         pass
 
     def _freeze_all(self):
