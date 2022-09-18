@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from abc import ABCMeta, abstractmethod
+from typing import Sequence
 
 import torch
 import torch.nn as nn
@@ -41,7 +42,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  input_channels: int = 3,
-                 out_indices: tuple = (2, 3, 4),
+                 out_indices: Sequence[int] = (2, 3, 4),
                  frozen_stages: int = -1,
                  norm_cfg: ConfigType = None,
                  act_cfg: ConfigType = None,
@@ -56,7 +57,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
             i for i in range(len(arch_setting) + 1))
 
         if frozen_stages not in range(-1, len(arch_setting) + 1):
-            raise ValueError('frozen_stages must be in range(-1, '
+            raise ValueError('"frozen_stages" must be in range(-1, '
                              'len(arch_setting) + 1). But received '
                              f'{frozen_stages}')
 
@@ -84,7 +85,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def build_stage_layer(self, stage_idx, setting):
+    def build_stage_layer(self, stage_idx: int, setting: list):
         """Build a stage layer.
 
         Args:
@@ -103,9 +104,9 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
                 for param in m.parameters():
                     param.requires_grad = False
 
-    def train(self, mode=True):
+    def train(self, mode: bool = True):
         """Convert the model into training mode while keep normalization layer
-        freezed."""
+        frozen."""
         super().train(mode)
         self._freeze_stages()
         if mode and self.norm_eval:
