@@ -15,7 +15,7 @@ register_all_modules()
 
 class TestYOLOXHead(TestCase):
 
-    def setUp(self) -> None:
+    def setUp(self):
         self.head_module = dict(
             type='YOLOXHeadModule',
             num_classes=4,

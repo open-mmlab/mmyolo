@@ -48,7 +48,7 @@ class YOLOv5CocoDataset(CocoDataset):
 
         self._fully_initialized = True
 
-    def prepare_data(self, idx) -> Any:
+    def prepare_data(self, idx: int) -> Any:
         """Pass the dataset to the pipeline during training to support mixed
         data augmentation, such as Mosaic and MixUp."""
         if self.test_mode is False:

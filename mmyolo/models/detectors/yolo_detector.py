@@ -37,7 +37,7 @@ class YOLODetector(SingleStageDetector):
                  test_cfg: OptConfigType = None,
                  data_preprocessor: OptConfigType = None,
                  init_cfg: OptMultiConfig = None,
-                 use_syncbn: bool = True) -> None:
+                 use_syncbn: bool = True):
         super().__init__(
             backbone=backbone,
             neck=neck,

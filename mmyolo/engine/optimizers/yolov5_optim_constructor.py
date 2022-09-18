@@ -62,7 +62,7 @@ class YOLOv5OptimizerConstructor:
 
     def __init__(self,
                  optim_wrapper_cfg: dict,
-                 paramwise_cfg: Optional[dict] = None) -> None:
+                 paramwise_cfg: Optional[dict] = None):
         if paramwise_cfg is None:
             paramwise_cfg = {'base_total_batch_size': 64}
         assert 'base_total_batch_size' in paramwise_cfg

@@ -49,7 +49,7 @@ class BatchShapePolicy:
                  batch_size: int = 32,
                  img_size: int = 640,
                  size_divisor: int = 32,
-                 extra_pad_ratio: float = 0.5) -> None:
+                 extra_pad_ratio: float = 0.5):
         self.batch_size = batch_size
         self.img_size = img_size
         self.size_divisor = size_divisor
