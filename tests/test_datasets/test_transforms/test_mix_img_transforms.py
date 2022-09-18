@@ -212,7 +212,7 @@ class TestYOLOXMixUp(unittest.TestCase):
         transform = YOLOXMixUp(
             img_scale=(10, 12),
             ratio_range=(0.8, 1.6),
-            pad_val=114.0,
+            pad_val=114,
             pre_transform=self.pre_transform)
 
         # self.results['mix_results'] = [copy.deepcopy(self.results)]
@@ -231,7 +231,7 @@ class TestYOLOXMixUp(unittest.TestCase):
         transform = YOLOXMixUp(
             img_scale=(10, 12),
             ratio_range=(0.8, 1.6),
-            pad_val=114.0,
+            pad_val=114,
             pre_transform=self.pre_transform)
         results['mix_results'] = [results]
         results = transform(results)

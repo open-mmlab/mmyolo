@@ -2,16 +2,16 @@
 import collections
 import copy
 from abc import ABCMeta, abstractmethod
-from typing import Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import mmcv
 import numpy as np
 from mmcv.transforms import BaseTransform
+from mmdet.structures.bbox import autocast_box_type
 from mmengine.dataset import BaseDataset
 from mmengine.dataset.base_dataset import Compose
 from numpy import random
 
-from mmdet.structures.bbox import autocast_box_type
 from mmyolo.registry import TRANSFORMS
 
 
@@ -203,7 +203,7 @@ class Mosaic(BaseMixImageTransform):
             are allowed to cross the border of images. Therefore, we don't
             need to clip the gt bboxes in these cases. Defaults to True.
         pad_val (int): Pad value. Defaults to 114.
-        pre_transform(Sequence[str]): Sequence of transform object or
+        pre_transform(Sequence[dict]): Sequence of transform object or
             config dict to be composed.
         prob (float): Probability of applying this transformation.
             Defaults to 1.0.
@@ -217,10 +217,10 @@ class Mosaic(BaseMixImageTransform):
                  img_scale: Tuple[int, int] = (640, 640),
                  center_ratio_range: Tuple[float, float] = (0.5, 1.5),
                  bbox_clip_border: bool = True,
-                 pad_val: float = 114.0,
-                 pre_transform: list = None,
+                 pad_val: int = 114,
+                 pre_transform: Sequence[dict] = None,
                  prob: float = 1.0,
-                 max_refetch: int = 15) -> None:
+                 max_refetch: int = 15):
         assert isinstance(img_scale, tuple)
         assert 0 <= prob <= 1.0, 'The probability should be in range [0,1]. ' \
                                  f'got {prob}.'
@@ -232,7 +232,7 @@ class Mosaic(BaseMixImageTransform):
         self.bbox_clip_border = bbox_clip_border
         self.pad_val = pad_val
 
-    def get_indexes(self, dataset: BaseDataset) -> list:
+    def get_indexes(self, dataset: BaseDataset) -> List[np.ndarray]:
         """Call function to collect indexes.
 
         Args:
@@ -397,7 +397,7 @@ class Mosaic(BaseMixImageTransform):
         paste_coord = x1, y1, x2, y2
         return paste_coord, crop_coord
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         repr_str = self.__class__.__name__
         repr_str += f'(img_scale={self.img_scale}, '
         repr_str += f'center_ratio_range={self.center_ratio_range}, '
@@ -442,7 +442,7 @@ class YOLOv5MixUp(BaseMixImageTransform):
             Defaults to 32.
         beta (float):  parameter of beta distribution to get mixup ratio.
             Defaults to 32.
-        pre_transform (Sequence[str]): Sequence of transform object or
+        pre_transform (Sequence[dict]): Sequence of transform object or
             config dict to be composed.
         prob (float): Probability of applying this transformation.
             Defaults to 1.0.
@@ -454,9 +454,9 @@ class YOLOv5MixUp(BaseMixImageTransform):
     def __init__(self,
                  alpha: float = 32.0,
                  beta: float = 32.0,
-                 pre_transform: list = None,
+                 pre_transform: Sequence[dict] = None,
                  prob: float = 1.0,
-                 max_refetch: int = 15) -> None:
+                 max_refetch: int = 15):
         super().__init__(
             pre_transform=pre_transform, prob=prob, max_refetch=max_refetch)
         self.alpha = alpha
@@ -572,7 +572,7 @@ class YOLOXMixUp(BaseMixImageTransform):
             the border of the image. In some dataset like MOT17, the gt bboxes
             are allowed to cross the border of images. Therefore, we don't
             need to clip the gt bboxes in these cases. Defaults to True.
-        pre_transform(Sequence[str]): Sequence of transform object or
+        pre_transform(Sequence[dict]): Sequence of transform object or
             config dict to be composed.
         prob (float): Probability of applying this transformation.
             Defaults to 1.0.
@@ -585,11 +585,11 @@ class YOLOXMixUp(BaseMixImageTransform):
                  img_scale: Tuple[int, int] = (640, 640),
                  ratio_range: Tuple[float, float] = (0.5, 1.5),
                  flip_ratio: float = 0.5,
-                 pad_val: float = 114.0,
+                 pad_val: int = 114,
                  bbox_clip_border: bool = True,
-                 pre_transform: list = None,
+                 pre_transform: Sequence[dict] = None,
                  prob: float = 1.0,
-                 max_refetch: int = 15) -> None:
+                 max_refetch: int = 15):
         assert isinstance(img_scale, tuple)
         super().__init__(
             pre_transform=pre_transform, prob=prob, max_refetch=max_refetch)
@@ -722,7 +722,7 @@ class YOLOXMixUp(BaseMixImageTransform):
 
         return results
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         repr_str = self.__class__.__name__
         repr_str += f'(img_scale={self.img_scale}, '
         repr_str += f'ratio_range={self.ratio_range}, '

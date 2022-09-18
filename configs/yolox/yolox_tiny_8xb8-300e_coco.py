@@ -24,7 +24,7 @@ train_pipeline_stage1 = [
     dict(
         type='Mosaic',
         img_scale=img_scale,
-        pad_val=114.0,
+        pad_val=114,
         pre_transform=pre_transform),
     dict(
         type='mmdet.RandomAffine',
@@ -48,7 +48,7 @@ test_pipeline = [
     dict(
         type='mmdet.Pad',
         pad_to_square=True,
-        pad_val=dict(img=(114.0, 114.0, 114.0))),
+        pad_val=dict(img=(114, 114, 114))),
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
         type='mmdet.PackDetInputs',

@@ -27,7 +27,7 @@ mosaic_affine_pipeline = [
     dict(
         type='Mosaic',
         img_scale=img_scale,
-        pad_val=114.0,
+        pad_val=114,
         pre_transform=pre_transform),
     dict(
         type='YOLOv5RandomAffine',

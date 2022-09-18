@@ -111,7 +111,7 @@ train_pipeline_stage1 = [
     dict(
         type='Mosaic',
         img_scale=img_scale,
-        pad_val=114.0,
+        pad_val=114,
         pre_transform=pre_transform),
     dict(
         type='mmdet.RandomAffine',
@@ -121,7 +121,7 @@ train_pipeline_stage1 = [
         type='YOLOXMixUp',
         img_scale=img_scale,
         ratio_range=(0.8, 1.6),
-        pad_val=114.0,
+        pad_val=114,
         pre_transform=pre_transform),
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
@@ -143,7 +143,7 @@ train_pipeline_stage2 = [
         pad_to_square=True,
         # If the image is three-channel, the pad value needs
         # to be set separately for each channel.
-        pad_val=dict(img=(114.0, 114.0, 114.0))),
+        pad_val=dict(img=(114, 114, 114))),
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(
@@ -175,7 +175,7 @@ test_pipeline = [
     dict(
         type='mmdet.Pad',
         pad_to_square=True,
-        pad_val=dict(img=(114.0, 114.0, 114.0))),
+        pad_val=dict(img=(114, 114, 114))),
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
         type='mmdet.PackDetInputs',

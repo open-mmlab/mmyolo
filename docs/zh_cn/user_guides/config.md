@@ -107,7 +107,7 @@ train_pipeline = [				# 训练数据处理流程
     dict(
         type='Mosaic',          # Mosaic 数据增强方法
         img_scale=img_scale,    # Mosaic 数据增强后的图像尺寸
-        pad_val=114.0,          # 空区域填充像素值
+        pad_val=114,            # 空区域填充像素值
         pre_transform=pre_transform), # 之前创建的 pre_transform 训练数据读取流程
     dict(
         type='YOLOv5RandomAffine',	    # YOLOv5 的随机仿射变换
@@ -434,7 +434,7 @@ mosaic_affine_pipeline = [
     dict(
         type='Mosaic',
         img_scale=img_scale,
-        pad_val=114.0,
+        pad_val=114,
         pre_transform=pre_transform),
     dict(
         type='YOLOv5RandomAffine',
