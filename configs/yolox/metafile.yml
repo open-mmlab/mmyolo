@@ -1,0 +1,70 @@
+Collections:
+  - Name: YOLOX
+    Metadata:
+      Training Data: COCO
+      Training Techniques:
+        - SGD with Nesterov
+        - Weight Decay
+        - Cosine Annealing Lr Updater
+      Training Resources: 8x TITANXp GPUs
+      Architecture:
+        - CSPDarkNet
+        - PAFPN
+    Paper:
+      URL: https://arxiv.org/abs/2107.08430
+      Title: 'YOLOX: Exceeding YOLO Series in 2021'
+    README: configs/yolox/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmyolo/blob/v0.0.1/mmyolo/models/detectors/yolo_detector.py#L12
+      Version: v0.0.1
+
+
+Models:
+  - Name: yolox_s_8xb8-300e_coco
+    In Collection: YOLOX
+    Config: configs/yolox/yolox_s_8xb8-300e_coco.py
+    Metadata:
+      Training Memory (GB):
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP:
+    Weights:
+  - Name: yolox_m_8xb8-300e_coco
+    In Collection: YOLOX
+    Config: configs/yolox/yolox_m_8xb8-300e_coco.py
+    Metadata:
+      Training Memory (GB):
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP:
+    Weights:
+  - Name: yolox_l_8xb8-300e_coco
+    In Collection: YOLOX
+    Config: configs/yolox/yolox_l_8xb8-300e_coco.py
+    Metadata:
+      Training Memory (GB):
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP:
+    Weights:
+  - Name: yolox_tiny_8x8b_300e_coco
+    In Collection: YOLOX
+    Config: configs/yolox/yolox_tiny_8xb8-300e_coco.py
+    Metadata:
+      Training Memory (GB):
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP:
+    Weights:

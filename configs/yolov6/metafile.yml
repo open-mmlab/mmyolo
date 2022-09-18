@@ -1,0 +1,21 @@
+Collections:
+  - Name: YOLOv6
+    Metadata:
+      Training Data: COCO
+      Training Techniques:
+        - SGD with Nesterov
+        - Weight Decay
+        - AMP
+        - Synchronize BN
+      Training Resources: 8x A100 GPUs
+      Architecture:
+        - CSPDarkNet
+        - PAFPN
+        - RepVGG
+    Paper:
+      URL: https://arxiv.org/abs/2209.02976
+      Title: 'YOLOv6: A Single-Stage Object Detection Framework for Industrial Applications'
+    README: configs/yolov6/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmyolo/blob/v0.0.1/mmyolo/models/detectors/yolo_detector.py#L12
+      Version: v0.0.1

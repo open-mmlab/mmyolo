@@ -1,0 +1,67 @@
+Collections:
+  - Name: YOLOv5
+    Metadata:
+      Training Data: COCO
+      Training Techniques:
+        - SGD with Nesterov
+        - Weight Decay
+        - AMP
+        - Synchronize BN
+      Training Resources: 8x A100 GPUs
+      Architecture:
+        - CSPDarkNet
+        - PAFPN
+    README: configs/yolov5/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmyolo/blob/v0.0.1/mmyolo/models/detectors/yolo_detector.py#L12
+      Version: v0.0.1
+
+Models:
+  - Name: yolov5_n-v61_syncbn_fast_8xb16-300e_coco
+    In Collection: YOLOv5
+    Config: configs/yolov5/yolov5_n-v61_syncbn_fast_8xb16-300e_coco.py
+    Metadata:
+      Training Memory (GB):
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP:
+    Weights:
+  - Name: yolov5_s-v61_syncbn_fast_8xb16-300e_coco
+    In Collection: YOLOv5
+    Config: configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py
+    Metadata:
+      Training Memory (GB):
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP:
+    Weights:
+  - Name: yolov5_m-v61_syncbn_fast_8xb16-300e_coco
+    In Collection: YOLOv5
+    Config: configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py
+    Metadata:
+      Training Memory (GB):
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP:
+    Weights:
+  - Name: yolov5_l-v61_syncbn_fast_8xb16-300e_coco
+    In Collection: YOLOv5
+    Config: configs/yolov5/yolov5_l-v61_syncbn_fast_8xb16-300e_coco.py
+    Metadata:
+      Training Memory (GB):
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP:
+    Weights:
