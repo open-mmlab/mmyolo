@@ -31,7 +31,7 @@ MMYOLO 系列沿用 MMDetection 中设计的 `BaseDenseHead` 作为 Head 结构�
 ## HeadModule
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/33799979/190407754-c725fe85-a71b-4e45-912b-34513d1ff128.png" width=800>
+<img src="https://user-images.githubusercontent.com/33799979/190985845-ed303ad4-3a77-447b-83f9-1feba38d5e24.png" width=800>
 </div>
 
 如上图所示，虚线部分为 [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/mmdet/models/dense_heads/base_dense_head.py) 中的实现，实线部分为 [MMYOLO](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py) 中的实现。与原先的实现相比具备以下优势：
