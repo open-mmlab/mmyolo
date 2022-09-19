@@ -132,7 +132,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 
 ### 可视化相关
 
-#### 验证评估阶段可视化
+#### 验证阶段可视化
 
 我们将 configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py 中的 default_hooks 的 visualization 进行修改，设置 draw 为 True，interval 为 2。
 
