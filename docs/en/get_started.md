@@ -74,7 +74,7 @@ To verify whether MMYOLO is installed correctly, we provide some sample codes to
 **Step 1.** We need to download config and checkpoint files.
 
 ```shell
-mim download mmyolo --config configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco --dest .
+mim download mmyolo --config yolov5_s-v61_syncbn_fast_8xb16-300e_coco --dest .
 ```
 
 The downloading will take several seconds or more, depending on your network environment. When it is done, you will find two files `yolov5_s-v61_syncbn_8xb16-300e_coco.py` and `yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth` in your current folder.

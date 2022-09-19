@@ -73,7 +73,7 @@ mim install "mmyolo"
 **步骤 1.** 我们需要下载配置文件和模型权重文件。
 
 ```shell
-mim download mmyolo --config configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco --dest .
+mim download mmyolo --config yolov5_s-v61_syncbn_fast_8xb16-300e_coco --dest .
 ```
 
 载将需要几秒钟或更长时间，这取决于你的网络环境。完成后，你会在当前文件夹中发现两个文件 `yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py` and `yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth`

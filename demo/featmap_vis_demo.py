@@ -190,6 +190,8 @@ def main(args):
             visualizer.show(shown_imgs)
 
 
+# Please refer to the usage tutorial:
+# https://github.com/open-mmlab/mmyolo/blob/main/docs/zh_cn/user_guides/visualization.md # noqa
 if __name__ == '__main__':
     args = parse_args()
     main(args)
