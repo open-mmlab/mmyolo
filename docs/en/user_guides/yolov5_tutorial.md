@@ -2,7 +2,7 @@
 
 ## Installation
 
-NOTICE: MMYOLO is based on OpenMMLab 2.0, it is highly recommended to create a new conda virtual environment to prevent conflicts the repository already installed  by OpenMMLab 1.0. 
+NOTICE: MMYOLO is based on OpenMMLab 2.0, it is highly recommended to create a new conda virtual environment to prevent conflicts the repository already installed by OpenMMLab 1.0. 
 
 ```shell
 conda create -n open-mmlab python=3.8 -y
@@ -26,7 +26,7 @@ Please see [get_started](../get_started.md) for detailed installation instructio
 We provide the ballon dataset, a small dataset of less than 40MB in size, as the learning dataset of MMYOLO.
 
 ```shell
-python tools/misc/download_dataset.py  --dataset-name balloon --save-dir data --unzip
+python tools/misc/download_dataset.py --dataset-name balloon --save-dir data --unzip
 python tools/dataset_converters/balloon2coco.py
 ```
 
