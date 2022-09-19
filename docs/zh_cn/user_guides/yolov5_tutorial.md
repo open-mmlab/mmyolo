@@ -134,7 +134,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 
 #### 验证评估阶段可视化
 
-我们将 configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py 中的 default_hooks 的 visualization 进行修改，设置 draw为True，interval为2。
+我们将 configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py 中的 default_hooks 的 visualization 进行修改，设置 draw 为 True，interval 为 2。
 
 ```shell
 default_hooks = dict(
@@ -143,7 +143,7 @@ default_hooks = dict(
 )
 ```
 
-重新运行以下训练命令，在验证评估的过程中，每 interval 张图片就会保存一张标注结果和预测结果的拼图到 work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/vis_data/vis_data 文件夹中了。
+重新运行以下训练命令，在验证评估的过程中，每 interval 张图片就会保存一张标注结果和预测结果的拼图到 work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/vis_data/vis_image 文件夹中了。
 
 ```shell
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py
