@@ -86,8 +86,8 @@ def main():
             'http://host.robots.ox.ac.uk/pascal/VOC/voc2007/VOCdevkit_08-Jun-2007.tar',  # noqa
         ],
         balloon=[
-            'https://github.com/matterport/Mask_RCNN/' +
-            'releases/download/v2.1/balloon_dataset.zip'
+            # src link: https://github.com/matterport/Mask_RCNN/releases/download/v2.1/balloon_dataset.zip # noqa
+            'https://download.openmmlab.com/mmyolo/data/balloon_dataset.zip'
         ])
     url = data2url.get(args.dataset_name, None)
     if url is None:
