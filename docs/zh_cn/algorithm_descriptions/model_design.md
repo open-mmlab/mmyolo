@@ -4,7 +4,7 @@
 
 下图为 RangeKing@GitHub 提供，非常感谢！
 
-![基类](https://user-images.githubusercontent.com/27466624/190985430-3592bb1d-eafd-45fa-bae8-e9421d86ffd1.jpg)
+![基类](https://user-images.githubusercontent.com/33799979/190382319-6b4e1fcb-cc3f-4fbe-9d6b-3c9c4e57472c.png)
 
 YOLO 系列算法大部分采用了统一的算法搭建结构，典型的如 Darknet + PAFPN。为了让用户快速理解 YOLO 系列算法架构，我们特意设计了如上图中的 BaseBackbone + BaseYOLONeck 结构。
 
