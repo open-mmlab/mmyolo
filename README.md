@@ -52,10 +52,6 @@ The master branch works with **PyTorch 1.6+**.
 <details open>
 <summary>Major features</summary>
 
-- **Modular Design**
-
-  MMYOLO decompose the framework into different components and users can easily construct a customized model by combining different modules and training and testing strategies.
-
 - **Fair and convenient algorithm evaluation**
 
   MMYOLO unifies the modules of various YOLO algorithms and provides a unified benchmark process. Users can compare and analyze in a fair and convenient way.
@@ -63,6 +59,13 @@ The master branch works with **PyTorch 1.6+**.
 - **Detailed introductory and advanced documentation**
 
   MMYOLO provides a series of documents from getting started, to model deployment, advanced guidelines, and algorithm analysis, making it easy for different users to get started and make extensions quickly.
+
+- **Modular Design**
+
+  MMYOLO decompose the framework into different components and users can easily construct a customized model by combining different modules and training and testing strategies.
+
+  ![BaseModule](https://user-images.githubusercontent.com/33799979/190382319-6b4e1fcb-cc3f-4fbe-9d6b-3c9c4e57472c.png)
+  The picture is provided by RangeKing@GitHub, thank you very much!
 
 </details>
 
