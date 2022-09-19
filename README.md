@@ -109,8 +109,8 @@ For different sections than MMDetection, we have also prepared user guides and a
   - [From getting started to deployment](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#get-started-to-deployment)
     - [From getting started to deployment with YOLOv5](docs/en/user_guides/yolov5_tutorial.md)
   - [Useful Tools](https://mmdetection.readthedocs.io/en/latest/user_guides/index.html#useful-tools)
-    - [Visualization](docs/en/algorithm_descriptions/visualization.md)
-    - [Useful Tools](docs/en/algorithm_descriptions/useful_tools.md)
+    - [Visualization](docs/en/user_guides/visualization.md)
+    - [Useful Tools](docs/en/user_guides/useful_tools.md)
 
 - Algorithm description
 
