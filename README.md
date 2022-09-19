@@ -75,6 +75,8 @@ The master branch works with **PyTorch 1.6+**.
 - Refactored YOLOX for MMDet to provide faster training and inference
 - Detailed introductory and advanced tutorials are provided, see the [English tutorial](https://mmyolo.readthedocs.io/en/latest)
 
+For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
+
 ## Installation
 
 MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps for installation. Please refer to the [Install Guide](docs/en/get_started.md) for more detailed instructions.
