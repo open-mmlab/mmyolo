@@ -7,7 +7,7 @@
 </div>
 可视化可以给深度学习的模型训练和测试过程提供直观解释。
 
-MMYOLO 中，将使用 MMEngine 提供的 `Visualizer` 可视化器用以可视化和存储模型在不同结构位置的特征图，具备如下功能：
+MMYOLO 中，将使用 MMEngine 提供的 `Visualizer` 可视化器进行特征图可视化，其具备如下功能：
 
 - 支持基础绘图接口以及特征图可视化
 - 支持选择模型中的不同层来得到特征图，包含 `squeeze_mean` ， `select_max` ， `topk` 三种显示方式，用户还可以使用 `arrangement` 自定义特征图显示的布局方式。
@@ -16,7 +16,7 @@ MMYOLO 中，将使用 MMEngine 提供的 `Visualizer` 可视化器用以可视�
 ## 特征图绘制
 
 你可以调用 `demo/featmap_vis_demo.py` 来简单快捷地得到可视化结果，为了方便理解，将其主要参数的功能梳理如下：
-- `img` 选择要用于特征图可视化的图片，目前只支持单张特征图的可视化
+- `img` 选择要用于特征图可视化的图片，支持单张图片或者图片路径列表
 
 - `config` 选择算法的配置文件
 
@@ -24,10 +24,10 @@ MMYOLO 中，将使用 MMEngine 提供的 `Visualizer` 可视化器用以可视�
 
 - `--out-file` 将得到的特征图保存到本地，并指定路径和文件名
 
-- `--device` 指定用于推理图片的硬件，`--device cuda：0` 表示使用第1张 GPU 推理，`--device cpu` 表示用 CPU 推理
+- `--device` 指定用于推理图片的硬件，`--device cuda：0`  表示使用第 1 张 GPU 推理，`--device cpu` 表示用 CPU 推理
 
 - `--score-thr` 设置检测框的置信度阈值，只有置信度高于这个值的框才会显示
-- 
+
 - `--preview-model` 可以预览模型，方便用户理解模型的特征层结构
 
 - `--target-layers` 对指定层获取可视化的特征图
@@ -57,7 +57,7 @@ python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/89863442/190903764-aea206a5-5229-4aa4-b980-8c8d23d82645.jpg" width="400"/>
+<img src="https://user-images.githubusercontent.com/89863442/190939711-c498060d-ed98-4dca-aa02-b41ca82f51b0.jpg" width="800"/>
 </div>
 
 (2) 将多通道特征图采用 `squeeze_mean` 参数压缩为单通道并显示, 通过提取 neck 层输出进行特征图可视化，将得到 neck 三个输出层的特征图
@@ -67,7 +67,7 @@ python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/89863442/190903770-6f42b927-a75f-47d9-8283-86d53b06e3f8.jpg" width="400"/>
+<img src="https://user-images.githubusercontent.com/89863442/190939718-b320239e-87f0-4a07-8525-b4087372e3fd.jpg" width="800"/>
 </div>
 
 (3) 将多通道特征图采用 `squeeze_mean` 参数压缩为单通道并显示, 通过提取 backbone.stage4 和 backbone.stage3 层输出进行特征图可视化，将得到两个输出层的特征图
@@ -78,19 +78,18 @@ python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/89863442/190903773-5ecf2c6a-58df-4ecf-86b3-2c600906aa4f.jpg" width="400"/>
+<img src="https://user-images.githubusercontent.com/89863442/190939720-cf829954-cc15-4b31-9be3-229d4d95e458.jpg" width="800"/>
 </div>
 
-(4) 利用 `topk=5` 参数选择多通道特征图中激活度最高的 5 个通道并采用 2x3 布局显示, 用户可以通过 `arrangement` 参数选择自己想要的布局
+(4) 利用 `--topk 3 --arrangement 2 2` 参数选择多通道特征图中激活度最高的 3 个通道并采用 2x2 布局显示, 用户可以通过 `arrangement` 参数选择自己想要的布局，特征图将自动布局，先按每个层中的 top3 特征图按 2x2 的格式布局，再将每个层按 2x2 布局
 
 ```python
-python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py mmyolov5s.pt --target-layers neck --channel-reduction None --topk 5 arrangement 2 3
+python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py mmyolov5s.pt --target-layers backbone.stage3 backbone.stage4 --channel-reduction None --topk 3 --arrangement 2 2 --out-file 4.jpg
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/89863442/190903778-07f69cbe-e107-4e52-a1e1-869ac7d19b32.jpg" width="1000"/>
+<img src="https://user-images.githubusercontent.com/89863442/190939723-911c5e9b-dd33-42eb-be4a-ba45f03110a0.jpg" width="1200"/>
 </div>
-
 
 (5) 存储绘制后的图片，在绘制完成后，可以选择本地窗口显示，也可以存储到本地，只需要加入参数 `--out-file xxx.jpg` 
 
