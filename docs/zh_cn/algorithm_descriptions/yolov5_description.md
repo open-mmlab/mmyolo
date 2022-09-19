@@ -3,7 +3,7 @@
 ## 0 简介
 
 <div align=center >
-<img alt="YOLOv5_structure_v3" src="https://user-images.githubusercontent.com/40284075/190545260-3eab3524-2bf9-4857-9e42-6b466f06b944.jpg"/>
+<img alt="YOLOv5_structure_v3" src="https://user-images.githubusercontent.com/27466624/190986656-b68bdb59-d0d5-480c-83c2-44f5648320a2.jpg"/>
 </div>
 
 以上结构图由 RangeKing@github 绘制。

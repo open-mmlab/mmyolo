@@ -2,8 +2,8 @@
 
 ## YOLO series model basic class
 
-The structural Graph is provided by @RangeKing ,Thank you RangeKing！
-![base class](https://user-images.githubusercontent.com/33799979/190382319-6b4e1fcb-cc3f-4fbe-9d6b-3c9c4e57472c.png)
+The structural Graph is provided by RangeKing@GitHub. Thank you RangeKing！
+![base class](https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg)
 
 Most of the YOLO series algorithms adopt a unified algorithm building structure, typically as Darknet + PAFPN. In order to let users quickly understand the YOLO series algorithm architecture, we deliberately designed the BaseBackbone + BaseYOLONeck structure as shown in the above graph.
 
@@ -21,7 +21,7 @@ We can see in the above graph，as for P5，BaseBackbone include 1 stem layer an
 
 ### BaseYOLONeck
 
-We reproduce the YOLO series Neck component by the similar method of the BaseBackbone, we can mainly divide them into Reduce layer, UpSample layer,TopDown layer,DownSample layer，BottomUP layer and output convolution layer, every layer can self-custom its inside construction by inheritance and rewrite `build_xx` method.
+We reproduce the YOLO series Neck component by the similar method of the BaseBackbone, we can mainly divide them into Reduce layer, UpSample layer, TopDown layer, DownSample layer, BottomUP layer and output convolution layer, every layer can self-custom its inside construction by inheritance and rewrite `build_xx` method.
 
 ### BaseDenseHead
 
