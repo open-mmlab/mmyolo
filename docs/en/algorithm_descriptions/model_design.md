@@ -25,7 +25,7 @@ We reproduce the YOLO series Neck component by the similar method of the BaseBac
 
 ### BaseDenseHead
 
-The YOLO series uses the BaseDenseHead designed in MMDet as the base class of the Head structure.[HeadModule](#headmodule)base class's forward function replace original forward method. Different algorithms only need to inheritance and rewrite [HeadModule](#headmodule)，`loss_by_feat` and `predict_by_feat` method.
+The YOLO series uses the BaseDenseHead designed in MMDet as the base class of the Head structure. Take YOLOv5 as an example, [HeadModule](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py#L2) class's forward function replace original forward method.
 
 ## HeadModule
 
@@ -33,7 +33,7 @@ The YOLO series uses the BaseDenseHead designed in MMDet as the base class of th
 <img src="https://user-images.githubusercontent.com/33799979/190407754-c725fe85-a71b-4e45-912b-34513d1ff128.png" width=800>
 </div>
 
-Methods implementation in the [MMDetection](https://github.com/open-mmlab/mmdetection) is shown in the above graph ，The solid line is the implementation in [MMDet-YOLO](<>), which has the following advantages over the original implementation:
+Methods implementation in the [MMDetection](https://github.com/open-mmlab/mmdetection) is shown in the above graph ，The solid line is the implementation in [MMYOLO](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py), which has the following advantages over the original implementation:
 
 1. MMDet in the bbox_head split into assigner + box coder + sampler three large components, but for the generality of passing through the 3 components , the model need to encapsulate additional objects to handle, and after the unification, the user needn't separate them. The benefits of not deliberately forcing the division of the three components are: no longer need to data encapsulation of internal data, simplifying the code logic, reducing the difficulty of use and the difficulty of algorithm implementation.
 2. MMYOLO is Faster, the user can customize the implementation of the algorithm when the original framework does not depend on the deep optimization of part of the code.

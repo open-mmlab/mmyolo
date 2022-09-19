@@ -4,7 +4,7 @@ MMYOLO and other OpenMMLab repositories use [MMEngine's config system](https://m
 
 ## Config file content
 
-MMYOLO uses a modular design, all modules with different functions can be configured through the config. Taking [YOLOv5-s](../../../configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) as an example, we will introduce each field in the config according to different function modules:
+MMYOLO uses a modular design, all modules with different functions can be configured through the config. Taking [YOLOv5-s](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py) as an example, we will introduce each field in the config according to different function modules:
 
 ### Important parameters
 

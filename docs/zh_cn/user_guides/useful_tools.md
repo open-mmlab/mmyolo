@@ -101,7 +101,7 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
 
 文件夹 `tools/data_converters/` 包含工具将 `balloon` 数据集（该小型数据集仅作为入门使用）转换成 COCO 的格式。
 
-关于该脚本的详细说明，请看 [YOLOv5 从入门到部署全流程](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/get_started_tutorial.html) 中 `数据集准备` 小节。
+关于该脚本的详细说明，请看 [YOLOv5 从入门到部署全流程](./yolov5_tutorial.md) 中 `数据集准备` 小节。
 
 ```shell
 python tools/dataset_converters/balloon2coco.py

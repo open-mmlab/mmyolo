@@ -4,7 +4,7 @@ MMYOLO 和其他 OpenMMLab 仓库使用 [MMEngine 的配置文件系统](https:/
 
 ## 配置文件的内容
 
-MMYOLO 采用模块化设计，所有功能的模块都可以通过配置文件进行配置。 以 [YOLOv5-s](../../../configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) 为例，我们将根据不同的功能模块介绍配置文件中的各个字段：
+MMYOLO 采用模块化设计，所有功能的模块都可以通过配置文件进行配置。 以 [YOLOv5-s](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py) 为例，我们将根据不同的功能模块介绍配置文件中的各个字段：
 
 ### 重要参数
 
@@ -79,7 +79,7 @@ model = dict(
 
 ### 数据集和评测器配置
 
-在使用 [执行器](https://mmengine.readthedocs.io/en/latest/tutorials/runner.html) 进行训练、测试、验证时，我们需要配置 [Dataloader](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader)。构建数据 dataloader 需要设置数据集（dataset）和数据处理流程（data pipeline）。 由于这部分的配置较为复杂，我们使用中间变量来简化 dataloader 配置的编写。由于MMYOLO 中各类轻量目标检测算法使用了更加复杂的数据增强方法，因此会比 MMDetection 中的其他模型拥有更多样的数据集配置。
+在使用 [执行器](https://mmengine.readthedocs.io/en/latest/tutorials/runner.html) 进行训练、测试、验证时，我们需要配置 [Dataloader](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader) 。构建数据 dataloader 需要设置数据集（dataset）和数据处理流程（data pipeline）。 由于这部分的配置较为复杂，我们使用中间变量来简化 dataloader 配置的编写。由于MMYOLO 中各类轻量目标检测算法使用了更加复杂的数据增强方法，因此会比 MMDetection 中的其他模型拥有更多样的数据集配置。
 
 YOLOv5 的训练与测试的数据流存在一定差异，这里我们分别进行介绍。
 

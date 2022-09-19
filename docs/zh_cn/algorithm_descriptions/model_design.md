@@ -26,15 +26,15 @@ YOLO 系列算法大部分采用了统一的算法搭建结构，典型的如 Da
 
 ### BaseDenseHead
 
-MMYOLO 系列沿用 MMDetection 中设计的 `BaseDenseHead` 作为 Head 结构的基类，[HeadModule](#headmodule基类)基类的 forward 代替了原有的 forward 实现。不同算法只需继承并重写 [HeadModule](#headmodule基类)，`loss_by_feat` 以及 `predict_by_feat` 方法。
+MMYOLO 系列沿用 MMDetection 中设计的 `BaseDenseHead` 作为 Head 结构的基类，但是进一步拆分了 HeadModule, 以 YOLOv5 为例，其 [HeadModule](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py#L24) forward 代替了原有的 forward 实现。
 
-## HeadModule 基类
+## HeadModule
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/33799979/190407754-c725fe85-a71b-4e45-912b-34513d1ff128.png" width=800>
 </div>
 
-如上图所示，虚线部分为 [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/mmdet/models/dense_heads/base_dense_head.py) 中的实现，实线部分为 [MMYOLO](../../../mmyolo/models/dense_heads/yolov5_head.py) 中的实现。与原先的实现相比具备以下优势：
+如上图所示，虚线部分为 [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/mmdet/models/dense_heads/base_dense_head.py) 中的实现，实线部分为 [MMYOLO](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py) 中的实现。与原先的实现相比具备以下优势：
 
 1. MMDet 中将 bbox_head 拆分为 assigner + box coder + sampler 三个大的组件，但由于 3 个组件之间的传递为了通用性，需要封装额外的对象来处理，统一之后用户可以不用进行拆分。不刻意强求划分三大组件的好处为：不再需要对内部数据进行数据封装，简化了代码逻辑，减轻了社区使用难度和算法复现难度。。
 2. 速度更快，用户在自定义实现算法时候，可以不依赖于原有框架，对部分代码进行深度优化。

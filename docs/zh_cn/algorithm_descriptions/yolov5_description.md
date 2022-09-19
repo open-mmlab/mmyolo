@@ -20,7 +20,7 @@ YOLOv5 是一个面向实时工业应用而开源的目标检测算法，受到�
 
 希望本文能够成为你入门和掌握 YOLOv5 的核心文档。由于 YOLOv5 本身也在不断迭代更新，因此我们也会不断的更新本文档。请注意阅读最新版本。
 
-MMYOLO 实现配置：`configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py`
+MMYOLO 实现配置：https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/
 
 YOLOv5 官方开源库地址：https://github.com/ultralytics/yolov5
 
@@ -313,7 +313,7 @@ YOLOV5 的匹配策略简单总结为：**采用了 anchor 和 gt_bbox 的 shape
 
 #### 1.3.1 Anchor 设置
 
-YOLOv5 是 Anchor-based 的目标检测算法，Anchor size 的获取方式与 YOLOv3 相同，是使用 kmeans算法进行聚类获得。
+YOLOv5 是 Anchor-based 的目标检测算法，Anchor size 的获取方式与 YOLOv3 相同，是使用 kmeans 算法进行聚类获得。
 
 在用户更换了数据集后，可以使用 MMDet 里带有的 Anchor 分析工具，对自己的数据集进行分析，确定合适的 Anchor size。
 
@@ -331,7 +331,7 @@ python tools/analysis_tools/optimize_anchors.py ${CONFIG} --algorithm k-means
  --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} --output-dir ${OUTPUT_DIR}
 ```
 
-然后在 [config 文件](../../../configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py)里修改默认 Anchor size:
+然后在 [config 文件](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py) 里修改默认 Anchor size:
 
 ```python
 anchors = [[(10, 13), (16, 30), (33, 23)], [(30, 61), (62, 45), (59, 119)],

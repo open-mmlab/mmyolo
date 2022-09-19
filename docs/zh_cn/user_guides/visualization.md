@@ -50,12 +50,19 @@ MMYOLO 中，将使用 MMEngine 提供的 `Visualizer` 可视化器进行特征�
 
 ## 用法示例
 
-以预训练好的 yolov5_s 模型为例:
+以预训练好的 YOLOv5_s 模型为例:
+
+请提前下载 YOLOv5_s 模型权重到本仓库根路径下：
+
+```shell
+cd mmyolo
+wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
+```
 
 (1) 将多通道特征图采用 `select_max` 参数压缩为单通道并显示, 通过提取 backbone 层输出进行特征图可视化，将得到 backbone 三个输出层的特征图
 
 ```python
-python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py mmyolov5s.pt --target-layers backbone --channel-reduction select_max
+python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --target-layers backbone --channel-reduction select_max
 ```
 
 <div align=center>
@@ -65,7 +72,7 @@ python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_
 (2) 将多通道特征图采用 `squeeze_mean` 参数压缩为单通道并显示, 通过提取 neck 层输出进行特征图可视化，将得到 neck 三个输出层的特征图
 
 ```python
-python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py mmyolov5s.pt --target-layers neck --channel-reduction squeeze_mean
+python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --target-layers neck --channel-reduction squeeze_mean
 ```
 
 <div align=center>
@@ -75,7 +82,7 @@ python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_
 (3) 将多通道特征图采用 `squeeze_mean` 参数压缩为单通道并显示, 通过提取 backbone.stage4 和 backbone.stage3 层输出进行特征图可视化，将得到两个输出层的特征图
 
 ```python
-python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py mmyolov5s.pt --target-layers backbone.stage4 backbone.stage3 --channel-reduction squeeze_mean
+python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_fast_syncbn_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --target-layers backbone.stage4 backbone.stage3 --channel-reduction squeeze_mean
 ```
 
 <div align=center>
@@ -85,7 +92,7 @@ python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_
 (4) 利用 `--topk 3 --arrangement 2 2` 参数选择多通道特征图中激活度最高的 3 个通道并采用 2x2 布局显示, 用户可以通过 `arrangement` 参数选择自己想要的布局，特征图将自动布局，先按每个层中的 top3 特征图按 2x2 的格式布局，再将每个层按 2x2 布局
 
 ```python
-python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py mmyolov5s.pt --target-layers backbone.stage3 backbone.stage4 --channel-reduction None --topk 3 --arrangement 2 2 --out-file 4.jpg
+python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --target-layers backbone.stage3 backbone.stage4 --channel-reduction None --topk 3 --arrangement 2 2 --out-file 4.jpg
 ```
 
 <div align=center>
@@ -95,5 +102,5 @@ python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_
 (5) 存储绘制后的图片，在绘制完成后，可以选择本地窗口显示，也可以存储到本地，只需要加入参数 `--out-file xxx.jpg`
 
 ```python
-python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py mmyolov5s.pt --target-layers backbone --channel-reduction select_max --out-file featmap_backbone
+python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --target-layers backbone --channel-reduction select_max --out-file featmap_backbone
 ```

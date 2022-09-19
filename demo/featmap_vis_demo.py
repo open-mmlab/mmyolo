@@ -124,6 +124,11 @@ def main(args):
 
     model = init_detector(args.config, args.checkpoint, device=args.device)
 
+    if args.preview_model:
+        print(model)
+        print('\n Please remove `--preview-model` to get the AM.')
+        return
+
     target_layers = []
     for target_layer in args.target_layers:
         try:
