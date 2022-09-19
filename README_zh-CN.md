@@ -46,9 +46,9 @@ MMYOLO 是一个基于 PyTorch 的 YOLO 系列算法开源工具箱。它是 [Op
 
 主分支代码目前支持 PyTorch 1.6 以上的版本。
 
-<img src="https://user-images.githubusercontent.com/45811724/190993591-bd3f1f11-1c30-4b93-b5f4-05c9ff64ff7f.gif"/>
-
 <img src="https://user-images.githubusercontent.com/12907710/137271636-56ba1cd2-b110-4812-8221-b4c120320aa9.png"/>
+
+<img src="https://user-images.githubusercontent.com/45811724/190993591-bd3f1f11-1c30-4b93-b5f4-05c9ff64ff7f.gif"/>
 
 <details open>
 <summary>主要特性</summary>
