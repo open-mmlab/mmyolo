@@ -79,7 +79,7 @@ model = dict(
 
 ### 数据集和评测器配置
 
-在使用 [执行器](https://mmengine.readthedocs.io/en/latest/tutorials/runner.html) 进行训练、测试、验证时，我们需要配置 [Dataloader](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader) 。构建数据 dataloader 需要设置数据集（dataset）和数据处理流程（data pipeline）。 由于这部分的配置较为复杂，我们使用中间变量来简化 dataloader 配置的编写。由于MMYOLO 中各类轻量目标检测算法使用了更加复杂的数据增强方法，因此会比 MMDetection 中的其他模型拥有更多样的数据集配置。
+在使用 [执行器](https://mmengine.readthedocs.io/en/latest/tutorials/runner.html) 进行训练、测试、验证时，我们需要配置 [Dataloader](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader) 。构建数据 dataloader 需要设置数据集（dataset）和数据处理流程（data pipeline）。 由于这部分的配置较为复杂，我们使用中间变量来简化 dataloader 配置的编写。由于 MMYOLO 中各类轻量目标检测算法使用了更加复杂的数据增强方法，因此会比 MMDetection 中的其他模型拥有更多样的数据集配置。
 
 YOLOv5 的训练与测试的数据流存在一定差异，这里我们分别进行介绍。
 
@@ -151,7 +151,7 @@ train_dataloader = dict( # 训练 dataloader 配置
         pipeline=train_pipeline)) # 这是由之前创建的 train_pipeline 定义的数据处理流程
 ```
 
-YOLOv5 测试阶段采用 LetterBox Resize 的方法来将所有的测试图像统一到相同尺度，进而有效保留了图像的长宽比。因此我们在验证和评测时，都采用相同的数据流进行推理。
+YOLOv5 测试阶段采用 `Letter Resize` 的方法来将所有的测试图像统一到相同尺度，进而有效保留了图像的长宽比。因此我们在验证和评测时，都采用相同的数据流进行推理。
 
 ```python
 test_pipeline = [ # 测试数据处理流程
