@@ -51,10 +51,6 @@ MMYOLO 是一个基于 PyTorch 的 YOLO 系列算法开源工具箱。它是 [Op
 <details open>
 <summary>主要特性</summary>
 
-- **模块化设计**
-
-  MMYOLO 将框架解耦成不同的模块组件，通过组合不同的模块和训练测试策略，用户可以便捷地构建自定义模型。
-
 - **公平便捷的算法评测**
 
   MMYOLO 统一各类 YOLO 算法模块, 并提供统一评测流程，用户可以公平便捷的进行对比分析。
@@ -62,6 +58,13 @@ MMYOLO 是一个基于 PyTorch 的 YOLO 系列算法开源工具箱。它是 [Op
 - **丰富的入门和进阶文档**
 
   MMYOLO 提供了从入门到部署到进阶和算法解析等一系列文档，方便不同用户快速上手和扩展。
+
+- **模块化设计**
+
+  MMYOLO 将框架解耦成不同的模块组件，通过组合不同的模块和训练测试策略，用户可以便捷地构建自定义模型。
+
+  ![基类](https://user-images.githubusercontent.com/33799979/190382319-6b4e1fcb-cc3f-4fbe-9d6b-3c9c4e57472c.png)
+  图为 RangeKing@GitHub 提供，非常感谢！
 
 </details>
 
