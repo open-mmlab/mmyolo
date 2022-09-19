@@ -345,7 +345,7 @@ anchors = [[(10, 13), (16, 30), (33, 23)], [(30, 61), (62, 45), (59, 119)],
 
 在 YOLOv3 中，回归公式为：
 
-```math
+```{math}
 b_x=\sigma(t_x)+c_x  \\
 b_y=\sigma(t_y)+c_y  \\
 b_w=a_w\cdot e^{t_w} \\
@@ -354,7 +354,7 @@ b_h=a_h\cdot e^{t_h} \\
 
 公式中，
 
-```math
+```{math}
 a_w 代表 Anchor 的宽度 \\
 c_x 代表 Grid 所处的坐标 \\
 \sigma 代表 Sigmoid 公式。
@@ -362,7 +362,7 @@ c_x 代表 Grid 所处的坐标 \\
 
 而在 YOLOv5 中，回归公式为：
 
-```math
+```{math}
 b_x=(2\cdot\sigma(t_x)-0.5)+c_x   \\
 b_y=(2\cdot\sigma(t_y)-0.5)+c_y   \\
 b_w=a_w\cdot(2\cdot\sigma(t_w))^2   \\
@@ -374,13 +374,13 @@ b_h=a_h\cdot(2\cdot\sigma(t_h))^2
 - 中心点坐标范围从 (0, 1) 调整至 (-0.5, 1.5)
 - 宽高范围从
 
-```math
+```{math}
 (0，+\infty)
 ```
 
 调整至
 
-```math
+```{math}
 (0，4a_{wh})
 ```
 
@@ -410,7 +410,7 @@ b_h=a_h\cdot(2\cdot\sigma(t_h))^2
 
 比较流程：
 
-```math
+```{math}
 r_w = w\_{gt} / w\_{pt}    \\
 r_h = h\_{gt} / h\_{pt}    \\
 r_w^{max}=max(r_w, 1/r_w)  \\
@@ -427,7 +427,7 @@ if\ \ r_{max} < prior\_match\_thr:   match!
 
 prior1 匹配失败的原因是
 
-```math
+```{math}
 h\_{gt}\ /\ h\_{prior}\ =\ 4.8\ >\ prior\_match\_thr
 ```
 
@@ -443,7 +443,7 @@ Prior WH 值为 \[(15, 5), (24, 16), (16, 24)\]，其中在 P3 特征图上，st
 
 **(2.1) 将 GT Bbox 的中心点坐标对应到 P3 的 grid 上**
 
-```math
+```{math}
 GT_x^{center_grid}=26/8=3.25  \\
 GT_y^{center_grid}=37/8=4.625
 ```
@@ -496,7 +496,7 @@ YOLOv5 中总共包含 3 个 Loss，分别为：
 
 三个 loss 按照一定比例汇总。
 
-```math
+```{math}
 Loss=\lambda_1L_{cls}+\lambda_2L_{obj}+\lambda_3L_{loc}
 ```
 
@@ -506,7 +506,7 @@ Loss=\lambda_1L_{cls}+\lambda_2L_{obj}+\lambda_3L_{loc}
 obj_level_weights=[4., 1., 0.4]
 ```
 
-```math
+```{math}
 L_{obj}=4.0\cdot L_{obj}^{small}+1.0\cdot L_{obj}^{medium}+0.4\cdot L_{obj}^{large}
 ```
 
