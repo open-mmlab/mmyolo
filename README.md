@@ -65,7 +65,7 @@ The master branch works with **PyTorch 1.6+**.
 
   MMYOLO decompose the framework into different components and users can easily construct a customized model by combining different modules and training and testing strategies.
 
- <img src="https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg"/>
+<img src="https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg"/>
   The picture is provided by RangeKing@GitHub, thank you very much!
 
 </details>
