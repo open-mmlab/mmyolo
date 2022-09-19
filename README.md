@@ -103,8 +103,6 @@ For different sections than MMDetection, we have also prepared user guides and a
 
 - User Guides
 
-  <details>
-
   - [Train & Test](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#train-test)
     - [Learn about Configs with YOLOv5](docs/en/user_guides/config.md)
   - [From getting started to deployment](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#get-started-to-deployment)
@@ -113,26 +111,16 @@ For different sections than MMDetection, we have also prepared user guides and a
     - [Visualization](docs/en/algorithm_descriptions/visualization.md)
     - [Useful Tools](docs/en/algorithm_descriptions/useful_tools.md)
 
-  </details>
-
 - Algorithm description
-
-  <details>
 
   - [Essential Basics](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#essential-basics)
     - [Model design-related instructions](docs/en/algorithm_descriptions/model_design.md)
   - [Algorithm principles and implementation](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#algorithm-principles-and-implementation)
     - [Algorithm principles and implementation with YOLOv5](docs/en/algorithm_descriptions/yolov5_description.md)
 
-  </details>
-
 - Advanced Guides
 
-  <details>
-
   - [How to](https://mmyolo.readthedocs.io/en/3.x/advanced_guides/index.html#how-to)
-
-  </details>
 
 ## Overview of Benchmark and Model Zoo
 
