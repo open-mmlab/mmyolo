@@ -19,3 +19,14 @@ For years, YOLO series have been de facto industry-level standard for efficient 
 **Note**:
 
 1. We don't support training just yet. But you can use the `tools/model_converters/yolov6_to_mmyolo.py` script to convert the official weight.
+
+## Citation
+
+```latex
+@article{li2022yolov6,
+  title={YOLOv6: A Single-Stage Object Detection Framework for Industrial Applications},
+  author={Li, Chuyi and Li, Lulu and Jiang, Hongliang and Weng, Kaiheng and Geng, Yifei and Li, Liang and Ke, Zaidan and Li, Qingyuan and Cheng, Meng and Nie, Weiqiang and others},
+  journal={arXiv preprint arXiv:2209.02976},
+  year={2022}
+}
+```
