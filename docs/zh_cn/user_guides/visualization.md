@@ -12,10 +12,10 @@ MMYOLO 中，将使用 MMEngine 提供的 `Visualizer` 可视化器进行特征�
 - 支持基础绘图接口以及特征图可视化
 - 支持选择模型中的不同层来得到特征图，包含 `squeeze_mean` ， `select_max` ， `topk` 三种显示方式，用户还可以使用 `arrangement` 自定义特征图显示的布局方式。
 
-
 ## 特征图绘制
 
 你可以调用 `demo/featmap_vis_demo.py` 来简单快捷地得到可视化结果，为了方便理解，将其主要参数的功能梳理如下：
+
 - `img` 选择要用于特征图可视化的图片，支持单张图片或者图片路径列表
 
 - `config` 选择算法的配置文件
@@ -31,6 +31,7 @@ MMYOLO 中，将使用 MMEngine 提供的 `Visualizer` 可视化器进行特征�
 - `--preview-model` 可以预览模型，方便用户理解模型的特征层结构
 
 - `--target-layers` 对指定层获取可视化的特征图
+
   - 可以单独输出某个层的特征图，例如： `--target-layers backbone` ,  `--target-layers neck` ,  `--target-layers backbone.stage4` 等
   - 参数为列表时，也可以同时输出多个层的特征图，例如： `--target-layers backbone.stage4 neck` 表示同时输出 backbone 的 stage4 层和 neck 的三层一共四层特征图
 
@@ -48,6 +49,7 @@ MMYOLO 中，将使用 MMEngine 提供的 `Visualizer` 可视化器进行特征�
 - 考虑到输入的特征图通常非常小，函数默认将特征图进行上采样后方便进行可视化。
 
 ## 用法示例
+
 以预训练好的 yolov5_s 模型为例:
 
 (1) 将多通道特征图采用 `select_max` 参数压缩为单通道并显示, 通过提取 backbone 层输出进行特征图可视化，将得到 backbone 三个输出层的特征图
@@ -72,7 +74,6 @@ python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_
 
 (3) 将多通道特征图采用 `squeeze_mean` 参数压缩为单通道并显示, 通过提取 backbone.stage4 和 backbone.stage3 层输出进行特征图可视化，将得到两个输出层的特征图
 
-
 ```python
 python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py mmyolov5s.pt --target-layers backbone.stage4 backbone.stage3 --channel-reduction squeeze_mean
 ```
@@ -91,7 +92,7 @@ python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_
 <img src="https://user-images.githubusercontent.com/89863442/190939723-911c5e9b-dd33-42eb-be4a-ba45f03110a0.jpg" width="1200"/>
 </div>
 
-(5) 存储绘制后的图片，在绘制完成后，可以选择本地窗口显示，也可以存储到本地，只需要加入参数 `--out-file xxx.jpg` 
+(5) 存储绘制后的图片，在绘制完成后，可以选择本地窗口显示，也可以存储到本地，只需要加入参数 `--out-file xxx.jpg`
 
 ```python
 python demo/featmap_vis_demo.py demo/dog.jpg configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py mmyolov5s.pt --target-layers backbone --channel-reduction select_max --out-file featmap_backbone

@@ -1,4 +1,4 @@
-# Learn about Configs with YOLOv5 
+# Learn about Configs with YOLOv5
 
 MMYOLO and other OpenMMLab repositories use [MMEngine's config system](https://mmengine.readthedocs.io/en/latest/tutorials/config.html). It has a modular and inheritance design, which is convenient to conduct various experiments.
 
@@ -46,7 +46,7 @@ model = dict(
         norm_cfg=dict(type='BN', momentum=0.03, eps=0.001), # The config of normalization layers.
         act_cfg=dict(type='SiLU', inplace=True)), # The config of activation function
     neck=dict(
-        type='YOLOv5PAFPN',  # The neck of detector is YOLOv5FPN，We also support 'YOLOv6RepPAFPN', 'YOLOXPAFPN'. 
+        type='YOLOv5PAFPN',  # The neck of detector is YOLOv5FPN，We also support 'YOLOv6RepPAFPN', 'YOLOXPAFPN'.
         deepen_factor=deepen_factor, # The scaling factor that controls the depth of the network structure
         widen_factor=widen_factor, # The scaling factor that controls the width of the network structure
         in_channels=[256, 512, 1024], # The input channels, this is consistent with the output channels of backbone
@@ -71,7 +71,7 @@ model = dict(
     test_cfg=dict(
         multi_label=True, # The config of multi-label for multi-clas prediction. THe default setting is True.
         nms_pre=30000,  # The number of boxes before NMS
-        score_thr=0.001, # Threshold to filter out boxes. 
+        score_thr=0.001, # Threshold to filter out boxes.
         nms=dict(type='nms', # Type of NMS
                  iou_threshold=0.65), # NMS threshold
         max_per_img=300)) # Max number of detections of each image
@@ -151,7 +151,7 @@ train_dataloader = dict( # Train dataloader config
         pipeline=train_pipeline))
 ```
 
-In the testing phase of YOLOv5, the letterbox resize method resizes all the test images to the same scale, which preserves the aspect ratio of all testing images. Therefore, the validation and testing phases share the same data pipeline. 
+In the testing phase of YOLOv5, the letterbox resize method resizes all the test images to the same scale, which preserves the aspect ratio of all testing images. Therefore, the validation and testing phases share the same data pipeline.
 
 ```python
 test_pipeline = [ # Validation/ Testing dataloader config
@@ -187,7 +187,7 @@ val_dataloader = dict(
         test_mode=True, # # Turn on test mode of the dataset to avoid filtering annotations or images
         data_prefix=dict(img='val2017/'), # Prefix of image path
         ann_file='annotations/instances_val2017.json', # Path of annotation file
-        pipeline=test_pipeline, 
+        pipeline=test_pipeline,
         batch_shapes_cfg=dict(  # Config of batch shapes
             type='BatchShapePolicy', # Policy that makes paddings with least pixels during batch inference process, which does not require the image scales of all batches to be the same throughout validation.
             batch_size=val_batch_size_pre_gpu, # Batch size for batch shapes strategy, equals to validation batch size on single GPU
@@ -253,7 +253,7 @@ val_cfg = dict(type='ValLoop')  # The validation loop type
 test_cfg = dict(type='TestLoop')  # The testing loop type
 ```
 
-MMEngine also support dynamic intervals for evaluation. For example, you can run validation every 10 epochs on the first 280 epochs, and run validation every epoch on the final 20 epochs. The configurations are as follows. 
+MMEngine also support dynamic intervals for evaluation. For example, you can run validation every 10 epochs on the first 280 epochs, and run validation every epoch on the final 20 epochs. The configurations are as follows.
 
 ```python
 max_epochs = 300 # Maximum training epochs: 300 epochs
@@ -352,7 +352,7 @@ resume = False  # Whether to resume from the checkpoint defined in `load_from`. 
 
 ## Config file inheritance
 
- `config/_base_` contains default runtime. The configs that are composed by components from `_base_` are called _primitive_.
+`config/_base_` contains default runtime. The configs that are composed by components from `_base_` are called _primitive_.
 
 For all configs under the same folder, it is recommended to have only **one** _primitive_ config. All other configs should inherit from the _primitive_ config. In this way, the maximum of inheritance level is 3.
 
@@ -421,7 +421,7 @@ model = dict(
 
 ### Use intermediate variables in configs
 
-Some intermediate variables are used in the configs files, like `train_pipeline`/`test_pipeline` in datasets. It's worth noting that when modifying intermediate variables in the children configs, user need to pass the intermediate variables into corresponding fields again. 
+Some intermediate variables are used in the configs files, like `train_pipeline`/`test_pipeline` in datasets. It's worth noting that when modifying intermediate variables in the children configs, user need to pass the intermediate variables into corresponding fields again.
 For example, we would like to change the `image_scale` during training and add `YOLOv5MixUp` data augmentation, `img_scale/train_pipeline/test_pipeline` are intermediate variable we would like modify.
 
 **Notice**：`YOLOv5MixUp` requires adding the `pre_transform` and `mosaic_affine_pipeline` to its own `pre_transform` field. Please refer to [The description of YOLOv5 algorithm and its implementation](../algorithm_descriptions/yolov5_description.md) for detailed process and diagrams.
@@ -430,7 +430,7 @@ For example, we would like to change the `image_scale` during training and add `
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
 img_scale = (1280, 1280)  # image height, image width
-affine_scale = 0.9        
+affine_scale = 0.9
 
 mosaic_affine_pipeline = [
     dict(
@@ -511,7 +511,6 @@ model = dict(
 
 If the users want to reuse the variables in the base file, they can get a copy of the corresponding variable by using `{{_base_.xxx}}`. The latest version of MMEngine also support reusing variables without `{{}}` usage. E.g:
 
-
 ```python
 _base_ = '../_base_/default_runtime.py'
 
@@ -550,7 +549,7 @@ The file name is divided to 8 name fields, which has 4 required parts and 4 opti
 
 - `{algorithm name}`: The name of the algorithm. It can be a detector name such as `yolov5`, `yolov6`, `yolox` etc.
 - `{component names}`:  Names of the components used in the algorithm such as backbone, neck, etc. For example, `yolov5_s` means its `deepen_factor` is `0.33` and its `widen_factor` is `0.5`.
-- `[version_id]` (optional): Since the evolution of YOLO series is much faster than traditional object detection algorithms, `version id` is used to distinguish the differences between different sub-versions. E.g, YOLOv5-3.0 uses the `Focus` layer as the stem layer, and YOLOv5-6.0 uses the `Conv` layer as the stem layer. 
+- `[version_id]` (optional): Since the evolution of YOLO series is much faster than traditional object detection algorithms, `version id` is used to distinguish the differences between different sub-versions. E.g, YOLOv5-3.0 uses the `Focus` layer as the stem layer, and YOLOv5-6.0 uses the `Conv` layer as the stem layer.
 - `[norm_setting]` (optional): `bn` indicates `Batch Normalization`， `syncbn` indicates `Synchronized Batch Normalization`。
 - `[data preprocessor type]` (optional): `fast` incorporates `YOLOv5DetDataPreprocessor` and `yolov5_collate` to preprocess data. The training speed is faster than default `mmdet.DetDataPreprocessor`, while results in extending tge overall pipeline to multi-task learning.
 - `{training settings}`: Information of training settings such as batch size, augmentations, loss trick, scheduler, and epochs/iterations. For example: `8xb16-300e_coco` means using 8-gpus x 16-images-per-gpu, and train 300 epochs.
