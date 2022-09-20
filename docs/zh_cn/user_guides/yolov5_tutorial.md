@@ -155,7 +155,9 @@ default_hooks = dict(
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py
 ```
 
-![](https://moonstarimg.oss-cn-hangzhou.aliyuncs.com/img/20220920094007.png)
+<div align=center>
+<img src="https://moonstarimg.oss-cn-hangzhou.aliyuncs.com/img/20220920094007.png" alt="image"/>
+</div>
 
 #### wandb 可视化后端使用
 
@@ -163,7 +165,9 @@ MMEngine 支持本地、TensorBoard 以及 wandb 等多种后端, 本节以 wand
 
 wandb 官网注册并在 https://wandb.ai/settings 获取到 wandb 的 API Keys。
 
-![](https://cdn.vansin.top/img/20220913212628.png)
+<div align=center>
+<img src="https://cdn.vansin.top/img/20220913212628.png" alt="image"/>
+</div>
 
 ```shell
 pip install wandb
