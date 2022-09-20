@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-
 from mmdet.models.data_preprocessors import DetDataPreprocessor
+
 from mmyolo.registry import MODELS
 
 

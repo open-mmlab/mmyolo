@@ -8,11 +8,11 @@ import numpy as np
 import torch
 from mmcv.transforms import BaseTransform
 from mmcv.transforms.utils import cache_randomness
-from numpy import random
-
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import autocast_box_type, get_box_type
+from numpy import random
+
 from mmyolo.registry import TRANSFORMS
 
 

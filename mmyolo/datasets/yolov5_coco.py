@@ -2,6 +2,7 @@
 from typing import Any, Optional
 
 from mmdet.datasets import CocoDataset
+
 from ..registry import DATASETS, TASK_UTILS
 
 

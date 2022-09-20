@@ -4,9 +4,9 @@ from typing import Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
-
 from mmdet.models.losses.utils import weight_reduce_loss
 from mmdet.structures.bbox import HorizontalBoxes
+
 from mmyolo.registry import MODELS
 
 
