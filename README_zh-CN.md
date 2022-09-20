@@ -76,7 +76,7 @@ MMYOLO 是一个基于 PyTorch 的 YOLO 系列算法开源工具箱。它是 [Op
 
 - 基于 [OpenMMLab 2.0](https://github.com/open-mmlab) 和 [MMDetection 3.0](https://github.com/open-mmlab/mmdetection/tree/3.x) 统一了各组件接口。
 - 支持 YOLOv5/YOLOX 训练和部署，支持 YOLOv6 推理和部署
-- 重构了 MMDet 的 YOLOX，提供了更快的训练和推理速度
+- 重构了 MMDetection 的 YOLOX，提供了更快的训练和推理速度
 - 提供了详细入门和进阶教程，详见 [中文教程](https://mmyolo.readthedocs.io/zh_CN/latest)
 
 发布历史和更新细节请参考 [更新日志](https://mmyolo.readthedocs.io/zh_CN/latest/notes/changelog.html)

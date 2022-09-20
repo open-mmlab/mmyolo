@@ -61,7 +61,7 @@ train_pipeline = [
 ]
 ```
 
-一个稍微复杂点的包括 MixUp的 YOLOv5-m 配置如下所示：
+一个稍微复杂点的包括 MixUp 的 YOLOv5-m 配置如下所示：
 
 ```python
 mosaic_affine_pipeline = [

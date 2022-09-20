@@ -13,7 +13,7 @@ from mmyolo.utils import register_all_modules
 # TODO: support fuse_conv_bn and format_only
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='MMDet test (and eval) a model')
+        description='MMYOLO test (and eval) a model')
     parser.add_argument('config', help='test config file path')
     parser.add_argument('checkpoint', help='checkpoint file')
     parser.add_argument(

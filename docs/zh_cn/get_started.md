@@ -76,14 +76,18 @@ mim install "mmyolo"
 mim download mmyolo --config yolov5_s-v61_syncbn_fast_8xb16-300e_coco --dest .
 ```
 
-载将需要几秒钟或更长时间，这取决于你的网络环境。完成后，你会在当前文件夹中发现两个文件 `yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py` and `yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth`
+下载将需要几秒钟或更长时间，这取决于你的网络环境。完成后，你会在当前文件夹中发现两个文件 `yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py` and `yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth`。
 
 **步骤 2.** 推理验证
 
 方案 1. 如果你通过源码安装的 MMYOLO，那么直接运行以下命令进行验证：
 
 ```shell
-python demo/image_demo.py demo/demo.jpg yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --device cpu --out-file result.jpg
+python demo/image_demo.py demo/demo.jpg \
+                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+                          --device cpu \
+                          --out-file result.jpg
 ```
 
 你会在当前文件夹中看到一个新的图像 `result.jpg`，图像中包含有网络预测的检测框。
@@ -101,7 +105,7 @@ model = init_detector(config_file, checkpoint_file, device='cpu')  # or device='
 inference_detector(model, 'demo/demo.jpg')
 ```
 
-你将会看到一个包含 `DetDataSample` 的列表，预测结果在 `pred_instance` 里，包含有预测框，预测分数和预测类别。
+你将会看到一个包含 `DetDataSample` 的列表，预测结果在 `pred_instance` 里，包含有预测框、预测分数 和 预测类别。
 
 ### 自定义安装
 
@@ -112,7 +116,7 @@ inference_detector(model, 'demo/demo.jpg')
 - 对于 Ampere 架构的 NVIDIA GPU，例如 GeForce 30 系列 以及 NVIDIA A100，CUDA 11 是必需的。
 - 对于更早的 NVIDIA GPU，CUDA 11 是向后兼容 (backward compatible) 的，但 CUDA 10.2 能够提供更好的兼容性，也更加轻量。
 
-请确保你的 GPU 驱动版本满足最低的版本需求，参阅 NVIDIA 官方的 [CUDA工具箱和相应的驱动版本关系表](https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html#cuda-major-component-versions__table-cuda-toolkit-driver-versions) 。
+请确保你的 GPU 驱动版本满足最低的版本需求，参阅 NVIDIA 官方的 [CUDA工具箱和相应的驱动版本关系表](https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html#cuda-major-component-versions__table-cuda-toolkit-driver-versions)。
 
 ```{note}
 如果按照我们的最佳实践进行安装，CUDA 运行时库就足够了，因为我们提供相关 CUDA 代码的预编译，不需要进行本地编译。
@@ -123,9 +127,9 @@ inference_detector(model, 'demo/demo.jpg')
 
 #### 不使用 MIM 安装 MMEngine
 
-要使用 pip 而不是 MIM 来安装 MMEngine，请遵照 [MMEngine 安装指南](https://mmengine.readthedocs.io/en/latest/get_started/installation.html) 。
+要使用 pip 而不是 MIM 来安装 MMEngine，请遵照 [MMEngine 安装指南](https://mmengine.readthedocs.io/en/latest/get_started/installation.html)。
 
-例如，你可以通过以下命令安装 MMEngine
+例如，你可以通过以下命令安装 MMEngine：
 
 ```shell
 pip install mmengine
@@ -133,13 +137,12 @@ pip install mmengine
 
 #### 不使用 MIM 安装 MMCV
 
-MMCV 包含 C++ 和 CUDA 扩展，因此其对 PyTorch 的依赖比较复杂。MIM 会自动解析这些
-依赖，选择合适的 MMCV 预编译包，使安装更简单，但它并不是必需的。
+MMCV 包含 C++ 和 CUDA 扩展，因此其对 PyTorch 的依赖比较复杂。MIM 会自动解析这些 依赖，选择合适的 MMCV 预编译包，使安装更简单，但它并不是必需的。
 
-要使用 pip 而不是 MIM 来安装 MMCV，请遵照 [MMCV 安装指南](https://mmcv.readthedocs.io/zh_CN/2.x/get_started/installation.html) 。
+要使用 pip 而不是 MIM 来安装 MMCV，请遵照 [MMCV 安装指南](https://mmcv.readthedocs.io/zh_CN/2.x/get_started/installation.html)。
 它需要您用指定 URL 的形式手动指定对应的 PyTorch 和 CUDA 版本。
 
-例如，下述命令将会安装基于 PyTorch 1.12.x 和 CUDA 11.6 编译的 mmcv。
+例如，下述命令将会安装基于 PyTorch 1.12.x 和 CUDA 11.6 编译的 mmcv：
 
 ```shell
 pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/torch1.12.0/index.html
@@ -149,7 +152,7 @@ pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 
 我们的代码能够建立在只使用 CPU 的环境（CUDA 不可用）。
 
-在 CPU 模式下，可以进行模型训练（需要 MMCV 版本 >= 2.0.0rc1)、测试或者推理，然而以下功能将在 CPU 模式下不能使用：
+在 CPU 模式下，可以进行模型训练（需要 MMCV 版本 >= `2.0.0rc1`)、测试或者推理，然而以下功能将在 CPU 模式下不能使用：
 
 - Deformable Convolution
 - Modulated Deformable Convolution
@@ -175,7 +178,7 @@ pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 
 #### 在 Google Colab 中安装
 
-[Google Colab](https://colab.research.google.com/) 通常已经包含了 PyTorch 环境，因此我们只需要安装 MMEngine， MMCV，MMDetection 和 MMYOLO 即可，命令如下：
+[Google Colab](https://colab.research.google.com/) 通常已经包含了 PyTorch 环境，因此我们只需要安装 MMEngine、MMCV、MMDetection 和 MMYOLO 即可，命令如下：
 
 **步骤 1.** 使用 [MIM](https://github.com/open-mmlab/mim) 安装 [MMEngine](https://github.com/open-mmlab/mmengine) 、 [MMCV](https://github.com/open-mmlab/mmcv) 和 [MMDetection](https://github.com/open-mmlab/mmdetection) 。
 
@@ -186,7 +189,7 @@ pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 !mim install "mmdet>=3.0.0.rc0"
 ```
 
-**步骤 2.** 使用源码安装 MMYOLO。
+**步骤 2.** 使用源码安装 MMYOLO：
 
 ```shell
 !git clone https://github.com/open-mmlab/mmyolo.git
@@ -194,7 +197,7 @@ pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 !pip install -e .
 ```
 
-**步骤 3.** 验证安装是否成功。
+**步骤 3.** 验证安装是否成功：
 
 ```python
 import mmyolo
@@ -208,7 +211,7 @@ print(mmyolo.__version__)
 
 #### 通过 Docker 使用 MMYOLO
 
-们提供了一个 [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile) 来构建一个镜像。请确保你的 [docker版本](https://docs.docker.com/engine/install/) >=19.03。
+我们提供了一个 [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile) 来构建一个镜像。请确保你的 [docker版本](https://docs.docker.com/engine/install/) >=`19.03`。
 
 ```shell
 # build an image with PyTorch 1.6, CUDA 10.1
@@ -219,18 +222,19 @@ docker build -t mmyolo docker/
 用以下命令运行 Docker 镜像：
 
 ```shell
-docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmyolo/data mmyolo
+DATA_DIR=/path/to/your/dataset
+docker run --gpus all --shm-size=8g -it -v ${DATA_DIR}:/mmyolo/data mmyolo
 ```
 
 ### 排除故障
 
 如果你在安装过程中遇到一些问题，请先查看 [FAQ](notes/faq.md) 页面。
 
-如果没有找到解决方案，你也可以在 GitHub 上 [打开一个问题](https://github.com/open-mmlab/mmyolo/issues/new/choose) 。
+如果没有找到解决方案，你也可以在 GitHub 上 [打开一个问题](https://github.com/open-mmlab/mmyolo/issues/new/choose)。
 
 ### 使用多个 MMYOLO 版本进行开发
 
-训练和测试的脚本已经在 PYTHONPATH 中进行了修改，以确保脚本使用当前目录中的 MMYOLO。
+训练和测试的脚本已经在 `PYTHONPATH` 中进行了修改，以确保脚本使用当前目录中的 MMYOLO。
 
 要使环境中安装默认的 MMYOLO 而不是当前正在在使用的，可以删除出现在相关脚本中的代码：
 

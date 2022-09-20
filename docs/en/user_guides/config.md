@@ -357,7 +357,7 @@ resume = False  # Whether to resume from the checkpoint defined in `load_from`. 
 For all configs under the same folder, it is recommended to have only **one** _primitive_ config. All other configs should inherit from the _primitive_ config. In this way, the maximum of inheritance level is 3.
 
 For easy understanding, we recommend contributors inherit from existing methods.
-For example, if some modification is made based on YOLOv5s, such as modifying the depth of the network, users may first inherit the `_base_ = ./yolov5_s-v61_syncbn_8xb16-300e_coco.py `, then modify the necessary fields in the config files.
+For example, if some modification is made based on YOLOv5-s, such as modifying the depth of the network, users may first inherit the `_base_ = ./yolov5_s-v61_syncbn_8xb16-300e_coco.py `, then modify the necessary fields in the config files.
 
 If you are building an entirely new method that does not share the structure with any of the existing methods, you may create a folder `yolov100` under `configs`,
 
@@ -509,7 +509,9 @@ model = dict(
 
 ### Reuse variables in \_base\_ file
 
-If the users want to reuse the variables in the base file, they can get a copy of the corresponding variable by using `{{_base_.xxx}}`. The latest version of MMEngine also support reusing variables without `{{}}` usage. E.g:
+If the users want to reuse the variables in the base file, they can get a copy of the corresponding variable by using `{{_base_.xxx}}`. The latest version of MMEngine also support reusing variables without `{{}}` usage. 
+
+E.g:
 
 ```python
 _base_ = '../_base_/default_runtime.py'

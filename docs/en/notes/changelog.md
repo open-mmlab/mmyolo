@@ -6,6 +6,6 @@ We have released MMYOLO open source library, which is based on MMEngine, MMCV 2.
 
 ### Highlights
 
-1. Support for YOLOv5/YOLOX training and deployment, support for YOLOv6 inference and deployment
-2. Refactored YOLOX for MMDet to provide faster training and inference
-3. Detailed introductory and advanced tutorials are provided, see the [English tutorial](https://mmyolo.readthedocs.io/en/latest)
+1. Support for YOLOv5/YOLOX training and deployment, support for YOLOv6 inference and deployment.
+2. Refactored YOLOX for MMDetection to provide faster training and inference.
+3. Detailed introductory and advanced tutorials are provided, see the [English tutorial](https://mmyolo.readthedocs.io/en/latest).
