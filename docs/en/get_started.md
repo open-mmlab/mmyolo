@@ -143,7 +143,7 @@ pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 
 #### Install on CPU-only platforms
 
-MMDetection can be built for the CPU-only environment. In CPU mode you can train (requires MMCV version >= 2.0.0rc1), test, or infer a model.
+MMDetection can be built for the CPU-only environment. In CPU mode you can train (requires MMCV version >= `2.0.0rc1`), test, or infer a model.
 
 However, some functionalities are gone in this mode:
 
@@ -217,7 +217,8 @@ docker build -t mmyolo docker/
 Run it with
 
 ```shell
-docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmyolo/data mmyolo
+DATA_DIR=/path/to/your/dataset
+docker run --gpus all --shm-size=8g -it -v ${DATA_DIR}:/mmyolo/data mmyolo
 ```
 
 ### Troubleshooting
@@ -227,7 +228,7 @@ You may [open an issue](https://github.com/open-mmlab/mmyolo/issues/new/choose) 
 
 ### Develop using multiple MMYOLO versions
 
-The training and testing scripts have been modified in PYTHONPATH to ensure that the scripts use MMYOLO in the current directory.
+The training and testing scripts have been modified in `PYTHONPATH` to ensure that the scripts use MMYOLO in the current directory.
 
 To have the default MMYOLO installed in your environment instead of what is currently in use, you can remove the code that appears in the relevant script:
 
