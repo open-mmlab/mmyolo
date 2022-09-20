@@ -127,7 +127,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 
 3. 冻结backbone进行训练
 
-通过config文件或者命令行中设置 `model.backbone.frozen_stages=4` 冻结 `backbone` 的 4 个 stages。
+通过 config 文件或者命令行中设置 `model.backbone.frozen_stages=4` 冻结 `backbone` 的 4 个 stages。
 
 ```shell
 # 命令行中设置 model.backbone.frozen_stages=4
