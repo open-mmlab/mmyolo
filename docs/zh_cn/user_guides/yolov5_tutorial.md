@@ -104,7 +104,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 
 ### 加载预训练权重微调
 
-经过测试，相比不加载预训练模型，加载 YOLOv5 官方的预训练模型在气球数据集上训练和验证 coco/bbox_mAP 能涨 30 多个百分点。
+经过测试，相比不加载预训练模型，加载 YOLOv5_s 预训练模型在气球数据集上训练和验证 coco/bbox_mAP 能涨 30 多个百分点。
 
 1. 下载 COCO 数据集预训练权重
 
@@ -117,12 +117,14 @@ wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8x
 
 ```shell
 cd mmyolo
-python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
+python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' custom_hooks.0.strict_load=False
 ```
 
-3. 冻结backbone进行训练
+注意： 必须要设置 `custom_hooks.0.strict_load=False`, 将 EMAHook 的 strict_load 初始化参数设置为 False，否则会报权重不匹配的错误。
 
-通过config文件或者命令行中设置 model.backbone.frozen_stages=4 冻结 backbone 的 4 个 stages。
+3. 冻结 backbone 进行训练
+
+通过 config 文件或者命令行中设置 model.backbone.frozen_stages=4 冻结 backbone 的 4 个 stages。
 
 ```shell
 # 命令行中设置 model.backbone.frozen_stages=4
