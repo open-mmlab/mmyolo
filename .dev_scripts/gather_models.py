@@ -177,7 +177,7 @@ def convert_model_info_to_pwc(model_infos):
                     Metrics={'PQ': metric}))
         pwc_model_info['Results'] = results
 
-        link_string = 'https://download.openmmlab.com/mmdetection/v2.0/'
+        link_string = 'https://download.openmmlab.com/mmyolo/v0/'
         link_string += '{}/{}'.format(model['config'].rstrip('.py'),
                                       osp.split(model['model_path'])[-1])
         pwc_model_info['Weights'] = link_string

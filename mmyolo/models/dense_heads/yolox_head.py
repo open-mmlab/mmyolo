@@ -5,15 +5,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import ConvModule, DepthwiseSeparableConvModule
-from mmengine.model import BaseModule, bias_init_with_prob
-from mmengine.structures import InstanceData
-from torch import Tensor
-
 from mmdet.models.task_modules.samplers import PseudoSampler
 from mmdet.models.utils import multi_apply
 from mmdet.structures.bbox import bbox_xyxy_to_cxcywh
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
                          OptMultiConfig, reduce_mean)
+from mmengine.model import BaseModule, bias_init_with_prob
+from mmengine.structures import InstanceData
+from torch import Tensor
+
 from mmyolo.registry import MODELS, TASK_UTILS
 from .yolov5_head import YOLOv5Head
 

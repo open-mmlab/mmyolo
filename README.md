@@ -89,6 +89,9 @@ MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps
 conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
 conda activate open-mmlab
 pip install openmim
+mim install mmengine
+mim install "mmcv>=2.0.0rc1"
+mim install "mmdet>=3.0.0rc0"
 git clone -b 1.x https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 mim install -e .

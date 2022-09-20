@@ -5,10 +5,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
+from mmdet.utils import ConfigType, OptMultiConfig
 from mmengine.model import BaseModule
 from mmengine.utils import digit_version
 
-from mmdet.utils import ConfigType, OptMultiConfig
 from mmyolo.registry import MODELS
 
 if digit_version(torch.__version__) >= digit_version('1.7.0'):

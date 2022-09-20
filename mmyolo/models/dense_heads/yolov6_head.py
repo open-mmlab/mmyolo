@@ -4,13 +4,13 @@ from typing import Sequence, Union
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
+from mmdet.models.utils import multi_apply
+from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
+                         OptMultiConfig)
 from mmengine.model import BaseModule, bias_init_with_prob
 from mmengine.structures import InstanceData
 from torch import Tensor
 
-from mmdet.models.utils import multi_apply
-from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
-                         OptMultiConfig)
 from mmyolo.registry import MODELS
 from ..utils import make_divisible
 from .yolov5_head import YOLOv5Head
