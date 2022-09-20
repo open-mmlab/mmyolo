@@ -131,12 +131,12 @@ MixUp 和 Mosaic 类似，也是属于混合图片类增强，其是随机从另
 - **HSV 颜色空间增强**
 - **随机水平翻转**
 
-MMDet 开源库中已经对 Albu 第三方数据增强库进行了封装，使得用户可以简单的通过配置即可使用 Albu 库中提供的任何数据增强功能。
+MMDetection 开源库中已经对 Albu 第三方数据增强库进行了封装，使得用户可以简单的通过配置即可使用 Albu 库中提供的任何数据增强功能。
 而 HSV 颜色空间增强和随机水平翻转都是属于比较常规的数据增强，不需要特殊介绍。
 
 #### 1.1.5 MMYOLO 实现解析
 
-常规的单图数据增强例如随机翻转等比较容易实现，而 Mosiac 类的混合数据增强则不太容易。在 MMDet 复现的 YOLOX 算法中
+常规的单图数据增强例如随机翻转等比较容易实现，而 Mosiac 类的混合数据增强则不太容易。在 MMDetection 复现的 YOLOX 算法中
 提出了 MultiImageMixDataset 数据集包装器的概念，其实现过程如下：
 
 <div align=center >
@@ -144,7 +144,7 @@ MMDet 开源库中已经对 Albu 第三方数据增强库进行了封装，使�
 </div>
 
 对于 Mosiac 等混合类数据增强，会额外实现一个 `get_indexes` 方法用来获取其他图片索引，然后得到 4 张图片信息后就可以进行 Mosiac 增强了。
-以 MMDet 中实现的 YOLOX 为例，其配置文件写法如下所示：
+以 MMDetection 中实现的 YOLOX 为例，其配置文件写法如下所示：
 
 ```python
 train_pipeline = [
@@ -177,7 +177,7 @@ MultiImageMixDataset 数据集包装其传入一个包括 Mosaic 和 RandAffine 
 标注加载的 pipeline。通过这种方式就可以快速的实现混合类数据增强。
 
 但是上述实现有一个缺点：
-**对于不熟悉 MMDet 的用户来说，其经常会忘记 Mosaic 必须要和 MultiImageMixDataset 配合使用，否则会报错，而且这样会加大复杂度和理解难度**。
+**对于不熟悉 MMDetection 的用户来说，其经常会忘记 Mosaic 必须要和 MultiImageMixDataset 配合使用，否则会报错，而且这样会加大复杂度和理解难度**。
 
 为了解决这个问题，在 MMYOLO 中进一步进行了简化。直接让 pipeline 能够获取到 dataset 对象，此时就可以将 Mosaic 等混合类数据增强的实现
 和使用变成和随机翻转一样。此时在 MMYOLO 中 YOLOX 的配置写法变成如下所示：
@@ -315,16 +315,16 @@ YOLOV5 的匹配策略简单总结为：**采用了 anchor 和 gt_bbox 的 shape
 
 YOLOv5 是 Anchor-based 的目标检测算法，Anchor size 的获取方式与 YOLOv3 相同，是使用 kmeans 算法进行聚类获得。
 
-在用户更换了数据集后，可以使用 MMDet 里带有的 Anchor 分析工具，对自己的数据集进行分析，确定合适的 Anchor size。
+在用户更换了数据集后，可以使用 MMDetection 里带有的 Anchor 分析工具，对自己的数据集进行分析，确定合适的 Anchor size。
 
-若你的 MMDet 通过 mim 安装，可使用以下命令分析 Anchor：
+若你的 MMDetection 通过 mim 安装，可使用以下命令分析 Anchor：
 
 ```shell
 mim run mmdet optimize_anchors ${CONFIG} --algorithm k-means
 --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} --output-dir ${OUTPUT_DIR}
 ```
 
-若 MMDet 为其他方式安装，可进入 MMDet 所在目录，使用以下命令分析 Anchor:
+若 MMDetection 为其他方式安装，可进入 MMDetection 所在目录，使用以下命令分析 Anchor:
 
 ```shell
 python tools/analysis_tools/optimize_anchors.py ${CONFIG} --algorithm k-means

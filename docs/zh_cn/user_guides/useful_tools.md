@@ -74,7 +74,7 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
                                                --output-dir 'work-dir/browse_dataset'
 ```
 
-2. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，每张图片持续`10`秒，同时保存到目录 `work-dir/browse_dataset`：
+2. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，每张图片持续 `10` 秒，同时保存到目录 `work-dir/browse_dataset`：
 
 ```shell
 python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
@@ -82,7 +82,7 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
                                                --show-interval 10
 ```
 
-3. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，每张图片持续`10`秒，图片不进行保存：
+3. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，每张图片持续 `10` 秒，图片不进行保存：
 
 ```shell
 python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
@@ -126,7 +126,7 @@ python tools/misc/download_dataset.py --dataset-name balloon [--save-dir ${SAVE_
 
 下面以转换 `yolov5s.pt` 为例：
 
-1. 将 `YOLOv5` 官方代码克隆到本地（目前支持的最高版本为`v6.1`）
+1. 将 YOLOv5 官方代码克隆到本地（目前支持的最高版本为 `v6.1` ）
 
 ```shell
 git clone -b v6.1 https://github.com/ultralytics/yolov5.git
@@ -139,7 +139,7 @@ cd yolov5
 wget https://github.com/ultralytics/yolov5/releases/download/v6.1/yolov5s.pt
 ```
 
-3. 将 `tools/model_converters/yolov5_to_mmyolo.py` 文件复制到 `YOLOv5` 官方代码克隆的路径
+3. 将 `tools/model_converters/yolov5_to_mmyolo.py` 文件复制到 YOLOv5 官方代码克隆的路径
 
 ```shell
 cp ${MMDET_YOLO_PATH}/tools/model_converters/yolov5_to_mmyolo.py yolov5_to_mmyolo.py
@@ -151,7 +151,7 @@ cp ${MMDET_YOLO_PATH}/tools/model_converters/yolov5_to_mmyolo.py yolov5_to_mmyol
 python yolov5_to_mmyolo.py --src ${WEIGHT_FILE_PATH} --dst mmyolov5.pt
 ```
 
-转换好的 `mmyolov5.pt` 就可以为 `MMYOLO` 所用。 YOLOv6 官方权重转化也是采用一样的使用方式。
+转换好的 `mmyolov5.pt` 即可以为 MMYOLO 所用。 YOLOv6 官方权重转化也是采用一样的使用方式。
 
 ### YOLOX
 
@@ -169,4 +169,4 @@ wget https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yo
 python tools/model_converters/yolox_to_mmyolo.py --src yolox_s.pth --dst mmyolox.pt
 ```
 
-转换好的 `mmyolox.pt` 既可以在 `MMYOLO` 中使用。
+转换好的 `mmyolox.pt` 即可以在 MMYOLO 中使用。

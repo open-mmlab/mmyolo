@@ -8,7 +8,7 @@
 
 MMYOLO 是一个 YOLO 系列的算法工具箱，目前仅实现了目标检测任务，后续会支持实例分割、全景分割和关键点检测等多种任务。其包括丰富的目标检测算法以及相关的组件和模块，下面是它的整体框架：
 
-MMYOLO 文件结构和 MMDetection 完全一致。为了能够充分复用 MMDetection 代码，MMYOLO 仅包括定制内容，其由 3 个主要部分组成：datasets、models、engine。
+MMYOLO 文件结构和 MMDetection 完全一致。为了能够充分复用 MMDetection 代码，MMYOLO 仅包括定制内容，其由 3 个主要部分组成：`datasets`、`models`、`engine`。
 
 - **datasets** 支持用于目标检测的各种数据集。
   - **transforms** 包含各种数据增强变换。
