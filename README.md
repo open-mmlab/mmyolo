@@ -65,7 +65,7 @@ The master branch works with **PyTorch 1.6+**.
 
   MMYOLO decompose the framework into different components and users can easily construct a customized model by combining different modules and training and testing strategies.
 
-  ![BaseModule](https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg)
+<img src="https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg" alt="BaseModule"/>
   The picture is provided by RangeKing@GitHub, thank you very much!
 
 </details>
@@ -109,8 +109,8 @@ For different sections than MMDetection, we have also prepared user guides and a
   - [From getting started to deployment](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#get-started-to-deployment)
     - [From getting started to deployment with YOLOv5](docs/en/user_guides/yolov5_tutorial.md)
   - [Useful Tools](https://mmdetection.readthedocs.io/en/latest/user_guides/index.html#useful-tools)
-    - [Visualization](docs/en/algorithm_descriptions/visualization.md)
-    - [Useful Tools](docs/en/algorithm_descriptions/useful_tools.md)
+    - [Visualization](docs/en/user_guides/visualization.md)
+    - [Useful Tools](docs/en/user_guides/useful_tools.md)
 
 - Algorithm description
 

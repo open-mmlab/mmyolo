@@ -22,3 +22,47 @@ YOLOv5 is a family of object detection architectures and models pretrained on th
 2. `SyncBN` means use SyncBN, `AMP` indicates training with mixed precision.
 3. We use 8x A100 for training, and the single-GPU batch size is 16. This is different from the official code.
 4. The performance is unstable and may fluctuate by about 0.4 mAP.
+
+## Citation
+
+```latex
+@software{glenn_jocher_2022_7002879,
+  author       = {Glenn Jocher and
+                  Ayush Chaurasia and
+                  Alex Stoken and
+                  Jirka Borovec and
+                  NanoCode012 and
+                  Yonghye Kwon and
+                  TaoXie and
+                  Kalen Michael and
+                  Jiacong Fang and
+                  imyhxy and
+                  Lorna and
+                  Colin Wong and
+                  曾逸夫(Zeng Yifu) and
+                  Abhiram V and
+                  Diego Montes and
+                  Zhiqiang Wang and
+                  Cristi Fati and
+                  Jebastin Nadar and
+                  Laughing and
+                  UnglvKitDe and
+                  tkianai and
+                  yxNONG and
+                  Piotr Skalski and
+                  Adam Hogan and
+                  Max Strobel and
+                  Mrinal Jain and
+                  Lorenzo Mammana and
+                  xylieong},
+  title        = {{ultralytics/yolov5: v6.2 - YOLOv5 Classification
+                   Models, Apple M1, Reproducibility, ClearML and
+                   Deci.ai integrations}},
+  month        = aug,
+  year         = 2022,
+  publisher    = {Zenodo},
+  version      = {v6.2},
+  doi          = {10.5281/zenodo.7002879},
+  url          = {https://doi.org/10.5281/zenodo.7002879}
+}
+```

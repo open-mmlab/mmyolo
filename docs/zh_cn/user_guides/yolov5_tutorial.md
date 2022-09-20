@@ -34,7 +34,7 @@ python tools/dataset_converters/balloon2coco.py
 
 ![](https://cdn.vansin.top/img/20220912105312.png)
 
-## config文件准备
+## config 文件准备
 
 在 configs/yolov5 文件夹下新建 yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py 配置文件，并把以下内容复制配置文件中。
 
@@ -130,9 +130,32 @@ cd mmyolo
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' model.backbone.frozen_stages=4
 ```
 
-### 可视化训练参数
+### 可视化相关
 
-本教程以 wandb 展示 loss 等数据的可视化, wandb 官网注册并在 https://wandb.ai/settings 获取到 wandb 的 API Keys
+#### 验证阶段可视化
+
+我们将 configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py 中的 default_hooks 的 visualization 进行修改，设置 draw 为 True，interval 为 2。
+
+```shell
+default_hooks = dict(
+    logger=dict(interval=1),
+    visualization=dict(draw=True, interval=2),
+)
+```
+
+重新运行以下训练命令，在验证评估的过程中，每 interval 张图片就会保存一张标注结果和预测结果的拼图到 work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/vis_data/vis_image 文件夹中了。
+
+```shell
+python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py
+```
+
+![](https://moonstarimg.oss-cn-hangzhou.aliyuncs.com/img/20220920094007.png)
+
+#### wandb 可视化后端使用
+
+MMEngine 支持本地、TensorBoard 以及 wandb 等多种后端, 本节以 wandb 为例展示 loss 等数据的可视化。
+
+wandb 官网注册并在 https://wandb.ai/settings 获取到 wandb 的 API Keys。
 
 ![](https://cdn.vansin.top/img/20220913212628.png)
 
