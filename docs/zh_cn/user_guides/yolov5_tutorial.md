@@ -149,6 +149,8 @@ default_hooks = dict(
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py
 ```
 
+![](https://moonstarimg.oss-cn-hangzhou.aliyuncs.com/img/20220920094007.png)
+
 #### wandb 可视化后端使用
 
 MMEngine 支持本地、TensorBoard 以及 wandb 等多种后端, 本节以 wandb 为例展示 loss 等数据的可视化。
