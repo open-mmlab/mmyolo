@@ -4,8 +4,8 @@ from typing import List
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
-
 from mmdet.utils import ConfigType, OptMultiConfig
+
 from mmyolo.registry import MODELS
 from ..layers import RepStageBlock, RepVGGBlock
 from ..utils import make_divisible, make_round

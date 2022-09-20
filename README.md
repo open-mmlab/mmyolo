@@ -48,13 +48,10 @@ a part of the [OpenMMLab](https://openmmlab.com/) project.
 The master branch works with **PyTorch 1.6+**.
 
 <img src="https://user-images.githubusercontent.com/12907710/137271636-56ba1cd2-b110-4812-8221-b4c120320aa9.png"/>
+<img src="https://user-images.githubusercontent.com/45811724/190993591-bd3f1f11-1c30-4b93-b5f4-05c9ff64ff7f.gif"/>
 
 <details open>
 <summary>Major features</summary>
-
-- **Modular Design**
-
-  MMYOLO decompose the framework into different components and users can easily construct a customized model by combining different modules and training and testing strategies.
 
 - **Fair and convenient algorithm evaluation**
 
@@ -64,16 +61,25 @@ The master branch works with **PyTorch 1.6+**.
 
   MMYOLO provides a series of documents from getting started, to model deployment, advanced guidelines, and algorithm analysis, making it easy for different users to get started and make extensions quickly.
 
+- **Modular Design**
+
+  MMYOLO decompose the framework into different components and users can easily construct a customized model by combining different modules and training and testing strategies.
+
+<img src="https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg" alt="BaseModule"/>
+  The picture is provided by RangeKing@GitHub, thank you very much!
+
 </details>
 
 ## What's New
 
-**v0.0.1** was released on 21/9/2022:
+**v0.1.0** was released on 20/9/2022:
 
 - Unified component interfaces based on [OpenMMLab 2.0](https://github.com/open-mmlab) and [MMDetection 3.0](https://github.com/open-mmlab/mmdetection/tree/3.x)
 - Support for YOLOv5/YOLOX training and deployment, support for YOLOv6 inference and deployment
-- Refactored YOLOX for MMDet to provide faster training and inference
+- Refactored YOLOX for MMDetection to provide faster training and inference
 - Detailed introductory and advanced tutorials are provided, see the [English tutorial](https://mmyolo.readthedocs.io/en/latest)
+
+For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
 ## Installation
 
@@ -83,6 +89,9 @@ MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps
 conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
 conda activate open-mmlab
 pip install openmim
+mim install mmengine
+mim install "mmcv>=2.0.0rc1"
+mim install "mmdet>=3.0.0rc0"
 git clone -b 1.x https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 mim install -e .
@@ -98,36 +107,24 @@ For different sections than MMDetection, we have also prepared user guides and a
 
 - User Guides
 
-  <details>
-
   - [Train & Test](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#train-test)
     - [Learn about Configs with YOLOv5](docs/en/user_guides/config.md)
   - [From getting started to deployment](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#get-started-to-deployment)
     - [From getting started to deployment with YOLOv5](docs/en/user_guides/yolov5_tutorial.md)
   - [Useful Tools](https://mmdetection.readthedocs.io/en/latest/user_guides/index.html#useful-tools)
-    - [Visualization](docs/en/algorithm_descriptions/visualization.md)
-    - [Useful Tools](docs/en/algorithm_descriptions/useful_tools.md)
-
-  </details>
+    - [Visualization](docs/en/user_guides/visualization.md)
+    - [Useful Tools](docs/en/user_guides/useful_tools.md)
 
 - Algorithm description
-
-  <details>
 
   - [Essential Basics](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#essential-basics)
     - [Model design-related instructions](docs/en/algorithm_descriptions/model_design.md)
   - [Algorithm principles and implementation](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#algorithm-principles-and-implementation)
     - [Algorithm principles and implementation with YOLOv5](docs/en/algorithm_descriptions/yolov5_description.md)
 
-  </details>
-
 - Advanced Guides
 
-  <details>
-
   - [How to](https://mmyolo.readthedocs.io/en/3.x/advanced_guides/index.html#how-to)
-
-  </details>
 
 ## Overview of Benchmark and Model Zoo
 

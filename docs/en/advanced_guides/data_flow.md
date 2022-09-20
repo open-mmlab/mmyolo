@@ -1,8 +1,8 @@
 # Mixed image data augmentation update
 
-Mixed image data augmentation is similar to Mosaic and MixUp, in which the annotation information of multiple images needs to be fused during the runtime. In the OpenMMLab data augmentation pipeline, the other indexes of the dataset are generally not available. In order to achieve the above function, in the [MultiImageMixDataset](https://github.com/open-mmlab/mmdetection/blob/master/mmdet/datasets/dataset_wrappers.py#L338) the concept of dataset wrapper is proposed in YOLOX, which is reproduced in MMDet.
+Mixed image data augmentation is similar to Mosaic and MixUp, in which the annotation information of multiple images needs to be fused during the runtime. In the OpenMMLab data augmentation pipeline, the other indexes of the dataset are generally not available. In order to achieve the above function, in the [MultiImageMixDataset](https://github.com/open-mmlab/mmdetection/blob/master/mmdet/datasets/dataset_wrappers.py#L338) the concept of dataset wrapper is proposed in YOLOX, which is reproduced in MMDetection.
 
-`MultiImageMixDataset` dataset wrapper will include some data augmentation method such as `Mosaic` and `RandAffine`, while `CocoDataset` will also include the `pipeline` to achieve the img and annotation loading function. through this way we can achieve mix data augmentation quickly. The configuration method is as follows：
+`MultiImageMixDataset` dataset wrapper will include some data augmentation methods such as `Mosaic` and `RandAffine`, while `CocoDataset` will also include the `pipeline` to achieve the image and annotation loading function. In this way, we can achieve mixed data augmentation quickly. The configuration method is as follows:
 
 ```python
 train_pipeline = [
@@ -31,9 +31,9 @@ train_dataset = dict(
 
 ```
 
-But above method will cause a problem: to the users who are not familiar with MMDet ,they will forget to match data augmentation methods like Mosaic together with  `MultiImageMixDataset`, which could extremely increase the Complexity, and it could be hard to understand.
+But above method will cause a problem: the users who are not familiar with MMDetection, will forget to match data augmentation methods like Mosaic together with `MultiImageMixDataset`, which could extremely increase the Complexity, and it could be hard to understand.
 
-To solve this problem we make a simplification in MMYOLO, which directly make `pipeline` catch the `dataset` ，and make the data augmentation methods like `Mosaic` be achieved and used as random flip, without data wrapper anymore. The new configuration method is as follows:
+To solve this problem we make a simplification in MMYOLO, which directly make `pipeline` catch the `dataset`, and make the data augmentation methods like `Mosaic` be achieved and used as random flip, without data wrapper anymore. The new configuration method is as follows:
 
 ```python
 pre_transform = [
@@ -61,7 +61,7 @@ train_pipeline = [
 ]
 ```
 
-A more complex YOLOv5-m configuration include MixUp is shown as follows:
+A more complex YOLOv5-m configuration including MixUp is shown as follows:
 
 ```python
 mosaic_affine_pipeline = [

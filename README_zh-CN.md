@@ -48,12 +48,10 @@ MMYOLO 是一个基于 PyTorch 的 YOLO 系列算法开源工具箱。它是 [Op
 
 <img src="https://user-images.githubusercontent.com/12907710/137271636-56ba1cd2-b110-4812-8221-b4c120320aa9.png"/>
 
+<img src="https://user-images.githubusercontent.com/45811724/190993591-bd3f1f11-1c30-4b93-b5f4-05c9ff64ff7f.gif"/>
+
 <details open>
 <summary>主要特性</summary>
-
-- **模块化设计**
-
-  MMYOLO 将框架解耦成不同的模块组件，通过组合不同的模块和训练测试策略，用户可以便捷地构建自定义模型。
 
 - **公平便捷的算法评测**
 
@@ -63,15 +61,22 @@ MMYOLO 是一个基于 PyTorch 的 YOLO 系列算法开源工具箱。它是 [Op
 
   MMYOLO 提供了从入门到部署到进阶和算法解析等一系列文档，方便不同用户快速上手和扩展。
 
+- **模块化设计**
+
+  MMYOLO 将框架解耦成不同的模块组件，通过组合不同的模块和训练测试策略，用户可以便捷地构建自定义模型。
+
+<img src="https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg" alt="基类"/>
+  图为 RangeKing@GitHub 提供，非常感谢！
+
 </details>
 
 ## 最新进展
 
-**v0.0.1** 版本已经在 2022.9.21 发布：
+**v0.1.0** 版本已经在 2022.9.20 发布：
 
 - 基于 [OpenMMLab 2.0](https://github.com/open-mmlab) 和 [MMDetection 3.0](https://github.com/open-mmlab/mmdetection/tree/3.x) 统一了各组件接口。
 - 支持 YOLOv5/YOLOX 训练和部署，支持 YOLOv6 推理和部署
-- 重构了 MMDet 的 YOLOX，提供了更快的训练和推理速度
+- 重构了 MMDetection 的 YOLOX，提供了更快的训练和推理速度
 - 提供了详细入门和进阶教程，详见 [中文教程](https://mmyolo.readthedocs.io/zh_CN/latest)
 
 发布历史和更新细节请参考 [更新日志](https://mmyolo.readthedocs.io/zh_CN/latest/notes/changelog.html)
@@ -84,6 +89,9 @@ MMYOLO 依赖 PyTorch, MMCV, MMEngine 和 MMDetection，以下是安装的简要
 conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
 conda activate open-mmlab
 pip install openmim
+mim install mmengine
+mim install "mmcv>=2.0.0rc1"
+mim install "mmdet>=3.0.0rc0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 mim install -e .
@@ -104,8 +112,8 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
   - [从入门到部署全流程](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#从入门到部署全流程)
     - [YOLOv5 从入门到部署全流程](docs/zh_cn/user_guides/yolov5_tutorial.md)
   - [实用工具](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#实用工具)
-    - [可视化教程](docs/zh_cn/algorithm_descriptions/visualization.md)
-    - [实用工具](docs/zh_cn/algorithm_descriptions/useful_tools.md)
+    - [可视化教程](docs/zh_cn/user_guides/visualization.md)
+    - [实用工具](docs/zh_cn/user_guides/useful_tools.md)
 
 - 算法描述
 

@@ -4,9 +4,9 @@ from typing import Sequence
 
 import mmcv
 import numpy as np
+from mmdet.apis import inference_detector, init_detector
 from mmengine import Config, DictAction
 
-from mmdet.apis import inference_detector, init_detector
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
 
@@ -124,6 +124,11 @@ def main(args):
 
     model = init_detector(args.config, args.checkpoint, device=args.device)
 
+    if args.preview_model:
+        print(model)
+        print('\n Please remove `--preview-model` to get the AM.')
+        return
+
     target_layers = []
     for target_layer in args.target_layers:
         try:
@@ -185,6 +190,8 @@ def main(args):
             visualizer.show(shown_imgs)
 
 
+# Please refer to the usage tutorial:
+# https://github.com/open-mmlab/mmyolo/blob/main/docs/zh_cn/user_guides/visualization.md # noqa
 if __name__ == '__main__':
     args = parse_args()
     main(args)

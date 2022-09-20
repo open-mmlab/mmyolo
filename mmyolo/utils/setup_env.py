@@ -18,6 +18,7 @@ def register_all_modules(init_default_scope: bool = True):
     """  # noqa
     import mmdet.engine  # noqa: F401,F403
     import mmdet.visualization  # noqa: F401,F403
+
     import mmyolo.datasets  # noqa: F401,F403
     import mmyolo.engine  # noqa: F401,F403
     import mmyolo.models  # noqa: F401,F403

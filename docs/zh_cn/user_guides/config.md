@@ -4,7 +4,7 @@ MMYOLO 和其他 OpenMMLab 仓库使用 [MMEngine 的配置文件系统](https:/
 
 ## 配置文件的内容
 
-MMYOLO 采用模块化设计，所有功能的模块都可以通过配置文件进行配置。 以 [YOLOv5-s](../../../configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) 为例，我们将根据不同的功能模块介绍配置文件中的各个字段：
+MMYOLO 采用模块化设计，所有功能的模块都可以通过配置文件进行配置。 以 [YOLOv5-s](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py) 为例，我们将根据不同的功能模块介绍配置文件中的各个字段：
 
 ### 重要参数
 
@@ -79,7 +79,7 @@ model = dict(
 
 ### 数据集和评测器配置
 
-在使用 [执行器](https://mmengine.readthedocs.io/en/latest/tutorials/runner.html) 进行训练、测试、验证时，我们需要配置 [Dataloader](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader)。构建数据 dataloader 需要设置数据集（dataset）和数据处理流程（data pipeline）。 由于这部分的配置较为复杂，我们使用中间变量来简化 dataloader 配置的编写。由于MMYOLO 中各类轻量目标检测算法使用了更加复杂的数据增强方法，因此会比 MMDetection 中的其他模型拥有更多样的数据集配置。
+在使用 [执行器](https://mmengine.readthedocs.io/en/latest/tutorials/runner.html) 进行训练、测试、验证时，我们需要配置 [Dataloader](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader) 。构建数据 dataloader 需要设置数据集（dataset）和数据处理流程（data pipeline）。 由于这部分的配置较为复杂，我们使用中间变量来简化 dataloader 配置的编写。由于 MMYOLO 中各类轻量目标检测算法使用了更加复杂的数据增强方法，因此会比 MMDetection 中的其他模型拥有更多样的数据集配置。
 
 YOLOv5 的训练与测试的数据流存在一定差异，这里我们分别进行介绍。
 
@@ -151,7 +151,7 @@ train_dataloader = dict( # 训练 dataloader 配置
         pipeline=train_pipeline)) # 这是由之前创建的 train_pipeline 定义的数据处理流程
 ```
 
-YOLOv5 测试阶段采用 LetterBox Resize 的方法来将所有的测试图像统一到相同尺度，进而有效保留了图像的长宽比。因此我们在验证和评测时，都采用相同的数据流进行推理。
+YOLOv5 测试阶段采用 `Letter Resize` 的方法来将所有的测试图像统一到相同尺度，进而有效保留了图像的长宽比。因此我们在验证和评测时，都采用相同的数据流进行推理。
 
 ```python
 test_pipeline = [ # 测试数据处理流程
@@ -210,7 +210,7 @@ val_evaluator = dict(  # 验证过程使用的评测器
 test_evaluator = val_evaluator  # 测试过程使用的评测器
 ```
 
-由于测试数据集没有标注文件，因此 MMYOLO 中的 test_dataloader 和 test_evaluator 配置通常等于 val。 如果要保存在测试数据集上的检测结果，则可以像这样编写配置：
+由于测试数据集没有标注文件，因此 MMYOLO 中的 `test_dataloader` 和 `test_evaluator` 配置通常等于 `val`。 如果要保存在测试数据集上的检测结果，则可以像这样编写配置：
 
 ```python
 # 在测试集上推理，
@@ -297,7 +297,7 @@ param_scheduler = None
 
 用户可以在训练、验证和测试循环上添加钩子，以便在运行期间插入一些操作。配置中有两种不同的钩子字段，一种是 `default_hooks`，另一种是 `custom_hooks`。
 
-`default_hooks` 是一个字典，用于配置运行时必须使用的钩子。这些钩子具有默认优先级，如果未设置，runner 将使用默认值。如果要禁用默认钩子，用户可以将其配置设置为` None`。
+`default_hooks` 是一个字典，用于配置运行时必须使用的钩子。这些钩子具有默认优先级，如果未设置，runner 将使用默认值。如果要禁用默认钩子，用户可以将其配置设置为 `None`。
 
 ```python
 default_hooks = dict(
@@ -357,7 +357,7 @@ resume = False  # 是否从 `load_from` 中定义的检查点恢复。 如果 `l
 
 对于同一文件夹下的所有配置，推荐**只有一个**对应的**原始配置**文件。所有其他的配置文件都应该继承自这个**原始配置**文件。这样就能保证配置文件的最大继承深度为 3。
 
-为了便于理解，我们建议贡献者继承现有方法。例如，如果在 YOLOv5s 的基础上做了一些修改，比如修改网络深度，用户首先可以通过指定`_base_ = ./yolov5_s-v61_syncbn_8xb16-300e_coco.py `来集成基础的 YOLOv5 结构，然后修改配置文件中的必要参数以完成继承。
+为了便于理解，我们建议贡献者继承现有方法。例如，如果在 YOLOv5s 的基础上做了一些修改，比如修改网络深度，用户首先可以通过指定 `_base_ = ./yolov5_s-v61_syncbn_8xb16-300e_coco.py` 来集成基础的 YOLOv5 结构，然后修改配置文件中的必要参数以完成继承。
 
 如果你在构建一个与任何现有方法不共享结构的全新方法，那么可以在 `configs` 文件夹下创建一个新的例如 `yolov100` 文件夹。
 
@@ -507,7 +507,7 @@ model = dict(
 
 ### 复用 \_base\_ 文件中的变量
 
-如果用户希望在当前配置中复用 base 文件中的变量，则可以通过使用 `{{_base_.xxx}}` 的方式来获取对应变量的拷贝。而在新版 MMEngine 中，还支持省略 `{{}}` 的写法。例如：
+如果用户希望在当前配置中复用 `_base_` 文件中的变量，则可以通过使用 `{{_base_.xxx}}` 的方式来获取对应变量的拷贝。而在新版 MMEngine 中，还支持省略 `{{}}` 的写法。例如：
 
 ```python
 _base_ = '../_base_/default_runtime.py'
@@ -526,11 +526,11 @@ pre_transform = _base_.pre_transform # 变量 pre_transform 等于 _base_ 中定
 
 - 更新配置列表中的键
 
-  在配置文件里，一些字典型的配置被包含在列表中。例如，数据训练流程 `data.train.pipeline` 通常是一个列表，比如 `[dict(type='LoadImageFromFile'), ...]`。如果需要将 `'LoadImageFromFile'` 改成 `'LoadImageFromWebcam'`，需要写成下述形式： `--cfg-options data.train.pipeline.0.type=LoadImageFromNDArray`.
+  在配置文件里，一些字典型的配置被包含在列表中。例如，数据训练流程 `data.train.pipeline` 通常是一个列表，比如 `[dict(type='LoadImageFromFile'), ...]`。如果需要将 `'LoadImageFromFile'` 改成 `'LoadImageFromWebcam'`，需要写成下述形式：`--cfg-options data.train.pipeline.0.type=LoadImageFromNDArray`.
 
 - 更新列表或元组的值
 
-  如果要更新的值是列表或元组。例如，配置文件通常设置 `model.data_preprocessor.mean=[123.675, 116.28, 103.53]`. 如果需要改变这个键，可以通过 `--cfg-options model.data_preprocessor.mean="[127,127,127]"` 来重新设置。需要注意，引号 " 是支持列表或元组数据类型所必需的，并且在指定值的引号内**不允许**有空格。
+  如果要更新的值是列表或元组。例如，配置文件通常设置 `model.data_preprocessor.mean=[123.675, 116.28, 103.53]`。如果需要改变这个键，可以通过 `--cfg-options model.data_preprocessor.mean="[127,127,127]"` 来重新设置。需要注意，引号 `"` 是支持列表或元组数据类型所必需的，并且在指定值的引号内**不允许**有空格。
 
 ## 配置文件名称风格
 

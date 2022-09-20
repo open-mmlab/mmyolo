@@ -1,9 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import mmcv
+import mmdet
 from mmengine.utils import get_git_hash
 from mmengine.utils.dl_utils import collect_env as collect_base_env
 
-import mmdet
 import mmyolo
 
 

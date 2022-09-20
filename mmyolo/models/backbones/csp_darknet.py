@@ -4,9 +4,9 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
-
 from mmdet.models.backbones.csp_darknet import CSPLayer, Focus
 from mmdet.utils import ConfigType, OptMultiConfig
+
 from mmyolo.registry import MODELS
 from ..layers import SPPFBottleneck
 from ..utils import make_divisible, make_round
