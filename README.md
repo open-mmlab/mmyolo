@@ -48,6 +48,7 @@ a part of the [OpenMMLab](https://openmmlab.com/) project.
 The master branch works with **PyTorch 1.6+**.
 
 <img src="https://user-images.githubusercontent.com/12907710/137271636-56ba1cd2-b110-4812-8221-b4c120320aa9.png"/>
+<img src="https://user-images.githubusercontent.com/45811724/190993591-bd3f1f11-1c30-4b93-b5f4-05c9ff64ff7f.gif"/>
 
 <details open>
 <summary>Major features</summary>
@@ -64,7 +65,7 @@ The master branch works with **PyTorch 1.6+**.
 
   MMYOLO decompose the framework into different components and users can easily construct a customized model by combining different modules and training and testing strategies.
 
-  ![BaseModule](https://user-images.githubusercontent.com/33799979/190382319-6b4e1fcb-cc3f-4fbe-9d6b-3c9c4e57472c.png)
+  ![BaseModule](https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg)
   The picture is provided by RangeKing@GitHub, thank you very much!
 
 </details>
@@ -108,8 +109,8 @@ For different sections than MMDetection, we have also prepared user guides and a
   - [From getting started to deployment](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#get-started-to-deployment)
     - [From getting started to deployment with YOLOv5](docs/en/user_guides/yolov5_tutorial.md)
   - [Useful Tools](https://mmdetection.readthedocs.io/en/latest/user_guides/index.html#useful-tools)
-    - [Visualization](docs/en/algorithm_descriptions/visualization.md)
-    - [Useful Tools](docs/en/algorithm_descriptions/useful_tools.md)
+    - [Visualization](docs/en/user_guides/visualization.md)
+    - [Useful Tools](docs/en/user_guides/useful_tools.md)
 
 - Algorithm description
 

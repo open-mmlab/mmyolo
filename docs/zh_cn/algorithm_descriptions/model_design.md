@@ -4,7 +4,7 @@
 
 下图为 RangeKing@GitHub 提供，非常感谢！
 
-![基类](https://user-images.githubusercontent.com/33799979/190382319-6b4e1fcb-cc3f-4fbe-9d6b-3c9c4e57472c.png)
+![基类](https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg)
 
 YOLO 系列算法大部分采用了统一的算法搭建结构，典型的如 Darknet + PAFPN。为了让用户快速理解 YOLO 系列算法架构，我们特意设计了如上图中的 BaseBackbone + BaseYOLONeck 结构。
 
@@ -31,7 +31,7 @@ MMYOLO 系列沿用 MMDetection 中设计的 `BaseDenseHead` 作为 Head 结构�
 ## HeadModule
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/33799979/190407754-c725fe85-a71b-4e45-912b-34513d1ff128.png" width=800>
+<img src="https://user-images.githubusercontent.com/33799979/190985845-ed303ad4-3a77-447b-83f9-1feba38d5e24.png" width=800>
 </div>
 
 如上图所示，虚线部分为 [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/mmdet/models/dense_heads/base_dense_head.py) 中的实现，实线部分为 [MMYOLO](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py) 中的实现。与原先的实现相比具备以下优势：
