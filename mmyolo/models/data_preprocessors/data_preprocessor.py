@@ -13,6 +13,16 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
     """
 
     def forward(self, data: dict, training: bool = False) -> dict:
+        """Perform normalization, padding and bgr2rgb conversion based on
+        ``DetDataPreprocessorr``.
+
+        Args:
+            data (dict): Data sampled from dataloader.
+            training (bool): Whether to enable training time augmentation.
+
+        Returns:
+            dict: Data in the same format as the model input.
+        """
         if not training:
             return super().forward(data, training)
         assert isinstance(data['data_samples'], torch.Tensor), \
