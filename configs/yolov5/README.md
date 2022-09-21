@@ -20,9 +20,11 @@ YOLOv5 is a family of object detection architectures and models pretrained on th
 **Note**:
 
 1. `fast` means that `YOLOv5DetDataPreprocessor` and `yolov5_collate` are used for data preprocessing, which is faster for training, but less flexible for multitasking. Recommended to use fast version config if you only care about object detection.
-2. `SyncBN` means use SyncBN, `AMP` indicates training with mixed precision.
-3. We use 8x A100 for training, and the single-GPU batch size is 16. This is different from the official code.
-4. The performance is unstable and may fluctuate by about 0.4 mAP.
+2. `detect` means that the network input is fixed to `640x640` and the post-processing thresholds is modified.
+3. `SyncBN` means use SyncBN, `AMP` indicates training with mixed precision.
+4. We use 8x A100 for training, and the single-GPU batch size is 16. This is different from the official code.
+5. The performance is unstable and may fluctuate by about 0.4 mAP.
+6. `balloon` means that this is a demo configuration.
 
 ## Citation
 

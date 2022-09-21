@@ -16,7 +16,8 @@ test_pipeline = [
                    'scale_factor', 'pad_param'))
 ]
 
-val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+val_dataloader = dict(
+    dataset=dict(pipeline=test_pipeline, batch_shapes_cfg=None))
 test_dataloader = val_dataloader
 
 model = dict(

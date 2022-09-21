@@ -3,6 +3,7 @@
 ## YOLO series model basic class
 
 The structural Graph is provided by RangeKing@GitHub. Thank you RangeKing！
+
 <div align=center>
 <img src="https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg" width=800 alt="base class">
 </div>

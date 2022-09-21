@@ -509,7 +509,7 @@ model = dict(
 
 ### Reuse variables in \_base\_ file
 
-If the users want to reuse the variables in the base file, they can get a copy of the corresponding variable by using `{{_base_.xxx}}`. The latest version of MMEngine also support reusing variables without `{{}}` usage. 
+If the users want to reuse the variables in the base file, they can get a copy of the corresponding variable by using `{{_base_.xxx}}`. The latest version of MMEngine also support reusing variables without `{{}}` usage.
 
 E.g:
 
