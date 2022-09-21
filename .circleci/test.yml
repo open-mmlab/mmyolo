@@ -145,7 +145,7 @@ workflows:
       - build_cpu:
           name: minimum_version_cpu
           torch: 1.7.0
-          torchvision: 0.8.0
+          torchvision: 0.8.1
           python: 3.8.0  # The lowest python 3.6.x version available on CircleCI images
           requires:
             - lint
