@@ -42,8 +42,7 @@ English | [简体中文](README_zh-CN.md)
 
 ## Introduction
 
-MMYOLO is an open source toolbox for YOLO series algorithms based on PyTorch. It is
-a part of the [OpenMMLab](https://openmmlab.com/) project.
+MMYOLO is an open source toolbox for YOLO series algorithms based on PyTorch and [MMDetection](https://github.com/open-mmlab/mmdetection). It is a part of the [OpenMMLab](https://openmmlab.com/) project.
 
 The master branch works with **PyTorch 1.6+**.
 
@@ -53,20 +52,20 @@ The master branch works with **PyTorch 1.6+**.
 <details open>
 <summary>Major features</summary>
 
-- **Fair and convenient algorithm evaluation**
+- **Unified and convenient benchmark**
 
-  MMYOLO unifies the modules of various YOLO algorithms and provides a unified benchmark process. Users can compare and analyze in a fair and convenient way.
+  MMYOLO unifies the implementation of modules in various YOLO algorithms and provides a unified benchmark. Users can compare and analyze in a fair and convenient way.
 
-- **Detailed introductory and advanced documentation**
+- **Rich and detailed documentation**
 
-  MMYOLO provides a series of documents from getting started, to model deployment, advanced guidelines, and algorithm analysis, making it easy for different users to get started and make extensions quickly.
+  MMYOLO provides rich documentation for getting started, model deployment, advanced usages, and algorithm analysis, making it easy for users at different levels to get started and make extensions quickly.
 
 - **Modular Design**
 
-  MMYOLO decompose the framework into different components and users can easily construct a customized model by combining different modules and training and testing strategies.
+  MMYOLO decomposes the framework into different components where users can easily customize a model by combining different modules with various training and testing strategies.
 
 <img src="https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg" alt="BaseModule"/>
-  The picture is provided by RangeKing@GitHub, thank you very much!
+  The figure is contributed by RangeKing@GitHub, thank you very much!
 
 </details>
 
@@ -75,9 +74,9 @@ The master branch works with **PyTorch 1.6+**.
 **v0.1.0** was released on 21/9/2022:
 
 - Unified component interfaces based on [OpenMMLab 2.0](https://github.com/open-mmlab) and [MMDetection 3.0](https://github.com/open-mmlab/mmdetection/tree/3.x)
-- Support for YOLOv5/YOLOX training and deployment, support for YOLOv6 inference and deployment
-- Refactored YOLOX for MMDetection to provide faster training and inference
-- Detailed introductory and advanced tutorials are provided, see the [English tutorial](https://mmyolo.readthedocs.io/en/latest)
+- Support YOLOv5/YOLOX training, support YOLOv6 inference. Deployment will be supported soon.
+- Refactored YOLOX from MMDetection to accelerate training and inference.
+- Detailed introduction and advanced tutorials are provided, see the [English tutorial](https://mmyolo.readthedocs.io/en/latest).
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
@@ -101,11 +100,11 @@ mim install -e .
 
 ## Tutorial
 
-MMYOLO is based on the MMDetection and uses the same code organization and design approach. To get better use of this, please read [MMDetection Overview](https://mmdetection.readthedocs.io/en/latest/get_started.html) for the first understanding of MMDetection.
+MMYOLO is based on MMDetection and adopts the same code structure and design approach. To get better use of this, please read [MMDetection Overview](https://mmdetection.readthedocs.io/en/latest/get_started.html) for the first understanding of MMDetection.
 
-MMYOLO usage is almost identical to MMDetection and all tutorials are straightforward to use, you can also learn about [MMDetection User Guide and Advanced Guide](https://mmdetection.readthedocs.io/en/3.x/).
+The usage of MMYOLO is almost identical to MMDetection and all tutorials are straightforward to use, you can also learn about [MMDetection User Guide and Advanced Guide](https://mmdetection.readthedocs.io/en/3.x/).
 
-For different sections than MMDetection, we have also prepared user guides and advanced guides, please read our [documentation](https://mmyolo.readthedocs.io/zenh_CN/latest/).
+For different parts from MMDetection, we have also prepared user guides and advanced guides, please read our [documentation](https://mmyolo.readthedocs.io/zenh_CN/latest/).
 
 - User Guides
 
