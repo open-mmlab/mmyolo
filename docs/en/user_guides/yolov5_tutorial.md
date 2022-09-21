@@ -128,7 +128,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
                       --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' custom_hooks.0.strict_load=False
 ```
 
-NOTICE: `custom_hooks.0.strict_load=False` must be set, and the `strict_load` of `EMAHook` must be set to False, otherwise an error of weight mismatched will be reported.
+NOTICE: Theoretically setting the `strict_load` initialization parameter of `EMAHook` to `False` makes the command to load pre-trained weight matches without errors `custom_hooks.0.strict_load=False`. Since MMEngine is iterating rapidly, this is currently a problem. So for now, the only way to load the pretrained weights correctly is to turn off the use of `custom_hooks` with the command `custom_hooks=None`. This issue is expected to be fixed in the next release.
 
 3. Freeze Backbone and start training
 
