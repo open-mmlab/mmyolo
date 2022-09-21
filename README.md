@@ -74,7 +74,7 @@ The master branch works with **PyTorch 1.6+**.
 **v0.1.0** was released on 21/9/2022:
 
 - Unified component interfaces based on [OpenMMLab 2.0](https://github.com/open-mmlab) and [MMDetection 3.0](https://github.com/open-mmlab/mmdetection/tree/3.x)
-- Support YOLOv5/YOLOX training, support for YOLOv6 inference. Deployment will be supported soon.
+- Support YOLOv5/YOLOX training, support YOLOv6 inference. Deployment will be supported soon.
 - Refactored YOLOX from MMDetection to accelerate training and inference.
 - Detailed introduction and advanced tutorials are provided, see the [English tutorial](https://mmyolo.readthedocs.io/en/latest).
 
