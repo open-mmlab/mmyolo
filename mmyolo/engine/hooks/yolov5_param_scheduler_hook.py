@@ -9,11 +9,13 @@ from mmengine.runner import Runner
 from mmyolo.registry import HOOKS
 
 
-def linear_fn(lr_factor, max_epochs):
+def linear_fn(lr_factor: float, max_epochs: int):
+    """Generate linear function."""
     return lambda x: (1 - x / max_epochs) * (1.0 - lr_factor) + lr_factor
 
 
-def cosine_fn(lr_factor, max_epochs):
+def cosine_fn(lr_factor: float, max_epochs: int):
+    """Generate cosine function."""
     return lambda x: (
         (1 - math.cos(x * math.pi / max_epochs)) / 2) * (lr_factor - 1) + 1
 
