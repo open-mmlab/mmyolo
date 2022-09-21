@@ -162,9 +162,11 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 <img src="https://moonstarimg.oss-cn-hangzhou.aliyuncs.com/img/20220920094007.png" alt="image"/>
 </div>
 
-#### wandb 可视化后端使用
+#### 可视化后端使用
 
-MMEngine 支持本地、TensorBoard 以及 wandb 等多种后端, 本节以 wandb 为例展示 loss 等数据的可视化。
+MMEngine 支持本地、TensorBoard 以及 wandb 等多种后端。
+
+##### wandb可视化使用
 
 wandb 官网注册并在 https://wandb.ai/settings 获取到 wandb 的 API Keys。
 
@@ -193,6 +195,26 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 <div align=center>
 <img src="https://cdn.vansin.top/img/20220913213221.png" alt="image"/>
 </div>
+
+##### Tensorboard可视化使用
+安装Tensorboard环境
+
+```shell
+pip install tensorboard
+```
+
+同上述在配置文件 `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py`中添加 tensorboard 配置
+
+```shell
+visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='TensorboardVisBackend')])
+```
+
+重新运行训练命令后生成在可视化文件在路径 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/vis_data` 下，
+运行命令便可以在命令行中提示的网页链接中看到 loss、学习率和 coco/bbox_mAP 等数据可视化了。
+
+```shell
+tensorboard --logdir = work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon
+```
 
 ### 模型推理
 
