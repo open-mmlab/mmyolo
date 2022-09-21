@@ -4,7 +4,9 @@ This chapter introduces you to the overall framework of MMYOLO and provides link
 
 ## What is  MMYOLO
 
-![pic](https://user-images.githubusercontent.com/12907710/137271636-56ba1cd2-b110-4812-8221-b4c120320aa9.png)
+<div align=center>
+<img src="https://user-images.githubusercontent.com/12907710/137271636-56ba1cd2-b110-4812-8221-b4c120320aa9.png" alt="img">
+</div>
 
 MMYOLO is a YOLO series algorithm toolbox, which currently implements only the target detection task and will subsequently support various tasks such as instance segmentation, panoramic segmentation and key point detection. It includes a rich set of target detection algorithms and related components and modules, and the following is its overall framework.
 
