@@ -1,1 +1,1 @@
-albumentations==1.0.1 --no-binary imgaug,albumentations
+albumentations==1.0.1 --no-binary qudida,albumentations
