@@ -72,7 +72,7 @@ The master branch works with **PyTorch 1.6+**.
 
 ## What's New
 
-**v0.1.0** was released on 20/9/2022:
+**v0.1.0** was released on 21/9/2022:
 
 - Unified component interfaces based on [OpenMMLab 2.0](https://github.com/open-mmlab) and [MMDetection 3.0](https://github.com/open-mmlab/mmdetection/tree/3.x)
 - Support for YOLOv5/YOLOX training and deployment, support for YOLOv6 inference and deployment
