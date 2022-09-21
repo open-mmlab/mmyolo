@@ -13,6 +13,7 @@ model = dict(
     neck=dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        use_depthwise=True),
+        use_depthwise=use_depthwise),
     bbox_head=dict(
-        head_module=dict(widen_factor=widen_factor, use_depthwise=True)))
+        head_module=dict(
+            widen_factor=widen_factor, use_depthwise=use_depthwise)))
