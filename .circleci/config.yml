@@ -3,7 +3,7 @@ version: 2.1
 # this allows you to use CircleCI's dynamic configuration feature
 setup: true
 
-#the path-filtering orb is required to continue a pipeline based on
+# the path-filtering orb is required to continue a pipeline based on
 # the path of an updated fileset
 orbs:
   path-filtering: circleci/path-filtering@0.1.2
