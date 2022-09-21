@@ -206,6 +206,17 @@ We wish that the toolbox and benchmark could serve the growing research communit
 
 ## Citation
 
+If you find this project useful in your research, please consider cite:
+
+```latex
+@misc{mmyolo2022,
+    title={{MMYOLO: OpenMMLab YOLO} series toolbox and benchmark},
+    author={MMYOLO Contributors},
+    howpublished = {\url{https://github.com/open-mmlab/mmyolo}},
+    year={2022}
+}
+```
+
 ## License
 
 This project is released under the [GPL 3.0 license](LICENSE).

@@ -205,6 +205,17 @@ MMYOLO 是一款由来自不同高校和企业的研发人员共同参与贡献�
 
 ## 引用
 
+如果你觉得本项目对你的研究工作有所帮助，请参考如下 bibtex 引用 MMYOLO
+
+```latex
+@misc{mmyolo2022,
+    title={{MMYOLO: OpenMMLab YOLO} series toolbox and benchmark},
+    author={MMYOLO Contributors},
+    howpublished = {\url{https://github.com/open-mmlab/mmyolo}},
+    year={2022}
+}
+```
+
 ## 开源许可证
 
 该项目采用 [GPL 3.0 开源许可证](LICENSE)。
