@@ -75,6 +75,11 @@ class ExpMomentumEMA(MMDET_ExpMomentumEMA):
         averaged_param.lerp_(source_param, momentum)
 
     def update_parameters(self, model: nn.Module):
+        """Update the parameters after each training step.
+
+        Args:
+            model (nn.Module): The model of the parameter needs to be updated.
+        """
         if self.steps == 0:
             for k, p_avg in self.avg_parameters.items():
                 p_avg.data.copy_(self.src_parameters[k].data)
