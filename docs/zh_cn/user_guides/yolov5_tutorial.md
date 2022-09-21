@@ -123,10 +123,10 @@ wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8x
 ```shell
 cd mmyolo
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
-                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' custom_hooks.0.strict_load=False
+                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' custom_hooks=None
 ```
 
-注意： 必须要设置 `custom_hooks.0.strict_load=False`, 将 EMAHook 的 strict_load 初始化参数设置为 False，否则会报权重不匹配的错误。
+注意： 理论上设置将 `EMAHook` 的 `strict_load` 初始化参数设置为 `False`，使得加载预训练权重匹配不报错的命令为 `custom_hooks.0.strict_load=False`。由于 MMEngine v0.1.0 为初期开发版本，目前这样设置会出现问题。因此暂时只能通过命令 `custom_hooks=None`，关闭 `custom_hooks` 使用，从而正确加载预训练权重。预计会在下个版本修复此问题。
 
 3. 冻结 backbone 进行训练
 
