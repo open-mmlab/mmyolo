@@ -64,6 +64,14 @@ class YOLOv5PAFPN(BaseYOLONeck):
                 m.reset_parameters()
 
     def build_reduce_layer(self, idx: int) -> nn.Module:
+        """build reduce layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The reduce layer.
+        """
         if idx == 2:
             layer = ConvModule(
                 make_divisible(self.in_channels[idx], self.widen_factor),
@@ -77,9 +85,18 @@ class YOLOv5PAFPN(BaseYOLONeck):
         return layer
 
     def build_upsample_layer(self, *args, **kwargs) -> nn.Module:
+        """build upsample layer."""
         return nn.Upsample(scale_factor=2, mode='nearest')
 
     def build_top_down_layer(self, idx: int):
+        """build top down layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The top down layer.
+        """
         if idx == 1:
             return CSPLayer(
                 make_divisible(self.in_channels[idx - 1] * 2,
@@ -111,6 +128,14 @@ class YOLOv5PAFPN(BaseYOLONeck):
                     act_cfg=self.act_cfg))
 
     def build_downsample_layer(self, idx: int) -> nn.Module:
+        """build downsample layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The downsample layer.
+        """
         return ConvModule(
             make_divisible(self.in_channels[idx], self.widen_factor),
             make_divisible(self.in_channels[idx], self.widen_factor),
@@ -121,6 +146,14 @@ class YOLOv5PAFPN(BaseYOLONeck):
             act_cfg=self.act_cfg)
 
     def build_bottom_up_layer(self, idx: int) -> nn.Module:
+        """build bottom up layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The bottom up layer.
+        """
         return CSPLayer(
             make_divisible(self.in_channels[idx] * 2, self.widen_factor),
             make_divisible(self.in_channels[idx + 1], self.widen_factor),
@@ -130,4 +163,5 @@ class YOLOv5PAFPN(BaseYOLONeck):
             act_cfg=self.act_cfg)
 
     def build_out_layer(self, *args, **kwargs) -> nn.Module:
+        """build out layer."""
         return nn.Identity()

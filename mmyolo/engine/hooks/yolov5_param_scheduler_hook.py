@@ -9,11 +9,13 @@ from mmengine.runner import Runner
 from mmyolo.registry import HOOKS
 
 
-def linear_fn(lr_factor, max_epochs):
+def linear_fn(lr_factor: float, max_epochs: int):
+    """Generate linear function."""
     return lambda x: (1 - x / max_epochs) * (1.0 - lr_factor) + lr_factor
 
 
-def cosine_fn(lr_factor, max_epochs):
+def cosine_fn(lr_factor: float, max_epochs: int):
+    """Generate cosine function."""
     return lambda x: (
         (1 - math.cos(x * math.pi / max_epochs)) / 2) * (lr_factor - 1) + 1
 
@@ -50,6 +52,11 @@ class YOLOv5ParamSchedulerHook(ParamSchedulerHook):
         self._base_momentum = None
 
     def before_train(self, runner: Runner):
+        """Operations before train.
+
+        Args:
+            runner (Runner): The runner of the training process.
+        """
         optimizer = runner.optim_wrapper.optimizer
         for group in optimizer.param_groups:
             # If the param is never be scheduled, record the current value
@@ -68,6 +75,13 @@ class YOLOv5ParamSchedulerHook(ParamSchedulerHook):
                           runner: Runner,
                           batch_idx: int,
                           data_batch: Optional[dict] = None):
+        """Operations before each training iteration.
+
+        Args:
+            runner (Runner): The runner of the training process.
+            batch_idx (int): The index of the current batch in the train loop.
+            data_batch (dict or tuple or list, optional): Data from dataloader.
+        """
         cur_iters = runner.iter
         cur_epoch = runner.epoch
         optimizer = runner.optim_wrapper.optimizer
@@ -101,6 +115,11 @@ class YOLOv5ParamSchedulerHook(ParamSchedulerHook):
             self._warmup_end = True
 
     def after_train_epoch(self, runner: Runner):
+        """Operations after each training epoch.
+
+        Args:
+            runner (Runner): The runner of the training process.
+        """
         if not self._warmup_end:
             return
 

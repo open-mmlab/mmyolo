@@ -10,7 +10,7 @@ deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 300
 save_epoch_intervals = 10
-train_batch_size_per_gpu = 16
+train_batch_size_per_gpu = 4
 train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
@@ -188,12 +188,7 @@ val_dataloader = dict(
         data_prefix=dict(img='val2017/'),
         ann_file='annotations/instances_val2017.json',
         pipeline=test_pipeline,
-        batch_shapes_cfg=dict(
-            type='BatchShapePolicy',
-            batch_size=val_batch_size_per_gpu,
-            img_size=img_scale[0],
-            size_divisor=32,
-            extra_pad_ratio=0.5)))
+        batch_shapes_cfg=batch_shapes_cfg))
 
 test_dataloader = val_dataloader
 

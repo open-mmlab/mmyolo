@@ -72,11 +72,11 @@ MMYOLO 是一个基于 PyTorch 的 YOLO 系列算法开源工具箱。它是 [Op
 
 ## 最新进展
 
-**v0.1.0** 版本已经在 2022.9.20 发布：
+**v0.1.0** 版本已经在 2022.9.21 发布：
 
 - 基于 [OpenMMLab 2.0](https://github.com/open-mmlab) 和 [MMDetection 3.0](https://github.com/open-mmlab/mmdetection/tree/3.x) 统一了各组件接口。
 - 支持 YOLOv5/YOLOX 训练和部署，支持 YOLOv6 推理和部署
-- 重构了 MMDet 的 YOLOX，提供了更快的训练和推理速度
+- 重构了 MMDetection 的 YOLOX，提供了更快的训练和推理速度
 - 提供了详细入门和进阶教程，详见 [中文教程](https://mmyolo.readthedocs.io/zh_CN/latest)
 
 发布历史和更新细节请参考 [更新日志](https://mmyolo.readthedocs.io/zh_CN/latest/notes/changelog.html)
@@ -92,6 +92,8 @@ pip install openmim
 mim install mmengine
 mim install "mmcv>=2.0.0rc1"
 mim install "mmdet>=3.0.0rc0"
+# for albumentations
+pip install -r requirements/albu.txt
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 mim install -e .
@@ -204,6 +206,17 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 MMYOLO 是一款由来自不同高校和企业的研发人员共同参与贡献的开源项目。我们感谢所有为项目提供算法复现和新功能支持的贡献者，以及提供宝贵反馈的用户。 我们希望这个工具箱和基准测试可以为社区提供灵活的代码工具，供用户复现已有算法并开发自己的新模型，从而不断为开源社区提供贡献。
 
 ## 引用
+
+如果你觉得本项目对你的研究工作有所帮助，请参考如下 bibtex 引用 MMYOLO
+
+```latex
+@misc{mmyolo2022,
+    title={{MMYOLO: OpenMMLab YOLO} series toolbox and benchmark},
+    author={MMYOLO Contributors},
+    howpublished = {\url{https://github.com/open-mmlab/mmyolo}},
+    year={2022}
+}
+```
 
 ## 开源许可证
 

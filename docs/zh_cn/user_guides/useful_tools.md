@@ -1,12 +1,14 @@
 # 实用工具
 
-我们在 `tools/` 文件夹下提供很多实用工具。 除此之外，你也可以通过 MIM 来快速运行 OpenMMLab 的其他开源库。以 MMDetection 为例，如果想利用 [print_config.py](https://github.com/open-mmlab/mmdetection/blob/3.x/tools/misc/print_config.py)，你可以直接采用如下命令，而无需复制源码到 MMYOLO 库中。
+我们在 `tools/` 文件夹下提供很多实用工具。 除此之外，你也可以通过 MIM 来快速运行 OpenMMLab 的其他开源库。
+
+以 MMDetection 为例，如果想利用 [print_config.py](https://github.com/open-mmlab/mmdetection/blob/3.x/tools/misc/print_config.py)，你可以直接采用如下命令，而无需复制源码到 MMYOLO 库中。
 
 ```shell
 mim run mmdet print_config [CONFIG]
 ```
 
-需要特别注意的是：上述命令能够成功的前提是 MMDetection 库必须通过 MIM 来安装。
+**注意**：上述命令能够成功的前提是 MMDetection 库必须通过 MIM 来安装。
 
 ## 可视化
 
@@ -15,12 +17,17 @@ mim run mmdet print_config [CONFIG]
 脚本 `tools/analysis_tools/browse_coco_json.py` 能够使用可视化显示 COCO 标签在图片的情况
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py ${DATA_ROOT} [--ann_file ${ANN_FILE}] [--img_dir ${IMG_DIR}] [--wait-time ${WAIT_TIME}] [--disp-all] [--category-names CATEGORY_NAMES [CATEGORY_NAMES ...]] [--shuffle]
+python tools/analysis_tools/browse_coco_json.py ${DATA_ROOT} \
+                                                [--ann_file ${ANN_FILE}] \
+                                                [--img_dir ${IMG_DIR}] \
+                                                [--wait-time ${WAIT_TIME}] \
+                                                [--disp-all] [--category-names CATEGORY_NAMES [CATEGORY_NAMES ...]] \
+                                                [--shuffle]
 ```
 
 例子：
 
-1. 查看 `COCO` 全部类别，同时展示 `bbox`、`mask` 等所有类型的标注
+1. 查看 `COCO` 全部类别，同时展示 `bbox`、`mask` 等所有类型的标注：
 
 ```shell
 python tools/analysis_tools/browse_coco_json.py './data/coco/' \
@@ -29,7 +36,7 @@ python tools/analysis_tools/browse_coco_json.py './data/coco/' \
                                                 --disp-all
 ```
 
-2. 查看 `COCO` 全部类别，同时仅展示 `bbox` 类型的标注，并打乱显示
+2. 查看 `COCO` 全部类别，同时仅展示 `bbox` 类型的标注，并打乱显示：
 
 ```shell
 python tools/analysis_tools/browse_coco_json.py './data/coco/' \
@@ -38,7 +45,7 @@ python tools/analysis_tools/browse_coco_json.py './data/coco/' \
                                                 --shuffle
 ```
 
-3. 只查看 `bicycle` 和 `person` 类别，同时仅展示 `bbox` 类型的标注
+3. 只查看 `bicycle` 和 `person` 类别，同时仅展示 `bbox` 类型的标注：
 
 ```shell
 python tools/analysis_tools/browse_coco_json.py './data/coco/' \
@@ -47,7 +54,7 @@ python tools/analysis_tools/browse_coco_json.py './data/coco/' \
                                                 --category-names 'bicycle' 'person'
 ```
 
-4. 查看 `COCO` 全部类别，同时展示 `bbox`、`mask` 等所有类型的标注，并打乱显示
+4. 查看 `COCO` 全部类别，同时展示 `bbox`、`mask` 等所有类型的标注，并打乱显示：
 
 ```shell
 python tools/analysis_tools/browse_coco_json.py './data/coco/' \
@@ -62,7 +69,11 @@ python tools/analysis_tools/browse_coco_json.py './data/coco/' \
 脚本 `tools/analysis_tools/browse_dataset.py` 能够帮助用户去直接窗口可视化数据集的原始图片+展示标签的图片，或者保存可视化图片到指定文件夹内。
 
 ```shell
-python tools/analysis_tools/browse_dataset.py ${CONFIG} [-h] [--output-dir ${OUTPUT_DIR}] [--not-show] [--show-interval ${SHOW_INTERVAL}]
+python tools/analysis_tools/browse_dataset.py ${CONFIG} \
+                                              [-h] \
+                                              [--output-dir ${OUTPUT_DIR}] \
+                                              [--not-show] \
+                                              [--show-interval ${SHOW_INTERVAL}]
 ```
 
 例子：
@@ -74,7 +85,7 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
                                                --output-dir 'work-dir/browse_dataset'
 ```
 
-2. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，每张图片持续`10`秒，同时保存到目录 `work-dir/browse_dataset`：
+2. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，每张图片持续 `10` 秒，同时保存到目录 `work-dir/browse_dataset`：
 
 ```shell
 python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
@@ -82,7 +93,7 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
                                                --show-interval 10
 ```
 
-3. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，每张图片持续`10`秒，图片不进行保存：
+3. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，每张图片持续 `10` 秒，图片不进行保存：
 
 ```shell
 python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
@@ -126,32 +137,32 @@ python tools/misc/download_dataset.py --dataset-name balloon [--save-dir ${SAVE_
 
 下面以转换 `yolov5s.pt` 为例：
 
-1. 将 `YOLOv5` 官方代码克隆到本地（目前支持的最高版本为`v6.1`）
+1. 将 YOLOv5 官方代码克隆到本地（目前支持的最高版本为 `v6.1` ）：
 
 ```shell
 git clone -b v6.1 https://github.com/ultralytics/yolov5.git
 cd yolov5
 ```
 
-2. 下载官方权重
+2. 下载官方权重：
 
 ```shell
 wget https://github.com/ultralytics/yolov5/releases/download/v6.1/yolov5s.pt
 ```
 
-3. 将 `tools/model_converters/yolov5_to_mmyolo.py` 文件复制到 `YOLOv5` 官方代码克隆的路径
+3. 将 `tools/model_converters/yolov5_to_mmyolo.py` 文件复制到 YOLOv5 官方代码克隆的路径：
 
 ```shell
 cp ${MMDET_YOLO_PATH}/tools/model_converters/yolov5_to_mmyolo.py yolov5_to_mmyolo.py
 ```
 
-4. 执行转换
+4. 执行转换：
 
 ```shell
 python yolov5_to_mmyolo.py --src ${WEIGHT_FILE_PATH} --dst mmyolov5.pt
 ```
 
-转换好的 `mmyolov5.pt` 就可以为 `MMYOLO` 所用。 YOLOv6 官方权重转化也是采用一样的使用方式。
+转换好的 `mmyolov5.pt` 即可以为 MMYOLO 所用。 YOLOv6 官方权重转化也是采用一样的使用方式。
 
 ### YOLOX
 
@@ -163,10 +174,10 @@ YOLOX 模型的转换不需要下载 YOLOX 官方代码，只需要下载权重�
 wget https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s.pth
 ```
 
-2. 执行转换
+2. 执行转换：
 
 ```shell
 python tools/model_converters/yolox_to_mmyolo.py --src yolox_s.pth --dst mmyolox.pt
 ```
 
-转换好的 `mmyolox.pt` 既可以在 `MMYOLO` 中使用。
+转换好的 `mmyolox.pt` 即可以在 MMYOLO 中使用。

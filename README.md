@@ -72,11 +72,11 @@ The master branch works with **PyTorch 1.6+**.
 
 ## What's New
 
-**v0.1.0** was released on 20/9/2022:
+**v0.1.0** was released on 21/9/2022:
 
 - Unified component interfaces based on [OpenMMLab 2.0](https://github.com/open-mmlab) and [MMDetection 3.0](https://github.com/open-mmlab/mmdetection/tree/3.x)
 - Support for YOLOv5/YOLOX training and deployment, support for YOLOv6 inference and deployment
-- Refactored YOLOX for MMDet to provide faster training and inference
+- Refactored YOLOX for MMDetection to provide faster training and inference
 - Detailed introductory and advanced tutorials are provided, see the [English tutorial](https://mmyolo.readthedocs.io/en/latest)
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
@@ -92,7 +92,9 @@ pip install openmim
 mim install mmengine
 mim install "mmcv>=2.0.0rc1"
 mim install "mmdet>=3.0.0rc0"
-git clone -b 1.x https://github.com/open-mmlab/mmyolo.git
+# for albumentations
+pip install -r requirements/albu.txt
+git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 mim install -e .
 ```
@@ -205,6 +207,17 @@ MMYOLO is an open source project that is contributed by researchers and engineer
 We wish that the toolbox and benchmark could serve the growing research community by providing a flexible toolkit to reimplement existing methods and develop their own new detectors.
 
 ## Citation
+
+If you find this project useful in your research, please consider cite:
+
+```latex
+@misc{mmyolo2022,
+    title={{MMYOLO: OpenMMLab YOLO} series toolbox and benchmark},
+    author={MMYOLO Contributors},
+    howpublished = {\url{https://github.com/open-mmlab/mmyolo}},
+    year={2022}
+}
+```
 
 ## License
 

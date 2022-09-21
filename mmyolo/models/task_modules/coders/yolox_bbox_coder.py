@@ -9,13 +9,20 @@ from mmyolo.registry import TASK_UTILS
 
 @TASK_UTILS.register_module()
 class YOLOXBBoxCoder(BaseBBoxCoder):
+    """YOLOX BBox coder.
+
+    This decoder decodes pred bboxes (delta_x, delta_x, w, h) to bboxes (tl_x,
+    tl_y, br_x, br_y).
+    """
 
     def encode(self, **kwargs):
+        """Encode deltas between bboxes and ground truth boxes."""
         pass
 
     def decode(self, priors: torch.Tensor, pred_bboxes: torch.Tensor,
                stride: Union[torch.Tensor, int]) -> torch.Tensor:
-        """Apply transformation `pred_bboxes` to `decoded_bboxes`.
+        """Decode regression results (delta_x, delta_x, w, h) to bboxes (tl_x,
+        tl_y, br_x, br_y).
 
         Args:
             priors (torch.Tensor): Basic boxes or points, e.g. anchors.

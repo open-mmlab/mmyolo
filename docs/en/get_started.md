@@ -44,9 +44,15 @@ pip install -U openmim
 mim install mmengine
 mim install "mmcv>=2.0.0rc1"
 mim install "mmdet>=3.0.0rc0"
+# for albumentations
+pip install -r requirements/albu.txt
 ```
 
-**Note:** In MMCV-v2.x, `mmcv-full` is rename to `mmcv`, if you want to install `mmcv` without CUDA ops, you can use `mim install "mmcv-lite>=2.0.0rc1"` to install the lite version.
+**Note:**
+
+a. In MMCV-v2.x, `mmcv-full` is rename to `mmcv`, if you want to install `mmcv` without CUDA ops, you can use `mim install "mmcv-lite>=2.0.0rc1"` to install the lite version.
+
+b. If you would like to use albumentations, we suggest using pip install -r requirements/albu.txt or pip install -U albumentations --no-binary qudida,albumentations. If you simply use pip install albumentations==1.0.1, it will install opencv-python-headless simultaneously (even though you have already installed opencv-python). We recommended checking the environment after installing albumentation to ensure that opencv-python and opencv-python-headless are not installed at the same time, because it might cause unexpected issues if they both installed. Please refer to [official documentation](https://albumentations.ai/docs/getting_started/installation/#note-on-opencv-dependencies) for more details.
 
 **Step 1.** Install MMYOLO.
 
@@ -143,7 +149,7 @@ pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 
 #### Install on CPU-only platforms
 
-MMDetection can be built for the CPU-only environment. In CPU mode you can train (requires MMCV version >= 2.0.0rc1), test, or infer a model.
+MMDetection can be built for the CPU-only environment. In CPU mode you can train (requires MMCV version >= `2.0.0rc1`), test, or infer a model.
 
 However, some functionalities are gone in this mode:
 
@@ -209,7 +215,7 @@ Within Jupyter, the exclamation mark `!` is used to call external executables an
 We provide a [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile) to build an image. Ensure that your [docker version](https://docs.docker.com/engine/install/) >=19.03.
 
 ```shell
-# build an image with PyTorch 1.6, CUDA 10.1
+# build an image with PyTorch 1.9, CUDA 11.1
 # If you prefer other versions, just modified the Dockerfile
 docker build -t mmyolo docker/
 ```
@@ -217,7 +223,8 @@ docker build -t mmyolo docker/
 Run it with
 
 ```shell
-docker run --gpus all --shm-size=8g -it -v {DATA_DIR}:/mmyolo/data mmyolo
+export DATA_DIR=/path/to/your/dataset
+docker run --gpus all --shm-size=8g -it -v ${DATA_DIR}:/mmyolo/data mmyolo
 ```
 
 ### Troubleshooting
@@ -227,7 +234,7 @@ You may [open an issue](https://github.com/open-mmlab/mmyolo/issues/new/choose) 
 
 ### Develop using multiple MMYOLO versions
 
-The training and testing scripts have been modified in PYTHONPATH to ensure that the scripts use MMYOLO in the current directory.
+The training and testing scripts have been modified in `PYTHONPATH` to ensure that the scripts use MMYOLO in the current directory.
 
 To have the default MMYOLO installed in your environment instead of what is currently in use, you can remove the code that appears in the relevant script:
 

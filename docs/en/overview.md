@@ -4,11 +4,13 @@ This chapter introduces you to the overall framework of MMYOLO and provides link
 
 ## What is  MMYOLO
 
-![pic](https://user-images.githubusercontent.com/12907710/137271636-56ba1cd2-b110-4812-8221-b4c120320aa9.png)
+<div align=center>
+<img src="https://user-images.githubusercontent.com/12907710/137271636-56ba1cd2-b110-4812-8221-b4c120320aa9.png" alt="image">
+</div>
 
 MMYOLO is a YOLO series algorithm toolbox, which currently implements only the target detection task and will subsequently support various tasks such as instance segmentation, panoramic segmentation and key point detection. It includes a rich set of target detection algorithms and related components and modules, and the following is its overall framework.
 
-MMYOLO file structure is identical to the MMDetection. To allow full reuse of the MMDetection code, MMYOLO includes only custom content, which consists of 3 main parts:datasets、models、engine.
+MMYOLO file structure is identical to the MMDetection. To allow full reuse of the MMDetection code, MMYOLO includes only custom content, which consists of 3 main parts: `datasets`, `models`, `engine`.
 
 - **datasets** supports a variety of data sets for target detection
   - **transforms** includes various data enhancement transforms
@@ -29,7 +31,7 @@ MMYOLO file structure is identical to the MMDetection. To allow full reuse of th
 
 The detailed instruction of MMYOLO is as following
 
-1. Look up install instruction through [start your first step](get_started.md)
+1. Look up install instruction through [start your first step](get_started.md).
 
 2. Basic method of how to use MMYOLO can be found here:
 

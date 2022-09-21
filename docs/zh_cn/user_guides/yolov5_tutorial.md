@@ -13,7 +13,8 @@ pip install -U openmim
 mim install mmengine
 mim install "mmcv>=2.0.0rc1"
 mim install "mmdet>=3.0.0rc0"
-
+# for albumentations
+pip install -r requirements/albu.txt
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 pip install -v -e .
@@ -30,13 +31,15 @@ python tools/misc/download_dataset.py  --dataset-name balloon --save-dir data --
 python tools/dataset_converters/balloon2coco.py
 ```
 
-执行以上命令，下载数据集并转化格式后，balloon 数据集在 data 文件夹中准备好了，train.json 和 val.json 便是 coco 格式的标注文件了。
+执行以上命令，下载数据集并转化格式后，balloon 数据集在 `data` 文件夹中准备好了，`train.json` 和 `val.json` 便是 coco 格式的标注文件了。
 
-![](https://cdn.vansin.top/img/20220912105312.png)
+<div align=center>
+<img src="https://cdn.vansin.top/img/20220912105312.png" alt="image"/>
+</div>
 
 ## config 文件准备
 
-在 configs/yolov5 文件夹下新建 yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py 配置文件，并把以下内容复制配置文件中。
+在 `configs/yolov5` 文件夹下新建 `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` 配置文件，并把以下内容复制配置文件中。
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
@@ -82,7 +85,7 @@ default_hooks = dict(logger=dict(interval=1))
 ```
 
 以上配置从 `./yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py` 中继承，并根据 balloon 数据的特点更新了 `data_root`、`metainfo`、`train_dataloader`、`val_dataloader`、`num_classes` 等配置。
-我们将 logger 的 interval 设置为 1 的原因是，每进行 interval 次 iteration 会输出一次 loss 相关的日志，而我们选取气球数据集比较小，interval 太大我们将看不到 loss 相关日志的输出。
+我们将 logger 的 `interval` 设置为 1 的原因是，每进行 `interval` 次 iteration 会输出一次 loss 相关的日志，而我们选取气球数据集比较小，`interval` 太大我们将看不到 loss 相关日志的输出。
 
 ## 训练
 
@@ -92,11 +95,13 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 
 运行以上训练命令，`work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon` 文件夹会被自动生成，权重文件以及此次的训练配置文件将会保存在此文件夹中。
 
-![](https://cdn.vansin.top/img/20220913213846.png)
+<div align=center>
+<img src="https://cdn.vansin.top/img/20220913213846.png" alt="image"/>
+</div>
 
 ### 中断后恢复训练
 
-如果训练中途停止，在训练命令最后加上 --resume ,程序会自动从 work_dirs 中加载最新的权重文件恢复训练。
+如果训练中途停止，在训练命令最后加上 `--resume` ,程序会自动从 `work_dirs` 中加载最新的权重文件恢复训练。
 
 ```shell
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py --resume
@@ -104,7 +109,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 
 ### 加载预训练权重微调
 
-经过测试，相比不加载预训练模型，加载 YOLOv5_s 预训练模型在气球数据集上训练和验证 coco/bbox_mAP 能涨 30 多个百分点。
+经过测试，相比不加载预训练模型，加载 YOLOv5-s 预训练模型在气球数据集上训练和验证 coco/bbox_mAP 能涨 30 多个百分点。
 
 1. 下载 COCO 数据集预训练权重
 
@@ -117,7 +122,8 @@ wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8x
 
 ```shell
 cd mmyolo
-python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' custom_hooks.0.strict_load=False
+python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
+                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' custom_hooks.0.strict_load=False
 ```
 
 注意： 必须要设置 `custom_hooks.0.strict_load=False`, 将 EMAHook 的 strict_load 初始化参数设置为 False，否则会报权重不匹配的错误。
@@ -129,14 +135,15 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 ```shell
 # 命令行中设置 model.backbone.frozen_stages=4
 cd mmyolo
-python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' model.backbone.frozen_stages=4
+python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
+                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' model.backbone.frozen_stages=4
 ```
 
 ### 可视化相关
 
 #### 验证阶段可视化
 
-我们将 configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py 中的 default_hooks 的 visualization 进行修改，设置 draw 为 True，interval 为 2。
+我们将 `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` 中的 `default_hooks` 的 `visualization` 进行修改，设置 `draw` 为 `True`，`interval` 为 `2`。
 
 ```shell
 default_hooks = dict(
@@ -145,13 +152,15 @@ default_hooks = dict(
 )
 ```
 
-重新运行以下训练命令，在验证评估的过程中，每 interval 张图片就会保存一张标注结果和预测结果的拼图到 work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/vis_data/vis_image 文件夹中了。
+重新运行以下训练命令，在验证评估的过程中，每 `interval` 张图片就会保存一张标注结果和预测结果的拼图到 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/vis_data/vis_image` 文件夹中了。
 
 ```shell
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py
 ```
 
-![](https://moonstarimg.oss-cn-hangzhou.aliyuncs.com/img/20220920094007.png)
+<div align=center>
+<img src="https://moonstarimg.oss-cn-hangzhou.aliyuncs.com/img/20220920094007.png" alt="image"/>
+</div>
 
 #### wandb 可视化后端使用
 
@@ -159,7 +168,9 @@ MMEngine 支持本地、TensorBoard 以及 wandb 等多种后端, 本节以 wand
 
 wandb 官网注册并在 https://wandb.ai/settings 获取到 wandb 的 API Keys。
 
-![](https://cdn.vansin.top/img/20220913212628.png)
+<div align=center>
+<img src="https://cdn.vansin.top/img/20220913212628.png" alt="image"/>
+</div>
 
 ```shell
 pip install wandb
@@ -179,14 +190,20 @@ visualizer = dict(vis_backends = [dict(type='LocalVisBackend'), dict(type='Wandb
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py
 ```
 
-![](https://cdn.vansin.top/img/20220913213221.png)
+<div align=center>
+<img src="https://cdn.vansin.top/img/20220913213221.png" alt="image"/>
+</div>
 
 ### 模型推理
 
 ```shell
-python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/epoch_300.pth --show-dir show_results
+python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
+                     work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/epoch_300.pth \
+                     --show-dir show_results
 ```
 
 运行以上推理命令，推理结果图片会自动保存至 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/show_results` 文件夹中。下面为其中一张结果图片，左图为实际标注，右图为模型推理结果。
 
-![result_img](https://user-images.githubusercontent.com/27466624/190913272-f99709e5-c798-46b8-aede-30f4e91683a3.jpg)
+<div align=center>
+<img src="https://user-images.githubusercontent.com/27466624/190913272-f99709e5-c798-46b8-aede-30f4e91683a3.jpg" alt="result_img"/>
+</div>
