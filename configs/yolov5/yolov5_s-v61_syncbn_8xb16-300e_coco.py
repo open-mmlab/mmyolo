@@ -1,7 +1,7 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/coco/'
+data_root = '/home/PJLAB/huanghaian/dataset/coco200/'
 dataset_type = 'YOLOv5CocoDataset'
 
 # parameters that often need to be modified
@@ -10,7 +10,7 @@ deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 300
 save_epoch_intervals = 10
-train_batch_size_per_gpu = 16
+train_batch_size_per_gpu = 4
 train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
