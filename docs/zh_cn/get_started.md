@@ -219,7 +219,8 @@ print(mmyolo.__version__)
 
 我们提供了一个 [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile) 来构建一个镜像。请确保你的 [docker版本](https://docs.docker.com/engine/install/) >=`19.03`。
 
-温馨提示；国内用户建议取消掉 [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile) 里面 `Optional` 那两行的注释，可以有火箭一般的下载提速：
+温馨提示；国内用户建议取消掉 [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile#L19-L20) 里面 `Optional` 后两行的注释，可以获得火箭一般的下载提速：
+
 ```dockerfile
 # (Optional)
 RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu\//http:\/\/mirrors.aliyun.com\/ubuntu\//g' /etc/apt/sources.list && \
