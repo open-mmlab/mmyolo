@@ -37,7 +37,7 @@ conda install pytorch torchvision cpuonly -c pytorch
 
 ### 最佳实践
 
-**步骤 0.** 使用 [MIM](https://github.com/open-mmlab/mim) 安装 [MMEngine](https://github.com/open-mmlab/mmengine)、 [MMCV](https://github.com/open-mmlab/mmcv) 和 [MMDetection](https://github.com/open-mmlab/mmdetection)。
+**步骤 0.** 使用 [MIM](https://github.com/open-mmlab/mim) 安装 [MMEngine](https://github.com/open-mmlab/mmengine)、 [MMCV](https://github.com/open-mmlab/mmcv) 和 [MMDetection](https://github.com/open-mmlab/mmdetection) 。
 
 ```shell
 pip install -U openmim
@@ -52,7 +52,7 @@ pip install -r requirements/albu.txt
 
 a. 在 MMCV-v2.x 中，`mmcv-full` 改名为 `mmcv`，如果你想安装不包含 CUDA 算子精简版，可以通过 `mim install mmcv-lite>=2.0.0rc1` 来安装。
 
-b. 如果使用 albumentations，我们建议使用 pip install -r requirements/albu.txt 或者 pip install -U albumentations --no-binary qudida,albumentations 进行安装。 如果简单地使用 pip install albumentations==1.0.1 进行安装，则会同时安装 opencv-python-headless（即便已经安装了 opencv-python 也会再次安装）。我们建议在安装 albumentations 后检查环境，以确保没有同时安装 opencv-python 和 opencv-python-headless，因为同时安装可能会导致一些问题。更多细节请参考官方文档。
+b. 如果使用 albumentations，我们建议使用 pip install -r requirements/albu.txt 或者 pip install -U albumentations --no-binary qudida,albumentations 进行安装。 如果简单地使用 pip install albumentations==1.0.1 进行安装，则会同时安装 opencv-python-headless（即便已经安装了 opencv-python 也会再次安装）。我们建议在安装 albumentations 后检查环境，以确保没有同时安装 opencv-python 和 opencv-python-headless，因为同时安装可能会导致一些问题。更多细节请参考 [官方文档](https://albumentations.ai/docs/getting_started/installation/#note-on-opencv-dependencies) 。
 
 **步骤 1.** 安装 MMYOLO
 

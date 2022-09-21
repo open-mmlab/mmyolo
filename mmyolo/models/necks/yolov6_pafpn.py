@@ -60,6 +60,14 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
             init_cfg=init_cfg)
 
     def build_reduce_layer(self, idx: int) -> nn.Module:
+        """build reduce layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The reduce layer.
+        """
         if idx == 2:
             layer = ConvModule(
                 in_channels=make_divisible(self.in_channels[idx],
@@ -76,6 +84,14 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
         return layer
 
     def build_upsample_layer(self, idx: int) -> nn.Module:
+        """build upsample layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The upsample layer.
+        """
         return nn.ConvTranspose2d(
             in_channels=make_divisible(self.out_channels[idx - 1],
                                        self.widen_factor),
@@ -86,6 +102,14 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
             bias=True)
 
     def build_top_down_layer(self, idx: int) -> nn.Module:
+        """build top down layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The top down layer.
+        """
         layer0 = RepStageBlock(
             in_channels=make_divisible(
                 self.out_channels[idx - 1] + self.in_channels[idx - 1],
@@ -109,6 +133,14 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
             return nn.Sequential(layer0, layer1)
 
     def build_downsample_layer(self, idx: int) -> nn.Module:
+        """build downsample layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The downsample layer.
+        """
         return ConvModule(
             in_channels=make_divisible(self.out_channels[idx],
                                        self.widen_factor),
@@ -121,6 +153,14 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
             act_cfg=self.act_cfg)
 
     def build_bottom_up_layer(self, idx: int) -> nn.Module:
+        """build bottom up layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The bottom up layer.
+        """
         return RepStageBlock(
             in_channels=make_divisible(self.out_channels[idx] * 2,
                                        self.widen_factor),
@@ -130,6 +170,7 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
             block=self.block)
 
     def build_out_layer(self, *args, **kwargs) -> nn.Module:
+        """build out layer."""
         return nn.Identity()
 
     def init_weights(self):

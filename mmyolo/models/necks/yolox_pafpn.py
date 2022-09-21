@@ -57,6 +57,14 @@ class YOLOXPAFPN(BaseYOLONeck):
             init_cfg=init_cfg)
 
     def build_reduce_layer(self, idx: int) -> nn.Module:
+        """build reduce layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The reduce layer.
+        """
         if idx == 2:
             layer = ConvModule(
                 self.in_channels[idx],
@@ -70,9 +78,18 @@ class YOLOXPAFPN(BaseYOLONeck):
         return layer
 
     def build_upsample_layer(self, *args, **kwargs) -> nn.Module:
+        """build upsample layer."""
         return nn.Upsample(scale_factor=2, mode='nearest')
 
     def build_top_down_layer(self, idx: int) -> nn.Module:
+        """build top down layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The top down layer.
+        """
         if idx == 1:
             return CSPLayer(
                 self.in_channels[idx - 1] * 2,
@@ -98,6 +115,14 @@ class YOLOXPAFPN(BaseYOLONeck):
                     act_cfg=self.act_cfg))
 
     def build_downsample_layer(self, idx: int) -> nn.Module:
+        """build downsample layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The downsample layer.
+        """
         return ConvModule(
             self.in_channels[idx],
             self.in_channels[idx],
@@ -108,6 +133,14 @@ class YOLOXPAFPN(BaseYOLONeck):
             act_cfg=self.act_cfg)
 
     def build_bottom_up_layer(self, idx: int) -> nn.Module:
+        """build bottom up layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The bottom up layer.
+        """
         return CSPLayer(
             self.in_channels[idx] * 2,
             self.in_channels[idx + 1],
@@ -117,6 +150,14 @@ class YOLOXPAFPN(BaseYOLONeck):
             act_cfg=self.act_cfg)
 
     def build_out_layer(self, idx: int) -> nn.Module:
+        """build out layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The out layer.
+        """
         return ConvModule(
             self.in_channels[idx],
             self.out_channels,
