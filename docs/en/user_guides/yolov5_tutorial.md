@@ -5,18 +5,19 @@
 NOTICE: MMYOLO is based on OpenMMLab 2.0, it is highly recommended to create a new conda virtual environment to prevent conflicts the repository already installed  by OpenMMLab 1.0. 
 
 ```shell
-conda create -n open-mmlab python=3.8 -y
-conda activate open-mmlab
-conda install pytorch torchvision -c pytorch
-# conda install pytorch torchvision cpuonly -c pytorch
-pip install -U openmim
-mim install mmengine
-mim install "mmcv>=2.0.0rc1"
-mim install "mmdet>=3.0.0rc0"
-
-git clone https://github.com/open-mmlab/mmyolo.git
-cd mmyolo
-pip install -v -e .
+ conda create -n open-mmlab python=3.8 -y 
+ conda activate open-mmlab 
+ conda install pytorch torchvision -c pytorch 
+ # conda install pytorch torchvision cpuonly -c pytorch 
+ pip install -U openmim 
+ mim install mmengine 
+ mim install "mmcv>=2.0.0rc1" 
+ mim install "mmdet>=3.0.0rc0" 
+ # for albumentations 
+ pip install -r requirements/albu.txt 
+ git clone https://github.com/open-mmlab/mmyolo.git 
+ cd mmyolo 
+ pip install -v -e . 
 ```
 
 Please see [get_started](../get_started.md) for detailed installation instructions.
