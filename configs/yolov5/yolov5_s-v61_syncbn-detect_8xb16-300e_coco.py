@@ -16,7 +16,15 @@ test_pipeline = [
                    'scale_factor', 'pad_param'))
 ]
 
-val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
+val_dataloader = dict(
+    dataset=dict(
+        pipeline=test_pipeline,
+        batch_shapes_cfg=dict(
+            type='BatchShapePolicy',
+            batch_size=_base_.val_batch_size_per_gpu,
+            img_size=_base_.img_scale[0],
+            size_divisor=32,
+            extra_pad_ratio=0.0)))
 test_dataloader = val_dataloader
 
 model = dict(
