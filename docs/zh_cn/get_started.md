@@ -228,7 +228,7 @@ docker build -t mmyolo docker/
 用以下命令运行 Docker 镜像：
 
 ```shell
-DATA_DIR=/path/to/your/dataset
+export DATA_DIR=/path/to/your/dataset
 docker run --gpus all --shm-size=8g -it -v ${DATA_DIR}:/mmyolo/data mmyolo
 ```
 

@@ -223,7 +223,7 @@ docker build -t mmyolo docker/
 Run it with
 
 ```shell
-DATA_DIR=/path/to/your/dataset
+export DATA_DIR=/path/to/your/dataset
 docker run --gpus all --shm-size=8g -it -v ${DATA_DIR}:/mmyolo/data mmyolo
 ```
 
