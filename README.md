@@ -46,6 +46,7 @@ MMYOLO is an open source toolbox for YOLO series algorithms based on PyTorch and
 
 The master branch works with **PyTorch 1.6+**.
 
+<img src="https://user-images.githubusercontent.com/12907710/137271636-56ba1cd2-b110-4812-8221-b4c120320aa9.png"/>
 <img src="https://user-images.githubusercontent.com/45811724/190993591-bd3f1f11-1c30-4b93-b5f4-05c9ff64ff7f.gif"/>
 
 <details open>
@@ -73,9 +74,9 @@ The master branch works with **PyTorch 1.6+**.
 **v0.1.0** was released on 21/9/2022:
 
 - Unified component interfaces based on [OpenMMLab 2.0](https://github.com/open-mmlab) and [MMDetection 3.0](https://github.com/open-mmlab/mmdetection/tree/3.x)
-- Support YOLOv5/YOLOX training and deployment, support for YOLOv6 inference and deployment
-- Refactored YOLOX from MMDetection to accelerate training and inference
-- Detailed introduction and advanced tutorials are provided, see the [English tutorial](https://mmyolo.readthedocs.io/en/latest)
+- Support YOLOv5/YOLOX training, support for YOLOv6 inference. Deployment will be supported soon.
+- Refactored YOLOX from MMDetection to accelerate training and inference.
+- Detailed introduction and advanced tutorials are provided, see the [English tutorial](https://mmyolo.readthedocs.io/en/latest).
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
