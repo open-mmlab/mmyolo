@@ -478,7 +478,8 @@ class YOLOv5RandomAffine(BaseTransform):
             width (int): Image width.
 
         Returns:
-            Tuple[np.ndarray, float]: The result of warp_matrix and scaling_ratio.
+            Tuple[np.ndarray, float]: The result of warp_matrix and
+            scaling_ratio.
         """
         # Rotation
         rotation_degree = random.uniform(-self.max_rotate_degree,
