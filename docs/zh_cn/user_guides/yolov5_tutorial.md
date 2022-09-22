@@ -196,7 +196,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 <img src="https://cdn.vansin.top/img/20220913213221.png" alt="image"/>
 </div>
 
-##### Tensorboard可视化使用
+##### Tensorboard 可视化使用
 
 安装 Tensorboard 环境
 
