@@ -204,7 +204,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 pip install tensorboard
 ```
 
-同上述在配置文件 `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py`中添加 tensorboard 配置
+同上述在配置文件 `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py`中添加 `tensorboard` 配置
 
 ```shell
 visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='TensorboardVisBackend')])
