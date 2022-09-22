@@ -42,11 +42,7 @@ class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
         if pre_transform is None:
             self.pre_transform = None
         else:
-            _transforms = []
-            for transform in pre_transform:
-                if isinstance(transform, dict):
-                    _transforms.append(TRANSFORMS.build(transform))
-            self.pre_transform = Compose(_transforms)
+            self.pre_transform = Compose(pre_transform)
 
     @abstractmethod
     def get_indexes(self, dataset: BaseDataset) -> Union[list, int]:
