@@ -211,7 +211,7 @@ visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='Tensorbo
 ```
 
 重新运行训练命令后生成在可视化文件在路径 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/vis_data` 下，
-运行命令便可以在命令行中提示的网页链接中看到 loss、学习率和 coco/bbox_mAP 等数据可视化了。
+运行下面的命令便可以在网页链接使用 Tensorboard 查看 loss、学习率和 coco/bbox_mAP 等可视化数据了：
 
 ```shell
 tensorboard --logdir=work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon
