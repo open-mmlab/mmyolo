@@ -38,7 +38,11 @@ class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
 
         self.max_refetch = max_refetch
         self.prob = prob
-        self.pre_transform = Compose(pre_transform)
+        
+        if pre_transform is None:
+            self.pre_transform = None
+        else:
+            self.pre_transform = Compose(pre_transform)
 
     @abstractmethod
     def get_indexes(self, dataset: BaseDataset) -> Union[list, int]:
