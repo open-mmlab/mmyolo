@@ -166,7 +166,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 
 MMEngine 支持本地、TensorBoard 以及 wandb 等多种后端。
 
-##### wandb可视化使用
+##### wandb 可视化使用
 
 wandb 官网注册并在 https://wandb.ai/settings 获取到 wandb 的 API Keys。
 
