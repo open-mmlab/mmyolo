@@ -180,7 +180,7 @@ pip install wandb
 wandb login
 ```
 
-在 `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` 添加 `wandb` 配置
+在 `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` 添加 wandb 配置
 
 ```python
 visualizer = dict(vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')])
@@ -210,14 +210,8 @@ pip install tensorboard
 visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='TensorboardVisBackend')])
 ```
 
-配置好后重新运行训练命令
-
-```shell
-python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py
-```
-
-生成的训练信息的可视化文件在路径 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/vis_data` 目录下，
-运行下述命令便可以在命令行中提示的网页链接中看到 loss、学习率和 coco/bbox_mAP 等数据可视化了。
+重新运行训练命令后生成在可视化文件在路径 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/vis_data` 下，
+运行命令便可以在命令行中提示的网页链接中看到 loss、学习率和 coco/bbox_mAP 等数据可视化了。
 
 ```shell
 tensorboard --logdir=work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon
