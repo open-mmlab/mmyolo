@@ -38,7 +38,7 @@ class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
 
         self.max_refetch = max_refetch
         self.prob = prob
-        
+
         if pre_transform is None:
             self.pre_transform = None
         else:
