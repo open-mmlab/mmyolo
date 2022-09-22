@@ -219,6 +219,16 @@ print(mmyolo.__version__)
 
 我们提供了一个 [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile) 来构建一个镜像。请确保你的 [docker版本](https://docs.docker.com/engine/install/) >=`19.03`。
 
+温馨提示；国内用户建议取消掉 [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile#L19-L20) 里面 `Optional` 后两行的注释，可以获得火箭一般的下载提速：
+
+```dockerfile
+# (Optional)
+RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu\//http:\/\/mirrors.aliyun.com\/ubuntu\//g' /etc/apt/sources.list && \
+    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+构建命令：
+
 ```shell
 # build an image with PyTorch 1.9, CUDA 11.1
 # If you prefer other versions, just modified the Dockerfile

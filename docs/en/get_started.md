@@ -214,13 +214,23 @@ Within Jupyter, the exclamation mark `!` is used to call external executables an
 
 We provide a [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile) to build an image. Ensure that your [docker version](https://docs.docker.com/engine/install/) >=19.03.
 
+Reminder: If you find out that your download speed is very slow, we suggest that you can canceling the comments in the last two lines of `Optional` in the [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile#L19-L20) to obtain a rocket like download speed:
+
+```dockerfile
+# (Optional)
+RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu\//http:\/\/mirrors.aliyun.com\/ubuntu\//g' /etc/apt/sources.list && \
+    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+Build Command：
+
 ```shell
 # build an image with PyTorch 1.9, CUDA 11.1
 # If you prefer other versions, just modified the Dockerfile
 docker build -t mmyolo docker/
 ```
 
-Run it with
+Run it with:
 
 ```shell
 export DATA_DIR=/path/to/your/dataset
