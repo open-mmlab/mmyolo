@@ -198,7 +198,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 
 ##### Tensorboard可视化使用
 
-安装Tensorboard环境
+安装 Tensorboard 环境
 
 ```shell
 pip install tensorboard
