@@ -44,8 +44,6 @@ pip install -U openmim
 mim install mmengine
 mim install "mmcv>=2.0.0rc1"
 mim install "mmdet>=3.0.0rc0"
-# for albumentations
-pip install -r requirements/albu.txt
 ```
 
 **注意：**
@@ -61,7 +59,10 @@ b. 如果使用 albumentations，我们建议使用 pip install -r requirements/
 ```shell
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
-pip install -v -e .
+# Install albumentations
+pip install -r requirements/albu.txt
+# Install MMYOLO
+mim install -v -e .
 # "-v" 指详细说明，或更多的输出
 # "-e" 表示在可编辑模式下安装项目，因此对代码所做的任何本地修改都会生效，从而无需重新安装。
 ```
