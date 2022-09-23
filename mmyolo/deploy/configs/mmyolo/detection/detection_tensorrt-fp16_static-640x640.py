@@ -3,11 +3,7 @@ onnx_config = dict(input_shape=(640, 640))
 codebase_config = dict(
     type='mmyolo',
     task='ObjectDetection',
-    module=[
-        'mmyolo.deploy.codebase.mmyolo', 'mmyolo.datasets', 'mmyolo.models',
-        'mmyolo.engine'
-    ],
-    extra_dependent_library=['mmdet'])
+    module=['mmyolo.deploy.codebase.mmyolo'])
 backend_config = dict(
     common_config=dict(max_workspace_size=1 << 30),
     model_inputs=[

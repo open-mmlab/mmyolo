@@ -17,6 +17,15 @@ class MMYolo(MMCodebase):
 
     task_registry = MMYOLO_TASK
 
+    @classmethod
+    def import_module(cls):
+        from mmyolo.utils.setup_env import register_all_modules \
+            as register_all_modules_mmyolo
+        from mmdet.utils.setup_env import register_all_modules \
+            as register_all_modules_mmdet
+        register_all_modules_mmyolo(False)
+        register_all_modules_mmdet(False)
+
 
 def _get_dataset_metainfo(model_cfg: Config):
     """Get metainfo of dataset.
