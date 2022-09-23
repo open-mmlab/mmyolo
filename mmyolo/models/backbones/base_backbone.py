@@ -109,7 +109,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
         """Make plugins for backbone ``stage_idx`` th stage.
 
         Currently we support to insert ``context_block``,
-        ``empirical_attention_block``, ``nonlocal_block``, ``drop_block``
+        ``empirical_attention_block``, ``nonlocal_block``, ``dropout_block``
         into the backbone.
 
 
