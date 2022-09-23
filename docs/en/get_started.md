@@ -62,7 +62,7 @@ cd mmyolo
 # Install albumentations
 pip install -r requirements/albu.txt
 # Install MMYOLO
-pip install -v -e .
+mim install -v -e .
 # "-v" means verbose, or more output
 # "-e" means installing a project in editable mode,
 # thus any local modifications made to the code will take effect without reinstallation.
