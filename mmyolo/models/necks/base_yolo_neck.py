@@ -17,7 +17,7 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
 
     Args:
         in_channels (List[int]): Number of input channels per scale.
-        out_channels (int): Number of output channels (used at each scale)
+        out_channels (List[int]): Number of output channels per scale.
         deepen_factor (float): Depth multiplier, multiply number of
             blocks in CSP layer by this amount. Defaults to 1.0.
         widen_factor (float): Width multiplier, multiply number of
@@ -33,7 +33,7 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
 
     def __init__(self,
                  in_channels: List[int],
-                 out_channels: int,
+                 out_channels: List[int],
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  freeze_all: bool = False,

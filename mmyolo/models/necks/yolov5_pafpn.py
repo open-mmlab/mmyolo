@@ -18,7 +18,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
 
     Args:
         in_channels (List[int]): Number of input channels per scale.
-        out_channels (int): Number of output channels (used at each scale)
+        out_channels (int): Number of output channels per scale.
         deepen_factor (float): Depth multiplier, multiply number of
             blocks in CSP layer by this amount. Defaults to 1.0.
         widen_factor (float): Width multiplier, multiply number of
@@ -35,7 +35,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
 
     def __init__(self,
                  in_channels: List[int],
-                 out_channels: int,
+                 out_channels: List[int],
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  num_csp_blocks: int = 1,
@@ -101,7 +101,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
             return CSPLayer(
                 make_divisible(self.in_channels[idx - 1] * 2,
                                self.widen_factor),
-                make_divisible(self.in_channels[idx - 1], self.widen_factor),
+                make_divisible(self.out_channels[idx - 1], self.widen_factor),
                 num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
                 add_identity=False,
                 norm_cfg=self.norm_cfg,
@@ -137,7 +137,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
             nn.Module: The downsample layer.
         """
         return ConvModule(
-            make_divisible(self.in_channels[idx], self.widen_factor),
+            make_divisible(self.out_channels[idx], self.widen_factor),
             make_divisible(self.in_channels[idx], self.widen_factor),
             kernel_size=3,
             stride=2,
@@ -156,7 +156,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
         """
         return CSPLayer(
             make_divisible(self.in_channels[idx] * 2, self.widen_factor),
-            make_divisible(self.in_channels[idx + 1], self.widen_factor),
+            make_divisible(self.out_channels[idx + 1], self.widen_factor),
             num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
             add_identity=False,
             norm_cfg=self.norm_cfg,
