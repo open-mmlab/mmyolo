@@ -4,11 +4,13 @@ from typing import Sequence
 
 import torch
 import torch.nn as nn
+from mmcv.cnn import build_plugin_layer
 from mmdet.utils import ConfigType, OptMultiConfig
 from mmengine.model import BaseModule
 from torch.nn.modules.batchnorm import _BatchNorm
 
 from mmyolo.registry import MODELS
+from ..utils import make_divisible
 
 
 @MODELS.register_module()
@@ -44,6 +46,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
                  input_channels: int = 3,
                  out_indices: Sequence[int] = (2, 3, 4),
                  frozen_stages: int = -1,
+                 plugins: dict = None,
                  norm_cfg: ConfigType = None,
                  act_cfg: ConfigType = None,
                  norm_eval: bool = False,
@@ -69,6 +72,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
         self.norm_eval = norm_eval
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
+        self.plugins = plugins
 
         self.stem = self.build_stem_layer()
         self.layers = ['stem']
@@ -76,6 +80,8 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
         for idx, setting in enumerate(arch_setting):
             stage = []
             stage += self.build_stage_layer(idx, setting)
+            if plugins is not None:
+                stage += self.make_stage_plugins(plugins, idx, setting)
             self.add_module(f'stage{idx + 1}', nn.Sequential(*stage))
             self.layers.append(f'stage{idx + 1}')
 
@@ -93,6 +99,18 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
             setting (list): The architecture setting of a stage layer.
         """
         pass
+
+    def make_stage_plugins(self, plugins, idx, setting):
+        """Build plugin layers."""
+        in_channels = make_divisible(setting[1], self.widen_factor)
+        plugin_layers = []
+        for plugin in plugins:
+            plugin = plugin.copy()
+            if plugin['stages'][idx]:
+                name, layer = build_plugin_layer(
+                    plugin['cfg'], in_channels=in_channels)
+                plugin_layers.append(layer)
+        return plugin_layers
 
     def _freeze_stages(self):
         """Freeze the parameters of the specified stage so that they are no

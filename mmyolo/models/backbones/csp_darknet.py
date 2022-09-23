@@ -62,6 +62,7 @@ class YOLOv5CSPDarknet(BaseBackbone):
 
     def __init__(self,
                  arch: str = 'P5',
+                 plugins: list = None,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  input_channels: int = 3,
@@ -78,6 +79,7 @@ class YOLOv5CSPDarknet(BaseBackbone):
             widen_factor,
             input_channels=input_channels,
             out_indices=out_indices,
+            plugins=plugins,
             frozen_stages=frozen_stages,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg,
