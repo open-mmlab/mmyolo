@@ -13,10 +13,10 @@ pip install -U openmim
 mim install mmengine
 mim install "mmcv>=2.0.0rc1"
 mim install "mmdet>=3.0.0rc0"
-# for albumentations
-pip install -r requirements/albu.txt
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
+# for albumentations
+pip install -r requirements/albu.txt
 pip install -v -e .
 ```
 
