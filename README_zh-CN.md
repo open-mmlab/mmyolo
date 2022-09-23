@@ -96,7 +96,7 @@ cd mmyolo
 # Install albumentations
 pip install -r requirements/albu.txt
 # Install MMYOLO
-mim install -e .
+mim install -v -e .
 ```
 
 ## 教程
