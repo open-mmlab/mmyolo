@@ -59,8 +59,9 @@ Case a: If you develop and run mmdet directly, install it from source:
 ```shell
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
-# for albumentations
+# Install albumentations
 pip install -r requirements/albu.txt
+# Install MMYOLO
 pip install -v -e .
 # "-v" means verbose, or more output
 # "-e" means installing a project in editable mode,
