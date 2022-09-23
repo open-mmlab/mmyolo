@@ -95,6 +95,7 @@ git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # for albumentations
 pip install -r requirements/albu.txt
+# Install MMYOLO
 mim install -e .
 ```
 
