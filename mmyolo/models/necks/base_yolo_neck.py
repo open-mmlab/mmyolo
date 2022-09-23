@@ -117,7 +117,7 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
         if self.freeze_all:
             self._freeze_all()
 
-    def forward(self, inputs: torch.Tensor) -> tuple:
+    def forward(self, inputs: List[torch.Tensor]) -> tuple:
         """Forward function."""
         assert len(inputs) == len(self.in_channels)
         # reduce layers
