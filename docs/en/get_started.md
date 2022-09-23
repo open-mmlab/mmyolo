@@ -44,8 +44,6 @@ pip install -U openmim
 mim install mmengine
 mim install "mmcv>=2.0.0rc1"
 mim install "mmdet>=3.0.0rc0"
-# for albumentations
-pip install -r requirements/albu.txt
 ```
 
 **Note:**
@@ -61,7 +59,10 @@ Case a: If you develop and run mmdet directly, install it from source:
 ```shell
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
-pip install -v -e .
+# Install albumentations
+pip install -r requirements/albu.txt
+# Install MMYOLO
+mim install -v -e .
 # "-v" means verbose, or more output
 # "-e" means installing a project in editable mode,
 # thus any local modifications made to the code will take effect without reinstallation.
