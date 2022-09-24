@@ -29,8 +29,3 @@ class TestYOLOv5PAFPN(TestCase):
             for i in range(len(feats)):
                 assert outs[i].shape[1] == out_channels[i]
                 assert outs[i].shape[2] == outs[i].shape[3] == s // (2**i)
-            print(f'测试{e}通过')
-
-
-if __name__ == '__main__':
-    TestYOLOv5PAFPN().test_forward()
