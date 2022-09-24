@@ -116,7 +116,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
                     make_divisible(self.in_channels[idx - 1] * 2,
                                    self.widen_factor, 1),
                     make_divisible(self.in_channels[idx - 1],
-                                   self.widen_factor, 1),
+                                   self.widen_factor, divisor=1),
                     num_blocks=make_round(self.num_csp_blocks,
                                           self.deepen_factor),
                     add_identity=False,
