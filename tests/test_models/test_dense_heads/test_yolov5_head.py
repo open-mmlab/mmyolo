@@ -143,5 +143,3 @@ class TestYOLOv5Head(TestCase):
                            'box loss should be non-zero')
         self.assertGreater(onegt_obj_loss.item(), 0,
                            'obj loss should be non-zero')
-
-
