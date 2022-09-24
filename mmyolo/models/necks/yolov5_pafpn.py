@@ -124,7 +124,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
                     act_cfg=self.act_cfg),
                 ConvModule(
                     make_divisible(self.in_channels[idx - 1],
-                                   self.widen_factor, 1),
+                                   self.widen_factor, divisor=1),
                     make_divisible(self.in_channels[idx - 2],
                                    self.widen_factor, 1),
                     kernel_size=1,
