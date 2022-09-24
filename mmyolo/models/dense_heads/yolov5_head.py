@@ -48,7 +48,8 @@ class YOLOv5HeadModule(BaseModule):
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
-        in_channels = [in_channels] * len(featmap_strides) if type(in_channels) is int else in_channels
+        in_channels = [in_channels] * len(featmap_strides) \
+            if type(in_channels) is int else in_channels
         self.in_channels = in_channels
         self.widen_factor = widen_factor
 
@@ -59,7 +60,7 @@ class YOLOv5HeadModule(BaseModule):
 
         in_channels = []
         for channel in self.in_channels:
-            channel = make_divisible(channel, self.widen_factor)
+            channel = make_divisible(channel, self.widen_factor, 1)
             in_channels.append(channel)
         self.in_channels = in_channels
 
