@@ -145,10 +145,3 @@ class TestYOLOv5Head(TestCase):
                            'obj loss should be non-zero')
 
 
-if __name__ == '__main__':
-    for e in range(99):
-        test_model = TestYOLOv5Head()
-        test_model.setUp()
-        test_model.test_predict_by_feat()
-        test_model.test_loss_by_feat()
-        print(f'测试{e}通过')
