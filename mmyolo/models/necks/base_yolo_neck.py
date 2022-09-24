@@ -123,13 +123,13 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
         """Forward function."""
         assert len(inputs) == len(self.in_channels)
         # reduce layers
-        reduce_outs = [] # top进行了降维，其他Identity, [in_channels[0], in_channels[1], in_channels[1]]
+        reduce_outs = []
         for idx in range(len(self.in_channels)):
             reduce_outs.append(self.reduce_layers[idx](inputs[idx]))
 
         # top-down path
         inner_outs = [reduce_outs[-1]]
-        for idx in range(len(self.in_channels) - 1, 0, -1): # 2, 1
+        for idx in range(len(self.in_channels) - 1, 0, -1):
             feat_heigh = inner_outs[0]
             feat_low = reduce_outs[idx - 1]
             upsample_feat = self.upsample_layers[len(self.in_channels) - 1 -
@@ -138,7 +138,7 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
 
             inner_out = self.top_down_layers[len(self.in_channels) - 1 - idx](
                 torch.cat([upsample_feat, feat_low], 1))
-            inner_outs.insert(0, inner_out) # [256, 256, 512]
+            inner_outs.insert(0, inner_out)
 
         # bottom-up path
         outs = [inner_outs[0]]
