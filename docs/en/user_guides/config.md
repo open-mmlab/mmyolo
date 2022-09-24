@@ -8,7 +8,7 @@ MMYOLO uses a modular design, all modules with different functions can be config
 
 ### Important parameters
 
-When changing the training configuration, it is frequently necessary to modify the following parameters. For example, the scaling factors `deepen_factor` and `widen_factor`, are used by the network in MMYOLO to control the size of the model. So we recommend defining these parameters separately in the configuration file.
+When changing the training configuration, it is usually necessary to modify the following parameters. For example, the scaling factors `deepen_factor` and `widen_factor` are used by the network to control the size of the model in MMYOLO. So we recommend defining these parameters separately in the configuration file.
 
 ```python
 img_scale = (640, 640)            # height of image, width of image
@@ -79,7 +79,7 @@ model = dict(
 
 ### Dataset and evaluator config
 
-[Dataloaders](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader) are required for the training, validation, and testing of the [runner](https://mmengine.readthedocs.io/en/latest/tutorials/runner.html). Dataset and data pipeline need to be set to build the dataloader. Due to the complexity of this part, we use intermediate variables to simplify the writing of dataloader configs. More complex data augmentation methods are adopted in lightweight object detection in MMYOLO. Therefore, MMYOLO has a wider range of dataset configurations than other models in MMDetection.
+[Dataloaders](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader) are required for the training, validation, and testing of the [runner](https://mmengine.readthedocs.io/en/latest/tutorials/runner.html). Dataset and data pipeline need to be set to build the dataloader. Due to the complexity of this part, we use intermediate variables to simplify the writing of dataloader configs. More complex data augmentation methods are adopted to the lightweight object detection algorithms in MMYOLO. Therefore, MMYOLO has a wider range of dataset configurations than other models in MMDetection.
 
 The training and testing data flow of YOLOv5 have a certain difference. We will introduce them separately here.
 
@@ -210,7 +210,7 @@ val_evaluator = dict(  # Validation evaluator config
 test_evaluator = val_evaluator  # Testing evaluator config
 ```
 
-Since the test dataset has no annotation files, the test_dataloader and test_evaluator config in MMYOLO are generally equal to the val's. If you want to save the detection results on the test dataset, you can write the config like this:
+Since the test dataset has no annotation files, the test_dataloader and test_evaluator config in MMYOLO are generally the same as the val's. If you want to save the detection results on the test dataset, you can write the config like this:
 
 ```python
 # inference on test dataset and
@@ -270,7 +270,7 @@ test_cfg = dict(type='TestLoop')  # The testing loop type
 
 ### Optimization config
 
-`optim_wrapper` is the field to configure optimization-related settings. The optimizer wrapper not only provides the functions of the optimizer, but also supports functions such as gradient clipping, mixed precision training, etc. Find more in [optimizer wrapper tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/optimizer.html).
+`optim_wrapper` is the field to configure optimization-related settings. The optimizer wrapper not only provides the functions of the optimizer, but also supports functions such as gradient clipping, mixed precision training, etc. Find out more in [optimizer wrapper tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/optimizer.html).
 
 ```python
 optim_wrapper = dict(  # Optimizer wrapper config
@@ -286,7 +286,7 @@ optim_wrapper = dict(  # Optimizer wrapper config
     constructor='YOLOv5OptimizerConstructor') # The constructor for YOLOv5 optimizer
 ```
 
-`param_scheduler` is a field that configures methods of adjusting optimization hyperparameters such as learning rate and momentum. Users can combine multiple schedulers to create a desired parameter adjustment strategy. Find more in [parameter scheduler tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/param_scheduler.html). In MMYOLO, no parameter optimizer is introduced.
+`param_scheduler` is the field that configures methods of adjusting optimization hyperparameters such as learning rate and momentum. Users can combine multiple schedulers to create a desired parameter adjustment strategy. Find more in [parameter scheduler tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/param_scheduler.html). In MMYOLO, no parameter optimizer is introduced.
 
 ```python
 param_scheduler = None
@@ -296,7 +296,7 @@ param_scheduler = None
 
 Users can attach hooks to training, validation, and testing loops to insert some operations during running. There are two different hook fields, one is `default_hooks` and the other is `custom_hooks`.
 
-`default_hooks` is a dict of hook configs. `default_hooks` are the hooks that must required at runtime. They have default priority which should not be modified. If not set, runner will use the default values. To disable a default hook, users can set its config to `None`.
+`default_hooks` is a dict of hook configs for the hooks that must be required at the runtime. They have default priority which should not be modified. If not set, runner will use the default values. To disable a default hook, users can set its config to `None`.
 
 ```python
 default_hooks = dict(
@@ -354,14 +354,14 @@ resume = False  # Whether to resume from the checkpoint defined in `load_from`. 
 
 `config/_base_` contains default runtime. The configs that are composed of components from `_base_` are called _primitive_.
 
-For all configs under the same folder, it is recommended to have only **one** _primitive_ config. All other configs should inherit from the _primitive_ config. In this way, the maximum of inheritance level is 3.
+For all configs under the same folder, it is recommended to have only **one** _primitive_ config. All other configs should be inheritred from the _primitive_ config. In this way, the maximum of inheritance level is 3.
 
 For easy understanding, we recommend contributors inherit from existing methods.
 For example, if some modification is made based on YOLOv5-s, such as modifying the depth of the network, users may first inherit the `_base_ = ./yolov5_s-v61_syncbn_8xb16-300e_coco.py `, then modify the necessary fields in the config files.
 
 If you are building an entirely new method that does not share the structure with any of the existing methods, you may create a folder `yolov100` under `configs`,
 
-Please refer to [mmengine config tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/config.html) for detailed documentation.
+Please refer to [mmengine config tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/config.html) for more detailes.
 
 By setting the `_base_` field, we can set which files the current configuration file inherits from.
 
@@ -421,7 +421,7 @@ model = dict(
 
 ### Use intermediate variables in configs
 
-Some intermediate variables are used in the configs files, like `train_pipeline`/`test_pipeline` in datasets. It's worth noting that when modifying intermediate variables in the children configs, user need to pass the intermediate variables into corresponding fields again.
+Some intermediate variables are used in the configs files, like `train_pipeline` and `test_pipeline` in datasets. It's worth noting that when modifying intermediate variables in the children configs, users need to pass the intermediate variables into corresponding fields again.
 For example, we would like to change the `image_scale` during training and add `YOLOv5MixUp` data augmentation, `img_scale/train_pipeline/test_pipeline` are intermediate variable we would like modify.
 
 **Notice**: `YOLOv5MixUp` requires adding the `pre_transform` and `mosaic_affine_pipeline` to its own `pre_transform` field. Please refer to [The description of YOLOv5 algorithm and its implementation](../algorithm_descriptions/yolov5_description.md) for detailed process and diagrams.
@@ -494,9 +494,9 @@ val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 ```
 
-Firstly, we define new `train_pipeline`/`test_pipeline` and pass them to `data`.
+We first define new `train_pipeline`/`test_pipeline` and pass it into `data`.
 
-Similarly, we need to change every `norm_cfg` to switch `SyncBN` normalization to `BN` and `MMSyncBN`.
+Likewise, if we want to switch from `SyncBN` to `BN` or `MMSyncBN`, we need to modify every `norm_cfg` in the configuration file.
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -531,13 +531,11 @@ When submitting jobs using `tools/train.py` or `tools/test.py`, you may specify 
 
 - Update keys inside a list of configs.
 
-  Some config dicts are composed as a list in your config. For example, the training pipeline `train_dataloader.dataset.pipeline` is normally a list
-  e.g. `[dict(type='LoadImageFromFile'), ...]`. If you want to change `'LoadImageFromFile'` to `'LoadImageFromNDArray'` in the pipeline,  you may specify `--cfg-options data.train.pipeline.0.type=LoadImageFromNDArray`.
+  Some config dicts are composed as a list in your config. For example, the training pipeline `train_dataloader.dataset.pipeline` is normally a list, e.g. `[dict(type='LoadImageFromFile'), ...]`. If you want to change `'LoadImageFromFile'` to `'LoadImageFromNDArray'` in the pipeline, you may specify `--cfg-options data.train.pipeline.0.type=LoadImageFromNDArray`.
 
 - Update values of list/tuples.
 
-  If the value to be updated is a list or a tuple. For example, the config file normally sets `model.data_preprocessor.mean=[123.675, 116.28, 103.53]`. If you want to change the mean values, you may specify `--cfg-options model.data_preprocessor.mean="[127,127,127]"`. Note that the quotation mark `"` is necessary to
-  support list/tuple data types, and that **NO** white space is allowed inside the quotation marks in the specified value.
+  Sometimes the value to update is a list or a tuple, for example, the config file normally sets `model.data_preprocessor.mean=[123.675, 116.28, 103.53]`. If you want to change the mean values, you may specify `--cfg-options model.data_preprocessor.mean="[127,127,127]"`. Note that the quotation mark `"` is necessary to support list/tuple data types, and that **NO** white space is allowed inside the quotation marks in the specified value.
 
 ## Config name style
 
