@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple, Union, Sequence
 
 import numpy as np
 import torch
@@ -49,7 +49,7 @@ class SPPFBottleneck(BaseModule):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 kernel_sizes: Union[int, Tuple[int]] = 5,
+                 kernel_sizes: Union[int, Sequence[int]] = 5,
                  conv_cfg: ConfigType = None,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
