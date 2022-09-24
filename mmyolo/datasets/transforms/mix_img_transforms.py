@@ -34,10 +34,17 @@ class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
     def __init__(self,
                  pre_transform: Optional[Sequence[str]] = None,
                  prob: float = 1.0,
+                 use_cached: bool = False,
+                 max_cached_images: int = 40,
+                 random_pop: bool = True,
                  max_refetch: int = 15):
 
         self.max_refetch = max_refetch
         self.prob = prob
+
+        self.use_cached = use_cached
+        self.max_cached_images = max_cached_images
+        self.random_pop = random_pop
 
         if pre_transform is None:
             self.pre_transform = None
@@ -90,23 +97,44 @@ class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
         if random.uniform(0, 1) > self.prob:
             return results
 
-        assert 'dataset' in results
+        if self.use_cached:
+            # Be careful: deep copying can be very time-consuming
+            # if results includes dataset.
+            dataset = results.pop('dataset', None)
+            self.results_cache.append(copy.deepcopy(results))
+            if len(self.results_cache) > self.max_cached_images:
+                if self.random_pop:
+                    index = random.randint(0, len(self.results_cache) - 1)
+                else:
+                    index = 0
+                self.results_cache.pop(index)
 
-        # Be careful: deep copying can be very time-consuming
-        # if results includes dataset.
-        dataset = results.pop('dataset')
+            if len(self.results_cache) <= 4:
+                return results
+        else:
+            assert 'dataset' in results
+            # Be careful: deep copying can be very time-consuming
+            # if results includes dataset.
+            dataset = results.pop('dataset', None)
 
         for _ in range(self.max_refetch):
             # get index of one or three other images
-            indexes = self.get_indexes(dataset)
+            if self.use_cached:
+                indexes = self.get_indexes(self.results_cache)
+            else:
+                indexes = self.get_indexes(dataset)
+
             if not isinstance(indexes, collections.abc.Sequence):
                 indexes = [indexes]
 
-            # get images information will be used for Mosaic or MixUp
-            mix_results = [
-                copy.deepcopy(dataset.get_data_info(index))
-                for index in indexes
-            ]
+            if self.use_cached:
+                mix_results = [copy.deepcopy(self.results_cache[i]) for i in indexes]
+            else:
+                # get images information will be used for Mosaic or MixUp
+                mix_results = [
+                    copy.deepcopy(dataset.get_data_info(index))
+                    for index in indexes
+                ]
 
             if self.pre_transform is not None:
                 for i, data in enumerate(mix_results):
@@ -216,12 +244,20 @@ class Mosaic(BaseMixImageTransform):
                  pad_val: float = 114.0,
                  pre_transform: Sequence[dict] = None,
                  prob: float = 1.0,
+                 use_cached: bool = False,
+                 max_cached_images: int = 40,
+                 random_pop: bool = True,
                  max_refetch: int = 15):
         assert isinstance(img_scale, tuple)
         assert 0 <= prob <= 1.0, 'The probability should be in range [0,1]. ' \
                                  f'got {prob}.'
         super().__init__(
-            pre_transform=pre_transform, prob=prob, max_refetch=max_refetch)
+            pre_transform=pre_transform,
+            prob=prob,
+            use_cached=use_cached,
+            max_cached_images=max_cached_images,
+            random_pop=random_pop,
+            max_refetch=max_refetch)
 
         self.img_scale = img_scale
         self.center_ratio_range = center_ratio_range
@@ -452,9 +488,17 @@ class YOLOv5MixUp(BaseMixImageTransform):
                  beta: float = 32.0,
                  pre_transform: Sequence[dict] = None,
                  prob: float = 1.0,
+                 use_cached: bool = False,
+                 max_cached_images: int = 20,
+                 random_pop: bool = True,
                  max_refetch: int = 15):
         super().__init__(
-            pre_transform=pre_transform, prob=prob, max_refetch=max_refetch)
+            pre_transform=pre_transform,
+            prob=prob,
+            use_cached=use_cached,
+            max_cached_images=max_cached_images,
+            random_pop=random_pop,
+            max_refetch=max_refetch)
         self.alpha = alpha
         self.beta = beta
 
@@ -585,10 +629,18 @@ class YOLOXMixUp(BaseMixImageTransform):
                  bbox_clip_border: bool = True,
                  pre_transform: Sequence[dict] = None,
                  prob: float = 1.0,
+                 use_cached: bool = False,
+                 max_cached_images: int = 20,
+                 random_pop: bool = True,
                  max_refetch: int = 15):
         assert isinstance(img_scale, tuple)
         super().__init__(
-            pre_transform=pre_transform, prob=prob, max_refetch=max_refetch)
+            pre_transform=pre_transform,
+            prob=prob,
+            use_cached=use_cached,
+            max_cached_images=max_cached_images,
+            random_pop=random_pop,
+            max_refetch=max_refetch)
         self.img_scale = img_scale
         self.ratio_range = ratio_range
         self.flip_ratio = flip_ratio

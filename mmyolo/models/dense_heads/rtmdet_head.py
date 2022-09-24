@@ -29,7 +29,7 @@ from mmdet.models.task_modules.prior_generators import anchor_inside_flags
 
 
 @MODELS.register_module()
-class RTMDetHeadModule(BaseModule):
+class RTMDetSepBNHeadModule(BaseModule):
     """Detection Head of RTMDet.
 
     Args:
@@ -50,18 +50,22 @@ class RTMDetHeadModule(BaseModule):
             feat_channels: int = 256,
             stacked_convs: int = 2,
             featmap_strides: Sequence[int] = [8, 16, 32],
+            share_conv: bool = True,
             with_objectness: bool = True,
-            conv_bias: Union[bool, str] = 'auto',
+            pred_kernel_size: int = 1,
+            exp_on_reg: bool = False,
             conv_cfg: OptConfigType = None,
             norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg: ConfigType = dict(type='SiLU', inplace=True),
             init_cfg: OptMultiConfig = None,
     ):
         super().__init__(init_cfg=init_cfg)
+        self.share_conv = share_conv
+        self.exp_on_reg = exp_on_reg
         self.num_classes = num_classes
+        self.pred_kernel_size = pred_kernel_size
         self.feat_channels = int(feat_channels * widen_factor)
         self.stacked_convs = stacked_convs
-        self.conv_bias = conv_bias
         self.num_base_priors = num_base_priors
 
         self.conv_cfg = conv_cfg
@@ -78,48 +82,64 @@ class RTMDetHeadModule(BaseModule):
         """Initialize layers of the head."""
         self.cls_convs = nn.ModuleList()
         self.reg_convs = nn.ModuleList()
-        for i in range(self.stacked_convs):
-            chn = self.in_channels if i == 0 else self.feat_channels
-            self.cls_convs.append(
-                ConvModule(
-                    chn,
-                    self.feat_channels,
-                    3,
-                    stride=1,
-                    padding=1,
-                    conv_cfg=self.conv_cfg,
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg))
-            self.reg_convs.append(
-                ConvModule(
-                    chn,
-                    self.feat_channels,
-                    3,
-                    stride=1,
-                    padding=1,
-                    conv_cfg=self.conv_cfg,
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg))
-        pred_pad_size = self.pred_kernel_size // 2
-        self.rtm_cls = nn.Conv2d(
-            self.feat_channels,
-            self.num_base_priors * self.cls_out_channels,
-            self.pred_kernel_size,
-            padding=pred_pad_size)
-        self.rtm_reg = nn.Conv2d(
-            self.feat_channels,
-            self.num_base_priors * 4,
-            self.pred_kernel_size,
-            padding=pred_pad_size)
-        if self.with_objectness:
-            self.rtm_obj = nn.Conv2d(
-                self.feat_channels,
-                1,
-                self.pred_kernel_size,
-                padding=pred_pad_size)
 
-        self.scales = nn.ModuleList(
-            [Scale(1.0) for _ in self.featmap_strides])
+        self.rtm_cls = nn.ModuleList()
+        self.rtm_reg = nn.ModuleList()
+        if self.with_objectness:
+            self.rtm_obj = nn.ModuleList()
+        for n in range(len(self.featmap_strides)):
+            cls_convs = nn.ModuleList()
+            reg_convs = nn.ModuleList()
+            for i in range(self.stacked_convs):
+                chn = self.in_channels if i == 0 else self.feat_channels
+                cls_convs.append(
+                    ConvModule(
+                        chn,
+                        self.feat_channels,
+                        3,
+                        stride=1,
+                        padding=1,
+                        conv_cfg=self.conv_cfg,
+                        norm_cfg=self.norm_cfg,
+                        act_cfg=self.act_cfg))
+                reg_convs.append(
+                    ConvModule(
+                        chn,
+                        self.feat_channels,
+                        3,
+                        stride=1,
+                        padding=1,
+                        conv_cfg=self.conv_cfg,
+                        norm_cfg=self.norm_cfg,
+                        act_cfg=self.act_cfg))
+            self.cls_convs.append(cls_convs)
+            self.reg_convs.append(reg_convs)
+
+            self.rtm_cls.append(
+                nn.Conv2d(
+                    self.feat_channels,
+                    self.num_base_priors * self.num_classes,
+                    self.pred_kernel_size,
+                    padding=self.pred_kernel_size // 2))
+            self.rtm_reg.append(
+                nn.Conv2d(
+                    self.feat_channels,
+                    self.num_base_priors * 4,
+                    self.pred_kernel_size,
+                    padding=self.pred_kernel_size // 2))
+            if self.with_objectness:
+                self.rtm_obj.append(
+                    nn.Conv2d(
+                        self.feat_channels,
+                        1,
+                        self.pred_kernel_size,
+                        padding=self.pred_kernel_size // 2))
+
+        if self.share_conv:
+            for n in range(len(self.featmap_strides)):
+                for i in range(self.stacked_convs):
+                    self.cls_convs[n][i].conv = self.cls_convs[0][i].conv
+                    self.reg_convs[n][i].conv = self.reg_convs[0][i].conv
 
     def init_weights(self):
         """Initialize weights of the head."""
@@ -131,10 +151,12 @@ class RTMDetHeadModule(BaseModule):
             if is_norm(m):
                 constant_init(m, 1)
         bias_cls = bias_init_with_prob(0.01)
-        normal_init(self.rtm_cls, std=0.01, bias=bias_cls)
-        normal_init(self.rtm_reg, std=0.01)
+        for rtm_cls, rtm_reg in zip(self.rtm_cls, self.rtm_reg):
+            normal_init(rtm_cls, std=0.01, bias=bias_cls)
+            normal_init(rtm_reg, std=0.01)
         if self.with_objectness:
-            normal_init(self.rtm_obj, std=0.01, bias=bias_cls)
+            for rtm_obj in self.rtm_obj:
+                normal_init(rtm_obj, std=0.01, bias=bias_cls)
 
     def forward(self, feats: Tuple[Tensor, ...]) -> tuple:
         """Forward features from the upstream network.
@@ -155,25 +177,26 @@ class RTMDetHeadModule(BaseModule):
 
         cls_scores = []
         bbox_preds = []
-        for idx, (x, scale, stride) in enumerate(
-                zip(feats, self.scales, self.featmap_strides)):
+        for idx, (x, stride) in enumerate(
+                zip(feats, self.featmap_strides)):
             cls_feat = x
             reg_feat = x
 
-            for cls_layer in self.cls_convs:
+            for cls_layer in self.cls_convs[idx]:
                 cls_feat = cls_layer(cls_feat)
-            cls_score = self.rtm_cls(cls_feat)
+            cls_score = self.rtm_cls[idx](cls_feat)
 
-            for reg_layer in self.reg_convs:
+            for reg_layer in self.reg_convs[idx]:
                 reg_feat = reg_layer(reg_feat)
 
             if self.with_objectness:
-                objectness = self.rtm_obj(reg_feat)
+                objectness = self.rtm_obj[idx](reg_feat)
                 cls_score = inverse_sigmoid(
                     sigmoid_geometric_mean(cls_score, objectness))
-
-            reg_dist = scale(self.rtm_reg(reg_feat).exp()).float() * stride[0]
-
+            if self.exp_on_reg:
+                reg_dist = self.rtm_reg[idx](reg_feat).exp() * stride[0]
+            else:
+                reg_dist = self.rtm_reg[idx](reg_feat) * stride[0]
             cls_scores.append(cls_score)
             bbox_preds.append(reg_dist)
         return tuple(cls_scores), tuple(bbox_preds)
