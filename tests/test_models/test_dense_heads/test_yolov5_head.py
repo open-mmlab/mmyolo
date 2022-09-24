@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from random import randint
 from unittest import TestCase
 
 import torch
@@ -17,7 +18,9 @@ class TestYOLOv5Head(TestCase):
         self.head_module = dict(
             type='YOLOv5HeadModule',
             num_classes=2,
-            in_channels=[32, 64, 128],
+            in_channels=[randint(88, 999),
+                         randint(88, 999),
+                         randint(88, 999)],
             featmap_strides=[8, 16, 32],
             num_base_priors=3)
 
@@ -140,3 +143,12 @@ class TestYOLOv5Head(TestCase):
                            'box loss should be non-zero')
         self.assertGreater(onegt_obj_loss.item(), 0,
                            'obj loss should be non-zero')
+
+
+if __name__ == '__main__':
+    for e in range(99):
+        test_model = TestYOLOv5Head()
+        test_model.setUp()
+        test_model.test_predict_by_feat()
+        test_model.test_loss_by_feat()
+        print(f'测试{e}通过')
