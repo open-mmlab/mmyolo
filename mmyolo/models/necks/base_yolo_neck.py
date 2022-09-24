@@ -33,7 +33,7 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
 
     def __init__(self,
                  in_channels: List[int],
-                 out_channels: List[int],
+                 out_channels: int,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  freeze_all: bool = False,
@@ -42,6 +42,7 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg)
         self.in_channels = in_channels
+        out_channels = [out_channels] * len(in_channels) if type(out_channels) is int else out_channels
         self.out_channels = out_channels
         self.deepen_factor = deepen_factor
         self.widen_factor = widen_factor

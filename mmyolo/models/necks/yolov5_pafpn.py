@@ -18,7 +18,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
 
     Args:
         in_channels (List[int]): Number of input channels per scale.
-        out_channels (int): Number of output channels per scale.
+        out_channels (int): Number of output channels (used at each scale)
         deepen_factor (float): Depth multiplier, multiply number of
             blocks in CSP layer by this amount. Defaults to 1.0.
         widen_factor (float): Width multiplier, multiply number of
@@ -35,7 +35,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
 
     def __init__(self,
                  in_channels: List[int],
-                 out_channels: List[int],
+                 out_channels: int,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  num_csp_blocks: int = 1,
