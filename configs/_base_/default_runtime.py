@@ -14,10 +14,7 @@ env_cfg = dict(
     dist_cfg=dict(backend='nccl'),
 )
 
-vis_backends = [
-    dict(type='LocalVisBackend'),
-    # dict(type='TensorboardVisBackend')  # tensorboard logger
-]
+vis_backends = [dict(type='LocalVisBackend')]
 
 visualizer = dict(
     type='mmdet.DetLocalVisualizer',
