@@ -24,7 +24,7 @@ We can see in the above graph, as for P5, `BaseBackbone` includes 1 stem layer a
 
 ### BaseYOLONeck
 
-We reproduce the YOLO series Neck components in the similar way as the `BaseBackbone`, and we can mainly divide them into `Reduce layer` , `UpSample layer` , `TopDown layer` , `DownSample layer`, `BottomUP layer` and `output convolution layer` . Each layer can be customized its internal construction by the inheritance and rewrite from the `build_xx` method.
+We reproduce the YOLO series Neck components in the similar way as the `BaseBackbone`, and we can mainly divide them into `Reduce layer`, `UpSample layer`, `TopDown layer`, `DownSample layer`, `BottomUP layer` and `output convolution layer`. Each layer can be customized its internal construction by the inheritance and rewrite from the `build_xx` method.
 
 ### BaseDenseHead
 
