@@ -45,6 +45,8 @@ class YOLOv5PAFPN(BaseYOLONeck):
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  init_cfg: OptMultiConfig = None):
         self.num_csp_blocks = num_csp_blocks
+        out_channels = [out_channels] * len(in_channels) \
+            if type(out_channels) is int else out_channels
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,
