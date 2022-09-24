@@ -16,7 +16,7 @@ YOLO 系列算法大部分采用了统一的算法搭建结构，典型的如 Da
 2. 可以通过配置实现定制插件功能，用户可以很方便的插入一些类似注意力模块。
 3. 所有子类自动支持 frozen 某些 stage 和 frozen bn 功能。
 
-抽取 BaseYOLONeck 也有同样好处。
+抽象 BaseYOLONeck 也有同样好处。
 
 ### BaseBackbone
 
@@ -28,7 +28,7 @@ YOLO 系列算法大部分采用了统一的算法搭建结构，典型的如 Da
 
 ### BaseDenseHead
 
-MMYOLO 系列沿用 MMDetection 中设计的 `BaseDenseHead` 作为 Head 结构的基类，但是进一步拆分了 HeadModule, 以 YOLOv5 为例，其 [HeadModule](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py#L24) forward 代替了原有的 forward 实现。
+MMYOLO 系列沿用 MMDetection 中设计的 `BaseDenseHead` 作为其 Head 结构的基类，但是进一步拆分了 HeadModule. 以 YOLOv5 为例，其 [HeadModule](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py#L24) 中的 forward 实现代替了原有的 forward 实现。
 
 ## HeadModule
 
@@ -36,12 +36,12 @@ MMYOLO 系列沿用 MMDetection 中设计的 `BaseDenseHead` 作为 Head 结构�
 <img src="https://user-images.githubusercontent.com/33799979/190985845-ed303ad4-3a77-447b-83f9-1feba38d5e24.png" width=800 alt="HeadModule">
 </div>
 
-如上图所示，虚线部分为 [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/mmdet/models/dense_heads/base_dense_head.py) 中的实现，实线部分为 [MMYOLO](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py) 中的实现。与原先的实现相比具备以下优势：
+如上图所示，虚线部分为 [MMDetection](https://github.com/open-mmlab/mmdetection/blob/3.x/mmdet/models/dense_heads/base_dense_head.py) 中的实现，实线部分为 [MMYOLO](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py) 中的实现。MMYOLO版本与原实现相比具备具有以下优势：
 
 1. MMDetection 中将 `bbox_head` 拆分为 `assigner` + `box coder` + `sampler` 三个大的组件，但由于 3 个组件之间的传递为了通用性，需要封装额外的对象来处理，统一之后用户可以不用进行拆分。不刻意强求划分三大组件的好处为：不再需要对内部数据进行数据封装，简化了代码逻辑，减轻了社区使用难度和算法复现难度。
 2. 速度更快，用户在自定义实现算法时候，可以不依赖于原有框架，对部分代码进行深度优化。
 
-总的来说，在 MMYOLO 中只需要做到 `model` + `loss_by_feat` 部分解耦，用户可以通过修改配置实现任意模型配合任意 `loss_by_feat` 计算过程。例如将 YOLOv5 模型应用 YOLOX 的 `loss_by_feat` 等。
+总的来说，在 MMYOLO 中只需要做到将 `model` + `loss_by_feat` 部分解耦，用户就可以通过修改配置实现任意模型配合任意 `loss_by_feat` 的计算过程。例如将 YOLOv5 模型应用 YOLOX 的 `loss_by_feat` 等。
 
 以 MMDetection 中 YOLOX 配置为例，其 Head 模块配置写法为：
 
