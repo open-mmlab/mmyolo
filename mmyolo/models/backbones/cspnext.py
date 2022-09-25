@@ -1,14 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .base_backbone import BaseBackbone
 import math
 from typing import Sequence
 
 import torch.nn as nn
 from mmcv.cnn import ConvModule, DepthwiseSeparableConvModule
-from mmyolo.registry import MODELS
-from mmdet.utils.typing import ConfigType, OptConfigType, OptMultiConfig
-from ..layers import SPPFBottleneck
 from mmdet.models.backbones.csp_darknet import CSPLayer
+from mmdet.utils.typing import ConfigType, OptConfigType, OptMultiConfig
+
+from mmyolo.registry import MODELS
+from ..layers import SPPFBottleneck
+from .base_backbone import BaseBackbone
 
 
 @MODELS.register_module()
@@ -57,29 +58,29 @@ class CSPNeXt(BaseBackbone):
     }
 
     def __init__(
-            self,
-            arch: str = 'P5',
-            deepen_factor: float = 1.0,
-            widen_factor: float = 1.0,
-            input_channels: int = 3,
-            out_indices: Sequence[int] = (2, 3, 4),
-            frozen_stages: int = -1,
-            use_depthwise: bool = False,
-            expand_ratio: float = 0.5,
-            arch_ovewrite: dict = None,
-            spp_kernel_sizes: Sequence[int] = (5, 9, 13),
-            channel_attention: bool = True,
-            conv_cfg: OptConfigType = None,
-            norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
-            act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-            norm_eval: bool = False,
-            init_cfg: OptMultiConfig = dict(
-                type='Kaiming',
-                layer='Conv2d',
-                a=math.sqrt(5),
-                distribution='uniform',
-                mode='fan_in',
-                nonlinearity='leaky_relu')
+        self,
+        arch: str = 'P5',
+        deepen_factor: float = 1.0,
+        widen_factor: float = 1.0,
+        input_channels: int = 3,
+        out_indices: Sequence[int] = (2, 3, 4),
+        frozen_stages: int = -1,
+        use_depthwise: bool = False,
+        expand_ratio: float = 0.5,
+        arch_ovewrite: dict = None,
+        spp_kernel_sizes: Sequence[int] = (5, 9, 13),
+        channel_attention: bool = True,
+        conv_cfg: OptConfigType = None,
+        norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
+        act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+        norm_eval: bool = False,
+        init_cfg: OptMultiConfig = dict(
+            type='Kaiming',
+            layer='Conv2d',
+            a=math.sqrt(5),
+            distribution='uniform',
+            mode='fan_in',
+            nonlinearity='leaky_relu')
     ) -> None:
         self.spp_kernel_sizes = spp_kernel_sizes
         arch_setting = self.arch_settings[arch]
@@ -87,7 +88,8 @@ class CSPNeXt(BaseBackbone):
             arch_setting = arch_ovewrite
         self.channel_attention = channel_attention
         self.use_depthwise = use_depthwise
-        self.conv = DepthwiseSeparableConvModule if use_depthwise else ConvModule
+        self.conv = DepthwiseSeparableConvModule \
+            if use_depthwise else ConvModule
         self.expand_ratio = expand_ratio
         self.conv_cfg = conv_cfg
 
@@ -171,4 +173,3 @@ class CSPNeXt(BaseBackbone):
             act_cfg=self.act_cfg)
         stage.append(csp_layer)
         return stage
-
