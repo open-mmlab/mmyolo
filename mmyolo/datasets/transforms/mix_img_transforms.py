@@ -245,7 +245,6 @@ class Mosaic(BaseMixImageTransform):
         indexes = [random.randint(0, len(dataset)) for _ in range(3)]
         return indexes
 
-    @autocast_box_type()
     def mix_img_transform(self, results: dict) -> dict:
         """Mixed image data transformation.
 
@@ -335,7 +334,6 @@ class Mosaic(BaseMixImageTransform):
         results['gt_ignore_flags'] = mosaic_ignore_flags
         return results
 
-    @autocast_box_type()
     def no_mix_img_transform(self, results: dict) -> dict:
         """Not ixed image data transformation.
 
