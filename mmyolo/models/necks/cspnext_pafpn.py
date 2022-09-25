@@ -1,14 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List,Sequence
+import math
+from typing import Sequence
 
 import torch.nn as nn
+from mmcv.cnn import ConvModule, DepthwiseSeparableConvModule
+from mmdet.models.backbones.csp_darknet import CSPLayer
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
 from .base_yolo_neck import BaseYOLONeck
-import math
-from mmcv.cnn import ConvModule, DepthwiseSeparableConvModule
-from mmdet.models.backbones.csp_darknet import CSPLayer
 
 
 @MODELS.register_module()
@@ -35,6 +35,7 @@ class CSPNeXtPAFPN(BaseYOLONeck):
         init_cfg (dict or list[dict], optional): Initialization config dict.
             Default: None.
     """
+
     def __init__(
         self,
         in_channels: Sequence[int],
@@ -48,7 +49,7 @@ class CSPNeXtPAFPN(BaseYOLONeck):
         upsample_cfg: ConfigType = dict(scale_factor=2, mode='nearest'),
         conv_cfg: bool = None,
         norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
-        act_cfg: ConfigType = dict(type='SiLu',inplace=True),
+        act_cfg: ConfigType = dict(type='SiLu', inplace=True),
         init_cfg: OptMultiConfig = dict(
             type='Kaiming',
             layer='Conv2d',
@@ -58,7 +59,8 @@ class CSPNeXtPAFPN(BaseYOLONeck):
             nonlinearity='leaky_relu')
     ) -> None:
         self.num_csp_blocks = round(num_csp_blocks * deepen_factor)
-        self.conv = DepthwiseSeparableConvModule if use_depthwise else ConvModule
+        self.conv = DepthwiseSeparableConvModule \
+            if use_depthwise else ConvModule
         self.upsample_cfg = upsample_cfg
 
         super().__init__(
@@ -190,12 +192,3 @@ class CSPNeXtPAFPN(BaseYOLONeck):
             1,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
-
-
-
-
-
-
-
-
-

@@ -37,16 +37,17 @@ model = dict(
         act_cfg=dict(type='SiLU', inplace=True)),
     bbox_head=dict(
         type='RTMDetHead',
-        head_module=dict(type='RTMDetSepBNHeadModule',
-                         num_classes=80,
-                         in_channels=256,
-                         stacked_convs=2,
-                         feat_channels=256,
-                         with_objectness=False,
-                         exp_on_reg=True,
-                         share_conv=True,
-                         pred_kernel_size=1,
-                         featmap_strides=[8, 16, 32]),
+        head_module=dict(
+            type='RTMDetSepBNHeadModule',
+            num_classes=80,
+            in_channels=256,
+            stacked_convs=2,
+            feat_channels=256,
+            with_objectness=False,
+            exp_on_reg=True,
+            share_conv=True,
+            pred_kernel_size=1,
+            featmap_strides=[8, 16, 32]),
         prior_generator=dict(
             type='mmdet.MlvlPointGenerator', offset=0, strides=[8, 16, 32]),
         bbox_coder=dict(type='mmdet.DistancePointBBoxCoder'),
@@ -72,15 +73,14 @@ model = dict(
 )
 
 train_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Mosaic',
-         img_scale=img_scale,
-         use_cached=True,
-         max_cached_images=40,
-         pad_val=114.0),
+    dict(
+        type='Mosaic',
+        img_scale=img_scale,
+        use_cached=True,
+        max_cached_images=40,
+        pad_val=114.0),
     dict(
         type='mmdet.RandomResize',
         scale=(img_scale[0] * 2, img_scale[1] * 2),
@@ -101,9 +101,7 @@ train_pipeline = [
 ]
 
 train_pipeline_stage2 = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='mmdet.RandomResize',
@@ -118,9 +116,7 @@ train_pipeline_stage2 = [
 ]
 
 test_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(

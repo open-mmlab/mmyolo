@@ -13,15 +13,14 @@ model = dict(
     bbox_head=dict(head_module=dict(in_channels=128, feat_channels=128)))
 
 train_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Mosaic',
-         img_scale=img_scale,
-         use_cached=True,
-         max_cached_images=40,
-         pad_val=114.0),
+    dict(
+        type='Mosaic',
+        img_scale=img_scale,
+        use_cached=True,
+        max_cached_images=40,
+        pad_val=114.0),
     dict(
         type='mmdet.RandomResize',
         scale=(img_scale[0] * 2, img_scale[1] * 2),
@@ -41,9 +40,7 @@ train_pipeline = [
 ]
 
 train_pipeline_stage2 = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='mmdet.RandomResize',

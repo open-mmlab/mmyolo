@@ -1,31 +1,24 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import copy
-import math
 from typing import List, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
-from mmdet.models.dense_heads.base_dense_head import BaseDenseHead
-from mmdet.models.utils import filter_scores_and_topk, multi_apply
-from mmdet.utils import (ConfigType, InstanceList, MultiConfig, OptConfigType,
-                         OptInstanceList, reduce_mean, OptMultiConfig)
-from mmengine.config import ConfigDict
-from mmengine.dist import get_dist_info
-from mmengine.logging import print_log
-from mmengine.model import BaseModule
+from mmcv.cnn import ConvModule, is_norm
+from mmdet.models.layers.transformer import inverse_sigmoid
+from mmdet.models.task_modules.prior_generators import anchor_inside_flags
+from mmdet.models.task_modules.samplers import PseudoSampler
+from mmdet.models.utils import (images_to_levels, multi_apply,
+                                sigmoid_geometric_mean, unmap)
+from mmdet.structures import SampleList
+from mmdet.utils import (ConfigType, InstanceList, OptConfigType,
+                         OptInstanceList, OptMultiConfig, reduce_mean)
+from mmengine.model import (BaseModule, bias_init_with_prob, constant_init,
+                            normal_init)
 from mmengine.structures import InstanceData
 from torch import Tensor
-from mmdet.models.task_modules.samplers import PseudoSampler
+
 from mmyolo.registry import MODELS, TASK_UTILS
-from ..utils import make_divisible
-from mmcv.cnn import ConvModule, Scale, is_norm
-from mmengine.model import bias_init_with_prob, constant_init, normal_init
-from mmengine.structures import InstanceData
-from mmdet.models.layers.transformer import inverse_sigmoid
-from mmdet.models.utils import (images_to_levels, multi_apply, sigmoid_geometric_mean,
-                     unmap)
 from .yolov5_head import YOLOv5Head
-from mmdet.models.task_modules.prior_generators import anchor_inside_flags
 
 
 @MODELS.register_module()
@@ -41,23 +34,24 @@ class RTMDetSepBNHeadModule(BaseModule):
         act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
             Default: dict(type='ReLU')
     """
+
     def __init__(
-            self,
-            num_classes: int,
-            in_channels: int,
-            widen_factor: float = 1.0,
-            num_base_priors: int = 1,
-            feat_channels: int = 256,
-            stacked_convs: int = 2,
-            featmap_strides: Sequence[int] = [8, 16, 32],
-            share_conv: bool = True,
-            with_objectness: bool = True,
-            pred_kernel_size: int = 1,
-            exp_on_reg: bool = False,
-            conv_cfg: OptConfigType = None,
-            norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
-            act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-            init_cfg: OptMultiConfig = None,
+        self,
+        num_classes: int,
+        in_channels: int,
+        widen_factor: float = 1.0,
+        num_base_priors: int = 1,
+        feat_channels: int = 256,
+        stacked_convs: int = 2,
+        featmap_strides: Sequence[int] = [8, 16, 32],
+        share_conv: bool = True,
+        with_objectness: bool = True,
+        pred_kernel_size: int = 1,
+        exp_on_reg: bool = False,
+        conv_cfg: OptConfigType = None,
+        norm_cfg: ConfigType = dict(type='BN'),
+        act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+        init_cfg: OptMultiConfig = None,
     ):
         super().__init__(init_cfg=init_cfg)
         self.share_conv = share_conv
@@ -177,8 +171,7 @@ class RTMDetSepBNHeadModule(BaseModule):
 
         cls_scores = []
         bbox_preds = []
-        for idx, (x, stride) in enumerate(
-                zip(feats, self.featmap_strides)):
+        for idx, (x, stride) in enumerate(zip(feats, self.featmap_strides)):
             cls_feat = x
             reg_feat = x
 
@@ -275,6 +268,24 @@ class RTMDetHead(YOLOv5Head):
                     self.train_cfg.sampler, default_args=dict(context=self))
             else:
                 self.sampler = PseudoSampler(context=self)
+
+    def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
+        """Forward features from the upstream network.
+
+        Args:
+            x (Tuple[Tensor]): Features from the upstream network, each is
+                a 4D-tensor.
+        Returns:
+            Tuple[List]: A tuple of multi-level classification scores, bbox
+            predictions, and objectnesses.
+        """
+        return self.head_module(x)
+
+    def predict(self,
+                x: Tuple[Tensor],
+                batch_data_samples: SampleList,
+                rescale: bool = True) -> InstanceList:
+        return super(YOLOv5Head, self).predict(x, batch_data_samples, rescale)
 
     def loss_by_feat(
             self,
@@ -531,8 +542,8 @@ class RTMDetHead(YOLOv5Head):
         # When using sampling method, avg_factor is usually the sum of
         # positive and negative priors. When using `PseudoSampler`,
         # `avg_factor` is usually equal to the number of positive priors.
-        avg_factor = sum(
-            [results.avg_factor for results in sampling_results_list])
+        avg_factor = sum(results.avg_factor
+                         for results in sampling_results_list)
         # split targets to a list w.r.t. multiple levels
         anchors_list = images_to_levels(all_anchors, num_level_anchors)
         labels_list = images_to_levels(all_labels, num_level_anchors)

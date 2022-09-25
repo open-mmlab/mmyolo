@@ -45,6 +45,7 @@ class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
         self.use_cached = use_cached
         self.max_cached_images = max_cached_images
         self.random_pop = random_pop
+        self.results_cache = []
 
         if pre_transform is None:
             self.pre_transform = None
@@ -128,7 +129,9 @@ class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
                 indexes = [indexes]
 
             if self.use_cached:
-                mix_results = [copy.deepcopy(self.results_cache[i]) for i in indexes]
+                mix_results = [
+                    copy.deepcopy(self.results_cache[i]) for i in indexes
+                ]
             else:
                 # get images information will be used for Mosaic or MixUp
                 mix_results = [
