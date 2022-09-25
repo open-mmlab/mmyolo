@@ -12,8 +12,7 @@ YOLOv5 是一个面向实时工业应用而开源的目标检测算法，受到�
 更多的在于开源库的实用和鲁棒性。简单来说 YOLOv5 开源库的主要特点为：
 
 1. **友好和完善的部署支持**
-2. **算法训练速度极快**，在 300 epoch 情况下训练时长和大部分 one-stage 算法如 RetinaNet、ATSS 和 two-stage 算法如 Faster R-CNN
-   12 epoch 时间接近
+2. **算法训练速度极快**，在 300 epoch 情况下训练时长和大部分 one-stage 算法如 RetinaNet、ATSS 和 two-stage 算法如 Faster R-CNN 12 epoch 时间接近
 3. 框架进行了**非常多的 corner case 优化**，功能和文档也比较丰富
 
 本文将从 YOLOv5 算法本身原理讲起，然后重点分析 MMYOLO 中的实现。关于 YOLOv5 的使用指南和速度等对比请阅读后续文档。
@@ -45,7 +44,7 @@ YOLOv5 官方 release 地址：https://github.com/ultralytics/yolov5/releases/ta
 <img alt="训练测试策略" src="https://user-images.githubusercontent.com/40284075/190542423-f6b20d8e-c82a-4a34-9065-c161c5e29e7c.png"/>
 </div>
 
-下面将从原理和结合 MMYOLO 的具体实现方面进行简要分析。
+下面将结合 MMYOLO 的具体实现方面对YoloV5远离进行简要分析。
 
 ### 1.1 数据增强模块
 
