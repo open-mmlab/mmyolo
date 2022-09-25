@@ -21,6 +21,14 @@ class YOLOv5VOCDataset(VOCDataset):
 
         self.batch_shapes_cfg = batch_shapes_cfg
         super().__init__(*args, **kwargs)
+        # TODO: The code is to avoid error in mmengine.
+        #  This should be removed while mmdet update.
+        if 'VOC2007' in self.sub_data_root:
+            self._metainfo['DATASET_TYPE'] = 'VOC'
+        elif 'VOC2012' in self.sub_data_root:
+            self._metainfo['DATASET_TYPE'] = 'VOC'
+        else:
+            self._metainfo['DATASET_TYPE'] = None
 
     def full_init(self):
         """rewrite full_init() to be compatible with serialize_data in
@@ -57,17 +65,3 @@ class YOLOv5VOCDataset(VOCDataset):
             return self.pipeline(data_info)
         else:
             return super().prepare_data(idx)
-
-    @property
-    def metainfo(self) -> dict:
-        """To use ConcatDataset while training, need to override this function.
-        Get meta information of dataset.
-
-        Returns:
-            dict: meta information collected from ``BaseDataset.METAINFO``,
-            annotation file and metainfo argument during instantiation.
-        """
-        metainfo = copy.deepcopy(self._metainfo)
-        if 'DATASET_TYPE' in metainfo:
-            del metainfo['DATASET_TYPE']
-        return metainfo
