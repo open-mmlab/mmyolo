@@ -81,3 +81,87 @@ Mosaic is one kind of mixed data augmentation because it requires 4 image stitch
 6. The annotation of each image will be processed accordingly
 
 Note: Since 4 images are spliced, the output area will be expanded by 4 times, from 640x640 to 1280x1280. To restore to 640x640, there must be another **RandomAffine** transformation. Otherwise, the image area will always be 4 times larger.
+
+#### 1.1.2 RandomAffine
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190542871-14e91a42-329f-4084-aec5-b3e412e5364b.png"/>
+</div>
+
+RandomAffine transformation serves two primary purposes:
+
+1. Perform random geometric affine transformation on the image
+2. Restore the `4x` enlarged image output by Mosaic to 640x640 size
+
+RandomAffine includes geometric enhancement operations such as translation, rotation, scaling, and staggering. Moreover, Mosaic and RandomAffine are relatively strong enhancement operations that will introduce considerable noise. Therefore, the enhanced annotation needs to be processed, and the filtering rule is:
+
+1. The height and width of the enhanced `gt bbox` should be larger than `wh_thr`.
+2. The area of `gt bbox` before enhancement and the area of `gt bbox` after enhancement should be larger than `ar_thr` to prevent too serious enhancement.
+3. The maximum aspect ratio should be smaller than `area_thr` to prevent the aspect ratio from changing too much.
+
+Since the annotation box will become larger after rotation, leading to inaccuracy, rotation data enhancement is rarely used in object detection.
+
+#### 1.1.3 MixUp
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190543076-db60e4b2-0552-4cf4-ab45-259d1ccbd5a6.png"/>
+</div>
+
+Like Mosaic, MixUp is also a mixed image enhancement. It first randomly selects an image. Then the two images are randomly mixed. There are many ways to achieve it. The common practice is:
+Either the labels are spliced directly, or the labels also use alpha blending. The author's approach is very simple. The labels are spliced directly, and the images are mixed by distribution sampling.
+
+Note:
+**In the MixUp of YOLOv5, the other image randomly selected must be enhanced by `Mosaic + RandomAffine` before the mixing as well. This is not the same as some implementations from other open-sourced libraries**.
+
+### 1.1.4 Image blur and other data enhancements
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190543533-8b9ece51-676b-4a7d-a7d0-597e2dd1d42e.png"/>
+</div>
+
+The remaining data enhancements include:
+
+- **Image blur and other transformations implemented with Albu**
+- **HSV color space enhancements**
+- **Random horizontal flips**
+
+The `Albu` third-party data augmentation library has been encapsulated in the MMDetection open-sourced library so that users can use any data augmentation functions provided in the `Albu` library simply through configuration.
+As HSV color space enhancement and random horizontal flip are relatively conventional data enhancements, there will be no special introduction.
+
+#### 1.1.5 MMYOLO implementation analysis
+
+Conventional single-image data augmentation, such as random flipping, is relatively easy to implement, while Mosaic-like mixed data augmentation is not so easy. In the YOLOX algorithm reproduced by MMDetection, the concept of `MultiImageMixDataset` dataset wrapper is proposed, and its implementation process is as follows:
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190543666-d5a22ed7-46a0-4696-990a-12ebde7f8907.png"/>
+</div>
+
+For mixed data enhancement such as Mosaic, an additional `get_indexes` method is proposed to obtain indexes of other images. Then Mosaic enhancement can be performed after obtaining 4 image information.
+Taking YOLOX implemented in MMDetection as an example, its configuration file is written as follows:
+
+```python
+train_pipeline = [
+    dict(type='Mosaic', img_scale=img_scale, pad_val=114.0),
+    dict(
+        type='RandomAffine',
+        scaling_ratio_range=(0.1, 2),
+        border=(-img_scale[0] // 2, -img_scale[1] // 2)),
+    dict(
+        type='MixUp',
+        img_scale=img_scale,
+        ratio_range=(0.8, 1.6),
+        pad_val=114.0),
+    ...
+]
+
+train_dataset = dict(
+    # use MultiImageMixDataset wrapper to support mosaic and mixup
+    type='MultiImageMixDataset',
+    dataset=dict(
+        type='CocoDataset',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='LoadAnnotations', with_bbox=True)
+        ]),
+    pipeline=train_pipeline)
+```

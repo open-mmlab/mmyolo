@@ -135,14 +135,14 @@ MMDetection 开源库中已经对 Albu 第三方数据增强库进行了封装�
 
 #### 1.1.5 MMYOLO 实现解析
 
-常规的单图数据增强例如随机翻转等比较容易实现，而 Mosiac 类的混合数据增强则不太容易。在 MMDetection 复现的 YOLOX 算法中
+常规的单图数据增强例如随机翻转等比较容易实现，而 mosaic 类的混合数据增强则不太容易。在 MMDetection 复现的 YOLOX 算法中
 提出了 MultiImageMixDataset 数据集包装器的概念，其实现过程如下：
 
 <div align=center >
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190543666-d5a22ed7-46a0-4696-990a-12ebde7f8907.png"/>
 </div>
 
-对于 Mosiac 等混合类数据增强，会额外实现一个 `get_indexes` 方法用来获取其他图片索引，然后得到 4 张图片信息后就可以进行 Mosiac 增强了。
+对于 mosaic 等混合类数据增强，会额外实现一个 `get_indexes` 方法用来获取其他图片索引，然后得到 4 张图片信息后就可以进行 mosaic 增强了。
 以 MMDetection 中实现的 YOLOX 为例，其配置文件写法如下所示：
 
 ```python
