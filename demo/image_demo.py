@@ -10,7 +10,7 @@ from mmyolo.utils import register_all_modules
 
 def parse_args():
     parser = ArgumentParser()
-    parser.add_argument('img', default='dog.jpg', help='Image file')
+    parser.add_argument('img', help='Image file')
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument('--out-file', default=None, help='Path to output file')

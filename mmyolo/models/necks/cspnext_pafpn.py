@@ -62,6 +62,8 @@ class CSPNeXtPAFPN(BaseYOLONeck):
         self.conv = DepthwiseSeparableConvModule \
             if use_depthwise else ConvModule
         self.upsample_cfg = upsample_cfg
+        self.expand_ratio = expand_ratio
+        self.conv_cfg = conv_cfg
 
         super().__init__(
             in_channels=[
