@@ -4,6 +4,7 @@ import copy
 from abc import ABCMeta, abstractmethod
 from typing import List, Optional, Sequence, Tuple, Union
 
+import cv2
 import mmcv
 import numpy as np
 from mmcv.transforms import BaseTransform
@@ -88,7 +89,11 @@ class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
         """
 
         if random.uniform(0, 1) > self.prob:
-            return results
+            if hasattr(self, 'no_mix_img_transform'):
+                results = self.no_mix_img_transform(results)
+                return results
+            else:
+                return results
 
         assert 'dataset' in results
 
@@ -328,6 +333,42 @@ class Mosaic(BaseMixImageTransform):
         results['gt_bboxes'] = mosaic_bboxes
         results['gt_bboxes_labels'] = mosaic_bboxes_labels
         results['gt_ignore_flags'] = mosaic_ignore_flags
+        return results
+
+    @autocast_box_type()
+    def no_mix_img_transform(self, results: dict) -> dict:
+        """Not ixed image data transformation.
+
+        Args:
+            results (dict): Result dict.
+
+        Returns:
+            results (dict): Updated result dict.
+        """
+        new_shape = self.img_scale
+        img = results['img']
+        gt_bboxes = results['gt_bboxes']
+        shape = results['img_shape']
+        scale = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
+
+        # Compute padding
+        resize_shape = int(round(shape[1] * scale)), int(round(shape[0] * scale))
+        padh, padw = new_shape[0] - resize_shape[1], new_shape[1] - resize_shape[0]  # wh padding
+
+        # resize
+        if shape[::-1] != resize_shape:
+            img = mmcv.imresize(img, resize_shape)
+            gt_bboxes.rescale_([scale, scale])
+
+        top, left = int(round(padh // 2 - 0.1)), int(round(padw // 2 - 0.1))
+        bottom, right = padh - top, padw - left
+        gt_bboxes.translate_([left, top])
+
+        img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=self.pad_val)  # add border
+        results['img'] = img
+        results['img_shape'] = new_shape
+        results['gt_bboxes'] = gt_bboxes
+
         return results
 
     def _mosaic_combine(
