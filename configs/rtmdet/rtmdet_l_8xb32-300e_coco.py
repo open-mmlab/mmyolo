@@ -43,6 +43,8 @@ model = dict(
             in_channels=256,
             stacked_convs=2,
             feat_channels=256,
+            norm_cfg=dict(type='SyncBN'),
+            act_cfg=dict(type='SiLU', inplace=True),
             with_objectness=False,
             exp_on_reg=True,
             share_conv=True,
@@ -56,11 +58,12 @@ model = dict(
             use_sigmoid=True,
             beta=2.0,
             loss_weight=1.0),
-        loss_bbox=dict(type='mmdet.GIoULoss', loss_weight=2.0),
-        norm_cfg=dict(type='SyncBN'),
-        act_cfg=dict(type='SiLU', inplace=True)),
+        loss_bbox=dict(type='mmdet.GIoULoss', loss_weight=2.0)),
     train_cfg=dict(
-        assigner=dict(type='mmdet.DynamicSoftLabelAssigner', topk=13),
+        assigner=dict(
+            type='mmdet.DynamicSoftLabelAssigner',
+            topk=13,
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D')),
         allowed_border=-1,
         pos_weight=-1,
         debug=False),
@@ -91,7 +94,7 @@ train_pipeline = [
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(
-        type='MixUp',
+        type='YOLOXMixUp',
         img_scale=img_scale,
         use_cached=True,
         ratio_range=(1.0, 1.0),
@@ -206,9 +209,9 @@ custom_hooks = [
         update_buffers=True,
         priority=49),
     dict(
-        type='YOLOXModeSwitchHook',
-        num_last_epochs=stage2_num_epochs,
-        new_train_pipeline=train_pipeline_stage2)
+        type='mmdet.PipelineSwitchHook',
+        switch_epoch=max_epochs - stage2_num_epochs,
+        switch_pipeline=train_pipeline_stage2)
 ]
 
 train_cfg = dict(

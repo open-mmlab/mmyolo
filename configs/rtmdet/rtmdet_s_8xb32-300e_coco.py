@@ -1,16 +1,21 @@
 _base_ = './rtmdet_l_8xb32-300e_coco.py'
-checkpoint = 'TODO:imagenet_pretrain'  # noqa
+checkpoint = None  # noqa
 
+deepen_factor = 0.33
+widen_factor = 0.5
 img_scale = _base_.img_scale
 
 model = dict(
     backbone=dict(
-        deepen_factor=0.33,
-        widen_factor=0.5,
+        deepen_factor=deepen_factor,
+        widen_factor=widen_factor,
         init_cfg=dict(
             type='Pretrained', prefix='backbone.', checkpoint=checkpoint)),
-    neck=dict(in_channels=[128, 256, 512], out_channels=128, num_csp_blocks=1),
-    bbox_head=dict(head_module=dict(in_channels=128, feat_channels=128)))
+    neck=dict(
+        deepen_factor=deepen_factor,
+        widen_factor=widen_factor,
+    ),
+    bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
 
 train_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
@@ -30,7 +35,7 @@ train_pipeline = [
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(
-        type='MixUp',
+        type='YOLOXMixUp',
         img_scale=img_scale,
         use_cached=True,
         ratio_range=(1.0, 1.0),
@@ -64,7 +69,7 @@ custom_hooks = [
         update_buffers=True,
         priority=49),
     dict(
-        type='YOLOXModeSwitchHook',
-        num_last_epochs=20,
-        new_train_pipeline=train_pipeline_stage2)
+        type='mmdet.PipelineSwitchHook',
+        switch_epoch=20,
+        switch_pipeline=train_pipeline_stage2)
 ]
