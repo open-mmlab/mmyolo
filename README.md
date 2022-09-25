@@ -45,8 +45,6 @@ English | [简体中文](README_zh-CN.md)
 MMYOLO is an open source toolbox for YOLO series algorithms based on PyTorch and [MMDetection](https://github.com/open-mmlab/mmdetection). It is a part of the [OpenMMLab](https://openmmlab.com/) project.
 
 The master branch works with **PyTorch 1.6+**.
-
-<img src="https://user-images.githubusercontent.com/12907710/137271636-56ba1cd2-b110-4812-8221-b4c120320aa9.png"/>
 <img src="https://user-images.githubusercontent.com/45811724/190993591-bd3f1f11-1c30-4b93-b5f4-05c9ff64ff7f.gif"/>
 
 <details open>
@@ -91,11 +89,12 @@ pip install openmim
 mim install mmengine
 mim install "mmcv>=2.0.0rc1"
 mim install "mmdet>=3.0.0rc0"
-# for albumentations
-pip install -r requirements/albu.txt
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
-mim install -e .
+# Install albumentations
+pip install -r requirements/albu.txt
+# Install MMYOLO
+mim install -v -e .
 ```
 
 ## Tutorial
