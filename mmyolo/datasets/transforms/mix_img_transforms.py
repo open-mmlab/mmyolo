@@ -76,6 +76,7 @@ class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
         """
         pass
 
+    @autocast_box_type()
     def transform(self, results: dict) -> dict:
         """Data augmentation function.
 
@@ -279,7 +280,6 @@ class Mosaic(BaseMixImageTransform):
         indexes = [random.randint(0, len(dataset)) for _ in range(3)]
         return indexes
 
-    @autocast_box_type()
     def mix_img_transform(self, results: dict) -> dict:
         """Mixed image data transformation.
 
@@ -516,7 +516,6 @@ class YOLOv5MixUp(BaseMixImageTransform):
         """
         return random.randint(0, len(dataset))
 
-    @autocast_box_type()
     def mix_img_transform(self, results: dict) -> dict:
         """YOLOv5 MixUp transform function.
 
@@ -661,7 +660,6 @@ class YOLOXMixUp(BaseMixImageTransform):
         """
         return random.randint(0, len(dataset))
 
-    @autocast_box_type()
     def mix_img_transform(self, results: dict) -> dict:
         """YOLOX MixUp transform function.
 
