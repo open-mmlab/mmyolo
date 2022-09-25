@@ -33,7 +33,7 @@ train_dataset = dict(
 
 However, this implementation has a disadvantage: users unfamiliar with MMDetection will forget those data augmentation methods like Mosaic must be used together with `MultiImageMixDataset`, increasing the usage complexity. Moreover, it is hard to understand as well.
 
-To address this problem, further simplications are made in MMYOLO, which directly let `pipeline` get `dataset`. In this way the implementation of `Mosaic` and other data augmentation methods can be achieved and used just as the random flip, without a data wrapper anymore. The new configuration method is as follows:
+To address this problem, further simplifications are made in MMYOLO, which directly lets `pipeline` get `dataset`. In this way, the implementation of `Mosaic` and other data augmentation methods can be achieved and used just as the random flip, without a data wrapper anymore. The new configuration method is as follows:
 
 ```python
 pre_transform = [
