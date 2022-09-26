@@ -92,3 +92,25 @@ class TestYOLOv6EfficientRep(TestCase):
         assert feat[2].shape == torch.Size((1, 32, 8, 8))
         assert feat[3].shape == torch.Size((1, 64, 4, 4))
         assert feat[4].shape == torch.Size((1, 128, 2, 2))
+
+        # Test YOLOv6EfficientRep with BatchNorm forward
+        model = YOLOv6EfficientRep(plugins=[
+            dict(
+                cfg=dict(type='mmdet.DropBlock', drop_prob=0.1, block_size=11),
+                stages=(False, False, True, True)),
+        ])
+
+        assert len(model.stage1) == 2
+        assert len(model.stage2) == 2
+        assert len(model.stage3) == 3
+        assert len(model.stage4) == 3
+
+        model.train()
+        imgs = torch.randn(1, 3, 64, 64)
+        feat = model(imgs)
+        assert len(feat) == 5
+        assert feat[0].shape == torch.Size((1, 8, 32, 32))
+        assert feat[1].shape == torch.Size((1, 16, 16, 16))
+        assert feat[2].shape == torch.Size((1, 32, 8, 8))
+        assert feat[3].shape == torch.Size((1, 64, 4, 4))
+        assert feat[4].shape == torch.Size((1, 128, 2, 2))
