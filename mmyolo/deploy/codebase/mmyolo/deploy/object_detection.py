@@ -24,7 +24,7 @@ class MMYOLO(MMCodebase):
         from mmdet.utils.setup_env import register_all_modules \
             as register_all_modules_mmdet
         register_all_modules_mmyolo(False)
-        register_all_modules_mmdet(False)
+        register_all_modules_mmdet(True)
 
 
 def _get_dataset_metainfo(model_cfg: Config):
