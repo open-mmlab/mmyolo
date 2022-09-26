@@ -15,7 +15,8 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
     ),
-    bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
+    bbox_head=dict(
+        head_module=dict(widen_factor=widen_factor, exp_on_reg=False)))
 
 train_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
