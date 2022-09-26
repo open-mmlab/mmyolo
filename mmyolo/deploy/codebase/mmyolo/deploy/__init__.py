@@ -1,4 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .object_detection import MMYolo, YoloObjectDetection
+from .object_detection import MMYOLO, YOLOObjectDetection
 
-__all__ = ['MMYolo', 'YoloObjectDetection']
+__all__ = ['MMYOLO', 'YOLOObjectDetection']

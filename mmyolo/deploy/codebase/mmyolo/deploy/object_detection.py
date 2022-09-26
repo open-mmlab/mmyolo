@@ -12,8 +12,8 @@ MMYOLO_TASK = Registry('mmyolo_tasks')
 
 
 @CODEBASE.register_module(Codebase.MMYOLO.value)
-class MMYolo(MMCodebase):
-    """MMYolo codebase class."""
+class MMYOLO(MMCodebase):
+    """MMYOLO codebase class."""
 
     task_registry = MMYOLO_TASK
 
@@ -63,7 +63,7 @@ def _get_dataset_metainfo(model_cfg: Config):
 
 
 @MMYOLO_TASK.register_module(Task.OBJECT_DETECTION.value)
-class YoloObjectDetection(ObjectDetection):
+class YOLOObjectDetection(ObjectDetection):
 
     def get_visualizer(self, name: str, save_dir: str):
         from mmdet.visualization import DetLocalVisualizer  # noqa: F401,F403
