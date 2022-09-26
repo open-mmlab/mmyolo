@@ -191,6 +191,7 @@ class CSPNeXtPAFPN(BaseYOLONeck):
         return self.conv(
             self.in_channels[idx],
             self.out_channels,
-            1,
+            3,
+            padding=1,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
