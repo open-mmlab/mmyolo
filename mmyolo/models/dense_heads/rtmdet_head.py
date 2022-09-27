@@ -30,10 +30,32 @@ class RTMDetSepBNHeadModule(BaseModule):
         num_classes (int): Number of categories excluding the background
             category.
         in_channels (int): Number of channels in the input feature map.
+        widen_factor (float): Width multiplier, multiply number of
+            channels in each layer by this amount. Defaults to 1.0.
+        num_base_priors:int: The number of priors (points) at a point
+            on the feature grid.  Defaults to 1.
+        feat_channels (int): Number of hidden channels. Used in child classes.
+            Defaults to 256
+        stacked_convs (int): Number of stacking convs of the head.
+            Defaults to 2.
+        featmap_strides (Sequence[int]): Downsample factor of each feature map.
+             Defaults to (8, 16, 32).
+        share_conv (bool): Whether to share conv layers between stages.
+            Defaults to True.
         with_objectness (bool): Whether to add an objectness branch.
             Defaults to True.
+        pred_kernel_size (int): Kernel size of ``nn.Conv2d``. Defaults to 1.
+        exp_on_reg (bool): Whether to apply exp on reg branch.
+            Defaults to False.
+        conv_cfg (:obj:`ConfigDict` or dict, optional): Config dict for
+            convolution layer. Defaults to None.
+        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
+            layer. Defaults to ``dict(type='BN')``.
         act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
-            Default: dict(type='ReLU')
+            Default: dict(type='SiLU', inplace=True).
+        init_cfg (:obj:`ConfigDict` or list[:obj:`ConfigDict`] or dict or
+            list[dict], optional): Initialization config dict.
+            Defaults to None.
     """
 
     def __init__(
@@ -290,6 +312,37 @@ class RTMDetHead(YOLOv5Head):
                         cfg: Optional[ConfigDict] = None,
                         rescale: bool = True,
                         with_nms: bool = True) -> List[InstanceData]:
+        """Transform a batch of output features extracted from the head into
+        bbox results.
+
+        Args:
+            cls_scores (list[Tensor]): Classification scores for all
+                scale levels, each is a 4D-tensor, has shape
+                (batch_size, num_priors * num_classes, H, W).
+            bbox_preds (list[Tensor]): Box energies / deltas for all
+                scale levels, each is a 4D-tensor, has shape
+                (batch_size, num_priors * 4, H, W).
+            batch_img_metas (list[dict], Optional): Batch image meta info.
+                Defaults to None.
+            cfg (ConfigDict, optional): Test / postprocessing
+                configuration, if None, test_cfg would be used.
+                Defaults to None.
+            rescale (bool): If True, return boxes in original image space.
+                Defaults to False.
+            with_nms (bool): If True, do nms before return boxes.
+                Defaults to True.
+
+        Returns:
+            list[:obj:`InstanceData`]: Object detection results of each image
+            after the post process. Each item usually contains following keys.
+
+                - scores (Tensor): Classification scores, has a shape
+                  (num_instance, )
+                - labels (Tensor): Labels of bboxes, has a shape
+                  (num_instances, ).
+                - bboxes (Tensor): Has a shape (num_instances, 4),
+                  the last dimension 4 arrange as (x1, y1, x2, y2).
+        """
         return super(YOLOv5Head, self).predict_by_feat(
             cls_scores,
             bbox_preds,

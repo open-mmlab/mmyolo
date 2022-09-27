@@ -31,8 +31,6 @@ class CSPNeXt(BaseBackbone):
             Defaults to False.
         arch_ovewrite (list): Overwrite default arch settings.
             Defaults to None.
-        spp_kernel_sizes: (tuple[int]): Sequential of kernel sizes of SPP
-            layers. Defaults to (5, 9, 13).
         channel_attention (bool): Whether to add channel attention in each
             stage. Defaults to True.
         conv_cfg (:obj:`ConfigDict` or dict, optional): Config dict for

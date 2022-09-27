@@ -19,6 +19,10 @@ class CSPNeXtPAFPN(BaseModule):
     Args:
         in_channels (Sequence[int]): Number of input channels per scale.
         out_channels (int): Number of output channels (used at each scale)
+        deepen_factor (float): Depth multiplier, multiply number of
+            blocks in CSP layer by this amount. Defaults to 1.0.
+        widen_factor (float): Width multiplier, multiply number of
+            channels in each layer by this amount. Defaults to 1.0.
         num_csp_blocks (int): Number of bottlenecks in CSPLayer.
             Defaults to 3.
         use_depthwise (bool): Whether to use depthwise separable convolution in
