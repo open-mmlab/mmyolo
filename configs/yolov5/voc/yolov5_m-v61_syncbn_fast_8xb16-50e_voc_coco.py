@@ -1,5 +1,19 @@
 _base_ = './yolov5_m-v61_syncbn_fast_8xb16-50e_voc.py'
 
+metainfo = {
+    'CLASSES':
+        ('aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 'cat',
+         'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike', 'person',
+         'pottedplant', 'sheep', 'sofa', 'train', 'tvmonitor'),
+    # PALETTE is a list of color tuples, which is used for visualization.
+    'PALETTE': [(106, 0, 228), (119, 11, 32), (165, 42, 42), (0, 0, 192),
+                (197, 226, 255), (0, 60, 100), (0, 0, 142), (255, 77, 255),
+                (153, 69, 1), (120, 166, 157), (0, 182, 199),
+                (0, 226, 252), (182, 182, 255), (0, 0, 230), (220, 20, 60),
+                (163, 255, 0), (0, 82, 0), (3, 95, 161), (0, 80, 100),
+                (183, 130, 88)]
+}
+
 img_scale = (512, 512)
 test_pipeline = [
     dict(
@@ -21,7 +35,7 @@ test_pipeline = [
 data_root_coco = 'data/coco_voc/'
 dataset_type_coco = 'YOLOv5CocoDataset'
 persistent_workers = True
-val_batch_size_per_gpu = 1
+val_batch_size_per_gpu = 32
 val_num_workers = 2
 
 
@@ -47,7 +61,8 @@ val_dataloader = dict(
         data_prefix=dict(img='test/'),
         ann_file='annotations/test.json',
         pipeline=test_pipeline,
-        batch_shapes_cfg=batch_shapes_cfg),
+        # batch_shapes_cfg=batch_shapes_cfg,
+        metainfo=metainfo),
     _delete_=True)
 
 test_dataloader = val_dataloader
@@ -59,7 +74,7 @@ custom_hooks = [
         momentum=0.0001,
         update_buffers=True,
         priority=49,
-        strict_load=False
+        strict_load=True
     )
 ]
 
@@ -70,5 +85,8 @@ val_evaluator = dict(
     metric='bbox',
     _delete_=True)
 test_evaluator = val_evaluator
-
+# train_cfg = dict(
+#     type='EpochBasedTrainLoop',
+#     # max_epochs=max_epochs,
+#     val_interval=1)
 load_from = 'yolov5m.pth'
