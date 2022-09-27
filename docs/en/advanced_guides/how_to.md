@@ -11,9 +11,6 @@ model = dict(
     backbone=dict(
         plugins=[
             dict(
-                cfg=dict(type='mmdet.DropBlock', drop_prob=0.1, block_size=11),
-                stages=(False, False, True, True)),
-            dict(
                 cfg=dict(
                     type='mmdet.GeneralizedAttention',
                     spatial_range=-1,

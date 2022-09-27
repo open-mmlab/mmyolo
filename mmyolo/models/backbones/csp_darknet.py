@@ -219,9 +219,9 @@ class YOLOXCSPDarknet(BaseBackbone):
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None):
         self.spp_kernal_sizes = spp_kernal_sizes
-        super().__init__(self.arch_settings[arch], plugins, deepen_factor,
-                         widen_factor, input_channels, out_indices,
-                         frozen_stages, norm_cfg, act_cfg, norm_eval, init_cfg)
+        super().__init__(self.arch_settings[arch], deepen_factor, widen_factor,
+                         input_channels, out_indices, frozen_stages, plugins,
+                         norm_cfg, act_cfg, norm_eval, init_cfg)
 
     def build_stem_layer(self) -> nn.Module:
         """Build a stem layer."""
