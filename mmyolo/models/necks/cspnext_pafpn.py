@@ -48,7 +48,7 @@ class CSPNeXtPAFPN(BaseYOLONeck):
         expand_ratio: float = 0.5,
         upsample_cfg: ConfigType = dict(scale_factor=2, mode='nearest'),
         conv_cfg: bool = None,
-        norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
+        norm_cfg: ConfigType = dict(type='BN'),
         act_cfg: ConfigType = dict(type='SiLu', inplace=True),
         init_cfg: OptMultiConfig = dict(
             type='Kaiming',

@@ -10,8 +10,7 @@ model = dict(
     backbone=dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        init_cfg=dict(
-            type='Pretrained', prefix='backbone.', checkpoint=checkpoint)),
+        init_cfg=dict(checkpoint=checkpoint)),
     neck=dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
@@ -28,8 +27,8 @@ train_pipeline = [
         type='Mosaic',
         img_scale=img_scale,
         use_cached=True,
-        max_cached_images=20,
-        random_pop=False,
+        max_cached_images=20,  # note
+        random_pop=False,  # note
         pad_val=114.0),
     dict(
         type='mmdet.RandomResize',
@@ -44,11 +43,11 @@ train_pipeline = [
         type='YOLOXMixUp',
         img_scale=(640, 640),
         ratio_range=(1.0, 1.0),
-        max_cached_images=10,
+        max_cached_images=10,  # note
         use_cached=True,
-        random_pop=False,
+        random_pop=False,  # note
         pad_val=(114, 114, 114),
-        prob=0.5),
+        prob=0.5),  # note
     dict(type='mmdet.PackDetInputs')
 ]
 

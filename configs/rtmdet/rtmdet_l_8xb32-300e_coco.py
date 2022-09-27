@@ -25,15 +25,17 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         channel_attention=True,
-        norm_cfg=dict(type='SyncBN'),
+        norm_cfg=dict(type='BN'),
         act_cfg=dict(type='SiLU', inplace=True)),
     neck=dict(
         type='CSPNeXtPAFPN',
+        deepen_factor=deepen_factor,
+        widen_factor=widen_factor,
         in_channels=[256, 512, 1024],
         out_channels=256,
         num_csp_blocks=3,
         expand_ratio=0.5,
-        norm_cfg=dict(type='SyncBN'),
+        norm_cfg=dict(type='BN'),
         act_cfg=dict(type='SiLU', inplace=True)),
     bbox_head=dict(
         type='RTMDetHead',
@@ -43,7 +45,7 @@ model = dict(
             in_channels=256,
             stacked_convs=2,
             feat_channels=256,
-            norm_cfg=dict(type='SyncBN'),
+            norm_cfg=dict(type='BN'),
             act_cfg=dict(type='SiLU', inplace=True),
             with_objectness=False,
             exp_on_reg=True,
@@ -139,7 +141,7 @@ train_dataloader = dict(
         data_root=data_root,
         ann_file='annotations/instances_train2017.json',
         data_prefix=dict(img='train2017/'),
-        filter_cfg=dict(filter_empty_gt=False, min_size=32),
+        filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=train_pipeline))
 
 val_dataloader = dict(
