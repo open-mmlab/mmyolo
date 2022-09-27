@@ -1,6 +1,6 @@
 _base_ = './rtmdet_s_8xb32-300e_coco.py'
 
-checkpoint = None  # noqa
+checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext_tiny/cspnext-tiny_imagenet_600e.pth'  # noqa
 
 deepen_factor = 0.167
 widen_factor = 0.375
@@ -33,6 +33,7 @@ train_pipeline = [
         type='mmdet.RandomResize',
         scale=(1280, 1280),
         ratio_range=(0.5, 2.0),
+        resize_type='mmdet.Resize',
         keep_ratio=True),
     dict(type='mmdet.RandomCrop', crop_size=(640, 640)),
     dict(type='mmdet.YOLOXHSVRandomAug'),
