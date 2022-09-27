@@ -8,8 +8,16 @@ deepen_factor = 1.0
 widen_factor = 1.0
 max_epochs = 300
 stage2_num_epochs = 20
-base_lr = 0.004
 interval = 10
+
+train_batch_size_per_gpu = 32
+train_num_workers = 10
+val_batch_size_per_gpu = 5
+val_num_workers = 10
+# persistent_workers must be False if num_workers is 0.
+persistent_workers = True
+strides = [8, 16, 32]
+base_lr = 0.004
 
 model = dict(
     type='YOLODetector',
@@ -51,9 +59,9 @@ model = dict(
             exp_on_reg=True,
             share_conv=True,
             pred_kernel_size=1,
-            featmap_strides=[8, 16, 32]),
+            featmap_strides=strides),
         prior_generator=dict(
-            type='mmdet.MlvlPointGenerator', offset=0, strides=[8, 16, 32]),
+            type='mmdet.MlvlPointGenerator', offset=0, strides=strides),
         bbox_coder=dict(type='mmdet.DistancePointBBoxCoder'),
         loss_cls=dict(
             type='mmdet.QualityFocalLoss',
@@ -133,9 +141,9 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=32,
-    num_workers=10,
-    persistent_workers=True,
+    batch_size=train_batch_size_per_gpu,
+    num_workers=train_num_workers,
+    persistent_workers=persistent_workers,
     pin_memory=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
@@ -147,9 +155,9 @@ train_dataloader = dict(
         pipeline=train_pipeline))
 
 val_dataloader = dict(
-    batch_size=5,
-    num_workers=10,
-    persistent_workers=True,
+    batch_size=val_batch_size_per_gpu,
+    num_workers=val_num_workers,
+    persistent_workers=persistent_workers,
     pin_memory=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
