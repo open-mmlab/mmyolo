@@ -1,15 +1,43 @@
-_base_ = './yolov5_s-v61_syncbn_fast_8xb16-50e_voc.py'
+_base_ = '../../_base_/default_runtime.py'
 
+# dataset settings
+data_root = 'data/VOCdevkit/'
+dataset_type = 'YOLOv5VOCDataset'
+
+img_scale = (512, 512)
 deepen_factor = 0.67
 widen_factor = 0.75
 max_epochs = 50
+save_epoch_intervals = 10
+train_batch_size_per_gpu = 32
+train_num_workers = 8
+val_batch_size_per_gpu = 32
+val_num_workers = 2
+
 lr_factor = 0.15135  # lrf=0.1
 affine_scale = 0.75544
-train_batch_size_per_gpu = 32
 
-anchors = [[(10, 13), (16, 30), (33, 23)], [(30, 61), (62, 45), (59, 119)],
-           [(116, 90), (156, 198), (373, 326)]]
+# persistent_workers must be False if num_workers is 0.
+persistent_workers = True
+
+# only on Val
+batch_shapes_cfg = dict(
+    type='BatchShapePolicy',
+    batch_size=val_batch_size_per_gpu,
+    img_size=img_scale[0],
+    size_divisor=32,
+    extra_pad_ratio=0.5)
+
+# anchors = [[(10, 13), (16, 30), (33, 23)], [(30, 61), (62, 45), (59, 119)],
+#            [(116, 90), (156, 198), (373, 326)]]
+anchors = [[(26, 44), (67, 57), (61, 130)], [(121, 118), (120, 239), (206, 182)],
+           [(376, 161), (234, 324), (428, 322)]]
+# anchors = 26,44, 67,57, 61,130, 121,118, 120,239, 206,182, 376,161, 234,324, 428,322
 strides = [8, 16, 32]
+
+# single-scale training is recommended to
+# be turned on, which can speed up training.
+env_cfg = dict(cudnn_benchmark=True)
 
 model = dict(
     type='YOLODetector',
@@ -72,12 +100,22 @@ model = dict(
         multi_label=True,
         nms_pre=30000,
         score_thr=0.001,
-        nms=dict(type='nms', iou_threshold=0.65),
+        nms=dict(type='nms', iou_threshold=0.6),
         max_per_img=300))
 
-pre_transform = _base_.pre_transform
-albu_train_transforms = _base_.albu_train_transforms
-img_scale = _base_.img_scale
+albu_train_transforms = [
+    dict(type='Blur', p=0.01),
+    dict(type='MedianBlur', p=0.01),
+    dict(type='ToGray', p=0.01),
+    dict(type='CLAHE', p=0.01)
+]
+
+pre_transform = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args={{_base_.file_client_args}}),
+    dict(type='LoadAnnotations', with_bbox=True)
+]
 
 mosaic_affine_pipeline = [
     dict(
@@ -126,19 +164,24 @@ train_pipeline = [
 ]
 
 train_dataloader = dict(
+    batch_size=train_batch_size_per_gpu,
+    num_workers=train_num_workers,
+    persistent_workers=persistent_workers,
+    pin_memory=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type='ConcatDataset',
         datasets=[
             dict(
-                type=_base_.dataset_type,
-                data_root=_base_.data_root,
+                type=dataset_type,
+                data_root=data_root,
                 ann_file='VOC2007/ImageSets/Main/trainval.txt',
                 data_prefix=dict(sub_data_root='VOC2007/'),
                 filter_cfg=dict(filter_empty_gt=False, min_size=32),
                 pipeline=train_pipeline),
             dict(
-                type=_base_.dataset_type,
-                data_root=_base_.data_root,
+                type=dataset_type,
+                data_root=data_root,
                 ann_file='VOC2012/ImageSets/Main/trainval.txt',
                 data_prefix=dict(sub_data_root='VOC2012/'),
                 filter_cfg=dict(filter_empty_gt=False, min_size=32),
@@ -146,14 +189,50 @@ train_dataloader = dict(
         ])
 )
 
+test_pipeline = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args={{_base_.file_client_args}}),
+    dict(type='YOLOv5KeepRatioResize', scale=img_scale),
+    dict(
+        type='LetterResize',
+        scale=img_scale,
+        allow_scale_up=False,
+        pad_val=dict(img=114)),
+    # need gt_ignore
+    dict(type='mmdet.LoadAnnotations', with_bbox=True),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor', 'pad_param'))
+]
+
+val_dataloader = dict(
+    batch_size=val_batch_size_per_gpu,
+    num_workers=val_num_workers,
+    persistent_workers=persistent_workers,
+    pin_memory=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_root,
+        ann_file='VOC2007/ImageSets/Main/test.txt',
+        data_prefix=dict(sub_data_root='VOC2007/'),
+        test_mode=True,
+        pipeline=test_pipeline,
+        batch_shapes_cfg=batch_shapes_cfg))
+
+test_dataloader = val_dataloader
+
 param_scheduler = None
 optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(
         type='SGD',
-        lr=0.01,
-        momentum=0.937,
-        weight_decay=0.0005,
+        lr=0.00334,
+        momentum=0.74832,
+        weight_decay=0.00025,
         nesterov=True,
         batch_size_per_gpu=train_batch_size_per_gpu),
     constructor='YOLOv5OptimizerConstructor')
@@ -168,5 +247,28 @@ default_hooks = dict(
         warmup_momentum=0.59462,
         warmup_bias_lr=0.18657),
     checkpoint=dict(
-        # type='CheckpointHook', interval=save_epoch_intervals,
+        type='CheckpointHook', interval=save_epoch_intervals,
         max_keep_ckpts=3))
+
+custom_hooks = [
+    dict(
+        type='EMAHook',
+        ema_type='ExpMomentumEMA',
+        momentum=0.0001,
+        update_buffers=True,
+        priority=49)
+]
+
+val_evaluator = dict(
+    type='mmdet.VOCMetric',
+    metric='mAP',
+    eval_mode='11points')
+
+test_evaluator = val_evaluator
+
+train_cfg = dict(
+    type='EpochBasedTrainLoop',
+    max_epochs=max_epochs,
+    val_interval=save_epoch_intervals)
+val_cfg = dict(type='ValLoop')
+test_cfg = dict(type='TestLoop')
