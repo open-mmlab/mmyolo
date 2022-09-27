@@ -4,7 +4,6 @@ import copy
 from abc import ABCMeta, abstractmethod
 from typing import List, Optional, Sequence, Tuple, Union
 
-import cv2
 import mmcv
 import numpy as np
 from mmcv.transforms import BaseTransform
@@ -350,8 +349,10 @@ class Mosaic(BaseMixImageTransform):
         scale = min(new_shape[0] / shape[0], new_shape[1] / shape[1])
 
         # Compute padding
-        resize_shape = int(round(shape[1] * scale)), int(round(shape[0] * scale))
-        padh, padw = new_shape[0] - resize_shape[1], new_shape[1] - resize_shape[0]  # wh padding
+        resize_shape = int(round(shape[1] * scale)), int(
+            round(shape[0] * scale))
+        padh, padw = new_shape[0] - resize_shape[1], new_shape[
+            1] - resize_shape[0]  # wh padding
 
         # resize
         if shape[::-1] != resize_shape:
@@ -362,7 +363,12 @@ class Mosaic(BaseMixImageTransform):
         bottom, right = padh - top, padw - left
         gt_bboxes.translate_([left, top])
 
-        img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT, value=self.pad_val)  # add border
+        img = mmcv.impad(
+            img=img,
+            padding=(left, top, right, bottom),
+            pad_val=self.pad_val,
+            padding_mode='constant')
+
         results['img'] = img
         results['img_shape'] = new_shape
         results['gt_bboxes'] = gt_bboxes
