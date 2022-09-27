@@ -68,10 +68,9 @@ class CSPNeXt(BaseBackbone):
         use_depthwise: bool = False,
         expand_ratio: float = 0.5,
         arch_ovewrite: dict = None,
-        spp_kernel_sizes: Sequence[int] = (5, 9, 13),
         channel_attention: bool = True,
         conv_cfg: OptConfigType = None,
-        norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
+        norm_cfg: ConfigType = dict(type='BN'),
         act_cfg: ConfigType = dict(type='SiLU', inplace=True),
         norm_eval: bool = False,
         init_cfg: OptMultiConfig = dict(
@@ -82,7 +81,6 @@ class CSPNeXt(BaseBackbone):
             mode='fan_in',
             nonlinearity='leaky_relu')
     ) -> None:
-        self.spp_kernel_sizes = spp_kernel_sizes
         arch_setting = self.arch_settings[arch]
         if arch_ovewrite:
             arch_setting = arch_ovewrite
@@ -154,7 +152,7 @@ class CSPNeXt(BaseBackbone):
             spp = SPPFBottleneck(
                 out_channels,
                 out_channels,
-                kernel_sizes=self.spp_kernel_sizes,
+                kernel_sizes=5,
                 conv_cfg=self.conv_cfg,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)

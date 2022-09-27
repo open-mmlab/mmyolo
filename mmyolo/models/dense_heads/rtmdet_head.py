@@ -207,7 +207,6 @@ class RTMDetHead(YOLOv5Head):
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
         loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
         loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
-        loss_bbox_aux (:obj:`ConfigDict` or dict): Config of bbox aux loss.
         train_cfg (:obj:`ConfigDict` or dict, optional): Training config of
             anchor head. Defaults to None.
         test_cfg (:obj:`ConfigDict` or dict, optional): Testing config of
@@ -217,32 +216,28 @@ class RTMDetHead(YOLOv5Head):
             Defaults to None.
     """
 
-    def __init__(self,
-                 head_module: nn.Module,
-                 prior_generator: ConfigType = dict(
-                     type='mmdet.MlvlPointGenerator',
-                     offset=0,
-                     strides=[8, 16, 32]),
-                 bbox_coder: ConfigType = dict(type='YOLOXBBoxCoder'),
-                 loss_cls: ConfigType = dict(
-                     type='mmdet.CrossEntropyLoss',
-                     use_sigmoid=True,
-                     reduction='sum',
-                     loss_weight=1.0),
-                 loss_bbox: ConfigType = dict(
-                     type='mmdet.IoULoss',
-                     mode='square',
-                     eps=1e-16,
-                     reduction='sum',
-                     loss_weight=5.0),
-                 loss_obj: ConfigType = dict(
-                     type='mmdet.CrossEntropyLoss',
-                     use_sigmoid=True,
-                     reduction='sum',
-                     loss_weight=1.0),
-                 train_cfg: OptConfigType = None,
-                 test_cfg: OptConfigType = None,
-                 init_cfg: OptMultiConfig = None):
+    def __init__(
+            self,
+            head_module: nn.Module,
+            prior_generator: ConfigType = dict(
+                type='mmdet.MlvlPointGenerator', offset=0, strides=[8, 16,
+                                                                    32]),
+            bbox_coder: ConfigType = dict(type='mmdet.DistancePointBBoxCoder'),
+            loss_cls: ConfigType = dict(
+                type='mmdet.QualityFocalLoss',
+                use_sigmoid=True,
+                beta=2.0,
+                loss_weight=1.0),
+            loss_bbox: ConfigType = dict(
+                type='mmdet.GIoULoss', loss_weight=2.0),
+            loss_obj: ConfigType = dict(
+                type='mmdet.CrossEntropyLoss',
+                use_sigmoid=True,
+                reduction='sum',
+                loss_weight=1.0),
+            train_cfg: OptConfigType = None,
+            test_cfg: OptConfigType = None,
+            init_cfg: OptMultiConfig = None):
 
         super().__init__(
             head_module=head_module,

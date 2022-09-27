@@ -6,15 +6,12 @@ import torch
 
 
 def convert(src, dst):
-    """Convert keys in detectron pretrained YOLOX models to mmyolo style."""
+    """Convert keys in pretrained RTMDet models to MMYOLO style."""
     blobs = torch.load(src)['state_dict']
     state_dict = OrderedDict()
 
     for key, weight in blobs.items():
-        if 'backbone' in key:
-            new_key = key
-            state_dict[new_key] = weight
-        elif 'neck.reduce_layers.0' in key:
+        if 'neck.reduce_layers.0' in key:
             new_key = key.replace('.0', '.2')
             state_dict[new_key] = weight
         elif 'neck.reduce_layers.1' in key:
@@ -37,8 +34,6 @@ def convert(src, dst):
             state_dict[new_key] = weight
         elif 'bbox_head' in key:
             new_key = key.replace('bbox_head', 'bbox_head.head_module')
-            if 'tood' in key:
-                new_key = new_key.replace('tood', 'rtm')
             state_dict[new_key] = weight
         elif 'data_preprocessor' in key:
             continue
@@ -55,8 +50,8 @@ def convert(src, dst):
 
 def main():
     parser = argparse.ArgumentParser(description='Convert model keys')
-    parser.add_argument('--src', help='src rtm model path')
-    parser.add_argument('--dst', help='save path')
+    parser.add_argument('src', help='src rtm model path')
+    parser.add_argument('dst', help='save path')
     args = parser.parse_args()
     convert(args.src, args.dst)
 

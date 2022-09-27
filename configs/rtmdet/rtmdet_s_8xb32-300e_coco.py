@@ -30,6 +30,7 @@ train_pipeline = [
     dict(
         type='mmdet.RandomResize',
         scale=(img_scale[0] * 2, img_scale[1] * 2),
+        ratio_range=(0.5, 2.0),  # note
         keep_ratio=True),
     dict(type='mmdet.RandomCrop', crop_size=img_scale),
     dict(type='mmdet.YOLOXHSVRandomAug'),
@@ -51,7 +52,7 @@ train_pipeline_stage2 = [
     dict(
         type='mmdet.RandomResize',
         scale=img_scale,
-        ratio_range=(0.5, 2.0),
+        ratio_range=(0.5, 2.0),  # note
         keep_ratio=True),
     dict(type='mmdet.RandomCrop', crop_size=img_scale),
     dict(type='mmdet.YOLOXHSVRandomAug'),
@@ -71,6 +72,6 @@ custom_hooks = [
         priority=49),
     dict(
         type='mmdet.PipelineSwitchHook',
-        switch_epoch=20,
+        switch_epoch=280,
         switch_pipeline=train_pipeline_stage2)
 ]
