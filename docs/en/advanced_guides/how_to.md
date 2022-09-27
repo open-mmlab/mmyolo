@@ -25,3 +25,35 @@ model = dict(
 ```
 
 `cfg`parameter indicates the specific configuration of the plug-in. The `stages` parameter indicates whether to add plug-ins after the corresponding stage of the backbone. The length of list `stages` must be the same as the number of backbone stages.
+
+## Apply multiple Necks
+
+If you want to stack multiple Necks, you can directly set the Neck parameters in the config. MMYOLO supports concatenating multiple Necks in the form of `List`. You need to ensure that the output channel of the previous Neck matches the input channel of the next Neck. If you need to adjust the number of channels, you can insert the `mmdet.ChannelMapper` module to align the number of channels between multiple Necks. The specific configuration is as follows:
+
+```python
+model = dict(
+    type='YOLODetector',
+    neck=[
+        dict(
+            type='YOLOv5PAFPN',
+            deepen_factor=deepen_factor,
+            widen_factor=widen_factor,
+            in_channels=[256, 512, 1024],
+            out_channels=[256, 512, 1024],
+            num_csp_blocks=3,
+            norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+            act_cfg=dict(type='SiLU', inplace=True)),
+        dict(
+            type='mmdet.ChannelMapper',
+            in_channels=[128, 256, 512],
+            out_channels=128,
+        ),
+        dict(
+            type='mmdet.DyHead',
+            in_channels=128,
+            out_channels=256,
+            num_blocks=2,
+            # disable zero_init_offset to follow official implementation
+            zero_init_offset=False)
+    ]
+```
