@@ -136,7 +136,7 @@ class RTMDetSepBNHeadModule(BaseModule):
                     self.cls_convs[n][i].conv = self.cls_convs[0][i].conv
                     self.reg_convs[n][i].conv = self.reg_convs[0][i].conv
 
-    def init_weights(self):
+    def init_weights(self) -> None:
         """Initialize weights of the head."""
         # Use prior in model initialization to improve stability
         super().init_weights()
@@ -198,12 +198,13 @@ class RTMDetSepBNHeadModule(BaseModule):
 
 @MODELS.register_module()
 class RTMDetHead(YOLOv5Head):
-    """YOLOXHead head used in `YOLOX <https://arxiv.org/abs/2107.08430>`_.
+    """RTMDet head.
 
     Args:
-        head_module(nn.Module): Base module used for YOLOXHead
+        head_module(nn.Module): Base module used for RTMDetHead
         prior_generator: Points generator feature maps in
             2D points-based detectors.
+        bbox_coder (:obj:`ConfigDict` or dict): Config of bbox coder.
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
         loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
         loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
@@ -264,7 +265,6 @@ class RTMDetHead(YOLOv5Head):
         """
         if self.train_cfg:
             self.assigner = TASK_UTILS.build(self.train_cfg.assigner)
-            # YOLOX does not support sampling
             if self.train_cfg.get('sampler', None) is not None:
                 self.sampler = TASK_UTILS.build(
                     self.train_cfg.sampler, default_args=dict(context=self))
@@ -302,7 +302,7 @@ class RTMDetHead(YOLOv5Head):
     def loss_by_feat_single(self, cls_score: Tensor, bbox_pred: Tensor,
                             labels: Tensor, label_weights: Tensor,
                             bbox_targets: Tensor, assign_metrics: Tensor,
-                            stride: List[int]):
+                            stride: List[int]) -> list:
         """Compute loss of a single scale level.
 
         Args:
@@ -362,12 +362,13 @@ class RTMDetHead(YOLOv5Head):
 
         return loss_cls, loss_bbox, assign_metrics.sum(), pos_bbox_weight.sum()
 
-    def loss_by_feat(self,
-                     cls_scores: List[Tensor],
-                     bbox_preds: List[Tensor],
-                     batch_gt_instances: InstanceList,
-                     batch_img_metas: List[dict],
-                     batch_gt_instances_ignore: OptInstanceList = None):
+    def loss_by_feat(
+            self,
+            cls_scores: List[Tensor],
+            bbox_preds: List[Tensor],
+            batch_gt_instances: InstanceList,
+            batch_img_metas: List[dict],
+            batch_gt_instances_ignore: OptInstanceList = None) -> dict:
         """Compute losses of the head.
 
         Args:
@@ -448,7 +449,7 @@ class RTMDetHead(YOLOv5Head):
                     batch_gt_instances: InstanceList,
                     batch_img_metas: List[dict],
                     batch_gt_instances_ignore: OptInstanceList = None,
-                    unmap_outputs=True):
+                    unmap_outputs=True) -> Union[tuple, None]:
         """Compute regression and classification targets for anchors in
         multiple images.
 
@@ -541,7 +542,7 @@ class RTMDetHead(YOLOv5Head):
                             gt_instances: InstanceData,
                             img_meta: dict,
                             gt_instances_ignore: Optional[InstanceData] = None,
-                            unmap_outputs=True):
+                            unmap_outputs=True) -> tuple:
         """Compute regression, classification targets for anchors in a single
         image.
 
@@ -639,7 +640,7 @@ class RTMDetHead(YOLOv5Head):
             bbox_targets = unmap(bbox_targets, num_total_anchors, inside_flags)
             assign_metrics = unmap(assign_metrics, num_total_anchors,
                                    inside_flags)
-        return (anchors, labels, label_weights, bbox_targets, assign_metrics)
+        return anchors, labels, label_weights, bbox_targets, assign_metrics
 
     def get_anchors(self,
                     featmap_sizes: List[tuple],
