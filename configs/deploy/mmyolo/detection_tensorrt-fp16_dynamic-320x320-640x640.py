@@ -35,7 +35,7 @@ codebase_config = dict(
         pre_top_k=5000,
         keep_top_k=100,
         background_label_id=-1),
-    module=['mmyolo.deploy.codebase.mmyolo'])
+    module=['mmyolo.deploy'])
 backend_config = dict(
     type='tensorrt',
     common_config=dict(fp16_mode=True, max_workspace_size=1 << 30),

@@ -35,5 +35,5 @@ codebase_config = dict(
         pre_top_k=5000,
         keep_top_k=100,
         background_label_id=-1),
-    module=['mmyolo.deploy.codebase.mmyolo'])
+    module=['mmyolo.deploy'])
 backend_config = dict(type='onnxruntime')
