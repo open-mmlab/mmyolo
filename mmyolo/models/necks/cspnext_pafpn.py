@@ -49,7 +49,7 @@ class CSPNeXtPAFPN(BaseYOLONeck):
         upsample_cfg: ConfigType = dict(scale_factor=2, mode='nearest'),
         conv_cfg: bool = None,
         norm_cfg: ConfigType = dict(type='BN'),
-        act_cfg: ConfigType = dict(type='SiLu', inplace=True),
+        act_cfg: ConfigType = dict(type='SiLU', inplace=True),
         init_cfg: OptMultiConfig = dict(
             type='Kaiming',
             layer='Conv2d',
