@@ -16,7 +16,8 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
     ),
-    bbox_head=dict(head_module=dict(widen_factor=widen_factor, exp_on_reg=False)))
+    bbox_head=dict(
+        head_module=dict(widen_factor=widen_factor, exp_on_reg=False)))
 
 train_pipeline = [
     dict(
