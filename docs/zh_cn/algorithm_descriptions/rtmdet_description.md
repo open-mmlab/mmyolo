@@ -5,8 +5,9 @@
 RTMDet 的 BBox Coder 采用的是 `mmdet.DistancePointBBoxCoder`。
 
 该类的 docstring 是这样的：
+
 > This coder encodes gt bboxes (x1, y1, x2, y2) into (top, bottom, left, right) and decode it back to the original.
-> 
+>
 > 这个编码器将 gt bboxes (x1, y1, x2, y2) 编码为 (top, bottom, left, right)，并且解码至原图像上
 
 MMDet 实现源码
@@ -163,7 +164,6 @@ class QualityFocalLoss(nn.Module):
         return loss_cls
 ```
 
-
 ### GIoULoss
 
 论文：[Generalized Intersection over Union: A Metric and A Loss for Bounding Box Regression](https://arxiv.org/abs/1902.09630)
@@ -172,9 +172,10 @@ class QualityFocalLoss(nn.Module):
 <img src="https://user-images.githubusercontent.com/25873202/192568784-3884b677-d8e1-439c-8bd2-20943fcedd93.png" alt="image"/>
 </div>
 
-GIoU Loss 用于计算两个框重叠区域的关系，重叠区域越大，损失越小，反之越大。而且 GIoU 是在 [0,2] 之间，因为其值被限制在了一个较小的范围内，所以网络不会出现剧烈的波动，证明了其具有比较好的稳定性。
+GIoU Loss 用于计算两个框重叠区域的关系，重叠区域越大，损失越小，反之越大。而且 GIoU 是在 \[0,2\] 之间，因为其值被限制在了一个较小的范围内，所以网络不会出现剧烈的波动，证明了其具有比较好的稳定性。
 
 MMDet 实现源码：
+
 ```python
 @MODELS.register_module()
 class GIoULoss(nn.Module):
@@ -215,4 +216,3 @@ class GIoULoss(nn.Module):
             **kwargs)
         return loss
 ```
-
