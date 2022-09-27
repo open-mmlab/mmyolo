@@ -45,6 +45,7 @@ def convert(src, dst):
     # save checkpoint
     checkpoint = dict()
     checkpoint['state_dict'] = state_dict
+    checkpoint['meta'] = blobs['meta']
     torch.save(checkpoint, dst)
 
 
