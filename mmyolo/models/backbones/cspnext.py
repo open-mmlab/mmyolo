@@ -95,7 +95,7 @@ class CSPNeXt(BaseBackbone):
                          input_channels, out_indices, frozen_stages, norm_cfg,
                          act_cfg, norm_eval, init_cfg)
 
-    def build_stem_layer(self):
+    def build_stem_layer(self) -> nn.Module:
         """Build a stem layer."""
         stem = nn.Sequential(
             ConvModule(
@@ -124,7 +124,7 @@ class CSPNeXt(BaseBackbone):
                 act_cfg=self.act_cfg))
         return stem
 
-    def build_stage_layer(self, stage_idx: int, setting: list):
+    def build_stage_layer(self, stage_idx: int, setting: list) -> list:
         """Build a stage layer.
 
         Args:
