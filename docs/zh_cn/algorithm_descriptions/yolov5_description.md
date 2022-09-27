@@ -345,44 +345,32 @@ anchors = [[(10, 13), (16, 30), (33, 23)], [(30, 61), (62, 45), (59, 119)],
 
 在 YOLOv3 中，回归公式为：
 
-```{math}
+$$
 b_x=\sigma(t_x)+c_x  \\
 b_y=\sigma(t_y)+c_y  \\
 b_w=a_w\cdot e^{t_w} \\
 b_h=a_h\cdot e^{t_h} \\
-```
+$$
 
 公式中，
 
-```{math}
-a_w 代表 Anchor 的宽度 \\
-c_x 代表 Grid 所处的坐标 \\
-\sigma 代表 Sigmoid 公式。
-```
+$a_w$ 代表 Anchor 的宽度
+$c_x$ 代表 Grid 所处的坐标
+$\sigma$ 代表 Sigmoid 公式。
 
 而在 YOLOv5 中，回归公式为：
 
-```{math}
+$$
 b_x=(2\cdot\sigma(t_x)-0.5)+c_x   \\
 b_y=(2\cdot\sigma(t_y)-0.5)+c_y   \\
 b_w=a_w\cdot(2\cdot\sigma(t_w))^2   \\
 b_h=a_h\cdot(2\cdot\sigma(t_h))^2
-```
+$$
 
 改进之处主要有以下几点：
 
 - 中心点坐标范围从 (0, 1) 调整至 (-0.5, 1.5)
-- 宽高范围从
-
-```{math}
-(0，+\infty)
-```
-
-调整至
-
-```{math}
-(0，4a_{wh})
-```
+- 宽高范围从 (0，+$\infty$) 调整至 (0，4$a_{wh}$)
 
 这个改进具有以下好处：
 
@@ -410,14 +398,14 @@ b_h=a_h\cdot(2\cdot\sigma(t_h))^2
 
 比较流程：
 
-```{math}
+$$
 r_w = w\_{gt} / w\_{pt}    \\
 r_h = h\_{gt} / h\_{pt}    \\
 r_w^{max}=max(r_w, 1/r_w)  \\
 r_h^{max}=max(r_h, 1/r_h)  \\
 r^{max}=max(r_w^{max}, r_h^{max})   \\
 if\ \ r_{max} < prior\_match\_thr:   match!
-```
+$$
 
 此处我们用一个 GT Bbox 与 P3 特征图的 Prior 进行匹配的案例进行讲解+图示：
 
@@ -427,9 +415,9 @@ if\ \ r_{max} < prior\_match\_thr:   match!
 
 prior1 匹配失败的原因是
 
-```{math}
+$$
 h\_{gt}\ /\ h\_{prior}\ =\ 4.8\ >\ prior\_match\_thr
-```
+$$
 
 **(2) 将步骤 1 中 match 的 GT 分配对应的正样本**
 
@@ -443,10 +431,10 @@ Prior WH 值为 \[(15, 5), (24, 16), (16, 24)\]，其中在 P3 特征图上，st
 
 **(2.1) 将 GT Bbox 的中心点坐标对应到 P3 的 grid 上**
 
-```{math}
+$$
 GT_x^{center_grid}=26/8=3.25  \\
 GT_y^{center_grid}=37/8=4.625
-```
+$$
 
 <div align=center >
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190549304-020ec19e-6d54-4d40-8f43-f78b8d6948aa.png"/>
@@ -496,9 +484,9 @@ YOLOv5 中总共包含 3 个 Loss，分别为：
 
 三个 loss 按照一定比例汇总。
 
-```{math}
+$$
 Loss=\lambda_1L_{cls}+\lambda_2L_{obj}+\lambda_3L_{loc}
-```
+$$
 
 在 Objectness loss 中，P3,P4,P5 层的 Objectness loss 按照不同权重进行相加，默认的设置是
 
