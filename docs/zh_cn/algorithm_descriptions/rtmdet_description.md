@@ -97,3 +97,30 @@ soft_cls_cost = soft_cls_cost.sum(dim=-1)
 当网络进行训练一段时间过后，分类分支和回归分支都进行了一定的优化后，这时 `IOU` 变大，
 选取的样本也逐渐增多，这时网络也有能力学习到更多的样本，同时因为 `IOU_Cost` 以及 `Soft_Cls_Cost`
 变小，网络也会动态的找到更有利优化分类以及回归的样本点。
+
+在 `Resnet50-1x` 的三种损失的消融实验：
+
+| Soft_cls_cost | Soft_center_prior | Log_IoU_cost | mAP  |
+| :-----------: | :---------------: | :----------: | :--: |
+|       ×       |         ×         |      ×       | 39.9 |
+|       √       |         ×         |      ×       | 40.3 |
+|       √       |         √         |      ×       | 40.8 |
+|       √       |         √         |      √       | 41.3 |
+
+与其他主流 `Assign` 方法在 `Resnet50-1x` 的对比实验：
+
+|    method     | mAP  |
+| :-----------: | :--: |
+|     ATSS      | 39.2 |
+|      PAA      | 40.4 |
+|      OTA      | 40.7 |
+| TOOD(w/o TAH) | 40.7 |
+|     Ours      | 41.3 |
+
+无论是 `Resnet50-1x` 还是标准的设置下，还是在`300epoch` + `havy augmentation`,
+相比于 `SimOTA` 、 `OTA` 以及 `TOOD` 中的 `TAL` 均有提升。
+
+| 300e + Mosaic & MixUP | mAP  |
+| :-------------------- | :--- |
+| RTMDet-s + SimOTA     | 43.2 |
+| RTMDet-s + DSLA       | 44.5 |
