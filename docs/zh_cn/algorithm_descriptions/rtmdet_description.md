@@ -25,8 +25,7 @@ RTMDet 由 tiny/s/m/l/x 一系列不同大小的模型组成，为不同的应�
 
 ![RTMDet_structure_v0 5](https://user-images.githubusercontent.com/27466624/192753174-388c420c-a768-4659-8731-66ddeb7d2774.jpg)
 
-RTMDet 模型整体结构和 YOLOX 几乎一致，由 `CSPNeXt` + `CSPNeXtPAFPN` + `共享卷积权重但分别计算 BN 的 SepBNHead` 构成。
-内部核心模块也是 `CSPLayer`，但对其中的  `Basic Block` 进行了改进，提出了 `CSPNeXt Block`。
+RTMDet 模型整体结构和 [YOLOX](https://arxiv.org/abs/2107.08430) 几乎一致，由 `CSPNeXt` + `CSPNeXtPAFPN` + `共享卷积权重但分别计算 BN 的 SepBNHead` 构成。内部核心模块也是 `CSPLayer`，但对其中的  `Basic Block` 进行了改进，提出了 `CSPNeXt Block`。
 
 ### Backbone
 
@@ -72,7 +71,8 @@ RTMDet 重新调整了不同 stage 间的 block 数，并调整了通道的超�
 [EfficientDet](https://arxiv.org/abs/1911.09070)、[NASFPN](https://arxiv.org/abs/1904.07392) 等工作在改进 Neck 时往往聚焦于如何修改特征融合的方式。
 但引入过多的连接会增加检测器的延时，并增加内存开销。
 
-所以 RTMDet 选择不引入额外的连接，而是改变 Backbone 与 Neck 间参数量的配比。
+所以 RTMDet 选择不引入额外的连接，而是改变 Backbone 与 Neck 间参数量的配比。该配比是通过手动调整 Backbone 和 Neck 的 `expand_ratio` 参数来实现的，其数值在 Backbone 和 Neck 中都为 0.5。`expand_ratio`  实际上是改变  `CSPLayer`  中各层通道数的参数（具体可见模型图 `CSPLayer` 部分）。
+
 实验发现，当 Neck 在整个模型中的参数量占比更高时，延时更低，且对精度的影响很小。作者在直播答疑时回复，RTMDet 在 Neck 这一部分的实验参考了 [GiraffeDet](https://arxiv.org/abs/2202.04256) 的做法，但没有像 GiraffeDet 一样引入额外连接（详细可参见 [RTMDet 发布视频](https://www.bilibili.com/video/BV1e841147GD) 31分40秒左右的内容）。
 
 关于不同参数量配比的实验结果，如下表所示。
@@ -86,9 +86,9 @@ RTMDet 重新调整了不同 stage 间的 block 数，并调整了通道的超�
 
 ### Head
 
-传统的 YOLO 系列都使用同一 Head 进行分类和回归。YOLOX 则将分类和回归分支解耦，PPYOLO-E 和 YOLOv6 则引入了 TOOD 中的结构。它们在不同特征层级之间都使用独立的 Head，因此 Head 在模型中也占有较多的参数量。
+传统的 YOLO 系列都使用同一 Head 进行分类和回归。YOLOX 则将分类和回归分支解耦，PPYOLO-E 和 YOLOv6 则引入了 [TOOD](https://arxiv.org/abs/2108.07755) 中的结构。它们在不同特征层级之间都使用独立的 Head，因此 Head 在模型中也占有较多的参数量。
 
-RTMDet 参考了 [NAS-FPN](https://arxiv.org/abs/1904.07392) 中的做法，使用了 `SepBNHead`，在不同层之间共享卷积权重，但是独立计算 BN 的统计量。
+RTMDet 参考了 [NAS-FPN](https://arxiv.org/abs/1904.07392) 中的做法，使用了 `SepBNHead`，在不同层之间共享卷积权重，但是独立计算 BN（BatchNorm） 的统计量。
 
 关于不同结构 Head 的实验结果，如下表所示。
 
