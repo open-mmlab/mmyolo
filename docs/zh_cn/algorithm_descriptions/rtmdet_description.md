@@ -21,7 +21,7 @@
 只要模型的预测越准确, 匹配算法求得的结果也会更优秀。但是在网络训练的初期,
 网络的分类以及回归是随机初始化, 这个时候还是需要 `先验` 来约束, 以达到 `冷启动` 的效果。
 
-`RTMDet` 作者也是采用了动态的 `SimOTA` 做法，不过其对动态的正负样本分配策略进行了改进。 
+`RTMDet` 作者也是采用了动态的 `SimOTA` 做法，不过其对动态的正负样本分配策略进行了改进。
 之前的动态匹配策略（ `HungarianAssigner` 、`OTA` ）往往使用与 `Loss`
 完全一致的代价函数作为匹配的依据，但我们经过实验发现这并不一定时最优的。
 使用更多 `Soften` 的 `Cost` 以及先验，能够提升性能。
@@ -80,65 +80,16 @@ soft_cls_cost = F.binary_cross_entropy_with_logits(
 soft_cls_cost = soft_cls_cost.sum(dim=-1)
 ```
 
-
-
-通过计算上述三个损失得到最终的 `cost_matrix` 后, 再使用 `SimOTA` 决定每一个 `GT` 匹配的样本的个数并决定最终的样本
+通过计算上述三个损失的和得到最终的 `cost_matrix` 后, 再使用 `SimOTA` 决定每一个 `GT` 匹配的样本的个数并决定最终的样本
 具体操作如下所示：
-```python
-def dynamic_k_matching(self, cost: Tensor, pairwise_ious: Tensor,
-                       num_gt: int,
-                       valid_mask: Tensor) -> Tuple[Tensor, Tensor]:
-    """Use IoU and matching cost to calculate the dynamic top-k positive
-    targets. Same as SimOTA.
 
-    Args:
-        cost (Tensor): Cost matrix.
-        pairwise_ious (Tensor): Pairwise iou matrix.
-        num_gt (int): Number of gt.
-        valid_mask (Tensor): Mask for valid bboxes.
-
-    Returns:
-        tuple: matched ious and gt indexes.
-    """
-    # matching_matrix:[valid_bboxes_nums,gt_nums]
-    # 若matching_marix[x,y]=1就表示第x个bboxes作为第y个gt的正样本
-    matching_matrix = torch.zeros_like(cost, dtype=torch.uint8)
-    
-    # 1. 首先通过自适应计算每一个gt要选取的样本数量
-    # 取每一个gt与所有bboxes前13大的iou
-    candidate_topk = min(self.topk, pairwise_ious.size(0))
-    topk_ious, _ = torch.topk(pairwise_ious, candidate_topk, dim=0)
-    # 取它们的和取整后作为这个gt的样本数目,最少为1个
-    dynamic_ks = torch.clamp(topk_ious.sum(0).int(), min=1)
-    
-    # 2. 对于每一个gt,将其cost矩阵前dynamic_ks小的位置作为该gt的正样本
-    for gt_idx in range(num_gt):
-        _, pos_idx = torch.topk(
-            cost[:, gt_idx], k=dynamic_ks[gt_idx], largest=False)
-        # 
-        matching_matrix[:, gt_idx][pos_idx] = 1
-        
-    # 3. 对于某一个bboxes，如果被匹配到多个gt就将
-    # 与这些gt的cost中最小的那个作为其label
-    
-    prior_match_gt_mask = matching_matrix.sum(1) > 1
-    # 如果存在bboxes匹配多个gt
-    if prior_match_gt_mask.sum() > 0:
-        # 找到这个cost最小的gt的下标cost_min
-        cost_min, cost_argmin = torch.min(
-            cost[prior_match_gt_mask, :], dim=1)
-        matching_matrix[prior_match_gt_mask, :] *= 0
-        matching_matrix[prior_match_gt_mask, cost_argmin] = 1
-    # fg_mask_inboxes表示正样本，存入实参valid_mask传回去了
-    fg_mask_inboxes = matching_matrix.sum(1) > 0
-    valid_mask[valid_mask.clone()] = fg_mask_inboxes
-    # 记录其正样本的gt下标和对应的iou
-    matched_gt_inds = matching_matrix[fg_mask_inboxes, :].argmax(1)
-    matched_pred_ious = (matching_matrix *
-                         pairwise_ious).sum(1)[fg_mask_inboxes]
-    return matched_pred_ious, matched_gt_inds
-
-```
+1. 首先通过自适应计算每一个 `gt` 要选取的样本数量：
+   取每一个 `gt` 与所有 `bboxes` 前 `13` 大的 `iou`,
+   得到它们的和取整后作为这个 `gt` 的 `样本数目` , 最少为 `1` 个,
+   记为 `dynamic_ks`。
+2. 对于每一个 `gt` , 将其 `cost_matrix` 矩阵前 `dynamic_ks` 小的位置作为该 `gt` 的正样本。
+3. 对于某一个 `bbox`, 如果被匹配到多个 `gt`
+   就将与这些 `gts` 的 `cost_marix` 中最小的那个作为其 `label`。
 
 在网络训练初期，因参数初始化，回归和分类的损失值 `Cost` 往往较大, 这时候 `IOU` 比较小，
 选取的样本较少，主要起作用的是 `Soft_center_prior` 也就是位置信息，优先选取位置距离 `GT`
