@@ -39,6 +39,9 @@ cost_matrix = soft_cls_cost + iou_cost + soft_center_prior
 
 1. Soft_Center_Prior
 
+$$
+ C_{center} = \alpha^{|x_{pred}-x_{gt}|-\beta} 
+$$
 ```python
 # valid_prior Tensor[N,4] 表示anchor point
 # 4分别表示 x, y, 以及对应的特征层的 stride, stride
@@ -54,6 +57,9 @@ soft_center_prior = torch.pow(10, distance - 3)
 
 2. IOU_Cost
 
+$$
+C_{reg} = -log(IOU)
+$$
 ```python
 # 计算回归 bboxes 和 gts 的 iou
 pairwise_ious = self.iou_calculator(valid_decoded_bbox, gt_bboxes)
@@ -63,6 +69,9 @@ iou_cost = -torch.log(pairwise_ious + EPS) * 3
 
 3. Soft_Cls_Cost
 
+$$
+C_{cls} = CE(P,Y_{soft}) *(Y_{soft}-P)^2
+$$
 ```python
 # 生成分类标签
  gt_onehot_label = (
@@ -101,7 +110,7 @@ soft_cls_cost = soft_cls_cost.sum(dim=-1)
 在 `Resnet50-1x` 的三种损失的消融实验：
 
 | Soft_cls_cost | Soft_center_prior | Log_IoU_cost | mAP  |
-| :-----------: | :---------------: | :----------: | :--: |
+|:-------------:|:-----------------:|:------------:|:----:|
 |       ×       |         ×         |      ×       | 39.9 |
 |       √       |         ×         |      ×       | 40.3 |
 |       √       |         √         |      ×       | 40.8 |
@@ -110,7 +119,7 @@ soft_cls_cost = soft_cls_cost.sum(dim=-1)
 与其他主流 `Assign` 方法在 `Resnet50-1x` 的对比实验：
 
 |    method     | mAP  |
-| :-----------: | :--: |
+|:-------------:|:----:|
 |     ATSS      | 39.2 |
 |      PAA      | 40.4 |
 |      OTA      | 40.7 |
@@ -120,7 +129,7 @@ soft_cls_cost = soft_cls_cost.sum(dim=-1)
 无论是 `Resnet50-1x` 还是标准的设置下，还是在`300epoch` + `havy augmentation`,
 相比于 `SimOTA` 、 `OTA` 以及 `TOOD` 中的 `TAL` 均有提升。
 
-| 300e + Mosaic & MixUP | mAP  |
-| :-------------------- | :--- |
-| RTMDet-s + SimOTA     | 43.2 |
-| RTMDet-s + DSLA       | 44.5 |
+| 300e + Mosaic & MixUP |mAP|
+|:----------------------|:----|
+| RTMDet-s + SimOTA     |43.2|
+| RTMDet-s + DSLA       |44.5|
