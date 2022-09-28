@@ -447,15 +447,15 @@ def giou_loss(pred, target, eps=1e-7):
 
 RTMDet采用了多种数据增强的方式来增加模型的性能，主要包括单图数据增强:
 
-- RandomResize 随机尺度变换
-- RandomCrop 随机裁剪
-- HSVRandomAug 颜色空间曾倩
-- RandomFlip 随机水平翻转
+- **RandomResize 随机尺度变换**
+- **RandomCrop 随机裁剪**
+- **HSVRandomAug 颜色空间曾倩**
+- **RandomFlip 随机水平翻转**
 
 以及混合类数据增强：
 
-- Mosaic 马赛克
-- MixUP 图像混合
+- **Mosaic 马赛克**
+- **MixUP 图像混合**
 
 MMDetection 开源库中已经对单图数据增强进行了封装，用户通过简单的修改配置即可使用库中提供的任何数据增强功能，且都是属于比较常规的数据增强，不需要特殊介绍。下面将具体介绍混合类数据增强的具体实现。
 
