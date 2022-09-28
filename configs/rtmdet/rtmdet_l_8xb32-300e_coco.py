@@ -122,7 +122,7 @@ train_pipeline_stage2 = [
         resize_type='mmdet.Resize',
         keep_ratio=True),
     dict(type='mmdet.RandomCrop', crop_size=img_scale),
-    dict(type='YOLOXHSVRandomAug'),
+    dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(type='mmdet.PackDetInputs')
