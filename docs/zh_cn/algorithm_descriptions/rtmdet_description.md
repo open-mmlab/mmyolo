@@ -5,8 +5,8 @@
 ## 简介
 
 最近一段时间，开源界涌现出了大量的高精度目标检测项目，其中最突出的就是 YOLO 系列，OpenMMLab 也在与社区的合作下推出了 MMYOLO。
-在集成了如此多高性能高精度的学术界以及工业界的模型之后，RTMDet也对这些它们的结构
-设计以及训练方式进行了经验性的总结，并进行了优化，推出了 RTMDe t高精度、低延时的
+在调研了当前 YOLO 系列的诸多改进模型后，MMDetection 核心开发者针对这些设计...
+设计以及训练方式进行了经验性的总结，并进行了优化，推出了 RTMDet 高精度、低延时的
 单阶段目标检测器。
 **R**eal-**t**ime **M**odels for Object **Det**ection
 (**R**elease **t**o **M**anufacture)
@@ -23,7 +23,7 @@ RTMDet 由 tiny/s/m/l/x 一系列不同大小的模型组成，为不同的应�
 
 ![RTMDet_structure_v0 5](https://user-images.githubusercontent.com/27466624/192753174-388c420c-a768-4659-8731-66ddeb7d2774.jpg)
 
-RTMDet 模型整体结构与目前主流的检测器 YOLO 系列相似。以 **L**arge 模型为例，整体由 `CSPNeXt` + `CSPNeXtPAFPN` + `共享卷积权重但分别计算 BN 的 Head` 构成。
+RTMDet 模型整体结构与目前主流的检测器 YOLO 系列相似。以 **L**arge 模型为例，整体由 `CSPNeXt` + `CSPNeXtPAFPN` + `共享卷积权重但分别计算 BN 的 SepBNHead` 构成。
 
 ### Backbone
 
@@ -51,7 +51,7 @@ RTMDet 则借鉴了最近比较热门的 [ConvNeXt](https://arxiv.org/abs/2201.0
 
 #### 调整检测器不同 stage 间的 block 数
 
-由于 ` CSPNeXt Block` 内使用了 `depth-wise` 卷积，单个 block 内的层数增多，如果保持原有的 stage 内的 block 数，则会导致模型的推理速度大幅降低。
+由于 `CSPNeXt Block` 内使用了 `depth-wise` 卷积，单个 block 内的层数增多，如果保持原有的 stage 内的 block 数，则会导致模型的推理速度大幅降低。
 
 RTMDet 重新调整了不同 stage 间的 block 数，并调整了通道的超参，在保证了精度的情况下提升了推理速度。
 
@@ -98,4 +98,4 @@ RTMDet 参考了 NAS-FPN 中的做法，使用了 `SepBNHead`，在不同层之�
 | Separated  head    | 57.03     | 80.23     | 2.44          | 51.2     |
 | **SepBN** **head** | **52.32** | **80.23** | **2.44**      | **51.3** |
 
-同时，RTMDet 也延续了作者之前在 [NanoDet](https://zhuanlan.zhihu.com/p/306530300) 中的思想，使用 [Quality Focal Loss](https://arxiv.org/abs/2011.12885)，去掉 Objectness 分支并去掉 Objectness 分支，进一步将 Head 轻量化。
+同时，RTMDet 也延续了作者之前在 [NanoDet](https://zhuanlan.zhihu.com/p/306530300) 中的思想，使用 [Quality Focal Loss](https://arxiv.org/abs/2011.12885)，并去掉 Objectness 分支，进一步将 Head 轻量化。
