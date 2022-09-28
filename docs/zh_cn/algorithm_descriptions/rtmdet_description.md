@@ -19,11 +19,15 @@ RTMDet 由 tiny/s/m/l/x 一系列不同大小的模型组成，为不同的应�
 
 而最轻量的模型 RTMDet-tiny，在仅有4M参数量的情况下也能够达到 40.9 mAP，且推理速度 \< 1 ms。
 
-![img](https://user-images.githubusercontent.com/12907710/192182907-f9a671d6-89cb-4d73-abd8-c2b9dada3c66.png)
+<div align=center >
+<img alt="RTMDet_精度图" src="https://user-images.githubusercontent.com/12907710/192182907-f9a671d6-89cb-4d73-abd8-c2b9dada3c66.png"/>
+</div>
 
 ## 模型结构
 
-![RTMDet_structure_v0 5](https://user-images.githubusercontent.com/27466624/192753174-388c420c-a768-4659-8731-66ddeb7d2774.jpg)
+<div align=center >
+<img alt="RTMDet_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/192815848-c2db9680-df03-40af-8051-124b9ae59d06.jpg"/>
+</div>
 
 RTMDet 模型整体结构和 [YOLOX](https://arxiv.org/abs/2107.08430) 几乎一致，由 `CSPNeXt` + `CSPNeXtPAFPN` + `共享卷积权重但分别计算 BN 的 SepBNHead` 构成。内部核心模块也是 `CSPLayer`，但对其中的  `Basic Block` 进行了改进，提出了 `CSPNeXt Block`。
 
@@ -40,7 +44,9 @@ RTMDet 模型整体结构和 [YOLOX](https://arxiv.org/abs/2107.08430) 几乎一
 Darknet （图 a）使用 1x1 与 3x3 卷积的 `Basic Block`。[YOLOv6](https://arxiv.org/abs/2209.02976)、[YOLOv7](https://arxiv.org/abs/2207.02696)、[PPYOLO-E](https://arxiv.org/abs/2203.16250)（图 b & c）使用了重参数化 Block。但重参数化的训练代价高，且不易量化，需要其他方式来弥补量化误差。
 RTMDet 则借鉴了最近比较热门的 [ConvNeXt](https://arxiv.org/abs/2201.03545)、[RepLKNet](https://arxiv.org/abs/2203.06717) 的做法，为 `Basic Block` 加入了大 kernel 的 `depth-wise` 卷积（图 d），并将其命名为 `CSPNeXt Block`。
 
-![image](https://user-images.githubusercontent.com/27466624/192752976-4c20f944-1ef0-4746-892e-ba814cdcda20.png)
+<div align=center >
+<img alt="BasicBlock" src="https://user-images.githubusercontent.com/27466624/192752976-4c20f944-1ef0-4746-892e-ba814cdcda20.png"/>
+</div>
 
 关于不同 kernel 大小的实验结果，如下表所示。
 
