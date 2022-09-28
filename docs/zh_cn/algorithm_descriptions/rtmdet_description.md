@@ -38,7 +38,7 @@ def distance2bbox(points: Tensor, distance: Tensor, ...) -> Tensor:
         points (Tensor): 需要计算的点，Shape (B, N, 2) or (N, 2).
         distance (Tensor): 距离四边的距离。(left, top, right, bottom). Shape (B, N, 4) or (N, 4)
     """
-    
+
     # 反算 bbox xyxy
     x1 = points[..., 0] - distance[..., 0]
     y1 = points[..., 1] - distance[..., 1]
@@ -115,7 +115,7 @@ def quality_focal_loss(pred, target, beta=2.0):
     loss = F.binary_cross_entropy_with_logits(
         pred, zerolabel, reduction='none') * scale_factor.pow(beta)
 
-    # 得出 IoU 在区间 (0,1] 的 bbox 
+    # 得出 IoU 在区间 (0,1] 的 bbox
     # FG cat_id: [0, num_classes -1], BG cat_id: num_classes
     bg_class_ind = pred.size(1)
     pos = ((label >= 0) & (label < bg_class_ind)).nonzero().squeeze(1)
@@ -124,7 +124,7 @@ def quality_focal_loss(pred, target, beta=2.0):
     # 正样本由 IoU 范围在 (0,1] 的 bbox 来监督
     # 计算动态比例因子
     scale_factor = score[pos] - pred_sigmoid[pos, pos_label]
-    
+
     # 计算两部分的 loss
     loss[pos, pos_label] = F.binary_cross_entropy_with_logits(
         pred[pos, pos_label], score[pos],
@@ -160,7 +160,7 @@ def bbox_overlaps(bboxes1, bboxes2, mode='iou', is_aligned=False, eps=1e-6):
         bboxes2[..., 3] - bboxes2[..., 1])
 
     if is_aligned:
-        # 得出两个 bbox 重合的左上角 lt 和右下角 rb 
+        # 得出两个 bbox 重合的左上角 lt 和右下角 rb
         lt = torch.max(bboxes1[..., :2], bboxes2[..., :2])  # [B, rows, 2]
         rb = torch.min(bboxes1[..., 2:], bboxes2[..., 2:])  # [B, rows, 2]
 
@@ -173,7 +173,7 @@ def bbox_overlaps(bboxes1, bboxes2, mode='iou', is_aligned=False, eps=1e-6):
         else:
             union = area1
         if mode == 'giou':
-            # 得出两个 bbox 最小凸闭合框的左上角 lt 和右下角 rb 
+            # 得出两个 bbox 最小凸闭合框的左上角 lt 和右下角 rb
             enclosed_lt = torch.min(bboxes1[..., :2], bboxes2[..., :2])
             enclosed_rb = torch.max(bboxes1[..., 2:], bboxes2[..., 2:])
     else:
@@ -183,7 +183,7 @@ def bbox_overlaps(bboxes1, bboxes2, mode='iou', is_aligned=False, eps=1e-6):
     eps = union.new_tensor([eps])
     union = torch.max(union, eps)
     ious = overlap / union
-    
+
     ...
 
     # 求最小凸闭合框面积
