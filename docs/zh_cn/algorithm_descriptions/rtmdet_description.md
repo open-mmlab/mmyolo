@@ -445,11 +445,11 @@ def giou_loss(pred, target, eps=1e-7):
 =======
 ## 3. 数据增强
 
-RTMDet采用了多种数据增强的方式来增加模型的性能，主要包括单图数据增强:
+RTMDet 采用了多种数据增强的方式来增加模型的性能，主要包括单图数据增强:
 
 - **RandomResize 随机尺度变换**
 - **RandomCrop 随机裁剪**
-- **HSVRandomAug 颜色空间曾倩**
+- **HSVRandomAug 颜色空间增强**
 - **RandomFlip 随机水平翻转**
 
 以及混合类数据增强：
@@ -459,26 +459,24 @@ RTMDet采用了多种数据增强的方式来增加模型的性能，主要包�
 
 MMDetection 开源库中已经对单图数据增强进行了封装，用户通过简单的修改配置即可使用库中提供的任何数据增强功能，且都是属于比较常规的数据增强，不需要特殊介绍。下面将具体介绍混合类数据增强的具体实现。
 
-与YOLOv5不同的是，RTMDet的s和tiny模型也采用了MixUP的数据增强，并且为混合类数据增强引入了Cache方案，有效地减少了图像处理的时间。具体介绍如下：
+与 YOLOv5 不同的是，YOLOv5认为在 s 和 nano 模型上使用 mixup 是过剩的，小模型不需要这么强的数据增强。而 RTMDet 在 s 和 tiny 上也使用了 MixUP，并通过训练证明这个操作是有效的。并且 RTMDet 为混合类数据增强引入了 Cache 方案，有效地减少了图像处理的时间。具体介绍如下：
 
 ### 3.1 为图像混合数据增强引入Cache
 
-Mosaic&Mixup 涉及到多张图片的混合，它们的耗时会是普通数据增强的K倍(K为混入图片的数量)。
-RTMDet将原本从数据集取图片改为从缓存队列种获取，通过牺牲一定空间的方式大幅提升了效率。
-另外，通过调整cache的大小以及pop的方式，也可以调整增强的强度。当使用较小的cache时，其效果类似repeated augmentation。
+Mosaic&Mixup 涉及到多张图片的混合，它们的耗时会是普通数据增强的K倍(K为混入图片的数量)。 如在YOLOv5中，每次做 Mosaic 时， 4张图片的信息都需要从硬盘中重新加载。 而 RTMDet 只需要重新载入当前的一张图片，其余参与混合增强的图片则从缓存队列中获取，通过牺牲一定空间的方式大幅提升了效率。 另外，通过调整 cache 的大小以及 pop 的方式，也可以调整增强的强度。当使用较小的 cache 时，其效果类似 repeated augmentation。
 ![cache](https://user-images.githubusercontent.com/33799979/192730011-90e2a28d-e163-4399-bf87-d3012007d8c3.png)
-如图所示，cache队列中预先储存了N张已加载的图像与标签数据，每一个训练step中只需加载一张新的图片及其标签数据并更新到cache队列中，同时如果cache队列长度超过预设长度，则随机pop一张图（为了tiny模型训练更稳定，在tiny模型中不采用随机pop的方式），当需要进行混合数据增强时，只需要从cache中随机选择需要的图像进行拼接等处理，而不需要全部从硬盘中加载，节省了图像加载的时间。
+如图所示，cache 队列中预先储存了N张已加载的图像与标签数据，每一个训练 step 中只需加载一张新的图片及其标签数据并更新到 cache 队列中，同时如果 cache 队列长度超过预设长度，则随机 pop 一张图（为了 tiny 模型训练更稳定，在 tiny 模型中不采用随机 pop 的方式），当需要进行混合数据增强时，只需要从cache中随机选择需要的图像进行拼接等处理，而不需要全部从硬盘中加载，节省了图像加载的时间。
 
-> cache队列的最大长度N为可调整参数，Mosaic增强默认 N=40， MixUP所需图像数量相较Mosaic更少，因此cache数量默认为20， tiny模型需要更稳定的训练条件，因此其cache数量也为其余规格模型的一半（MixUP为10，Mosaic为20）
+> cache 队列的最大长度 N 为可调整参数，Mosaic 增强默认 N=40， MixUP 所需图像数量相较 Mosaic 更少，因此 cache 数量默认为20， tiny 模型需要更稳定的训练条件，因此其 cache 数量也为其余规格模型的一半（ MixUP 为10，Mosaic 为20）
 
-在具体实现中，MMYOLO设计了`BaseMiximageTransform`类来支持多张图像混合数据增强：
+在具体实现中，MMYOLO 设计了`BaseMiximageTransform`类来支持多张图像混合数据增强：
 
 ```python
 if self.use_cached:
     # Be careful: deep copying can be very time-consuming
     # if results includes dataset.
     dataset = results.pop('dataset', None)
-    self.results_cache.append(copy.deepcopy(results))  # 将当前加载的图片数据缓存到cache中
+    self.results_cache.append(copy.deepcopy(results))  # 将当前加载的图片数据缓存到 cache 中
     if len(self.results_cache) > self.max_cached_images:
         if self.random_pop: # 除了tiny模型，self.random_pop=True
             index = random.randint(0, len(self.results_cache) - 1)
@@ -497,7 +495,7 @@ else:
 
 ### 3.2 Mosaic
 
-mosaic 是将 4 张图拼接为 1 张大图，变相的相当于增加了 batch size，具体步骤为：
+mosaic 是将 4 张图拼接为 1 张大图，相当于变相的增加了 batch size，具体步骤为：
 
 1. 根据索引随机从自定义数据集中再采样3个图像，可能重复
 
@@ -515,7 +513,7 @@ def get_indexes(self, dataset: Union[BaseDataset, list]) -> list:
     return indexes
 ```
 
-2. 随机选出4幅图像相交的中点。
+2. 随机选出 4 幅图像相交的中点。
 
 ```python
 # mosaic center x, y
@@ -526,7 +524,7 @@ center_y = int(
 center_position = (center_x, center_y)
 ```
 
-3. 根据采样的index读取图片并拼接, 拼接前会先进行 keep-ratio 的 resize 图片(即为最大边一定是 640)。
+3. 根据采样的 index 读取图片并拼接, 拼接前会先进行 keep-ratio 的 resize 图片(即为最大边一定是 640)。
 
 ```python
 # keep_ratio resize
@@ -546,9 +544,9 @@ mosaic_bboxes.clip_([2 * self.img_scale[0], 2 * self.img_scale[1]])
 
 ### 3.4 强弱两阶段训练
 
-Mosaic+Mixup失真度比较高，持续用太强的数据增强对模型并不一定有益。YOLOX中率先使用了强弱两阶段的训川练方式，但由于引入了旋转，切片导致box标注产生误差，需要在第二阶段引入额外的L1oss来纠正回归分支的性能。
+Mosaic+Mixup 失真度比较高，持续用太强的数据增强对模型并不一定有益。YOLOX 中率先使用了强弱两阶段的训川练方式，但由于引入了旋转，切片导致box标注产生误差，需要在第二阶段引入额外的L1oss来纠正回归分支的性能。
 
-为了使数据增强的方式更为通用，rtmdet在前 280 epoch 使用不带旋转的 Mosaic+Mixup, 且通过混入8张图片来提升强度以及正样本数。后20 epoch使用比较小的学习率在比较弱的Random Crop下进行微调，同时在EMA的作用下将参数缓慢更新至模型，能够得到比较大的提升。
+为了使数据增强的方式更为通用，rtmdet在前 280 epoch 使用不带旋转的 Mosaic+Mixup, 且通过混入8张图片来提升强度以及正样本数。后 20 epoch 使用比较小的学习率在比较弱的 Random Crop 下进行微调，同时在EMA的作用下将参数缓慢更新至模型，能够得到比较大的提升。
 
 具体训练阶段数据增强流程：
 
