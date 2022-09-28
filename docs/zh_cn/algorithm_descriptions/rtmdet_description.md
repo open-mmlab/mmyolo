@@ -26,7 +26,7 @@
 **位置先验信息损失** , **样本回归损失** , **样本分类损失** , 同时对三个损失进行了 `Soft`
 处理进行参数调优, 以达到最佳的动态匹配效果。
 
-1. Soft Center Prior
+1. Soft_Center_Prior
 
 ```python
 # valid_prior Tensor[N,4] 表示anchor point
@@ -41,7 +41,7 @@ distance = (valid_prior[:, None, :2] - gt_center[None, :, :]
 soft_center_prior = torch.pow(10, distance - 3)
 ```
 
-2. iou_cost
+2. IOU_Cost
 
 ```python
 # 计算回归 bboxes 和 gts 的 iou
@@ -50,7 +50,7 @@ pairwise_ious = self.iou_calculator(valid_decoded_bbox, gt_bboxes)
 iou_cost = -torch.log(pairwise_ious + EPS) * 3
 ```
 
-3. soft_cls_cost
+3. Soft_Cls_Cost
 
 ```python
 # 生成分类标签
