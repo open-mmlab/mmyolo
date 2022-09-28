@@ -17,13 +17,11 @@ RTMDet 由 tiny/s/m/l/x 一系列不同大小的模型组成，为不同的应�
 
 ![img](https://user-images.githubusercontent.com/12907710/192182907-f9a671d6-89cb-4d73-abd8-c2b9dada3c66.png)
 
-**注**:
+**注**：推理速度测试（不包含 NMS）是在 1 块 NVIDIA 3090 GPU 上的 `TensorRT 8.4.3, cuDNN 8.2.0, FP16, batch size=1` 条件里测试的。
 
-1. 推理速度测试（不包含 NMS）是在 1 块 NVIDIA 3090 GPU 上的 `TensorRT 8.4.3, cuDNN 8.2.0, FP16, batch size=1` 条件里测试的。
+## 模型结构
 
-## 2. 模型结构
-
-## 整体结构
+![RTMDet_structure_v0 5](https://user-images.githubusercontent.com/27466624/192753174-388c420c-a768-4659-8731-66ddeb7d2774.jpg)
 
 RTMDet 模型整体结构与目前主流的检测器 YOLO 系列相似。以 **L**arge 模型为例，整体由 `CSPNeXt` + `CSPNeXtPAFPN` + `共享卷积权重但分别计算 BN 的 Head` 构成。
 
@@ -33,13 +31,15 @@ RTMDet 模型整体结构与目前主流的检测器 YOLO 系列相似。以 **L
 
 - `Stem Layer` 是 3 层 3x3 kernel 的 `ConvModule` ，不同于之前的 `Focus` 模块或者 1 层 6x6 kernel 的 `ConvModule` 。
 - `Stage Layer` 总体结构与已有模型类似，前 3 个 `Stage Layer` 由 1 个 `ConvModule` 和 1 个 `CSPLayer`  组成。第 4 个 `Stage Layer` 在 `ConvModule`  和  `CSPLayer` 中间增加了 `SPPF` 模块（MMDetection 版本为 `SPP` 模块）。
-- 如上图 Details 部分，其中 `ConvModule` 为 3x3 `Conv2d` + `BatchNorm` + `SiLU 激活函数`。`CSPLayer` 由 3 个 `ConvModule` + n 个 `CSPNeXt Block`(带残差连接) + `Channel Attention` 组成。`CSPNeXt Block` 和 `Channel Attention` 模块在下节详细讲述。
+- 如模型图 Details 部分所示，`CSPLayer` 由 3 个 `ConvModule` + n 个 `CSPNeXt Block`(带残差连接) + 1 个  `Channel Attention` 模块组成。`ConvModule` 为 1 层 3x3 `Conv2d` + `BatchNorm` + `SiLU` 激活函数。`Channel Attention` 模块为 1 层 `AdaptiveAvgPool2d` + 1 层 1x1 `Conv2d` + `Hardsigmoid` 激活函数。`CSPNeXt Block` 模块在下节详细讲述。
 
 #### CSPNeXt Block
 
 RTMDet 对 `CSPDarknet` 的 `Basic Block` 进行了改进。
 `DarkNet` （图 a）使用 1x1 与 3x3 卷积的 `Basic Block`。YOLOv6、v7、PPYOLO-E（图 b & c）使用了重参数化 Block。但重参数化的训练代价高，且不易量化，需要其他方式来弥补量化误差。
 RTMDet 则借鉴了最近比较热门的 [ConvNeXt](https://arxiv.org/abs/2201.03545)、[RepLKNet](https://arxiv.org/abs/2203.06717) 的做法，为 `Basic Block` 加入了大 kernel 的 `depth-wise` 卷积（图 d），并将其命名为 `CSPNeXt Block`。
+
+![image](https://user-images.githubusercontent.com/27466624/192752976-4c20f944-1ef0-4746-892e-ba814cdcda20.png)
 
 关于不同 kernel 大小的实验结果，如下表所示。
 
