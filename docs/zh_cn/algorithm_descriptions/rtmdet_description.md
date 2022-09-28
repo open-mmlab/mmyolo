@@ -15,8 +15,8 @@ MMDet 编码的核心源码：
 ```python
 def bbox2distance(points: Tensor, bbox: Tensor, ...) -> Tensor:
     """
-        points (Tensor): 需要计算的点（该点已经乘上了 strides），Shape (n, 2) or (b, n, 2), [x, y].
-        bbox (Tensor): BBox 的 xyxy，Shape (n, 4) or (b, n, 4), "xyxy" format.
+        points (Tensor): 相当于 scale 值 stride ，且每个预测点仅为一个正方形 anchor 的 anchor point [x, y]，Shape (n, 2) or (b, n, 2).
+        bbox (Tensor): Bbox 为乘上 stride 的网络预测值，格式为 xyxy，Shape (n, 4) or (b, n, 4).
     """
     # 计算点距离四边的距离
     left = points[..., 0] - bbox[..., 0]
@@ -35,7 +35,7 @@ MMDet 解码的核心源码：
 def distance2bbox(points: Tensor, distance: Tensor, ...) -> Tensor:
     """
         通过距离反算 bbox 的 xyxy
-        points (Tensor): 需要计算的点，Shape (B, N, 2) or (N, 2).
+        points (Tensor): 正方形的预测 anchor 的 anchor point [x, y]，Shape (B, N, 2) or (N, 2).
         distance (Tensor): 距离四边的距离。(left, top, right, bottom). Shape (B, N, 4) or (N, 4)
     """
 
