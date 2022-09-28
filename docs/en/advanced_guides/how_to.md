@@ -21,7 +21,7 @@ model = dict(
         ], ))
 ```
 
-`cfg`parameter indicates the specific configuration of the plug-in. The `stages` parameter indicates whether to add plug-ins after the corresponding stage of the backbone. The length of list `stages` must be the same as the number of backbone stages.
+`cfg` parameter indicates the specific configuration of the plug-in. The `stages` parameter indicates whether to add plug-ins after the corresponding stage of the backbone. The length of list `stages` must be the same as the number of backbone stages.
 
 ## Apply multiple Necks
 
