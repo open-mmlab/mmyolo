@@ -10,41 +10,19 @@ RTMDet 的 BBox Coder 采用的是 `mmdet.DistancePointBBoxCoder`。
 >
 > 这个编码器将 gt bboxes (x1, y1, x2, y2) 编码为 (top, bottom, left, right)，并且解码至原图像上
 
-MMDet 实现源码
+MMDet 实现源码核心部分：
 
 ```python
 @TASK_UTILS.register_module()
 class DistancePointBBoxCoder(BaseBBoxCoder):
-    """Distance Point BBox coder.
-
-    This coder encodes gt bboxes (x1, y1, x2, y2) into (top, bottom, left,
-    right) and decode it back to the original.
-
-    Args:
-        clip_border (bool, optional): Whether clip the objects outside the
-            border of the image. Defaults to True.
-    """
 
     def __init__(self, clip_border=True):
-        super(BaseBBoxCoder, self).__init__()
-        self.clip_border = clip_border
+        ...
 
     def encode(self, points, gt_bboxes, max_dis=None, eps=0.1):
-        """Encode bounding box to distances.
-
-        Args:
-            points (Tensor): Shape (N, 2), The format is [x, y].
-            gt_bboxes (Tensor): Shape (N, 4), The format is "xyxy"
-            max_dis (float): Upper bound of the distance. Default None.
-            eps (float): a small value to ensure target < max_dis, instead <=.
-                Default 0.1.
-
-        Returns:
-            Tensor: Box transformation deltas. The shape is (N, 4).
-        """
         assert points.size(0) == gt_bboxes.size(0)
-        assert points.size(-1) == 2
-        assert gt_bboxes.size(-1) == 4
+        assert points.size(-1) == 2 # Shape (N, 2), The format is [x, y].
+        assert gt_bboxes.size(-1) == 4  # Shape (N, 4), The format is "xyxy"
         return bbox2distance(points, gt_bboxes, max_dis, eps)
 
     def decode(self, points, pred_bboxes, max_shape=None):
@@ -82,46 +60,15 @@ class DistancePointBBoxCoder(BaseBBoxCoder):
 
 ### QualityFocalLoss
 
-Quality Focal Loss (QFL) 是 [Generalized Focal Loss: Learning Qualified and Distributed Bounding Boxes for Dense Object Detection](https://arxiv.org/abs/2006.04388) 的变体。
+Quality Focal Loss (QFL) 是 [Generalized Focal Loss: Learning Qualified and Distributed Bounding Boxes for Dense Object Detection](https://arxiv.org/abs/2006.04388) 的一部分。
 
-其可以将离散标签的 `focal loss` 泛化到连续标签上，将 bboxes 与 gt 的 IoU 的作为分类分数的标签，使得分类分数为表征回归质量的分数 。
+其可以将离散标签的 `focal loss` 泛化到连续标签上，将 bboxes 与 gt 的 IoU 的作为分类分数的标签，使得分类分数为表征回归质量的分数。
 
-MMDet 实现源码：
+MMDet 实现源码的核心部分：
 
 ```python
 @MODELS.register_module()
 class QualityFocalLoss(nn.Module):
-    r"""Quality Focal Loss (QFL) is a variant of `Generalized Focal Loss:
-    Learning Qualified and Distributed Bounding Boxes for Dense Object
-    Detection <https://arxiv.org/abs/2006.04388>`_.
-
-    Args:
-        use_sigmoid (bool): Whether sigmoid operation is conducted in QFL.
-            Defaults to True.
-        beta (float): The beta parameter for calculating the modulating factor.
-            Defaults to 2.0.
-        reduction (str): Options are "none", "mean" and "sum".
-        loss_weight (float): Loss weight of current loss.
-        activated (bool, optional): Whether the input is activated.
-            If True, it means the input has been activated and can be
-            treated as probabilities. Else, it should be treated as logits.
-            Defaults to False.
-    """
-
-    def __init__(self,
-                 use_sigmoid=True,
-                 beta=2.0,
-                 reduction='mean',
-                 loss_weight=1.0,
-                 activated=False):
-        super(QualityFocalLoss, self).__init__()
-        assert use_sigmoid is True, 'Only sigmoid in QFL supported now.'
-        self.use_sigmoid = use_sigmoid
-        self.beta = beta
-        self.reduction = reduction
-        self.loss_weight = loss_weight
-        self.activated = activated
-
     def forward(self,
                 pred,
                 target,
@@ -174,17 +121,14 @@ class QualityFocalLoss(nn.Module):
 
 GIoU Loss 用于计算两个框重叠区域的关系，重叠区域越大，损失越小，反之越大。而且 GIoU 是在 \[0,2\] 之间，因为其值被限制在了一个较小的范围内，所以网络不会出现剧烈的波动，证明了其具有比较好的稳定性。
 
-MMDet 实现源码：
+MMDet 实现源码的核心部分：
 
 ```python
 @MODELS.register_module()
 class GIoULoss(nn.Module):
 
     def __init__(self, eps=1e-6, reduction='mean', loss_weight=1.0):
-        super(GIoULoss, self).__init__()
-        self.eps = eps
-        self.reduction = reduction
-        self.loss_weight = loss_weight
+        ...
 
     def forward(self,
                 pred,
@@ -201,9 +145,6 @@ class GIoULoss(nn.Module):
         reduction = (
             reduction_override if reduction_override else self.reduction)
         if weight is not None and weight.dim() > 1:
-            # TODO: remove this in the future
-            # reduce the weight of shape (n, 4) to (n,) to match the
-            # giou_loss of shape (n,)
             assert weight.shape == pred.shape
             weight = weight.mean(-1)
         loss = self.loss_weight * giou_loss(
