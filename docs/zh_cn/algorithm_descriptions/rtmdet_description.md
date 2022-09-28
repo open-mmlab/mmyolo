@@ -457,7 +457,7 @@ RTMDet 采用了多种数据增强的方式来增加模型的性能，主要包�
 - **Mosaic 马赛克**
 - **MixUp 图像混合**
 
-数据增强的作用顺序可以参考[RTMDet\\ 数据增强流程](#34-强弱两阶段训练), 其中 RandomResize 这个在 大模型 M,L,X 和 小模型 s, tiny 上是不一样的，大模型由于参数较多，可以使用 large scale jitter 策略即参数为 (0.1,2.0)，而小模型采用 stand scale jitter 策略即 (0.5, 2.0) 策略。
+数据增强的作用顺序可以参考[RTMDet 数据增强流程](#34-强弱两阶段训练), 其中 RandomResize 这个在 大模型 M,L,X 和 小模型 s, tiny 上是不一样的，大模型由于参数较多，可以使用 large scale jitter 策略即参数为 (0.1,2.0)，而小模型采用 stand scale jitter 策略即 (0.5, 2.0) 策略。
 MMDetection 开源库中已经对单图数据增强进行了封装，用户通过简单的修改配置即可使用库中提供的任何数据增强功能，且都是属于比较常规的数据增强，不需要特殊介绍。下面将具体介绍混合类数据增强的具体实现。
 
 与 YOLOv5 不同的是，YOLOv5认为在 s 和 nano 模型上使用 MixUp 是过剩的，小模型不需要这么强的数据增强。而 RTMDet 在 s 和 tiny 上也使用了 MixUp，这是因为 RTMDet 在最后 20 epoch 会切换为正常的 aug， 并通过训练证明这个操作是有效的。 并且 RTMDet 为混合类数据增强引入了 Cache 方案，有效地减少了图像处理的时间,和引入了可调超参 max_cached_images ，当使用较小的 cache 时，其效果类似 repeated augmentation。具体介绍如下：
