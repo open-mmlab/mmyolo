@@ -84,7 +84,7 @@ class DistancePointBBoxCoder(BaseBBoxCoder):
 
 Quality Focal Loss (QFL) 是 [Generalized Focal Loss: Learning Qualified and Distributed Bounding Boxes for Dense Object Detection](https://arxiv.org/abs/2006.04388) 的变体。
 
-其可以将离散标签的 `focal loss` 泛化到连续标签上，从而直接预测分类分数和 IoU 分数的乘积。
+其可以将离散标签的 `focal loss` 泛化到连续标签上，将 bboxes 与 gt 的 IoU 的作为分类分数的标签，使得分类分数为表征回归质量的分数 。
 
 MMDet 实现源码：
 
