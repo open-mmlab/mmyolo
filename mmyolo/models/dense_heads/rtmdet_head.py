@@ -4,11 +4,9 @@ from typing import List, Optional, Sequence, Tuple, Union
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule, is_norm
-from mmdet.models.layers.transformer import inverse_sigmoid
 from mmdet.models.task_modules.prior_generators import anchor_inside_flags
 from mmdet.models.task_modules.samplers import PseudoSampler
-from mmdet.models.utils import (images_to_levels, multi_apply,
-                                sigmoid_geometric_mean, unmap)
+from mmdet.models.utils import images_to_levels, multi_apply, unmap
 from mmdet.structures.bbox import distance2bbox
 from mmdet.utils import (ConfigType, InstanceList, OptConfigType,
                          OptInstanceList, OptMultiConfig, reduce_mean)
@@ -42,11 +40,7 @@ class RTMDetSepBNHeadModule(BaseModule):
              Defaults to (8, 16, 32).
         share_conv (bool): Whether to share conv layers between stages.
             Defaults to True.
-        with_objectness (bool): Whether to add an objectness branch.
-            Defaults to True.
         pred_kernel_size (int): Kernel size of ``nn.Conv2d``. Defaults to 1.
-        exp_on_reg (bool): Whether to apply exp on reg branch.
-            Defaults to False.
         conv_cfg (:obj:`ConfigDict` or dict, optional): Config dict for
             convolution layer. Defaults to None.
         norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
@@ -68,9 +62,7 @@ class RTMDetSepBNHeadModule(BaseModule):
         stacked_convs: int = 2,
         featmap_strides: Sequence[int] = [8, 16, 32],
         share_conv: bool = True,
-        with_objectness: bool = True,
         pred_kernel_size: int = 1,
-        exp_on_reg: bool = False,
         conv_cfg: OptConfigType = None,
         norm_cfg: ConfigType = dict(type='BN'),
         act_cfg: ConfigType = dict(type='SiLU', inplace=True),
@@ -78,7 +70,6 @@ class RTMDetSepBNHeadModule(BaseModule):
     ):
         super().__init__(init_cfg=init_cfg)
         self.share_conv = share_conv
-        self.exp_on_reg = exp_on_reg
         self.num_classes = num_classes
         self.pred_kernel_size = pred_kernel_size
         self.feat_channels = int(feat_channels * widen_factor)
@@ -89,7 +80,6 @@ class RTMDetSepBNHeadModule(BaseModule):
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
         self.featmap_strides = featmap_strides
-        self.with_objectness = with_objectness
 
         self.in_channels = int(in_channels * widen_factor)
 
@@ -205,14 +195,7 @@ class RTMDetSepBNHeadModule(BaseModule):
             for reg_layer in self.reg_convs[idx]:
                 reg_feat = reg_layer(reg_feat)
 
-            if self.with_objectness:
-                objectness = self.rtm_obj[idx](reg_feat)
-                cls_score = inverse_sigmoid(
-                    sigmoid_geometric_mean(cls_score, objectness))
-            if self.exp_on_reg:
-                reg_dist = self.rtm_reg[idx](reg_feat).exp() * stride
-            else:
-                reg_dist = self.rtm_reg[idx](reg_feat) * stride
+            reg_dist = self.rtm_reg[idx](reg_feat) * stride
             cls_scores.append(cls_score)
             bbox_preds.append(reg_dist)
         return tuple(cls_scores), tuple(bbox_preds)

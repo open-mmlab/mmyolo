@@ -55,8 +55,6 @@ model = dict(
             feat_channels=256,
             norm_cfg=dict(type='BN'),
             act_cfg=dict(type='SiLU', inplace=True),
-            with_objectness=False,
-            exp_on_reg=True,
             share_conv=True,
             pred_kernel_size=1,
             featmap_strides=strides),
