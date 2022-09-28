@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # RTMDet 原理和实现全解析
 
 ## 0 简介
@@ -441,3 +442,81 @@ def giou_loss(pred, target, eps=1e-7):
     loss = 1 - gious
     return loss
 ```
+=======
+## 3. 数据增强
+
+rtmdet采用了多种数据增强的方式来增加模型的性能，主要包括Mosaic，RandomResize，RandomCrop，YOLOXHSVRandomAug，RandomFlip和MixUP。
+
+训练阶段数据增强流程：
+![pipeline](https://user-images.githubusercontent.com/33799979/192729900-9d8a98b7-d9a3-4278-b87d-24f16258cfc8.png)
+
+### 3.1 Mosaic
+
+mosaic 是将 4 张图拼接为 1 张大图，变相的相当于增加了 batch size，具体步骤为：
+
+1. 根据索引随机从自定义数据集中再采样3个图像，可能重复
+
+```python
+def get_indexes(self, dataset: Union[BaseDataset, list]) -> list:
+    """Call function to collect indexes.
+
+    Args:
+        dataset (:obj:`Dataset` or list): The dataset or cached list.
+
+    Returns:
+        list: indexes.
+    """
+    indexes = [random.randint(0, len(dataset)) for _ in range(3)]
+    return indexes
+```
+
+2. 随机选出4幅图像相交的中点。
+
+```python
+# mosaic center x, y
+center_x = int(
+    random.uniform(*self.center_ratio_range) * self.img_scale[1])
+center_y = int(
+    random.uniform(*self.center_ratio_range) * self.img_scale[0])
+center_position = (center_x, center_y)
+```
+
+3. 根据采样的index读取图片并拼接, 拼接前会先进行 keep-ratio 的 resize 图片(即为最大边一定是 640)。
+
+```python
+# keep_ratio resize
+scale_ratio_i = min(self.img_scale[0] / h_i,
+                    self.img_scale[1] / w_i)
+img_i = mmcv.imresize(
+    img_i, (int(w_i * scale_ratio_i), int(h_i * scale_ratio_i)))
+```
+
+4. 拼接后，把 bbox 和 label 全部拼接起来，然后对 bbox 进行裁剪但是不过滤(可能出现一些无效框)
+
+```python
+mosaic_bboxes.clip_([2 * self.img_scale[0], 2 * self.img_scale[1]])
+```
+
+### 3.2 YOLOXHSVRandomAug
+
+### 3.3 RandomFlip
+
+随机水平翻转
+
+### 3.1 强弱两阶段训练
+
+Mosaic+Mixup失真度比较高，持续用太强的数据增强对模型并不一定有益。YOLOX中率先使用了强弱两阶段的训川练方式，但由于引入了旋转，切片导致box标注产生误差，需要在第二阶段引入额外的L1oss来纠正回归分支的性能。
+
+为了使数据增强的方式更为通用，rtmdet在前 280 epoch 使用不带旋转的 Mosaic+Mixup, 且通过混入8张图片来提升强度以及正样本数。
+
+后20 epoch使用比较小的学习率在比较弱的Random Crop下进行微调，同时在EMA的作用下将参数缓慢更新至模型，能够得到比较大的提升。
+
+### 3.2 为图像混合数据增强引入Cache
+
+![cache](https://user-images.githubusercontent.com/33799979/192730011-90e2a28d-e163-4399-bf87-d3012007d8c3.png)
+由于Mosaic&Mixup涉及到多张图片的混合，它们的耗时会是普通数据增强的K倍(K为混入图片的数量)。
+我们将原本从数据集取图片改为从缓存队列种获取，通过牺牲一定空间的方式大幅提升了效率。
+另外，通过调整cache的大小以及pop的方式，也可以调整增强的强度。当使用较小的cache时，其效果类似repeated augmentation。
+
+为了在小模型上的训练更稳定，tiny模型不采用random pop的方式。
+>>>>>>> add pipeline doc
