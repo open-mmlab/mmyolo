@@ -469,7 +469,7 @@ RTMDet将原本从数据集取图片改为从缓存队列种获取，通过牺�
 ![cache](https://user-images.githubusercontent.com/33799979/192730011-90e2a28d-e163-4399-bf87-d3012007d8c3.png)
 如图所示，cache队列中预先储存了N张已加载的图像与标签数据，每一个训练step中只需加载一张新的图片及其标签数据并更新到cache队列中，同时如果cache队列长度超过预设长度，则随机pop一张图（为了tiny模型训练更稳定，在tiny模型中不采用随机pop的方式），当需要进行混合数据增强时，只需要从cache中随机选择需要的图像进行拼接等处理，而不需要全部从硬盘中加载，节省了图像加载的时间。
 
-cache队列的最大长度N为可调整参数，Mosaic增强默认 N=40， MixUP所需图像数量相较Mosaic更少，因此cache数量默认为20， tiny模型需要更稳定的训练条件，因此其cache数量也为其余规格模型的一半（MixUP为10，Mosaic为20）
+> cache队列的最大长度N为可调整参数，Mosaic增强默认 N=40， MixUP所需图像数量相较Mosaic更少，因此cache数量默认为20， tiny模型需要更稳定的训练条件，因此其cache数量也为其余规格模型的一半（MixUP为10，Mosaic为20）
 
 在具体实现中，MMYOLO设计了`BaseMiximageTransform`类来支持多张图像混合数据增强：
 
