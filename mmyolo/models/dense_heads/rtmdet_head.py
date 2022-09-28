@@ -92,8 +92,6 @@ class RTMDetSepBNHeadModule(BaseModule):
 
         self.rtm_cls = nn.ModuleList()
         self.rtm_reg = nn.ModuleList()
-        if self.with_objectness:
-            self.rtm_obj = nn.ModuleList()
         for n in range(len(self.featmap_strides)):
             cls_convs = nn.ModuleList()
             reg_convs = nn.ModuleList()
@@ -134,13 +132,6 @@ class RTMDetSepBNHeadModule(BaseModule):
                     self.num_base_priors * 4,
                     self.pred_kernel_size,
                     padding=self.pred_kernel_size // 2))
-            if self.with_objectness:
-                self.rtm_obj.append(
-                    nn.Conv2d(
-                        self.feat_channels,
-                        1,
-                        self.pred_kernel_size,
-                        padding=self.pred_kernel_size // 2))
 
         if self.share_conv:
             for n in range(len(self.featmap_strides)):
@@ -161,9 +152,6 @@ class RTMDetSepBNHeadModule(BaseModule):
         for rtm_cls, rtm_reg in zip(self.rtm_cls, self.rtm_reg):
             normal_init(rtm_cls, std=0.01, bias=bias_cls)
             normal_init(rtm_reg, std=0.01)
-        if self.with_objectness:
-            for rtm_obj in self.rtm_obj:
-                normal_init(rtm_obj, std=0.01, bias=bias_cls)
 
     def forward(self, feats: Tuple[Tensor, ...]) -> tuple:
         """Forward features from the upstream network.
