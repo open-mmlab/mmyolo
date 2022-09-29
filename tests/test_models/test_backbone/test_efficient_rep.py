@@ -100,10 +100,10 @@ class TestYOLOv6EfficientRep(TestCase):
                 stages=(False, False, True, True)),
         ])
 
-        assert len(model.stage1) == 2
-        assert len(model.stage2) == 2
-        assert len(model.stage3) == 3  # +DropBlock
-        assert len(model.stage4) == 4  # +SPPF+DropBlock
+        assert len(model.stage1) == 1
+        assert len(model.stage2) == 1
+        assert len(model.stage3) == 2  # +DropBlock
+        assert len(model.stage4) == 3  # +SPPF+DropBlock
         model.train()
         imgs = torch.randn(1, 3, 256, 256)
         feat = model(imgs)

@@ -10,7 +10,6 @@ from mmengine.model import BaseModule
 from torch.nn.modules.batchnorm import _BatchNorm
 
 from mmyolo.registry import MODELS
-from ..utils import make_divisible
 
 
 @MODELS.register_module()
@@ -123,7 +122,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
             ...          stages=(True, True, True, True)),
             ... ]
             >>> model = YOLOv5CSPDarknet()
-            >>> stage_plugins = self.make_stage_plugins(plugins, 0, setting)
+            >>> stage_plugins = model.make_stage_plugins(plugins, 0, setting)
             >>> assert len(stage_plugins) == 3
 
         Suppose ``stage_idx=0``, the structure of blocks in the stage would be:
@@ -150,7 +149,9 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
         Returns:
             list[nn.Module]: Plugins for current stage
         """
-        in_channels = make_divisible(setting[1], self.widen_factor)
+        # TODO: It is not general enough to support any channel and needs
+        # to be refactored
+        in_channels = int(setting[1] * self.widen_factor)
         plugin_layers = []
         for plugin in plugins:
             plugin = plugin.copy()

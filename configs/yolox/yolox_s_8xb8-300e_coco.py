@@ -43,6 +43,16 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         out_indices=(2, 3, 4),
+        plugins=[
+            dict(
+                cfg=dict(
+                    type='mmdet.GeneralizedAttention',
+                    spatial_range=-1,
+                    num_heads=8,
+                    attention_type='0011',
+                    kv_stride=2),
+                stages=(False, False, True, True)),
+        ],
         spp_kernal_sizes=(5, 9, 13),
         norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
         act_cfg=dict(type='SiLU', inplace=True),
