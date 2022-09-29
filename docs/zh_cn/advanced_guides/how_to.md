@@ -2,7 +2,7 @@
 
 ## 给骨干网络增加插件
 
-MMYOLO 支持在 BackBone 的不同 Stage 后增加如 `none_local`、`dropout` 等插件，用户可以直接通过修改 config 文件中 `backbone` 的 `plugins` 参数来实现对插件的管理。例如为 `YOLOv5` 增加 `DropBlock` 和 `GeneralizedAttention` 插件，其配置文件如下：
+MMYOLO 支持在 BackBone 的不同 Stage 后增加如 `none_local`、`dropblock` 等插件，用户可以直接通过修改 config 文件中 `backbone` 的 `plugins` 参数来实现对插件的管理。例如为 `YOLOv5` 增加 `GeneralizedAttention` 插件，其配置文件如下：
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -23,9 +23,9 @@ model = dict(
 
 `cfg` 参数表示插件的具体配置， `stages` 参数表示是否在 backbone 对应的 stage 后面增加插件，长度需要和 backbone 的 stage 数量相同。
 
-## 应用多个Neck
+## 应用多个 Neck
 
-如果你想堆叠多个 Neck，可以直接在配置文件中的 Neck 参数，MMYOLO支持以 `List` 形式拼接多个 Neck 配置，你需要保证的是上一个 Neck 的输出通道与下一个 Neck 的输入通道相匹配。如需要调整通道，可以插入 `mmdet.ChannelMapper` 模块用来对齐多个 Neck 之间的通道数量。具体配置如下：
+如果你想堆叠多个 Neck，可以直接在配置文件中的 Neck 参数，MMYOLO 支持以 `List` 形式拼接多个 Neck 配置，你需要保证的是上一个 Neck 的输出通道与下一个 Neck 的输入通道相匹配。如需要调整通道，可以插入 `mmdet.ChannelMapper` 模块用来对齐多个 Neck 之间的通道数量。具体配置如下：
 
 ```python
 model = dict(
