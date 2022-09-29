@@ -201,15 +201,11 @@ class LetterResize(MMDET_Resize):
                 self.scale[0] / image_shape[0], self.scale[1] / image_shape[1]
             ]  # height, width ratios
 
-        # divide padding into 2 sides
-        padding_h /= 2
-        padding_w /= 2
-
-        if image_shape[::-1] != no_pad_shape:
+        if image_shape != no_pad_shape:
             # compare with no resize and padding size
-            image = mmcv.imrescale(
+            image = mmcv.imresize(
                 image,
-                no_pad_shape,
+                (no_pad_shape[1], no_pad_shape[0]),
                 interpolation=self.interpolation,
                 backend=self.backend)
 
@@ -221,10 +217,9 @@ class LetterResize(MMDET_Resize):
             results['scale_factor'] = scale_factor
 
         # padding
-        top_padding, bottom_padding = int(round(padding_h - 0.1)), int(
-            round(padding_h + 0.1))
-        left_padding, right_padding = int(round(padding_w - 0.1)), int(
-            round(padding_w + 0.1))
+        top_padding, left_padding = int(round(padding_h // 2 - 0.1)), int(
+            round(padding_w // 2 + 0.1))
+        bottom_padding, right_padding = padding_h - top_padding, padding_w - left_padding
 
         padding_list = [
             top_padding, bottom_padding, left_padding, right_padding
