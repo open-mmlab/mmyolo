@@ -1,34 +1,34 @@
-# Model design related instructions
+# Model design instructions
 
 ## YOLO series model basic class
 
-The structural Graph is provided by RangeKing@GitHub. Thank you RangeKing！
+The structural graph is provided by RangeKing@GitHub. Thank you RangeKing！
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg" width=800 alt="base class">
 </div>
 
-Most of the YOLO series algorithms adopt a unified algorithm building structure, typically as Darknet + PAFPN. In order to let users quickly understand the YOLO series algorithm architecture, we deliberately designed the `BaseBackbone` + `BaseYOLONeck` structure as shown in the above graph.
+Most YOLO series algorithms adopt a unified algorithm-building structure, typically as Darknet + PAFPN. In order to let users quickly understand the YOLO series algorithm architecture, we deliberately designed the `BaseBackbone` + `BaseYOLONeck` structure, as shown in the above graph.
 
-The benefit of abstract `BaseBackbone` includes:
+The benefits of the abstract `BaseBackbone` include:
 
-1. Subclasses do not need to concern about the forward process, just build the model as the builder pattern.
-2. It can be configured to achieve custom plug-in functions, the users can easily insert some similar attention module.
-3. All subclasses automatically support frozen certain stage and frozen bn functions.
+1. Subclasses do not need to be concerned about the forward process. Just build the model as a builder pattern.
+2. It can be configured to achieve custom plug-in functions. Users can easily insert some similar attention modules.
+3. All subclasses automatically support freezing certain stages and bn functions.
 
-`BaseYOLONeck` has the same benefit as `BaseBackbone`.
+`BaseYOLONeck` has the same benefits as `BaseBackbone`.
 
 ### BaseBackbone
 
-We can see in the above graph，as for P5，`BaseBackbone` include 1 stem layer and 4 stage layers which are similar to the basic structural of ResNet. Different backbone network algorithms inheritance the `BaseBackbone`, users can achieve construction of every layer of the network by using self-custom basic module through `build_xx` method.
+We can see in the above graph, as for P5, `BaseBackbone` includes 1 stem layer and 4 stage layers which are similar to the basic structure of ResNet. Different backbone network algorithms inherit the `BaseBackbone`. Users can build each layer of the whole network by implementing customized basic modules through the internal `build_xx` method.
 
 ### BaseYOLONeck
 
-We reproduce the YOLO series Neck component by the similar method of the BaseBackbone, we can mainly divide them into Reduce layer, UpSample layer, TopDown layer, DownSample layer, BottomUP layer and output convolution layer, every layer can self-custom its inside construction by inheritance and rewrite `build_xx` method.
+We reproduce the YOLO series Neck components in the similar way as the `BaseBackbone`, and we can mainly divide them into `Reduce layer`, `UpSample layer`, `TopDown layer`, `DownSample layer`, `BottomUP layer` and `output convolution layer`. Each layer can be customized its internal construction by the inheritance and rewrite from the `build_xx` method.
 
 ### BaseDenseHead
 
-The YOLO series uses the BaseDenseHead designed in MMDetection as the base class of the Head structure. Take YOLOv5 as an example, [HeadModule](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py#L2) class's forward function replace original forward method.
+MMYOLO uses the `BaseDenseHead` designed in MMDetection as the base class of the Head structure. Take YOLOv5 as an example, the forward function of its [HeadModule](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py#L2) replaces the original forward method.
 
 ## HeadModule
 
@@ -36,14 +36,14 @@ The YOLO series uses the BaseDenseHead designed in MMDetection as the base class
 <img src="https://user-images.githubusercontent.com/33799979/190407754-c725fe85-a71b-4e45-912b-34513d1ff128.png" width=800 alt="image">
 </div>
 
-Methods implementation in the [MMDetection](https://github.com/open-mmlab/mmdetection) is shown in the above graph. The solid line is the implementation in [MMYOLO](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py), which has the following advantages over the original implementation:
+As shown in the above graph, the solid line is the implementation in [MMYOLO](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py), whereas the original implementation in [MMDetection](https://github.com/open-mmlab/mmdetection) is shown in the dotted line. MMYOLO has the following advantages over the original implementation:
 
-1. MMDetection in the `bbox_head` split into `assigner` + `box coder` + `sampler` three large components, but for the generality of passing through the 3 components , the model need to encapsulate additional objects to handle, and after the unification, the user needn't separate them. The benefits of not deliberately forcing the division of the three components are: no longer need to data encapsulation of internal data, simplifying the code logic, reducing the difficulty of use and the difficulty of algorithm implementation.
-2. MMYOLO is Faster, the user can customize the implementation of the algorithm when the original framework does not depend on the deep optimization of part of the code.
+1. In MMDetection, `bbox_head` is split into three large components: `assigner` + `box coder` + `sampler`. But because the transfer between these three components is universal, it is necessary to encapsulate additional objects. With the unification in MMYOLO, users do not need to separate them. The advantages of not deliberately forcing the division of the three components are: data encapsulation of internal data is no longer required, code logic is simplified, and the difficulty of community use and algorithm reproduction is reduced.
+2. MMYOLO is Faster. When users customize the implementation algorithm, they can deeply optimize part of the code without relying on the original framework.
 
-In general, in the MMYOLO, they only need to implement the decouple of the model + `loss_by_feat` parts, and users can achieve any model with any `loss_by_feat` calculation process through modify the configuration. For example, applying the YOLOX `loss_by_feat` to the YOLOv5 model, etc.
+In general, with the partly decoupled model + `loss_by_feat` part in MMYOLO, users can construct any model with any `loss_by_feat` by modifying the configuration. For example, applying the `loss_by_feat` of YOLOX to the YOLOv5 model, etc.
 
-Taking the YOLOX configuration in MMDetection as an example, the Head module configuration is written as follows:
+Take the YOLOX configuration in MMDetection as an example, the Head module configuration is written as follows:
 
 ```python
 bbox_head=dict(
@@ -66,7 +66,7 @@ bbox_head=dict(
 train_cfg=dict(assigner=dict(type='SimOTAAssigner', center_radius=2.5)),
 ```
 
-After extracting the head_module in MMYOLO, the new configuration is written as follows:
+For the head_module in MMYOLO, the new configuration is written as follows:
 
 ```python
 bbox_head=dict(
