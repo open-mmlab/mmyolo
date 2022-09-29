@@ -179,6 +179,8 @@ def distance2bbox(points: Tensor, distance: Tensor, ...) -> Tensor:
 - `loss_cls`：`mmdet.QualityFocalLoss`
 - `loss_bbox`：`mmdet.GIoULoss`
 
+权重比例是：`loss_cls` : `loss_bbox` = `1 : 2`
+
 ### QualityFocalLoss
 
 Quality Focal Loss (QFL) 是 [Generalized Focal Loss: Learning Qualified and Distributed Bounding Boxes for Dense Object Detection](https://arxiv.org/abs/2006.04388) 的一部分。
