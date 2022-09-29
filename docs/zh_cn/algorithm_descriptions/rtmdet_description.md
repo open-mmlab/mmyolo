@@ -457,9 +457,11 @@ RTMDet 采用了多种数据增强的方式来增加模型的性能，主要包�
 - **Mosaic 马赛克**
 - **MixUp 图像混合**
 
-训练阶段数据增强流程如下：
+数据增强流程如下：
 
-![pipeline](https://user-images.githubusercontent.com/33799979/192729900-9d8a98b7-d9a3-4278-b87d-24f16258cfc8.png)
+<center>
+<img src="https://user-images.githubusercontent.com/33799979/192932014-c2dfdcf1-0054-4308-b098-bbe87bb9d4c3.png" width=800 />
+</center>
 
 其中 RandomResize 这个在 大模型 M,L,X 和 小模型 s, tiny 上是不一样的，大模型由于参数较多，可以使用 large scale jitter 策略即参数为 (0.1,2.0)，而小模型采用 stand scale jitter 策略即 (0.5, 2.0) 策略。
 MMDetection 开源库中已经对单图数据增强进行了封装，用户通过简单的修改配置即可使用库中提供的任何数据增强功能，且都是属于比较常规的数据增强，不需要特殊介绍。下面将具体介绍混合类数据增强的具体实现。
@@ -470,7 +472,7 @@ MMDetection 开源库中已经对单图数据增强进行了封装，用户通�
 
 Mosaic&MixUp 涉及到多张图片的混合，它们的耗时会是普通数据增强的K倍(K为混入图片的数量)。 如在YOLOv5中，每次做 Mosaic 时， 4张图片的信息都需要从硬盘中重新加载。 而 RTMDet 只需要重新载入当前的一张图片，其余参与混合增强的图片则从缓存队列中获取，通过牺牲一定内存空间的方式大幅提升了效率。 另外，通过调整 cache 的大小以及 pop 的方式，也可以调整增强的强度。
 ![cache](https://user-images.githubusercontent.com/33799979/192730011-90e2a28d-e163-4399-bf87-d3012007d8c3.png)
-如图所示，cache 队列中预先储存了N张已加载的图像与标签数据，每一个训练 step 中只需加载一张新的图片及其标签数据并更新到 cache 队列中，同时如果 cache 队列长度超过预设长度，则随机 pop 一张图（为了 tiny 模型训练更稳定，在 tiny 模型中不采用随机 pop 的方式, 而是移除最先加入的图片。），当需要进行混合数据增强时，只需要从 cache 中随机选择需要的图像进行拼接等处理，而不需要全部从硬盘中加载，节省了图像加载的时间。
+如图所示，cache 队列中预先储存了N张已加载的图像与标签数据，每一个训练 step 中只需加载一张新的图片及其标签数据并更新到 cache 队列中(cache 队列中的图像可重复，如果图中出现两次 img3)，同时如果 cache 队列长度超过预设长度，则随机 pop 一张图（为了 tiny 模型训练更稳定，在 tiny 模型中不采用随机 pop 的方式, 而是移除最先加入的图片。），当需要进行混合数据增强时，只需要从 cache 中随机选择需要的图像进行拼接等处理，而不需要全部从硬盘中加载，节省了图像加载的时间。
 
 > cache 队列的最大长度 N 为可调整参数，根据经验性的原则，当为每一张需要混合的图片提供十个缓存时，可以认为提供了足够的随机性，而 Mosaic 增强是四张图混合，因此 cache 数量默认 N=40， 同理 MixUp 的 cache 数量默认为20， tiny 模型需要更稳定的训练条件，因此其 cache 数量也为其余规格模型的一半（ MixUp 为10，Mosaic 为20）
 
@@ -545,9 +547,13 @@ img_i = mmcv.imresize(
 mosaic_bboxes.clip_([2 * self.img_scale[0], 2 * self.img_scale[1]])
 ```
 
+更多的关于 Mosaic 原理的详情可以参考 [YOLOv5 原理和实现全解析](./yolov5_description.md) 中的 Mosaic 原理分析。
+
 ### 3.3 MixUp
 
 RTMDet 的 MixUp 实现方式与 YOLOX 中一样，只不过增加了类似上文中提到的 [cache](#31-为图像混合数据增强引入cache) 功能。
+
+更多的关于 MixUp 原理的详情也可以参考 [YOLOv5 原理和实现全解析](./yolov5_description.md) 中的 MixUp 原理分析。
 
 ### 3.4 强弱两阶段训练
 
