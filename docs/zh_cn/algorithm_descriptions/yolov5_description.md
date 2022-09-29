@@ -119,7 +119,7 @@ MixUp 和 Mosaic 类似，也是属于混合图片类增强，其是随机从另
 需要特别注意的是：
 **YOLOv5 实现的 MixUp 中，随机出来的另一张图也需要经过 Mosaic 马赛克 + RandomAffine 随机仿射变换 增强后才能混合。这个和其他开源库实现可能不太一样**。
 
-### 1.1.4 图像模糊和其他数据增强
+#### 1.1.4 图像模糊和其他数据增强
 
 <div align=center >
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190543533-8b9ece51-676b-4a7d-a7d0-597e2dd1d42e.png"/>
@@ -483,7 +483,7 @@ GT_y^{center_grid}=37/8=4.625
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190549696-3da08c06-753a-4108-be47-64495ea480f2.png"/>
 </div>
 
-### 1.4 Loss设计
+### 1.4 Loss 设计
 
 YOLOv5 中总共包含 3 个 Loss，分别为：
 
