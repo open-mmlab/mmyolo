@@ -29,6 +29,16 @@ RTMDet 由 tiny/s/m/l/x 一系列不同大小的模型组成，为不同的应�
 
 上图中的精度是和 300 epoch 训练下的公平对比，为不使用蒸馏的结果。
 
+|   | mAP    |  Params     |  Flops | Inference speed | 
+| ------------ | ---------- | --------- | --------- | --------- | 
+| Baseline(YOLOX)          |  40.2 | 9M    | 13.4G    | 1.2ms    | 
+| + AdamW + Flat Cosine     |  40.6 (+0.4) | 9M    | 13.4G    | 1.2ms    | 
+| + CSPNeXt backbone & PAFPN     |  41.8 (+1.2) | 10.07M (+1.07)    | 14.8G (+1.4)    | 1.22ms (+0.02)    | 
+| + SepBNHead     |   41.8 (+0) | 8.89M (-1.18)    | 14.8G   | 1.22ms    | 
+|   + Label Assign & Loss     |  42.9 (+1.1) | 8.89M    | 14.8G   | 1.22ms    | 
+|   + Cached Mosaic & MixUp     |  44.2 (+1.3) | 8.89M    | 14.8G   | 1.22ms    | 
+|   + RSB-pretrained backbone     |  **44.5 (+0.3)** | 8.89M    | 14.8G   | 1.22ms    | 
+
 - 官方开源地址： https://github.com/open-mmlab/mmdetection/blob/3.x/configs/rtmdet/README.md
 - MMYOLO 开源地址： https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/README.md
 
