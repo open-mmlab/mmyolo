@@ -72,7 +72,7 @@ The master branch works with **PyTorch 1.6+**.
 **v0.1.1** was released on 29/9/2022:
 
 - Support [RTMDet](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet).
-- Support for backbone customization plugins.
+- Support for backbone customization plugins and update How-to documentation.
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
