@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Sequence, Union
+from typing import Sequence, Union, Tuple
 
 import torch
 import torch.nn as nn
@@ -145,10 +145,13 @@ class YOLOv6HeadModule(BaseModule):
         return multi_apply(self.forward_single, x, self.stems, self.cls_convs,
                            self.cls_preds, self.reg_convs, self.reg_preds)
 
-    def forward_single(self, x: torch.Tensor, stem: nn.ModuleList,
-                       cls_conv: nn.ModuleList, cls_pred: nn.ModuleList,
+    @staticmethod
+    def forward_single(x: torch.Tensor,
+                       stem: nn.ModuleList,
+                       cls_conv: nn.ModuleList,
+                       cls_pred: nn.ModuleList,
                        reg_conv: nn.ModuleList,
-                       reg_pred: nn.ModuleList) -> torch.Tensor:
+                       reg_pred: nn.ModuleList) -> Tuple[torch.Tensor, torch.Tensor]:
         """Forward feature of a single scale level."""
         y = stem(x)
         cls_x = y
