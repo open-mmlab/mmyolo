@@ -44,8 +44,6 @@ pip install -U openmim
 mim install mmengine
 mim install "mmcv>=2.0.0rc1"
 mim install "mmdet>=3.0.0rc0"
-# for albumentations
-pip install -r requirements/albu.txt
 ```
 
 **Note:**
@@ -61,7 +59,10 @@ Case a: If you develop and run mmdet directly, install it from source:
 ```shell
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
-pip install -v -e .
+# Install albumentations
+pip install -r requirements/albu.txt
+# Install MMYOLO
+mim install -v -e .
 # "-v" means verbose, or more output
 # "-e" means installing a project in editable mode,
 # thus any local modifications made to the code will take effect without reinstallation.
@@ -83,14 +84,14 @@ To verify whether MMYOLO is installed correctly, we provide some sample codes to
 mim download mmyolo --config yolov5_s-v61_syncbn_fast_8xb16-300e_coco --dest .
 ```
 
-The downloading will take several seconds or more, depending on your network environment. When it is done, you will find two files `yolov5_s-v61_syncbn_8xb16-300e_coco.py` and `yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth` in your current folder.
+The downloading will take several seconds or more, depending on your network environment. When it is done, you will find two files `yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py` and `yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth` in your current folder.
 
 **Step 2.** Verify the inference demo.
 
 Option (a). If you install MMYOLO from source, just run the following command.
 
 ```shell
-python demo/image_demo.py demo/demo.jpg yolov5_s-v61_syncbn_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --device cpu --out-file result.jpg
+python demo/image_demo.py demo/demo.jpg yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --device cpu --out-file result.jpg
 ```
 
 You will see a new image `result.jpg` on your current folder, where bounding boxes are plotted.
@@ -102,7 +103,7 @@ from mmdet.apis import init_detector, inference_detector
 from mmyolo.utils import register_all_modules
 
 register_all_modules()
-config_file = 'yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+config_file = 'yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 checkpoint_file = 'yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 model = init_detector(config_file, checkpoint_file, device='cpu')  # or device='cuda:0'
 inference_detector(model, 'demo/demo.jpg')
@@ -214,13 +215,23 @@ Within Jupyter, the exclamation mark `!` is used to call external executables an
 
 We provide a [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile) to build an image. Ensure that your [docker version](https://docs.docker.com/engine/install/) >=19.03.
 
+Reminder: If you find out that your download speed is very slow, we suggest that you can canceling the comments in the last two lines of `Optional` in the [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile#L19-L20) to obtain a rocket like download speed:
+
+```dockerfile
+# (Optional)
+RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu\//http:\/\/mirrors.aliyun.com\/ubuntu\//g' /etc/apt/sources.list && \
+    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+Build Command：
+
 ```shell
 # build an image with PyTorch 1.9, CUDA 11.1
 # If you prefer other versions, just modified the Dockerfile
 docker build -t mmyolo docker/
 ```
 
-Run it with
+Run it with:
 
 ```shell
 export DATA_DIR=/path/to/your/dataset

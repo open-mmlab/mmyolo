@@ -3,7 +3,7 @@
 ## 0 简介
 
 <div align=center >
-<img alt="YOLOv5_structure_v3" src="https://user-images.githubusercontent.com/27466624/190986656-b68bdb59-d0d5-480c-83c2-44f5648320a2.jpg"/>
+<img alt="YOLOv5_structure_v3.3" src="https://user-images.githubusercontent.com/27466624/192134657-a8d0286d-640c-445f-89bd-fda751094a4a.jpg"/>
 </div>
 
 以上结构图由 RangeKing@github 绘制。
@@ -255,8 +255,7 @@ train_pipeline = [
 
 YOLOv5 网络结构是标准的 `CSPDarknet` + `PAFPN` + `非解耦 Head`。
 
-YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决定，其中 `deepen_factor` 控制网络结构深度
-即 `CSPLayer` 中 `DarknetBottleneck` 模块堆叠的数量，`widen_factor` 控制网络结构宽度即模块输出特征图的通道数。以 YOLOv5-l 为例，
+YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决定。其中 `deepen_factor` 控制网络结构深度，即 `CSPLayer` 中 `DarknetBottleneck` 模块堆叠的数量；`widen_factor` 控制网络结构宽度，即模块输出特征图的通道数。以 YOLOv5-l 为例，
 其 `deepen_factor = widen_factor = 1.0` ，整体结构图如上所示。
 
 图的上半部分为模型总览；下半部分为具体网络结构，其中的模块均标有序号，方便用户与 YOLOv5 官方仓库的配置文件对应；中间部分为各子模块的具体构成。
@@ -266,16 +265,14 @@ YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决�
 #### 1.2.1 Backbone
 
 在 MMYOLO 中 `CSPDarknet` 继承自 `BaseBackbone`，整体结构和 `ResNet` 类似，共 5 层结构，
-包含 1 个 `Stem Layer` 和 4 个 `Stage Layer`
+包含 1 个 `Stem Layer` 和 4 个 `Stage Layer`：
 
-- `Stem Layer` 是 1 个 6x6 kernel 的 `ConvModule`，相较于 v6.1 版本之前的 `Focus` 模块更加高效
+- `Stem Layer` 是 1 个 6x6 kernel 的 `ConvModule`，相较于 v6.1 版本之前的 `Focus` 模块更加高效。
 - 前 3 个 `Stage Layer` 由 1 个 `ConvModule` 和 1 个 `CSPLayer` 组成。如上图 Details 部分，
-  其中 `ConvModule` 为 3x3 `Conv2d` + `BatchNorm` + `SiLU 激活函数`。`CSPLayer` 即 YOLOv5 官方仓库中的 C3 模块，
-  由 3 个 `ConvModule` + n 个 `DarknetBottleneck`(带残差连接) 组成
-- 第 4 个 `Stage Layer` 在最后增加了 `SPPF` 模块。`SPPF` 模块是将输入串行通过多个 5x5 大小的 `MaxPool2d` 层，
-  与 `SPP`  模块效果相同，但速度更快
+  其中 `ConvModule` 为 3x3 `Conv2d` + `BatchNorm` + `SiLU 激活函数`。`CSPLayer` 即 YOLOv5 官方仓库中的 C3 模块，由 3 个 `ConvModule` + n 个 `DarknetBottleneck`(带残差连接) 组成。
+- 第 4 个 `Stage Layer` 在最后增加了 `SPPF` 模块。`SPPF` 模块是将输入串行通过多个 5x5 大小的 `MaxPool2d` 层，与 `SPP`  模块效果相同，但速度更快。
 - P5 模型结构会在 `Stage Layer` 2-4 之后分别输出，进入 `Neck` 结构，共抽取三个输出特征图，以 640x640 输入图片为例，
-  其输出特征为 (B,256,80,80)、 (B,512,40,40) 和 (B,1024,20,20)，stride 为 8/16/32
+  其输出特征为 (B,256,80,80)、 (B,512,40,40) 和 (B,1024,20,20)，stride 为 8/16/32。
 
 #### 1.2.2 Neck
 
@@ -589,7 +586,7 @@ max_per_img 表示最终保留的最大检测框数目，通常设置为 300。
 以 COCO 80 类为例，假设输入图片大小为 640x640
 
 <div align=center >
-<img alt="image" src="https://user-images.githubusercontent.com/40284075/190550471-a71ecf04-f427-4ba6-b62f-71f4fdd2c8c7.png"/>
+<img alt="image" src="https://user-images.githubusercontent.com/17425982/192942249-96b0fcfb-059f-48fe-862f-7d526a3a06d7.png"/>
 </div>
 
 其推理和后处理过程为：
