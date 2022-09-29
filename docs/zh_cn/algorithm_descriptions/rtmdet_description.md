@@ -27,6 +27,8 @@ RTMDet 由 tiny/s/m/l/x 一系列不同大小的模型组成，为不同的应�
 <img alt="RTMDet_精度图" src="https://user-images.githubusercontent.com/12907710/192182907-f9a671d6-89cb-4d73-abd8-c2b9dada3c66.pngxx"/>
 </div>
 
+上图中的精度是和 300 epoch 训练下的公平对比，为不使用蒸馏的结果。
+
 - 官方开源地址： https://github.com/open-mmlab/mmdetection/blob/3.x/configs/rtmdet/README.md
 - MMYOLO 开源地址： https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/README.md
 
