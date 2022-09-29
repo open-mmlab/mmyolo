@@ -19,9 +19,10 @@ class TestSingleStageDetector(TestCase):
         register_all_modules()
 
     @parameterized.expand([
-        'yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py',
+        'yolov5/yolov5_n-v61_syncbn_fast_8xb16-300e_coco.py',
         'yolov6/yolov6_s_syncbn_8xb32-400e_coco.py',
-        'yolox/yolox_s_8xb8-300e_coco.py'
+        'yolox/yolox_tiny_8xb8-300e_coco.py',
+        'rtmdet/rtmdet_tiny_syncbn_8xb32-300e_coco.py'
     ])
     def test_init(self, cfg_file):
         model = get_detector_cfg(cfg_file)
@@ -35,7 +36,8 @@ class TestSingleStageDetector(TestCase):
 
     @parameterized.expand([
         ('yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py', ('cuda', 'cpu')),
-        ('yolox/yolox_s_8xb8-300e_coco.py', ('cuda', 'cpu'))
+        ('yolox/yolox_s_8xb8-300e_coco.py', ('cuda', 'cpu')),
+        ('rtmdet/rtmdet_tiny_syncbn_8xb32-300e_coco.py', ('cuda', 'cpu'))
     ])
     def test_forward_loss_mode(self, cfg_file, devices):
         message_hub = MessageHub.get_instance(
@@ -63,9 +65,11 @@ class TestSingleStageDetector(TestCase):
             self.assertIsInstance(losses, dict)
 
     @parameterized.expand([
-        ('yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py', ('cuda', 'cpu')),
+        ('yolov5/yolov5_n-v61_syncbn_fast_8xb16-300e_coco.py', ('cuda',
+                                                                'cpu')),
         ('yolov6/yolov6_s_syncbn_8xb32-400e_coco.py', ('cuda', 'cpu')),
-        ('yolox/yolox_s_8xb8-300e_coco.py', ('cuda', 'cpu'))
+        ('yolox/yolox_tiny_8xb8-300e_coco.py', ('cuda', 'cpu')),
+        ('rtmdet/rtmdet_tiny_syncbn_8xb32-300e_coco.py', ('cuda', 'cpu'))
     ])
     def test_forward_predict_mode(self, cfg_file, devices):
         model = get_detector_cfg(cfg_file)
@@ -92,9 +96,11 @@ class TestSingleStageDetector(TestCase):
                 self.assertIsInstance(batch_results[0], DetDataSample)
 
     @parameterized.expand([
-        ('yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py', ('cuda', 'cpu')),
+        ('yolov5/yolov5_n-v61_syncbn_fast_8xb16-300e_coco.py', ('cuda',
+                                                                'cpu')),
         ('yolov6/yolov6_s_syncbn_8xb32-400e_coco.py', ('cuda', 'cpu')),
-        ('yolox/yolox_s_8xb8-300e_coco.py', ('cuda', 'cpu'))
+        ('yolox/yolox_tiny_8xb8-300e_coco.py', ('cuda', 'cpu')),
+        ('rtmdet/rtmdet_tiny_syncbn_8xb32-300e_coco.py', ('cuda', 'cpu'))
     ])
     def test_forward_tensor_mode(self, cfg_file, devices):
         model = get_detector_cfg(cfg_file)
