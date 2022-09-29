@@ -115,8 +115,9 @@ RTMDet 参考了 [NAS-FPN](https://arxiv.org/abs/1904.07392) 中的做法，使�
 
 如果想阅读 Head - `RTMDetSepBNHeadModule` 的源码，可以[**点此**](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/rtmdet_head.py#L24-L189)跳转。
 
-````{note}
+```{note}
 注：MMYOLO 和 MMDetection 中 Neck 和 Head 的具体实现稍有不同。
+```
 
 ### 1.3 正负样本匹配策略
 
@@ -144,7 +145,7 @@ RTMDet 参考了 [NAS-FPN](https://arxiv.org/abs/1904.07392) 中的做法，使�
 
 ```python
 cost_matrix = soft_cls_cost + iou_cost + soft_center_prior
-````
+```
 
 1. Soft_Center_Prior
 
