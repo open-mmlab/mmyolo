@@ -18,7 +18,7 @@ class MMYOLO(MMCodebase):
     task_registry = MMYOLO_TASK
 
     @classmethod
-    def import_module(cls):
+    def register_all_modules(cls):
         from mmyolo.utils.setup_env import register_all_modules \
             as register_all_modules_mmyolo
         from mmdet.utils.setup_env import register_all_modules \
