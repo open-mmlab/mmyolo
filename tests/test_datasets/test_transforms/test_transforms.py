@@ -84,7 +84,7 @@ class TestLetterResize(unittest.TestCase):
         # Test
         transform = LetterResize(scale=(640, 640), pad_val=dict(img=144))
         rng = np.random.RandomState(0)
-        for _ in range(20):
+        for _ in range(5):
             input_h, input_w = np.random.randint(100, 700), np.random.randint(
                 100, 700)
             output_h, output_w = np.random.randint(100,
@@ -107,7 +107,7 @@ class TestLetterResize(unittest.TestCase):
         # Test without batchshape
         transform = LetterResize(scale=(640, 640), pad_val=dict(img=144))
         rng = np.random.RandomState(0)
-        for _ in range(20):
+        for _ in range(5):
             input_h, input_w = np.random.randint(100, 700), np.random.randint(
                 100, 700)
             data_info = dict(
