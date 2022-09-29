@@ -5,7 +5,7 @@
 高性能，低延时的单阶段目标检测器
 
 <div align=center >
-<img alt="RTMDet_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/192815848-c2db9680-df03-40af-8051-124b9ae59d06.jpg"/>
+<img alt="RTMDet_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/192815848-c2db9680-df03-40af-8051-124b9ae59d06.jpgxxx"/>
 </div>
 
 以上结构图由 RangeKing@github 绘制。
@@ -24,7 +24,7 @@ RTMDet 由 tiny/s/m/l/x 一系列不同大小的模型组成，为不同的应�
 而最轻量的模型 RTMDet-tiny，在仅有 4M 参数量的情况下也能够达到 40.9 mAP，且推理速度 \< 1 ms。
 
 <div align=center>
-<img alt="RTMDet_精度图" src="https://user-images.githubusercontent.com/12907710/192182907-f9a671d6-89cb-4d73-abd8-c2b9dada3c66.pngxx"/>
+<img alt="RTMDet_精度图" src="https://user-images.githubusercontent.com/12907710/192182907-f9a671d6-89cb-4d73-abd8-c2b9dada3c66.png"/>
 </div>
 
 上图中的精度是和 300 epoch 训练下的公平对比，为不使用蒸馏的结果。
