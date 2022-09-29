@@ -3,7 +3,11 @@
 <img src="https://user-images.githubusercontent.com/89863442/192923741-eb6a81f4-f5a1-4697-badc-2909bd65c5fd.png" width="800"/>
 </div>
 
-#### 推理和后处理过程
+### 推理和后处理过程
+<div align=center>
+<img src="https://user-images.githubusercontent.com/89863442/192933502-dfb4cdf2-c3a6-43ea-95dd-a484d5101370.png" width="800"/>
+</div>
+
 **(1) 特征图输入**
 
 预测的图片输入大小为 640 x 640, 通道数为 3 ,经过 CSPNeXt, CSPNeXtPAFPN 层的 8 倍、16 倍、32 倍下采样得到 80 x 80, 40 x 40, 20 x 20 三个尺寸的特征图。以 rtmdet-l 模型为例，此时三层通道数都为 256，经过 `bbox_head` 层得到两个分支，分别为 `rtm_cls` 类别预测分支，将通道数从 256 变为 80，80 对应所有类别数量; `rtm_reg` 边框回归分支将通道数从 256 变为 4，4 代表框的坐标。
@@ -29,3 +33,4 @@
 **(6) NMS**
 
 进行 nms 操作，最终预测得到的返回值为经过后处理的每张图片的检测结果，包含分类置信度，框的 labels，框的四个坐标
+
