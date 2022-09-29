@@ -83,13 +83,13 @@ class TestLetterResize(unittest.TestCase):
 
         # Test
         transform = LetterResize(scale=(640, 640), pad_val=dict(img=144))
+        rng = np.random.RandomState(0)
         for _ in range(20):
             input_h, input_w = np.random.randint(100, 700), np.random.randint(
                 100, 700)
             output_h, output_w = np.random.randint(100,
                                                    700), np.random.randint(
                                                        100, 700)
-            rng = np.random.RandomState(0)
             data_info = dict(
                 img=np.random.random((input_h, input_w, 3)),
                 gt_bboxes=np.array([[0, 0, 10, 10]], dtype=np.float32),
