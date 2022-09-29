@@ -27,7 +27,7 @@
 [![issue resolution](https://isitmaintained.com/badge/resolution/open-mmlab/mmyolo.svg)](https://github.com/open-mmlab/mmyolo/issues)
 
 [📘Documentation](https://mmyolo.readthedocs.io/en/latest/) |
-[🛠️Installation](https://mmyolo.readthedocs.io/en/latest/install.html) |
+[🛠️Installation](https://mmyolo.readthedocs.io/en/latest/get_started.html) |
 [👀Model Zoo](https://mmyolo.readthedocs.io/en/latest/model_zoo.html) |
 [🆕Update News](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html) |
 [🤔Reporting Issues](https://github.com/open-mmlab/mmyolo/issues/new/choose)
