@@ -38,6 +38,7 @@ RTMDet 模型整体结构和 [YOLOX](https://arxiv.org/abs/2107.08430) 几乎一
 - `Stem Layer` 是 3 层 3x3 kernel 的 `ConvModule` ，不同于之前的 `Focus` 模块或者 1 层 6x6 kernel 的 `ConvModule` 。
 - `Stage Layer` 总体结构与已有模型类似，前 3 个 `Stage Layer` 由 1 个 `ConvModule` 和 1 个 `CSPLayer`  组成。第 4 个 `Stage Layer` 在 `ConvModule`  和  `CSPLayer` 中间增加了 `SPPF` 模块（MMDetection 版本为 `SPP` 模块）。
 - 如模型图 Details 部分所示，`CSPLayer` 由 3 个 `ConvModule` + n 个 `CSPNeXt Block`(带残差连接) + 1 个  `Channel Attention` 模块组成。`ConvModule` 为 1 层 3x3 `Conv2d` + `BatchNorm` + `SiLU` 激活函数。`Channel Attention` 模块为 1 层 `AdaptiveAvgPool2d` + 1 层 1x1 `Conv2d` + `Hardsigmoid` 激活函数。`CSPNeXt Block` 模块在下节详细讲述。
+- 如果想阅读 Backbone - `CSPNeXt` 的源码，可以[**点此**](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/backbones/cspnext.py#L16-L171)跳转。
 
 #### CSPNeXt Block
 
@@ -56,6 +57,8 @@ RTMDet 则借鉴了最近比较热门的 [ConvNeXt](https://arxiv.org/abs/2201.0
 | **5x5**      | **50.92M** | **79.7G** | **2.11**                  | **50.9** |
 | 7x7          | 51.1       | 80.34G    | 2.73                      | 51.1     |
 
+如果想阅读 `Basic Block` - `CSPNeXt Block` 源码，可以[**点此**](https://github.com/open-mmlab/mmdetection/blob/3.x/mmdet/models/layers/csp_layer.py#L79-L146)跳转。
+
 #### 调整检测器不同 stage 间的 block 数
 
 由于 `CSPNeXt Block` 内使用了 `depth-wise` 卷积，单个 block 内的层数增多。如果保持原有的 stage 内的 block 数，则会导致模型的推理速度大幅降低。
@@ -70,6 +73,8 @@ RTMDet 重新调整了不同 stage 间的 block 数，并调整了通道的超�
 | L+3-6-6-3                          | 50.92M    | 79.7G     | 2.11                      | 50.9     |
 | **L+3-6-6-3  + channel attention** | **52.3M** | **79.9G** | **2.4**                   | **51.3** |
 
+最后不同大小模型的 block 数设置，可以参见[源码](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/backbones/cspnext.py#L50-L56)。
+
 ### Neck
 
 #### Backbone 与 Neck 之间的参数量和计算量的均衡
@@ -77,7 +82,7 @@ RTMDet 重新调整了不同 stage 间的 block 数，并调整了通道的超�
 [EfficientDet](https://arxiv.org/abs/1911.09070)、[NASFPN](https://arxiv.org/abs/1904.07392) 等工作在改进 Neck 时往往聚焦于如何修改特征融合的方式。
 但引入过多的连接会增加检测器的延时，并增加内存开销。
 
-所以 RTMDet 选择不引入额外的连接，而是改变 Backbone 与 Neck 间参数量的配比。该配比是通过手动调整 Backbone 和 Neck 的 `expand_ratio` 参数来实现的，其数值在 Backbone 和 Neck 中都为 0.5。`expand_ratio`  实际上是改变  `CSPLayer`  中各层通道数的参数（具体可见模型图 `CSPLayer` 部分）。
+所以 RTMDet 选择不引入额外的连接，而是改变 Backbone 与 Neck 间参数量的配比。该配比是通过手动调整 Backbone 和 Neck 的 `expand_ratio` 参数来实现的，其数值在 Backbone 和 Neck 中都为 0.5。`expand_ratio`  实际上是改变  `CSPLayer`  中各层通道数的参数（具体可见模型图 `CSPLayer` 部分）。如果想进行不同配比的实验，可以通过调整配置文件中的 [backbone {expand_ratio}](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_l_8xb32-300e_coco.py#L32) 和 [neck {expand_ratio}](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_l_8xb32-300e_coco.py#L45) 参数完成。
 
 实验发现，当 Neck 在整个模型中的参数量占比更高时，延时更低，且对精度的影响很小。作者在直播答疑时回复，RTMDet 在 Neck 这一部分的实验参考了 [GiraffeDet](https://arxiv.org/abs/2202.04256) 的做法，但没有像 GiraffeDet 一样引入额外连接（详细可参见 [RTMDet 发布视频](https://www.bilibili.com/video/BV1e841147GD) 31分40秒左右的内容）。
 
@@ -89,6 +94,8 @@ RTMDet 重新调整了不同 stage 间的 block 数，并调整了通道的超�
 | S           | 63%      | 29%     | 9.01M      | 15.85G     | 1.37          | 43.7     |
 | **L**       | **47%**  | **45%** | **50.92M** | **79.7G**  | **2.11**      | **50.9** |
 | L           | 63%      | 29%     | 57.43M     | 93.73      | 2.57          | 51.0     |
+
+如果想阅读 Neck - `CSPNeXtPAFPN` 的源码，可以[**点此**](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/necks/cspnext_pafpn.py#L15-L201)跳转。
 
 ### Head
 
@@ -105,6 +112,8 @@ RTMDet 参考了 [NAS-FPN](https://arxiv.org/abs/1904.07392) 中的做法，使�
 | **SepBN** **head** | **52.32** | **80.23** | **2.44**      | **51.3** |
 
 同时，RTMDet 也延续了作者之前在 [NanoDet](https://zhuanlan.zhihu.com/p/306530300) 中的思想，使用 [Quality Focal Loss](https://arxiv.org/abs/2011.12885)，并去掉 Objectness 分支，进一步将 Head 轻量化。
+
+如果想阅读 Head - `RTMDetSepBNHeadModule` 的源码，可以[**点此**](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/rtmdet_head.py#L24-L189)跳转。
 
 ```{note}
 注：MMYOLO 和 MMDetection 中 Neck 和 Head 的具体实现稍有不同。
