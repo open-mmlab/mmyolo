@@ -362,9 +362,9 @@ cost_matrix = soft_cls_cost + iou_cost + soft_center_prior
 
 1. Soft_Center_Prior
 
-$$
+```{math}
 C\_{center} = \\alpha^{|x\_{pred}-x\_{gt}|-\\beta}
-$$
+```
 
 ```python
 # valid_prior Tensor[N,4] 表示anchor point
@@ -381,9 +381,9 @@ soft_center_prior = torch.pow(10, distance - 3)
 
 2. IOU_Cost
 
-$$
+```{math}
 C\_{reg} = -log(IOU)
-$$
+```
 
 ```python
 # 计算回归 bboxes 和 gts 的 iou
@@ -394,9 +394,9 @@ iou_cost = -torch.log(pairwise_ious + EPS) * 3
 
 3. Soft_Cls_Cost
 
-$$
+```{math}
 C\_{cls} = CE(P,Y\_{soft}) \*(Y\_{soft}-P)^2
-$$
+```
 
 ```python
 # 生成分类标签
@@ -474,15 +474,16 @@ Quality Focal Loss (QFL) 是 [Generalized Focal Loss: Learning Qualified and Dis
 p, & \bold{when} \ y = 1 \\
 1 - p, & \bold{when} \ y = 0
 \end{cases}
-\tag{1}
 ```
 
-其中 $y\\in{1,0}$ 指定真实类，$p\\in\[0,1\]$ 表示标签 $y = 1$ 的类估计概率。$\\gamma$ 是可调聚焦参数。具体来说，FL 由标准交叉熵部分 $-\\log(p_t)$ 和动态比例因子部分 $-(1-p_t)^\\gamma$ 组成，其中比例因子 $-(1-p_t)^\\gamma$ 在训练期间自动降低简单类对于 loss 的比重，并且迅速将模型集中在困难类上。
+```{prf:corollary}
+其中 $y\in{1,0}$ 指定真实类，$p\in\[0,1]$ 表示标签 $y = 1$ 的类估计概率。$\gamma$ 是可调聚焦参数。具体来说，FL 由标准交叉熵部分 $-\log(p_t)$ 和动态比例因子部分 $-(1-p_t)^\gamma$ 组成，其中比例因子 $-(1-p_t)^\gamma$ 在训练期间自动降低简单类对于 loss 的比重，并且迅速将模型集中在困难类上。
 
-首先 $y = 0$ 表示质量得分为 0 的负样本，$0 \< y \\leq1$ 表示目标 IoU 得分为 y 的正样本。为了针对连续的标签，扩展 FL 的两个部分：
+首先 $y = 0$ 表示质量得分为 0 的负样本，$0 < y \leq 1$ 表示目标 IoU 得分为 y 的正样本。为了针对连续的标签，扩展 FL 的两个部分：
 
-1. 交叉熵部分 $-\\log(p_t)$ 扩展为完整版本 `{math} $-((1-y)\\log(1-\\sigma)+y\\log(\\sigma))$ `
-2. 比例因子部分 $-(1-p_t)^\\gamma$ 被泛化为估计 $\\gamma$ 与其连续标签 $y$ 的绝对距离，即 $|y-\\sigma|^\\beta (\\beta \\geq 0)$。
+1. 交叉熵部分 $-\log(p_t)$ 扩展为完整版本 `{math} $-((1-y)\log(1-\sigma)+y\log(\sigma))$ `
+2. 比例因子部分 $-(1-p_t)^\gamma$ 被泛化为估计 $\gamma$ 与其连续标签 $y$ 的绝对距离，即 $|y-\sigma|^\beta (\beta \geq 0)$。
+```
 
 结合上面两个部分之后，我们得出 QFL 的公式：
 
