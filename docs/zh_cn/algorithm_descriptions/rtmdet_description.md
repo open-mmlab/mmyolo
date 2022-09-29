@@ -4,7 +4,7 @@
 
 高性能，低延时的单阶段目标检测器
 
-<div align=center >
+<div align=center>
 <img alt="RTMDet_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/192954055-e044fe8a-53e6-4a08-8af2-f29c73e4b54b.jpg"/>
 </div>
 
@@ -60,9 +60,9 @@ RTMDet 采用了多种数据增强的方式来增加模型的性能，主要包�
 
 数据增强流程如下：
 
-<center>
-<img src="https://user-images.githubusercontent.com/33799979/192956011-78f89d89-ac9f-4a40-b4f1-056b49b704ef.png" width=800 />
-</center>
+<div align=center>
+<img alt="image" src="https://user-images.githubusercontent.com/33799979/192956011-78f89d89-ac9f-4a40-b4f1-056b49b704ef.png" width=800 />
+</div>
 
 其中 RandomResize 超参在大模型 M,L,X 和小模型 S, Tiny 上是不一样的，大模型由于参数较多，可以使用 large scale jitter 策略即参数为 (0.1,2.0)，而小模型采用 stand scale jitter 策略即 (0.5, 2.0) 策略。
 MMDetection 开源库中已经对单图数据增强进行了封装，用户通过简单的修改配置即可使用库中提供的任何数据增强功能，且都是属于比较常规的数据增强，不需要特殊介绍。下面将具体介绍混合类数据增强的具体实现。
@@ -84,7 +84,11 @@ MMDetection 开源库中已经对单图数据增强进行了封装，用户通�
 #### 1.1.1 为图像混合数据增强引入 Cache
 
 Mosaic&MixUp 涉及到多张图片的混合，它们的耗时会是普通数据增强的 K 倍(K 为混入图片的数量)。 如在 YOLOv5 中，每次做 Mosaic 时， 4 张图片的信息都需要从硬盘中重新加载。 而 RTMDet 只需要重新载入当前的一张图片，其余参与混合增强的图片则从缓存队列中获取，通过牺牲一定内存空间的方式大幅提升了效率。 另外通过调整 cache 的大小以及 pop 的方式，也可以调整增强的强度。
-![cache](https://user-images.githubusercontent.com/33799979/192730011-90e2a28d-e163-4399-bf87-d3012007d8c3.png)
+
+<div align=center>
+<img alt="data cache" src="https://user-images.githubusercontent.com/33799979/192730011-90e2a28d-e163-4399-bf87-d3012007d8c3.png" width=800 />
+</div>
+
 如图所示，cache 队列中预先储存了 N 张已加载的图像与标签数据，每一个训练 step 中只需加载一张新的图片及其标签数据并更新到 cache 队列中(cache 队列中的图像可重复，如图中出现两次 img3)，同时如果 cache 队列长度超过预设长度，则随机 pop 一张图（为了 Tiny 模型训练更稳定，在 Tiny 模型中不采用随机 pop 的方式, 而是移除最先加入的图片），当需要进行混合数据增强时，只需要从 cache 中随机选择需要的图像进行拼接等处理，而不需要全部从硬盘中加载，节省了图像加载的时间。
 
 ```{note}
@@ -204,7 +208,7 @@ RTMDet 模型整体结构和 [YOLOX](https://arxiv.org/abs/2107.08430) 几乎一
 Darknet （图 a）使用 1x1 与 3x3 卷积的 `Basic Block`。[YOLOv6](https://arxiv.org/abs/2209.02976) 、[YOLOv7](https://arxiv.org/abs/2207.02696) 、[PPYOLO-E](https://arxiv.org/abs/2203.16250) （图 b & c）使用了重参数化 Block。但重参数化的训练代价高，且不易量化，需要其他方式来弥补量化误差。
 RTMDet 则借鉴了最近比较热门的 [ConvNeXt](https://arxiv.org/abs/2201.03545) 、[RepLKNet](https://arxiv.org/abs/2203.06717) 的做法，为 `Basic Block` 加入了大 kernel 的 `depth-wise` 卷积（图 d），并将其命名为 `CSPNeXt Block`。
 
-<div align=center >
+<div align=center>
 <img alt="BasicBlock" src="https://user-images.githubusercontent.com/27466624/192752976-4c20f944-1ef0-4746-892e-ba814cdcda20.png"/>
 </div>
 
