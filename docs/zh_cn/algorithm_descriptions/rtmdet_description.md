@@ -188,7 +188,7 @@ RTMDet 模型整体结构和 [YOLOX](https://arxiv.org/abs/2107.08430) 几乎一
 
 - 如模型图 Details 部分所示，`CSPLayer` 由 3 个 `ConvModule` + n 个 `CSPNeXt Block`(带残差连接) + 1 个  `Channel Attention` 模块组成。`ConvModule` 为 1 层 3x3 `Conv2d` + `BatchNorm` + `SiLU` 激活函数。`Channel Attention` 模块为 1 层 `AdaptiveAvgPool2d` + 1 层 1x1 `Conv2d` + `Hardsigmoid` 激活函数。`CSPNeXt Block` 模块在下节详细讲述。
 
-- 如果想阅读 Backbone - `CSPNeXt` 的源码，可以[**点此**](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/backbones/cspnext.py#L16-L171) 跳转。
+- 如果想阅读 Backbone - `CSPNeXt` 的源码，可以 [**点此**](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/backbones/cspnext.py#L16-L171) 跳转。
 
 #### 1.2.2 CSPNeXt Block
 
