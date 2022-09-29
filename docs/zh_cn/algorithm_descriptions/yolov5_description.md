@@ -586,7 +586,7 @@ max_per_img 表示最终保留的最大检测框数目，通常设置为 300。
 以 COCO 80 类为例，假设输入图片大小为 640x640
 
 <div align=center >
-<img alt="image" src="https://user-images.githubusercontent.com/40284075/190550471-a71ecf04-f427-4ba6-b62f-71f4fdd2c8c7.png"/>
+<img alt="image" src="https://user-images.githubusercontent.com/17425982/192942249-96b0fcfb-059f-48fe-862f-7d526a3a06d7.png"/>
 </div>
 
 其推理和后处理过程为：
