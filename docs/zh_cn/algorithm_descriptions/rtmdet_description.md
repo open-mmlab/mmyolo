@@ -1,11 +1,11 @@
 ### 训练策略
 <div align=center>
-<img src="https://user-images.githubusercontent.com/89863442/192923741-eb6a81f4-f5a1-4697-badc-2909bd65c5fd.png" width="800"/>
+<img src="https://user-images.githubusercontent.com/89863442/192943607-74952731-4eb7-45f5-b86d-2dad46732614.png" width="800"/>
 </div>
 
 ### 推理和后处理过程
 <div align=center>
-<img src="https://user-images.githubusercontent.com/89863442/192933502-dfb4cdf2-c3a6-43ea-95dd-a484d5101370.png" width="800"/>
+<img src="https://user-images.githubusercontent.com/89863442/192943600-98c3a8f9-e42c-47ea-8e12-d20f686e9318.png" width="800"/>
 </div>
 
 **(1) 特征图输入**
