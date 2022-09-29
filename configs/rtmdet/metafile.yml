@@ -15,9 +15,9 @@ Collections:
       Version: v0.1.1
 
 Models:
-  - Name: rtmdet_tiny_8xb32-300e_coco
+  - Name: rtmdet_tiny_syncbn_8xb32-300e_coco
     In Collection: RTMDet
-    Config: configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py
+    Config: configs/rtmdet/rtmdet_tiny_syncbn_8xb32-300e_coco.py
     Metadata:
       Training Memory (GB): 7.6
       Epochs: 300
@@ -26,11 +26,11 @@ Models:
         Dataset: COCO
         Metrics:
           box AP: 40.9
-    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_tiny_8xb32-300e_coco/rtmdet_tiny_8xb32-300e_coco_20220902_112414-259f3241.pth
+    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_tiny_syncbn_8xb32-300e_coco/rtmdet_tiny_syncbn_8xb32-300e_coco_20220902_112414-259f3241.pth
 
-  - Name: rtmdet_s_8xb32-300e_coco
+  - Name: rtmdet_s_syncbn_8xb32-300e_coco
     In Collection: RTMDet
-    Config: configs/rtmdet/rtmdet_s_8xb32-300e_coco.py
+    Config: configs/rtmdet/rtmdet_s_syncbn_8xb32-300e_coco.py
     Metadata:
       Training Memory (GB): 7.6
       Epochs: 300
@@ -39,11 +39,11 @@ Models:
         Dataset: COCO
         Metrics:
           box AP: 44.5
-    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_s_8xb32-300e_coco/rtmdet_s_8xb32-300e_coco_20220905_161602-fd1cacb9.pth
+    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_s_syncbn_8xb32-300e_coco/rtmdet_s_syncbn_8xb32-300e_coco_20220905_161602-fd1cacb9.pth
 
-  - Name: rtmdet_m_8xb32-300e_coco
+  - Name: rtmdet_m_syncbn_8xb32-300e_coco
     In Collection: RTMDet
-    Config: configs/rtmdet/rtmdet_m_8xb32-300e_coco.py
+    Config: configs/rtmdet/rtmdet_m_syncbn_8xb32-300e_coco.py
     Metadata:
       Training Memory (GB): 7.6
       Epochs: 300
@@ -52,11 +52,11 @@ Models:
         Dataset: COCO
         Metrics:
           box AP: 49.1
-    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_m_8xb32-300e_coco/rtmdet_m_8xb32-300e_coco_20220719_112220-e35a2a2f.pth
+    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_m_syncbn_8xb32-300e_coco/rtmdet_m_syncbn_8xb32-300e_coco_20220924_132959-d9f2e90d.pth
 
-  - Name: rtmdet_l_8xb32-300e_coco
+  - Name: rtmdet_l_syncbn_8xb32-300e_coco
     In Collection: RTMDet
-    Config: configs/rtmdet/rtmdet_l_8xb32-300e_coco.py
+    Config: configs/rtmdet/rtmdet_l_syncbn_8xb32-300e_coco.py
     Metadata:
       Training Memory (GB): 7.6
       Epochs: 300
@@ -65,17 +65,4 @@ Models:
         Dataset: COCO
         Metrics:
           box AP: 51.3
-    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_l_8xb32-300e_coco/rtmdet_l_8xb32-300e_coco_20220719_112030-ba28d740.pth
-
-  - Name: rtmdet_x_8xb32-300e_coco
-    In Collection: RTMDet
-    Config: configs/rtmdet/rtmdet_x_8xb32-300e_coco.py
-    Metadata:
-      Training Memory (GB): 7.6
-      Epochs: 300
-    Results:
-      - Task: Object Detection
-        Dataset: COCO
-        Metrics:
-          box AP: 52.6
-    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_x_8xb32-300e_coco/rtmdet_x_8xb32-300e_coco_20220715_230555-2ab9b647.pth
+    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_l_syncbn_8xb32-300e_coco/rtmdet_l_syncbn_8xb32-300e_coco_20220926_150401-40c754b5.pth
