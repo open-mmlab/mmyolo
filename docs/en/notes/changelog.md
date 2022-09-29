@@ -13,6 +13,7 @@ Based on MMDetection's RTMDet high precision and low latency object detection al
 
 1. Fix some documentation errors (#66, #72, #76, #83, #86)
 2. Fix checkpoints link error (#63)
+3. Fix the bug that the output of `LetterResize` does not meet the expectation when using `imscale` (#105)
 
 ### Improvements
 
@@ -22,9 +23,9 @@ Based on MMDetection's RTMDet high precision and low latency object detection al
 
 #### Contributors
 
-A total of 12 developers contributed to this release.
+A total of 13 developers contributed to this release.
 
-Thank @wanghonglie, @hhaAndroid, @yang-0201, @PeterH0323, @RangeKing, @satuoqaq, @Zheng-LinXiao, @xin-li-67, @suibe-qingtian, @MambaWong, @MichaelCai0912, @rimoire
+Thank @wanghonglie, @hhaAndroid, @yang-0201, @PeterH0323, @RangeKing, @satuoqaq, @Zheng-LinXiao, @xin-li-67, @suibe-qingtian, @MambaWong, @MichaelCai0912, @rimoire, @Nioolek
 
 ## v0.1.0（21/9/2022)
 

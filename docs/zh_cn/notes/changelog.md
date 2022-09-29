@@ -14,6 +14,7 @@
 
 1. 修复一些文档错误 (#66, #72, #76, #83, #86)
 2. 修复权重链接错误 (#63)
+3. 修复 `LetterResize` 使用 `imscale` api 时候输出不符合预期的 bug (#105)
 
 ### 完善
 
@@ -23,9 +24,9 @@
 
 #### 贡献者
 
-总共 12 位开发者参与了本次版本
+总共 13 位开发者参与了本次版本
 
-谢谢 @wanghonglie, @hhaAndroid, @yang-0201, @PeterH0323, @RangeKing, @satuoqaq, @Zheng-LinXiao, @xin-li-67, @suibe-qingtian, @MambaWong, @MichaelCai0912, @rimoire
+谢谢 @wanghonglie, @hhaAndroid, @yang-0201, @PeterH0323, @RangeKing, @satuoqaq, @Zheng-LinXiao, @xin-li-67, @suibe-qingtian, @MambaWong, @MichaelCai0912, @rimoire, @Nioolek
 
 ## v0.1.0（21/9/2022)
 
