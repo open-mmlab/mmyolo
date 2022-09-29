@@ -76,10 +76,9 @@ MMDetection 开源库中已经对单图数据增强进行了封装，用户通�
 | MixUp  |           | 19.3          |
 | MixUp  | √         | **12.4**      |
 
-|                                               | RTMDet-s | RTMDet-l |
-| --------------------------------------------- | -------- | -------- |
-| Mosaic + MixUp + 20e finetune                 | 43.9     | **51.3** |
-| **Small-cache** Mosaic + MixUp + 20e finetune | **44.2** | 51.1     |
+|                               | RTMDet-s | RTMDet-l |
+| ----------------------------- | -------- | -------- |
+| Mosaic + MixUp + 20e finetune | 43.9     | **51.3** |
 
 #### 1.1.1 为图像混合数据增强引入 Cache
 
@@ -180,12 +179,11 @@ Mosaic+MixUp 失真度比较高，持续用太强的数据增强对模型并不�
 
 为了使数据增强的方式更为通用，RTMDet 在前 280 epoch 使用不带旋转的 Mosaic+MixUp, 且通过混入 8 张图片来提升强度以及正样本数。后 20 epoch 使用比较小的学习率在比较弱的增强下进行微调，同时在 EMA 的作用下将参数缓慢更新至模型，能够得到比较大的提升。
 
-|                                           | RTMDet-s | RTMDet-l |
-| ----------------------------------------- | -------- | -------- |
-| LSJ + rand crop                           | 42.3     | 46.7     |
-| Mosaic+MixUp                              | 41.9     | 49.8     |
-| Mosaic + MixUp + 20e finetune             | 43.9     | **51.3** |
-| Small-cache Mosaic + MixUp + 20e finetune | **44.2** | 51.1     |
+|                               | RTMDet-s | RTMDet-l |
+| ----------------------------- | -------- | -------- |
+| LSJ + rand crop               | 42.3     | 46.7     |
+| Mosaic+MixUp                  | 41.9     | 49.8     |
+| Mosaic + MixUp + 20e finetune | 43.9     | **51.3** |
 
 ### 1.2 模型结构
 
