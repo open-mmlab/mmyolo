@@ -28,6 +28,8 @@ model = dict(
 如果你想堆叠多个 Neck，可以直接在配置文件中的 Neck 参数，MMYOLO 支持以 `List` 形式拼接多个 Neck 配置，你需要保证的是上一个 Neck 的输出通道与下一个 Neck 的输入通道相匹配。如需要调整通道，可以插入 `mmdet.ChannelMapper` 模块用来对齐多个 Neck 之间的通道数量。具体配置如下：
 
 ```python
+_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+
 model = dict(
     type='YOLODetector',
     neck=[
