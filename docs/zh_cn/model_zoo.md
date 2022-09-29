@@ -18,3 +18,7 @@
 ### YOLOX
 
 请参考 [YOLOX](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolox)。
+
+### RTMDet
+
+请参考 [RTMDet](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet)。
