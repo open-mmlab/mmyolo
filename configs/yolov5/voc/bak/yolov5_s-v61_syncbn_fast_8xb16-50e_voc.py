@@ -236,9 +236,7 @@ custom_hooks = [
 ]
 
 val_evaluator = dict(
-    type='mmdet.VOCMetric',
-    metric='mAP',
-    eval_mode='11points')
+    type='mmdet.VOCMetric', metric='mAP', eval_mode='11points')
 
 test_evaluator = val_evaluator
 
