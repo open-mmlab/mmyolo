@@ -2,7 +2,7 @@ This tutorial collects answers to any `How to xxx with MMYOLO`. Feel free to upd
 
 # Add plugins to the BackBone network
 
-MMYOLO supports adding plug-ins such as none_local and dropout after different stages of BackBone. Users can directly manage plug-ins by modifying the plugins parameter of backbone in config. For example, add DropBlock and GeneralizedAttention plug-ins for `YOLOv5`. The configuration files are as follows:
+MMYOLO supports adding plug-ins such as none_local and dropout after different stages of BackBone. Users can directly manage plug-ins by modifying the plugins parameter of backbone in config. For example, add GeneralizedAttention plug-ins for `YOLOv5`. The configuration files are as follows:
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -28,6 +28,8 @@ model = dict(
 If you want to stack multiple Necks, you can directly set the Neck parameters in the config. MMYOLO supports concatenating multiple Necks in the form of `List`. You need to ensure that the output channel of the previous Neck matches the input channel of the next Neck. If you need to adjust the number of channels, you can insert the `mmdet.ChannelMapper` module to align the number of channels between multiple Necks. The specific configuration is as follows:
 
 ```python
+_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+
 model = dict(
     type='YOLODetector',
     neck=[
