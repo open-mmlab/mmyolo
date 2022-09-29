@@ -4,8 +4,8 @@
 
 高性能，低延时的单阶段目标检测器
 
-<div align=center >
-<img alt="RTMDet_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/192815848-c2db9680-df03-40af-8051-124b9ae59d06.jpg"/>
+<div align=center>
+<img alt="RTMDet_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/192954055-e044fe8a-53e6-4a08-8af2-f29c73e4b54b.jpg"/>
 </div>
 
 以上结构图由 RangeKing@github 绘制。
@@ -23,9 +23,21 @@ RTMDet 由 tiny/s/m/l/x 一系列不同大小的模型组成，为不同的应�
 
 而最轻量的模型 RTMDet-tiny，在仅有 4M 参数量的情况下也能够达到 40.9 mAP，且推理速度 \< 1 ms。
 
-<div align=center >
+<div align=center>
 <img alt="RTMDet_精度图" src="https://user-images.githubusercontent.com/12907710/192182907-f9a671d6-89cb-4d73-abd8-c2b9dada3c66.png"/>
 </div>
+
+上图中的精度是和 300 epoch 训练下的公平对比，为不使用蒸馏的结果。
+
+|                            | mAP             | Params         | Flops        | Inference speed |
+| -------------------------- | --------------- | -------------- | ------------ | --------------- |
+| Baseline(YOLOX)            | 40.2            | 9M             | 13.4G        | 1.2ms           |
+| + AdamW + Flat Cosine      | 40.6 (+0.4)     | 9M             | 13.4G        | 1.2ms           |
+| + CSPNeXt backbone & PAFPN | 41.8 (+1.2)     | 10.07M (+1.07) | 14.8G (+1.4) | 1.22ms (+0.02)  |
+| + SepBNHead                | 41.8 (+0)       | 8.89M (-1.18)  | 14.8G        | 1.22ms          |
+| + Label Assign & Loss      | 42.9 (+1.1)     | 8.89M          | 14.8G        | 1.22ms          |
+| + Cached Mosaic & MixUp    | 44.2 (+1.3)     | 8.89M          | 14.8G        | 1.22ms          |
+| + RSB-pretrained backbone  | **44.5 (+0.3)** | 8.89M          | 14.8G        | 1.22ms          |
 
 - 官方开源地址： https://github.com/open-mmlab/mmdetection/blob/3.x/configs/rtmdet/README.md
 - MMYOLO 开源地址： https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/README.md
@@ -48,19 +60,35 @@ RTMDet 采用了多种数据增强的方式来增加模型的性能，主要包�
 
 数据增强流程如下：
 
-<center>
-<img src="https://user-images.githubusercontent.com/33799979/192940322-3864fac4-cbbc-4f80-a8d3-0f84a2c40e27.png" width=800 />
-</center>
+<div align=center>
+<img alt="image" src="https://user-images.githubusercontent.com/33799979/192956011-78f89d89-ac9f-4a40-b4f1-056b49b704ef.png" width=800 />
+</div>
 
 其中 RandomResize 超参在大模型 M,L,X 和小模型 S, Tiny 上是不一样的，大模型由于参数较多，可以使用 large scale jitter 策略即参数为 (0.1,2.0)，而小模型采用 stand scale jitter 策略即 (0.5, 2.0) 策略。
 MMDetection 开源库中已经对单图数据增强进行了封装，用户通过简单的修改配置即可使用库中提供的任何数据增强功能，且都是属于比较常规的数据增强，不需要特殊介绍。下面将具体介绍混合类数据增强的具体实现。
 
 与 YOLOv5 不同的是，YOLOv5 认为在 S 和 Nano 模型上使用 MixUp 是过剩的，小模型不需要这么强的数据增强。而 RTMDet 在 S 和 Tiny 上也使用了 MixUp，这是因为 RTMDet 在最后 20 epoch 会切换为正常的 aug， 并通过训练证明这个操作是有效的。 并且 RTMDet 为混合类数据增强引入了 Cache 方案，有效地减少了图像处理的时间, 和引入了可调超参 `max_cached_images` ，当使用较小的 cache 时，其效果类似 `repeated augmentation`。具体介绍如下：
 
+|        | Use cache | ms / 100 imgs |
+| ------ | --------- | ------------- |
+| Mosaic |           | 87.1          |
+| Mosaic | √         | **24.0**      |
+| MixUp  |           | 19.3          |
+| MixUp  | √         | **12.4**      |
+
+|                                               | RTMDet-s | RTMDet-l |
+| --------------------------------------------- | -------- | -------- |
+| Mosaic + MixUp + 20e finetune                 | 43.9     | **51.3** |
+| **Small-cache** Mosaic + MixUp + 20e finetune | **44.2** | 51.1     |
+
 #### 1.1.1 为图像混合数据增强引入 Cache
 
 Mosaic&MixUp 涉及到多张图片的混合，它们的耗时会是普通数据增强的 K 倍(K 为混入图片的数量)。 如在 YOLOv5 中，每次做 Mosaic 时， 4 张图片的信息都需要从硬盘中重新加载。 而 RTMDet 只需要重新载入当前的一张图片，其余参与混合增强的图片则从缓存队列中获取，通过牺牲一定内存空间的方式大幅提升了效率。 另外通过调整 cache 的大小以及 pop 的方式，也可以调整增强的强度。
-![cache](https://user-images.githubusercontent.com/33799979/192730011-90e2a28d-e163-4399-bf87-d3012007d8c3.png)
+
+<div align=center>
+<img alt="data cache" src="https://user-images.githubusercontent.com/33799979/192730011-90e2a28d-e163-4399-bf87-d3012007d8c3.png" width=800 />
+</div>
+
 如图所示，cache 队列中预先储存了 N 张已加载的图像与标签数据，每一个训练 step 中只需加载一张新的图片及其标签数据并更新到 cache 队列中(cache 队列中的图像可重复，如图中出现两次 img3)，同时如果 cache 队列长度超过预设长度，则随机 pop 一张图（为了 Tiny 模型训练更稳定，在 Tiny 模型中不采用随机 pop 的方式, 而是移除最先加入的图片），当需要进行混合数据增强时，只需要从 cache 中随机选择需要的图像进行拼接等处理，而不需要全部从硬盘中加载，节省了图像加载的时间。
 
 ```{note}
@@ -152,6 +180,13 @@ Mosaic+MixUp 失真度比较高，持续用太强的数据增强对模型并不�
 
 为了使数据增强的方式更为通用，RTMDet 在前 280 epoch 使用不带旋转的 Mosaic+MixUp, 且通过混入 8 张图片来提升强度以及正样本数。后 20 epoch 使用比较小的学习率在比较弱的增强下进行微调，同时在 EMA 的作用下将参数缓慢更新至模型，能够得到比较大的提升。
 
+|                                           | RTMDet-s | RTMDet-l |
+| ----------------------------------------- | -------- | -------- |
+| LSJ + rand crop                           | 42.3     | 46.7     |
+| Mosaic+MixUp                              | 41.9     | 49.8     |
+| Mosaic + MixUp + 20e finetune             | 43.9     | **51.3** |
+| Small-cache Mosaic + MixUp + 20e finetune | **44.2** | 51.1     |
+
 ### 1.2 模型结构
 
 RTMDet 模型整体结构和 [YOLOX](https://arxiv.org/abs/2107.08430) 几乎一致，由 `CSPNeXt` + `CSPNeXtPAFPN` + `共享卷积权重但分别计算 BN 的 SepBNHead` 构成。内部核心模块也是 `CSPLayer`，但对其中的  `Basic Block` 进行了改进，提出了 `CSPNeXt Block`。
@@ -166,14 +201,14 @@ RTMDet 模型整体结构和 [YOLOX](https://arxiv.org/abs/2107.08430) 几乎一
 
 - 如模型图 Details 部分所示，`CSPLayer` 由 3 个 `ConvModule` + n 个 `CSPNeXt Block`(带残差连接) + 1 个  `Channel Attention` 模块组成。`ConvModule` 为 1 层 3x3 `Conv2d` + `BatchNorm` + `SiLU` 激活函数。`Channel Attention` 模块为 1 层 `AdaptiveAvgPool2d` + 1 层 1x1 `Conv2d` + `Hardsigmoid` 激活函数。`CSPNeXt Block` 模块在下节详细讲述。
 
-- 如果想阅读 Backbone - `CSPNeXt` 的源码，可以[**点此**](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/backbones/cspnext.py#L16-L171) 跳转。
+- 如果想阅读 Backbone - `CSPNeXt` 的源码，可以 [**点此**](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/backbones/cspnext.py#L16-L171) 跳转。
 
 #### 1.2.2 CSPNeXt Block
 
 Darknet （图 a）使用 1x1 与 3x3 卷积的 `Basic Block`。[YOLOv6](https://arxiv.org/abs/2209.02976) 、[YOLOv7](https://arxiv.org/abs/2207.02696) 、[PPYOLO-E](https://arxiv.org/abs/2203.16250) （图 b & c）使用了重参数化 Block。但重参数化的训练代价高，且不易量化，需要其他方式来弥补量化误差。
 RTMDet 则借鉴了最近比较热门的 [ConvNeXt](https://arxiv.org/abs/2201.03545) 、[RepLKNet](https://arxiv.org/abs/2203.06717) 的做法，为 `Basic Block` 加入了大 kernel 的 `depth-wise` 卷积（图 d），并将其命名为 `CSPNeXt Block`。
 
-<div align=center >
+<div align=center>
 <img alt="BasicBlock" src="https://user-images.githubusercontent.com/27466624/192752976-4c20f944-1ef0-4746-892e-ba814cdcda20.png"/>
 </div>
 
@@ -330,9 +365,9 @@ cost_matrix = soft_cls_cost + iou_cost + soft_center_prior
 
 1. Soft_Center_Prior
 
-$$
+```{math}
 C\_{center} = \\alpha^{|x\_{pred}-x\_{gt}|-\\beta}
-$$
+```
 
 ```python
 # valid_prior Tensor[N,4] 表示anchor point
@@ -349,9 +384,9 @@ soft_center_prior = torch.pow(10, distance - 3)
 
 2. IOU_Cost
 
-$$
+```{math}
 C\_{reg} = -log(IOU)
-$$
+```
 
 ```python
 # 计算回归 bboxes 和 gts 的 iou
@@ -362,9 +397,9 @@ iou_cost = -torch.log(pairwise_ious + EPS) * 3
 
 3. Soft_Cls_Cost
 
-$$
+```{math}
 C\_{cls} = CE(P,Y\_{soft}) \*(Y\_{soft}-P)^2
-$$
+```
 
 ```python
 # 生成分类标签
@@ -438,19 +473,18 @@ Quality Focal Loss (QFL) 是 [Generalized Focal Loss: Learning Qualified and Dis
 普通的 Focal Loss 公式：
 
 ```{math}
-\bold{FL}(p) = -(1-p_t)^\gamma\log(p_t),p_t = \begin{cases}
-p, & \bold{when} \ y = 1 \\
-1 - p, & \bold{when} \ y = 0
+{FL}(p) = -(1-p_t)^\gamma\log(p_t),p_t = \begin{cases}
+p, & {when} \ y = 1 \\
+1 - p, & {when} \ y = 0
 \end{cases}
-\tag{1}
 ```
 
-其中 $y\\in{1,0}$ 指定真实类，$p\\in\[0,1\]$ 表示标签 $y = 1$ 的类估计概率。$\\gamma$ 是可调聚焦参数。具体来说，FL 由标准交叉熵部分 $-\\log(p_t)$ 和动态比例因子部分 $-(1-p_t)^\\gamma$ 组成，其中比例因子 $-(1-p_t)^\\gamma$ 在训练期间自动降低简单类对于 loss 的比重，并且迅速将模型集中在困难类上。
+其中 {math}`y\in{1,0}` 指定真实类，{math}`p\in[0,1]` 表示标签 {math}`y = 1` 的类估计概率。{math}`\gamma` 是可调聚焦参数。具体来说，FL 由标准交叉熵部分 {math}`-\log(p_t)` 和动态比例因子部分 {math}`-(1-p_t)^\gamma` 组成，其中比例因子 {math}`-(1-p_t)^\gamma` 在训练期间自动降低简单类对于 loss 的比重，并且迅速将模型集中在困难类上。
 
-首先 $y = 0$ 表示质量得分为 0 的负样本，$0 \< y \\leq1$ 表示目标 IoU 得分为 y 的正样本。为了针对连续的标签，扩展 FL 的两个部分：
+首先 {math}`y = 0` 表示质量得分为 0 的负样本，{math}`0 < y \leq 1` 表示目标 IoU 得分为 y 的正样本。为了针对连续的标签，扩展 FL 的两个部分：
 
-1. 交叉熵部分 $-\\log(p_t)$ 扩展为完整版本 `{math} $-((1-y)\\log(1-\\sigma)+y\\log(\\sigma))$ `
-2. 比例因子部分 $-(1-p_t)^\\gamma$ 被泛化为估计 $\\gamma$ 与其连续标签 $y$ 的绝对距离，即 $|y-\\sigma|^\\beta (\\beta \\geq 0)$。
+1. 交叉熵部分 {math}`-\log(p_t)` 扩展为完整版本 {math}`-((1-y)\log(1-\sigma)+y\log(\sigma))`
+2. 比例因子部分 {math}`-(1-p_t)^\gamma` 被泛化为估计 {math}`\gamma` 与其连续标签 {math}`y` 的绝对距离，即 {math}`|y-\sigma|^\beta (\beta \geq 0)` 。
 
 结合上面两个部分之后，我们得出 QFL 的公式：
 
