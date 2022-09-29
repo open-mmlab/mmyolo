@@ -49,7 +49,7 @@ RTMDet 采用了多种数据增强的方式来增加模型的性能，主要包�
 数据增强流程如下：
 
 <center>
-<img src="https://user-images.githubusercontent.com/33799979/192940322-3864fac4-cbbc-4f80-a8d3-0f84a2c40e27.png" width=800 />
+<img src="https://user-images.githubusercontent.com/33799979/192956011-78f89d89-ac9f-4a40-b4f1-056b49b704ef.png" width=800 />
 </center>
 
 其中 RandomResize 超参在大模型 M,L,X 和小模型 S, Tiny 上是不一样的，大模型由于参数较多，可以使用 large scale jitter 策略即参数为 (0.1,2.0)，而小模型采用 stand scale jitter 策略即 (0.5, 2.0) 策略。
