@@ -26,6 +26,21 @@ YOLOv5 is a family of object detection architectures and models pretrained on th
 5. The performance is unstable and may fluctuate by about 0.4 mAP.
 6. `balloon` means that this is a demo configuration.
 
+### VOC
+
+| Backbone | size | SyncBN | AMP | Mem (GB) | box AP(COCO metric) |                                                         Config                                                         |         Download         |
+| :------: | :--: | :----: | :-: | :------: | :-----------------: | :--------------------------------------------------------------------------------------------------------------------: | :----------------------: |
+| YOLOv5-n | 512  |  Yes   | Yes |   1.5    |          x          | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_n-v61_syncbn_fast_8xb8-50e_voc.py) | [model](<>) \| [log](<>) |
+| YOLOv5-s | 512  |  Yes   | Yes |   2.7    |          x          | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_s-v61_syncbn_fast_8xb8-50e_voc.py) | [model](<>) \| [log](<>) |
+| YOLOv5-m | 512  |  Yes   | Yes |   5.0    |        70.0         | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_m-v61_syncbn_fast_8xb8-50e_voc.py) | [model](<>) \| [log](<>) |
+| YOLOv5-l | 512  |  Yes   | Yes |   8.1    |          x          | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_l-v61_syncbn_fast_8xb4-50e_voc.py) | [model](<>) \| [log](<>) |
+
+**Note**:
+
+1. Training on VOC dataset need pretrained model which trained on COCO.
+2. The performance is unstable and may fluctuate by about 0.4 mAP.
+3. YOLOv5 use COCO metric, while training VOC dataset. We will support to use COCO metric while training VOC dataset.
+
 ## Citation
 
 ```latex
