@@ -18,3 +18,7 @@ Please refer to [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/main/configs/
 ### YOLOX
 
 Please refer to [YOLOX](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolox)。
+
+### RTMDet
+
+Please refer to [RTMDet](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet)。

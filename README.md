@@ -69,12 +69,10 @@ The master branch works with **PyTorch 1.6+**.
 
 ## What's New
 
-**v0.1.0** was released on 21/9/2022:
+**v0.1.1** was released on 29/9/2022:
 
-- Unified component interfaces based on [OpenMMLab 2.0](https://github.com/open-mmlab) and [MMDetection 3.0](https://github.com/open-mmlab/mmdetection/tree/3.x)
-- Support YOLOv5/YOLOX training, support YOLOv6 inference. Deployment will be supported soon.
-- Refactored YOLOX from MMDetection to accelerate training and inference.
-- Detailed introduction and advanced tutorials are provided, see the [English tutorial](https://mmyolo.readthedocs.io/en/latest).
+- Support [RTMDet](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet).
+- Support for backbone customization plugins.
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
@@ -88,7 +86,7 @@ conda activate open-mmlab
 pip install openmim
 mim install mmengine
 mim install "mmcv>=2.0.0rc1"
-mim install "mmdet>=3.0.0rc0"
+mim install "mmdet>=3.0.0rc1"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
@@ -135,6 +133,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 
 - [x] [YOLOv5](configs/yolov5)
 - [x] [YOLOX](configs/yolox)
+- [x] [RTMDet](configs/rtmdet)
 - [ ] [YOLOv6](configs/yolov6)(Inference only)
 
 </details>
@@ -165,6 +164,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         <li>YOLOv5CSPDarknet</li>
         <li>YOLOXCSPDarknet</li>
         <li>EfficientRep</li>
+        <li>CSPNeXt</li>
       </ul>
       </td>
       <td>
@@ -172,6 +172,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         <li>YOLOv5PAFPN</li>
         <li>YOLOv6RepPAFPN</li>
         <li>YOLOXPAFPN</li>
+        <li>CSPNeXtPAFPN</li>
       </ul>
       </td>
       <td>
