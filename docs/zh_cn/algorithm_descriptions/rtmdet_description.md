@@ -23,7 +23,7 @@ RTMDet 由 tiny/s/m/l/x 一系列不同大小的模型组成，为不同的应�
 
 而最轻量的模型 RTMDet-tiny，在仅有 4M 参数量的情况下也能够达到 40.9 mAP，且推理速度 \< 1 ms。
 
-<div align=center >
+<div align=center>
 <img alt="RTMDet_精度图" src="https://user-images.githubusercontent.com/12907710/192182907-f9a671d6-89cb-4d73-abd8-c2b9dada3c66.pngxx"/>
 </div>
 
@@ -56,6 +56,19 @@ RTMDet 采用了多种数据增强的方式来增加模型的性能，主要包�
 MMDetection 开源库中已经对单图数据增强进行了封装，用户通过简单的修改配置即可使用库中提供的任何数据增强功能，且都是属于比较常规的数据增强，不需要特殊介绍。下面将具体介绍混合类数据增强的具体实现。
 
 与 YOLOv5 不同的是，YOLOv5 认为在 S 和 Nano 模型上使用 MixUp 是过剩的，小模型不需要这么强的数据增强。而 RTMDet 在 S 和 Tiny 上也使用了 MixUp，这是因为 RTMDet 在最后 20 epoch 会切换为正常的 aug， 并通过训练证明这个操作是有效的。 并且 RTMDet 为混合类数据增强引入了 Cache 方案，有效地减少了图像处理的时间, 和引入了可调超参 `max_cached_images` ，当使用较小的 cache 时，其效果类似 `repeated augmentation`。具体介绍如下：
+    
+|   | Use cache    |  ms / 100 imgs     | 
+| ------------ | ---------- | --------- | 
+| Mosaic          |         | 87.1    | 
+| Mosaic      | √ | **24.0** | 
+| MixUp          |        | 19.3    | 
+| MixUp          | √       | **12.4**   | 
+
+|   | RTMDet-s    |  RTMDet-l     | 
+| ------------ | ---------- | --------- | 
+| Mosaic + MixUp + 20e finetune        |   43.9   | **51.3**    | 
+| **Small-cache** Mosaic + MixUp + 20e finetune        |   **44.2**   | 51.1    | 
+
 
 #### 1.1.1 为图像混合数据增强引入 Cache
 
