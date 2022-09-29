@@ -14,3 +14,4 @@
    :maxdepth: 1
 
    yolov5_description.md
+   rtmdet_description.md

@@ -10,6 +10,9 @@ from mmdet.structures.mask import BitmapMasks
 
 from mmyolo.datasets import YOLOv5CocoDataset
 from mmyolo.datasets.transforms import Mosaic, YOLOv5MixUp, YOLOXMixUp
+from mmyolo.utils import register_all_modules
+
+register_all_modules()
 
 
 class TestMosaic(unittest.TestCase):
@@ -60,6 +63,10 @@ class TestMosaic(unittest.TestCase):
         # test assertion for invalid probability
         with self.assertRaises(AssertionError):
             transform = Mosaic(prob=1.5)
+
+        # test assertion for invalid max_cached_images
+        with self.assertRaises(AssertionError):
+            transform = Mosaic(use_cached=True, max_cached_images=1)
 
         transform = Mosaic(
             img_scale=(10, 12), pre_transform=self.pre_transform)
@@ -151,6 +158,10 @@ class TestYOLOv5MixUp(unittest.TestCase):
         self.assertTrue(results['gt_bboxes'].dtype == np.float32)
         self.assertTrue(results['gt_ignore_flags'].dtype == bool)
 
+        # test assertion for invalid max_cached_images
+        with self.assertRaises(AssertionError):
+            transform = YOLOv5MixUp(use_cached=True, max_cached_images=1)
+
     def test_transform_with_box_list(self):
         results = copy.deepcopy(self.results)
         results['gt_bboxes'] = HorizontalBoxes(results['gt_bboxes'])
@@ -209,6 +220,10 @@ class TestYOLOXMixUp(unittest.TestCase):
         with self.assertRaises(AssertionError):
             transform = YOLOXMixUp(img_scale=640)
 
+        # test assertion for invalid max_cached_images
+        with self.assertRaises(AssertionError):
+            transform = YOLOXMixUp(use_cached=True, max_cached_images=1)
+
         transform = YOLOXMixUp(
             img_scale=(10, 12),
             ratio_range=(0.8, 1.6),
@@ -233,7 +248,6 @@ class TestYOLOXMixUp(unittest.TestCase):
             ratio_range=(0.8, 1.6),
             pad_val=114.0,
             pre_transform=self.pre_transform)
-        results['mix_results'] = [results]
         results = transform(results)
         self.assertTrue(results['img'].shape[:2] == (224, 224))
         self.assertTrue(results['gt_bboxes_labels'].shape[0] ==

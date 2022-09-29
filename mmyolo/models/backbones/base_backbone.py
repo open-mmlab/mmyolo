@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from abc import ABCMeta, abstractmethod
-from typing import List, Sequence
+from typing import List, Sequence, Union
 
 import torch
 import torch.nn as nn
+from mmcv.cnn import build_plugin_layer
 from mmdet.utils import ConfigType, OptMultiConfig
 from mmengine.model import BaseModule
 from torch.nn.modules.batchnorm import _BatchNorm
@@ -17,6 +18,11 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
 
     Args:
         arch_setting (dict): Architecture of BaseBackbone.
+        plugins (list[dict]): List of plugins for stages, each dict contains:
+
+            - cfg (dict, required): Cfg dict to build plugin.
+            - stages (tuple[bool], optional): Stages to apply plugin, length
+              should be same as 'num_stages'.
         deepen_factor (float): Depth multiplier, multiply number of
             blocks in CSP layer by this amount. Defaults to 1.0.
         widen_factor (float): Width multiplier, multiply number of
@@ -44,6 +50,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
                  input_channels: int = 3,
                  out_indices: Sequence[int] = (2, 3, 4),
                  frozen_stages: int = -1,
+                 plugins: Union[dict, List[dict]] = None,
                  norm_cfg: ConfigType = None,
                  act_cfg: ConfigType = None,
                  norm_eval: bool = False,
@@ -69,6 +76,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
         self.norm_eval = norm_eval
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
+        self.plugins = plugins
 
         self.stem = self.build_stem_layer()
         self.layers = ['stem']
@@ -76,6 +84,8 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
         for idx, setting in enumerate(arch_setting):
             stage = []
             stage += self.build_stage_layer(idx, setting)
+            if plugins is not None:
+                stage += self.make_stage_plugins(plugins, idx, setting)
             self.add_module(f'stage{idx + 1}', nn.Sequential(*stage))
             self.layers.append(f'stage{idx + 1}')
 
@@ -93,6 +103,65 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
             setting (list): The architecture setting of a stage layer.
         """
         pass
+
+    def make_stage_plugins(self, plugins, idx, setting):
+        """Make plugins for backbone ``stage_idx`` th stage.
+
+        Currently we support to insert ``context_block``,
+        ``empirical_attention_block``, ``nonlocal_block``, ``dropout_block``
+        into the backbone.
+
+
+        An example of plugins format could be:
+
+        Examples:
+            >>> plugins=[
+            ...     dict(cfg=dict(type='xxx', arg1='xxx'),
+            ...          stages=(False, True, True, True)),
+            ...     dict(cfg=dict(type='yyy'),
+            ...          stages=(True, True, True, True)),
+            ... ]
+            >>> model = YOLOv5CSPDarknet()
+            >>> stage_plugins = model.make_stage_plugins(plugins, 0, setting)
+            >>> assert len(stage_plugins) == 3
+
+        Suppose ``stage_idx=0``, the structure of blocks in the stage would be:
+
+        .. code-block:: none
+
+            conv1 -> conv2 -> conv3 -> yyy
+
+        Suppose 'stage_idx=1', the structure of blocks in the stage would be:
+
+        .. code-block:: none
+
+            conv1 -> conv2 -> conv3 -> xxx -> yyy
+
+
+        Args:
+            plugins (list[dict]): List of plugins cfg to build. The postfix is
+                required if multiple same type plugins are inserted.
+            stage_idx (int): Index of stage to build
+                If stages is missing, the plugin would be applied to all
+                stages.
+            setting (list): The architecture setting of a stage layer.
+
+        Returns:
+            list[nn.Module]: Plugins for current stage
+        """
+        # TODO: It is not general enough to support any channel and needs
+        # to be refactored
+        in_channels = int(setting[1] * self.widen_factor)
+        plugin_layers = []
+        for plugin in plugins:
+            plugin = plugin.copy()
+            stages = plugin.pop('stages', None)
+            assert stages is None or len(stages) == self.num_stages
+            if stages is None or stages[idx]:
+                name, layer = build_plugin_layer(
+                    plugin['cfg'], in_channels=in_channels)
+                plugin_layers.append(layer)
+        return plugin_layers
 
     def _freeze_stages(self):
         """Freeze the parameters of the specified stage so that they are no

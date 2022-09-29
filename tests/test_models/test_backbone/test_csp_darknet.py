@@ -95,3 +95,22 @@ class TestCSPDarknet(TestCase):
         assert feat[2].shape == torch.Size((1, 32, 8, 8))
         assert feat[3].shape == torch.Size((1, 64, 4, 4))
         assert feat[4].shape == torch.Size((1, 128, 2, 2))
+
+        # Test CSPDarknet with Dropout Block
+        model = module_class(plugins=[
+            dict(
+                cfg=dict(type='mmdet.DropBlock', drop_prob=0.1, block_size=3),
+                stages=(False, False, True, True)),
+        ])
+
+        assert len(model.stage1) == 2
+        assert len(model.stage2) == 2
+        assert len(model.stage3) == 3  # +DropBlock
+        assert len(model.stage4) == 4  # +SPPF+DropBlock
+        model.train()
+        imgs = torch.randn(1, 3, 256, 256)
+        feat = model(imgs)
+        assert len(feat) == 3
+        assert feat[0].shape == torch.Size((1, 256, 32, 32))
+        assert feat[1].shape == torch.Size((1, 512, 16, 16))
+        assert feat[2].shape == torch.Size((1, 1024, 8, 8))
