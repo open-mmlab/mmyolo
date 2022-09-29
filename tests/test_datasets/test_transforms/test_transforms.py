@@ -104,6 +104,22 @@ class TestLetterResize(unittest.TestCase):
                 (results['batch_shape'] == np.array([output_h,
                                                      output_w])).all())
 
+        # Test without batchshape
+        transform = LetterResize(scale=(640, 640), pad_val=dict(img=144))
+        rng = np.random.RandomState(0)
+        for _ in range(20):
+            input_h, input_w = np.random.randint(100, 700), np.random.randint(
+                100, 700)
+            data_info = dict(
+                img=np.random.random((input_h, input_w, 3)),
+                gt_bboxes=np.array([[0, 0, 10, 10]], dtype=np.float32),
+                gt_masks=BitmapMasks(
+                    rng.rand(1, input_h, input_w),
+                    height=input_h,
+                    width=input_w))
+            results = transform(data_info)
+            self.assertEqual(results['img_shape'], (640, 640, 3))
+
 
 class TestYOLOv5KeepRatioResize(unittest.TestCase):
 
