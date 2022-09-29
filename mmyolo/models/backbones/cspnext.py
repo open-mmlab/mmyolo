@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
-from typing import Sequence
+from typing import List, Sequence, Union
 
 import torch.nn as nn
 from mmcv.cnn import ConvModule, DepthwiseSeparableConvModule
@@ -27,6 +27,11 @@ class CSPNeXt(BaseBackbone):
             Defaults to (2, 3, 4).
         frozen_stages (int): Stages to be frozen (stop grad and set eval
             mode). -1 means not freezing any parameters. Defaults to -1.
+        plugins (list[dict]): List of plugins for stages, each dict contains:
+
+            - cfg (dict, required): Cfg dict to build plugin.
+            - stages (tuple[bool], optional): Stages to apply plugin, length
+              should be same as 'num_stages'.
         use_depthwise (bool): Whether to use depthwise separable convolution.
             Defaults to False.
         arch_ovewrite (list): Overwrite default arch settings.
@@ -63,6 +68,7 @@ class CSPNeXt(BaseBackbone):
         input_channels: int = 3,
         out_indices: Sequence[int] = (2, 3, 4),
         frozen_stages: int = -1,
+        plugins: Union[dict, List[dict]] = None,
         use_depthwise: bool = False,
         expand_ratio: float = 0.5,
         arch_ovewrite: dict = None,
@@ -89,9 +95,18 @@ class CSPNeXt(BaseBackbone):
         self.expand_ratio = expand_ratio
         self.conv_cfg = conv_cfg
 
-        super().__init__(arch_setting, deepen_factor, widen_factor,
-                         input_channels, out_indices, frozen_stages, norm_cfg,
-                         act_cfg, norm_eval, init_cfg)
+        super().__init__(
+            arch_setting,
+            deepen_factor,
+            widen_factor,
+            input_channels,
+            out_indices,
+            frozen_stages=frozen_stages,
+            plugins=plugins,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg,
+            norm_eval=norm_eval,
+            init_cfg=init_cfg)
 
     def build_stem_layer(self) -> nn.Module:
         """Build a stem layer."""
