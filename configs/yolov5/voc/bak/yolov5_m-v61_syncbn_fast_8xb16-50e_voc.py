@@ -1,4 +1,4 @@
-_base_ = '../../_base_/default_runtime.py'
+_base_ = '../../../_base_/default_runtime.py'
 
 # dataset settings
 data_root = 'data/VOCdevkit/'
@@ -28,11 +28,10 @@ batch_shapes_cfg = dict(
     size_divisor=32,
     extra_pad_ratio=0.5)
 
-# anchors = [[(10, 13), (16, 30), (33, 23)], [(30, 61), (62, 45), (59, 119)],
-#            [(116, 90), (156, 198), (373, 326)]]
-anchors = [[(26, 44), (67, 57), (61, 130)], [(121, 118), (120, 239), (206, 182)],
+anchors = [[(26, 44), (67, 57), (61, 130)], [(121, 118), (120, 239),
+                                             (206, 182)],
            [(376, 161), (234, 324), (428, 322)]]
-# anchors = 26,44, 67,57, 61,130, 121,118, 120,239, 206,182, 376,161, 234,324, 428,322
+
 strides = [8, 16, 32]
 
 # single-scale training is recommended to
@@ -152,10 +151,11 @@ train_pipeline = [
             'img': 'image',
             'gt_bboxes': 'bboxes'
         }),
-    dict(type='YOLOv5HSVRandomAug',
-         hue_delta=0.01041,
-         saturation_delta=0.54703,
-         value_delta=0.27739),
+    dict(
+        type='YOLOv5HSVRandomAug',
+        hue_delta=0.01041,
+        saturation_delta=0.54703,
+        value_delta=0.27739),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(
         type='mmdet.PackDetInputs',
@@ -186,8 +186,7 @@ train_dataloader = dict(
                 data_prefix=dict(sub_data_root='VOC2012/'),
                 filter_cfg=dict(filter_empty_gt=False, min_size=32),
                 pipeline=train_pipeline)
-        ])
-)
+        ]))
 
 test_pipeline = [
     dict(
@@ -260,9 +259,7 @@ custom_hooks = [
 ]
 
 val_evaluator = dict(
-    type='mmdet.VOCMetric',
-    metric='mAP',
-    eval_mode='11points')
+    type='mmdet.VOCMetric', metric='mAP', eval_mode='11points')
 
 test_evaluator = val_evaluator
 
