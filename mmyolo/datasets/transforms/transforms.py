@@ -167,13 +167,14 @@ class LetterResize(MMDET_Resize):
 
         # Use batch_shape if a batch_shape policy is configured
         if 'batch_shape' in results:
-            self.scale = tuple(results['batch_shape'])
+            scale = tuple(results['batch_shape'])
+        else:
+            scale = self.scale
 
         image_shape = image.shape[:2]  # height, width
 
         # Scale ratio (new / old)
-        ratio = min(self.scale[0] / image_shape[0],
-                    self.scale[1] / image_shape[1])
+        ratio = min(scale[0] / image_shape[0], scale[1] / image_shape[1])
 
         # only scale down, do not scale up (for better test mAP)
         if not self.allow_scale_up:
@@ -187,7 +188,7 @@ class LetterResize(MMDET_Resize):
 
         # padding height & width
         padding_h, padding_w = [
-            self.scale[0] - no_pad_shape[0], self.scale[1] - no_pad_shape[1]
+            scale[0] - no_pad_shape[0], scale[1] - no_pad_shape[1]
         ]
         if self.use_mini_pad:
             # minimum rectangle padding
@@ -196,10 +197,9 @@ class LetterResize(MMDET_Resize):
         elif self.stretch_only:
             # stretch to the specified size directly
             padding_h, padding_w = 0.0, 0.0
-            no_pad_shape = (self.scale[0], self.scale[1])
-            ratio = [
-                self.scale[0] / image_shape[0], self.scale[1] / image_shape[1]
-            ]  # height, width ratios
+            no_pad_shape = (scale[0], scale[1])
+            ratio = [scale[0] / image_shape[0],
+                     scale[1] / image_shape[1]]  # height, width ratios
 
         if image_shape != no_pad_shape:
             # compare with no resize and padding size
