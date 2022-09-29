@@ -15,7 +15,7 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
     ),
-    bbox_head=dict(head_module=dict(widen_factor=widen_factor, exp_on_reg=False)))
+    bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
 
 train_pipeline = [
     dict(
@@ -35,13 +35,13 @@ train_pipeline = [
         ratio_range=(0.5, 2.0),
         resize_type='mmdet.Resize',
         keep_ratio=True),
-    dict(type='mmdet.RandomCrop', crop_size=(640, 640)),
+    dict(type='mmdet.RandomCrop', crop_size=img_scale),
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
-    dict(type='mmdet.Pad', size=(640, 640), pad_val=dict(img=(114, 114, 114))),
+    dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(
         type='YOLOXMixUp',
-        img_scale=(640, 640),
+        img_scale=img_scale,
         ratio_range=(1.0, 1.0),
         max_cached_images=10,  # note
         use_cached=True,
