@@ -252,7 +252,8 @@ class LetterResize(MMDET_Resize):
             results['scale_factor'][0]
         gt_mask_width = results['gt_masks'].width * \
             results['scale_factor'][1]
-        gt_masks = results['gt_masks'].rescale((gt_mask_height, gt_mask_width))
+        gt_masks = results['gt_masks'].resize(
+            (int(round(gt_mask_height)), int(round(gt_mask_width))))
 
         # padding the gt_masks
         if len(gt_masks) == 0:

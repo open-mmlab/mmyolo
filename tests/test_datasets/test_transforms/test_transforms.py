@@ -75,7 +75,7 @@ class TestLetterResize(unittest.TestCase):
         # Test stretch_only
         transform = LetterResize(scale=(640, 640), stretch_only=True)
         results = transform(copy.deepcopy(self.data_info1))
-        self.assertEqual(results['img_shape'], (460, 613, 3))
+        self.assertEqual(results['img_shape'], (460, 672, 3))
         self.assertTrue((results['gt_bboxes'] == np.array(
             [[0., 0., 230., 251.99998474121094]])).all())
         self.assertTrue((results['batch_shape'] == np.array([460, 672])).all())
