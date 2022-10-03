@@ -17,6 +17,8 @@ def parse_args():
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
+        '--show', action='store_true', help='Show the detection results')
+    parser.add_argument(
         '--palette',
         default='coco',
         choices=['coco', 'voc', 'citys', 'random'],
@@ -50,7 +52,7 @@ def main(args):
         img,
         data_sample=result,
         draw_gt=False,
-        show=True,
+        show=args.show,
         wait_time=0,
         out_file=args.out_file,
         pred_score_thr=args.score_thr)
