@@ -4,11 +4,11 @@
 
 下表为 MMYOLO 和 MMEngine, MMCV, MMDetection 依赖库的版本要求，请安装正确的版本以避免安装问题。
 
-| MMYOLO version || MMDetection version |    MMEngine version     |  MMCV version     |
-|:--------------:|:-------------------:|:-------------------:|:-------------------:|
-| main          | mmdet>=3.0.0rc1, \<3.1.0  | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0|
-| 0.1.1         | mmdet>=3.0.0rc1, \<3.1.0   | mmengine>=0.1.0, \<0.2.0 |mmcv>=2.0.0rc0, \<2.1.0|
-| 0.1.0         | mmdet>=3.0.0rc0, \<3.1.0   | mmengine>=0.1.0, \<0.2.0 |mmcv>=2.0.0rc0, \<2.1.0|
+| MMYOLO version |   MMDetection version    |     MMEngine version     |      MMCV version       |
+| :------------: | :----------------------: | :----------------------: | :---------------------: |
+|      main      | mmdet>=3.0.0rc1, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.1.1      | mmdet>=3.0.0rc1, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.1.0      | mmdet>=3.0.0rc0, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
 
 本节中，我们将演示如何用 PyTorch 准备一个环境。
 
