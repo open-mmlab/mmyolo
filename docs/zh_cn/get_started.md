@@ -101,8 +101,7 @@ mim download mmyolo --config yolov5_s-v61_syncbn_fast_8xb16-300e_coco --dest .
 python demo/image_demo.py demo/demo.jpg \
                           yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
                           yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
-                          --device cpu \
-                          --out-file result.jpg
+                          --device cpu
 ```
 
 你会在当前文件夹中看到一个新的图像 `result.jpg`，图像中包含有网络预测的检测框。

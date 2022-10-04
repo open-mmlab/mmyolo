@@ -99,7 +99,7 @@ The downloading will take several seconds or more, depending on your network env
 Option (a). If you install MMYOLO from source, just run the following command.
 
 ```shell
-python demo/image_demo.py demo/demo.jpg yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --device cpu --out-file result.jpg
+python demo/image_demo.py demo/demo.jpg yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --device cpu
 ```
 
 You will see a new image `result.jpg` on your current folder, where bounding boxes are plotted.
