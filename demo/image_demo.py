@@ -5,6 +5,7 @@ from argparse import ArgumentParser
 
 import mmcv
 from mmdet.apis import inference_detector, init_detector
+from mmengine.utils import ProgressBar
 
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
@@ -85,6 +86,8 @@ def main(args):
     visualizer.dataset_meta = model.dataset_meta
 
     files = LoadFiles(args.img)
+    progress_bar = ProgressBar(len(files))
+
     for file in files:
         result = inference_detector(model, file)
         img = mmcv.imread(file)
@@ -99,6 +102,7 @@ def main(args):
             wait_time=0,
             out_file=os.path.join(args.out_path, file_name),
             pred_score_thr=args.score_thr)
+        progress_bar.update()
 
 
 if __name__ == '__main__':

@@ -4,6 +4,7 @@ import argparse
 import cv2
 import mmcv
 from mmdet.apis import inference_detector, init_detector
+from mmengine.utils import ProgressBar
 
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
@@ -51,6 +52,8 @@ def main():
             args.out, fourcc, video_reader.fps,
             (video_reader.width, video_reader.height))
 
+    progress_bar = ProgressBar(len(video_reader))
+
     for frame in video_reader:
         result = inference_detector(model, frame)
         if args.show:
@@ -68,6 +71,8 @@ def main():
                 pred_score_thr=args.score_thr)
         if args.out:
             video_writer.write(visualizer.get_image())
+        progress_bar.update()
+
     if video_writer:
         video_writer.release()
     cv2.destroyAllWindows()
