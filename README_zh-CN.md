@@ -124,7 +124,10 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 - 进阶指南
 
-  - [How to](https://mmyolo.readthedocs.io/zh_CN/3.x/advanced_guides/index.html#how-to)
+  - [数据流](docs/zh_cn/advanced_guides/data_flow.md)
+  - [How to](docs/zh_cn/advanced_guides/how_to.md)
+
+- [解读文章和资源汇总](docs/zh_cn/article.md)
 
 ## 基准测试和模型库
 

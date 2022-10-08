@@ -140,10 +140,10 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 # 命令行中设置 model.backbone.frozen_stages=4
 cd mmyolo
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
-                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' model.backbone.frozen_stages=4
+                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' model.backbone.frozen_stages=4 custom_hooks=None
 ```
 
-### 可视化相关
+### 训练验证中可视化相关
 
 #### 验证阶段可视化
 
@@ -221,7 +221,17 @@ visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='Tensorbo
 tensorboard --logdir=work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon
 ```
 
-### 模型推理
+## 模型测试
+
+如果你训练时候设置了 `custom_hooks=None`，那么在模型测试过程中依然需要设置 `custom_hooks=None`
+
+```shell
+python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
+                     work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/epoch_300.pth \
+                     --show-dir show_results  --cfg-options custom_hooks=None
+```
+
+如果你没有设置 `custom_hooks=None`，那么测试命令如下：
 
 ```shell
 python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
@@ -229,7 +239,7 @@ python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.p
                      --show-dir show_results
 ```
 
-运行以上推理命令，推理结果图片会自动保存至 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/show_results` 文件夹中。下面为其中一张结果图片，左图为实际标注，右图为模型推理结果。
+运行以上测试命令，推理结果图片会自动保存至 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/show_results` 文件夹中。下面为其中一张结果图片，左图为实际标注，右图为模型推理结果。
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/27466624/190913272-f99709e5-c798-46b8-aede-30f4e91683a3.jpg" alt="result_img"/>
