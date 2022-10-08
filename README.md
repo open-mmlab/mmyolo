@@ -122,7 +122,8 @@ For different parts from MMDetection, we have also prepared user guides and adva
 
 - Advanced Guides
 
-  - [How to](https://mmyolo.readthedocs.io/en/3.x/advanced_guides/index.html#how-to)
+  - [Data flow](docs/en/advanced_guides/data_flow.md)
+  - [How to](docs/en/advanced_guides/how_to.md)
 
 ## Overview of Benchmark and Model Zoo
 
