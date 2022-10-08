@@ -1,8 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import copy
 from typing import Any, Optional
 
 from mmdet.datasets import VOCDataset
+
 from ..registry import DATASETS, TASK_UTILS
 
 
@@ -21,12 +21,6 @@ class YOLOv5VOCDataset(VOCDataset):
 
         self.batch_shapes_cfg = batch_shapes_cfg
         super().__init__(*args, **kwargs)
-        if 'VOC2007' in self.sub_data_root:
-            self._metainfo['DATASET_TYPE'] = 'VOC'
-        elif 'VOC2012' in self.sub_data_root:
-            self._metainfo['DATASET_TYPE'] = 'VOC'
-        else:
-            self._metainfo['DATASET_TYPE'] = None
 
     def full_init(self):
         """rewrite full_init() to be compatible with serialize_data in
