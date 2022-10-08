@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import datetime
 import sys
 from unittest import TestCase
