@@ -2,6 +2,14 @@
 
 ## Prerequisites
 
+Compatible MMEngine, MMCV and MMDetection versions are shown as below. Please install the correct version to avoid installation issues.
+
+| MMYOLO version |   MMDetection version    |     MMEngine version     |      MMCV version       |
+| :------------: | :----------------------: | :----------------------: | :---------------------: |
+|      main      | mmdet>=3.0.0rc1, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.1.1      | mmdet>=3.0.0rc1, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.1.0      | mmdet>=3.0.0rc0, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+
 In this section, we demonstrate how to prepare an environment with PyTorch.
 
 MMDetection works on Linux, Windows, and macOS. It requires Python 3.6+, CUDA 9.2+, and PyTorch 1.7+.
@@ -42,8 +50,8 @@ conda install pytorch torchvision cpuonly -c pytorch
 ```shell
 pip install -U openmim
 mim install mmengine
-mim install "mmcv>=2.0.0rc1"
-mim install "mmdet>=3.0.0rc0"
+mim install "mmcv>=2.0.0rc1,<2.1.0"
+mim install "mmdet>=3.0.0rc1,<3.1.0"
 ```
 
 **Note:**
@@ -188,7 +196,7 @@ thus we only need to install MMEngine, MMCV, MMDetection, and MMYOLO with the fo
 !pip3 install openmim
 !mim install mmengine
 !mim install "mmcv>=2.0.0rc1,<2.1.0"
-!mim install "mmdet>=3.0.0.rc0"
+!mim install "mmdet>=3.0.0.rc1"
 ```
 
 **Step 2.** Install MMYOLO from the source.
