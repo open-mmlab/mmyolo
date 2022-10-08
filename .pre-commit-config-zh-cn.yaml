@@ -48,13 +48,13 @@ repos:
     hooks:
       - id: pyupgrade
         args: ["--py36-plus"]
-  - repo: https://gitee.com/openmmlab/pre-commit-hooks
+  - repo: https://github.com/open-mmlab/pre-commit-hooks
     rev: v0.2.0
     hooks:
       - id: check-copyright
-        args: ["mmyolo"]
-  - repo: https://gitee.com/openmmlab/mirrors-mypy
-    rev: v0.812
-    hooks:
-      - id: mypy
-        exclude: "docs"
+        args: ["mmyolo", "tests"]
+#  - repo: https://gitee.com/openmmlab/mirrors-mypy
+#    rev: v0.812
+#    hooks:
+#      - id: mypy
+#        exclude: "docs"
