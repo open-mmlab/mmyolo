@@ -11,8 +11,8 @@ conda install pytorch torchvision -c pytorch
 # conda install pytorch torchvision cpuonly -c pytorch
 pip install -U openmim
 mim install mmengine
-mim install "mmcv>=2.0.0rc1"
-mim install "mmdet>=3.0.0rc0"
+mim install "mmcv>=2.0.0rc1,<2.1.0"
+mim install "mmdet>=3.0.0rc0,<3.1.0"
 # for albumentations
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
