@@ -11,13 +11,17 @@ conda install pytorch torchvision -c pytorch
 # conda install pytorch torchvision cpuonly -c pytorch
 pip install -U openmim
 mim install mmengine
-mim install "mmcv>=2.0.0rc1"
-mim install "mmdet>=3.0.0rc0"
+mim install "mmcv>=2.0.0rc1,<2.1.0"
+mim install "mmdet>=3.0.0rc0,<3.1.0"
 # for albumentations
-pip install -r requirements/albu.txt
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
-pip install -v -e .
+# Install albumentations
+pip install -r requirements/albu.txt
+# Install MMYOLO
+mim install -v -e .
+# "-v" 指详细说明，或更多的输出
+# "-e" 表示在可编辑模式下安装项目，因此对代码所做的任何本地修改都会生效，从而无需重新安装。
 ```
 
 详细环境配置操作请查看 [get_started](../get_started.md)
