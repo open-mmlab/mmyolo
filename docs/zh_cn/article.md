@@ -1,6 +1,6 @@
 # 解读文章和资源汇总
 
-这篇文章汇总了 MMYOLO 或相关的 [OpenMMLab](https://www.zhihu.com/people/openmmlab) 解读的部分文章（更多文章和视频见 [OpenMMLabCourse](https://github.com/open-mmlab/OpenMMLabCourse) )，如果您有推荐的文章（不一定是 OpenMMLab 发布的文章，可以是自己写的文章），非常欢迎提 Pull Request 添加到这里。
+本文汇总了 MMYOLO 或相关的 [OpenMMLab](https://www.zhihu.com/people/openmmlab) 解读的部分文章（更多文章和视频见 [OpenMMLabCourse](https://github.com/open-mmlab/OpenMMLabCourse) )，如果您有推荐的文章（不一定是 OpenMMLab 发布的文章，可以是自己写的文章），非常欢迎提 Pull Request 添加到这里。
 
 ## MMYOLO 解读文章和资源
 
