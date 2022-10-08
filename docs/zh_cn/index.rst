@@ -27,7 +27,7 @@
    advanced_guides/index.rst
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: 解读文章和资源汇总
 
    article.md
