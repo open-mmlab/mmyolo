@@ -27,6 +27,12 @@
    advanced_guides/index.rst
 
 .. toctree::
+   :maxdepth: 2
+   :caption: 解读文章和资源汇总
+
+   article.md
+
+.. toctree::
    :maxdepth: 1
    :caption: 接口文档（英文）
 
