@@ -35,7 +35,7 @@ python tools/misc/download_dataset.py  --dataset-name balloon --save-dir data --
 python tools/dataset_converters/balloon2coco.py
 ```
 
-After executing the above command, the balloon dataset will be downloaded in the `data` folder with the converted format we need. The `train.json` and `val.json` are the annotation files; both are in the coco format.
+After executing the above command, the balloon dataset will be downloaded in the `data` folder with the converted format we need. The `train.json` and `val.json` are the annotation files, both are in the coco format.
 
 <div align=center>
 <img src="https://cdn.vansin.top/img/20220912105312.png" alt="image"/>
