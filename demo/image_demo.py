@@ -18,14 +18,14 @@ VIDEO_EXTENSIONS=('avi','rmvb','mkv','asf','wmv','mp4','3gp','flv')
 def parse_args():
     parser = ArgumentParser()
     #img,video,camrea
-    parser.add_argument('--mode',default='img',help='inference mode,img,video or camrea')
-    parser.add_argument('--config', default='../configs/yolov5/yolov5_n-v61_syncbn_fast_8xb16-300e_coco.py',help='Config file')
-    parser.add_argument('--checkpoint',default='../weights/yolov5_n-v61_syncbn_fast_8xb16-300e_coco_20220919_090739-b804c1ad.pth', help='Checkpoint file')
-    parser.add_argument('--data-path', default='.//imgs', help='data file/dir')
-    parser.add_argument('--out', default='result_imgs', help='Path to output file/dir')
+    parser.add_argument('mode',default='img',help='inference mode,img,video or camrea')
+    parser.add_argument('config', help='Config file')
+    parser.add_argument('checkpoint', help='Checkpoint file')
+    parser.add_argument('--data-path', default='', help='data file/dir')
+    parser.add_argument('--out', default='', help='Path to output file/dir')
     parser.add_argument(
         '--camera-id', type=int, default=0, help='camera device id')
-    parser.add_argument('--inference_subdir',action='store_false',help='inference image under subdirectories')
+    parser.add_argument('--inference_subdir',action='store_true',help='inference image under subdirectories')
     parser.add_argument('--wait_time',type=int,default=1,help='Waiting time')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
