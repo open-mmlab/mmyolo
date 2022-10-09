@@ -2,6 +2,14 @@
 
 ## 依赖
 
+下表为 MMYOLO 和 MMEngine, MMCV, MMDetection 依赖库的版本要求，请安装正确的版本以避免安装问题。
+
+| MMYOLO version |   MMDetection version    |     MMEngine version     |      MMCV version       |
+| :------------: | :----------------------: | :----------------------: | :---------------------: |
+|      main      | mmdet>=3.0.0rc1, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.1.1      | mmdet>=3.0.0rc1, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.1.0      | mmdet>=3.0.0rc0, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+
 本节中，我们将演示如何用 PyTorch 准备一个环境。
 
 MMYOLO 支持在 Linux，Windows 和 macOS 上运行。它需要 Python 3.6 以上，CUDA 9.2 以上和 PyTorch 1.7 以上。
@@ -42,8 +50,8 @@ conda install pytorch torchvision cpuonly -c pytorch
 ```shell
 pip install -U openmim
 mim install mmengine
-mim install "mmcv>=2.0.0rc1"
-mim install "mmdet>=3.0.0rc0"
+mim install "mmcv>=2.0.0rc1,<2.1.0"
+mim install "mmdet>=3.0.0rc1,<3.1.0"
 ```
 
 **注意：**
@@ -193,7 +201,7 @@ pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 !pip3 install openmim
 !mim install mmengine
 !mim install "mmcv>=2.0.0rc1,<2.1.0"
-!mim install "mmdet>=3.0.0.rc0"
+!mim install "mmdet>=3.0.0.rc1"
 ```
 
 **步骤 2.** 使用源码安装 MMYOLO：

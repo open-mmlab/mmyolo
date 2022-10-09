@@ -69,12 +69,11 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 
 ## 最新进展
 
-**v0.1.0** 版本已经在 2022.9.21 发布：
+**v0.1.1** 版本已经在 2022.9.29 发布：
 
-- 基于 [OpenMMLab 2.0](https://github.com/open-mmlab) 和 [MMDetection 3.0](https://github.com/open-mmlab/mmdetection/tree/3.x) 统一了各组件接口。
-- 支持 YOLOv5/YOLOX 训练，支持 YOLOv6 推理。即将支持部署。
-- 重构了 MMDetection 的 YOLOX，提供了更快的训练和推理速度。
-- 提供了详细入门和进阶教程，详见 [中文教程](https://mmyolo.readthedocs.io/zh_CN/latest)。
+- 支持了 [RTMDet](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet)
+- 新增了 [RTMDet 原理和实现全解析中文文档](https://github.com/open-mmlab/mmyolo/blob/main/docs/zh_cn/algorithm_descriptions/rtmdet_description.md)
+- 支持对 backbone 自定义插件，并且更新了 How-to 文档
 
 发布历史和更新细节请参考 [更新日志](https://mmyolo.readthedocs.io/zh_CN/latest/notes/changelog.html)
 
@@ -87,8 +86,8 @@ conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudato
 conda activate open-mmlab
 pip install openmim
 mim install mmengine
-mim install "mmcv>=2.0.0rc1"
-mim install "mmdet>=3.0.0rc0"
+mim install "mmcv>=2.0.0rc1,<2.1.0"
+mim install "mmdet>=3.0.0rc1,<3.1.0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
@@ -121,10 +120,14 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
     - [模型设计相关说明](docs/zh_cn/algorithm_descriptions/model_design.md)
   - [算法原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#算法原理和实现全解析)
     - [YOLOv5 原理和实现全解析](docs/zh_cn/algorithm_descriptions/yolov5_description.md)
+    - [RTMDet 原理和实现全解析](docs/zh_cn/algorithm_descriptions/rtmdet_description.md)
 
 - 进阶指南
 
-  - [How to](https://mmyolo.readthedocs.io/zh_CN/3.x/advanced_guides/index.html#how-to)
+  - [数据流](docs/zh_cn/advanced_guides/data_flow.md)
+  - [How to](docs/zh_cn/advanced_guides/how_to.md)
+
+- [解读文章和资源汇总](docs/zh_cn/article.md)
 
 ## 基准测试和模型库
 
@@ -135,6 +138,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 - [x] [YOLOv5](configs/yolov5)
 - [x] [YOLOX](configs/yolox)
+- [x] [RTMDet](configs/rtmdet)
 - [ ] [YOLOv6](configs/yolov6)(仅推理)
 
 </details>
@@ -165,6 +169,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
         <li>YOLOv5CSPDarknet</li>
         <li>YOLOXCSPDarknet</li>
         <li>EfficientRep</li>
+        <li>CSPNeXt</li>
       </ul>
       </td>
       <td>
@@ -172,6 +177,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
         <li>YOLOv5PAFPN</li>
         <li>YOLOv6RepPAFPN</li>
         <li>YOLOXPAFPN</li>
+        <li>CSPNeXtPAFPN</li>
       </ul>
       </td>
       <td>

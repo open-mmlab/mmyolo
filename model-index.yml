@@ -2,3 +2,4 @@ Import:
   - configs/yolov5/metafile.yml
   - configs/yolov6/metafile.yml
   - configs/yolox/metafile.yml
+  - configs/rtmdet/metafile.yml
