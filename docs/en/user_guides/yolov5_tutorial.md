@@ -148,7 +148,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 
 For `visualization` of `default_hooks` in `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py`, we set `draw` to `True` and `interval` to `2`.
 
-```shell
+```python
 default_hooks = dict(
      logger=dict(interval=1),
      visualization=dict(draw=True, interval=2),
