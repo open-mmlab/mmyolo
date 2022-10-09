@@ -31,7 +31,9 @@ For more detailed information about environment configuration, please refer to [
 In this tutorial, the training dataset for MMYOLO is less than 40MB and is selected from the balloon dataset.
 
 ```shell
-python tools/misc/download_dataset.py  --dataset-name balloon --save-dir data --unzip
+python tools/misc/download_dataset.py  --dataset-name balloon \
+                                                                  --save-dir data \
+                                                                  --unzip
 python tools/dataset_converters/balloon2coco.py
 ```
 
