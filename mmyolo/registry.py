@@ -6,7 +6,6 @@ More details can be found at
 https://mmengine.readthedocs.io/en/latest/tutorials/registry.html.
 """
 
-from mmdet.registry import TRANSFORMS as MMDET_TRANSFORM
 from mmengine.registry import DATA_SAMPLERS as MMENGINE_DATA_SAMPLERS
 from mmengine.registry import DATASETS as MMENGINE_DATASETS
 from mmengine.registry import HOOKS as MMENGINE_HOOKS
@@ -23,6 +22,7 @@ from mmengine.registry import \
     RUNNER_CONSTRUCTORS as MMENGINE_RUNNER_CONSTRUCTORS
 from mmengine.registry import RUNNERS as MMENGINE_RUNNERS
 from mmengine.registry import TASK_UTILS as MMENGINE_TASK_UTILS
+from mmengine.registry import TRANSFORMS as MMENGINE_TRANSFORMS
 from mmengine.registry import VISBACKENDS as MMENGINE_VISBACKENDS
 from mmengine.registry import VISUALIZERS as MMENGINE_VISUALIZERS
 from mmengine.registry import \
@@ -42,7 +42,7 @@ HOOKS = Registry('hook', parent=MMENGINE_HOOKS)
 # manage data-related modules
 DATASETS = Registry('dataset', parent=MMENGINE_DATASETS)
 DATA_SAMPLERS = Registry('data sampler', parent=MMENGINE_DATA_SAMPLERS)
-TRANSFORMS = Registry('transform', parent=MMDET_TRANSFORM)
+TRANSFORMS = Registry('transform', parent=MMENGINE_TRANSFORMS)
 
 # manage all kinds of modules inheriting `nn.Module`
 MODELS = Registry('model', parent=MMENGINE_MODELS)
