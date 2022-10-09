@@ -85,7 +85,6 @@ test_evaluator = val_evaluator
 model = dict(bbox_head=dict(head_module=dict(num_classes=1)))
 
 default_hooks = dict(logger=dict(interval=1))
-
 ```
 
 以上配置从 `./yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py` 中继承，并根据 balloon 数据的特点更新了 `data_root`、`metainfo`、`train_dataloader`、`val_dataloader`、`num_classes` 等配置。
