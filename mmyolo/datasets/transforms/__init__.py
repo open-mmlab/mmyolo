@@ -1,11 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .mix_img_transforms import Mosaic, YOLOv5MixUp, YOLOXMixUp
-from .transforms import (LetterResize, LoadAnnotations, RandomTransform,
+from .transforms import (LetterResize, LoadAnnotations, OneOf,
                          YOLOv5HSVRandomAug, YOLOv5KeepRatioResize,
                          YOLOv5RandomAffine)
 
 __all__ = [
     'YOLOv5KeepRatioResize', 'LetterResize', 'Mosaic', 'YOLOXMixUp',
     'YOLOv5MixUp', 'YOLOv5HSVRandomAug', 'LoadAnnotations',
-    'YOLOv5RandomAffine', 'RandomTransform'
+    'YOLOv5RandomAffine', 'OneOf'
 ]

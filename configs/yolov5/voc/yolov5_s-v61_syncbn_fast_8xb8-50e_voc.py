@@ -92,11 +92,9 @@ no_mosaic_affine_pipeline = [
 ]
 
 mosaic_prob_config = dict(
-    type='RandomTransform',
+    type='OneOf',
     transform_list=[mosaic_affine_pipeline, no_mosaic_affine_pipeline],
-    prob_list=[
-        0.85834,
-    ])
+    prob_list=[0.85834, 0.14166])
 
 # enable mixup
 train_pipeline = [
