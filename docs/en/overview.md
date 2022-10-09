@@ -46,4 +46,5 @@ The detailed instruction of MMYOLO is as follows.
 
 4. Refer to the following tutorials for an in-depth look:
 
+   - [Data flow](https://mmyolo.readthedocs.io/en/latest/advanced_guides/index.html#data-flow)
    - [How to](https://mmyolo.readthedocs.io/en/latest/advanced_guides/index.html#how-to)
