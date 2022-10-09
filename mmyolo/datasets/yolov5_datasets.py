@@ -1,24 +1,17 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Any, Optional
 
-from mmdet.datasets import VOCDataset
+from mmdet.datasets import BaseDetDataset, CocoDataset, VOCDataset
 
 from ..registry import DATASETS, TASK_UTILS
 
 
-@DATASETS.register_module()
-class YOLOv5VOCDataset(VOCDataset):
-    """Dataset for YOLOv5 VOC Dataset.
-
-    We only add `BatchShapePolicy` function compared with VOCDataset. See
-    `mmyolo/datasets/utils.py#BatchShapePolicy` for details
-    """
+class BatchShapeDataset(BaseDetDataset):
 
     def __init__(self,
                  *args,
                  batch_shapes_cfg: Optional[dict] = None,
                  **kwargs):
-
         self.batch_shapes_cfg = batch_shapes_cfg
         super().__init__(*args, **kwargs)
 
@@ -57,3 +50,28 @@ class YOLOv5VOCDataset(VOCDataset):
             return self.pipeline(data_info)
         else:
             return super().prepare_data(idx)
+
+
+@DATASETS.register_module()
+class YOLOv5CocoDataset(BatchShapeDataset, CocoDataset):
+    """Dataset for YOLOv5 COCO Dataset.
+
+    We only add `BatchShapePolicy` function compared with CocoDataset. See
+    `mmyolo/datasets/utils.py#BatchShapePolicy` for details
+    """
+    pass
+
+
+@DATASETS.register_module()
+class YOLOv5VOCDataset(BatchShapeDataset, VOCDataset):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # TODO: Because of the bug in mmengine `ConcatDataset`
+        # add this to avoid ValueError
+        if 'VOC2007' in self.sub_data_root:
+            self._metainfo['DATASET_TYPE'] = 'VOC'
+        elif 'VOC2012' in self.sub_data_root:
+            self._metainfo['DATASET_TYPE'] = 'VOC'
+        else:
+            self._metainfo['DATASET_TYPE'] = None
