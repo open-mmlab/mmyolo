@@ -8,12 +8,15 @@ from mmdet.models.utils import multi_apply
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
                          OptMultiConfig)
 from mmengine.model import BaseModule, bias_init_with_prob
+from mmengine import MessageHub
 from mmengine.structures import InstanceData
 from torch import Tensor
+import torch.nn.functional as F
 
-from mmyolo.registry import MODELS
+from mmyolo.registry import MODELS, TASK_UTILS
 from ..utils import make_divisible
 from .yolov5_head import YOLOv5Head
+import numpy as np
 
 
 @MODELS.register_module()
@@ -190,13 +193,20 @@ class YOLOv6Head(YOLOv5Head):
                      offset=0.5,
                      strides=[8, 16, 32]),
                  bbox_coder: ConfigType = dict(type='DistancePointBBoxCoder'),
-                 loss_cls: ConfigType = dict(
-                     type='mmdet.CrossEntropyLoss',
+                 loss_cls=dict(
+                     type='mmdet.VarifocalLoss',
                      use_sigmoid=True,
-                     reduction='sum',
-                     loss_weight=1.0),
-                 loss_bbox: ConfigType = dict(
-                     type='mmdet.GIoULoss', reduction='sum', loss_weight=5.0),
+                     alpha=0.75,
+                     gamma=2.0,
+                     iou_weighted=True,
+                     loss_weight=1.0),   
+                 loss_bbox=dict(
+                     type='IoULoss',
+                     iou_mode='siou',
+                     bbox_format='xywh',
+                     eps=1e-16,
+                     reduction='mean',
+                     loss_weight=5.0),
                  loss_obj: ConfigType = dict(
                      type='mmdet.CrossEntropyLoss',
                      use_sigmoid=True,
@@ -222,7 +232,10 @@ class YOLOv6Head(YOLOv5Head):
 
         The special_init function is designed to deal with this situation.
         """
-        pass
+        if self.train_cfg:
+            self.initial_epoch = self.train_cfg['initial_epoch']
+            self.initial_assigner = TASK_UTILS.build(self.train_cfg.initial_assigner)
+            self.assinger = TASK_UTILS.build(self.train_cfg.assigner)
 
     def loss_by_feat(
             self,
@@ -253,4 +266,117 @@ class YOLOv6Head(YOLOv5Head):
         Returns:
             dict[str, Tensor]: A dictionary of losses.
         """
-        raise NotImplementedError('Not implemented yet！')
+
+        num_imgs = len(batch_img_metas)
+        if batch_gt_instances_ignore is None:
+            batch_gt_instances_ignore = [None] * num_imgs
+        featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
+        mlvl_priors = self.prior_generator.grid_priors(
+            featmap_sizes,
+            dtype=cls_scores[0].dtype,
+            device=cls_scores[0].device,
+            with_stride=True)
+        
+        n_anchors_list = [len(n) for n in mlvl_priors]
+
+        flatten_cls_preds = [
+            cls_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1,
+                                                 self.num_classes)
+            for cls_pred in cls_scores
+        ]
+        flatten_bbox_preds = [
+            bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
+            for bbox_pred in bbox_preds
+        ]
+
+        flatten_cls_preds = torch.cat(flatten_cls_preds, dim=1)
+        flatten_bbox_preds = torch.cat(flatten_bbox_preds, dim=1)
+        flatten_priors = torch.cat(mlvl_priors, dim=0)
+        flatten_bboxes = self.bbox_coder.decode(flatten_priors[..., :2],
+                                                flatten_bbox_preds,
+                                                flatten_priors[..., 2])
+        # generate v6 anchor
+        cell_half_size = flatten_priors[:,2:]*2.5 
+        flatten_anchors = torch.zeros_like(flatten_priors)
+        flatten_anchors[:,:2] = flatten_priors[:,:2] - cell_half_size
+        flatten_anchors[:,2:] = flatten_priors[:,:2] + cell_half_size
+
+        batch_size = flatten_cls_preds.shape[0]
+
+        # targets
+        targets =self.preprocess(batch_gt_instances, batch_size)
+        
+        import pdb;pdb.set_trace()
+        gt_labels = targets[:, :, :1]
+        gt_bboxes = targets[:, :, 1:] #xyxy
+        mask_gt = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
+
+        # get epoch information from message hub
+        message_hub = MessageHub.get_current_instance()
+        self.epoch = message_hub.get_info('epoch')
+
+        pred_scores = flatten_cls_preds.detach().sigmoid()
+
+        if self.epoch < self.initial_epoch:
+            target_labels, target_bboxes, target_scores, fg_mask = \
+                self.initial_assigner(
+                    flatten_anchors,
+                    n_anchors_list,
+                    gt_labels,
+                    gt_bboxes,
+                    mask_gt,
+                    flatten_bboxes.detach(),
+                    )
+        else:
+            target_labels, target_bboxes, target_scores, fg_mask = \
+                self.assigner(
+                    pred_scores,
+                    flatten_bboxes.detach(),
+                    anchor_points,
+                    gt_labels,
+                    gt_bboxes,
+                    mask_gt)
+
+        import pdb;pdb.set_trace()
+        # rescale bbox
+        # target_bboxes /= stride_tensor
+
+        # cls loss
+        target_labels = torch.where(fg_mask > 0, target_labels, torch.full_like(target_labels, self.num_classes))
+        one_hot_label = F.one_hot(target_labels.long(), self.num_classes + 1)[..., :-1]
+        # loss_cls = self.varifocal_loss(pred_scores, target_scores, one_hot_label)
+        loss_cls = self.loss_cls(flatten_cls_preds.view(-1,self.num_classes), one_hot_label.view(-1,self.num_classes))
+
+        target_scores_sum = target_scores.sum()
+        loss_cls /= target_scores_sum
+        num_pos = fg_mask.sum()
+        if num_pos > 0:
+            # iou loss
+            bbox_mask = fg_mask.unsqueeze(-1).repeat([1, 1, 4])
+            pred_bboxes_pos = torch.masked_select(pred_bboxes,
+                                                  bbox_mask).reshape([-1, 4])
+            target_bboxes_pos = torch.masked_select(
+                target_bboxes, bbox_mask).reshape([-1, 4])
+            bbox_weight = torch.masked_select(
+                target_scores.sum(-1), fg_mask).unsqueeze(-1)
+            loss_iou = self.loss_bbox(pred_bboxes_pos,
+                                     target_bboxes_pos) * bbox_weight
+            loss_iou = loss_iou.sum() / target_scores_sum
+
+        else:
+            loss_iou = torch.tensor(0.).to(pred_dist.device)
+            
+        
+        loss_dict = self.loss_weight['class'] * loss_cls + \
+               self.loss_weight['iou'] * loss_iou
+
+
+        return loss_dict
+
+    def preprocess(self, targets, batch_size):
+        targets_list = np.zeros((batch_size, 1, 5)).tolist() 
+        for i, item in enumerate(targets.cpu().numpy().tolist()):
+            targets_list[int(item[0])].append(item[1:])
+        max_len = max((len(l) for l in targets_list))
+        targets = torch.from_numpy(np.array(list(map(lambda l:l + [[-1,0,0,0,0]]*(max_len - len(l)), targets_list)))[:,1:,:]).to(targets.device)
+        return targets
