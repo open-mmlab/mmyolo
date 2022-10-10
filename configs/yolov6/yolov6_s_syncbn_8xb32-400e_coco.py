@@ -64,3 +64,10 @@ train_pipeline = [
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
                    'flip_direction'))
 ]
+
+default_hooks = dict(
+    param_scheduler=dict(
+        type='YOLOv5ParamSchedulerHook',
+        scheduler_type='cosine',
+        lr_factor=0.01,
+        max_epochs=max_epochs))
