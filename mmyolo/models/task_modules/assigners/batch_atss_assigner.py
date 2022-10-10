@@ -232,7 +232,6 @@ class BatchATSSAssigner(nn.Module):
                     fg_mask):
         
         # assigned target labels
-        import pdb;pdb.set_trace()
         batch_idx = torch.arange(self.bs, dtype=gt_labels.dtype, device=gt_labels.device)
         batch_idx = batch_idx[...,None]
         target_gt_idx = (target_gt_idx + batch_idx * self.n_max_boxes).long()
