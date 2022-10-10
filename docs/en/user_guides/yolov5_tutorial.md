@@ -90,7 +90,7 @@ default_hooks = dict(logger=dict(interval=1))
 ```
 
 The above configuration is inherited from `./yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py`, and `data_root`, `metainfo`, `train_dataloader`, `val_dataloader`, `num_classes` and other configurations are updated according to the balloon data we are using.
-We set the `interval` of the logger to 1 because each iteration of the `interval` will output a loss-related log, and the balloon dataset we use is relatively tiny. We will not see the loss-related output if the `interval` is too large.
+The reason why we set the `interval` of the logger to 1 is that the balloon data set we choose is relatively small, and if the `interval` is too large, we will not see the output of the loss-related log. Therefore, by setting the `interval` of the logger to 1 will ensure that each interval iteration will output a loss-related log.
 
 ## Training
 
