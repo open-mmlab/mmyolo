@@ -3,6 +3,7 @@
 _base_ = '../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 max_epochs = 400
 train_batch_size_per_gpu = 32
+img_scale = (640, 640)  # height, width
 
 deepen_factor = _base_.deepen_factor
 widen_factor = _base_.widen_factor
@@ -41,3 +42,25 @@ model = dict(
         initial_assigner=dict(type='BatchATSSAssigner', topk=9, iou2d_calculator=dict(type='mmdet.BboxOverlaps2D'), num_classes=80),
         assigner=dict(type='BatchTaskAlignedAssigner', topk=13, alpha=1, beta=6),
         ))
+
+pre_transform = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args=_base_.file_client_args),
+    dict(type='LoadAnnotations', with_bbox=True)
+]
+
+train_pipeline = [
+    *pre_transform,
+    dict(
+        type='Mosaic',
+        img_scale=img_scale,
+        pad_val=114.0,
+        pre_transform=pre_transform),
+    dict(type='YOLOv5HSVRandomAug'),
+    dict(type='mmdet.RandomFlip', prob=0.5),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
+                   'flip_direction'))
+]
