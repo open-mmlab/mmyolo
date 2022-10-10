@@ -112,7 +112,8 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 
 ### Fine-tune with loaded pretrained weights
 
-Our testing shows that with the YOLOv5-s pretrained model to train and validate, the coco/bbox_mAP can increase by more than 30 percent on the balloon dataset compared with not using the pre-training model solution.
+NOTICE: It is highly recommended that finetuning from large datasets, such as COCO, can significantly boost the performance of overall network.
+In this example, compared with training from scratch, finetuning the pretrained model outperforms with a significant margin. (Over 30+ mAP boost than training from scratch).
 
 1. Download the COCO dataset pre-trained weights
 
@@ -153,7 +154,7 @@ default_hooks = dict(
 )
 ```
 
-Then re-run the following training command. During the validation, each `interval` image will save a puzzle of the annotation and prediction results to `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/vis_data/vis_image` folder.
+Re-run the following training command. During the validation, each `interval` image will save a puzzle of the annotation and prediction results to `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/vis_data/vis_image` folder.
 
 ```shell
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py
