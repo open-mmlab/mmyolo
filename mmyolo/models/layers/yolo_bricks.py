@@ -4,7 +4,7 @@ from typing import Optional, Sequence, Tuple, Union
 import numpy as np
 import torch
 import torch.nn as nn
-from mmcv.cnn import ConvModule
+from mmcv.cnn import ConvModule, build_activation_layer
 from mmdet.utils import ConfigType, OptMultiConfig
 from mmengine.model import BaseModule
 from mmengine.utils import digit_version
@@ -130,7 +130,8 @@ class RepVGGBlock(nn.Module):
                  groups: Optional[int] = 1,
                  padding_mode: Optional[str] = 'zeros',
                  deploy: bool = False,
-                 use_se: bool = False):
+                 use_se: bool = False,
+                 alpha: bool = False):
         super().__init__()
         self.deploy = deploy
         self.groups = groups
@@ -148,6 +149,14 @@ class RepVGGBlock(nn.Module):
             raise NotImplementedError('se block not supported yet')
         else:
             self.se = nn.Identity()
+
+        if alpha:
+            alpha = torch.ones([
+                1,
+            ], dtype=torch.float32, requires_grad=True)
+            self.alpha = nn.Parameter(alpha, requires_grad=True)
+        else:
+            self.alpha = None
 
         if deploy:
             self.rbr_reparam = nn.Conv2d(
@@ -201,9 +210,15 @@ class RepVGGBlock(nn.Module):
             id_out = 0
         else:
             id_out = self.rbr_identity(inputs)
-
-        return self.nonlinearity(
-            self.se(self.rbr_dense(inputs) + self.rbr_1x1(inputs) + id_out))
+        if self.alpha:
+            return self.nonlinearity(
+                self.se(
+                    self.rbr_dense(inputs) +
+                    self.alpha * self.rbr_1x1(inputs) + id_out))
+        else:
+            return self.nonlinearity(
+                self.se(
+                    self.rbr_dense(inputs) + self.rbr_1x1(inputs) + id_out))
 
     def get_equivalent_kernel_bias(self):
         """Derives the equivalent kernel and bias in a differentiable way.
@@ -329,3 +344,25 @@ class RepStageBlock(nn.Module):
         if self.block is not None:
             x = self.block(x)
         return x
+
+
+class EffectiveSELayer(nn.Module):
+    """Effective Squeeze-Excitation.
+
+    From `CenterMask : Real-Time Anchor-Free Instance Segmentation`
+    - https://arxiv.org/abs/1911.06667
+    TODO: doc
+    """
+
+    def __init__(self, channels, act_cfg=dict(type='HSigmoid')):
+        super().__init__()
+        assert isinstance(act_cfg, dict)
+        self.fc = ConvModule(channels, channels, 1)
+
+        act_cfg_ = act_cfg.copy()  # type: ignore
+        self.activate = build_activation_layer(act_cfg_)
+
+    def forward(self, x):
+        x_se = x.mean((2, 3), keepdim=True)
+        x_se = self.fc(x_se)
+        return x * self.activate(x_se)
