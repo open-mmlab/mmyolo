@@ -1,4 +1,4 @@
-# YOLOv5: From Start to Deploy
+# From getting started to deployment with YOLOv5
 
 ## Environment Setup
 
@@ -28,16 +28,14 @@ For more detailed information about environment configuration, please refer to [
 
 ## Dataset Preparation
 
-In this tutorial, the training dataset for MMYOLO is less than 40MB and is selected from the balloon dataset.
+In this tutorial, we provide the ballon dataset, which is less than 40MB, as the training dataset for MMYOLO.
 
 ```shell
-python tools/misc/download_dataset.py  --dataset-name balloon \
-                                                                  --save-dir data \
-                                                                  --unzip
+python tools/misc/download_dataset.py --dataset-name balloon --save-dir data --unzip
 python tools/dataset_converters/balloon2coco.py
 ```
 
-After executing the above command, the balloon dataset will be downloaded in the `data` folder with the converted format we need. The `train.json` and `val.json` are the annotation files, both are in the coco format.
+After executing the above command, the balloon dataset will be downloaded in the `data` folder with the converted format we need. The `train.json` and `val.json` are the annotation files in the COCO format.
 
 <div align=center>
 <img src="https://cdn.vansin.top/img/20220912105312.png" alt="image"/>
@@ -148,7 +146,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 
 For `visualization` of `default_hooks` in `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py`, we set `draw` to `True` and `interval` to `2`.
 
-```shell
+```python
 default_hooks = dict(
      logger=dict(interval=1),
      visualization=dict(draw=True, interval=2),
@@ -238,7 +236,7 @@ python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.p
                       --show-dir show_results
 ```
 
-Run the above command, the inference result picture will be automatically saved to the `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/show_results` folder. The following is one of the result pictures. Left picture is the actual annotation, and the right picture is the model inference result.
+Run the above command, the inference result picture will be automatically saved to the `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/show_results` folder. The following is one of the result pictures. The left one is the actual annotation, and the right is the model inference result.
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/27466624/190913272-f99709e5-c798-46b8-aede-30f4e91683a3.jpg" alt="result_img"/>
