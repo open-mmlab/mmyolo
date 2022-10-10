@@ -36,4 +36,8 @@ model = dict(
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg=dict(type='SiLU', inplace=True),
             featmap_strides=[8, 16, 32])),
-    train_cfg=None)
+    train_cfg=dict(
+        initial_epoch=4,
+        initial_assigner=dict(type='BatchATSSAssigner', topk=9, iou2d_calculator=dict(type='mmdet.BboxOverlaps2D'), num_classes=80),
+        assigner=dict(type='BatchTaskAlignedAssigner', topk=13, alpha=1, beta=6),
+        ))
