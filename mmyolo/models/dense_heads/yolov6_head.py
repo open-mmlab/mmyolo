@@ -76,18 +76,6 @@ class YOLOv6HeadModule(BaseModule):
 
         self._init_layers()
 
-    def init_weights(self):
-        """Initialize weights of the head."""
-        # Use prior in model initialization to improve stability
-        super().init_weights()
-
-        for m in self.modules():
-            if isinstance(m, torch.nn.Conv2d):
-                m.reset_parameters()
-
-        bias_init = bias_init_with_prob(0.01)
-        for conv_cls in self.cls_preds:
-            conv_cls.bias.data.fill_(bias_init)
 
     def _init_layers(self):
         """initialize conv layers in YOLOv6 head."""
@@ -135,6 +123,27 @@ class YOLOv6HeadModule(BaseModule):
                     in_channels=self.in_channels[i],
                     out_channels=self.num_base_priors * 4,
                     kernel_size=1))
+
+    def init_weights(self):
+        super().init_weights()
+        for conv in self.cls_preds:
+            b = conv.bias.view(-1, )
+            b.data.fill_(-math.log((1 - self.prior_prob) / self.prior_prob))
+            conv.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+            w = conv.weight
+            w.data.fill_(0.)
+            conv.weight = torch.nn.Parameter(w, requires_grad=True)
+
+        import pdb;pdb.set_trace()
+        for conv in self.reg_preds:
+            b = conv.bias.view(-1, )
+            b.data.fill_(1.0)
+            conv.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+            w = conv.weight
+            w.data.fill_(0.)
+            conv.weight = torch.nn.Parameter(w, requires_grad=True)
+        import pdb;pdb.set_trace()
+        
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward features from the upstream network.
@@ -231,6 +240,7 @@ class YOLOv6Head(YOLOv5Head):
         self.iou_type = 'siou'
         self.bbox_loss = BboxLoss(self.num_classes,0 , False, self.iou_type).cuda()
         self.iou_weight = 2.5
+
 
     def special_init(self):
         """Since YOLO series algorithms will inherit from YOLOv5Head, but
@@ -341,6 +351,7 @@ class YOLOv6Head(YOLOv5Head):
                     gt_labels,
                     gt_bboxes,
                     mask_gt)
+        import pdb;pdb.set_trace()
 
 
         # cls loss
@@ -375,6 +386,7 @@ class YOLOv6Head(YOLOv5Head):
         loss_dict = self.loss_weight['class'] * loss_cls + \
                self.loss_weight['iou'] * loss_iou
         '''
+        import pdb;pdb.set_trace()
         # rescale bbox
         # target_bboxes /= stride_tensor
         stride_tensor = flatten_priors[..., [2]]
