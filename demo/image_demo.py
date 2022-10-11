@@ -1,9 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import logging
 import os
+import urllib
 from argparse import ArgumentParser
 
 import mmcv
+import torch
 from mmdet.apis import inference_detector, init_detector
+from mmengine.logging import print_log
 from mmengine.utils import ProgressBar, scandir
 
 from mmyolo.registry import VISUALIZERS
@@ -42,15 +46,27 @@ def main(args):
     visualizer = VISUALIZERS.build(model.cfg.visualizer)
     visualizer.dataset_meta = model.dataset_meta
 
-    if os.path.isdir(args.img):
-        files = [
-            os.path.join(args.img, file)
-            for file in scandir(args.img, IMG_EXTENSIONS, recursive=True)
-        ]
-    elif os.path.splitext(args.img)[-1] in (IMG_EXTENSIONS):
+    is_dir = os.path.isdir(args.img)
+    is_url = args.img.startswith(('http:/', 'https:/'))
+    is_file = os.path.splitext(args.img)[-1] in (IMG_EXTENSIONS)
+
+    files = []
+    if is_dir:
+        # when input source is dir
+        for file in scandir(args.img, IMG_EXTENSIONS, recursive=True):
+            files.append(os.path.join(args.img, file))
+    elif is_url:
+        # when input source is url
+        filename = os.path.basename(
+            urllib.parse.unquote(args.img).split('?')[0])
+        torch.hub.download_url_to_file(args.img, filename)
+        files = [os.path.join(os.getcwd(), filename)]
+    elif is_file:
+        # when input source is single image
         files = [args.img]
     else:
-        raise Exception('Cannot find image file.')
+        print_log(
+            'Cannot find image file.', logger='current', level=logging.WARNING)
 
     # start detector inference
     progress_bar = ProgressBar(len(files))
@@ -58,7 +74,7 @@ def main(args):
         result = inference_detector(model, file)
         img = mmcv.imread(file)
         img = mmcv.imconvert(img, 'bgr', 'rgb')
-        if len(files) > 1:
+        if is_dir:
             filename = os.path.relpath(file, args.img).replace('/', '_')
         else:
             filename = os.path.basename(file)
@@ -69,7 +85,7 @@ def main(args):
             draw_gt=False,
             show=args.show,
             wait_time=0,
-            out_file=os.path.join(args.out_path, filename),
+            out_file=os.path.join(args.out_dir, filename),
             pred_score_thr=args.score_thr)
         progress_bar.update()
 

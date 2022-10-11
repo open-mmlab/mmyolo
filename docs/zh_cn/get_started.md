@@ -115,6 +115,7 @@ python demo/image_demo.py demo/demo.jpg \
 
 - 单张图片, 支持 `jpg`, `jpeg`, `png`, `ppm`, `bmp`, `pgm`, `tif`, `tiff`, `webp`。
 - 文件目录，会遍历文件目录下所有图片文件，并输出对应结果。
+- 网址，会自动从对应网址下载图片，并输出结果。
 
 方案 2. 如果你通过 MIM 安装的 MMYOLO， 那么可以打开你的 Python 解析器，复制并粘贴以下代码：
 

@@ -116,6 +116,7 @@ Supported input types:
 
 - Single image, include `jpg`, `jpeg`, `png`, `ppm`, `bmp`, `pgm`, `tif`, `tiff`, `webp`.
 - Folder, all image files in the folder will be traversed and the corresponding results will be output.
+- URL, will automatically download from the URL and the corresponding results will be output.
 
 Option (b). If you install MMYOLO with MIM, open your python interpreter and copy&paste the following codes.
 
