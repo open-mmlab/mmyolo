@@ -2,7 +2,7 @@
 
 _base_ = '../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 max_epochs = 400
-train_batch_size_per_gpu = 32
+train_batch_size_per_gpu = 1
 img_scale = (640, 640)  # height, width
 
 deepen_factor = _base_.deepen_factor
