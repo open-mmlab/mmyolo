@@ -127,22 +127,20 @@ class YOLOv6HeadModule(BaseModule):
     def init_weights(self):
         super().init_weights()
         for conv in self.cls_preds:
-            b = conv.bias.view(-1, )
-            b.data.fill_(-math.log((1 - self.prior_prob) / self.prior_prob))
-            conv.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+            b = conv.bias.data.view(-1, )
+            b.fill_(-math.log((1 - self.prior_prob) / self.prior_prob))
+            conv.bias.data = b.view(-1)
             w = conv.weight
             w.data.fill_(0.)
-            conv.weight = torch.nn.Parameter(w, requires_grad=True)
+            conv.weight.data = w
 
-        import pdb;pdb.set_trace()
         for conv in self.reg_preds:
-            b = conv.bias.view(-1, )
-            b.data.fill_(1.0)
-            conv.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+            b = conv.bias.data.view(-1, )
+            b.fill_(1.0)
+            conv.bias.data = b.view(-1)
             w = conv.weight
             w.data.fill_(0.)
-            conv.weight = torch.nn.Parameter(w, requires_grad=True)
-        import pdb;pdb.set_trace()
+            conv.weight.data = w
         
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -330,7 +328,8 @@ class YOLOv6Head(YOLOv5Head):
         message_hub = MessageHub.get_current_instance()
         self.epoch = message_hub.get_info('epoch')
 
-        pred_scores = flatten_cls_preds.detach().sigmoid()
+        # pred_scores = flatten_cls_preds.detach().sigmoid()
+        pred_scores = torch.sigmoid(flatten_cls_preds.detach())
 
         if self.epoch < self.initial_epoch:
             target_labels, target_bboxes, target_scores, fg_mask = \
@@ -351,7 +350,6 @@ class YOLOv6Head(YOLOv5Head):
                     gt_labels,
                     gt_bboxes,
                     mask_gt)
-        import pdb;pdb.set_trace()
 
 
         # cls loss
@@ -386,7 +384,6 @@ class YOLOv6Head(YOLOv5Head):
         loss_dict = self.loss_weight['class'] * loss_cls + \
                self.loss_weight['iou'] * loss_iou
         '''
-        import pdb;pdb.set_trace()
         # rescale bbox
         # target_bboxes /= stride_tensor
         stride_tensor = flatten_priors[..., [2]]
