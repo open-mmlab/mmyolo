@@ -346,11 +346,10 @@ class YOLOv6Head(YOLOv5Head):
                 self.assigner(
                     pred_scores,
                     flatten_bboxes.detach(),
-                    anchor_points,
+                    flatten_priors[:,:2],
                     gt_labels,
                     gt_bboxes,
                     mask_gt)
-
 
         # cls loss
         target_labels = torch.where(fg_mask > 0, target_labels, torch.full_like(target_labels, self.num_classes))
