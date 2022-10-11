@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from abc import ABCMeta, abstractmethod
-from typing import List
+from typing import List, Union
 
 import torch
 import torch.nn as nn
@@ -33,7 +33,7 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
 
     def __init__(self,
                  in_channels: List[int],
-                 out_channels: int,
+                 out_channels: Union[int, List[int]],
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  freeze_all: bool = False,
@@ -141,6 +141,7 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
         # bottom-up path
         outs = [inner_outs[0]]
         for idx in range(len(self.in_channels) - 1):
+            print(idx)
             feat_low = outs[-1]
             feat_height = inner_outs[idx + 1]
             downsample_feat = self.downsample_layers[idx](feat_low)
