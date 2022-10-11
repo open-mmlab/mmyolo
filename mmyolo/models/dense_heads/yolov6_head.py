@@ -354,7 +354,6 @@ class YOLOv6Head(YOLOv5Head):
         # cls loss
         target_labels = torch.where(fg_mask > 0, target_labels, torch.full_like(target_labels, self.num_classes))
         one_hot_label = F.one_hot(target_labels.long(), self.num_classes + 1)[..., :-1]
-        pred_scores = torch.sigmoid(flatten_cls_preds)
         loss_cls = self.varifocal_loss(pred_scores, target_scores, one_hot_label)
         # weighted_target = one_hot_label * target_scores
         # loss_cls = self.loss_cls(flatten_cls_preds.view(-1,self.num_classes), (target_scores*one_hot_label).view(-1,self.num_classes))
@@ -397,10 +396,9 @@ class YOLOv6Head(YOLOv5Head):
         loss_iou, loss_dfl = self.bbox_loss(flatten_bbox_preds, flatten_bboxes, anchor_points_s, target_bboxes, 
                                             target_scores, target_scores_sum, fg_mask)
         
-        _, world_size = get_dist_info()
         return dict(
-            loss_cls=loss_cls * world_size,
-            loss_bbox=loss_iou * self.iou_weight * world_size) 
+            loss_cls=loss_cls,
+            loss_bbox=loss_iou * self.iou_weight) 
 
     def preprocess(self, targets, batch_size):
         targets_list = np.zeros((batch_size, 1, 5)).tolist() 
