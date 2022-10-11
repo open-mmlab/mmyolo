@@ -211,7 +211,7 @@ class YOLOv6Head(YOLOv5Head):
                      loss_weight=1.0),   
                  loss_bbox=dict(
                      type='IoULoss',
-                     iou_mode='siou',
+                     iou_mode='giou',
                      bbox_format='xywh',
                      eps=1e-16,
                      reduction='mean',
