@@ -1,13 +1,4 @@
-onnx_config = dict(
-    type='onnx',
-    export_params=True,
-    keep_initializers_as_inputs=False,
-    opset_version=11,
-    save_file='end2end.onnx',
-    input_names=['input'],
-    output_names=['dets', 'labels'],
-    input_shape=None,
-    optimize=True)
+_base_ = ['./base_static.py']
 codebase_config = dict(
     type='mmyolo',
     task='ObjectDetection',

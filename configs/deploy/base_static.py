@@ -1,4 +1,13 @@
-_base_ = ['./base_dynamic.py']
+onnx_config = dict(
+    type='onnx',
+    export_params=True,
+    keep_initializers_as_inputs=False,
+    opset_version=11,
+    save_file='end2end.onnx',
+    input_names=['input'],
+    output_names=['dets', 'labels'],
+    input_shape=None,
+    optimize=True)
 codebase_config = dict(
     type='mmyolo',
     task='ObjectDetection',
@@ -12,4 +21,3 @@ codebase_config = dict(
         keep_top_k=100,
         background_label_id=-1),
     module=['mmyolo.deploy'])
-backend_config = dict(type='onnxruntime')
