@@ -1,4 +1,5 @@
 _base_ = 'yolov6_s_syncbn_8xb32-400e_coco.py'
+# load_from = 'mmyolov6s.pt'
 # fast means faster training speed,
 # but less flexibility for multitasking
 model = dict(
