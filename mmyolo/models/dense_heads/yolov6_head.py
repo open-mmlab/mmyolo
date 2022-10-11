@@ -329,7 +329,7 @@ class YOLOv6Head(YOLOv5Head):
         self.epoch = message_hub.get_info('epoch')
 
         # pred_scores = flatten_cls_preds.detach().sigmoid()
-        pred_scores = torch.sigmoid(flatten_cls_preds.detach())
+        pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if self.epoch < self.initial_epoch:
             target_labels, target_bboxes, target_scores, fg_mask = \
@@ -344,7 +344,7 @@ class YOLOv6Head(YOLOv5Head):
         else:
             target_labels, target_bboxes, target_scores, fg_mask = \
                 self.assigner(
-                    pred_scores,
+                    pred_scores.detach(),
                     flatten_bboxes.detach(),
                     flatten_priors[:,:2],
                     gt_labels,
@@ -354,6 +354,7 @@ class YOLOv6Head(YOLOv5Head):
         # cls loss
         target_labels = torch.where(fg_mask > 0, target_labels, torch.full_like(target_labels, self.num_classes))
         one_hot_label = F.one_hot(target_labels.long(), self.num_classes + 1)[..., :-1]
+        pred_scores = torch.sigmoid(flatten_cls_preds.detach())
         loss_cls = self.varifocal_loss(pred_scores, target_scores, one_hot_label)
         # weighted_target = one_hot_label * target_scores
         # loss_cls = self.loss_cls(flatten_cls_preds.view(-1,self.num_classes), (target_scores*one_hot_label).view(-1,self.num_classes))
