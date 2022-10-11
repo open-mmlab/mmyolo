@@ -3,17 +3,16 @@ import copy
 from typing import List, Optional, Tuple
 
 import torch
+from mmdeploy.codebase.mmdet import get_post_processing_params
+from mmdeploy.codebase.mmdet.models.layers import multiclass_nms
+from mmdeploy.core import FUNCTION_REWRITER
 from mmengine.config import ConfigDict
 from mmengine.structures import InstanceData
 from torch import Tensor
 
-from mmdeploy.codebase.mmdet import get_post_processing_params
-from mmdeploy.codebase.mmdet.models.layers import multiclass_nms
-from mmdeploy.core import FUNCTION_REWRITER
-
 
 @FUNCTION_REWRITER.register_rewriter(
-    func_name='mmyolo.models.dense_heads.yolov5_head.'	
+    func_name='mmyolo.models.dense_heads.yolov5_head.'
     'YOLOv5Head.predict_by_feat')
 def yolov5_head__predict_by_feat(ctx,
                                  self,
@@ -24,33 +23,33 @@ def yolov5_head__predict_by_feat(ctx,
                                  cfg: Optional[ConfigDict] = None,
                                  rescale: bool = False,
                                  with_nms: bool = True) -> Tuple[InstanceData]:
-    """Transform a batch of output features extracted by the head into	
-    bbox results.	
-    Args:	
-        cls_scores (list[Tensor]): Classification scores for all	
-            scale levels, each is a 4D-tensor, has shape	
-            (batch_size, num_priors * num_classes, H, W).	
-        bbox_preds (list[Tensor]): Box energies / deltas for all	
-            scale levels, each is a 4D-tensor, has shape	
-            (batch_size, num_priors * 4, H, W).	
-        objectnesses (list[Tensor], Optional): Score factor for	
-            all scale level, each is a 4D-tensor, has shape	
-            (batch_size, 1, H, W).	
-        batch_img_metas (list[dict], Optional): Batch image meta info.	
-            Defaults to None.	
-        cfg (ConfigDict, optional): Test / postprocessing	
-            configuration, if None, test_cfg would be used.	
-            Defaults to None.	
-        rescale (bool): If True, return boxes in original image space.	
-            Defaults to False.	
-        with_nms (bool): If True, do nms before return boxes.	
-            Defaults to True.	
-    Returns:	
-        tuple[Tensor, Tensor]: The first item is an (N, num_box, 5) tensor,	
-            where 5 represent (tl_x, tl_y, br_x, br_y, score), N is batch	
-            size and the score between 0 and 1. The shape of the second	
-            tensor in the tuple is (N, num_box), and each element	
-            represents the class label of the corresponding box.	
+    """Transform a batch of output features extracted by the head into
+    bbox results.
+    Args:
+        cls_scores (list[Tensor]): Classification scores for all
+            scale levels, each is a 4D-tensor, has shape
+            (batch_size, num_priors * num_classes, H, W).
+        bbox_preds (list[Tensor]): Box energies / deltas for all
+            scale levels, each is a 4D-tensor, has shape
+            (batch_size, num_priors * 4, H, W).
+        objectnesses (list[Tensor], Optional): Score factor for
+            all scale level, each is a 4D-tensor, has shape
+            (batch_size, 1, H, W).
+        batch_img_metas (list[dict], Optional): Batch image meta info.
+            Defaults to None.
+        cfg (ConfigDict, optional): Test / postprocessing
+            configuration, if None, test_cfg would be used.
+            Defaults to None.
+        rescale (bool): If True, return boxes in original image space.
+            Defaults to False.
+        with_nms (bool): If True, do nms before return boxes.
+            Defaults to True.
+    Returns:
+        tuple[Tensor, Tensor]: The first item is an (N, num_box, 5) tensor,
+            where 5 represent (tl_x, tl_y, br_x, br_y, score), N is batch
+            size and the score between 0 and 1. The shape of the second
+            tensor in the tuple is (N, num_box), and each element
+            represents the class label of the corresponding box.
     """
     assert len(cls_scores) == len(bbox_preds)
     cfg = self.test_cfg if cfg is None else cfg

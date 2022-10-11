@@ -1,12 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Callable
 
-from mmengine.registry import Registry
-from mmengine import Config
-
 from mmdeploy.codebase.base import CODEBASE, MMCodebase
 from mmdeploy.codebase.mmdet.deploy import ObjectDetection
 from mmdeploy.utils import Codebase, Task
+from mmengine import Config
+from mmengine.registry import Registry
 
 MMYOLO_TASK = Registry('mmyolo_tasks')
 
@@ -19,10 +18,11 @@ class MMYOLO(MMCodebase):
 
     @classmethod
     def register_all_modules(cls):
-        from mmyolo.utils.setup_env import register_all_modules \
-            as register_all_modules_mmyolo
-        from mmdet.utils.setup_env import register_all_modules \
-            as register_all_modules_mmdet
+        from mmdet.utils.setup_env import \
+            register_all_modules as register_all_modules_mmdet
+
+        from mmyolo.utils.setup_env import \
+            register_all_modules as register_all_modules_mmyolo
         register_all_modules_mmyolo(False)
         register_all_modules_mmdet(True)
 
