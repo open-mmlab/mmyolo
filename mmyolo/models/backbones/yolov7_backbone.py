@@ -6,17 +6,18 @@ from mmcv.cnn import ConvModule
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
-from ..layers import SPPCSPBlock, ELANBlock, MaxPoolBlock
+from ..layers import ELANBlock, MaxPoolBlock
 from .base_backbone import BaseBackbone
 
 
 @MODELS.register_module()
 class YOLOv7Backbone(BaseBackbone):
     # From left to right:
-    # in_channels, out_channels, num_blocks, type
+    # in_channels, out_channels, ELAN mode
     arch_settings = {
-        'P5': [[64, 128, 2, 'type1'], [256, 512, 2, 'type1'],
-               [512, 1024, 2, 'type1'], [1024, 1024, 2, 'type2']]
+        'P5': [[64, 128, 'expand_channel_2x'], [256, 512, 'expand_channel_2x'],
+               [512, 1024, 'expand_channel_2x'],
+               [1024, 1024, 'no_change_channel']]
     }
 
     def __init__(self,
@@ -46,7 +47,6 @@ class YOLOv7Backbone(BaseBackbone):
             init_cfg=init_cfg)
 
     def build_stem_layer(self) -> nn.Module:
-        """Build a stem layer."""
         """Build a stem layer."""
         stem = nn.Sequential(
             ConvModule(
@@ -82,7 +82,7 @@ class YOLOv7Backbone(BaseBackbone):
             stage_idx (int): The index of a stage layer.
             setting (list): The architecture setting of a stage layer.
         """
-        in_channels, out_channels, num_blocks, mode_type = setting
+        in_channels, out_channels, elan_mode = setting
 
         in_channels = int(in_channels * self.widen_factor)
         out_channels = int(out_channels * self.widen_factor)
@@ -99,19 +99,21 @@ class YOLOv7Backbone(BaseBackbone):
                 act_cfg=self.act_cfg)
             elan_layer = ELANBlock(
                 out_channels,
-                mode_type,
-                num_blocks=num_blocks,
+                mode=elan_mode,
+                num_blocks=2,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
             stage.extend([pre_layer, elan_layer])
         else:
-            pre_layer = MaxPoolBlock(in_channels,
-                                     norm_cfg=self.norm_cfg,
-                                     act_cfg=self.act_cfg)
+            pre_layer = MaxPoolBlock(
+                in_channels,
+                mode='reduce_channel_2x',
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg)
             elan_layer = ELANBlock(
                 in_channels,
-                mode_type,
-                num_blocks=num_blocks,
+                mode=elan_mode,
+                num_blocks=2,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
             stage.extend([pre_layer, elan_layer])

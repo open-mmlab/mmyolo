@@ -5,7 +5,6 @@ from .cspnext import CSPNeXt
 from .efficient_rep import YOLOv6EfficientRep
 from .yolov7_backbone import YOLOv7Backbone
 
-
 __all__ = [
     'YOLOv5CSPDarknet', 'BaseBackbone', 'YOLOv6EfficientRep',
     'YOLOXCSPDarknet', 'CSPNeXt', 'YOLOv7Backbone'

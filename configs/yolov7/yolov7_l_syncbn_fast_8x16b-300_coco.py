@@ -47,8 +47,7 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
-        act_cfg=dict(type='SiLU', inplace=True)
-    ),
+        act_cfg=dict(type='SiLU', inplace=True)),
     neck=dict(
         type='YOLOv7PAFPN',
         deepen_factor=deepen_factor,
