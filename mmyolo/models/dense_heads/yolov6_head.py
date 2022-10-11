@@ -249,7 +249,7 @@ class YOLOv6Head(YOLOv5Head):
         if self.train_cfg:
             self.initial_epoch = self.train_cfg['initial_epoch']
             self.initial_assigner = TASK_UTILS.build(self.train_cfg.initial_assigner)
-            self.assinger = TASK_UTILS.build(self.train_cfg.assigner)
+            self.assigner = TASK_UTILS.build(self.train_cfg.assigner)
 
     def loss_by_feat(
             self,
