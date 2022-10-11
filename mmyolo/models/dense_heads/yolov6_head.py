@@ -211,7 +211,7 @@ class YOLOv6Head(YOLOv5Head):
                      loss_weight=1.0),   
                  loss_bbox=dict(
                      type='IoULoss',
-                     iou_mode='giou',
+                     iou_mode='siou',
                      bbox_format='xywh',
                      eps=1e-16,
                      reduction='mean',
@@ -235,7 +235,7 @@ class YOLOv6Head(YOLOv5Head):
             test_cfg=test_cfg,
             init_cfg=init_cfg)
 
-        self.iou_type = 'siou'
+        self.iou_type = 'giou'
         self.bbox_loss = BboxLoss(self.num_classes,0 , False, self.iou_type).cuda()
         self.iou_weight = 2.5
 
