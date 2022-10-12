@@ -100,13 +100,14 @@ mim download mmyolo --config yolov5_s-v61_syncbn_fast_8xb16-300e_coco --dest .
 ```shell
 python demo/image_demo.py demo/demo.jpg \
                           yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
-                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
+                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+                          --out-dir ./output
 
 # 可选参数
-# --out-dir ./output *检测结果输出到指定目录下，默认为./output
-# --device cuda:0   *使用的计算资源，包括cuda, cpu等，默认为cuda:0
-# --show            *使用该参数表示在屏幕上显示检测结果，默认为False
-# --score-thr 0.3   *置信度阈值，默认为0.3
+# --out-dir ./output *检测结果输出到指定目录下，默认为None, 不保存检测结果
+# --device cuda:0    *使用的计算资源，包括cuda, cpu等，默认为cuda:0
+# --show             *使用该参数表示在屏幕上显示检测结果，默认为False
+# --score-thr 0.3    *置信度阈值，默认为0.3
 ```
 
 运行结束后，在 `output` 文件夹中可以看到检测结果图像，图像中包含有网络预测的检测框。

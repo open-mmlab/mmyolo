@@ -101,13 +101,14 @@ Option (a). If you install MMYOLO from source, just run the following command.
 ```shell
 python demo/image_demo.py demo/demo.jpg \
                           yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
-                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
+                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+                          --out-dir ./output
 
 # Optional parameters
-# --out-dir ./output *The detection results are output to the specified directory. Default: ./output
-# --device cuda:0   *The computing resources used, including cuda and cpu. Default: cuda:0
-# --show            *Display the results on the screen. Default: False
-# --score-thr 0.3   *Confidence threshold. Default: 0.3
+# --out-dir ./output *The detection results are output to the specified directory. Default: None (Do not save results)
+# --device cuda:0    *The computing resources used, including cuda and cpu. Default: cuda:0
+# --show             *Display the results on the screen. Default: False
+# --score-thr 0.3    *Confidence threshold. Default: 0.3
 ```
 
 You will see a new image on your `output` folder, where bounding boxes are plotted.
