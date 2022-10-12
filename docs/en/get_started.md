@@ -101,11 +101,10 @@ Option (a). If you install MMYOLO from source, just run the following command.
 ```shell
 python demo/image_demo.py demo/demo.jpg \
                           yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
-                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
-                          --out-dir ./output
+                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
 
 # Optional parameters
-# --out-dir ./output *The detection results are output to the specified directory. Default: None (Do not save results)
+# --out-dir ./output *The detection results are output to the specified directory. When args have action --show, the script do not save results. Default: ./output
 # --device cuda:0    *The computing resources used, including cuda and cpu. Default: cuda:0
 # --show             *Display the results on the screen. Default: False
 # --score-thr 0.3    *Confidence threshold. Default: 0.3

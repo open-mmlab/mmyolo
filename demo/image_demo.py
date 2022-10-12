@@ -23,7 +23,8 @@ def parse_args():
         'img', help='Image path, include image file, dir and URL.')
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
-    parser.add_argument('--out-dir', default=None, help='Path to output file')
+    parser.add_argument(
+        '--out-dir', default='./output', help='Path to output file')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
@@ -77,8 +78,7 @@ def main(args):
             filename = os.path.relpath(file, args.img).replace('/', '_')
         else:
             filename = os.path.basename(file)
-        out_file = os.path.join(args.out_dir,
-                                filename) if args.out_dir else None
+        out_file = None if args.show else os.path.join(args.out_dir, filename)
         visualizer.add_datasample(
             filename,
             img,
@@ -89,9 +89,9 @@ def main(args):
             out_file=out_file,
             pred_score_thr=args.score_thr)
         progress_bar.update()
-    if args.out_dir:
-        print_log(f'\nProcessing completed, results have been saved at \
-                {os.path.abspath(args.out_dir)}')
+    if not args.show:
+        print_log(
+            f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
 
 
 if __name__ == '__main__':
