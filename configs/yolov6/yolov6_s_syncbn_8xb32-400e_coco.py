@@ -12,7 +12,7 @@ deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 400
 save_epoch_intervals = 10
-train_batch_size_per_gpu = 4
+train_batch_size_per_gpu = 32
 train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
@@ -121,8 +121,7 @@ train_pipeline_stage2 = [
         max_translate_ratio=0.1,
         scaling_ratio_range=(0.5, 1.5),
         max_shear_degree=0.0,
-        border=(-img_scale[0] // 2, -img_scale[1] // 2),
-        border_val=(114, 114, 114)),
+        ),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(
