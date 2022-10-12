@@ -100,12 +100,22 @@ mim download mmyolo --config yolov5_s-v61_syncbn_fast_8xb16-300e_coco --dest .
 ```shell
 python demo/image_demo.py demo/demo.jpg \
                           yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
-                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
-                          --device cpu \
-                          --out-file result.jpg
+                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
+
+# 可选参数
+# --out-dir ./output *检测结果输出到指定目录下，默认为./output, 当--show参数存在时，不保存检测结果
+# --device cuda:0    *使用的计算资源，包括cuda, cpu等，默认为cuda:0
+# --show             *使用该参数表示在屏幕上显示检测结果，默认为False
+# --score-thr 0.3    *置信度阈值，默认为0.3
 ```
 
-你会在当前文件夹中看到一个新的图像 `result.jpg`，图像中包含有网络预测的检测框。
+运行结束后，在 `output` 文件夹中可以看到检测结果图像，图像中包含有网络预测的检测框。
+
+支持输入类型包括
+
+- 单张图片, 支持 `jpg`, `jpeg`, `png`, `ppm`, `bmp`, `pgm`, `tif`, `tiff`, `webp`。
+- 文件目录，会遍历文件目录下所有图片文件，并输出对应结果。
+- 网址，会自动从对应网址下载图片，并输出结果。
 
 方案 2. 如果你通过 MIM 安装的 MMYOLO， 那么可以打开你的 Python 解析器，复制并粘贴以下代码：
 
