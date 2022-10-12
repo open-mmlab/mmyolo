@@ -91,6 +91,12 @@ train_pipeline = [
         img_scale=img_scale,
         pad_val=114.0,
         pre_transform=pre_transform),
+    dict(
+        type='YOLOv5RandomAffine',
+        max_rotate_degree=0.0,
+        max_translate_ratio=0.1,
+        scaling_ratio_range=(0.5, 1.5),
+        max_shear_degree=0.0),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(
@@ -107,6 +113,12 @@ train_pipeline_stage2 = [
         scale=img_scale,
         allow_scale_up=False,
         pad_val=dict(img=114)),
+    dict(
+        type='YOLOv5RandomAffine',
+        max_rotate_degree=0.0,
+        max_translate_ratio=0.1,
+        scaling_ratio_range=(0.5, 1.5),
+        max_shear_degree=0.0),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(
