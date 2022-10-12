@@ -319,7 +319,7 @@ class YOLOv6Head(YOLOv5Head):
 
         # targets
         targets =self.preprocess(batch_gt_instances, batch_size)
-        
+
         gt_labels = targets[:, :, :1]
         gt_bboxes = targets[:, :, 1:] #xyxy
         mask_gt = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
@@ -396,9 +396,10 @@ class YOLOv6Head(YOLOv5Head):
         loss_iou, loss_dfl = self.bbox_loss(flatten_bbox_preds, flatten_bboxes, anchor_points_s, target_bboxes, 
                                             target_scores, target_scores_sum, fg_mask)
         
+        _, world_size = get_dist_info()
         return dict(
-            loss_cls=loss_cls,
-            loss_bbox=loss_iou * self.iou_weight) 
+            loss_cls=loss_cls * world_size,
+            loss_bbox=loss_iou * self.iou_weight * world_size) 
 
     def preprocess(self, targets, batch_size):
         targets_list = np.zeros((batch_size, 1, 5)).tolist() 
