@@ -4,6 +4,7 @@ _base_ = '../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 max_epochs = 400
 train_batch_size_per_gpu = 32
 img_scale = (640, 640)  # height, width
+stop_aug_last_n_epoch = 15
 
 deepen_factor = _base_.deepen_factor
 widen_factor = _base_.widen_factor
@@ -65,9 +66,32 @@ train_pipeline = [
                    'flip_direction'))
 ]
 
+train_pipeline_stage2 = [
+    *pre_transform,
+    dict(type='YOLOv5HSVRandomAug'),
+    dict(type='mmdet.RandomFlip', prob=0.5),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
+                   'flip_direction'))
+]
+
 default_hooks = dict(
     param_scheduler=dict(
         type='YOLOv5ParamSchedulerHook',
         scheduler_type='cosine',
         lr_factor=0.01,
         max_epochs=max_epochs))
+
+custom_hooks = [
+    dict(
+        type='EMAHook',
+        ema_type='ExpMomentumEMA',
+        momentum=0.0001,
+        update_buffers=True,
+        priority=49),
+    dict(
+        type='mmdet.PipelineSwitchHook',
+        switch_epoch=max_epochs - stop_aug_last_n_epoch,
+        switch_pipeline=train_pipeline_stage2)
+]
