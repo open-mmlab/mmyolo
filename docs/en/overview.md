@@ -31,7 +31,7 @@ MMYOLO file structure is identical to the MMDetection. To fully reuse the MMDete
 
 The detailed instruction of MMYOLO is as follows.
 
-1. Look up install instructions to get_started.md).
+1. Look up install instructions to [get_started.md](get_started.md).
 
 2. The basic method of how to use MMYOLO can be found here:
 
