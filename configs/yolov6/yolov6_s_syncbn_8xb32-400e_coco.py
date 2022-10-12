@@ -97,10 +97,9 @@ custom_hooks = [
         update_buffers=True,
         priority=49),
     dict(
-        type='YOLOXModeSwitchHook',
-        num_last_epochs=num_last_epochs,
-        new_train_pipeline=train_pipeline_stage2,
-        priority=48)
+        type='mmdet.PipelineSwitchHook',
+        switch_epoch=max_epochs - num_last_epochs,
+        switch_pipeline=train_pipeline_stage2)
 ]
 
 train_cfg = dict(
