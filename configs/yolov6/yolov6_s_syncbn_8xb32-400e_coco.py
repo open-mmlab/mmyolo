@@ -69,6 +69,12 @@ train_pipeline = [
 
 train_pipeline_stage2 = [
     *pre_transform,
+    dict(type='YOLOv5KeepRatioResize', scale=img_scale),
+    dict(
+        type='LetterResize',
+        scale=img_scale,
+        allow_scale_up=False,
+        pad_val=dict(img=114)),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(
