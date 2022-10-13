@@ -165,6 +165,7 @@ class DropBlock2d(nn.Module):
 
 
 class SPP(nn.Module):
+    """SPP layer."""
 
     def __init__(
             self,
@@ -202,6 +203,7 @@ class SPP(nn.Module):
 
 
 class BasicBlock(nn.Module):
+    """PPYOLOE neck Basic Block."""
 
     def __init__(self,
                  ch_in,
@@ -241,6 +243,7 @@ class BasicBlock(nn.Module):
 
 
 class CSPStage(nn.Module):
+    """PPYOLOE Neck Stage."""
 
     def __init__(self,
                  block_fn,
@@ -289,6 +292,7 @@ class CSPStage(nn.Module):
 
 @MODELS.register_module()
 class PPYOLOECustomCSPPAN(BaseYOLONeck):
+    """CustomCSPPAN in PPYOLOE."""
 
     def __init__(self,
                  in_channels=[256, 512, 1024],
@@ -323,6 +327,14 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
             init_cfg=init_cfg)
 
     def build_reduce_layer(self, idx: int):
+        """build reduce layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The reduce layer.
+        """
         if idx == 2:
             # fpn_stage
             layer = []
@@ -365,6 +377,14 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
             nn.Upsample(scale_factor=2, mode='nearest'))
 
     def build_top_down_layer(self, idx: int) -> nn.Module:
+        """build top down layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The top down layer.
+        """
         # fpn_stage
         layer = []
         in_channels = make_divisible(
@@ -390,6 +410,14 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
         return layer
 
     def build_downsample_layer(self, idx: int) -> nn.Module:
+        """build downsample layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The downsample layer.
+        """
         # pan_route
         return ConvModule(
             in_channels=make_divisible(self.out_channels[idx],
@@ -403,6 +431,14 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
             act_cfg=self.act_cfg)
 
     def build_bottom_up_layer(self, idx: int) -> nn.Module:
+        """build bottom up layer.
+
+        Args:
+            idx (int): layer idx.
+
+        Returns:
+            nn.Module: The bottom up layer.
+        """
         # pan_stage
         layer = []
         in_channels = make_divisible(
@@ -428,4 +464,5 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
         return layer
 
     def build_out_layer(self, *args, **kwargs) -> nn.Module:
+        """build out layer."""
         return nn.Identity()

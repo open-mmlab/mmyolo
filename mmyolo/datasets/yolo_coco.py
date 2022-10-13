@@ -61,6 +61,10 @@ class YOLOv5CocoDataset(CocoDataset):
 
 @DATASETS.register_module()
 class PPYOLOECocoDataset(CocoDataset):
+    """Dataset for PPYOLOE COCO Dataset.
+
+    While test in ppyoloe, it do not use img with no gt.
+    """
 
     def filter_data(self) -> List[dict]:
         """Filter annotations according to filter_cfg.
