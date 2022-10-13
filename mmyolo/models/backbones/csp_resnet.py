@@ -16,21 +16,22 @@ class CSPResStage(nn.Module):
     """PPYOLOE Backbone Stage."""
 
     def __init__(self,
-                 block_fn,
-                 ch_in,
-                 ch_out,
-                 n,
-                 stride,
-                 norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
-                 act_cfg=dict(type='Swish'),
-                 use_attn=True,
-                 use_alpha=False):
+                 block_fn: nn.Module,
+                 input_channels: int,
+                 output_channels: int,
+                 num_layer: int,
+                 stride: int = 1,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='Swish'),
+                 use_attn: bool = True,
+                 use_alpha: bool = False):
         super().__init__()
-        ch_mid = (ch_in + ch_out) // 2
+        middle_channels = (input_channels + output_channels) // 2
         if stride == 2:
             self.conv_down = ConvModule(
-                ch_in,
-                ch_mid,
+                input_channels,
+                middle_channels,
                 3,
                 stride=2,
                 padding=1,
@@ -39,25 +40,38 @@ class CSPResStage(nn.Module):
         else:
             self.conv_down = None
         self.conv1 = ConvModule(
-            ch_mid, ch_mid // 2, 1, norm_cfg=norm_cfg, act_cfg=act_cfg)
+            middle_channels,
+            middle_channels // 2,
+            1,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
         self.conv2 = ConvModule(
-            ch_mid, ch_mid // 2, 1, norm_cfg=norm_cfg, act_cfg=act_cfg)
+            middle_channels,
+            middle_channels // 2,
+            1,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
         self.blocks = nn.Sequential(*[
             block_fn(
-                ch_mid // 2,
-                ch_mid // 2,
+                middle_channels // 2,
+                middle_channels // 2,
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg,
                 shortcut=True,
-                use_alpha=use_alpha) for i in range(n)
+                use_alpha=use_alpha) for i in range(num_layer)
         ])
         if use_attn:
-            self.attn = EffectiveSELayer(ch_mid, act_cfg=dict(type='HSigmoid'))
+            self.attn = EffectiveSELayer(
+                middle_channels, act_cfg=dict(type='HSigmoid'))
         else:
             self.attn = None
 
         self.conv3 = ConvModule(
-            ch_mid, ch_out, 1, norm_cfg=norm_cfg, act_cfg=act_cfg)
+            middle_channels,
+            output_channels,
+            1,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
 
     def forward(self, x):
         if self.conv_down is not None:
@@ -75,18 +89,19 @@ class BasicBlock(nn.Module):
     """PPYOLOE Backbone BasicBlock."""
 
     def __init__(self,
-                 ch_in,
-                 ch_out,
-                 norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg=dict(type='Swish'),
-                 shortcut=True,
-                 use_alpha=False):
+                 input_channels: int,
+                 output_channels: int,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.1, eps=1e-5),
+                 act_cfg: ConfigType = dict(type='Swish'),
+                 shortcut: bool = True,
+                 use_alpha: bool = False):
         super().__init__()
-        assert ch_in == ch_out
+        assert input_channels == output_channels
         assert act_cfg is None or isinstance(act_cfg, dict)
         self.conv1 = ConvModule(
-            ch_in,
-            ch_out,
+            input_channels,
+            output_channels,
             3,
             stride=1,
             padding=1,
@@ -94,8 +109,8 @@ class BasicBlock(nn.Module):
             act_cfg=act_cfg)
 
         self.conv2 = RepVGGBlock(
-            ch_out,
-            ch_out,
+            output_channels,
+            output_channels,
             alpha=use_alpha,
             act_cfg=act_cfg,
             norm_cfg=norm_cfg,
@@ -134,7 +149,7 @@ class CSPResNet(BaseBackbone):
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None,
                  use_large_stem: bool = False,
-                 use_alpha=False):
+                 use_alpha: bool = False):
         self.use_large_stem = use_large_stem
         self.use_alpha = use_alpha
         super().__init__(
