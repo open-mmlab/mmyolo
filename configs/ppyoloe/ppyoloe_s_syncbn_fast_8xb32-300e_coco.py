@@ -56,7 +56,7 @@ model = dict(
             in_channels=[192, 384, 768],
             widen_factor=widen_factor,
             featmap_strides=strides,
-            num_base_priors=3),
+            num_base_priors=1),
     ),
     test_cfg=dict(
         multi_label=True,
