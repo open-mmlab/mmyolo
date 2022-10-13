@@ -49,7 +49,7 @@ conda install pytorch torchvision cpuonly -c pytorch
 
 ```shell
 pip install -U openmim
-mim install mmengine
+mim install "mmengine==0.1.0"
 mim install "mmcv>=2.0.0rc1,<2.1.0"
 mim install "mmdet>=3.0.0rc1,<3.1.0"
 ```
