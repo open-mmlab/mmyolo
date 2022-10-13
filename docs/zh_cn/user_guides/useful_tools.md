@@ -110,13 +110,27 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
 
 ## 数据集转换
 
-文件夹 `tools/data_converters/` 包含工具将 `balloon` 数据集（该小型数据集仅作为入门使用）转换成 COCO 的格式。
+文件夹 `tools/data_converters/` 目前包含 `ballon2coco.py` 和 `yolo2coco.py` 两个数据集转换工具。
+
+- `ballon2coco.py` 将 `balloon` 数据集（该小型数据集仅作为入门使用）转换成 COCO 的格式。
 
 关于该脚本的详细说明，请看 [YOLOv5 从入门到部署全流程](./yolov5_tutorial.md) 中 `数据集准备` 小节。
 
 ```shell
 python tools/dataset_converters/balloon2coco.py
 ```
+
+- `yolo2coco.py` 将 `yolo-style` **.txt** 格式的数据集转换成 COCO 的格式，请按如下方式使用：
+
+```shell
+python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/of/your_dataset [--split]
+```
+
+使用说明：
+
+1. `-image-dir` 是待转换的yolo格式数据集的根目录，内应包含 `images` 、 `labels` 和 `class.txt` 文件， `class.txt` 是当前dataset对应的类的声明，一行一个。
+2. `-split` 代表是否需要在转换中按已有的 `train` 、 `val` 和 `text` 类别进行整理，默认不使用，如果需要使用，请确保对应的 `train.txt` 、 `val.txt` 和 `test.txt` 也要存在于 `-image-dir` 下，否则将报错。
+3. 脚本会默认在 `-image-dir` 目录下创建 `coco_format` 文件夹并将转换结果存在这里。如果未指明 `-split` ，输出文件即为 `result.json`，如果指明 `-split` ，则会生成对应的 `train.json` 、 `val.json` 和 `test.json` 三个文件。
 
 ## 数据集下载
 

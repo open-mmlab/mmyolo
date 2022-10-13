@@ -108,17 +108,33 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
                                                --not-show
 ```
 
-## Dataset Conversion
+## Convert Dataset
 
-the `tools/` directory also contains script to convert the `balloon` dataset (A small dataset is only for beginner use) into COCO format.
+The folder `tools/data_converters` currently contains `ballon2coco.py` and `yolo2coco.py` two dataset conversion tools.
 
-For a detailed description of this script, please refer to the "Dataset Preparation" section in [From getting started to deployment with YOLOv5](./yolov5_tutorial.md).
+- `ballon2coco.py` converts the `balloon` dataset (this small dataset is for starters only) to COCO format.
+
+For a detailed description of this script, please see the `Dataset Preparation` section in [YOLOv5 from entry to deployment](./yolov5_tutorial.md).
 
 ```shell
 python tools/dataset_converters/balloon2coco.py
 ```
 
-## Dataset Download
+- `yolo2coco.py` converts a dataset from `yolo-style` **.txt** format to COCO format, please use it as follows:
+
+```shell
+python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/of/your_dataset [--split]
+```
+
+Instructions:
+
+1. `-image-dir` is the root directory of the yolo-style dataset, which should contain `images`, `labels`, and `class.txt`. `class.txt` is the class declaration corresponding to the current dataset. One class a line.
+2. `-split` indicates whether you need to format the dataset based on the existing `train`, `val`, and `text` categories. It is not used by default. If you need to use it, please ensure the corresponding `train.txt`, ` val.txt`, and `test.txt` must exist under `-image-dir`. Otherwise, the script will fail to run.
+3. By default, the script will create a folder called `coco_format` in the `-image-dir` directory where stores the converted JSON file. If `-split` is not specified, the output file is `result.json`. If `-split` is specified, three corresponding files called `train.json`, `val.json`, and `test.json` will be generated.
+
+````
+
+## Download Dataset
 
 `tools/misc/download_dataset.py` supports downloading datasets such as `COCO`, `VOC`, `LVIS` and `Balloon`.
 
@@ -127,9 +143,9 @@ python tools/misc/download_dataset.py --dataset-name coco2017
 python tools/misc/download_dataset.py --dataset-name voc2007
 python tools/misc/download_dataset.py --dataset-name lvis
 python tools/misc/download_dataset.py --dataset-name balloon [--save-dir ${SAVE_DIR}] [--unzip]
-```
+````
 
-## Model Conversion
+## Convert Model
 
 The three scripts under the `tools/` directory can help users convert the keys in the official pre-trained model of YOLO to the format of MMYOLO, and use MMYOLO to fine tune the model.
 
