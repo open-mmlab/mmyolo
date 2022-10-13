@@ -337,6 +337,28 @@ class RepStageBlock(nn.Module):
 
 
 class ELANBlock(BaseModule):
+    """Efficient layer aggregation networks for YOLOv7.
+
+    - if mode is `reduce_channel_2x`, the output channel will be
+      reduced by a factor of 2
+    - if mode is `no_change_channel`, the output channel does not change.
+    - if mode is `expand_channel_2x`, the output channel will be
+      expanded by a factor of 2
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        mode (str): Output channel mode. Defaults to `expand_channel_2x`.
+        num_blocks (int): The number of blocks in the main branch.
+            Defaults to 2.
+        conv_cfg (dict): Config dict for convolution layer. Defaults to None.
+            which means using conv2d. Defaults to None.
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='SiLU', inplace=True).
+        init_cfg (dict or list[dict], optional): Initialization config dict.
+            Defaults to None.
+    """
 
     def __init__(self,
                  in_channels: int,
@@ -425,6 +447,10 @@ class ELANBlock(BaseModule):
             act_cfg=act_cfg)
 
     def forward(self, x: Tensor) -> Tensor:
+        """Forward process
+         Args:
+             x (Tensor): The input tensor.
+         """
         x_short = self.short_conv(x)
         x_main = self.main_conv(x)
         block_outs = []
@@ -437,6 +463,25 @@ class ELANBlock(BaseModule):
 
 
 class MaxPoolBlock(BaseModule):
+    """Max pooling layer for YOLOv7.
+
+    - if mode is `reduce_channel_2x`, the output channel will
+    be reduced by a factor of 2
+    - if mode is `no_change_channel`, the output channel does not change.
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        mode (str): Output channel mode. `reduce_channel_2x` or
+            `no_change_channel`. Defaults to `reduce_channel_2x`
+        conv_cfg (dict): Config dict for convolution layer. Defaults to None.
+            which means using conv2d. Defaults to None.
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='SiLU', inplace=True).
+        init_cfg (dict or list[dict], optional): Initialization config dict.
+            Defaults to None.
+    """
 
     def __init__(self,
                  in_channels: int,
@@ -483,18 +528,41 @@ class MaxPoolBlock(BaseModule):
                 act_cfg=act_cfg))
 
     def forward(self, x: Tensor) -> Tensor:
+        """Forward process
+        Args:
+            x (Tensor): The input tensor.
+        """
         top_out = self.top_branches(x)
         bottom_out = self.bottom_branches(x)
         return torch.cat([bottom_out, top_out], dim=1)
 
 
-class SPPCSPBlock(BaseModule):
+class SPPFCSPBlock(BaseModule):
+    """Spatial pyramid pooling - Fast (SPPF) layer with CSP for
+     YOLOv7
+
+     Args:
+         in_channels (int): The input channels of this Module.
+         out_channels (int): The output channels of this Module.
+         expand_ratio (float): Expand ratio of SPPCSPBlock.
+            Defaults to 0.5.
+         kernel_sizes (int, tuple[int]): Sequential or number of kernel
+             sizes of pooling layers. Defaults to 5.
+         conv_cfg (dict): Config dict for convolution layer. Defaults to None.
+             which means using conv2d. Defaults to None.
+         norm_cfg (dict): Config dict for normalization layer.
+             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+         act_cfg (dict): Config dict for activation layer.
+             Defaults to dict(type='SiLU', inplace=True).
+         init_cfg (dict or list[dict], optional): Initialization config dict.
+             Defaults to None.
+     """
 
     def __init__(self,
-                 in_channels,
-                 out_channels,
-                 expand_ratio=0.5,
-                 kernel_sizes=(5, 9, 13),
+                 in_channels: int,
+                 out_channels: int,
+                 expand_ratio: float = 0.5,
+                 kernel_sizes: Union[int, Sequence[int]] = 5,
                  conv_cfg: OptConfigType = None,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
@@ -527,10 +595,17 @@ class SPPCSPBlock(BaseModule):
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg),
         )
-        self.poolings = nn.ModuleList([
-            nn.MaxPool2d(kernel_size=x, stride=1, padding=x // 2)
-            for x in kernel_sizes
-        ])
+
+        self.kernel_sizes = kernel_sizes
+        if isinstance(kernel_sizes, int):
+            self.poolings = nn.MaxPool2d(
+                kernel_size=kernel_sizes, stride=1, padding=kernel_sizes // 2)
+        else:
+            self.poolings = nn.ModuleList([
+                nn.MaxPool2d(kernel_size=ks, stride=1, padding=ks // 2)
+                for ks in kernel_sizes
+            ])
+
         self.fuse_layers = nn.Sequential(
             ConvModule(
                 4 * mid_channels,
@@ -565,8 +640,18 @@ class SPPCSPBlock(BaseModule):
             act_cfg=act_cfg)
 
     def forward(self, x):
+        """Forward process
+        Args:
+            x (Tensor): The input tensor.
+        """
         x1 = self.main_layers(x)
-        x1 = self.fuse_layers(
-            torch.cat([x1] + [m(x1) for m in self.poolings], 1))
+        if isinstance(self.kernel_sizes, int):
+            y1 = self.poolings(x1)
+            y2 = self.poolings(y1)
+            x1 = self.fuse_layers(
+                torch.cat([x1] + [y1, y2, self.poolings(y2)], 1))
+        else:
+            x1 = self.fuse_layers(
+                torch.cat([x1] + [m(x1) for m in self.poolings], 1))
         x2 = self.short_layers(x)
         return self.final_conv(torch.cat((x1, x2), dim=1))

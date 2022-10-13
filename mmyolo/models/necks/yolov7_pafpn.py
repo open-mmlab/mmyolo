@@ -6,7 +6,7 @@ from mmcv.cnn import ConvModule
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
-from ..layers import ELANBlock, MaxPoolBlock, RepVGGBlock, SPPCSPBlock
+from ..layers import ELANBlock, MaxPoolBlock, RepVGGBlock, SPPFCSPBlock
 from .base_yolo_neck import BaseYOLONeck
 
 
@@ -74,11 +74,11 @@ class YOLOv7PAFPN(BaseYOLONeck):
             nn.Module: The reduce layer.
         """
         if idx == 2:
-            layer = SPPCSPBlock(
+            layer = SPPFCSPBlock(
                 self.in_channels[idx],
                 self.out_channels[idx],
                 expand_ratio=self.spp_expand_ratio,
-                kernel_sizes=(5, 9, 13),
+                kernel_sizes=5,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
         else:

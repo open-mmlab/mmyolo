@@ -14,7 +14,7 @@ from .yolov5_head import YOLOv5Head
 # Training mode is currently not supported
 @MODELS.register_module()
 class YOLOv7Head(YOLOv5Head):
-    """YOLOv6Head head used in `YOLOv6 <https://arxiv.org/pdf/2209.02976>`_.
+    """YOLOv7Head head used in `YOLOv7 <https://arxiv.org/abs/2207.02696>`_.
 
     Args:
         head_module(nn.Module): Base module used for YOLOv6Head

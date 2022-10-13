@@ -12,6 +12,35 @@ from .base_backbone import BaseBackbone
 
 @MODELS.register_module()
 class YOLOv7Backbone(BaseBackbone):
+    """Backbone used in YOLOv7.
+
+    Args:
+        arch (str): Architecture of YOLOv7, from {P5, P6}.
+            Defaults to P5.
+        deepen_factor (float): Depth multiplier, multiply number of
+            blocks in CSP layer by this amount. Defaults to 1.0.
+        widen_factor (float): Width multiplier, multiply number of
+            channels in each layer by this amount. Defaults to 1.0.
+        out_indices (Sequence[int]): Output from which stages.
+            Defaults to (2, 3, 4).
+        frozen_stages (int): Stages to be frozen (stop grad and set eval
+            mode). -1 means not freezing any parameters. Defaults to -1.
+        plugins (list[dict]): List of plugins for stages, each dict contains:
+
+            - cfg (dict, required): Cfg dict to build plugin.
+            - stages (tuple[bool], optional): Stages to apply plugin, length
+              should be same as 'num_stages'.
+        norm_cfg (:obj:`ConfigDict` or dict): Dictionary to construct and
+            config norm layer. Defaults to dict(type='BN', requires_grad=True).
+        act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
+            Defaults to dict(type='SiLU').
+        norm_eval (bool): Whether to set norm layers to eval mode, namely,
+            freeze running stats (mean and var). Note: Effect on Batch Norm
+            and its variants only.
+        init_cfg (:obj:`ConfigDict` or dict or list[dict] or
+            list[:obj:`ConfigDict`]): Initialization config dict.
+    """
+
     # From left to right:
     # in_channels, out_channels, ELAN mode
     arch_settings = {
