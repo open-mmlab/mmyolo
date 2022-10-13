@@ -1,7 +1,7 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/coco100/'
+data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 num_last_epochs = 15
@@ -113,7 +113,7 @@ train_pipeline_stage2 = [
     dict(
         type='LetterResize',
         scale=img_scale,
-        allow_scale_up=False,
+        allow_scale_up=True,
         pad_val=dict(img=114)),
     dict(
         type='YOLOv5RandomAffine',
