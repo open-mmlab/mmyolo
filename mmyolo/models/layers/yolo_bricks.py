@@ -384,14 +384,6 @@ class ELANBlock(BaseModule):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
-        self.final_conv = ConvModule(
-            final_conv_in_channels,
-            final_conv_out_channels,
-            1,
-            conv_cfg=conv_cfg,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg)
-
         self.blocks = nn.ModuleList()
         for _ in range(num_blocks):
             if mode == 'reduce_channel_2x':
@@ -423,6 +415,14 @@ class ELANBlock(BaseModule):
                         act_cfg=act_cfg))
             mid_channels = block_channels
             self.blocks.append(internal_block)
+
+        self.final_conv = ConvModule(
+            final_conv_in_channels,
+            final_conv_out_channels,
+            1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
 
     def forward(self, x: Tensor) -> Tensor:
         x_short = self.short_conv(x)

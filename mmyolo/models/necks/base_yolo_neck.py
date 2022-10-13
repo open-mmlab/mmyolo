@@ -141,7 +141,6 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
         # bottom-up path
         outs = [inner_outs[0]]
         for idx in range(len(self.in_channels) - 1):
-            print(idx)
             feat_low = outs[-1]
             feat_height = inner_outs[idx + 1]
             downsample_feat = self.downsample_layers[idx](feat_low)
