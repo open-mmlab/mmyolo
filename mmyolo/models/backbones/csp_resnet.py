@@ -13,6 +13,7 @@ from mmyolo.registry import MODELS
 
 
 class CSPResStage(nn.Module):
+    """PPYOLOE Backbone Stage."""
 
     def __init__(self,
                  block_fn,
@@ -71,6 +72,7 @@ class CSPResStage(nn.Module):
 
 
 class BasicBlock(nn.Module):
+    """PPYOLOE Backbone BasicBlock."""
 
     def __init__(self,
                  ch_in,
@@ -111,6 +113,7 @@ class BasicBlock(nn.Module):
 
 @MODELS.register_module()
 class CSPResNet(BaseBackbone):
+    """CSP-ResNet backbone used in PYOLOE."""
     # From left to right:
     # in_channels, out_channels, num_blocks, add_identity, use_spp
     arch_settings = {
@@ -201,6 +204,12 @@ class CSPResNet(BaseBackbone):
         return stem
 
     def build_stage_layer(self, stage_idx: int, setting: list) -> list:
+        """Build a stage layer.
+
+        Args:
+            stage_idx (int): The index of a stage layer.
+            setting (list): The architecture setting of a stage layer.
+        """
         in_channels, out_channels, num_blocks, add_identity, _ = setting
         in_channels = make_divisible(in_channels, self.widen_factor)
         out_channels = make_divisible(out_channels, self.widen_factor)
@@ -218,6 +227,3 @@ class CSPResNet(BaseBackbone):
             use_alpha=self.use_alpha)
         stage.append(cspres_layer)
         return stage
-
-    def init_weights(self):
-        raise NotImplementedError

@@ -19,11 +19,17 @@ from .yolov5_head import YOLOv5Head
 
 
 class ESEAttn(nn.Module):
+    """ESEAttn layer.
+
+    Args:
+        feat_channels
+    """
 
     def __init__(self,
-                 feat_channels,
-                 norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg=dict(type='Swish')):
+                 feat_channels: int,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.1, eps=1e-5),
+                 act_cfg: ConfigType = dict(type='Swish')):
         super().__init__()
         self.fc = nn.Conv2d(feat_channels, feat_channels, 1)
         self.sig = nn.Sigmoid()
@@ -46,6 +52,26 @@ class ESEAttn(nn.Module):
 
 @MODELS.register_module()
 class PPYOLOEHeadModule(BaseModule):
+    """PPYOLOEHead head module used in `PPYOLOE`
+
+    Args:
+        num_classes (int): Number of categories excluding the background
+            category.
+        in_channels (int): Number of channels in the input feature map.
+        widen_factor (float): Width multiplier, multiply number of
+            channels in each layer by this amount. Default: 1.0.
+        num_base_priors:int: The number of priors (points) at a point
+            on the feature grid.
+        featmap_strides (Sequence[int]): Downsample factor of each feature map.
+             Defaults to (8, 16, 32).
+        reg_max (int): TOOD reg_max param.
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='Swish').
+        init_cfg (dict or list[dict], optional): Initialization config dict.
+            Defaults to None.
+    """
 
     def __init__(self,
                  num_classes: int,
@@ -154,6 +180,10 @@ class PPYOLOEHeadModule(BaseModule):
 
 @MODELS.register_module()
 class PPYOLOEHead(YOLOv5Head):
+    """YOLOv5Head head used in `YOLOv5`.
+
+    Args:
+    """
 
     def __init__(self,
                  head_module: nn.Module,
