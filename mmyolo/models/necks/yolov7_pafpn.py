@@ -21,6 +21,11 @@ class YOLOv7PAFPN(BaseYOLONeck):
             blocks in CSP layer by this amount. Defaults to 1.0.
         widen_factor (float): Width multiplier, multiply number of
             channels in each layer by this amount. Defaults to 1.0.
+        spp_expand_ratio (float): Expand ratio of SPPCSPBlock.
+            Defaults to 0.5.
+        upsample_feats_cat_first (bool): Whether the output features are
+            concat first after upsampling in the topdown module.
+            Defaults to True. Currently only YOLOv7 is false.
         freeze_all(bool): Whether to freeze the model. Defaults to False.
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
@@ -36,6 +41,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  spp_expand_ratio: float = 0.5,
+                 upsample_feats_cat_first: bool = False,
                  freeze_all: bool = False,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
@@ -52,6 +58,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
             ],
             deepen_factor=deepen_factor,
             widen_factor=widen_factor,
+            upsample_feats_cat_first=upsample_feats_cat_first,
             freeze_all=freeze_all,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg,

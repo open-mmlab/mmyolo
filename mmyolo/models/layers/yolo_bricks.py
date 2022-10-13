@@ -426,17 +426,13 @@ class ELANBlock(BaseModule):
 
     def forward(self, x: Tensor) -> Tensor:
         x_short = self.short_conv(x)
-
         x_main = self.main_conv(x)
-
         block_outs = []
         x_block = x_main
         for block in self.blocks:
             x_block = block(x_block)
             block_outs.append(x_block)
-
         x_final = torch.cat((*block_outs[::-1], x_main, x_short), dim=1)
-
         return self.final_conv(x_final)
 
 
@@ -572,7 +568,5 @@ class SPPCSPBlock(BaseModule):
         x1 = self.main_layers(x)
         x1 = self.fuse_layers(
             torch.cat([x1] + [m(x1) for m in self.poolings], 1))
-
         x2 = self.short_layers(x)
-
         return self.final_conv(torch.cat((x1, x2), dim=1))

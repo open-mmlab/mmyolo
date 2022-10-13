@@ -1,7 +1,7 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/coco/'
+data_root = '/home/PJLAB/huanghaian/dataset/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 # parameters that often need to be modified
@@ -52,6 +52,7 @@ model = dict(
         type='YOLOv7PAFPN',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
+        upsample_feats_cat_first=False,
         in_channels=[512, 1024, 1024],
         out_channels=[128, 256, 512],
         norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
