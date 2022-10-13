@@ -2,10 +2,11 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mmcv.cnn import ConvModule, build_activation_layer
+from mmcv.cnn import ConvModule
 from mmdet.utils import ConfigType, OptMultiConfig
 
-from mmyolo.models import BaseYOLONeck, RepVGGBlock
+from mmyolo.models.layers.yolo_bricks import RepVGGBlock
+from mmyolo.models.necks import BaseYOLONeck
 from mmyolo.models.utils import make_divisible, make_round
 from mmyolo.registry import MODELS
 
@@ -171,6 +172,7 @@ class SPP(nn.Module):
             ch_out,
             k,
             pool_size,
+            norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
             act_cfg=dict(type='Swish'),
     ):
         super().__init__()
@@ -181,7 +183,12 @@ class SPP(nn.Module):
             self.add_module(f'pool{i}', pool)
             self.pool.append(pool)
         self.conv = ConvModule(
-            ch_in, ch_out, k, padding=k // 2, act_cfg=act_cfg)
+            ch_in,
+            ch_out,
+            k,
+            padding=k // 2,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
 
     def forward(self, x):
         outs = [x]
@@ -199,29 +206,29 @@ class BasicBlock(nn.Module):
     def __init__(self,
                  ch_in,
                  ch_out,
+                 norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
                  act_cfg=dict(type='Swish'),
                  shortcut=True,
-                 inplace=True):
+                 use_alpha=False):
         super().__init__()
         assert ch_in == ch_out
         assert act_cfg is None or isinstance(act_cfg, dict)
         self.conv1 = ConvModule(
-            ch_in, ch_out, 3, stride=1, padding=1, act_cfg=act_cfg)
+            ch_in,
+            ch_out,
+            3,
+            stride=1,
+            padding=1,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
 
-        # build activation layer
-        self.with_activation = act_cfg is not None
-        if self.with_activation:
-            act_cfg_ = act_cfg.copy()  # type: ignore
-            # nn.Tanh has no 'inplace' argument
-            if act_cfg_['type'] not in [
-                    'Tanh', 'PReLU', 'Sigmoid', 'HSigmoid', 'Swish', 'GELU'
-            ]:
-                act_cfg_.setdefault('inplace', inplace)
-            self.activate = build_activation_layer(act_cfg_)
-            self.conv2 = nn.Sequential(
-                RepVGGBlock(ch_out, ch_out), self.activate)
-        else:
-            self.conv2 = RepVGGBlock(ch_out, ch_out)
+        self.conv2 = RepVGGBlock(
+            ch_out,
+            ch_out,
+            alpha=use_alpha,
+            act_cfg=act_cfg,
+            norm_cfg=norm_cfg,
+            mode='ppyoloe')
         self.shortcut = shortcut
 
     def forward(self, x):
@@ -240,28 +247,36 @@ class CSPStage(nn.Module):
                  in_channels,
                  out_channels,
                  n,
-                 act_cfg=dict(type='swish'),
+                 norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
+                 act_cfg=dict(type='Swish'),
                  spp=False):
         super().__init__()
 
         ch_mid = int(out_channels // 2)
-        self.conv1 = ConvModule(in_channels, ch_mid, 1, act_cfg=act_cfg)
-        self.conv2 = ConvModule(in_channels, ch_mid, 1, act_cfg=act_cfg)
+        self.conv1 = ConvModule(
+            in_channels, ch_mid, 1, norm_cfg=norm_cfg, act_cfg=act_cfg)
+        self.conv2 = ConvModule(
+            in_channels, ch_mid, 1, norm_cfg=norm_cfg, act_cfg=act_cfg)
         self.convs = nn.Sequential()
 
         next_ch_in = ch_mid
         for i in range(n):
             self.convs.add_module(
                 str(i),
-                block_fn(next_ch_in, ch_mid, act_cfg=act_cfg, shortcut=False))
+                block_fn(
+                    next_ch_in,
+                    ch_mid,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg,
+                    shortcut=False))
 
             if i == (n - 1) // 2 and spp:
                 self.convs.add_module(
                     'spp',
                     SPP(ch_mid * 4, ch_mid, 1, [5, 9, 13], act_cfg=act_cfg))
             next_ch_in = ch_mid
-        # self.convs = nn.Sequential(*convs)
-        self.conv3 = ConvModule(ch_mid * 2, out_channels, 1, act_cfg=act_cfg)
+        self.conv3 = ConvModule(
+            ch_mid * 2, out_channels, 1, norm_cfg=norm_cfg, act_cfg=act_cfg)
 
     def forward(self, x):
         y1 = self.conv1(x)
@@ -280,12 +295,11 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
                  out_channels=[256, 512, 1024],
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
-                 num_csp_blocks: int = 1,
                  drop_block=False,
                  freeze_all: bool = False,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
-                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 act_cfg: ConfigType = dict(type='Swish'),
                  init_cfg: OptMultiConfig = None,
                  stage_num=1,
                  block_num=3,
@@ -310,6 +324,7 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
 
     def build_reduce_layer(self, idx: int):
         if idx == 2:
+            # fpn_stage
             layer = []
             for j in range(self.stage_num):
                 layer.append(
@@ -320,6 +335,7 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
                         out_channels=make_divisible(self.out_channels[idx],
                                                     self.widen_factor),
                         n=make_round(self.block_num, self.deepen_factor),
+                        norm_cfg=self.norm_cfg,
                         act_cfg=self.act_cfg,
                         spp=self.spp))
             if self.drop_block:
@@ -344,6 +360,7 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
                 kernel_size=1,
                 stride=1,
                 padding=0,
+                norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg),
             nn.Upsample(scale_factor=2, mode='nearest'))
 
@@ -352,7 +369,7 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
         layer = []
         in_channels = make_divisible(
             self.in_channels[idx - 1], self.widen_factor) + (
-                make_divisible(self.in_channels[idx], self.widen_factor) // 2)
+                make_divisible(self.out_channels[idx], self.widen_factor) // 2)
         out_channels = make_divisible(self.out_channels[idx - 1],
                                       self.widen_factor)
         for j in range(self.stage_num):
@@ -362,8 +379,9 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
                     in_channels=in_channels if j == 0 else out_channels,
                     out_channels=out_channels,
                     n=make_round(self.block_num, self.deepen_factor),
+                    norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg,
-                    spp=self.spp))
+                    spp=False))
         if self.drop_block:
             layer.append(
                 DropBlock2d(
@@ -381,6 +399,7 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
             kernel_size=3,
             stride=2,
             padding=1,
+            norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
 
     def build_bottom_up_layer(self, idx: int) -> nn.Module:
@@ -398,6 +417,7 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
                     in_channels=in_channels if j == 0 else out_channels,
                     out_channels=out_channels,
                     n=make_round(self.block_num, self.deepen_factor),
+                    norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg,
                     spp=False))
         if self.drop_block:
@@ -409,14 +429,3 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
 
     def build_out_layer(self, *args, **kwargs) -> nn.Module:
         return nn.Identity()
-
-
-if __name__ == '__main__':
-    from mmyolo.utils import register_all_modules
-
-    register_all_modules()
-    model = PPYOLOECustomCSPPAN()
-    data = []
-    for shape in [(1, 256, 80, 80), (1, 512, 40, 40), (1, 1024, 20, 20)]:
-        data.append(torch.zeros(shape))
-    res = model(data)

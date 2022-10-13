@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Optional, Sequence, Tuple, Union
+from typing import Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -128,10 +128,13 @@ class RepVGGBlock(nn.Module):
                  padding: Union[int, Tuple[int]] = 1,
                  dilation: Union[int, Tuple[int]] = 1,
                  groups: Optional[int] = 1,
+                 norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: Optional[Dict] = dict(type='ReLU'),
                  padding_mode: Optional[str] = 'zeros',
                  deploy: bool = False,
                  use_se: bool = False,
-                 alpha: bool = False):
+                 alpha: bool = False,
+                 mode=None):
         super().__init__()
         self.deploy = deploy
         self.groups = groups
@@ -140,10 +143,11 @@ class RepVGGBlock(nn.Module):
 
         assert kernel_size == 3
         assert padding == 1
+        assert mode in [None, 'ppyoloe']
 
         padding_11 = padding - kernel_size // 2
-
-        self.nonlinearity = nn.ReLU()
+        assert act_cfg is not None
+        self.nonlinearity = build_activation_layer(act_cfg)
 
         if use_se:
             raise NotImplementedError('se block not supported yet')
@@ -171,9 +175,14 @@ class RepVGGBlock(nn.Module):
                 padding_mode=padding_mode)
 
         else:
-            self.rbr_identity = nn.BatchNorm2d(
-                num_features=in_channels, momentum=0.03, eps=0.001
-            ) if out_channels == in_channels and stride == 1 else None
+            if mode == 'ppyoloe':
+                self.rbr_identity = None
+            else:
+                self.rbr_identity = nn.BatchNorm2d(
+                    num_features=in_channels,
+                    momentum=norm_cfg['momentum'],
+                    eps=norm_cfg['eps']
+                ) if out_channels == in_channels and stride == 1 else None
             self.rbr_dense = ConvModule(
                 in_channels=in_channels,
                 out_channels=out_channels,
@@ -182,7 +191,7 @@ class RepVGGBlock(nn.Module):
                 padding=padding,
                 groups=groups,
                 bias=False,
-                norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+                norm_cfg=norm_cfg,
                 act_cfg=None)
             self.rbr_1x1 = ConvModule(
                 in_channels=in_channels,
@@ -192,7 +201,7 @@ class RepVGGBlock(nn.Module):
                 padding=padding_11,
                 groups=groups,
                 bias=False,
-                norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+                norm_cfg=norm_cfg,
                 act_cfg=None)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
@@ -357,7 +366,7 @@ class EffectiveSELayer(nn.Module):
     def __init__(self, channels, act_cfg=dict(type='HSigmoid')):
         super().__init__()
         assert isinstance(act_cfg, dict)
-        self.fc = ConvModule(channels, channels, 1)
+        self.fc = ConvModule(channels, channels, 1, act_cfg=None)
 
         act_cfg_ = act_cfg.copy()  # type: ignore
         self.activate = build_activation_layer(act_cfg_)

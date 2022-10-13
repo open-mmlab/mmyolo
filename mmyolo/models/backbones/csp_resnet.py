@@ -3,11 +3,11 @@ from typing import Tuple
 
 import torch
 import torch.nn as nn
-from mmcv.cnn import ConvModule, build_activation_layer
+from mmcv.cnn import ConvModule
 from mmdet.utils import ConfigType, OptMultiConfig
 
-from mmyolo.models import BaseBackbone, RepVGGBlock
-from mmyolo.models.layers.yolo_bricks import EffectiveSELayer
+from mmyolo.models.backbones import BaseBackbone
+from mmyolo.models.layers.yolo_bricks import EffectiveSELayer, RepVGGBlock
 from mmyolo.models.utils import make_divisible, make_round
 from mmyolo.registry import MODELS
 
@@ -20,32 +20,43 @@ class CSPResStage(nn.Module):
                  ch_out,
                  n,
                  stride,
+                 norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
                  act_cfg=dict(type='Swish'),
-                 attn='eca',
+                 use_attn=True,
                  use_alpha=False):
         super().__init__()
         ch_mid = (ch_in + ch_out) // 2
         if stride == 2:
             self.conv_down = ConvModule(
-                ch_in, ch_mid, 3, stride=2, padding=1, act_cfg=act_cfg)
+                ch_in,
+                ch_mid,
+                3,
+                stride=2,
+                padding=1,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg)
         else:
             self.conv_down = None
-        self.conv1 = ConvModule(ch_mid, ch_mid // 2, 1, act_cfg=act_cfg)
-        self.conv2 = ConvModule(ch_mid, ch_mid // 2, 1, act_cfg=act_cfg)
+        self.conv1 = ConvModule(
+            ch_mid, ch_mid // 2, 1, norm_cfg=norm_cfg, act_cfg=act_cfg)
+        self.conv2 = ConvModule(
+            ch_mid, ch_mid // 2, 1, norm_cfg=norm_cfg, act_cfg=act_cfg)
         self.blocks = nn.Sequential(*[
             block_fn(
                 ch_mid // 2,
                 ch_mid // 2,
+                norm_cfg=norm_cfg,
                 act_cfg=act_cfg,
                 shortcut=True,
                 use_alpha=use_alpha) for i in range(n)
         ])
-        if attn:
+        if use_attn:
             self.attn = EffectiveSELayer(ch_mid, act_cfg=dict(type='HSigmoid'))
         else:
             self.attn = None
 
-        self.conv3 = ConvModule(ch_mid, ch_out, 1, act_cfg=act_cfg)
+        self.conv3 = ConvModule(
+            ch_mid, ch_out, 1, norm_cfg=norm_cfg, act_cfg=act_cfg)
 
     def forward(self, x):
         if self.conv_down is not None:
@@ -64,30 +75,29 @@ class BasicBlock(nn.Module):
     def __init__(self,
                  ch_in,
                  ch_out,
+                 norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
                  act_cfg=dict(type='Swish'),
                  shortcut=True,
-                 inplace=True,
                  use_alpha=False):
         super().__init__()
         assert ch_in == ch_out
         assert act_cfg is None or isinstance(act_cfg, dict)
         self.conv1 = ConvModule(
-            ch_in, ch_out, 3, stride=1, padding=1, act_cfg=act_cfg)
+            ch_in,
+            ch_out,
+            3,
+            stride=1,
+            padding=1,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
 
-        # build activation layer
-        self.with_activation = act_cfg is not None
-        if self.with_activation:
-            act_cfg_ = act_cfg.copy()  # type: ignore
-            # nn.Tanh has no 'inplace' argument
-            if act_cfg_['type'] not in [
-                    'Tanh', 'PReLU', 'Sigmoid', 'HSigmoid', 'Swish', 'GELU'
-            ]:
-                act_cfg_.setdefault('inplace', inplace)
-            self.activate = build_activation_layer(act_cfg_)
-            self.conv2 = nn.Sequential(
-                RepVGGBlock(ch_out, ch_out, alpha=use_alpha), self.activate)
-        else:
-            self.conv2 = RepVGGBlock(ch_out, ch_out, alpha=use_alpha)
+        self.conv2 = RepVGGBlock(
+            ch_out,
+            ch_out,
+            alpha=use_alpha,
+            act_cfg=act_cfg,
+            norm_cfg=norm_cfg,
+            mode='ppyoloe')
         self.shortcut = shortcut
 
     def forward(self, x):
@@ -116,7 +126,7 @@ class CSPResNet(BaseBackbone):
                  out_indices: Tuple[int] = (2, 3, 4),
                  frozen_stages: int = -1,
                  norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.03, eps=0.001),
+                     type='BN', momentum=0.1, eps=1e-5),
                  act_cfg: ConfigType = dict(type='Swish'),
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None,
@@ -142,40 +152,51 @@ class CSPResNet(BaseBackbone):
             stem = nn.Sequential(
                 ConvModule(
                     self.input_channels,
-                    self.arch_setting[0][0] // 2,
+                    make_divisible(self.arch_setting[0][0], self.widen_factor)
+                    // 2,
                     3,
                     stride=2,
                     padding=1,
-                    act_cfg=self.act_cfg),
+                    act_cfg=self.act_cfg,
+                    norm_cfg=self.norm_cfg),
                 ConvModule(
-                    self.arch_setting[0][0] // 2,
-                    self.arch_setting[0][0] // 2,
+                    make_divisible(self.arch_setting[0][0],
+                                   self.widen_factor) // 2,
+                    make_divisible(self.arch_setting[0][0], self.widen_factor)
+                    // 2,
                     3,
                     stride=1,
                     padding=1,
+                    norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg),
                 ConvModule(
-                    self.arch_setting[0][0] // 2,
-                    self.arch_setting[0][0],
+                    make_divisible(self.arch_setting[0][0], self.widen_factor)
+                    // 2,
+                    make_divisible(self.arch_setting[0][0], self.widen_factor),
                     3,
                     stride=1,
                     padding=1,
+                    norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg))
         else:
             stem = nn.Sequential(
                 ConvModule(
                     self.input_channels,
-                    self.arch_setting[0][0] // 2,
+                    make_divisible(self.arch_setting[0][0], self.widen_factor)
+                    // 2,
                     3,
                     stride=2,
                     padding=1,
+                    norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg),
                 ConvModule(
-                    self.arch_setting[0][0] // 2,
-                    self.arch_setting[0][0],
+                    make_divisible(self.arch_setting[0][0], self.widen_factor)
+                    // 2,
+                    make_divisible(self.arch_setting[0][0], self.widen_factor),
                     3,
                     stride=1,
                     padding=1,
+                    norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg))
         return stem
 
@@ -192,15 +213,11 @@ class CSPResNet(BaseBackbone):
             out_channels,
             num_blocks,
             2,
-            act_cfg=self.act_cfg)
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg,
+            use_alpha=self.use_alpha)
         stage.append(cspres_layer)
         return stage
 
     def init_weights(self):
         raise NotImplementedError
-
-
-if __name__ == '__main__':
-    backbone = CSPResNet()
-    input_ = torch.zeros((1, 3, 512, 512), dtype=torch.float32)
-    res = backbone(input_)
