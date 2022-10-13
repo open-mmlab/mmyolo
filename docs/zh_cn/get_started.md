@@ -157,7 +157,7 @@ inference_detector(model, 'demo/demo.jpg')
 例如，你可以通过以下命令安装 MMEngine：
 
 ```shell
-pip install mmengine
+pip install "mmengine==0.1.0"
 ```
 
 #### 不使用 MIM 安装 MMCV
@@ -209,7 +209,7 @@ pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 
 ```shell
 !pip3 install openmim
-!mim install mmengine
+!mim install "mmengine==0.1.0"
 !mim install "mmcv>=2.0.0rc1,<2.1.0"
 !mim install "mmdet>=3.0.0.rc1"
 ```
