@@ -54,8 +54,8 @@ class YOLOv6HeadModule(BaseModule):
                  num_base_priors: int = 1,
                  featmap_strides: Sequence[int] = (8, 16, 32),
                  norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.03, eps=0.001),
-                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                     type='BN', momentum=0.1, eps=1e-05),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=False),
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg=init_cfg)
 
