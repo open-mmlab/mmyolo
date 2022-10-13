@@ -128,11 +128,11 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
         # top-down path
         inner_outs = [reduce_outs[-1]]
         for idx in range(len(self.in_channels) - 1, 0, -1):
-            feat_heigh = inner_outs[0]
+            feat_high = inner_outs[0]
             feat_low = reduce_outs[idx - 1]
             upsample_feat = self.upsample_layers[len(self.in_channels) - 1 -
                                                  idx](
-                                                     feat_heigh)
+                                                     feat_high)
 
             inner_out = self.top_down_layers[len(self.in_channels) - 1 - idx](
                 torch.cat([upsample_feat, feat_low], 1))
@@ -142,10 +142,10 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
         outs = [inner_outs[0]]
         for idx in range(len(self.in_channels) - 1):
             feat_low = outs[-1]
-            feat_height = inner_outs[idx + 1]
+            feat_high = inner_outs[idx + 1]
             downsample_feat = self.downsample_layers[idx](feat_low)
             out = self.bottom_up_layers[idx](
-                torch.cat([downsample_feat, feat_height], 1))
+                torch.cat([downsample_feat, feat_high], 1))
             outs.append(out)
 
         # out_layers
