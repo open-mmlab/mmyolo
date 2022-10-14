@@ -13,10 +13,10 @@ def format_by_file(image_dir: str):
 
     for category in categories:
         txt_file = osp.join(image_dir, f'{category}.txt')
-        print(f'Start to read {category} dataset definition from {txtFile}')
-        assert osp.exists(txtFile)
+        print(f'Start to read {category} dataset definition from {txt_file}')
+        assert osp.exists(txt_file)
 
-        with open(txtFile) as f:
+        with open(txt_file) as f:
             image_path = f.readlines()
             image_list.append(image_path)
     return image_list[0], image_list[1], image_list[2]
