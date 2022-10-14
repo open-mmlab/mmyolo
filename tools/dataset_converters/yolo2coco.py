@@ -86,7 +86,7 @@ def convert_yolo_to_coco(image_dir: str, split: bool = False):
             'height': height
         })
 
-        if not osp.exists(osp.join(yolo_label_dir, txtFile)):
+        if not osp.exists(osp.join(yolo_label_dir, txt_file)):
             # if current image is not annotated
             continue
 
