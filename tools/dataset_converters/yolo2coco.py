@@ -65,9 +65,16 @@ def convert_yolo_to_coco(image_dir: str, split: bool = False):
     obj_count = 0
     for idx, file in enumerate(mmengine.track_iter_progress(indices)):
         # support both .jpg and .png
+        """TODO:
+        1、replace may cause bug, while img filename is images1.jpg.
+            Try to use os.path.splitext.
+        2、It is better to use a format list like ['.jpg', '.png', '.jpeg']
+            to verify file postfixes.
+        3、use .lower() while verify file postfixes.
+        """
         txt_file = file.replace('images',
-                               'txt').replace('.jpg',
-                                              '.txt').replace('.png', '.txt')
+                                'txt').replace('.jpg',
+                                               '.txt').replace('.png', '.txt')
         img = mmcv.imread(osp.join(image_dir, 'images/') + file)
         height, width = img.shape[:2]
 
@@ -88,8 +95,10 @@ def convert_yolo_to_coco(image_dir: str, split: bool = False):
 
         if not osp.exists(osp.join(yolo_label_dir, txt_file)):
             # if current image is not annotated
+            # TODO: Add warning msg
             continue
 
+        # TODO: consider to excapsulate this part
         with open(osp.join(yolo_label_dir, txt_file)) as f:
             labels = f.readlines()
             for label in labels:
@@ -107,8 +116,8 @@ def convert_yolo_to_coco(image_dir: str, split: bool = False):
                 y2 = (y + h / 2) * H
 
                 cls_id = int(label[0])
-                width = max(0, x2 - x1)
-                height = max(0, y2 - y1)
+                width = max(0., x2 - x1)
+                height = max(0., y2 - y1)
                 dataset['annotations'].append({
                     'image_id':
                     idx,
