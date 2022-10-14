@@ -65,7 +65,7 @@ def convert_yolo_to_coco(image_dir: str, split: bool = False):
     obj_count = 0
     for idx, file in enumerate(mmengine.track_iter_progress(indices)):
         # support both .jpg and .png
-        txtFile = file.replace('images',
+        txt_file = file.replace('images',
                                'txt').replace('.jpg',
                                               '.txt').replace('.png', '.txt')
         img = mmcv.imread(osp.join(image_dir, 'images/') + file)
