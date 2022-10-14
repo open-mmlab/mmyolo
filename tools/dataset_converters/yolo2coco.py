@@ -140,17 +140,12 @@ def convert_yolo_to_coco(image_dir: str, split: bool = False):
 
     obj_count = 0
     for idx, image in enumerate(mmengine.track_iter_progress(indices)):
-        """Comments:
-        1、replace may cause bug, while img filename is images1.jpg.
-            Try to use os.path.splitext.
-        2、It is better to use a format list like ['.jpg', '.png', '.jpeg']
-            to verify file postfixes.
-        3、use .lower() while verify file postfixes.
-        """
         # support both .jpg, .png, and .jpeg
         img_suffix = osp.splitext(image)[1].lower()
-        if img_suffix in ['.jpg', '.png', '.jpeg']:
-            img_name = osp.splitext(image)[0]
+        if img_suffix not in ['.jpg', '.png', '.jpeg']:
+            raise Exception(
+                "Only supports '.jpg', '.png', and '.jepg' image formats")
+        img_name = osp.splitext(image)[0]
         img_info_dict, H, W = get_image_info(yolo_image_dir, idx, image)
 
         if split:
