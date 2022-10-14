@@ -132,6 +132,7 @@ test_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
