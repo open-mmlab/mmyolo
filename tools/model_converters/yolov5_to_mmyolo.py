@@ -30,8 +30,14 @@ convert_dict = {
 
 def convert(src, dst):
     """Convert keys in detectron pretrained YOLOV5 models to mmyolo style."""
-    yolov5_model = torch.load(src)['model']
-    blobs = yolov5_model.state_dict()
+    try:
+        yolov5_model = torch.load(src)['model']
+        blobs = yolov5_model.state_dict()
+    except ModuleNotFoundError:
+        raise RuntimeError(
+            'This script must be placed under the ultralytics/yolov5 repo,'
+            ' because loading the official pretrained model need'
+            ' `model.py` to build model.')
     state_dict = OrderedDict()
 
     for key, weight in blobs.items():
