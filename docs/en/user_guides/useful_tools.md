@@ -128,7 +128,18 @@ python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/o
 
 Instructions:
 
-1. `-image-dir` is the root directory of the yolo-style dataset, which should contain `images`, `labels`, and `class.txt`. `class.txt` is the class declaration corresponding to the current dataset. One class a line.
+1. `-image-dir` is the root directory of the yolo-style dataset, which should contain `images`, `labels`, and `class.txt`. `class.txt` is the class declaration corresponding to the current dataset. One class a line as this example shows:
+
+>
+
+```
+|____ $ROOT_PATH
+    |__ class.txt
+    |__ labels
+    |__ images
+    |__ ...
+```
+
 2. `-split` indicates whether you need to format the dataset based on the existing `train`, `val`, and `text` categories. It is not used by default. If you need to use it, please ensure the corresponding `train.txt`, ` val.txt`, and `test.txt` must exist under `-image-dir`. Otherwise, the script will fail to run.
 3. By default, the script will create a folder called `coco_format` in the `-image-dir` directory where stores the converted JSON file. If `-split` is not specified, the output file is `result.json`. If `-split` is specified, three corresponding files called `train.json`, `val.json`, and `test.json` will be generated.
 

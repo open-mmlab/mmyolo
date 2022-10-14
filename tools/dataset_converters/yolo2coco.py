@@ -1,3 +1,23 @@
+"""This script helps to convert yolo-style dataset to the coco format.
+
+Usage:
+    $ python yolo2coco.py --image-dir /path/to/dataset   # the root dir
+                          [--split]                      # if splits
+
+Note:
+    1. Before running this script, please make sure the root directory
+    of your dataset is formatted in the following struction:
+            |____ $ROOT_PATH
+            |__ class.txt
+            |__ labels
+            |__ images
+            |__ ...
+    2. `-split` is not used by default. If you need to use it, please ensure
+    the corresponding`train.txt`, ` val.txt`, and `test.txt` must exist under
+    `-image-dir`. Otherwise, the script will fail to run.
+    3. Once the script finishes, the result files will be saved in the
+    directory named 'coco_format' in the root directory of your dataset.
+"""
 import argparse
 import os
 import os.path as osp
