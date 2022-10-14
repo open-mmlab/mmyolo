@@ -90,7 +90,7 @@ def convert_yolo_to_coco(image_dir: str, split: bool = False):
             # if current image is not annotated
             continue
 
-        with open(osp.join(yolo_label_dir, txtFile)) as f:
+        with open(osp.join(yolo_label_dir, txt_file)) as f:
             labels = f.readlines()
             for label in labels:
                 label = label.strip().split()
