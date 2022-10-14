@@ -130,14 +130,14 @@ python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/o
 
 1. `-image-dir` 是待转换的yolo格式数据集的根目录，内应包含 `images` 、 `labels` 和 `class.txt` 文件， `class.txt` 是当前dataset对应的类的声明，一行一个。如下所示：
 
->
 
-```
-|____ $ROOT_PATH
-    |__ class.txt
-    |__ labels
-    |__ images
-    |__ ...
+```bash
+.
+└── $ROOT_PATH
+         ├── class.txt
+         ├── labels
+         ├── images
+         └── ...
 ```
 
 2. `-split` 代表是否需要在转换中按已有的 `train` 、 `val` 和 `text` 类别进行整理，默认不使用，如果需要使用，请确保对应的 `train.txt` 、 `val.txt` 和 `test.txt` 也要存在于 `-image-dir` 下，否则将报错。
