@@ -128,20 +128,24 @@ python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/o
 
 使用说明：
 
-1. `image-dir` 是待转换的yolo格式数据集的根目录，内应包含 `images` 、 `labels` 和 `class.txt` 文件， `class.txt` 是当前dataset对应的类的声明，一行一个。如下所示：
-
+1. `image-dir` 是待转换的yolo格式数据集的根目录，内应包含 `images` 、 `labels` 和 `class.txt` 文件， `class.txt` 是当前dataset对应的类的声明，一行一个类别。
+   `image_dir` 结构如下例所示：
 
 ```bash
 .
 └── $ROOT_PATH
          ├── class.txt
          ├── labels
+             ├── a.txt
+             ├── b.txt
          ├── images
+             ├── a.jpg
+             ├── b.png
          └── ...
 ```
 
-2. `split` 代表是否需要在转换中按已有的 `train` 、 `val` 和 `text` 类别进行整理，默认不使用，如果需要使用，请确保对应的 `train.txt` 、 `val.txt` 和 `test.txt` 也要存在于 `image-dir` 下，否则将报错。
-3. 脚本会默认在 `image-dir` 目录下创建 `coco_format` 文件夹并将转换结果存在这里。如果未指明 `split` ，输出文件即为 `result.json`，如果指明 `split` ，则会生成对应的 `train.json` 、 `val.json` 和 `test.json` 三个文件。
+2. 脚本会检测 `image-dir` 下是否已有的 `train.txt` 、 `val.txt` 和 `test.txt` 。若检测到三个文件，则会按照类别进行整理， 否则默认不需要分类。故请确保对应的 `train.txt` 、 `val.txt` 和 `test.txt` 要在 `image-dir` 内。
+3. 脚本会默认在 `image-dir` 目录下创建 `coco_format` 文件夹并将转换结果存在这里。如果在 `image-dir` 下没找到分类文件，输出文件即为 `result.json`，反之，则会生成对应的 `train.json` 、 `val.json` 和 `test.json` 三个文件。
 
 ## 数据集下载
 

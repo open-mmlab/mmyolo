@@ -2,20 +2,23 @@
 
 Usage:
     $ python yolo2coco.py --image-dir /path/to/dataset   # the root dir
-                          [--split]                      # if splits
 
 Note:
     1. Before running this script, please make sure the root directory
     of your dataset is formatted in the following struction:
     .
     └── $ROOT_PATH
-             ├── class.txt
-             ├── labels
-             ├── images
-             └── ...
-    2. `split` is not used by default. If you need to use it, please ensure
-    the corresponding`train.txt`, ` val.txt`, and `test.txt` must exist under
-    `image-dir`. Otherwise, the script will fail to run.
+            ├── class.txt
+            ├── labels
+                ├── a.txt
+                ├── b.txt
+            ├── images
+                ├── a.jpg
+                ├── b.png
+            └── ...
+    2. The script will automatically check whether the corresponding
+    `train.txt`, ` val.txt`, and `test.txt` exist under `image-dir` or not.
+    If these files are detected, the script will organize the dataset.
     3. Once the script finishes, the result files will be saved in the
     directory named 'coco_format' in the root directory of your dataset.
 """
@@ -96,14 +99,12 @@ def organize_by_existing_files(image_dir: str):
     return image_list[0], image_list[1], image_list[2]
 
 
-def convert_yolo_to_coco(image_dir: str, split: bool = False):
+def convert_yolo_to_coco(image_dir: str):
     """Convert annotations from yolo style to coco style.
 
     Args:
         image_dir (str): the root directory of your datasets which contains
             labels, images, classes.txt, etc
-        split (bool): whether to organize the datasets based on existing
-            train.txt, val.txt, and test.txt
     """
     print(f'Start to load existing images and annotations from {image_dir}')
     check_existance(image_dir)
@@ -114,14 +115,27 @@ def convert_yolo_to_coco(image_dir: str, split: bool = False):
     check_existance(yolo_label_dir)
     check_existance(yolo_image_dir)
     check_existance(yolo_class_txt)
+    print(f'All necessary files are located at {image_dir}')
+
+    train_txt_path = osp.join(image_dir, 'train.txt')
+    val_txt_path = osp.join(image_dir, 'val.txt')
+    test_txt_path = osp.join(image_dir, 'test.txt')
+    print(f'Checking if train.txt, val.txt, and test.txt are in {image_dir}')
+    if osp.exists(train_txt_path) and osp.exists(val_txt_path) and osp.exists(
+            test_txt_path):
+        print(
+            'these files are located, need to organize the data accordingly.')
+        to_categorize = True
+    else:
+        print('these files are not located, no need to organize separately.')
+        to_categorize = False
 
     with open(yolo_class_txt) as f:
         classes = f.read().strip().split()
 
     indices = os.listdir(yolo_image_dir)
 
-    if split:
-        print('Start to work based to existing train, test, and val')
+    if to_categorize:
         train_dataset = {'images': [], 'annotations': [], 'categories': []}
         val_dataset = {'images': [], 'annotations': [], 'categories': []}
         test_dataset = {'images': [], 'annotations': [], 'categories': []}
@@ -133,7 +147,6 @@ def convert_yolo_to_coco(image_dir: str, split: bool = False):
             test_dataset['categories'].append({'id': i, 'name': cls})
         train_img, val_img, test_img = organize_by_existing_files(image_dir)
     else:
-        print('Start to work on all data')
         dataset = {'images': [], 'annotations': [], 'categories': []}
         for i, cls in enumerate(classes, 0):
             dataset['categories'].append({'id': i, 'name': cls})
@@ -148,7 +161,7 @@ def convert_yolo_to_coco(image_dir: str, split: bool = False):
         img_name = osp.splitext(image)[0]
         img_info_dict, H, W = get_image_info(yolo_image_dir, idx, image)
 
-        if split:
+        if to_categorize:
             if image in train_img:
                 dataset = train_dataset
             elif image in val_img:
@@ -177,7 +190,7 @@ def convert_yolo_to_coco(image_dir: str, split: bool = False):
     if not osp.exists(res_folder):
         os.makedirs(res_folder)
 
-    if split:
+    if to_categorize:
         for category in ['train', 'val', 'test']:
             out_file = osp.join(image_dir, f'coco_format/{category}.json')
             print(f'Saving converted annotations to {out_file}')
@@ -201,9 +214,5 @@ if __name__ == '__main__':
         type=str,
         required=True,
         help='dataset directory with ./images and ./labels, classes.txt, etc.')
-    parser.add_argument(
-        '--split',
-        action='store_true',
-        help='convert based on existing train.txt, val.txt, and test.txt')
     arg = parser.parse_args()
-    convert_yolo_to_coco(arg.image_dir, arg.split)
+    convert_yolo_to_coco(arg.image_dir)
