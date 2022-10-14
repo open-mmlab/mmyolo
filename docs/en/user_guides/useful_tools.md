@@ -130,14 +130,13 @@ Instructions:
 
 1. `-image-dir` is the root directory of the yolo-style dataset, which should contain `images`, `labels`, and `class.txt`. `class.txt` is the class declaration corresponding to the current dataset. One class a line as this example shows:
 
->
-
-```
-|____ $ROOT_PATH
-    |__ class.txt
-    |__ labels
-    |__ images
-    |__ ...
+```bash
+.
+└── $ROOT_PATH
+         ├── class.txt
+         ├── labels
+         ├── images
+         └── ...
 ```
 
 2. `-split` indicates whether you need to format the dataset based on the existing `train`, `val`, and `text` categories. It is not used by default. If you need to use it, please ensure the corresponding `train.txt`, ` val.txt`, and `test.txt` must exist under `-image-dir`. Otherwise, the script will fail to run.
