@@ -139,8 +139,8 @@ Instructions:
          └── ...
 ```
 
-2. `-split` indicates whether you need to format the dataset based on the existing `train`, `val`, and `text` categories. It is not used by default. If you need to use it, please ensure the corresponding `train.txt`, ` val.txt`, and `test.txt` must exist under `-image-dir`. Otherwise, the script will fail to run.
-3. By default, the script will create a folder called `coco_format` in the `-image-dir` directory where stores the converted JSON file. If `-split` is not specified, the output file is `result.json`. If `-split` is specified, three corresponding files called `train.json`, `val.json`, and `test.json` will be generated.
+2. `split` indicates whether you need to format the dataset based on the existing `train`, `val`, and `text` categories. It is not used by default. If you need to use it, please ensure the corresponding `train.txt`, ` val.txt`, and `test.txt` must exist under `image-dir`. Otherwise, the script will fail to run.
+3. By default, the script will create a folder called `coco_format` in the `image-dir` directory where stores the converted JSON file. If `split` is not specified, the output file is `result.json`. If `split` is specified, three corresponding files called `train.json`, `val.json`, and `test.json` will be generated.
 
 ## Download Dataset
 
