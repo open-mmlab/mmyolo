@@ -25,6 +25,8 @@ anchors = [[(26, 44), (67, 57), (61, 130)], [(121, 118), (120, 239),
                                              (206, 182)],
            [(376, 161), (234, 324), (428, 322)]]
 
+load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa
+
 model = dict(
     bbox_head=dict(
         head_module=dict(num_classes=20),
@@ -95,7 +97,6 @@ randchoice_mosaic_pipeline = dict(
     transforms=[with_mosiac_pipeline, without_mosaic_pipeline],
     prob=[0.85834, 0.14166])
 
-# enable mixup
 train_pipeline = [
     *pre_transform, randchoice_mosaic_pipeline,
     dict(
@@ -216,5 +217,3 @@ val_evaluator = dict(
 test_evaluator = val_evaluator
 
 train_cfg = dict(max_epochs=max_epochs)
-
-load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa

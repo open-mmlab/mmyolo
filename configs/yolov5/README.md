@@ -28,12 +28,12 @@ YOLOv5 is a family of object detection architectures and models pretrained on th
 
 ### VOC
 
-| Backbone | size | SyncBN | AMP | Mem (GB) | box AP(COCO metric) |                                                      Config                                                      |         Download         |
-| :------: | :--: | :----: | :-: | :------: | :-----------------: | :--------------------------------------------------------------------------------------------------------------: | :----------------------: |
-| YOLOv5-n | 512  |   No   | Yes |   1.5    |          x          | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_n-v61_fast_1xb64-50e_voc.py) | [model](<>) \| [log](<>) |
-| YOLOv5-s | 512  |   No   | Yes |   2.7    |          x          | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py) | [model](<>) \| [log](<>) |
-| YOLOv5-m | 512  |   No   | Yes |   5.0    |        70.0         | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_m-v61_fast_1xb64-50e_voc.py) | [model](<>) \| [log](<>) |
-| YOLOv5-l | 512  |   No   | Yes |   8.1    |          x          | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_l-v61_fast_1xb32-50e_voc.py) | [model](<>) \| [log](<>) |
+| Backbone | size | AMP | Mem (GB) | box AP(COCO metric) |                                                      Config                                                      |         Download         |
+| :------: | :--: | :-: | :------: | :-----------------: | :--------------------------------------------------------------------------------------------------------------: | :----------------------: |
+| YOLOv5-n | 512  | Yes |   1.5    |          x          | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_n-v61_fast_1xb64-50e_voc.py) | [model](<>) \| [log](<>) |
+| YOLOv5-s | 512  | Yes |   2.7    |          x          | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py) | [model](<>) \| [log](<>) |
+| YOLOv5-m | 512  | Yes |   5.0    |        70.0         | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_m-v61_fast_1xb64-50e_voc.py) | [model](<>) \| [log](<>) |
+| YOLOv5-l | 512  | Yes |   8.1    |          x          | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_l-v61_fast_1xb32-50e_voc.py) | [model](<>) \| [log](<>) |
 
 **Note**:
 
