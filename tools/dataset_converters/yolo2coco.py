@@ -22,7 +22,7 @@ def format_by_file(image_dir: str):
     return image_list[0], image_list[1], image_list[2]
 
 
-def convert_yolo_to_coco(image_dir, split=False):
+def convert_yolo_to_coco(image_dir: str, split: bool = False):
     """Convert annotations from yolo style to coco style.
 
     Args:
