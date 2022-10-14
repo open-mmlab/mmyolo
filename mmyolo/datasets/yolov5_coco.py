@@ -6,7 +6,7 @@ from mmdet.datasets import BaseDetDataset, CocoDataset
 from ..registry import DATASETS, TASK_UTILS
 
 
-class BatchShapeDataset(BaseDetDataset):
+class BatchShapePolicyDataset(BaseDetDataset):
 
     def __init__(self,
                  *args,
@@ -53,10 +53,11 @@ class BatchShapeDataset(BaseDetDataset):
 
 
 @DATASETS.register_module()
-class YOLOv5CocoDataset(BatchShapeDataset, CocoDataset):
+class YOLOv5CocoDataset(BatchShapePolicyDataset, CocoDataset):
     """Dataset for YOLOv5 COCO Dataset.
 
     We only add `BatchShapePolicy` function compared with CocoDataset. See
     `mmyolo/datasets/utils.py#BatchShapePolicy` for details
+    TODO: need to merge YOLOv5CocoDataset into yolov5_datasets.py
     """
     pass
