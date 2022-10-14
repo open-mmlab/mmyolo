@@ -140,8 +140,8 @@ python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/o
          └── ...
 ```
 
-2. `-split` 代表是否需要在转换中按已有的 `train` 、 `val` 和 `text` 类别进行整理，默认不使用，如果需要使用，请确保对应的 `train.txt` 、 `val.txt` 和 `test.txt` 也要存在于 `-image-dir` 下，否则将报错。
-3. 脚本会默认在 `-image-dir` 目录下创建 `coco_format` 文件夹并将转换结果存在这里。如果未指明 `-split` ，输出文件即为 `result.json`，如果指明 `-split` ，则会生成对应的 `train.json` 、 `val.json` 和 `test.json` 三个文件。
+2. `split` 代表是否需要在转换中按已有的 `train` 、 `val` 和 `text` 类别进行整理，默认不使用，如果需要使用，请确保对应的 `train.txt` 、 `val.txt` 和 `test.txt` 也要存在于 `image-dir` 下，否则将报错。
+3. 脚本会默认在 `image-dir` 目录下创建 `coco_format` 文件夹并将转换结果存在这里。如果未指明 `split` ，输出文件即为 `result.json`，如果指明 `split` ，则会生成对应的 `train.json` 、 `val.json` 和 `test.json` 三个文件。
 
 ## 数据集下载
 
