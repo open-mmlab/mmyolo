@@ -13,9 +13,9 @@ Note:
              ├── labels
              ├── images
              └── ...
-    2. `-split` is not used by default. If you need to use it, please ensure
+    2. `split` is not used by default. If you need to use it, please ensure
     the corresponding`train.txt`, ` val.txt`, and `test.txt` must exist under
-    `-image-dir`. Otherwise, the script will fail to run.
+    `image-dir`. Otherwise, the script will fail to run.
     3. Once the script finishes, the result files will be saved in the
     directory named 'coco_format' in the root directory of your dataset.
 """
