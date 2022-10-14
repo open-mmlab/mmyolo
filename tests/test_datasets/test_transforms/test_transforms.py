@@ -137,7 +137,6 @@ class TestYOLOv5KeepRatioResize(unittest.TestCase):
         self.data_info2 = dict(img=np.random.random((300, 400, 3)))
 
     def test_yolov5_keep_ratio_resize(self):
-
         # test assertion for invalid keep_ratio
         with self.assertRaises(AssertionError):
             transform = YOLOv5KeepRatioResize(scale=(640, 640))
@@ -231,6 +230,13 @@ class TestLoadAnnotations(unittest.TestCase):
             (results['gt_ignore_flags'] == np.array([False, False])).all())
         self.assertEqual(results['gt_ignore_flags'].dtype, bool)
 
+        # test empty instance
+        results = transform({})
+        self.assertIn('gt_bboxes', results)
+        self.assertTrue(results['gt_bboxes'].shape == (0, 4))
+        self.assertIn('gt_ignore_flags', results)
+        self.assertTrue(results['gt_ignore_flags'].shape == (0, ))
+
     def test_load_labels(self):
         transform = LoadAnnotations(
             with_bbox=False,
@@ -243,6 +249,11 @@ class TestLoadAnnotations(unittest.TestCase):
         self.assertTrue((results['gt_bboxes_labels'] == np.array([1,
                                                                   2])).all())
         self.assertEqual(results['gt_bboxes_labels'].dtype, np.int64)
+
+        # test empty instance
+        results = transform({})
+        self.assertIn('gt_bboxes_labels', results)
+        self.assertTrue(results['gt_bboxes_labels'].shape == (0, ))
 
 
 class TestYOLOv5RandomAffine(unittest.TestCase):
