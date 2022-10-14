@@ -6,7 +6,7 @@ import mmcv
 import mmengine
 
 
-def format_by_file(image_dir):
+def format_by_file(image_dir: str):
     """Format annotations by existing train/val/test files."""
     categories = ['train', 'val', 'test']
     image_list = []
