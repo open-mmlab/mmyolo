@@ -1,8 +1,8 @@
-_base_ = './yolov5_s-v61_syncbn_fast_8xb8-50e_voc.py'
+_base_ = './yolov5_s-v61_fast_1xb64-50e_voc.py'
 
 deepen_factor = 1.33
 widen_factor = 1.25
-train_batch_size_per_gpu = 4
+train_batch_size_per_gpu = 32
 train_num_workers = 4
 
 model = dict(
@@ -21,3 +21,6 @@ train_dataloader = dict(
 
 optim_wrapper = dict(
     optimizer=dict(batch_size_per_gpu=train_batch_size_per_gpu))
+
+# TODO: need to add pretrained_model
+load_from = None

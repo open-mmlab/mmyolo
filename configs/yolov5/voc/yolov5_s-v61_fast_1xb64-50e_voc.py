@@ -7,7 +7,7 @@ dataset_type = 'YOLOv5VOCDataset'
 # parameters that often need to be modified
 img_scale = (512, 512)
 max_epochs = 50
-train_batch_size_per_gpu = 8
+train_batch_size_per_gpu = 64
 train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
@@ -39,7 +39,7 @@ model = dict(
 albu_train_transforms = _base_.albu_train_transforms
 pre_transform = _base_.pre_transform
 
-mosaic_affine_pipeline = [
+with_mosiac_pipeline = [
     dict(
         type='Mosaic',
         img_scale=img_scale,
@@ -62,8 +62,7 @@ mosaic_affine_pipeline = [
                 type='Mosaic',
                 img_scale=img_scale,
                 pad_val=114.0,
-                pre_transform=pre_transform,
-                prob=0.85834),
+                pre_transform=pre_transform),
             dict(
                 type='YOLOv5RandomAffine',
                 max_rotate_degree=0.0,
@@ -71,11 +70,11 @@ mosaic_affine_pipeline = [
                 max_shear_degree=0.0,
                 scaling_ratio_range=(1 - affine_scale, 1 + affine_scale),
                 border=(-img_scale[0] // 2, -img_scale[1] // 2),
-                border_val=(114, 114, 114)),
+                border_val=(114, 114, 114))
         ])
 ]
 
-no_mosaic_affine_pipeline = [
+without_mosaic_pipeline = [
     dict(
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
@@ -91,14 +90,14 @@ no_mosaic_affine_pipeline = [
         pad_val=dict(img=114))
 ]
 
-mosaic_prob_config = dict(
-    type='mmcv.RandomChoice',
-    transforms=[mosaic_affine_pipeline, no_mosaic_affine_pipeline],
+randchoice_mosaic_pipeline = dict(
+    type='RandomChoice',
+    transforms=[with_mosiac_pipeline, without_mosaic_pipeline],
     prob=[0.85834, 0.14166])
 
 # enable mixup
 train_pipeline = [
-    *pre_transform, mosaic_prob_config,
+    *pre_transform, randchoice_mosaic_pipeline,
     dict(
         type='mmdet.Albu',
         transforms=albu_train_transforms,
@@ -123,6 +122,7 @@ train_pipeline = [
 ]
 
 train_dataloader = dict(
+    _delete_=True,
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
     persistent_workers=persistent_workers,
@@ -146,8 +146,7 @@ train_dataloader = dict(
                 filter_cfg=dict(filter_empty_gt=False, min_size=32),
                 pipeline=train_pipeline)
         ]),
-    collate_fn=dict(type='yolov5_collate'),
-    _delete_=True)
+    collate_fn=dict(type='yolov5_collate'))
 
 test_pipeline = [
     dict(
@@ -159,8 +158,7 @@ test_pipeline = [
         scale=img_scale,
         allow_scale_up=False,
         pad_val=dict(img=114)),
-    # need gt_ignore
-    dict(type='mmdet.LoadAnnotations', with_bbox=True),
+    dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
@@ -201,10 +199,22 @@ default_hooks = dict(
         warmup_momentum=0.59462,
         warmup_bias_lr=0.18657))
 
+custom_hooks = [
+    dict(
+        type='EMAHook',
+        ema_type='ExpMomentumEMA',
+        momentum=0.0001,
+        update_buffers=True,
+        strict_load=False,
+        priority=49)
+]
+
 # TODO: support using coco metric in voc dataset
 val_evaluator = dict(
-    type='mmdet.VOCMetric', metric='mAP', eval_mode='11points', _delete_=True)
+    _delete_=True, type='mmdet.VOCMetric', metric='mAP', eval_mode='area')
 
 test_evaluator = val_evaluator
 
 train_cfg = dict(max_epochs=max_epochs)
+
+load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa

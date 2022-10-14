@@ -2,11 +2,11 @@
 from mmdet.datasets import VOCDataset
 
 from ..registry import DATASETS
-from .yolov5_coco import BatchShapeDataset
+from .yolov5_coco import BatchShapePolicyDataset
 
 
 @DATASETS.register_module()
-class YOLOv5VOCDataset(BatchShapeDataset, VOCDataset):
+class YOLOv5VOCDataset(BatchShapePolicyDataset, VOCDataset):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
