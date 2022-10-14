@@ -7,11 +7,12 @@ Usage:
 Note:
     1. Before running this script, please make sure the root directory
     of your dataset is formatted in the following struction:
-            |____ $ROOT_PATH
-            |__ class.txt
-            |__ labels
-            |__ images
-            |__ ...
+    .
+    └── $ROOT_PATH
+             ├── class.txt
+             ├── labels
+             ├── images
+             └── ...
     2. `-split` is not used by default. If you need to use it, please ensure
     the corresponding`train.txt`, ` val.txt`, and `test.txt` must exist under
     `-image-dir`. Otherwise, the script will fail to run.
