@@ -64,7 +64,7 @@ def yolov5_head__predict_by_feat(ctx,
 
     mlvl_strides = [
         flatten_priors.new_full(
-            (featmap_size.numel() * self.num_base_priors, ), stride)
+            (featmap_size[0] * featmap_size[1] * self.num_base_priors, ), stride)
         for featmap_size, stride in zip(featmap_sizes, self.featmap_strides)
     ]
     flatten_stride = torch.cat(mlvl_strides)
