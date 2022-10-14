@@ -6,7 +6,7 @@ from mmcv.cnn import ConvModule
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
-from ..layers import ELANBlock, MaxPoolBlock
+from ..layers import ELANBlock, MaxPoolAndStrideConvBlock
 from .base_backbone import BaseBackbone
 
 
@@ -134,7 +134,7 @@ class YOLOv7Backbone(BaseBackbone):
                 act_cfg=self.act_cfg)
             stage.extend([pre_layer, elan_layer])
         else:
-            pre_layer = MaxPoolBlock(
+            pre_layer = MaxPoolAndStrideConvBlock(
                 in_channels,
                 mode='reduce_channel_2x',
                 norm_cfg=self.norm_cfg,

@@ -462,8 +462,8 @@ class ELANBlock(BaseModule):
         return self.final_conv(x_final)
 
 
-class MaxPoolBlock(BaseModule):
-    """Max pooling layer for YOLOv7.
+class MaxPoolAndStrideConvBlock(BaseModule):
+    """Max pooling and stride conv layer for YOLOv7.
 
     - if mode is `reduce_channel_2x`, the output channel will
     be reduced by a factor of 2
@@ -500,7 +500,7 @@ class MaxPoolBlock(BaseModule):
         else:
             out_channels = in_channels
 
-        self.top_branches = nn.Sequential(
+        self.maxpool_branches = nn.Sequential(
             MaxPool2d(2, 2),
             ConvModule(
                 in_channels,
@@ -509,7 +509,7 @@ class MaxPoolBlock(BaseModule):
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg))
-        self.bottom_branches = nn.Sequential(
+        self.stride_conv_branches = nn.Sequential(
             ConvModule(
                 in_channels,
                 out_channels,
@@ -532,9 +532,9 @@ class MaxPoolBlock(BaseModule):
         Args:
             x (Tensor): The input tensor.
         """
-        top_out = self.top_branches(x)
-        bottom_out = self.bottom_branches(x)
-        return torch.cat([bottom_out, top_out], dim=1)
+        maxpool_out = self.maxpool_branches(x)
+        stride_conv_out = self.stride_conv_branches(x)
+        return torch.cat([stride_conv_out, maxpool_out], dim=1)
 
 
 class SPPFCSPBlock(BaseModule):
@@ -639,7 +639,7 @@ class SPPFCSPBlock(BaseModule):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
-    def forward(self, x):
+    def forward(self, x) -> Tensor:
         """Forward process
         Args:
             x (Tensor): The input tensor.

@@ -24,9 +24,9 @@ convert_dict = {
 
     # stage2
     # MaxPoolBlock reduce_channel_2x
-    'model.13': 'backbone.stage2.0.top_branches.1',
-    'model.14': 'backbone.stage2.0.bottom_branches.0',
-    'model.15': 'backbone.stage2.0.bottom_branches.1',
+    'model.13': 'backbone.stage2.0.maxpool_branches.1',
+    'model.14': 'backbone.stage2.0.stride_conv_branches.0',
+    'model.15': 'backbone.stage2.0.stride_conv_branches.1',
     # ELANBlock expand_channel_2x
     'model.17': 'backbone.stage2.1.short_conv',
     'model.18': 'backbone.stage2.1.main_conv',
@@ -38,9 +38,9 @@ convert_dict = {
 
     # stage3
     # MaxPoolBlock reduce_channel_2x
-    'model.26': 'backbone.stage3.0.top_branches.1',
-    'model.27': 'backbone.stage3.0.bottom_branches.0',
-    'model.28': 'backbone.stage3.0.bottom_branches.1',
+    'model.26': 'backbone.stage3.0.maxpool_branches.1',
+    'model.27': 'backbone.stage3.0.stride_conv_branches.0',
+    'model.28': 'backbone.stage3.0.stride_conv_branches.1',
     # ELANBlock expand_channel_2x
     'model.30': 'backbone.stage3.1.short_conv',
     'model.31': 'backbone.stage3.1.main_conv',
@@ -52,9 +52,9 @@ convert_dict = {
 
     # stage4
     # MaxPoolBlock reduce_channel_2x
-    'model.39': 'backbone.stage4.0.top_branches.1',
-    'model.40': 'backbone.stage4.0.bottom_branches.0',
-    'model.41': 'backbone.stage4.0.bottom_branches.1',
+    'model.39': 'backbone.stage4.0.maxpool_branches.1',
+    'model.40': 'backbone.stage4.0.stride_conv_branches.0',
+    'model.41': 'backbone.stage4.0.stride_conv_branches.1',
     # ELANBlock no_change_channel
     'model.43': 'backbone.stage4.1.short_conv',
     'model.44': 'backbone.stage4.1.main_conv',
@@ -98,9 +98,9 @@ convert_dict = {
     'model.75': 'neck.top_down_layers.1.final_conv',
 
     # neck MaxPoolBlock no_change_channel
-    'model.77': 'neck.downsample_layers.0.top_branches.1',
-    'model.78': 'neck.downsample_layers.0.bottom_branches.0',
-    'model.79': 'neck.downsample_layers.0.bottom_branches.1',
+    'model.77': 'neck.downsample_layers.0.maxpool_branches.1',
+    'model.78': 'neck.downsample_layers.0.stride_conv_branches.0',
+    'model.79': 'neck.downsample_layers.0.stride_conv_branches.1',
 
     # neck ELANBlock reduce_channel_2x
     'model.81': 'neck.bottom_up_layers.0.short_conv',
@@ -112,9 +112,9 @@ convert_dict = {
     'model.88': 'neck.bottom_up_layers.0.final_conv',
 
     # neck MaxPoolBlock no_change_channel
-    'model.90': 'neck.downsample_layers.1.top_branches.1',
-    'model.91': 'neck.downsample_layers.1.bottom_branches.0',
-    'model.92': 'neck.downsample_layers.1.bottom_branches.1',
+    'model.90': 'neck.downsample_layers.1.maxpool_branches.1',
+    'model.91': 'neck.downsample_layers.1.stride_conv_branches.0',
+    'model.92': 'neck.downsample_layers.1.stride_conv_branches.1',
 
     # neck ELANBlock reduce_channel_2x
     'model.94': 'neck.bottom_up_layers.1.short_conv',
@@ -146,8 +146,14 @@ convert_dict = {
 
 def convert(src, dst):
     """Convert keys in detectron pretrained YOLOv7 models to mmyolo style."""
-    yolov7_model = torch.load(src)['model'].float()
-    blobs = yolov7_model.state_dict()
+    try:
+        yolov7_model = torch.load(src)['model'].float()
+        blobs = yolov7_model.state_dict()
+    except ModuleNotFoundError:
+        raise RuntimeError(
+            'This script must be placed under the WongKinYiu/yolov7 repo,'
+            ' because loading the official pretrained model need'
+            ' `model.py` to build model.')
     state_dict = OrderedDict()
 
     for key, weight in blobs.items():

@@ -6,7 +6,8 @@ from mmcv.cnn import ConvModule
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
-from ..layers import ELANBlock, MaxPoolBlock, RepVGGBlock, SPPFCSPBlock
+from ..layers import (ELANBlock, MaxPoolAndStrideConvBlock, RepVGGBlock,
+                      SPPFCSPBlock)
 from .base_yolo_neck import BaseYOLONeck
 
 
@@ -127,7 +128,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The downsample layer.
         """
-        return MaxPoolBlock(
+        return MaxPoolAndStrideConvBlock(
             self.out_channels[idx],
             mode='no_change_channel',
             norm_cfg=self.norm_cfg,
