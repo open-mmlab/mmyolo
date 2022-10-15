@@ -133,14 +133,16 @@ Instructions:
 ```bash
 .
 └── $ROOT_PATH
-         ├── class.txt
-         ├── labels
-             ├── a.txt
-             ├── b.txt
-         ├── images
-             ├── a.jpg
-             ├── b.png
-         └── ...
+    ├── class.txt
+    ├── labels
+    │    ├── a.txt
+    │    ├── b.txt
+    │    └── ...
+    ├── images
+    │    ├── a.jpg
+    │    ├── b.png
+    │    └── ...
+    └── ...
 ```
 
 2. The script will automatically check if `train.txt`, `val.txt`, and `test.txt` are already existed under `image-dir`. If these files are located, the script will organize the dataset accordingly. Otherwise, the script will convert the dataset in one file.
