@@ -8,14 +8,16 @@ Note:
     of your dataset is formatted in the following struction:
     .
     └── $ROOT_PATH
-            ├── class.txt
-            ├── labels
-                ├── a.txt
-                ├── b.txt
-            ├── images
-                ├── a.jpg
-                ├── b.png
-            └── ...
+        ├── class.txt
+        ├── labels
+        │    ├── a.txt
+        │    ├── b.txt
+        │    └── ...
+        ├── images
+        │    ├── a.jpg
+        │    ├── b.png
+        │    └── ...
+        └── ...
     2. The script will automatically check whether the corresponding
     `train.txt`, ` val.txt`, and `test.txt` exist under `image-dir` or not.
     If these files are detected, the script will organize the dataset.

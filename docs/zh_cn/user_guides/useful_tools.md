@@ -134,14 +134,16 @@ python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/o
 ```bash
 .
 └── $ROOT_PATH
-         ├── class.txt
-         ├── labels
-             ├── a.txt
-             ├── b.txt
-         ├── images
-             ├── a.jpg
-             ├── b.png
-         └── ...
+    ├── class.txt
+    ├── labels
+    │    ├── a.txt
+    │    ├── b.txt
+    │    └── ...
+    ├── images
+    │    ├── a.jpg
+    │    ├── b.png
+    │    └── ...
+    └── ...
 ```
 
 2. 脚本会检测 `image-dir` 下是否已有的 `train.txt` 、 `val.txt` 和 `test.txt` 。若检测到三个文件，则会按照类别进行整理， 否则默认不需要分类。故请确保对应的 `train.txt` 、 `val.txt` 和 `test.txt` 要在 `image-dir` 内。
