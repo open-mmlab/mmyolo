@@ -716,7 +716,7 @@ class YOLOv6RandomAffine(BaseTransform):
             labels = labels[i]
             labels[:, 1:5] = new[i]
 
-            results['gt_bboxes'] = HorizontalBoxes(labels[:,1:5])
+            results['gt_bboxes'] = HorizontalBoxes(torch.tensor(labels[:,1:5]))
             results['gt_bboxes_labels'] = labels[:,0]
             results['gt_ignore_flags'] = results['gt_ignore_flags'][i]
 
