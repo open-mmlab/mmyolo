@@ -41,7 +41,7 @@ def check_existence(file_path: str):
 def get_image_info(yolo_image_dir, idx, file_name):
     """Retrieve image information."""
     img_path = osp.join(yolo_image_dir, file_name)
-    check_existance(img_path)
+    check_existence(img_path)
 
     img = mmcv.imread(img_path)
     height, width = img.shape[:2]
@@ -109,14 +109,14 @@ def convert_yolo_to_coco(image_dir: str):
             labels, images, classes.txt, etc
     """
     print(f'Start to load existing images and annotations from {image_dir}')
-    check_existance(image_dir)
+    check_existence(image_dir)
 
     yolo_label_dir = osp.join(image_dir, 'labels')
     yolo_image_dir = osp.join(image_dir, 'images')
     yolo_class_txt = osp.join(image_dir, 'classes.txt')
-    check_existance(yolo_label_dir)
-    check_existance(yolo_image_dir)
-    check_existance(yolo_class_txt)
+    check_existence(yolo_label_dir)
+    check_existence(yolo_image_dir)
+    check_existence(yolo_class_txt)
     print(f'All necessary files are located at {image_dir}')
 
     train_txt_path = osp.join(image_dir, 'train.txt')
