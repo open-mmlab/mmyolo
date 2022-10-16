@@ -13,7 +13,7 @@ widen_factor = 0.5
 max_epochs = 400
 save_epoch_intervals = 10
 train_batch_size_per_gpu = 32
-train_num_workers = 0
+train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
 
