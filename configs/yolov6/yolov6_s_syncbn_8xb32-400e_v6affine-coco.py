@@ -4,7 +4,7 @@ _base_ = '../_base_/default_runtime.py'
 data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
-num_last_epochs = 20
+num_last_epochs = 15
 
 # parameters that often need to be modified
 img_scale = (640, 640)  # height, width
@@ -18,7 +18,7 @@ val_batch_size_per_gpu = 1
 val_num_workers = 2
 
 # persistent_workers must be False if num_workers is 0.
-persistent_workers = False
+persistent_workers = True
 
 # only on Val
 batch_shapes_cfg = dict(
