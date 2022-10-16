@@ -8,7 +8,7 @@ Note:
     of your dataset is formatted in the following struction:
     .
     └── $ROOT_PATH
-        ├── class.txt
+        ├── classes.txt
         ├── labels
         │    ├── a.txt
         │    ├── b.txt
@@ -161,7 +161,8 @@ def convert_yolo_to_coco(image_dir: str):
             raise Exception(
                 "Only supports '.jpg', '.png', and '.jpeg' image formats")
         img_name = osp.splitext(image)[0]
-        img_info_dict, image_height, image_width = get_image_info(yolo_image_dir, idx, image)
+        img_info_dict, image_height, image_width = get_image_info(
+            yolo_image_dir, idx, image)
 
         if to_categorize:
             if image in train_img:
@@ -183,7 +184,7 @@ def convert_yolo_to_coco(image_dir: str):
             labels = f.readlines()
             for label in labels:
                 coco_info, obj_count = convert_bbox_info(
-                    label, idx, obj_count, H, W)
+                    label, idx, obj_count, image_height, image_width)
                 dataset['annotations'].append(coco_info)
                 obj_count += 1
 

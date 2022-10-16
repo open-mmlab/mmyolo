@@ -123,17 +123,17 @@ python tools/dataset_converters/balloon2coco.py
 - `yolo2coco.py` converts a dataset from `yolo-style` **.txt** format to COCO format, please use it as follows:
 
 ```shell
-python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/of/your_dataset [--split]
+python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/of/your_dataset
 ```
 
 Instructions:
 
-1. `image-dir` is the root directory of the yolo-style dataset, which should contain `images`, `labels`, and `class.txt`. `class.txt` is the class declaration corresponding to the current dataset. One class a line. The structure of the root directory should be formatted as this example shows:
+1. `image-dir` is the root directory of the yolo-style dataset, which should contain `images`, `labels`, and `classes.txt`. `classes.txt` is the class declaration corresponding to the current dataset. One class a line. The structure of the root directory should be formatted as this example shows:
 
 ```bash
 .
 └── $ROOT_PATH
-    ├── class.txt
+    ├── classes.txt
     ├── labels
     │    ├── a.txt
     │    ├── b.txt
@@ -146,7 +146,7 @@ Instructions:
 ```
 
 2. The script will automatically check if `train.txt`, `val.txt`, and `test.txt` are already existed under `image-dir`. If these files are located, the script will organize the dataset accordingly. Otherwise, the script will convert the dataset in one file.
-3. By default, the script will create a folder called `coco_format` in the `image-dir` directory where stores the converted JSON file. If `train.txt`, `val.txt`, and `test.txt` are not found, the output file is `result.json`. Otherwise, three corresponding files called `train.json`, `val.json`, and `test.json` will be generated.
+3. By default, the script will create a folder called `coco_format` in the `image-dir` directory where stores the converted JSON file. If `train.txt`, `val.txt`, and `test.txt` are not found, the output file is `result.json`. Otherwise, three corresponding files will be generated, named as`train.json`, `val.json`, and `test.json`.
 
 ## Download Dataset
 

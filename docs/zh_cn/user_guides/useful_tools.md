@@ -123,18 +123,18 @@ python tools/dataset_converters/balloon2coco.py
 - `yolo2coco.py` 将 `yolo-style` **.txt** 格式的数据集转换成 COCO 的格式，请按如下方式使用：
 
 ```shell
-python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/of/your_dataset [--split]
+python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/of/your_dataset
 ```
 
 使用说明：
 
-1. `image-dir` 是待转换的yolo格式数据集的根目录，内应包含 `images` 、 `labels` 和 `class.txt` 文件， `class.txt` 是当前 dataset 对应的类的声明，一行一个类别。
+1. `image-dir` 是待转换的yolo格式数据集的根目录，内应包含 `images` 、 `labels` 和 `classes.txt` 文件， `classes.txt` 是当前 dataset 对应的类的声明，一行一个类别。
    `image_dir` 结构如下例所示：
 
 ```bash
 .
 └── $ROOT_PATH
-    ├── class.txt
+    ├── classes.txt
     ├── labels
     │    ├── a.txt
     │    ├── b.txt
@@ -147,7 +147,7 @@ python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/o
 ```
 
 2. 脚本会检测 `image-dir` 下是否已有的 `train.txt` 、 `val.txt` 和 `test.txt` 。若检测到三个文件，则会按照类别进行整理， 否则默认不需要分类。故请确保对应的 `train.txt` 、 `val.txt` 和 `test.txt` 要在 `image-dir` 内。
-3. 脚本会默认在 `image-dir` 目录下创建 `coco_format` 文件夹并将转换结果存在这里。如果在 `image-dir` 下没找到分类文件，输出文件即为 `result.json`，反之，则会生成对应的 `train.json` 、 `val.json` 和 `test.json` 三个文件。
+3. 脚本会默认在 `image-dir` 目录下创建 `coco_format` 文件夹并将转换结果存在这里。如果在 `image-dir` 下没找到分类文件，输出文件即为一个 `result.json`，反之则会生成对应的 `train.json` 、 `val.json` 和 `test.json` 三个文件。
 
 ## 数据集下载
 
