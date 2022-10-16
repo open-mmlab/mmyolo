@@ -161,7 +161,7 @@ def convert_yolo_to_coco(image_dir: str):
             raise Exception(
                 "Only supports '.jpg', '.png', and '.jpeg' image formats")
         img_name = osp.splitext(image)[0]
-        img_info_dict, H, W = get_image_info(yolo_image_dir, idx, image)
+        img_info_dict, image_height, image_width = get_image_info(yolo_image_dir, idx, image)
 
         if to_categorize:
             if image in train_img:
