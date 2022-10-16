@@ -159,7 +159,7 @@ def convert_yolo_to_coco(image_dir: str):
         img_suffix = osp.splitext(image)[1].lower()
         if img_suffix not in ['.jpg', '.png', '.jpeg']:
             raise Exception(
-                "Only supports '.jpg', '.png', and '.jepg' image formats")
+                "Only supports '.jpg', '.png', and '.jpeg' image formats")
         img_name = osp.splitext(image)[0]
         img_info_dict, H, W = get_image_info(yolo_image_dir, idx, image)
 
