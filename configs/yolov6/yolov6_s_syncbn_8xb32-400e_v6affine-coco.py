@@ -93,10 +93,10 @@ train_pipeline = [
         pre_transform=pre_transform),
     dict(
         type='YOLOv6RandomAffine',
-        degrees=10,
+        degrees=0,
         translate=.1,
-        scale=.1,
-        shear=10,
+        scale=.5,
+        shear=0,
         new_shape=(640,640)),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
