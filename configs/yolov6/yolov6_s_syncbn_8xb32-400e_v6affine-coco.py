@@ -1,7 +1,7 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/coco100/'
+data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 num_last_epochs = 20
@@ -12,7 +12,7 @@ deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 400
 save_epoch_intervals = 10
-train_batch_size_per_gpu = 2
+train_batch_size_per_gpu = 32
 train_num_workers = 0
 val_batch_size_per_gpu = 1
 val_num_workers = 2
