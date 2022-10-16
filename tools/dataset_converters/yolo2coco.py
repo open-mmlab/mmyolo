@@ -55,7 +55,7 @@ def get_image_info(yolo_image_dir, idx, file_name):
     return img_info_dict, height, width
 
 
-def convert_bbox_info(label, idx, obj_count, H, W):
+def convert_bbox_info(label, idx, obj_count, image_height, image_width):
     """Convert yolo-style bbox info to the coco format."""
     label = label.strip().split()
     x = float(label[1])
