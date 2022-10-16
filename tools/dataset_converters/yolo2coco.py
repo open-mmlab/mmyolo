@@ -64,10 +64,10 @@ def convert_bbox_info(label, idx, obj_count, image_height, image_width):
     h = float(label[4])
 
     # convert x,y,w,h to x1,y1,x2,y2
-    x1 = (x - w / 2) * W
-    y1 = (y - h / 2) * H
-    x2 = (x + w / 2) * W
-    y2 = (y + h / 2) * H
+    x1 = (x - w / 2) * image_width
+    y1 = (y - h / 2) * image_height
+    x2 = (x + w / 2) * image_width
+    y2 = (y + h / 2) * image_height
 
     cls_id = int(label[0])
     width = max(0., x2 - x1)
