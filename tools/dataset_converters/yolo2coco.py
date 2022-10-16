@@ -32,7 +32,7 @@ import mmcv
 import mmengine
 
 
-def check_existance(file_path: str):
+def check_existence(file_path: str):
     """Check if target file is existed."""
     if not osp.exists(file_path):
         raise FileNotFoundError(f'{file_path} does not exist!')
