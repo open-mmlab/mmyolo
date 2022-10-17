@@ -118,6 +118,8 @@ class RepVGGBlock(nn.Module):
         padding_mode (string, optional): Default: 'zeros'
         deploy (bool): Whether in deploy mode. Default: False
         use_se (bool): Whether to use se. Default: False
+        TODO: Because the RepVGG are different in YOLOv6 and PPYOLOE ,
+        recommend refactoring `RepVGGBlock` code
     """
 
     def __init__(self,
@@ -238,8 +240,12 @@ class RepVGGBlock(nn.Module):
         kernel3x3, bias3x3 = self._fuse_bn_tensor(self.rbr_dense)
         kernel1x1, bias1x1 = self._fuse_bn_tensor(self.rbr_1x1)
         kernelid, biasid = self._fuse_bn_tensor(self.rbr_identity)
-        return kernel3x3 + self._pad_1x1_to_3x3_tensor(
-            kernel1x1) + kernelid, bias3x3 + bias1x1 + biasid
+        if self.alpha:
+            return kernel3x3 + self.alpha * self._pad_1x1_to_3x3_tensor(
+                kernel1x1) + kernelid, bias3x3 + self.alpha * bias1x1 + biasid
+        else:
+            return kernel3x3 + self._pad_1x1_to_3x3_tensor(
+                kernel1x1) + kernelid, bias3x3 + bias1x1 + biasid
 
     def _pad_1x1_to_3x3_tensor(self, kernel1x1):
         """Pad 1x1 tensor to 3x3.
