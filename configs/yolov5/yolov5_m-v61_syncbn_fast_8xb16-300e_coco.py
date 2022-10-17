@@ -5,6 +5,10 @@ widen_factor = 0.75
 lr_factor = 0.1  # lrf=0.1
 affine_scale = 0.9
 
+num_classes = _base_.num_classes
+num_det_layers = _base_.num_det_layers
+img_scale = _base_.img_scale
+
 model = dict(
     backbone=dict(
         deepen_factor=deepen_factor,
@@ -16,12 +20,13 @@ model = dict(
     ),
     bbox_head=dict(
         head_module=dict(widen_factor=widen_factor),
-        loss_cls=dict(loss_weight=0.3),
-        loss_obj=dict(loss_weight=0.7)))
+        loss_cls=dict(loss_weight=0.3 *
+                      (num_classes / 80 * 3 / num_det_layers)),
+        loss_obj=dict(loss_weight=0.7 *
+                      ((img_scale[0] / 640)**2 * 3 / num_det_layers))))
 
 pre_transform = _base_.pre_transform
 albu_train_transforms = _base_.albu_train_transforms
-img_scale = _base_.img_scale
 
 mosaic_affine_pipeline = [
     dict(

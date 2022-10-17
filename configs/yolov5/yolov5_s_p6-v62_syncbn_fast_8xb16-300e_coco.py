@@ -1,28 +1,34 @@
 _base_ = 'yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 
 img_scale = (1280, 1280)  # height, width
-
+num_classes = 80
 # only on Val
-batch_shapes_cfg = dict(img_size=img_scale[0])
+batch_shapes_cfg = dict(img_size=img_scale[0], size_divisor=64)
 
-anchors = [[(19, 27), (44, 40), (38, 94)],  # P3/8
-           [(96, 68), (86, 152), (180, 137)],  # P4/16
-           [(140, 301), (303, 264), (238, 542)],  # P5/32
-           [(436, 615), (739, 380), (925, 792)]]  # P6/64
+anchors = [
+    [(19, 27), (44, 40), (38, 94)],  # P3/8
+    [(96, 68), (86, 152), (180, 137)],  # P4/16
+    [(140, 301), (303, 264), (238, 542)],  # P5/32
+    [(436, 615), (739, 380), (925, 792)]
+]  # P6/64
 strides = [8, 16, 32, 64]
+num_det_layers = 4
 
 model = dict(
-    backbone=dict(arch='P6'),
+    backbone=dict(arch='P6', out_indices=(2, 3, 4, 5)),
     neck=dict(
-        in_channels=[256, 512, 768, 1024],
-        out_channels=[256, 512, 768, 1024]),
+        in_channels=[256, 512, 768, 1024], out_channels=[256, 512, 768, 1024]),
     bbox_head=dict(
         head_module=dict(
-            in_channels=[256, 512, 768, 1024],
-            featmap_strides=strides),
-        prior_generator=dict(
-            base_sizes=anchors,
-            strides=strides)))
+            in_channels=[256, 512, 768, 1024], featmap_strides=strides),
+        prior_generator=dict(base_sizes=anchors, strides=strides),
+        # scaled based on number of detection layers
+        loss_cls=dict(loss_weight=0.5 *
+                      (num_classes / 80 * 3 / num_det_layers)),
+        loss_bbox=dict(loss_weight=0.05 * (3 / num_det_layers)),
+        loss_obj=dict(loss_weight=1.0 *
+                      ((img_scale[0] / 640)**2 * 3 / num_det_layers)),
+        obj_level_weights=[4.0, 1.0, 0.25, 0.06]))
 
 pre_transform = _base_.pre_transform
 albu_train_transforms = _base_.albu_train_transforms
@@ -80,8 +86,6 @@ test_pipeline = [
 ]
 
 val_dataloader = dict(
-    dataset=dict(
-        pipeline=test_pipeline,
-        batch_shapes_cfg=batch_shapes_cfg))
+    dataset=dict(pipeline=test_pipeline, batch_shapes_cfg=batch_shapes_cfg))
 
 test_dataloader = val_dataloader

@@ -5,6 +5,7 @@ data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 # parameters that often need to be modified
+num_classes = 80
 img_scale = (640, 640)  # height, width
 deepen_factor = 0.33
 widen_factor = 0.5
@@ -29,6 +30,7 @@ batch_shapes_cfg = dict(
 anchors = [[(10, 13), (16, 30), (33, 23)], [(30, 61), (62, 45), (59, 119)],
            [(116, 90), (156, 198), (373, 326)]]
 strides = [8, 16, 32]
+num_det_layers = 3
 
 # single-scale training is recommended to
 # be turned on, which can speed up training.
@@ -60,7 +62,7 @@ model = dict(
         type='YOLOv5Head',
         head_module=dict(
             type='YOLOv5HeadModule',
-            num_classes=80,
+            num_classes=num_classes,
             in_channels=[256, 512, 1024],
             widen_factor=widen_factor,
             featmap_strides=strides,
@@ -69,24 +71,25 @@ model = dict(
             type='mmdet.YOLOAnchorGenerator',
             base_sizes=anchors,
             strides=strides),
+        # scaled based on number of detection layers
         loss_cls=dict(
             type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
             reduction='mean',
-            loss_weight=0.5),
+            loss_weight=0.5 * (num_classes / 80 * 3 / num_det_layers)),
         loss_bbox=dict(
             type='IoULoss',
             iou_mode='ciou',
             bbox_format='xywh',
             eps=1e-7,
             reduction='mean',
-            loss_weight=0.05,
+            loss_weight=0.05 * (3 / num_det_layers),
             return_iou=True),
         loss_obj=dict(
             type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
             reduction='mean',
-            loss_weight=1.0),
+            loss_weight=1.0 * ((img_scale[0] / 640)**2 * 3 / num_det_layers)),
         prior_match_thr=4.,
         obj_level_weights=[4., 1., 0.4]),
     test_cfg=dict(
