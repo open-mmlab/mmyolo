@@ -24,11 +24,13 @@ def parse_args():
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
-        '--save-json-type', default='', choices=['cwh', 'tl-wh', 'tl-br'],
+        '--save-json-type',
+        default='',
+        choices=['cwh', 'tl-wh', 'tl-br'],
         help='Save predict info to json with type in ("cwh", "tl-wh", "tl-br"). '
-             '`cwh`: center xy and bbox wh, '
-             '`tl-wh`: top-left xy and bbox wh, '
-             '`tl-br`: top-left xy and bottom-right xy.')
+        '`cwh`: center xy and bbox wh, '
+        '`tl-wh`: top-left xy and bbox wh, '
+        '`tl-br`: top-left xy and bottom-right xy.')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
@@ -125,10 +127,15 @@ def main():
                     # top-left xy and bottom-right xy
                     bbox_save = result.pred_instances['bboxes'][idx].tolist()
 
-                pred_json.append({'image_id': os.path.splitext(filename)[0],
-                                  'category_id': int(result.pred_instances['labels'][idx]),
-                                  'bbox': [round(x, 3) for x in bbox_save],
-                                  'score': round(result.pred_instances['scores'][idx].tolist(), 5)})
+                pred_json.append({
+                    'image_id':
+                    os.path.splitext(filename)[0],
+                    'category_id':
+                    int(result.pred_instances['labels'][idx]),
+                    'bbox': [round(x, 3) for x in bbox_save],
+                    'score':
+                    round(result.pred_instances['scores'][idx].tolist(), 5)
+                })
 
         progress_bar.update()
 
@@ -138,7 +145,8 @@ def main():
             json.dump(pred_json, f)
 
     if not args.show:
-        print_log(f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
+        print_log(
+            f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
 
 
 if __name__ == '__main__':
