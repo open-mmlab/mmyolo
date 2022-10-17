@@ -107,14 +107,20 @@ python demo/image_demo.py demo/demo.jpg \
 ```
 Optional parameters:
 - `--out-dir`: The detection results are output to the specified directory. When args have action `--show`, the script do not save results. Default is `./output`. 
+- `--device`: The computing resources used, including cuda and cpu. Default is `cuda:0`.
+- `--show` : Display the results on the screen. Default is `False`.
+- `--score-thr`: Confidence threshold. Default is `0.3`.
 - `--save-json-type'`: Save predict info to json with type in ("cwh", "tl-wh", "tl-br"). File will be saved with file named `predict.json` under `--out-dir`. When args have action `--show`, the script do not save results. Default not saving json file. 
   - `cwh`: BBox center xy and bbox wh.
   - `tl-wh`: Bbox top-left xy and bbox wh.
   - `tl-br`: Bbox top-left xy and bottom-right xy.
-- `--device`: The computing resources used, including cuda and cpu. Default is `cuda:0`.
-- `--show` : Display the results on the screen. Default is `False`.
-- `--score-thr`: Confidence threshold. Default is `0.3`.
 
+  Json file example:
+  ```json
+  [{"image_id": "image1", "category_id": 0, "bbox": [685.527, 1505.345, 55.327, 54.691], "score": 0.64104}, 
+  {"image_id": "image1", "category_id": 1, "bbox": [2127.666, 1416.52, 134.104, 117.782], "score": 0.70942}, 
+  {"image_id": "image2", "category_id": 0, "bbox": [1026.099, 45.593, 39.551, 40.855], "score": 0.61739}, ...]
+  ```
 
 You will see a new image on your `output` folder, where bounding boxes are plotted.
 

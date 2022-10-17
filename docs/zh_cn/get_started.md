@@ -105,13 +105,20 @@ python demo/image_demo.py demo/demo.jpg \
 
 可选参数:
 `--out-dir`：检测结果输出到指定目录下，默认为./output, 当 `--show` 参数存在时，不保存检测结果。默认是 `./output`。
+`--device`：使用的计算资源，包括cuda, cpu等，默认为 `cuda:0`。
+`--show`：使用该参数表示在屏幕上显示检测结果，默认为 `False`。
+`--score-thr`：置信度阈值，默认为 `0.3`。
 - `--save-json-type'`: 保存推理结果到 Json 文件，可选格式为 `cwh`、`tl-wh` 和 `tl-br`，保存结果在 `--out-dir` 文件夹下的 `predict.json`。当 `--show` 参数存在时，不保存检测结果。默认不保存。
   - `cwh`: BBox 中心点 xy 和 bbox wh.
   - `tl-wh`: BBox top-left xy 和 bbox wh.
   - `tl-br`: top-left xy 和 bottom-right xy.
-`--device`：使用的计算资源，包括cuda, cpu等，默认为 `cuda:0`。
-`--show`：使用该参数表示在屏幕上显示检测结果，默认为 `False`。
-`--score-thr`：置信度阈值，默认为 `0.3`。
+
+  Json 保存结果例子:
+  ```json
+  [{"image_id": "image1", "category_id": 0, "bbox": [685.527, 1505.345, 55.327, 54.691], "score": 0.64104}, 
+  {"image_id": "image1", "category_id": 1, "bbox": [2127.666, 1416.52, 134.104, 117.782], "score": 0.70942}, 
+  {"image_id": "image2", "category_id": 0, "bbox": [1026.099, 45.593, 39.551, 40.855], "score": 0.61739}, ...]
+  ```
 
 运行结束后，在 `output` 文件夹中可以看到检测结果图像，图像中包含有网络预测的检测框。
 
