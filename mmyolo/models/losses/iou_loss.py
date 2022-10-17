@@ -40,7 +40,7 @@ def bbox_overlaps(pred: torch.Tensor,
     Returns:
         Tensor: shape (n,).
     """
-    assert iou_mode in ('ciou', )
+    assert iou_mode in ('ciou', 'giou', 'siou')
     assert bbox_format in ('xyxy', 'xywh')
     if bbox_format == 'xywh':
         pred = HorizontalBoxes.cxcywh_to_xyxy(pred)
@@ -51,6 +51,7 @@ def bbox_overlaps(pred: torch.Tensor,
     rb = torch.min(pred[:, 2:], target[:, 2:])
     wh = (rb - lt).clamp(min=0)
     overlap = wh[:, 0] * wh[:, 1]
+    import pdb;pdb.set_trace()
 
     # union
     ap = (pred[:, 2] - pred[:, 0]) * (pred[:, 3] - pred[:, 1])
@@ -92,6 +93,11 @@ def bbox_overlaps(pred: torch.Tensor,
 
         # CIoU
         ious = ious - (rho2 / c2 + alpha * v)
+
+    elif iou_mode == 'giou':
+        c_area = cw * ch + eps  # convex area
+        ious = ious - (c_area - union) / c_area
+
     elif iou_mode == 'siou':
         # SIoU Loss https://arxiv.org/pdf/2205.12740.pdf
         s_cw = (b2_x1 + b2_x2 - b1_x1 - b1_x2) * 0.5
@@ -109,7 +115,7 @@ def bbox_overlaps(pred: torch.Tensor,
         omiga_w = torch.abs(w1 - w2) / torch.max(w1, w2)
         omiga_h = torch.abs(h1 - h2) / torch.max(h1, h2)
         shape_cost = torch.pow(1 - torch.exp(-1 * omiga_w), 4) + torch.pow(1 - torch.exp(-1 * omiga_h), 4)
-        iou = iou - 0.5 * (distance_cost + shape_cost)
+        ious = ious - 0.5 * (distance_cost + shape_cost)
 
     return ious.clamp(min=-1.0, max=1.0)
 
@@ -139,7 +145,7 @@ class IoULoss(nn.Module):
                  return_iou: bool = True):
         super().__init__()
         assert bbox_format in ('xywh', 'xyxy')
-        assert iou_mode in ('ciou', 'siou')
+        assert iou_mode in ('ciou', 'siou', 'giou')
         self.iou_mode = iou_mode
         self.bbox_format = bbox_format
         self.eps = eps
@@ -176,11 +182,10 @@ class IoULoss(nn.Module):
         assert reduction_override in (None, 'none', 'mean', 'sum')
         reduction = (
             reduction_override if reduction_override else self.reduction)
-        if weight is not None and weight.dim() > 1:
-            # TODO: remove this in the future
-            # reduce the weight of shape (n, 4) to (n,) to match the
-            # giou_loss of shape (n,)
-            assert weight.shape == pred.shape
+
+        import pdb;pdb.set_trace()
+
+        if weight.shape[-1] == 4:
             weight = weight.mean(-1)
 
         iou = bbox_overlaps(
