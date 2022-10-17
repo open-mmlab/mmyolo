@@ -51,7 +51,6 @@ def bbox_overlaps(pred: torch.Tensor,
     rb = torch.min(pred[:, 2:], target[:, 2:])
     wh = (rb - lt).clamp(min=0)
     overlap = wh[:, 0] * wh[:, 1]
-    import pdb;pdb.set_trace()
 
     # union
     ap = (pred[:, 2] - pred[:, 0]) * (pred[:, 3] - pred[:, 1])
@@ -183,9 +182,7 @@ class IoULoss(nn.Module):
         reduction = (
             reduction_override if reduction_override else self.reduction)
 
-        import pdb;pdb.set_trace()
-
-        if weight.shape[-1] == 4:
+        if weight is not None and weight.dim() > 1:
             weight = weight.mean(-1)
 
         iou = bbox_overlaps(
