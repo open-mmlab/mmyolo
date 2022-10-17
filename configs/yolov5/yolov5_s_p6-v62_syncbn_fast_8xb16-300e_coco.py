@@ -9,8 +9,8 @@ anchors = [
     [(19, 27), (44, 40), (38, 94)],  # P3/8
     [(96, 68), (86, 152), (180, 137)],  # P4/16
     [(140, 301), (303, 264), (238, 542)],  # P5/32
-    [(436, 615), (739, 380), (925, 792)]
-]  # P6/64
+    [(436, 615), (739, 380), (925, 792)]  # P6/64
+]
 strides = [8, 16, 32, 64]
 num_det_layers = 4
 
@@ -69,9 +69,7 @@ train_pipeline = [
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
 
 test_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',

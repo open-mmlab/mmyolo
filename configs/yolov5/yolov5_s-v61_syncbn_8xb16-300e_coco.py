@@ -27,8 +27,11 @@ batch_shapes_cfg = dict(
     size_divisor=32,
     extra_pad_ratio=0.5)
 
-anchors = [[(10, 13), (16, 30), (33, 23)], [(30, 61), (62, 45), (59, 119)],
-           [(116, 90), (156, 198), (373, 326)]]
+anchors = [
+    [(10, 13), (16, 30), (33, 23)],  # P3/8
+    [(30, 61), (62, 45), (59, 119)],  # P4/16
+    [(116, 90), (156, 198), (373, 326)]  # P5/32
+]
 strides = [8, 16, 32]
 num_det_layers = 3
 
@@ -107,9 +110,7 @@ albu_train_transforms = [
 ]
 
 pre_transform = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True)
 ]
 
@@ -161,9 +162,7 @@ train_dataloader = dict(
         pipeline=train_pipeline))
 
 test_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',

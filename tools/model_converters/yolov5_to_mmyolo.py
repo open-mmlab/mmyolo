@@ -62,11 +62,11 @@ def convert(src, dst):
     if src.endswith('6.pt'):
         convert_dict = convert_dict_p6
         is_p6_model = True
-        print('!P6 model')
+        print('Converting P6 model')
     else:
         convert_dict = convert_dict_p5
         is_p6_model = False
-        print('!P5 model')
+        print('Converting P5 model')
     try:
         yolov5_model = torch.load(src)['model']
         blobs = yolov5_model.state_dict()
