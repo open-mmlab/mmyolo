@@ -215,7 +215,8 @@ class YOLOv6Head(YOLOv5Head):
                      bbox_format='xyxy',
                      eps=1e-10,
                      reduction='mean',
-                     loss_weight=2.5),
+                     loss_weight=2.5,
+                     return_iou=False),
                  loss_obj: ConfigType = dict(
                      type='mmdet.CrossEntropyLoss',
                      use_sigmoid=True,
@@ -247,6 +248,7 @@ class YOLOv6Head(YOLOv5Head):
             self.initial_epoch = self.train_cfg['initial_epoch']
             self.initial_assigner = TASK_UTILS.build(self.train_cfg.initial_assigner)
             self.assigner = TASK_UTILS.build(self.train_cfg.assigner)
+            self.use_dfl = self.train_cfg['use_dfl']
 
     def loss_by_feat(
             self,
@@ -378,7 +380,7 @@ class YOLOv6Head(YOLOv5Head):
             bbox_weight = torch.masked_select(
                 target_scores.sum(-1), fg_mask).unsqueeze(-1)
             loss_iou = self.loss_bbox(pred_bboxes_pos,
-                                     target_bboxes_pos, weight=bbox_weight, avg_factor = target_scores_sum,return_iou=False)
+                                     target_bboxes_pos, weight=bbox_weight, avg_factor = target_scores_sum)
 
             # dfl loss
             if self.use_dfl:
