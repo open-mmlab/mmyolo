@@ -5,6 +5,7 @@ data_root = 'data/VOCdevkit/'
 dataset_type = 'YOLOv5VOCDataset'
 
 # parameters that often need to be modified
+num_classes = 20
 img_scale = (512, 512)
 max_epochs = 50
 train_batch_size_per_gpu = 64
@@ -24,16 +25,22 @@ batch_shapes_cfg = dict(img_size=img_scale[0])
 anchors = [[(26, 44), (67, 57), (61, 130)], [(121, 118), (120, 239),
                                              (206, 182)],
            [(376, 161), (234, 324), (428, 322)]]
+num_det_layers = 3
 
 load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa
 
 model = dict(
     bbox_head=dict(
-        head_module=dict(num_classes=20),
+        head_module=dict(num_classes=num_classes),
         prior_generator=dict(base_sizes=anchors),
-        loss_cls=dict(loss_weight=0.21638, class_weight=0.5),
-        loss_bbox=dict(loss_weight=0.02),
-        loss_obj=dict(loss_weight=0.51728, class_weight=0.67198),
+        loss_cls=dict(
+            loss_weight=0.21638 * (num_classes / 80 * 3 / num_det_layers),
+            class_weight=0.5),
+        loss_bbox=dict(loss_weight=0.02 * (3 / num_det_layers)),
+        loss_obj=dict(
+            loss_weight=0.51728 *
+            ((img_scale[0] / 640)**2 * 3 / num_det_layers),
+            class_weight=0.67198),
         prior_match_thr=3.3744,
         obj_level_weights=[4., 1., 0.4]),
     test_cfg=dict(nms=dict(iou_threshold=0.6)))
