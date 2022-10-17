@@ -55,7 +55,7 @@ def yolov5_head__predict_by_feat(ctx,
     cfg = self.test_cfg if cfg is None else cfg
     cfg = copy.deepcopy(cfg)
 
-    num_imgs = len(batch_img_metas)
+    num_imgs = cls_scores[0].shape[0]
     featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
 
     mlvl_priors = self.prior_generator.grid_priors(
@@ -64,11 +64,11 @@ def yolov5_head__predict_by_feat(ctx,
 
     mlvl_strides = [
         flatten_priors.new_full(
-            (featmap_size[0] * featmap_size[1] * self.num_base_priors, ), stride)
+            (featmap_size[0] * featmap_size[1] * self.num_base_priors, ),
+            stride)
         for featmap_size, stride in zip(featmap_sizes, self.featmap_strides)
     ]
     flatten_stride = torch.cat(mlvl_strides)
-
     # flatten cls_scores, bbox_preds and objectness
     flatten_cls_scores = [
         cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1, self.num_classes)
