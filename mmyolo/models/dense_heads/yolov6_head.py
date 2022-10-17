@@ -211,11 +211,11 @@ class YOLOv6Head(YOLOv5Head):
                      loss_weight=1.0),   
                  loss_bbox=dict(
                      type='IoULoss',
-                     iou_mode='siou',
-                     bbox_format='xywh',
-                     eps=1e-16,
+                     iou_mode='giou',
+                     bbox_format='xyxy',
+                     eps=1e-10,
                      reduction='mean',
-                     loss_weight=5.0),
+                     loss_weight=2.5),
                  loss_obj: ConfigType = dict(
                      type='mmdet.CrossEntropyLoss',
                      use_sigmoid=True,
@@ -236,7 +236,9 @@ class YOLOv6Head(YOLOv5Head):
             init_cfg=init_cfg)
 
         self.iou_type = 'giou'
-        self.bbox_loss = BboxLoss(self.num_classes,0 , False, self.iou_type).cuda()
+        self.bbox_loss_v6 = BboxLoss(self.num_classes,0 , False, self.iou_type).cuda()
+        self.loss_bbox: nn.Module = MODELS.build(loss_bbox)
+        
         self.iou_weight = 2.5
 
 
@@ -355,34 +357,10 @@ class YOLOv6Head(YOLOv5Head):
         target_labels = torch.where(fg_mask > 0, target_labels, torch.full_like(target_labels, self.num_classes))
         one_hot_label = F.one_hot(target_labels.long(), self.num_classes + 1)[..., :-1]
         loss_cls = self.varifocal_loss(pred_scores, target_scores, one_hot_label)
+
         # weighted_target = one_hot_label * target_scores
         # loss_cls = self.loss_cls(flatten_cls_preds.view(-1,self.num_classes), (target_scores*one_hot_label).view(-1,self.num_classes))
 
-        # TODO: refactor WIP
-        '''
-        target_scores_sum = target_scores.sum()
-        loss_cls /= target_scores_sum
-        num_pos = fg_mask.sum()
-        if num_pos > 0:
-            # iou loss
-            bbox_mask = fg_mask.unsqueeze(-1).repeat([1, 1, 4])
-            pred_bboxes_pos = torch.masked_select(pred_bboxes,
-                                                  bbox_mask).reshape([-1, 4])
-            target_bboxes_pos = torch.masked_select(
-                target_bboxes, bbox_mask).reshape([-1, 4])
-            bbox_weight = torch.masked_select(
-                target_scores.sum(-1), fg_mask).unsqueeze(-1)
-            loss_iou = self.loss_bbox(pred_bboxes_pos,
-                                     target_bboxes_pos) * bbox_weight
-            loss_iou = loss_iou.sum() / target_scores_sum
-
-        else:
-            loss_iou = torch.tensor(0.).to(pred_dist.device)
-            
-        
-        loss_dict = self.loss_weight['class'] * loss_cls + \
-               self.loss_weight['iou'] * loss_iou
-        '''
         # rescale bbox
         # target_bboxes /= stride_tensor
         stride_tensor = flatten_priors[..., [2]]
@@ -392,10 +370,49 @@ class YOLOv6Head(YOLOv5Head):
 
         target_scores_sum = target_scores.sum()
         loss_cls /= target_scores_sum
+        import pdb;pdb.set_trace()
 
-        loss_iou, loss_dfl = self.bbox_loss(flatten_bbox_preds, flatten_bboxes, anchor_points_s, target_bboxes, 
+        # fake input
+
+        loss_iou, loss_dfl = self.bbox_loss_v6(flatten_bbox_preds, flatten_bboxes, anchor_points_s, target_bboxes, 
                                             target_scores, target_scores_sum, fg_mask)
-        
+
+        import pdb;pdb.set_trace()
+        # select positive samples mask
+        num_pos = fg_mask.sum()
+        if num_pos > 0:
+            # iou loss
+            bbox_mask = fg_mask.unsqueeze(-1).repeat([1, 1, 4])
+            pred_bboxes_pos = torch.masked_select(flatten_bboxes,
+                                                  bbox_mask).reshape([-1, 4])
+            target_bboxes_pos = torch.masked_select(
+                target_bboxes, bbox_mask).reshape([-1, 4])
+            bbox_weight = torch.masked_select(
+                target_scores.sum(-1), fg_mask).unsqueeze(-1)
+            loss_iou = self.loss_bbox(pred_bboxes_pos,
+                                     target_bboxes_pos, weight=bbox_weight)
+            import pdb;pdb.set_trace()
+            loss_iou = loss_iou.sum() / target_scores_sum
+            # dfl loss
+            if self.use_dfl:
+                dist_mask = fg_mask.unsqueeze(-1).repeat(
+                    [1, 1, (self.reg_max + 1) * 4])
+                pred_dist_pos = torch.masked_select(
+                    flatten_bbox_preds, dist_mask).reshape([-1, 4, self.reg_max + 1])
+                target_ltrb = bbox2dist(anchor_points_s, target_bboxes, self.reg_max)
+                target_ltrb_pos = torch.masked_select(
+                    target_ltrb, bbox_mask).reshape([-1, 4])
+                loss_dfl = self._df_loss(pred_dist_pos,
+                                        target_ltrb_pos, bbox_weight)
+                loss_dfl = loss_dfl.sum() / target_scores_sum
+            else:
+                loss_dfl = torch.tensor(0.).to(flatten_bbox_preds.device)
+
+        else:
+            loss_iou = torch.tensor(0.).to(flatten_bbox_preds.device)
+            loss_dfl = torch.tensor(0.).to(flatten_bbox_preds.device)
+        import pdb;pdb.set_trace()
+            
         _, world_size = get_dist_info()
         return dict(
             loss_cls=loss_cls * world_size,
@@ -430,6 +447,7 @@ class BboxLoss(nn.Module):
         # select positive samples mask
         num_pos = fg_mask.sum()
         if num_pos > 0:
+            import pdb;pdb.set_trace()
             # iou loss
             bbox_mask = fg_mask.unsqueeze(-1).repeat([1, 1, 4])
             pred_bboxes_pos = torch.masked_select(pred_bboxes,
@@ -438,6 +456,7 @@ class BboxLoss(nn.Module):
                 target_bboxes, bbox_mask).reshape([-1, 4])
             bbox_weight = torch.masked_select(
                 target_scores.sum(-1), fg_mask).unsqueeze(-1)
+            print('bfweight:', self.iou_loss(pred_bboxes_pos,target_bboxes_pos))
             loss_iou = self.iou_loss(pred_bboxes_pos,
                                      target_bboxes_pos) * bbox_weight
             loss_iou = loss_iou.sum() / target_scores_sum
@@ -523,6 +542,7 @@ class IOUloss:
                 (torch.min(b1_y2, b2_y2) - torch.max(b1_y1, b2_y1)).clamp(0)
 
         # Union Area
+        import pdb;pdb.set_trace()
         w1, h1 = b1_x2 - b1_x1, b1_y2 - b1_y1 + self.eps
         w2, h2 = b2_x2 - b2_x1, b2_y2 - b2_y1 + self.eps
         union = w1 * h1 + w2 * h2 - inter + self.eps
