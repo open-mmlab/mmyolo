@@ -103,12 +103,18 @@ python demo/image_demo.py demo/demo.jpg \
                           yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
                           yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
 
-# Optional parameters
-# --out-dir ./output *The detection results are output to the specified directory. When args have action --show, the script do not save results. Default: ./output
-# --device cuda:0    *The computing resources used, including cuda and cpu. Default: cuda:0
-# --show             *Display the results on the screen. Default: False
-# --score-thr 0.3    *Confidence threshold. Default: 0.3
+
 ```
+Optional parameters:
+- `--out-dir`: The detection results are output to the specified directory. When args have action `--show`, the script do not save results. Default is `./output`. 
+- `--save-json-type'`: Save predict info to json with type in ("cwh", "tl-wh", "tl-br"). File will be saved with file named `predict.json` under `--out-dir`. When args have action `--show`, the script do not save results. Default not saving json file. 
+  - `cwh`: BBox center xy and bbox wh.
+  - `tl-wh`: Bbox top-left xy and bbox wh.
+  - `tl-br`: Bbox top-left xy and bottom-right xy.
+- `--device`: The computing resources used, including cuda and cpu. Default is `cuda:0`.
+- `--show` : Display the results on the screen. Default is `False`.
+- `--score-thr`: Confidence threshold. Default is `0.3`.
+
 
 You will see a new image on your `output` folder, where bounding boxes are plotted.
 

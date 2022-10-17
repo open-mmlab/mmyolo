@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import logging
+import json
 import os
 import urllib
 from argparse import ArgumentParser
@@ -24,7 +24,11 @@ def parse_args():
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
-        '--out-dir', default='./output', help='Path to output file')
+        '--save-json-type', default='', choices=['cwh', 'tl-wh', 'tl-br'],
+        help='Save predict info to json with type in ("cwh", "tl-wh", "tl-br"). '
+             '`cwh`: center xy and bbox wh, '
+             '`tl-wh`: top-left xy and bbox wh, '
+             '`tl-br`: top-left xy and bottom-right xy.')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
@@ -35,7 +39,10 @@ def parse_args():
     return args
 
 
-def main(args):
+def main():
+    # get argument
+    args = parse_args()
+
     # register all modules in mmdet into the registries
     register_all_modules()
 
@@ -48,10 +55,18 @@ def main(args):
 
     is_dir = os.path.isdir(args.img)
     is_url = args.img.startswith(('http:/', 'https:/'))
-    is_file = os.path.splitext(args.img)[-1] in (IMG_EXTENSIONS)
+    is_file = os.path.splitext(args.img)[-1] in IMG_EXTENSIONS
+
+    # save predict info to predict.json
+    save_pred_json = args.save_json_type != ''
+    pred_json_path = ''
+    pred_json = []
+    if save_pred_json and not args.show:
+        pred_json_path = f'{args.out_dir}/predict.json'
+        print_log(f'Predict info json files will be saved in {pred_json_path}')
 
     files = []
-    if is_dir:
+    if is_dir and os.path.exists(args.img):
         # when input source is dir
         for file in scandir(args.img, IMG_EXTENSIONS, recursive=True):
             files.append(os.path.join(args.img, file))
@@ -61,12 +76,11 @@ def main(args):
             urllib.parse.unquote(args.img).split('?')[0])
         torch.hub.download_url_to_file(args.img, filename)
         files = [os.path.join(os.getcwd(), filename)]
-    elif is_file:
+    elif is_file and os.path.exists(args.img):
         # when input source is single image
         files = [args.img]
     else:
-        print_log(
-            'Cannot find image file.', logger='current', level=logging.WARNING)
+        raise FileNotFoundError('Cannot find image file.')
 
     # start detector inference
     progress_bar = ProgressBar(len(files))
@@ -88,12 +102,44 @@ def main(args):
             wait_time=0,
             out_file=out_file,
             pred_score_thr=args.score_thr)
+
+        if save_pred_json:
+            for idx in range(len(result.pred_instances['labels'])):
+                # save json as
+                # {"image_id": 'xxx', "category_id": 66, "bbox": [66.551, 23.462, 123.564, 59.336], "score": 0.97557}
+                if not result.pred_instances['scores'][idx] >= args.score_thr:
+                    continue
+
+                bbox = result.pred_instances['bboxes'][idx].tolist()
+                if args.save_json_type in ['cwh', 'tl-wh']:
+                    bbox_save = [0, 0, 0, 0]
+                    if args.save_json_type == 'tl-wh':
+                        bbox_save[0] = bbox[0]  # left top x
+                        bbox_save[1] = bbox[1]  # left top y
+                    else:
+                        bbox_save[0] = (bbox[0] + bbox[2]) / 2  # center x
+                        bbox_save[1] = (bbox[1] + bbox[3]) / 2  # center y
+                    bbox_save[2] = bbox[2] - bbox[0]  # bbox width
+                    bbox_save[3] = bbox[3] - bbox[1]  # bbox height
+                else:
+                    # top-left xy and bottom-right xy
+                    bbox_save = result.pred_instances['bboxes'][idx].tolist()
+
+                pred_json.append({'image_id': os.path.splitext(filename)[0],
+                                  'category_id': int(result.pred_instances['labels'][idx]),
+                                  'bbox': [round(x, 3) for x in bbox_save],
+                                  'score': round(result.pred_instances['scores'][idx].tolist(), 5)})
+
         progress_bar.update()
+
+    if save_pred_json:
+        print_log(f'Saving predict info files to {pred_json_path}')
+        with open(pred_json_path, 'w') as f:
+            json.dump(pred_json, f)
+
     if not args.show:
-        print_log(
-            f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
+        print_log(f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
 
 
 if __name__ == '__main__':
-    args = parse_args()
-    main(args)
+    main()

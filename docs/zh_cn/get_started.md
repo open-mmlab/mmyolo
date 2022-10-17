@@ -101,13 +101,17 @@ mim download mmyolo --config yolov5_s-v61_syncbn_fast_8xb16-300e_coco --dest .
 python demo/image_demo.py demo/demo.jpg \
                           yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
                           yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
-
-# 可选参数
-# --out-dir ./output *检测结果输出到指定目录下，默认为./output, 当--show参数存在时，不保存检测结果
-# --device cuda:0    *使用的计算资源，包括cuda, cpu等，默认为cuda:0
-# --show             *使用该参数表示在屏幕上显示检测结果，默认为False
-# --score-thr 0.3    *置信度阈值，默认为0.3
 ```
+
+可选参数:
+`--out-dir`：检测结果输出到指定目录下，默认为./output, 当 `--show` 参数存在时，不保存检测结果。默认是 `./output`。
+- `--save-json-type'`: 保存推理结果到 Json 文件，可选格式为 `cwh`、`tl-wh` 和 `tl-br`，保存结果在 `--out-dir` 文件夹下的 `predict.json`。当 `--show` 参数存在时，不保存检测结果。默认不保存。
+  - `cwh`: BBox 中心点 xy 和 bbox wh.
+  - `tl-wh`: BBox top-left xy 和 bbox wh.
+  - `tl-br`: top-left xy 和 bottom-right xy.
+`--device`：使用的计算资源，包括cuda, cpu等，默认为 `cuda:0`。
+`--show`：使用该参数表示在屏幕上显示检测结果，默认为 `False`。
+`--score-thr`：置信度阈值，默认为 `0.3`。
 
 运行结束后，在 `output` 文件夹中可以看到检测结果图像，图像中包含有网络预测的检测框。
 
