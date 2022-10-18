@@ -28,18 +28,21 @@ YOLOv5 is a family of object detection architectures and models pretrained on th
 
 ### VOC
 
-| Backbone | size | AMP | Mem (GB) | box AP(COCO metric) |                                                      Config                                                      |         Download         |
-| :------: | :--: | :-: | :------: | :-----------------: | :--------------------------------------------------------------------------------------------------------------: | :----------------------: |
-| YOLOv5-n | 512  | Yes |   1.5    |          x          | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_n-v61_fast_1xb64-50e_voc.py) | [model](<>) \| [log](<>) |
-| YOLOv5-s | 512  | Yes |   2.7    |          x          | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py) | [model](<>) \| [log](<>) |
-| YOLOv5-m | 512  | Yes |   5.0    |        70.0         | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_m-v61_fast_1xb64-50e_voc.py) | [model](<>) \| [log](<>) |
-| YOLOv5-l | 512  | Yes |   8.1    |          x          | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_l-v61_fast_1xb32-50e_voc.py) | [model](<>) \| [log](<>) |
+| Backbone | size | AMP | Mem (GB) | box AP(COCO metric) |                                                      Config                                                      |                                                                                                                                                 Download                                                                                                                                                 |
+| :------: | :--: | :-: | :------: | :-----------------: | :--------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| YOLOv5-n | 512  | Yes |   3.5    |        51.2         | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_n-v61_fast_1xb64-50e_voc.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_n-v61_fast_1xb64-50e_voc/yolov5_n-v61_fast_1xb64-50e_voc_20221017_234254-f1493430.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_n-v61_fast_1xb64-50e_voc/yolov5_n-v61_fast_1xb64-50e_voc_20221017_234254.log.json) |
+| YOLOv5-s | 512  | Yes |   6.5    |        62.7         | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_fast_1xb64-50e_voc/yolov5_s-v61_fast_1xb64-50e_voc_20221017_234156-0009b33e.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_fast_1xb64-50e_voc/yolov5_s-v61_fast_1xb64-50e_voc_20221017_234156.log.json) |
+| YOLOv5-m | 512  | Yes |   12.0   |        70.1         | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_m-v61_fast_1xb64-50e_voc.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_m-v61_fast_1xb64-50e_voc/yolov5_m-v61_fast_1xb64-50e_voc_20221017_114138-815c143a.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_m-v61_fast_1xb64-50e_voc/yolov5_m-v61_fast_1xb64-50e_voc_20221017_114138.log.json) |
+| YOLOv5-l | 512  | Yes |   10.0   |        72.9         | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_l-v61_fast_1xb32-50e_voc.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_l-v61_fast_1xb32-50e_voc/yolov5_l-v61_fast_1xb32-50e_voc_20221017_045500-edc7e0d8.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_l-v61_fast_1xb32-50e_voc/yolov5_l-v61_fast_1xb32-50e_voc_20221017_045500.log.json) |
 
 **Note**:
 
 1. Training on VOC dataset need pretrained model which trained on COCO.
 2. The performance is unstable and may fluctuate by about 0.4 mAP.
 3. YOLOv5 use COCO metric, while training VOC dataset. We will support to use COCO metric while training VOC dataset.
+4. Need to use 'mmengine>=0.0.2'.
+5. Hyperparameter reference from `https://wandb.ai/glenn-jocher/YOLOv5_VOC_official`.
+6. We use single A100 for training, and the single-GPU batch size is 32 or 64.
 
 ## Citation
 

@@ -29,6 +29,8 @@ num_det_layers = 3
 
 load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa
 
+# Hyperparameter reference from:
+# https://github.com/ultralytics/yolov5/blob/master/data/hyps/hyp.VOC.yaml
 model = dict(
     bbox_head=dict(
         head_module=dict(num_classes=num_classes),
@@ -41,8 +43,8 @@ model = dict(
             loss_weight=0.51728 *
             ((img_scale[0] / 640)**2 * 3 / num_det_layers),
             class_weight=0.67198),
-        prior_match_thr=3.3744,
-        obj_level_weights=[4., 1., 0.4]),
+        # Different from COCO
+        prior_match_thr=3.3744),
     test_cfg=dict(nms=dict(iou_threshold=0.6)))
 
 albu_train_transforms = _base_.albu_train_transforms
@@ -99,6 +101,8 @@ without_mosaic_pipeline = [
         pad_val=dict(img=114))
 ]
 
+# Because the border parameter is inconsistent when
+# using mosaic or not, `RandomChoice` is used here.
 randchoice_mosaic_pipeline = dict(
     type='RandomChoice',
     transforms=[with_mosiac_pipeline, without_mosaic_pipeline],
@@ -166,7 +170,7 @@ test_pipeline = [
         scale=img_scale,
         allow_scale_up=False,
         pad_val=dict(img=114)),
-    dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='LoadAnnotations', with_bbox=True, scope='mmdet'),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
@@ -213,12 +217,12 @@ custom_hooks = [
         ema_type='ExpMomentumEMA',
         momentum=0.0001,
         update_buffers=True,
-        # To load coco pretrained model, need to set `strict_load=False`
+        # To load COCO pretrained model, need to set `strict_load=False`
         strict_load=False,
         priority=49)
 ]
 
-# TODO: support using coco metric in voc dataset
+# TODO: Support using coco metric in voc dataset
 val_evaluator = dict(
     _delete_=True, type='mmdet.VOCMetric', metric='mAP', eval_mode='area')
 
