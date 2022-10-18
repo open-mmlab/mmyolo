@@ -39,10 +39,11 @@ YOLOv5 is a family of object detection architectures and models pretrained on th
 
 1. Training on VOC dataset need pretrained model which trained on COCO.
 2. The performance is unstable and may fluctuate by about 0.4 mAP.
-3. YOLOv5 use COCO metric, while training VOC dataset. We will support to use COCO metric while training VOC dataset.
-4. Need to use 'mmengine>=0.0.2'.
-5. Hyperparameter reference from `https://wandb.ai/glenn-jocher/YOLOv5_VOC_official`.
-6. We use single A100 for training, and the single-GPU batch size is 32 or 64.
+3. Official YOLOv5 use COCO metric, while training VOC dataset.
+4. We converted the VOC test dataset to COCO format offline, while reproducing mAP result as shown above. We will support to use COCO metric while training VOC dataset in later version.
+5. Need to use 'mmengine>=0.0.2'.
+6. Hyperparameter reference from `https://wandb.ai/glenn-jocher/YOLOv5_VOC_official`.
+7. We use single A100 for training, and the single-GPU batch size is 32 or 64.
 
 ## Citation
 
