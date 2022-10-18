@@ -27,8 +27,8 @@ def parse_args():
         '--save-json-type',
         default='',
         choices=['cwh', 'tl-wh', 'tl-br'],
-        help='Save predict info to json with type in ("cwh", "tl-wh", "tl-br"). '
-        '`cwh`: center xy and bbox wh, '
+        help='Save predict info to json with type in '
+        '("cwh", "tl-wh", "tl-br"). `cwh`: center xy and bbox wh, '
         '`tl-wh`: top-left xy and bbox wh, '
         '`tl-br`: top-left xy and bottom-right xy.')
     parser.add_argument(
@@ -108,7 +108,8 @@ def main():
         if save_pred_json:
             for idx in range(len(result.pred_instances['labels'])):
                 # save json as
-                # {"image_id": 'xxx', "category_id": 66, "bbox": [66.551, 23.462, 123.564, 59.336], "score": 0.97557}
+                # {"image_id": 'xxx', "category_id": 66,
+                # "bbox": [66.551, 23.462, 123.564, 59.336], "score": 0.97557}
                 if not result.pred_instances['scores'][idx] >= args.score_thr:
                     continue
 
