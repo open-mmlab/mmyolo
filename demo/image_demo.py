@@ -21,7 +21,7 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument(
         'img', help='Image path, include image file, dir and URL.')
-    parser.add_argument('config', help='Config file')
+    parser.add_argument('config', help='Config file path.')
     parser.add_argument('checkpoint', help='Checkpoint path.')
     parser.add_argument(
         '--save-json-type',
