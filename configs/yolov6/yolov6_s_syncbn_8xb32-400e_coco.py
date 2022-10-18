@@ -66,11 +66,15 @@ model = dict(
             act_cfg=dict(type='SiLU', inplace=True),
             featmap_strides=[8, 16, 32])),
     train_cfg=dict(
-        use_dfl = False,
         initial_epoch=4,
-        initial_assigner=dict(type='BatchATSSAssigner', topk=9, iou2d_calculator=dict(type='mmdet.BboxOverlaps2D'), num_classes=80),
-        assigner=dict(type='BatchTaskAlignedAssigner', topk=13, alpha=1, beta=6),
-        ),
+        initial_assigner=dict(
+            type='BatchATSSAssigner',
+            topk=9,
+            iou2d_calculator=dict(type='mmdet.BboxOverlaps2D'),
+            num_classes=80),
+        assigner=dict(
+            type='BatchTaskAlignedAssigner', topk=13, alpha=1, beta=6),
+    ),
     test_cfg=dict(
         multi_label=True,
         nms_pre=30000,
@@ -79,9 +83,7 @@ model = dict(
         max_per_img=300))
 
 pre_transform = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True)
 ]
 
@@ -122,7 +124,7 @@ train_pipeline_stage2 = [
         max_translate_ratio=0.1,
         scaling_ratio_range=(0.5, 1.5),
         max_shear_degree=0.0,
-        ),
+    ),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(
