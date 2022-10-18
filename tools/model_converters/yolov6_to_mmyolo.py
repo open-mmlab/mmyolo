@@ -5,7 +5,15 @@ import torch
 
 
 def convert(src, dst):
-    ckpt = torch.load(src, map_location=torch.device('cpu'))
+    import sys
+    sys.path.append('yolov6')
+    try:
+        ckpt = torch.load(src, map_location=torch.device('cpu'))
+    except ModuleNotFoundError:
+        raise RuntimeError(
+            'This script must be placed under the meituan/YOLOv6 repo,'
+            ' because loading the official pretrained model need'
+            ' some python files to build model.')
     # The saved model is the model before reparameterization
     model = ckpt['ema' if ckpt.get('ema') else 'model'].float()
     new_state_dict = OrderedDict()
