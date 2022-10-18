@@ -58,6 +58,5 @@ class YOLOv5CocoDataset(BatchShapePolicyDataset, CocoDataset):
 
     We only add `BatchShapePolicy` function compared with CocoDataset. See
     `mmyolo/datasets/utils.py#BatchShapePolicy` for details
-    TODO: need to merge YOLOv5CocoDataset into yolov5_datasets.py
     """
     pass

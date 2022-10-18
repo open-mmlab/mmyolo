@@ -18,6 +18,7 @@ YOLOv5 is a family of object detection architectures and models pretrained on th
 | YOLOv5-l | 640  |  Yes   | Yes |   8.1    |  48.8  | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/yolov5_l-v61_syncbn_fast_8xb16-300e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_l-v61_syncbn_fast_8xb16-300e_coco/yolov5_l-v61_syncbn_fast_8xb16-300e_coco_20220917_031007-096ef0eb.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_l-v61_syncbn_fast_8xb16-300e_coco/yolov5_l-v61_syncbn_fast_8xb16-300e_coco_20220917_031007.log.json) |
 
 **Note**:
+Please make sure 'mmengine>=0.2.0'.
 
 1. `fast` means that `YOLOv5DetDataPreprocessor` and `yolov5_collate` are used for data preprocessing, which is faster for training, but less flexible for multitasking. Recommended to use fast version config if you only care about object detection.
 2. `detect` means that the network input is fixed to `640x640` and the post-processing thresholds is modified.
@@ -33,7 +34,7 @@ YOLOv5 is a family of object detection architectures and models pretrained on th
 | YOLOv5-n | 512  | Yes |   3.5    |        51.2         | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_n-v61_fast_1xb64-50e_voc.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_n-v61_fast_1xb64-50e_voc/yolov5_n-v61_fast_1xb64-50e_voc_20221017_234254-f1493430.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_n-v61_fast_1xb64-50e_voc/yolov5_n-v61_fast_1xb64-50e_voc_20221017_234254.log.json) |
 | YOLOv5-s | 512  | Yes |   6.5    |        62.7         | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_fast_1xb64-50e_voc/yolov5_s-v61_fast_1xb64-50e_voc_20221017_234156-0009b33e.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_fast_1xb64-50e_voc/yolov5_s-v61_fast_1xb64-50e_voc_20221017_234156.log.json) |
 | YOLOv5-m | 512  | Yes |   12.0   |        70.1         | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_m-v61_fast_1xb64-50e_voc.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_m-v61_fast_1xb64-50e_voc/yolov5_m-v61_fast_1xb64-50e_voc_20221017_114138-815c143a.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_m-v61_fast_1xb64-50e_voc/yolov5_m-v61_fast_1xb64-50e_voc_20221017_114138.log.json) |
-| YOLOv5-l | 512  | Yes |   10.0   |        72.9         | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_l-v61_fast_1xb32-50e_voc.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_l-v61_fast_1xb32-50e_voc/yolov5_l-v61_fast_1xb32-50e_voc_20221017_045500-edc7e0d8.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_l-v61_fast_1xb32-50e_voc/yolov5_l-v61_fast_1xb32-50e_voc_20221017_045500.log.json) |
+| YOLOv5-l | 512  | Yes |   10.0   |        73.1         | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/voc/yolov5_l-v61_fast_1xb32-50e_voc.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_l-v61_fast_1xb32-50e_voc/yolov5_l-v61_fast_1xb32-50e_voc_20221017_045500-edc7e0d8.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_l-v61_fast_1xb32-50e_voc/yolov5_l-v61_fast_1xb32-50e_voc_20221017_045500.log.json) |
 
 **Note**:
 
@@ -41,9 +42,7 @@ YOLOv5 is a family of object detection architectures and models pretrained on th
 2. The performance is unstable and may fluctuate by about 0.4 mAP.
 3. Official YOLOv5 use COCO metric, while training VOC dataset.
 4. We converted the VOC test dataset to COCO format offline, while reproducing mAP result as shown above. We will support to use COCO metric while training VOC dataset in later version.
-5. Need to use 'mmengine>=0.0.2'.
-6. Hyperparameter reference from `https://wandb.ai/glenn-jocher/YOLOv5_VOC_official`.
-7. We use single A100 for training, and the single-GPU batch size is 32 or 64.
+5. Hyperparameter reference from `https://wandb.ai/glenn-jocher/YOLOv5_VOC_official`.
 
 ## Citation
 
