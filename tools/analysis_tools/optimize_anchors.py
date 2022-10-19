@@ -63,7 +63,7 @@ def parse_args():
         '--thr',
         default=4.0,
         type=float,
-        help='anchor-label wh ratio threshold hyperparameter.'
+        help='anchor-label gt_filter_sizes ratio threshold hyperparameter.'
         'used for training, default=4.0')
     parser.add_argument(
         '--output-dir',
@@ -123,9 +123,9 @@ class BaseAnchorOptimizer:
             gt_instances = data_info['instances']
             for instance in gt_instances:
                 bbox = np.array(instance['bbox'])
-                wh = bbox[2:4] - bbox[0:2]
+                gt_filter_sizes = bbox[2:4] - bbox[0:2]
                 img_shapes.append(img_shape)
-                bbox_whs.append(wh)
+                bbox_whs.append(gt_filter_sizes)
 
             prog_bar.update()
         print('\n')
@@ -234,12 +234,14 @@ class YOLOKMeansAnchorOptimizer(BaseAnchorOptimizer):
 
 
 class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
-    r"""YOLO anchor optimizer using k-means. Code refer to `AlexeyAB/darknet.
-    <https://github.com/AlexeyAB/darknet/blob/master/src/detector.c>`_.
+    r"""YOLOv5 anchor optimizer using shape k-means.
+    Code refer to `ultralytics/yolov5.
+    <https://github.com/ultralytics/yolov5/blob/master/utils/autoanchor.py>`_.
 
     Args:
         num_anchors (int) : Number of anchors.
         iters (int): Maximum iterations for k-means.
+        thr (float): anchor-label width height ratio threshold hyperparameter.
     """
 
     def __init__(self, num_anchors, iters, thr=4.0, **kwargs):
@@ -255,82 +257,98 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
 
     def generate_gtwh_kwh(self):
         r'''generate gt_bbox with width and height,
-           also return init cluster center anchor k
+           also return init cluster center_anchors
+
            Return:
-               wh: Tensor(gt_nums, 2) the gt width and height
+               gt_filter_sizes: Tensor(gt_nums, 2) the gt width and height
                    after augment scale and small box filter
-               k: np.array(num_anchors, 2) kmeans evolved anchors
+               center_anchors: np.array(num_anchors, 2) kmeans evolved anchors
         '''
-        # 根据均匀分布，随机生成0.9~1.1之间的缩放尺度
+        # According to the uniform distribution,
+        # the scaling scale between 0.9 and 1.1 is randomly generated
         scale = np.random.uniform(
             0.9, 1.1, size=(self.bbox_whs.shape[0], 1))  # augment scale
-        wh0 = np.array([l[:, ] * s for s, l in zip(scale, self.bbox_whs)])
+        gt_sizes = np.array([l[:, ] * s for s, l in zip(scale, self.bbox_whs)])
         # Filter
-        i = (wh0 < 3.0).any(1).sum()
-        if i:
-            self.logger.info(
-                'WARNING: Extremely small objects found:',
-                f' {i} of {len(wh0)} labels are <3 pixels in size')
-        wh = wh0[(wh0 >= 2.0).any(1)].astype(np.float32)  # filter > 2 pixels
-        # Kmeans init
-        n = self.num_anchors
+        small_gt_cnt = (gt_sizes < 3.0).any(1).sum()
+        if small_gt_cnt:
+            self.logger.info('WARNING: Extremely small objects found:' +
+                             f' {small_gt_cnt} of {len(gt_sizes)} labels' +
+                             'are <3 pixels in size')
+        # filter > 2 pixels
+        gt_filter_sizes = gt_sizes[(gt_sizes >= 2.0).any(1)].astype(np.float32)
+        # K-means init
         try:
-            self.logger.info(
-                f'Running kmeans for {n} anchors on {len(wh)} points...')
-            assert n <= len(wh)  # apply overdetermined constraint
-            s = wh.std(0)  # sigmas for whitening
-            k = kmeans(wh / s, n, iter=30)[0] * s  # points
+            self.logger.info(f'Running kmeans for {self.num_anchors} anchors' +
+                             'on {len(gt_filter_sizes)} points...')
+            # apply overdetermined constraint
+            assert self.num_anchors <= len(gt_filter_sizes)
+            sigmas = gt_filter_sizes.std(0)  # sigmas for whitening
+            center_anchors = kmeans(
+                gt_filter_sizes / sigmas, self.num_anchors,
+                iter=30)[0] * sigmas  # points
             # kmeans may return fewer points than requested
-            # if wh is insufficient or too similar
-            assert n == len(k)
+            # if gt_filter_sizes is insufficient or too similar
+            assert self.num_anchors == len(center_anchors)
         except Exception:
             self.logger.warning(
                 'WARNING: switching strategies from kmeans to random init')
-            k = np.sort(np.random.rand(self.num_anchors * 2)).reshape(
-                self.num_anchors, 2) * self.input_shape[0]  # random init
-        wh, wh0 = (torch.tensor(x, dtype=torch.float32) for x in (wh, wh0))
-        k = k[np.argsort(k.prod(1))]  # sort small to large
-        return wh, k
+            center_anchors = np.sort(
+                np.random.rand(self.num_anchors * 2)).reshape(
+                    self.num_anchors, 2) * self.input_shape[0]  # random init
+        gt_filter_sizes, gt_sizes = (
+            torch.tensor(x, dtype=torch.float32)
+            for x in (gt_filter_sizes, gt_sizes))
+        # sort small to large
+        center_anchors = center_anchors[np.argsort(center_anchors.prod(1))]
+        return gt_filter_sizes, center_anchors
 
     def kmeans_anchors(self):
         self.logger.info(
             f'Start cluster {self.num_anchors} YOLO anchors with K-means...')
-        self.wh, cluster_centers = self.generate_gtwh_kwh()
+        self.gt_filter_sizes, cluster_centers = self.generate_gtwh_kwh()
 
         prog_bar = ProgressBar(self.iters)
-        # fitness, generations, mutation prob, sigma
-        f, sh, mp, s = self.anchor_fitness(
-            cluster_centers), cluster_centers.shape, 0.9, 0.1
+
+        fitness = self.anchor_fitness(cluster_centers)
+        cluster_shape = cluster_centers.shape
+        mutation_prob, sigma = 0.9, 0.1
+
         for _ in range(self.iters):
-            v = np.ones(sh)
-            while (v == 1).all(
-            ):  # mutate until a change occurs (prevent duplicates)
-                v = ((np.random.random(sh) < mp) * random.random() *
-                     np.random.randn(*sh) * s + 1).clip(0.3, 3.0)
-            kg = (cluster_centers.copy() * v).clip(min=2.0)
-            fg = self.anchor_fitness(kg)
-            if fg > f:
-                f, cluster_centers = fg, kg.copy()
+            mutate_result = np.ones(cluster_shape)
+            # mutate until a change occurs (prevent duplicates)
+            while (mutate_result == 1).all():
+                mutate_result = (
+                    (np.random.random(cluster_shape) < mutation_prob) *
+                    random.random() * np.random.randn(*cluster_shape) * sigma +
+                    1).clip(0.3, 3.0)
+            new_cluster_centers = (cluster_centers.copy() *
+                                   mutate_result).clip(min=2.0)
+            new_fitness = self.anchor_fitness(new_cluster_centers)
+            if new_fitness > fitness:
+                fitness = new_fitness
+                cluster_centers = new_cluster_centers.copy()
 
             prog_bar.update()
         print('\n')
-        anchors = cluster_centers[np.argsort(
-            cluster_centers.prod(1))]  # sort small to large
-        self.logger.info(f'Anchor cluster finish. fitness = {f:.4f}')
+        # sort small to large
+        anchors = cluster_centers[np.argsort(cluster_centers.prod(1))]
+        self.logger.info(f'Anchor cluster finish. fitness = {fitness:.4f}')
 
         return anchors
 
-    def metric(self, k, wh):  # compute metric
-        # wh（gt）的 shape 是 [N, 2] 表示 N 个 gt box 和宽高这 2 个维度
-        # k（anchor）的 shape 是 [num_anchors,2]
-        # 表示 YOLOv5 中的 num_anchors 种 anchor 和宽高这 2 个维度
-        r = wh[:, None] / k[None]
-        x = torch.min(r, 1 / r).min(2)[0]  # ratio metric
-        best = x.max(1)[0]  # best_x
-        return x, best
+    def metric(self, anchors, gt_filter_sizes):  # compute metric
+        # gt_filter_sizes(gt) shape is [N, 2], means width and height of N gt
+        # anchors(anchor) shape is [num_anchors,2],
+        #           means YOLOv5 width and height of num_anchors
+        ratio = gt_filter_sizes[:, None] / anchors[None]
+        metric_r = torch.min(ratio, 1 / ratio).min(2)[0]  # ratio metric
+        best = metric_r.max(1)[0]  # best_metric
+        return metric_r, best
 
-    def anchor_fitness(self, k):  # mutation fitness
-        _, best = self.metric(torch.tensor(k, dtype=torch.float32), self.wh)
+    def anchor_fitness(self, anchors):  # mutation fitness
+        _, best = self.metric(
+            torch.tensor(anchors, dtype=torch.float32), self.gt_filter_sizes)
         return (best * (best > self.thr).float()).mean()  # fitness
 
 
@@ -463,14 +481,12 @@ def main():
     dataset = build_dataset(train_data_cfg)
 
     if args.algorithm == 'k-means':
-        # optimizer = YOLOKMeansAnchorOptimizer(
-        optimizer = YOLOV5KMeansAnchorOptimizer(
+        optimizer = YOLOKMeansAnchorOptimizer(
             dataset=dataset,
             input_shape=input_shape,
             device=args.device,
             num_anchors=num_anchors,
             iters=args.iters,
-            thr=args.thr,
             logger=logger,
             out_dir=args.output_dir)
     elif args.algorithm == 'differential_evolution':
@@ -480,6 +496,16 @@ def main():
             device=args.device,
             num_anchors=num_anchors,
             iters=args.iters,
+            logger=logger,
+            out_dir=args.output_dir)
+    elif args.algorithm == 'v5-k-means':
+        optimizer = YOLOV5KMeansAnchorOptimizer(
+            dataset=dataset,
+            input_shape=input_shape,
+            device=args.device,
+            num_anchors=num_anchors,
+            iters=args.iters,
+            thr=args.thr,
             logger=logger,
             out_dir=args.output_dir)
     else:
