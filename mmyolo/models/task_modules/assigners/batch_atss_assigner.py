@@ -155,7 +155,7 @@ class BatchATSSAssigner(nn.Module):
         Returns:
             target_labels (Tensor): shape(batch_size, num_total_anchors)
             target_bboxes (Tensor): shape(batch_size, num_total_anchors, 4)
-            target_scores (Tensor): shape(batch_size, num_total_anchors, num_classes)
+            target_scores (Tensor):
             fg_mask (Tensor): shape(bs, num_total_anchors)
         """
         total_anchors = anchor_bboxes.size(0)
