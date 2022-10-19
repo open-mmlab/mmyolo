@@ -4,7 +4,7 @@ import argparse
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
-from mmengine.config import Config, DictAction
+from mmengine.config import Config
 from mmengine.utils import ProgressBar
 
 from mmyolo.registry import DATASETS
@@ -30,20 +30,10 @@ def parse_args():
         'category and bbox instance area')
     parser.add_argument(
         '--output-dir',
-        default='./data/analysis',
+        default='./',
         type=str,
         help='If there is no display interface, you can save it'
         'Save pictures in./data/analysis by default')
-    parser.add_argument(
-        '--cfg-options',
-        nargs='+',
-        action=DictAction,
-        help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
     args = parser.parse_args()
     return args
 
@@ -60,7 +50,7 @@ def func_1(cfg, args, dataset):
                 instance['bbox_label']] = cat_nums[instance['bbox_label']] + 1
         progress_bar.update()
 
-    fig = plt.figure(figsize=(50, 18), dpi=60)
+    fig = plt.figure(figsize=(50, 18), dpi=600)
     plt.bar(classes, cat_nums, align='center')
     plt.xticks(rotation=70)
     plt.xlabel('Category Name')
@@ -210,8 +200,6 @@ def func_4(cfg, args, dataset):
 def main():
     args = parse_args()
     cfg = Config.fromfile(args.config)
-    if args.cfg_options is not None:
-        cfg.merge_from_dict(args.cfg_options)
 
     # register all modules in mmdet into the registries
     register_all_modules()
