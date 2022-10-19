@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
+import os.path
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
@@ -57,8 +58,10 @@ def func_1(cfg, args, dataset):
     plt.ylabel('Number of categories')
     plt.title(cfg.dataset_type)
     for x, y in enumerate(cat_nums):
-        plt.text(x, y + 10, '%s' % y, ha='center')
+        plt.text(x, y + 10, '%s' % y, ha='center', fontsize=4)
     out = args.output_dir
+    if not os.path.exists(out):
+        os.makedirs(out)
     fig.set_size_inches(35, 18)
     fig.savefig(f'{out}/{cfg.dataset_type}.jpg')  # Save Image
 
@@ -84,6 +87,8 @@ def func_2(cfg, args, dataset):
         plt.ylabel('High of bbox')
         plt.title(f'Current Display Category:{classes[idx]}')
         out = args.output_dir
+        if not os.path.exists(out):
+            os.makedirs(out)
         fig.savefig(f'{out}/{classes[idx]}.jpg')  # Save Image
 
 
@@ -129,6 +134,8 @@ def func_3(cfg, args, dataset):
         plt.axis('equal')
         plt.title(f'Current Display Category:{classes[idx]}')
         out = args.output_dir
+        if not os.path.exists(out):
+            os.makedirs(out)
         fig.savefig(f'{out}/{classes[idx]}.jpg')  # Save Image
 
 
@@ -194,6 +201,8 @@ def func_4(cfg, args, dataset):
     for x3, y3 in enumerate(cat_area_l_num):
         plt.text(x3 + width, y3 + 8, y3, ha='center', fontsize=4)
     out = args.output_dir
+    if not os.path.exists(out):
+        os.makedirs(out)
     fig.savefig(f'{out}/{cfg.dataset_type}.jpg')  # Save Image
 
 
