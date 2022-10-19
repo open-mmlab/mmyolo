@@ -21,6 +21,7 @@ Note:
     2. The script will automatically check whether the corresponding
     `train.txt`, ` val.txt`, and `test.txt` exist under `image-dir` or not.
     If these files are detected, the script will organize the dataset.
+    The image paths in these files must be ABSOLUTE paths.
     3. Once the script finishes, the result files will be saved in the
     directory named 'annotations' in the root directory of your dataset. The
     corresponding images will be kept in `.jpg` format. The 'annotations'
@@ -113,7 +114,7 @@ def organize_by_existing_files(image_dir: str, existing_cat: list):
                 img_paths = [
                     os.path.split(img_path.strip())[1]
                     for img_path in img_paths
-                ]  # splitting the absolute path
+                ]  # split the absolute path
                 image_list.append(img_paths)
         else:
             image_list.append([])
