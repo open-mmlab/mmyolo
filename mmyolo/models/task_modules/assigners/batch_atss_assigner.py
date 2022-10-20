@@ -160,9 +160,9 @@ class BatchATSSAssigner(nn.Module):
             return (gt_bboxes.new_full([batch_size, num_priors],
                                        self.num_classes),
                     gt_bboxes.new_full([batch_size, num_priors, 4], 0),
-                    gt_bboxes.new_full([batch_size, num_priors,
-                                        self.num_classes], 0),
-                    gt_bboxes.new_full([batch_size, num_priors], 0))
+                    gt_bboxes.new_full(
+                        [batch_size, num_priors, self.num_classes],
+                        0), gt_bboxes.new_full([batch_size, num_priors], 0))
 
         # compute iou between all bbox and gt
         overlaps = self.iou_calculator(gt_bboxes.reshape([-1, 4]), priors)
