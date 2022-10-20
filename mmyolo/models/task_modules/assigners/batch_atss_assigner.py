@@ -16,12 +16,13 @@ def bbox_center_distance(bboxes: Tensor,
 
     Args:
         bboxes (Tensor): Shape (n, 4) for bbox, "xyxy" format.
-        priors (Tensor): Shape (n, 4) for priors, "xyxy" format.
+        priors (Tensor): Shape (num_priors, 4) for priors, "xyxy" format.
 
     Returns:
-        # TODO shape?
-        Tensor: Shape (n, 4). Center distances between bboxes and priors.
-        Tensor: Shape (n, 4).  Priors cx cy points.
+        distances (Tensor): Center distances between bboxes and priors,
+            shape (num_priors, n).
+        priors_points (Tensor):Priors cx cy points,
+            shape (num_priors, 2).
     """
     bbox_cx = (bboxes[:, 0] + bboxes[:, 2]) / 2.0
     bbox_cy = (bboxes[:, 1] + bboxes[:, 3]) / 2.0
@@ -43,11 +44,13 @@ def select_candidates_in_gts(priors_cxy_points: Tensor,
     """Select the positive anchors' center in gt.
 
     Args:
-        priors_cxy_points (Tensor): shape(bs*num_gt, num_gt, 4)
-        gt_bboxes (Tensor): shape(bs, num_gt, 4)
-        eps (float):
+        priors_cxy_points (Tensor): Priors center xy points,
+            shape(num_priors, 2)
+        gt_bboxes (Tensor): Ground true bboxes,
+            shape(batch_size, num_gt, 4)
+        eps (float): Default to 1e-9.
     Return:
-        (Tensor): shape(bs, num_gt, num_gt)
+        (Tensor): shape(batch_size, num_gt, num_priors)
     """
     batch_size, num_gt, _ = gt_bboxes.size()
     gt_bboxes = gt_bboxes.reshape([-1, 4])
@@ -68,21 +71,26 @@ def select_candidates_in_gts(priors_cxy_points: Tensor,
     return (bbox_deltas.min(axis=-1)[0] > eps).to(gt_bboxes.dtype)
 
 
-def select_highest_overlaps(pos_mask: Tensor, overlaps: Tensor,
+def select_highest_overlaps(possible_mask: Tensor, overlaps: Tensor,
                             num_gt: int) -> Tuple[Tensor, Tensor, Tensor]:
     """If an anchor box is assigned to multiple gts, the one with the highest
     iou will be selected.
 
     Args:
-        pos_mask (Tensor): shape(bs, num_gt, num_gt)
-        overlaps (Tensor): shape(bs, num_gt, num_gt)
-        num_gt (int):
+        possible_mask (Tensor): Possible mask,
+            shape(batch_size, num_gt, num_priors)
+        overlaps (Tensor): IoU between all bbox and ground true,
+            shape(batch_size, num_gt, num_priors)
+        num_gt (int): Number of ground true.
     Return:
-        target_gt_index (Tensor): shape(bs, num_gt)
-        force_gt_matching (Tensor): shape(bs, num_gt)
-        pos_mask (Tensor): shape(bs, num_gt, num_gt)
+        target_gt_index (Tensor): Target ground true index,
+            shape(batch_size, num_priors)
+        force_gt_matching (Tensor): Force matching ground true,
+            shape(batch_size, num_priors)
+        possible_mask (Tensor): Possible mask,
+            shape(batch_size, num_gt, num_priors)
     """
-    force_gt_matching = pos_mask.sum(axis=-2)
+    force_gt_matching = possible_mask.sum(axis=-2)
 
     # make sure all gt_bbox match anchor
     if force_gt_matching.max() > 1:
@@ -90,24 +98,26 @@ def select_highest_overlaps(pos_mask: Tensor, overlaps: Tensor,
             [1, num_gt, 1])
         index = overlaps.argmax(axis=1)
         is_max_overlaps = F.one_hot(index, num_gt)
-        is_max_overlaps = is_max_overlaps.permute(0, 2, 1).to(overlaps.dtype)
+        is_max_overlaps = \
+            is_max_overlaps.permute(0, 2, 1).to(overlaps.dtype)
 
-        pos_mask = torch.where(mask_multi_gts, is_max_overlaps, pos_mask)
-        force_gt_matching = pos_mask.sum(axis=-2)
+        possible_mask = torch.where(mask_multi_gts, is_max_overlaps,
+                                    possible_mask)
+        force_gt_matching = possible_mask.sum(axis=-2)
 
-    target_gt_index = pos_mask.argmax(axis=-2)
-    return target_gt_index, force_gt_matching, pos_mask
+    target_gt_index = possible_mask.argmax(axis=-2)
+    return target_gt_index, force_gt_matching, possible_mask
 
 
 def iou_calculator(bbox1: Tensor, bbox2: Tensor, eps: float = 1e-9) -> Tensor:
     """Calculate iou for batch.
 
     Args:
-        bbox1 (Tensor): shape(bs, num_gt, 1, 4)
-        bbox2 (Tensor): shape(bs, 1, num_gt, 4)
-        eps (float):
+        bbox1 (Tensor): shape(batch size, num_gt, 4)
+        bbox2 (Tensor): shape(batch size, num_priors, 4)
+        eps (float): Default to 1e-9.
     Return:
-        (Tensor): shape(bs, num_gt, num_priors)
+        (Tensor): IoU, shape(size, num_gt, num_priors)
     """
     bbox1 = bbox1.unsqueeze(2)  # [N, M1, 4] -> [N, M1, 1, 4]
     bbox2 = bbox2.unsqueeze(1)  # [N, M2, 4] -> [N, 1, M2, 4]
@@ -153,14 +163,19 @@ class BatchATSSAssigner(nn.Module):
             https://github.com/fcjian/TOOD/blob/master/mmdet/core/bbox/assigners/atss_assigner.py
 
         Args:
-            priors (Tensor): shape(num_gt, 4)
-            num_level_priors (List): len(3)
-            gt_labels (Tensor): shape(batch_size, num_gt, 1)
-            gt_bboxes (Tensor): shape(batch_size, num_gt, 4)
-            pad_gt_mask (Tensor): shape(batch_size, num_gt, 1),
-                Bbox mask, 1 means bbox, 0 means no bbox
-            pred_bboxes (Tensor): shape(batch_size, num_gt, 4),
-                predicted bounding boxes
+            priors (Tensor): model predictions, it can be anchors, points,
+                or bboxes predicted by the model, shape(num_priors, 4).
+            num_level_priors (List): Number of bboxes in each level, len(3)
+            gt_labels (Tensor): Ground truth label,
+                shape(batch_size, num_gt, 1)
+            gt_bboxes (Tensor): Ground truth bbox,
+                shape(batch_size, num_gt, 4)
+            pad_gt_mask (Tensor): Ground truth bbox mask,
+                1 means bbox, 0 means no bbox,
+                shape(batch_size, num_gt, 1),
+            pred_bboxes (Tensor): Predicted bounding boxes,
+                shape(batch_size, num_priors, 4),
+
         Returns:
             assigned_labels (Tensor): shape(batch_size, num_gt)
             assigned_bboxes (Tensor): shape(batch_size, num_gt, 4)
@@ -189,27 +204,27 @@ class BatchATSSAssigner(nn.Module):
         distances = distances.reshape([batch_size, -1, num_priors])
 
         # Selecting candidates based on the center distance
-        is_in_candidate, candidate_indexes = self.select_topk_candidates(
+        is_in_candidate, candidate_idxs = self.select_topk_candidates(
             distances, num_level_priors, pad_gt_mask)
 
         # get corresponding iou for the these candidates, and compute the
         # mean and std, set mean + std as the iou threshold
         overlaps_thr_per_gt, iou_candidates = self.threshold_calculator(
-            is_in_candidate, candidate_indexes, overlaps, num_priors,
-            batch_size, num_gt)
+            is_in_candidate, candidate_idxs, overlaps, num_priors, batch_size,
+            num_gt)
 
         # select candidates iou >= threshold as positive
-        is_pos = torch.where(
+        is_possible = torch.where(
             iou_candidates > overlaps_thr_per_gt.repeat([1, 1, num_priors]),
             is_in_candidate, torch.zeros_like(is_in_candidate))
 
         is_in_gts = select_candidates_in_gts(priors_points, gt_bboxes)
-        pos_mask = is_pos * is_in_gts * pad_gt_mask
+        possible_mask = is_possible * is_in_gts * pad_gt_mask
 
         # if an anchor box is assigned to multiple gts,
         # the one with the highest IoU will be selected.
-        target_gt_index, force_gt_matching, pos_mask = select_highest_overlaps(
-            pos_mask, overlaps, num_gt)
+        target_gt_index, force_gt_matching, possible_mask = \
+            select_highest_overlaps(possible_mask, overlaps, num_gt)
 
         # assigned target
         assigned_labels, assigned_bboxes, assigned_scores = self.get_targets(
@@ -218,7 +233,7 @@ class BatchATSSAssigner(nn.Module):
 
         # soft label with iou
         if pred_bboxes is not None:
-            ious = iou_calculator(gt_bboxes, pred_bboxes) * pos_mask
+            ious = iou_calculator(gt_bboxes, pred_bboxes) * possible_mask
             ious = ious.max(axis=-2)[0].unsqueeze(-1)
             assigned_scores *= ious
 
@@ -231,13 +246,18 @@ class BatchATSSAssigner(nn.Module):
         """Selecting candidates based on the center distance.
 
         Args:
-            # TODO Shape
-            distances (Tensor): Shape(): Distance between all bbox and gt
-            num_level_priors (List[int]): Number of bboxes in each level.
-            pad_gt_mask (Tensor): # TODO ?
+            distances (Tensor): Distance between all bbox and gt,
+                shape(batch_size, num_gt, num_priors)
+            num_level_priors (List[int]): Number of bboxes in each level,
+                len(3)
+            pad_gt_mask (Tensor): Ground truth bbox mask,
+                shape(batch_size, num_gt, 1)
 
         Return:
-            Tuple[Tensor, Tensor]:
+            is_in_candidate_list (Tensor): Flag show that each level have
+                topk candidates or not,  shape(batch_size, num_gt, num_priors)
+            candidate_idxs (Tensor): Candidates index,
+                shape(batch_size, num_gt, num_gt)
         """
         is_in_candidate_list = []
         candidate_idxs = []
@@ -277,35 +297,40 @@ class BatchATSSAssigner(nn.Module):
         return is_in_candidate_list, candidate_idxs
 
     @staticmethod
-    def threshold_calculator(is_in_candidate: List, candidate_indexes: Tensor,
+    def threshold_calculator(is_in_candidate: List, candidate_idxs: Tensor,
                              overlaps: Tensor, num_priors: int,
                              batch_size: int,
                              num_gt: int) -> Tuple[Tensor, Tensor]:
         """Get corresponding iou for the these candidates, and compute the mean
         and std, set mean + std as the iou threshold.
 
-        Args: # TODO shape
-            is_in_candidate (Tensor):
-            candidate_indexes (Tensor):
-            overlaps (Tensor):
-            num_priors (int):
-            batch_size (int):
-            num_gt (int):
+        Args:
+            is_in_candidate (Tensor): Flag show that each level have
+                topk candidates or not, shape(batch_size, num_gt, num_priors).
+            candidate_idxs (Tensor): Candidates index,
+                shape(batch_size, num_gt, num_gt)
+            overlaps (Tensor): Overlaps area,
+                shape(batch_size, num_gt, num_priors).
+            num_priors (int): Number of priors.
+            batch_size (int): Batch size.
+            num_gt (int): Number of ground true.
 
-        Return: # TODO shape
-            Tensor
-            Tensor
+        Return:
+            overlaps_thr_per_gt (Tensor): Overlap threshold of per ground true,
+                shape(batch_size, num_gt, 1).
+            candidate_overlaps (Tensor): Candidate overlaps,
+                shape(batch_size, num_gt, num_priors).
         """
 
         batch_size_num_gt = batch_size * num_gt
         candidate_overlaps = torch.where(is_in_candidate > 0, overlaps,
                                          torch.zeros_like(overlaps))
-        candidate_indexes = candidate_indexes.reshape([batch_size_num_gt, -1])
+        candidate_idxs = candidate_idxs.reshape([batch_size_num_gt, -1])
 
         assist_indexes = num_priors * torch.arange(
-            batch_size_num_gt, device=candidate_indexes.device)
+            batch_size_num_gt, device=candidate_idxs.device)
         assist_indexes = assist_indexes[:, None]
-        flatten_indexes = candidate_indexes + assist_indexes
+        flatten_indexes = candidate_idxs + assist_indexes
 
         candidate_overlaps_reshape = candidate_overlaps.reshape(
             -1)[flatten_indexes]
@@ -327,16 +352,25 @@ class BatchATSSAssigner(nn.Module):
         """Get target info.
 
         Args:
-            gt_labels (Tensor):
-            gt_bboxes (Tensor):
-            assigned_gt_inds (Tensor):
-            force_gt_matching (Tensor):
-            num_priors (int):
-            batch_size (int):
-            num_gt (int):
+            gt_labels (Tensor): Ground true labels,
+                shape(batch_size, num_gt, 1)
+            gt_bboxes (Tensor): Ground true bboxes,
+                shape(batch_size, num_gt, 4)
+            assigned_gt_inds (Tensor): Assigned ground true indexes,
+                shape(batch_size, num_priors)
+            force_gt_matching (Tensor): Force ground true matching mask,
+                shape(batch_size, num_priors)
+            num_priors (int): Number of priors.
+            batch_size (int): Batch size.
+            num_gt (int): Number of ground true.
 
         Return:
-            Tuple[Tensor, Tensor, Tensor]:
+            assigned_labels (Tensor): Assigned labels,
+                shape(batch_size, num_priors)
+            assigned_bboxes (Tensor): Assigned bboxes,
+                shape(batch_size, num_priors)
+            assigned_scores (Tensor): Assigned scores,
+                shape(batch_size, num_priors)
         """
 
         # assigned target labels
