@@ -121,7 +121,7 @@ def organize_by_existing_files(image_dir: str, existing_cat: list):
     return image_list[0], image_list[1], image_list[2]
 
 
-def copy_image_categorically(image_dir, output_folder, category, image,
+def copy_image_by_category(image_dir, output_folder, category, image,
                              img_suffix):
     """Allocate the images according to their categories in separate folder."""
     cat_folder = osp.join(output_folder, category)
