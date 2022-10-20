@@ -209,7 +209,7 @@ def convert_yolo_to_coco(image_dir: str):
         classes = f.read().strip().split()
 
     indices = os.listdir(yolo_image_dir)
-    total_num = len(indices)
+    total_img = len(indices)
 
     dataset = {'images': [], 'annotations': [], 'categories': []}
     if to_categorize:
@@ -230,7 +230,7 @@ def convert_yolo_to_coco(image_dir: str):
 
     obj_count = 0
     skiped_count = 0
-    img_count = 0
+    convert_img = 0
     for idx, image in enumerate(mmengine.track_iter_progress(indices)):
         # support both .jpg, .png, and .jpeg
         img_suffix = osp.splitext(image)[1].lower()
@@ -271,7 +271,7 @@ def convert_yolo_to_coco(image_dir: str):
                     label, idx, obj_count, image_height, image_width)
                 dataset['annotations'].append(coco_info)
                 obj_count += 1
-        img_count += 1
+        convert_img += 1
 
     # saving results to result json in res_folder
     if to_categorize:
@@ -289,9 +289,10 @@ def convert_yolo_to_coco(image_dir: str):
         print(f'Saving converted results to {out_file}')
         mmengine.dump(dataset, out_file)
 
+    # simple statistics
     print(f'All data has been converted. Please check at {output_folder} !')
     print(
-        f'Number of images found: {total_num}, converted: {img_count},',
+        f'Number of images found: {total_img}, converted: {convert_img},',
         f'and skipped: {skiped_count}. Total annotation count: {obj_count}.')
     print('You can use tools/analysis_tools/browse_coco_json.py to visualize!')
 
