@@ -244,7 +244,7 @@ def convert_yolo_to_coco(image_dir: str):
 
         dataset['images'].append(img_info_dict)
 
-        label_path = osp.join(yolo_label_dir, img_name) + '.txt'
+        label_path = f'{osp.join(yolo_label_dir, img_name)}.txt'
         if not osp.exists(label_path):
             # if current image is not annotated
             print(f'WARNING: {label_path} does not exist. Skipped.')
