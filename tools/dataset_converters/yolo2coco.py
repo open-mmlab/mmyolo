@@ -74,7 +74,6 @@ def get_image_info(yolo_image_dir, idx, file_name):
         'width': width,
         'height': height
     }
-
     return img_info_dict, height, width
 
 
@@ -104,7 +103,7 @@ def convert_bbox_info(label, idx, obj_count, image_height, image_width):
         'segmentation': [[x1, y1, x2, y1, x2, y2, x1, y2]],
         'iscrowd': 0
     }
-
+    obj_count += 1
     return coco_format_info, obj_count
 
 
@@ -131,17 +130,18 @@ def organize_by_existing_files(image_dir: str, existed_categories: list):
     return image_list[0], image_list[1], image_list[2]
 
 
-def copy_image_by_category(image_dir, output_folder, category, image,
-                           img_suffix):
+def copy_image_by_category(yolo_image_dir, cat_out_folder, image):
     """Allocate the images according to their categories in separate folder."""
-    cat_folder = osp.join(output_folder, category)
-    check_existence(cat_folder)
+    # support both .jpg, .png, and .jpeg
+    img_suffix = osp.splitext(image)[1].lower()
+    if img_suffix not in IMG_EXTENSIONS:
+        raise Exception(
+            "Only supports '.jpg', '.png', and '.jpeg' image formats")
 
-    img_path = osp.join(image_dir, 'images', image)
+    img_path = osp.join(yolo_image_dir, image)
     img_name = osp.splitext(image)[0]
+    new_img_path = osp.join(cat_out_folder, f'{img_name}.jpg')
     img_data = mmcv.imread(str(img_path))
-    new_img_name = f'{img_name}.jpg'
-    new_img_path = osp.join(cat_folder, new_img_name)
 
     if img_suffix == '.jpg':
         shutil.copyfile(img_path, new_img_path)
@@ -172,47 +172,43 @@ def convert_yolo_to_coco(image_dir: str):
     train_txt_path = osp.join(image_dir, 'train.txt')
     val_txt_path = osp.join(image_dir, 'val.txt')
     test_txt_path = osp.join(image_dir, 'test.txt')
-    train_txt_found, val_txt_found, test_txt_found = False, False, False
     existed_categories = []
     print(f'Checking if train.txt, val.txt, and test.txt are in {image_dir}')
     if osp.exists(train_txt_path):
         print('Found train.txt')
-        train_txt_found = True
         existed_categories.append('train')
     if osp.exists(val_txt_path):
         print('Found val.txt')
-        val_txt_found = True
         existed_categories.append('val')
     if osp.exists(test_txt_path):
         print('Found test.txt')
-        test_txt_found = True
         existed_categories.append('test')
-
-    if train_txt_found or val_txt_found or test_txt_found:
-        print('Need to organize the data accordingly.')
-        to_categorize = True
-    else:
-        print('These files are not located, no need to organize separately.')
-        to_categorize = False
 
     # prepare the output folders
     output_folder = osp.join(image_dir, 'annotations')
     if not osp.exists(output_folder):
         os.makedirs(output_folder)
+        check_existence(output_folder)
     for category in existed_categories:
         cat_out_folder = osp.join(output_folder, category)
         if not osp.exists(cat_out_folder):
             os.makedirs(cat_out_folder)
+        check_existence(cat_out_folder)
 
     # start the conversion and allocate images
     with open(yolo_class_txt) as f:
         classes = f.read().strip().split()
 
     indices = os.listdir(yolo_image_dir)
-    total_img = len(indices)
+    total = len(indices)
 
     dataset = {'images': [], 'annotations': [], 'categories': []}
-    if to_categorize:
+    if existed_categories == []:
+        print('These files are not located, no need to organize separately.')
+        for i, cls in enumerate(classes, 0):
+            dataset['categories'].append({'id': i, 'name': cls})
+    else:
+        print('Need to organize the data accordingly.')
         train_dataset = {'images': [], 'annotations': [], 'categories': []}
         val_dataset = {'images': [], 'annotations': [], 'categories': []}
         test_dataset = {'images': [], 'annotations': [], 'categories': []}
@@ -224,44 +220,38 @@ def convert_yolo_to_coco(image_dir: str):
             test_dataset['categories'].append({'id': i, 'name': cls})
         train_img, val_img, test_img = organize_by_existing_files(
             image_dir, existed_categories)
-    else:
-        for i, cls in enumerate(classes, 0):
-            dataset['categories'].append({'id': i, 'name': cls})
 
     obj_count = 0
-    skiped_count = 0
-    convert_img = 0
+    skipped = 0
+    converted = 0
     for idx, image in enumerate(mmengine.track_iter_progress(indices)):
-        # support both .jpg, .png, and .jpeg
-        img_suffix = osp.splitext(image)[1].lower()
-        if img_suffix not in IMG_EXTENSIONS:
-            raise Exception(
-                "Only supports '.jpg', '.png', and '.jpeg' image formats")
-        img_name = osp.splitext(image)[0]
         img_info_dict, image_height, image_width = get_image_info(
             yolo_image_dir, idx, image)
 
-        if to_categorize:
+        if existed_categories != []:
             if image in train_img:
                 dataset = train_dataset
-                copy_image_by_category(image_dir, output_folder, 'train',
-                                       image, img_suffix)
+                cat_out_folder = output_folder + '/train'
+                copy_image_by_category(yolo_image_dir, cat_out_folder, image)
             elif image in val_img:
                 dataset = val_dataset
-                copy_image_by_category(image_dir, output_folder, 'val', image,
-                                       img_suffix)
+                cat_out_folder = output_folder + '/val'
+                copy_image_by_category(yolo_image_dir, cat_out_folder, image)
             elif image in test_img:
                 dataset = test_dataset
-                copy_image_by_category(image_dir, output_folder, 'test', image,
-                                       img_suffix)
+                cat_out_folder = output_folder + 'test'
+                copy_image_by_category(yolo_image_dir, cat_out_folder, image)
 
         dataset['images'].append(img_info_dict)
 
+        img_name = osp.splitext(image)[0]
         label_path = f'{osp.join(yolo_label_dir, img_name)}.txt'
         if not osp.exists(label_path):
-            # if current image is not annotated
-            print(f'WARNING: {label_path} does not exist. Skipped.')
-            skiped_count += 1
+            # if current image is not annotated or the annotation file failed
+            print(
+                f'WARNING: {label_path} does not exist. Please check the file.'
+            )
+            skipped += 1
             continue
 
         with open(label_path) as f:
@@ -270,30 +260,28 @@ def convert_yolo_to_coco(image_dir: str):
                 coco_info, obj_count = convert_bbox_info(
                     label, idx, obj_count, image_height, image_width)
                 dataset['annotations'].append(coco_info)
-                obj_count += 1
-        convert_img += 1
+        converted += 1
 
-    # saving results to result json in res_folder
-    if to_categorize:
+    # saving results to result json
+    if existed_categories == []:
+        out_file = osp.join(image_dir, 'annotations/result.json')
+        print(f'Saving converted results to {out_file} ...')
+        mmengine.dump(dataset, out_file)
+    else:
         for category in existed_categories:
             out_file = osp.join(output_folder, f'{category}.json')
-            print(f'Saving converted results to {out_file}')
+            print(f'Saving converted results to {out_file} ...')
             if category == 'train':
                 mmengine.dump(train_dataset, out_file)
             elif category == 'val':
                 mmengine.dump(val_dataset, out_file)
             elif category == 'test':
                 mmengine.dump(test_dataset, out_file)
-    else:
-        out_file = osp.join(image_dir, 'annotations/result.json')
-        print(f'Saving converted results to {out_file}')
-        mmengine.dump(dataset, out_file)
 
     # simple statistics
     print(f'All data has been converted. Please check at {output_folder} !')
-    print(
-        f'Number of images found: {total_img}, converted: {convert_img},',
-        f'and skipped: {skiped_count}. Total annotation count: {obj_count}.')
+    print(f'Number of images found: {total}, converted: {converted},',
+          f'and skipped: {skipped}. Total annotation count: {obj_count}.')
     print('You can use tools/analysis_tools/browse_coco_json.py to visualize!')
 
 
