@@ -319,7 +319,7 @@ class YOLOv6Head(YOLOv5Head):
         targets = self.preprocess(batch_gt_instances, batch_size)
 
         gt_labels = targets[:, :, :1]
-        gt_bboxes = targets[:, :, 1:]  #xyxy
+        gt_bboxes = targets[:, :, 1:]  # xyxy
         mask_gt = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
 
         # get epoch information from message hub
@@ -344,7 +344,7 @@ class YOLOv6Head(YOLOv5Head):
                 self.assigner(
                     pred_scores.detach(),
                     flatten_bboxes.detach(),
-                    flatten_priors[:,:2],
+                    flatten_priors[:, :2],
                     gt_labels,
                     gt_bboxes,
                     mask_gt)
@@ -358,15 +358,10 @@ class YOLOv6Head(YOLOv5Head):
         loss_cls = self.varifocal_loss(pred_scores, target_scores,
                                        one_hot_label)
 
-        # weighted_target = one_hot_label * target_scores
-        # loss_cls = self.loss_cls(flatten_cls_preds.view(-1,self.num_classes), (target_scores*one_hot_label).view(-1,self.num_classes))
-
         # rescale bbox
-        # target_bboxes /= stride_tensor
         stride_tensor = flatten_priors[..., [2]]
         target_bboxes /= stride_tensor
         flatten_bboxes /= stride_tensor
-        anchor_points_s = flatten_priors[:, :2] / stride_tensor
 
         target_scores_sum = target_scores.sum()
         loss_cls /= target_scores_sum
@@ -395,16 +390,17 @@ class YOLOv6Head(YOLOv5Head):
         return dict(
             loss_cls=loss_cls * world_size, loss_bbox=loss_iou * world_size)
 
-    def preprocess(self, targets, batch_size):
+    def preprocess(self, batch_gt_instances, batch_size):
         targets_list = np.zeros((batch_size, 1, 5)).tolist()
-        for i, item in enumerate(targets.cpu().numpy().tolist()):
+        for i, item in enumerate(batch_gt_instances.cpu().numpy().tolist()):
             targets_list[int(item[0])].append(item[1:])
-        max_len = max(len(l) for l in targets_list)
+        max_len = max(len(target) for target in targets_list)
         targets = torch.from_numpy(
             np.array(
                 list(
                     map(lambda l: l + [[-1, 0, 0, 0, 0]] * (max_len - len(l)),
-                        targets_list)))[:, 1:, :]).to(targets.device)
+                        targets_list)))[:,
+                                        1:, :]).to(batch_gt_instances.device)
         return targets
 
     def varifocal_loss(self,
