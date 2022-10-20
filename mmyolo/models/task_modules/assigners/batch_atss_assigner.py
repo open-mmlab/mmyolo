@@ -1,30 +1,40 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import List, Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from mmdet.utils import ConfigType
+from torch import Tensor
 
 from mmyolo.registry import TASK_UTILS
 
-def dist_calculator(gt_bboxes, anchor_bboxes):
-    """compute center distance between all bbox and gt
+
+def bbox_center_distance(bboxes: Tensor,
+                         priors: Tensor) -> Tuple[Tensor, Tensor]:
+    """Compute the center distance between bboxes and priors.
 
     Args:
-        gt_bboxes (Tensor): shape(bs*n_max_boxes, 4)
-        anchor_bboxes (Tensor): shape(num_total_anchors, 4)
-    Return:
-        distances (Tensor): shape(bs*n_max_boxes, num_total_anchors)
-        ac_points (Tensor): shape(num_total_anchors, 2)
-    """  
-    gt_cx = (gt_bboxes[:, 0] + gt_bboxes[:, 2]) / 2.0
-    gt_cy = (gt_bboxes[:, 1] + gt_bboxes[:, 3]) / 2.0
-    gt_points = torch.stack([gt_cx, gt_cy], dim=1)
-    ac_cx = (anchor_bboxes[:, 0] + anchor_bboxes[:, 2]) / 2.0
-    ac_cy = (anchor_bboxes[:, 1] + anchor_bboxes[:, 3]) / 2.0
-    ac_points = torch.stack([ac_cx, ac_cy], dim=1)
+        bboxes (Tensor): Shape (n, 4) for bbox, "xyxy" format.
+        priors (Tensor): Shape (n, 4) for priors, "xyxy" format.
 
-    distances = (gt_points[:, None, :] - ac_points[None, :, :]).pow(2).sum(-1).sqrt()
-    
-    return distances, ac_points
+    Returns:
+        # TODO shape?
+        Tensor: Shape (n, 4). Center distances between bboxes and priors.
+        Tensor: Shape (n, 4).  Priors cx cy points.
+    """
+    bbox_cx = (bboxes[:, 0] + bboxes[:, 2]) / 2.0
+    bbox_cy = (bboxes[:, 1] + bboxes[:, 3]) / 2.0
+    bbox_points = torch.stack((bbox_cx, bbox_cy), dim=1)
+
+    priors_cx = (priors[:, 0] + priors[:, 2]) / 2.0
+    priors_cy = (priors[:, 1] + priors[:, 3]) / 2.0
+    priors_points = torch.stack((priors_cx, priors_cy), dim=1)
+
+    distances = (bbox_points[:, None, :] -
+                 priors_points[None, :, :]).pow(2).sum(-1).sqrt()
+
+    return distances, priors_points
 
 def select_candidates_in_gts(xy_centers, gt_bboxes, eps=1e-9):
     """select the positive anchors's center in gt
@@ -144,7 +154,7 @@ class BatchATSSAssigner(nn.Module):
         overlaps = self.iou2d_calculator(gt_bboxes.reshape([-1, 4]), anc_bboxes)
         overlaps = overlaps.reshape([self.bs, -1, self.n_anchors])
 
-        distances, ac_points = dist_calculator(gt_bboxes.reshape([-1, 4]), anc_bboxes)
+        distances, ac_points = bbox_center_distance(gt_bboxes.reshape([-1, 4]), anc_bboxes)
         distances = distances.reshape([self.bs, -1, self.n_anchors])
 
         is_in_candidate, candidate_idxs = self.select_topk_candidates(
