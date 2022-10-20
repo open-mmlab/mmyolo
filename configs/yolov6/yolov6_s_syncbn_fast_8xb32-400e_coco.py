@@ -70,10 +70,14 @@ model = dict(
         initial_assigner=dict(
             type='BatchATSSAssigner',
             topk=9,
-            iou2d_calculator=dict(type='mmdet.BboxOverlaps2D'),
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             num_classes=80),
         assigner=dict(
-            type='BatchTaskAlignedAssigner', topk=13, alpha=1, beta=6),
+            type='BatchTaskAlignedAssigner',
+            topk=13,
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
+            alpha=1,
+            beta=6),
     ),
     test_cfg=dict(
         multi_label=True,
