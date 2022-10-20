@@ -35,7 +35,7 @@ env_cfg = dict(cudnn_benchmark=True)
 model = dict(
     type='YOLODetector',
     data_preprocessor=dict(
-        type='mmdet.DetDataPreprocessor',
+        type='YOLOv5DetDataPreprocessor',
         mean=[0., 0., 0.],
         std=[255., 255., 255.],
         bgr_to_rgb=True),
@@ -136,6 +136,7 @@ train_pipeline_stage2 = [
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
+    collate_fn=dict(type='yolov5_collate'),
     persistent_workers=persistent_workers,
     pin_memory=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
