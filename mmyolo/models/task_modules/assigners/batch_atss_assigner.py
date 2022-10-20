@@ -21,7 +21,7 @@ def bbox_center_distance(bboxes: Tensor,
     Returns:
         distances (Tensor): Center distances between bboxes and priors,
             shape (num_priors, n).
-        priors_points (Tensor):Priors cx cy points,
+        priors_points (Tensor): Priors cx cy points,
             shape (num_priors, 2).
     """
     bbox_cx = (bboxes[:, 0] + bboxes[:, 2]) / 2.0
