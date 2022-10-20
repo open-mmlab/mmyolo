@@ -71,42 +71,42 @@ def select_candidates_in_gts(priors_cxy_points: Tensor,
     return (bbox_deltas.min(axis=-1)[0] > eps).to(gt_bboxes.dtype)
 
 
-def select_highest_overlaps(possible_mask: Tensor, overlaps: Tensor,
+def select_highest_overlaps(pos_mask: Tensor, overlaps: Tensor,
                             num_gt: int) -> Tuple[Tensor, Tensor, Tensor]:
     """If an anchor box is assigned to multiple gts, the one with the highest
     iou will be selected.
 
     Args:
-        possible_mask (Tensor): Possible mask,
+        pos_mask (Tensor): Possible mask,
             shape(batch_size, num_gt, num_priors)
         overlaps (Tensor): IoU between all bbox and ground true,
             shape(batch_size, num_gt, num_priors)
         num_gt (int): Number of ground true.
     Return:
-        target_gt_index (Tensor): Target ground true index,
+        gt_idx_pre_prior (Tensor): Target ground true index,
             shape(batch_size, num_priors)
-        force_gt_matching (Tensor): Force matching ground true,
+        fg_mask_pre_prior (Tensor): Force matching ground true,
             shape(batch_size, num_priors)
-        possible_mask (Tensor): Possible mask,
+        pos_mask (Tensor): Possible mask,
             shape(batch_size, num_gt, num_priors)
     """
-    force_gt_matching = possible_mask.sum(axis=-2)
+    fg_mask_pre_prior = pos_mask.sum(axis=-2)
 
-    # make sure all gt_bbox match anchor
-    if force_gt_matching.max() > 1:
-        mask_multi_gts = (force_gt_matching.unsqueeze(1) > 1).repeat(
+    # Make sure the positive sample matches the only one and is the largest IoU
+    if fg_mask_pre_prior.max() > 1:
+        mask_multi_gts = (fg_mask_pre_prior.unsqueeze(1) > 1).repeat(
             [1, num_gt, 1])
         index = overlaps.argmax(axis=1)
         is_max_overlaps = F.one_hot(index, num_gt)
         is_max_overlaps = \
             is_max_overlaps.permute(0, 2, 1).to(overlaps.dtype)
 
-        possible_mask = torch.where(mask_multi_gts, is_max_overlaps,
-                                    possible_mask)
-        force_gt_matching = possible_mask.sum(axis=-2)
+        pos_mask = torch.where(mask_multi_gts, is_max_overlaps,
+                                    pos_mask)
+        fg_mask_pre_prior = pos_mask.sum(axis=-2)
 
-    target_gt_index = possible_mask.argmax(axis=-2)
-    return target_gt_index, force_gt_matching, possible_mask
+    gt_idx_pre_prior = pos_mask.argmax(axis=-2)
+    return gt_idx_pre_prior, fg_mask_pre_prior, pos_mask
 
 
 def iou_calculator(bbox1: Tensor, bbox2: Tensor, eps: float = 1e-9) -> Tensor:
@@ -141,7 +141,10 @@ def iou_calculator(bbox1: Tensor, bbox2: Tensor, eps: float = 1e-9) -> Tensor:
 
 @TASK_UTILS.register_module()
 class BatchATSSAssigner(nn.Module):
-    """Adaptive Training Sample Selection Assigner."""
+    """Adaptive Training Sample Selection Assigner.
+        This code is based on
+        https://github.com/meituan/YOLOv6/blob/main/yolov6/assigners/atss_assigner.py
+    """
 
     def __init__(
             self,
@@ -157,11 +160,9 @@ class BatchATSSAssigner(nn.Module):
     def forward(
             self, priors: torch.Tensor, num_level_priors: List,
             gt_labels: torch.Tensor, gt_bboxes: torch.Tensor,
-            pad_gt_mask: torch.Tensor, pred_bboxes: torch.Tensor
+            pad_bbox_flag: torch.Tensor, pred_bboxes: torch.Tensor
     ) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
-        r"""This code is based on
-            https://github.com/fcjian/TOOD/blob/master/mmdet/core/bbox/assigners/atss_assigner.py
-
+        r"""Get assigner result
         Args:
             priors (Tensor): model predictions, it can be anchors, points,
                 or bboxes predicted by the model, shape(num_priors, 4).
@@ -170,7 +171,7 @@ class BatchATSSAssigner(nn.Module):
                 shape(batch_size, num_gt, 1)
             gt_bboxes (Tensor): Ground truth bbox,
                 shape(batch_size, num_gt, 4)
-            pad_gt_mask (Tensor): Ground truth bbox mask,
+            pad_bbox_flag (Tensor): Ground truth bbox mask,
                 1 means bbox, 0 means no bbox,
                 shape(batch_size, num_gt, 1),
             pred_bboxes (Tensor): Predicted bounding boxes,
@@ -180,7 +181,7 @@ class BatchATSSAssigner(nn.Module):
             assigned_labels (Tensor): shape(batch_size, num_gt)
             assigned_bboxes (Tensor): shape(batch_size, num_gt, 4)
             assigned_scores (Tensor):
-            force_gt_matching (Tensor): shape(bs, num_gt)
+            fg_mask_pre_prior (Tensor): shape(bs, num_gt)
         """
         batch_size = gt_bboxes.size(0)
         num_gt, num_priors = gt_bboxes.size(1), priors.size(0)
@@ -205,7 +206,7 @@ class BatchATSSAssigner(nn.Module):
 
         # Selecting candidates based on the center distance
         is_in_candidate, candidate_idxs = self.select_topk_candidates(
-            distances, num_level_priors, pad_gt_mask)
+            distances, num_level_priors, pad_bbox_flag)
 
         # get corresponding iou for the these candidates, and compute the
         # mean and std, set mean + std as the iou threshold
@@ -214,36 +215,36 @@ class BatchATSSAssigner(nn.Module):
             num_gt)
 
         # select candidates iou >= threshold as positive
-        is_possible = torch.where(
+        is_pos = torch.where(
             iou_candidates > overlaps_thr_per_gt.repeat([1, 1, num_priors]),
             is_in_candidate, torch.zeros_like(is_in_candidate))
 
         is_in_gts = select_candidates_in_gts(priors_points, gt_bboxes)
-        possible_mask = is_possible * is_in_gts * pad_gt_mask
+        pos_mask = is_pos * is_in_gts * pad_bbox_flag
 
         # if an anchor box is assigned to multiple gts,
         # the one with the highest IoU will be selected.
-        target_gt_index, force_gt_matching, possible_mask = \
-            select_highest_overlaps(possible_mask, overlaps, num_gt)
+        gt_idx_pre_prior, fg_mask_pre_prior, pos_mask = \
+            select_highest_overlaps(pos_mask, overlaps, num_gt)
 
         # assigned target
         assigned_labels, assigned_bboxes, assigned_scores = self.get_targets(
-            gt_labels, gt_bboxes, target_gt_index, force_gt_matching,
+            gt_labels, gt_bboxes, gt_idx_pre_prior, fg_mask_pre_prior,
             num_priors, batch_size, num_gt)
 
         # soft label with iou
         if pred_bboxes is not None:
-            ious = iou_calculator(gt_bboxes, pred_bboxes) * possible_mask
+            ious = iou_calculator(gt_bboxes, pred_bboxes) * pos_mask
             ious = ious.max(axis=-2)[0].unsqueeze(-1)
             assigned_scores *= ious
 
         # TODO change it to dict
         return assigned_labels.long(
-        ), assigned_bboxes, assigned_scores, force_gt_matching.bool()
+        ), assigned_bboxes, assigned_scores, fg_mask_pre_prior.bool()
 
     def select_topk_candidates(self, distances: Tensor,
                                num_level_priors: List[int],
-                               pad_gt_mask: Tensor) -> Tuple[Tensor, Tensor]:
+                               pad_bbox_flag: Tensor) -> Tuple[Tensor, Tensor]:
         """Selecting candidates based on the center distance.
 
         Args:
@@ -251,7 +252,7 @@ class BatchATSSAssigner(nn.Module):
                 shape(batch_size, num_gt, num_priors)
             num_level_priors (List[int]): Number of bboxes in each level,
                 len(3)
-            pad_gt_mask (Tensor): Ground truth bbox mask,
+            pad_bbox_flag (Tensor): Ground truth bbox mask,
                 shape(batch_size, num_gt, 1)
 
         Return:
@@ -266,7 +267,7 @@ class BatchATSSAssigner(nn.Module):
 
         distances_dtype = distances.dtype
         distances = torch.split(distances, num_level_priors, dim=-1)
-        pad_gt_mask = pad_gt_mask.repeat(1, 1, self.topk).bool()
+        pad_bbox_flag = pad_bbox_flag.repeat(1, 1, self.topk).bool()
 
         for distances_per_level, priors_per_level in zip(
                 distances, num_level_priors):
@@ -280,7 +281,7 @@ class BatchATSSAssigner(nn.Module):
             candidate_idxs.append(topk_idxs_per_level + start_idx)
 
             topk_idxs_per_level = torch.where(
-                pad_gt_mask, topk_idxs_per_level,
+                pad_bbox_flag, topk_idxs_per_level,
                 torch.zeros_like(topk_idxs_per_level))
 
             is_in_candidate = F.one_hot(topk_idxs_per_level,
@@ -347,7 +348,7 @@ class BatchATSSAssigner(nn.Module):
         return overlaps_thr_per_gt, candidate_overlaps
 
     def get_targets(self, gt_labels: Tensor, gt_bboxes: Tensor,
-                    assigned_gt_inds: Tensor, force_gt_matching: Tensor,
+                    assigned_gt_inds: Tensor, fg_mask_pre_prior: Tensor,
                     num_priors: int, batch_size: int,
                     num_gt: int) -> Tuple[Tensor, Tensor, Tensor]:
         """Get target info.
@@ -359,7 +360,7 @@ class BatchATSSAssigner(nn.Module):
                 shape(batch_size, num_gt, 4)
             assigned_gt_inds (Tensor): Assigned ground true indexes,
                 shape(batch_size, num_priors)
-            force_gt_matching (Tensor): Force ground true matching mask,
+            fg_mask_pre_prior (Tensor): Force ground true matching mask,
                 shape(batch_size, num_priors)
             num_priors (int): Number of priors.
             batch_size (int): Batch size.
@@ -382,7 +383,7 @@ class BatchATSSAssigner(nn.Module):
         assigned_labels = gt_labels.flatten()[assigned_gt_inds.flatten()]
         assigned_labels = assigned_labels.reshape([batch_size, num_priors])
         assigned_labels = torch.where(
-            force_gt_matching > 0, assigned_labels,
+            fg_mask_pre_prior > 0, assigned_labels,
             torch.full_like(assigned_labels, self.num_classes))
 
         # assigned target boxes
