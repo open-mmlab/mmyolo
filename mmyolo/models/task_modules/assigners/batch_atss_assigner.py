@@ -98,27 +98,35 @@ def select_highest_overlaps(pos_mask: Tensor, overlaps: Tensor,
     target_gt_index = pos_mask.argmax(axis=-2)
     return target_gt_index, force_gt_matching, pos_mask
 
-def iou_calculator(box1, box2, eps=1e-9):
-    """Calculate iou for batch
+
+def iou_calculator(bbox1: Tensor, bbox2: Tensor, eps: float = 1e-9) -> Tensor:
+    """Calculate iou for batch.
 
     Args:
-        box1 (Tensor): shape(bs, n_max_boxes, 1, 4)
-        box2 (Tensor): shape(bs, 1, num_total_anchors, 4)
+        bbox1 (Tensor): shape(bs, num_gt, 1, 4)
+        bbox2 (Tensor): shape(bs, 1, num_gt, 4)
+        eps (float):
     Return:
-        (Tensor): shape(bs, n_max_boxes, num_total_anchors)
+        (Tensor): shape(bs, num_gt, num_priors)
     """
-    box1 = box1.unsqueeze(2)  # [N, M1, 4] -> [N, M1, 1, 4]
-    box2 = box2.unsqueeze(1)  # [N, M2, 4] -> [N, 1, M2, 4]
-    px1y1, px2y2 = box1[:, :, :, 0:2], box1[:, :, :, 2:4]
-    gx1y1, gx2y2 = box2[:, :, :, 0:2], box2[:, :, :, 2:4]
-    x1y1 = torch.maximum(px1y1, gx1y1)
-    x2y2 = torch.minimum(px2y2, gx2y2)
-    overlap = (x2y2 - x1y1).clip(0).prod(-1)
-    area1 = (px2y2 - px1y1).clip(0).prod(-1)
-    area2 = (gx2y2 - gx1y1).clip(0).prod(-1)
-    union = area1 + area2 - overlap + eps
+    bbox1 = bbox1.unsqueeze(2)  # [N, M1, 4] -> [N, M1, 1, 4]
+    bbox2 = bbox2.unsqueeze(1)  # [N, M2, 4] -> [N, 1, M2, 4]
+
+    # calculate xy info of predict and gt bbox
+    pred_x1y1, pred_x2y2 = bbox1[:, :, :, 0:2], bbox1[:, :, :, 2:4]
+    gt_x1y1, gt_x2y2 = bbox2[:, :, :, 0:2], bbox2[:, :, :, 2:4]
+
+    # calculate overlap area
+    overlap = (torch.minimum(pred_x2y2, gt_x2y2) - torch.maximum(pred_x1y1, gt_x1y1)).clip(0).prod(-1)
+
+    # calculate bbox area
+    pred_area = (pred_x2y2 - pred_x1y1).clip(0).prod(-1)
+    gt_area = (gt_x2y2 - gt_x1y1).clip(0).prod(-1)
+
+    union = pred_area + gt_area - overlap + eps
 
     return overlap / union
+
 
 @TASK_UTILS.register_module()
 class BatchATSSAssigner(nn.Module):
