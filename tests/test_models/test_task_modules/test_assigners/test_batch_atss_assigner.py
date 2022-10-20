@@ -11,7 +11,7 @@ class TestBatchATSSAssigner(TestCase):
     def test_batch_atss_assigner(self):
         batch_atss_assigner = BatchATSSAssigner(
             topk=9,
-            iou2d_calculator=dict(type='mmdet.BboxOverlaps2D'),
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             num_classes=80)
         batch_size = 16
         priors = torch.FloatTensor([[-16., -16., 24., 24.],
@@ -50,7 +50,7 @@ class TestBatchATSSAssigner(TestCase):
         """Test corner case where an image might have no true detections."""
         batch_atss_assigner = BatchATSSAssigner(
             topk=9,
-            iou2d_calculator=dict(type='mmdet.BboxOverlaps2D'),
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             num_classes=80)
         batch_size = 16
         priors = torch.FloatTensor([[-16., -16., 24., 24.],
@@ -90,7 +90,7 @@ class TestBatchATSSAssigner(TestCase):
         """Test corner case where a network might predict no boxes."""
         batch_atss_assigner = BatchATSSAssigner(
             topk=9,
-            iou2d_calculator=dict(type='mmdet.BboxOverlaps2D'),
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             num_classes=80)
         batch_size = 16
         priors = torch.empty(0, 1)
@@ -120,7 +120,7 @@ class TestBatchATSSAssigner(TestCase):
         gt."""
         batch_atss_assigner = BatchATSSAssigner(
             topk=9,
-            iou2d_calculator=dict(type='mmdet.BboxOverlaps2D'),
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             num_classes=80)
         batch_size = 16
         priors = torch.empty(0, 1)

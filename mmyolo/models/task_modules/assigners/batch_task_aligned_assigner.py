@@ -22,6 +22,7 @@ class BatchTaskAlignedAssigner(nn.Module):
         self.alpha = alpha
         self.beta = beta
         self.eps = eps
+        self.iou_calculator = TASK_UTILS.build(iou_calculator)
 
     @torch.no_grad()
     def forward(self,
