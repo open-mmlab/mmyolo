@@ -237,6 +237,7 @@ class BatchATSSAssigner(nn.Module):
             ious = ious.max(axis=-2)[0].unsqueeze(-1)
             assigned_scores *= ious
 
+        # TODO change it to dict
         return assigned_labels.long(
         ), assigned_bboxes, assigned_scores, force_gt_matching.bool()
 
@@ -265,7 +266,7 @@ class BatchATSSAssigner(nn.Module):
 
         distances_dtype = distances.dtype
         distances = torch.split(distances, num_level_priors, dim=-1)
-        pad_gt_mask = pad_gt_mask.repeat(1, 1, self.topk).bool()  # TODO ?
+        pad_gt_mask = pad_gt_mask.repeat(1, 1, self.topk).bool()
 
         for distances_per_level, priors_per_level in zip(
                 distances, num_level_priors):
