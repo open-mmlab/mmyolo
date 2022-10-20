@@ -14,7 +14,7 @@ mim run mmdet print_config [CONFIG]
 
 ### 可视化 COCO 标签
 
-脚本 `tools/analysis_tools/browse_coco_json.py` 能够使用可视化显示 COCO 标签在图片的情况
+脚本 `tools/analysis_tools/browse_coco_json.py` 能够使用可视化显示 COCO 标签在图片的情况。
 
 ```shell
 python tools/analysis_tools/browse_coco_json.py ${DATA_ROOT} \
@@ -106,6 +106,31 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
 python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
                                                --output-dir 'work-dir/browse_dataset' \
                                                --not-show
+```
+
+### 可视化数据集分析
+
+脚本`tools/analysis_tools/dataset_analysis.py`能够帮助用户得到四种功能的效果图，并直接保存可视化图片到指定文件夹内。在指定文件夹内还会生成四个功能对应的文件夹，便于大家对应使用。
+关于该脚本的功能的说明，请看 [数据集分析脚本](https://github.com/open-mmlab/mmyolo/pull/172) Pr中有'功能'介绍。
+
+```shell
+python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
+                                              [--output-dir ${OUTPUT_DIR}] \
+```
+
+例子：
+
+1.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化数据集分析，同时得到的结果图片直接保存到当前运行目录中：
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
+```
+
+2.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化数据集分析，同时得到的结果图片直接保存到目录 `work-dir/dataset_analysis`：
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
+                                               --output-dir work-dir/dataset_analysis
 ```
 
 ## 数据集转换

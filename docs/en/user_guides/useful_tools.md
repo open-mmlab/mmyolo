@@ -108,6 +108,31 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
                                                --not-show
 ```
 
+### Visualize dataset analysis
+
+`tools/analysis_tools/dataset_analysis.py`help the user get the renderings of the four functions, and directly save the visualization pictures to the specified folder. In the specified folder, four folders corresponding to the function will be generated for everyone to use.
+For a description of the functions of this script, see [Dataset analysis script](https://github.com/open-mmlab/mmyolo/pull/172).
+
+```shell
+python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
+                                              [--output-dir ${OUTPUT_DIR}] \
+```
+
+E,g:
+
+1. USe `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` to visualize dataset analysis.The resulting image is directly saved to the current running directory:
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
+```
+
+2. Use `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` to visualize dataset analysis.The picture will pop up directly and be saved to the directory `work-dir/dataset_analysis` at the same time:
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
+                                               --output-dir work-dir/dataset_analysis
+```
+
 ## Dataset Conversion
 
 the `tools/` directory also contains script to convert the `balloon` dataset (A small dataset is only for beginner use) into COCO format.
