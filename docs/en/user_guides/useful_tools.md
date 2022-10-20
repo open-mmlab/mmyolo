@@ -173,7 +173,7 @@ python tools/misc/download_dataset.py --dataset-name balloon [--save-dir ${SAVE_
 
 ## Convert Model
 
-The three scripts under the `tools/` directory can help users convert the keys in the official pre-trained model of YOLO to the format of MMYOLO, and use MMYOLO to fine tune the model.
+The three scripts under the `tools/` directory can help users convert the keys in the official pre-trained model of YOLO to the format of MMYOLO, and use MMYOLO to fine-tune the model.
 
 ### YOLOv5
 
