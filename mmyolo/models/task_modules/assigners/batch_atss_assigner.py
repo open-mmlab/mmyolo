@@ -157,13 +157,12 @@ class BatchATSSAssigner(nn.Module):
         num_gt, num_priors = gt_bboxes.size(1), priors.size(0)
 
         if num_gt == 0:
-            device = gt_bboxes.device
-            return (torch.full([batch_size, num_priors],
-                               self.num_classes).to(device),
-                    torch.zeros([batch_size, num_priors, 4]).to(device),
-                    torch.zeros([batch_size, num_priors,
-                                 self.num_classes]).to(device),
-                    torch.zeros([batch_size, num_priors]).to(device))
+            return (gt_bboxes.new_full([batch_size, num_priors],
+                                       self.num_classes),
+                    gt_bboxes.new_full([batch_size, num_priors, 4], 0),
+                    gt_bboxes.new_full([batch_size, num_priors,
+                                        self.num_classes], 0),
+                    gt_bboxes.new_full([batch_size, num_priors], 0))
 
         # compute iou between all bbox and gt
         overlaps = self.iou_calculator(gt_bboxes.reshape([-1, 4]), priors)
