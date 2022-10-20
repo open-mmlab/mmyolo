@@ -119,12 +119,12 @@ class BatchATSSAssigner(nn.Module):
     def __init__(
             self,
             topk: int = 9,
-            iou2d_calculator: ConfigType = dict(type='mmdet.BboxOverlaps2D'),
+            iou_calculator: ConfigType = dict(type='mmdet.BboxOverlaps2D'),
             num_classes: int = 80):
         super().__init__()
         self.topk = topk
         self.num_classes = num_classes
-        self.iou2d_calculator = TASK_UTILS.build(iou2d_calculator)
+        self.iou_calculator = TASK_UTILS.build(iou_calculator)
 
     @torch.no_grad()
     def forward(
@@ -166,7 +166,7 @@ class BatchATSSAssigner(nn.Module):
                     torch.zeros([batch_size, num_priors]).to(device))
 
         # compute iou between all bbox and gt
-        overlaps = self.iou2d_calculator(gt_bboxes.reshape([-1, 4]), priors)
+        overlaps = self.iou_calculator(gt_bboxes.reshape([-1, 4]), priors)
         overlaps = overlaps.reshape([batch_size, -1, num_priors])
 
         # compute center distance between all bbox and gt
@@ -204,7 +204,7 @@ class BatchATSSAssigner(nn.Module):
 
         # soft label with iou
         if pred_bboxes is not None:
-            ious = self.iou2d_calculator(gt_bboxes, pred_bboxes) * pos_mask
+            ious = self.iou_calculator(gt_bboxes, pred_bboxes) * pos_mask
             ious = ious.max(axis=-2)[0].unsqueeze(-1)
             assigned_scores *= ious
 

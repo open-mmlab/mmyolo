@@ -2,7 +2,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from .batch_atss_assigner import select_candidates_in_gts, select_highest_overlaps, iou_calculator
+from .batch_atss_assigner import select_candidates_in_gts, select_highest_overlaps
 from mmyolo.registry import TASK_UTILS
 
 
@@ -10,6 +10,7 @@ from mmyolo.registry import TASK_UTILS
 class BatchTaskAlignedAssigner(nn.Module):
     def __init__(self, 
                  topk=13,
+                 iou_calculator=None,
                  num_classes=80, 
                  alpha=1.0, 
                  beta=6.0, 
@@ -21,6 +22,7 @@ class BatchTaskAlignedAssigner(nn.Module):
         self.alpha = alpha
         self.beta = beta
         self.eps = eps
+        self.iou_calculator = TASK_UTILS.build(iou_calculator)
 
     @torch.no_grad()
     def forward(self,
@@ -109,7 +111,7 @@ class BatchTaskAlignedAssigner(nn.Module):
         ind[1] = gt_labels.squeeze(-1)
         bbox_scores = pd_scores[ind[0], ind[1]]
 
-        overlaps = iou_calculator(gt_bboxes, pd_bboxes)
+        overlaps = self.iou_calculator(gt_bboxes, pd_bboxes)
         align_metric = bbox_scores.pow(self.alpha) * overlaps.pow(self.beta)
 
         return align_metric, overlaps
