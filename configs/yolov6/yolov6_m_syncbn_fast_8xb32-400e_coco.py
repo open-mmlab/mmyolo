@@ -12,7 +12,6 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
     ),
-    bbox_head=dict(head_module=dict(widen_factor=widen_factor),
-                                    loss_bbox=dict(iou_mode='siou',
-                     )))
-
+    bbox_head=dict(
+        head_module=dict(widen_factor=widen_factor),
+        loss_bbox=dict(iou_mode='siou', )))
