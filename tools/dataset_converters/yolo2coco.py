@@ -231,7 +231,7 @@ def convert_yolo_to_coco(image_dir: str):
         if to_categorize:
             if image in train_img:
                 dataset = train_dataset
-                copy_image_categorically(image_dir, output_folder, 'train',
+                copy_image_by_category(image_dir, output_folder, 'train',
                                          image, img_suffix)
             elif image in val_img:
                 dataset = val_dataset
