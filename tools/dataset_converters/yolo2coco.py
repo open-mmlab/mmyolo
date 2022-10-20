@@ -239,7 +239,7 @@ def convert_yolo_to_coco(image_dir: str):
                                          image, img_suffix)
             elif image in test_img:
                 dataset = test_dataset
-                copy_image_categorically(image_dir, output_folder, 'test',
+                copy_image_by_category(image_dir, output_folder, 'test',
                                          image, img_suffix)
 
         dataset['images'].append(img_info_dict)
