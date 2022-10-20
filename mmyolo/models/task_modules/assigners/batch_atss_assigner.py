@@ -36,25 +36,35 @@ def bbox_center_distance(bboxes: Tensor,
 
     return distances, priors_points
 
-def select_candidates_in_gts(xy_centers, gt_bboxes, eps=1e-9):
-    """select the positive anchors's center in gt
+
+def select_candidates_in_gts(priors_cxy_points: Tensor,
+                             gt_bboxes: Tensor,
+                             eps: float = 1e-9) -> Tensor:
+    """Select the positive anchors' center in gt.
 
     Args:
-        xy_centers (Tensor): shape(bs*n_max_boxes, num_total_anchors, 4)
-        gt_bboxes (Tensor): shape(bs, n_max_boxes, 4)
+        priors_cxy_points (Tensor): shape(bs*num_gt, num_gt, 4)
+        gt_bboxes (Tensor): shape(bs, num_gt, 4)
+        eps (float):
     Return:
-        (Tensor): shape(bs, n_max_boxes, num_total_anchors)
-    """  
-    n_anchors = xy_centers.size(0)
-    bs, n_max_boxes, _ = gt_bboxes.size()
-    _gt_bboxes = gt_bboxes.reshape([-1, 4])
-    xy_centers = xy_centers.unsqueeze(0).repeat(bs * n_max_boxes, 1, 1) 
-    gt_bboxes_lt = _gt_bboxes[:, 0:2].unsqueeze(1).repeat(1, n_anchors, 1) 
-    gt_bboxes_rb = _gt_bboxes[:, 2:4].unsqueeze(1).repeat(1, n_anchors, 1) 
-    b_lt = xy_centers - gt_bboxes_lt
-    b_rb = gt_bboxes_rb - xy_centers
-    bbox_deltas = torch.cat([b_lt, b_rb], dim=-1)
-    bbox_deltas = bbox_deltas.reshape([bs, n_max_boxes, n_anchors, -1])
+        (Tensor): shape(bs, num_gt, num_gt)
+    """
+    batch_size, num_gt, _ = gt_bboxes.size()
+    gt_bboxes = gt_bboxes.reshape([-1, 4])
+
+    priors_number = priors_cxy_points.size(0)
+    priors_cxy_points = priors_cxy_points.unsqueeze(0).repeat(
+        batch_size * num_gt, 1, 1)
+
+    # calculate the left, top, right, bottom distance between positive
+    # prior center and gt side
+    gt_bboxes_lt = gt_bboxes[:, 0:2].unsqueeze(1).repeat(1, priors_number, 1)
+    gt_bboxes_rb = gt_bboxes[:, 2:4].unsqueeze(1).repeat(1, priors_number, 1)
+    bbox_deltas = torch.cat(
+        [priors_cxy_points - gt_bboxes_lt, gt_bboxes_rb - priors_cxy_points],
+        dim=-1)
+    bbox_deltas = bbox_deltas.reshape([batch_size, num_gt, priors_number, -1])
+
     return (bbox_deltas.min(axis=-1)[0] > eps).to(gt_bboxes.dtype)
 
 def select_highest_overlaps(mask_pos, overlaps, n_max_boxes):
