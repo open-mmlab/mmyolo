@@ -25,7 +25,7 @@ def parse_args():
     return args
 
 
-def shou_bbox_num(cfg, classes, cat_nums, out):
+def show_bbox_num(cfg, classes, cat_nums, out):
     """Display the distribution map of categories and number of bbox
     instances."""
 
@@ -43,7 +43,7 @@ def shou_bbox_num(cfg, classes, cat_nums, out):
     fig.savefig(f'{out_dir}/{cfg.dataset_type}.jpg')  # Save Image
 
 
-def shou_bbox_wh(which_cat_w, which_cat_h, classes, idx, out):
+def show_bbox_wh(which_cat_w, which_cat_h, classes, idx, out):
     """Display the width and height distribution of categories and bbox
     instances."""
 
@@ -151,13 +151,13 @@ def main():
             cat_with_bbox[instance['bbox_label']].append(instance['bbox'])
         progress_bar.update()
     print('\nStart drawing')
-    shou_bbox_num(cfg, classes, cat_nums, out)
+    show_bbox_num(cfg, classes, cat_nums, out)
     # Get the width, height and area of bbox corresponding to each category
     for idx in range(len(classes)):
         which_cat_with_bbox = np.array(cat_with_bbox[idx])
         which_cat_w = which_cat_with_bbox[:, 2] - which_cat_with_bbox[:, 0]
         which_cat_h = which_cat_with_bbox[:, 3] - which_cat_with_bbox[:, 1]
-        shou_bbox_wh(which_cat_w, which_cat_h, classes, idx, out)
+        show_bbox_wh(which_cat_w, which_cat_h, classes, idx, out)
         which_cat_ratio = which_cat_w / which_cat_h
         which_cat_area = which_cat_w * which_cat_h
         small = []
