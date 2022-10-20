@@ -101,8 +101,7 @@ def select_highest_overlaps(pos_mask: Tensor, overlaps: Tensor,
         is_max_overlaps = \
             is_max_overlaps.permute(0, 2, 1).to(overlaps.dtype)
 
-        pos_mask = torch.where(mask_multi_gts, is_max_overlaps,
-                                    pos_mask)
+        pos_mask = torch.where(mask_multi_gts, is_max_overlaps, pos_mask)
         fg_mask_pre_prior = pos_mask.sum(axis=-2)
 
     gt_idx_pre_prior = pos_mask.argmax(axis=-2)
@@ -142,8 +141,9 @@ def iou_calculator(bbox1: Tensor, bbox2: Tensor, eps: float = 1e-9) -> Tensor:
 @TASK_UTILS.register_module()
 class BatchATSSAssigner(nn.Module):
     """Adaptive Training Sample Selection Assigner.
-        This code is based on
-        https://github.com/meituan/YOLOv6/blob/main/yolov6/assigners/atss_assigner.py
+
+    This code is based on
+    https://github.com/meituan/YOLOv6/blob/main/yolov6/assigners/atss_assigner.py
     """
 
     def __init__(
