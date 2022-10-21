@@ -115,7 +115,7 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
-                                              [--output-dir ${OUTPUT_DIR}] \
+                                              [--output-dir ${OUTPUT_DIR}]
 ```
 
 例子：
