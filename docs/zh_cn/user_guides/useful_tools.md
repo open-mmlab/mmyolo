@@ -128,7 +128,7 @@ python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/o
 
 使用说明：
 
-1. `image-dir` 是待转换的yolo格式数据集的根目录，内应包含 `images` 、 `labels` 和 `classes.txt` 文件， `classes.txt` 是当前 dataset 对应的类的声明，一行一个类别。
+1. `image-dir` 是待转换的 yolo 格式数据集的根目录，内应包含 `images` 、 `labels` 和 `classes.txt` 文件， `classes.txt` 是当前 dataset 对应的类的声明，一行一个类别。
    `image_dir` 结构如下例所示：
 
 ```bash
