@@ -7,8 +7,7 @@ import torch.nn.functional as F
 from mmdet.utils import ConfigType
 from torch import Tensor
 
-from mmyolo.models.task_modules.assigners import (select_candidates_in_gts,
-                                                  select_highest_overlaps)
+from .utils import select_candidates_in_gts, select_highest_overlaps
 from mmyolo.registry import TASK_UTILS
 
 
