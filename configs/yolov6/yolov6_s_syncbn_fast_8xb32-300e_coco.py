@@ -1,4 +1,4 @@
-_base_ = '../_base_/default_runtime.py'
+_base_ = './yolov6_s_syncbn_fast_8xb32-400e_coco.py'
 
 # dataset settings
 data_root = 'data/coco/'
@@ -214,37 +214,10 @@ default_hooks = dict(
         type='YOLOv5ParamSchedulerHook',
         scheduler_type='cosine',
         lr_factor=0.01,
-        max_epochs=max_epochs),
-    checkpoint=dict(
-        type='CheckpointHook',
-        interval=save_epoch_intervals,
-        max_keep_ckpts=3,
-        save_best='auto'))
+        max_epochs=max_epochs))
 
-custom_hooks = [
-    dict(
-        type='EMAHook',
-        ema_type='ExpMomentumEMA',
-        momentum=0.0001,
-        update_buffers=True,
-        priority=49),
-    dict(
-        type='mmdet.PipelineSwitchHook',
-        switch_epoch=max_epochs - num_last_epochs,
-        switch_pipeline=train_pipeline_stage2)
-]
-
-val_evaluator = dict(
-    type='mmdet.CocoMetric',
-    proposal_nums=(100, 1, 10),
-    ann_file=data_root + 'annotations/instances_val2017.json',
-    metric='bbox')
-test_evaluator = val_evaluator
+custom_hooks = [dict(switch_epoch=max_epochs - num_last_epochs)]
 
 train_cfg = dict(
-    type='EpochBasedTrainLoop',
     max_epochs=max_epochs,
-    val_interval=save_epoch_intervals,
     dynamic_intervals=[(max_epochs - num_last_epochs, 1)])
-val_cfg = dict(type='ValLoop')
-test_cfg = dict(type='TestLoop')
