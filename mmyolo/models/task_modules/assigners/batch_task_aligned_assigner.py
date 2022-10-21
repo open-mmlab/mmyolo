@@ -15,7 +15,30 @@ from mmyolo.registry import TASK_UTILS
 class BatchTaskAlignedAssigner(nn.Module):
     """This code referenced to
     https://github.com/meituan/YOLOv6/blob/main/yolov6/
-    assigners/tal_assigner.py."""
+    assigners/tal_assigner.py.
+
+    Batch Task aligned assigner base on the paper:
+    `TOOD: Task-aligned One-stage Object Detection.
+    <https://arxiv.org/abs/2108.07755>`_.
+
+    Assign a corresponding gt bboxes or background to a batch of
+    predicted bboxes. Each bbox will be assigned with `0` or a
+    positive integer indicating the ground truth index.
+
+    - 0: negative sample, no assigned gt
+    - positive integer: positive sample, index (1-based) of assigned gt
+
+    Args:
+        num_classes (int): number of class
+        topk (int): number of bbox selected in each level
+        alpha (float): Hyper-parameters related to alignment_metrics.
+            Defaults to 1.0
+        beta (float): Hyper-parameters related to alignment_metrics.
+            Defaults to 6.
+        iou_calculator (:obj:`ConfigDict` or dict): Config dict for iou
+            calculator. Defaults to ``dict(type='BboxOverlaps2D')``
+        eps (float): Eps to avoid log(0). Default set to 1e-9
+    """
 
     def __init__(self,
                  num_classes: int,
@@ -42,7 +65,15 @@ class BatchTaskAlignedAssigner(nn.Module):
             pad_bbox_flag: Tensor,
             pred_bboxes: Tensor
     ) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
-        """Get assigner result.
+        """Assign gt to bboxes.
+
+        The assignment is done in following steps
+
+        1. compute alignment metric between all bbox (bbox of all pyramid
+           levels) and gt
+        2. select top-k bbox as candidates for each gt
+        3. limit the positive sample's center in gt (because the anchor-free
+           detector only can predict positive distance)
 
         Args:
             priors_points (Tensor): Priors cx cy points,
@@ -65,7 +96,7 @@ class BatchTaskAlignedAssigner(nn.Module):
                 shape(batch_size, num_priors, 4)
             assigned_scores (Tensor): Assigned scores,
                 shape(batch_size, num_priors, num_classes)
-            fg_mask_pre_prior (Tensor): Force ground true matching mask,
+            fg_mask_pre_prior (Tensor): Force ground truth matching mask,
                 shape(batch_size, num_priors)
         """
         batch_size = pred_scores.size(0)
@@ -129,7 +160,7 @@ class BatchTaskAlignedAssigner(nn.Module):
                 1 means bbox, 0 means no bbox,
                 shape(batch_size, num_gt, 1)
             batch_size (int): Batch size.
-            num_gt (int): Number of ground true.
+            num_gt (int): Number of ground truth.
         Returns:
             pos_mask (Tensor): Possible mask,
                 shape(batch_size, num_gt, num_priors)
@@ -171,7 +202,7 @@ class BatchTaskAlignedAssigner(nn.Module):
             gt_bboxes (Tensor): Ground true bboxes,
                 shape(batch_size, num_gt, 4)
             batch_size (int): Batch size.
-            num_gt (int): Number of ground true.
+            num_gt (int): Number of ground truth.
         Returns:
             alignment_metrics (Tensor): Align metric,
                 shape(batch_size, num_gt, num_priors)
@@ -229,12 +260,12 @@ class BatchTaskAlignedAssigner(nn.Module):
                 shape(batch_size, num_gt, 1)
             gt_bboxes (Tensor): Ground true bboxes,
                 shape(batch_size, num_gt, 4)
-            assigned_gt_inds (Tensor): Assigned ground true indexes,
+            assigned_gt_inds (Tensor): Assigned ground truth indexes,
                 shape(batch_size, num_priors)
-            fg_mask_pre_prior (Tensor): Force ground true matching mask,
+            fg_mask_pre_prior (Tensor): Force ground truth matching mask,
                 shape(batch_size, num_priors)
             batch_size (int): Batch size.
-            num_gt (int): Number of ground true.
+            num_gt (int): Number of ground truth.
         Returns:
             assigned_labels (Tensor): Assigned labels,
                 shape(batch_size, num_priors)

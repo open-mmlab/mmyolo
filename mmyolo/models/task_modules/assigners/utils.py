@@ -48,13 +48,13 @@ def select_highest_overlaps(pos_mask: Tensor, overlaps: Tensor,
     Args:
         pos_mask (Tensor): The assigned positive sample mask,
             shape(batch_size, num_gt, num_priors)
-        overlaps (Tensor): IoU between all bbox and ground true,
+        overlaps (Tensor): IoU between all bbox and ground truth,
             shape(batch_size, num_gt, num_priors)
-        num_gt (int): Number of ground true.
+        num_gt (int): Number of ground truth.
     Return:
-        gt_idx_pre_prior (Tensor): Target ground true index,
+        gt_idx_pre_prior (Tensor): Target ground truth index,
             shape(batch_size, num_priors)
-        fg_mask_pre_prior (Tensor): Force matching ground true,
+        fg_mask_pre_prior (Tensor): Force matching ground truth,
             shape(batch_size, num_priors)
         pos_mask (Tensor): The assigned positive sample mask,
             shape(batch_size, num_gt, num_priors)

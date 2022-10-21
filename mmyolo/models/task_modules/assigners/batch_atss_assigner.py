@@ -219,10 +219,10 @@ class BatchATSSAssigner(nn.Module):
                 shape(batch_size, num_gt, num_priors).
             num_priors (int): Number of priors.
             batch_size (int): Batch size.
-            num_gt (int): Number of ground true.
+            num_gt (int): Number of ground truth.
 
         Return:
-            overlaps_thr_per_gt (Tensor): Overlap threshold of per ground true,
+            overlaps_thr_per_gt (Tensor): Overlap threshold of per ground truth,
                 shape(batch_size, num_gt, 1).
             candidate_overlaps (Tensor): Candidate overlaps,
                 shape(batch_size, num_gt, num_priors).
@@ -262,13 +262,13 @@ class BatchATSSAssigner(nn.Module):
                 shape(batch_size, num_gt, 1)
             gt_bboxes (Tensor): Ground true bboxes,
                 shape(batch_size, num_gt, 4)
-            assigned_gt_inds (Tensor): Assigned ground true indexes,
+            assigned_gt_inds (Tensor): Assigned ground truth indexes,
                 shape(batch_size, num_priors)
-            fg_mask_pre_prior (Tensor): Force ground true matching mask,
+            fg_mask_pre_prior (Tensor): Force ground truth matching mask,
                 shape(batch_size, num_priors)
             num_priors (int): Number of priors.
             batch_size (int): Batch size.
-            num_gt (int): Number of ground true.
+            num_gt (int): Number of ground truth.
 
         Return:
             assigned_labels (Tensor): Assigned labels,
