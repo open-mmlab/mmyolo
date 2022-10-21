@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Tuple, Optional
+from typing import Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -7,7 +7,8 @@ import torch.nn.functional as F
 from mmengine import Config
 from torch import Tensor
 
-from mmyolo.models.task_modules.assigners import select_candidates_in_gts, select_highest_overlaps
+from mmyolo.models.task_modules.assigners import (select_candidates_in_gts,
+                                                  select_highest_overlaps)
 from mmyolo.registry import TASK_UTILS
 
 
@@ -59,15 +60,9 @@ class BatchTaskAlignedAssigner(nn.Module):
         self.eps = eps
 
     @torch.no_grad()
-    def forward(
-            self,
-            priors_points: Tensor,
-            pred_scores: Tensor,
-            gt_labels: Tensor,
-            gt_bboxes: Tensor,
-            pad_bbox_flag: Tensor,
-            pred_bboxes: Tensor
-    ) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+    def forward(self, priors_points: Tensor, pred_scores: Tensor,
+                gt_labels: Tensor, gt_bboxes: Tensor, pad_bbox_flag: Tensor,
+                pred_bboxes: Tensor) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
         """Assign gt to bboxes.
 
         The assignment is done in following steps
@@ -129,23 +124,18 @@ class BatchTaskAlignedAssigner(nn.Module):
         pos_align_metrics = alignment_metrics.max(axis=-1, keepdim=True)[0]
         pos_overlaps = (overlaps * pos_mask).max(axis=-1, keepdim=True)[0]
         norm_align_metric = (
-                alignment_metrics * pos_overlaps /
-                (pos_align_metrics + self.eps)).max(-2)[0].unsqueeze(-1)
+            alignment_metrics * pos_overlaps /
+            (pos_align_metrics + self.eps)).max(-2)[0].unsqueeze(-1)
         assigned_scores = assigned_scores * norm_align_metric
 
         return (assigned_labels, assigned_bboxes, assigned_scores,
                 fg_mask_pre_prior.bool())
 
-    def get_pos_mask(self,
-                     pred_scores: Tensor,
-                     pred_bboxes: Tensor,
-                     gt_labels: Tensor,
-                     gt_bboxes: Tensor,
-                     priors_points: Tensor,
-                     pad_bbox_flag: Tensor,
+    def get_pos_mask(self, pred_scores: Tensor, pred_bboxes: Tensor,
+                     gt_labels: Tensor, gt_bboxes: Tensor,
+                     priors_points: Tensor, pad_bbox_flag: Tensor,
                      batch_size: int,
-                     num_gt: int
-                     ) -> Tuple[Tensor, Tensor, Tensor]:
+                     num_gt: int) -> Tuple[Tensor, Tensor, Tensor]:
         """Get possible mask.
 
         Args:

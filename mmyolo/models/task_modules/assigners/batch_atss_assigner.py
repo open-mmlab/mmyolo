@@ -7,7 +7,8 @@ import torch.nn.functional as F
 from mmdet.utils import ConfigType
 from torch import Tensor
 
-from mmyolo.models.task_modules.assigners import select_candidates_in_gts, select_highest_overlaps
+from mmyolo.models.task_modules.assigners import (select_candidates_in_gts,
+                                                  select_highest_overlaps)
 from mmyolo.registry import TASK_UTILS
 
 
@@ -50,9 +51,8 @@ class BatchATSSAssigner(nn.Module):
     def __init__(
             self,
             num_classes: int,
-            topk: int = 9,
-            iou_calculator: ConfigType = dict(type='mmdet.BboxOverlaps2D')
-    ):
+            iou_calculator: ConfigType = dict(type='mmdet.BboxOverlaps2D'),
+            topk: int = 9):
         super(BatchATSSAssigner).__init__()
         self.num_classes = num_classes
         self.topk = topk
@@ -222,8 +222,8 @@ class BatchATSSAssigner(nn.Module):
             num_gt (int): Number of ground truth.
 
         Return:
-            overlaps_thr_per_gt (Tensor): Overlap threshold of per ground truth,
-                shape(batch_size, num_gt, 1).
+            overlaps_thr_per_gt (Tensor): Overlap threshold of
+                per ground truth, shape(batch_size, num_gt, 1).
             candidate_overlaps (Tensor): Candidate overlaps,
                 shape(batch_size, num_gt, num_priors).
         """
