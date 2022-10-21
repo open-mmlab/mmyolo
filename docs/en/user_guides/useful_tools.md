@@ -123,12 +123,12 @@ python tools/dataset_converters/balloon2coco.py
 - `yolo2coco.py` converts a dataset from `yolo-style` **.txt** format to COCO format, please use it as follows:
 
 ```shell
-python tools/dataset_converters/yolo2coco.py  /path/to/the/root/dir/of/your_dataset
+python tools/dataset_converters/yolo2coco.py /path/to/the/root/dir/of/your_dataset
 ```
 
 Instructions:
 
-1. `image_dir` is the root directory of the yolo-style dataset, which should contain `images`, `labels`, and `classes.txt`. `classes.txt` is the class declaration corresponding to the current dataset. One class a line. The structure of the root directory should be formatted as this example shows:
+1. `image_dir` is the root directory of the yolo-style dataset you need to pass to the script, which should contain `images`, `labels`, and `classes.txt`. `classes.txt` is the class declaration corresponding to the current dataset. One class a line. The structure of the root directory should be formatted as this example shows:
 
 ```bash
 .

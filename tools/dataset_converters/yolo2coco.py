@@ -1,7 +1,7 @@
 """This script helps to convert yolo-style dataset to the coco format.
 
 Usage:
-    $ python yolo2coco.py /path/to/dataset   # the root dir
+    $ python yolo2coco.py /path/to/dataset # image_dir
 
 Note:
     1. Before running this script, please make sure the root directory
@@ -19,9 +19,9 @@ Note:
         │    └── ...
         └── ...
     2. The script will automatically check whether the corresponding
-    `train.txt`, ` val.txt`, and `test.txt` exist under `image-dir` or not.
-    If these files are detected, the script will organize the dataset.
-    The image paths in these files must be ABSOLUTE paths.
+    `train.txt`, ` val.txt`, and `test.txt` exist under your `image_dir`
+    or not. If these files are detected, the script will organize the
+    dataset. The image paths in these files must be ABSOLUTE paths.
     3. Once the script finishes, the result files will be saved in the
     directory named 'annotations' in the root directory of your dataset.
     The default output file is result.json. The root directory folder may
@@ -257,9 +257,8 @@ def convert_yolo_to_coco(image_dir: str):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--image-dir',
+        'image_dir',
         type=str,
-        required=True,
         help='dataset directory with ./images and ./labels, classes.txt, etc.')
     arg = parser.parse_args()
     convert_yolo_to_coco(arg.image_dir)
