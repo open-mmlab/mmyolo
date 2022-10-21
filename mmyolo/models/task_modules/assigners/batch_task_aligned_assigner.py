@@ -19,9 +19,9 @@ class BatchTaskAlignedAssigner(nn.Module):
     assigners/tal_assigner.py."""
 
     def __init__(self,
+                 num_classes: int,
                  topk: int = 13,
                  iou_calculator: Config = dict(type='mmdet.BboxOverlaps2D'),
-                 num_classes: int = 80,
                  alpha: float = 1.0,
                  beta: float = 6.0,
                  eps: float = 1e-9):
@@ -195,7 +195,7 @@ class BatchTaskAlignedAssigner(nn.Module):
         Returns:
             Tensor: Topk candidates mask, shape(batch_size, num_gt, num_priors)
         """
-        num_anchors = metrics.shape[-1]
+        num_priors = metrics.shape[-1]
         topk_metrics, topk_idxs = torch.topk(
             metrics, self.topk, axis=-1, largest=largest)
         if topk_mask is None:
@@ -203,7 +203,7 @@ class BatchTaskAlignedAssigner(nn.Module):
                          self.eps).tile([1, 1, self.topk])
         topk_idxs = torch.where(topk_mask, topk_idxs,
                                 torch.zeros_like(topk_idxs))
-        is_in_topk = F.one_hot(topk_idxs, num_anchors).sum(axis=-2)
+        is_in_topk = F.one_hot(topk_idxs, num_priors).sum(axis=-2)
         is_in_topk = torch.where(is_in_topk > 1, torch.zeros_like(is_in_topk),
                                  is_in_topk)
         return is_in_topk.to(metrics.dtype)
