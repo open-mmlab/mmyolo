@@ -35,18 +35,18 @@ MMYOLO 文件结构和 MMDetection 完全一致。为了能够充分复用 MMDet
 
 2. MMYOLO 的基本使用方法请参考以下教程：
 
-   - [训练和测试](https://mmyolo.readthedocs.io/zh_cn/latest/user_guides/index.html#训练-测试)
-   - [从入门到部署全流程](https://mmyolo.readthedocs.io/zh_cn/latest/user_guides/index.html#从入门到部署全流程)
-   - [实用工具](https://mmyolo.readthedocs.io/zh_cn/latest/user_guides/index.html#实用工具)
+   - [训练和测试](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#id1)
+   - [从入门到部署全流程](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#id2)
+   - [实用工具](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#id3)
 
 3. YOLO 系列算法实现和全解析教程：
 
-   - [必备基础](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#必备基础)
-   - [原理和实现全解析](https://mmyolo.readthedocs.io/zh_cn/latest/algorithm_descriptions/index.html#原理和实现全解析)
+   - [必备基础](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#id1)
+   - [原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#id2)
 
 4. 参考以下教程深入了解：
 
-   - [数据流](https://mmyolo.readthedocs.io/zh_cn/latest/advanced_guides/index.html#数据流)
-   - [How to](https://mmyolo.readthedocs.io/zh_cn/latest/advanced_guides/index.html#how-to)
+   - [数据流](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/index.html#id1)
+   - [How to](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/index.html#how-to)
 
 5. [解读文章和资源汇总](article.md)
