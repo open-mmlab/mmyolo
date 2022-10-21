@@ -11,7 +11,7 @@ try:
     import importlib
     importlib.import_module('mmdeploy')
 except ImportError:
-    pytest.skip(f'mmdeploy is not installed.', allow_module_level=True)
+    pytest.skip('mmdeploy is not installed.', allow_module_level=True)
 
 import mmdeploy.backend.onnxruntime as ort_apis
 from mmdeploy.apis import build_task_processor
@@ -24,7 +24,7 @@ try:
     codebase = register_codebase('mmyolo')
     import_codebase(codebase, ['mmyolo.deploy'])
 except ImportError:
-    pytest.skip(f'mmyolo is not installed.', allow_module_level=True)
+    pytest.skip('mmyolo is not installed.', allow_module_level=True)
 
 model_cfg_path = 'tests/test_deploy/data/model.py'
 model_cfg = load_config(model_cfg_path)[0]

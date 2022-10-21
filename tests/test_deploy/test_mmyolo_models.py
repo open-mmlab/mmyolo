@@ -11,7 +11,7 @@ try:
     import importlib
     importlib.import_module('mmdeploy')
 except ImportError:
-    pytest.skip(f'mmdeploy is not installed.', allow_module_level=True)
+    pytest.skip('mmdeploy is not installed.', allow_module_level=True)
 
 from mmdeploy.codebase import import_codebase
 from mmdeploy.utils import Backend
@@ -23,7 +23,7 @@ try:
     codebase = register_codebase('mmyolo')
     import_codebase(codebase, ['mmyolo.deploy'])
 except ImportError:
-    pytest.skip(f'mmyolo is not installed.', allow_module_level=True)
+    pytest.skip('mmyolo is not installed.', allow_module_level=True)
 
 
 def seed_everything(seed=1029):
@@ -49,7 +49,7 @@ def get_yolov5_head_model():
             nms=dict(type='nms', iou_threshold=0.65),
             max_per_img=300))
 
-    from mmyolo.models.dense_heads import YOLOv5Head, YOLOv5HeadModule
+    from mmyolo.models.dense_heads import YOLOv5Head
     head_module = dict(
         type='YOLOv5HeadModule',
         num_classes=4,
