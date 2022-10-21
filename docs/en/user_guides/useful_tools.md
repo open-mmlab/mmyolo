@@ -118,7 +118,7 @@ python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
                                               [--output-dir ${OUTPUT_DIR}]
 ```
 
-E,g:
+e.g:
 
 1. USe `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` to visualize dataset analysis.The resulting image is directly saved to the current running directory:
 
