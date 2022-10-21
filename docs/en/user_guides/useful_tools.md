@@ -110,7 +110,7 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
 
 ### Visualize dataset analysis
 
-`tools/analysis_tools/dataset_analysis.py`help the user get the renderings of the four functions, and directly save the visualization pictures to the specified folder. In the specified folder, four folders corresponding to the function will be generated for everyone to use.
+`tools/analysis_tools/dataset_analysis.py` help the user get the renderings of the four functions, and directly save the visualization pictures to the specified folder. In the specified folder, four folders corresponding to the function will be generated for everyone to use.
 For a description of the functions of this script, see [Dataset analysis script](https://github.com/open-mmlab/mmyolo/pull/172).
 
 ```shell
