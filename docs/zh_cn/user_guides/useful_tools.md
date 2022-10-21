@@ -110,7 +110,7 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
 
 ### 可视化数据集分析
 
-脚本`tools/analysis_tools/dataset_analysis.py`能够帮助用户得到四种功能的效果图，并直接保存可视化图片到指定文件夹内。在指定文件夹内还会生成四个功能对应的文件夹，便于大家对应使用。
+脚本 `tools/analysis_tools/dataset_analysis.py` 能够帮助用户得到四种功能的效果图，并直接保存可视化图片到指定文件夹内。在指定文件夹内还会生成四个功能对应的文件夹，便于大家对应使用。
 关于该脚本的功能的说明，请看 [数据集分析脚本](https://github.com/open-mmlab/mmyolo/pull/172) Pr中有'功能'介绍。
 
 ```shell
