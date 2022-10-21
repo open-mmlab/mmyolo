@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Tuple
+from typing import Tuple, Optional
 
 import torch
 import torch.nn as nn
@@ -43,7 +43,7 @@ class BatchTaskAlignedAssigner(nn.Module):
         """Get assigner result.
 
         Args:
-            pred_scores (Tensor): Scores of predict bbox,
+            pred_scores (Tensor): Scores of predict bboxes,
                 shape(batch_size, num_priors, num_classes)
             pred_bboxes (Tensor): Predict bboxes,
                 shape(batch_size, num_priors, 4)
@@ -61,9 +61,10 @@ class BatchTaskAlignedAssigner(nn.Module):
                 shape(batch_size, num_priors)
             assigned_bboxes (Tensor): Assigned boxes,
                 shape(batch_size, num_priors, 4)
-            assigned_scores (Tensor): Assigned score,
+            assigned_scores (Tensor): Assigned scores,
                 shape(batch_size, num_priors, num_classes)
-            fg_mask_pre_prior (Tensor): shape(batch_size, num_priors)
+            fg_mask_pre_prior (Tensor): Force ground true matching mask,
+                shape(batch_size, num_priors)
         """
         batch_size = pred_scores.size(0)
         num_gt = gt_bboxes.size(1)
@@ -127,12 +128,14 @@ class BatchTaskAlignedAssigner(nn.Module):
                 shape(batch_size, num_gt, num_priors)
             alignment_metrics (Tensor): Alignment metrics,
                 shape(batch_size, num_gt, num_priors)
-            overlaps (Tensor): Overlaps, shape(batch_size, num_gt, num_priors)
+            overlaps (Tensor): Overlaps of gt_bboxes and pred_bboxes,
+                shape(batch_size, num_gt, num_priors)
         """
 
         # Compute alignment metric between all bbox and gt
         alignment_metrics, overlaps = self.get_box_metrics(
             pred_scores, pred_bboxes, gt_labels, gt_bboxes, batch_size, num_gt)
+
         # get in_gts mask
         mask_in_gts = select_candidates_in_gts(priors_points, gt_bboxes)
 
@@ -183,7 +186,7 @@ class BatchTaskAlignedAssigner(nn.Module):
     def select_topk_candidates(self,
                                metrics: Tensor,
                                largest: bool = True,
-                               topk_mask: Tensor = None) -> Tensor:
+                               topk_mask: Optional[Tensor] = None) -> Tensor:
         """Compute alignment metric between all bbox and gt.
 
         Args:
