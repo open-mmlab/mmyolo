@@ -123,7 +123,7 @@ python tools/dataset_converters/balloon2coco.py
 - `yolo2coco.py` converts a dataset from `yolo-style` **.txt** format to COCO format, please use it as follows:
 
 ```shell
-python tools/dataset_converters/yolo2coco.py --image-dir /path/to/the/root/dir/of/your_dataset
+python tools/dataset_converters/yolo2coco.py  /path/to/the/root/dir/of/your_dataset
 ```
 
 Instructions:
