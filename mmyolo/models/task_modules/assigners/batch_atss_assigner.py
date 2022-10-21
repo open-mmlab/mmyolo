@@ -121,7 +121,7 @@ class BatchATSSAssigner(nn.Module):
             num_classes: int,
             iou_calculator: ConfigType = dict(type='mmdet.BboxOverlaps2D'),
             topk: int = 9):
-        super(BatchATSSAssigner).__init__()
+        super().__init__()
         self.num_classes = num_classes
         self.topk = topk
         self.iou_calculator = TASK_UTILS.build(iou_calculator)
