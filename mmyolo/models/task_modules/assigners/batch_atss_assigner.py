@@ -41,7 +41,7 @@ def bbox_center_distance(bboxes: Tensor,
 def select_candidates_in_gts(priors_cxy_points: Tensor,
                              gt_bboxes: Tensor,
                              eps: float = 1e-9) -> Tensor:
-    """Select the positive anchors' center in gt.
+    """Select the positive priors' center in gt.
 
     Args:
         priors_cxy_points (Tensor): Priors center xy points,
@@ -138,8 +138,7 @@ class BatchATSSAssigner(nn.Module):
     ) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
         r"""Get assigner result
         Args:
-            priors (Tensor): Priors, it can be anchors, points,
-                or bboxes predicted by the model, shape(num_priors, 4).
+            priors (Tensor): Model priors, shape(num_priors, 4).
             num_level_priors (List): Number of bboxes in each level, len(3)
             gt_labels (Tensor): Ground truth label,
                 shape(batch_size, num_gt, 1)
