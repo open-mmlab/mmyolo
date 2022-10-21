@@ -320,7 +320,7 @@ class YOLOv6Head(YOLOv5Head):
 
         gt_labels = targets[:, :, :1]
         gt_bboxes = targets[:, :, 1:]  # xyxy
-        mask_gt = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
+        pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
 
         # get epoch information from message hub
         message_hub = MessageHub.get_current_instance()
@@ -330,29 +330,29 @@ class YOLOv6Head(YOLOv5Head):
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if self.epoch < self.initial_epoch:
-            target_labels, target_bboxes, target_scores, fg_mask = \
+            target_labels, target_bboxes, target_scores, fg_mask_pre_prior = \
                 self.initial_assigner(
                     flatten_anchors,
                     n_anchors_list,
                     gt_labels,
                     gt_bboxes,
-                    mask_gt,
-                    flatten_bboxes.detach(),
-                    )
+                    pad_bbox_flag,
+                    flatten_bboxes.detach()
+                )
         else:
-            target_labels, target_bboxes, target_scores, fg_mask = \
+            target_labels, target_bboxes, target_scores, fg_mask_pre_prior = \
                 self.assigner(
                     flatten_priors[:, :2],
                     gt_labels,
                     gt_bboxes,
-                    mask_gt,
+                    pad_bbox_flag,
                     pred_scores.detach(),
                     flatten_bboxes.detach()
                 )
 
         # cls loss
         target_labels = torch.where(
-            fg_mask > 0, target_labels,
+            fg_mask_pre_prior > 0, target_labels,
             torch.full_like(target_labels, self.num_classes))
         one_hot_label = F.one_hot(target_labels.long(),
                                   self.num_classes + 1)[..., :-1]
@@ -368,16 +368,16 @@ class YOLOv6Head(YOLOv5Head):
         loss_cls /= target_scores_sum
 
         # select positive samples mask
-        num_pos = fg_mask.sum()
+        num_pos = fg_mask_pre_prior.sum()
         if num_pos > 0:
             # iou loss
-            bbox_mask = fg_mask.unsqueeze(-1).repeat([1, 1, 4])
+            bbox_mask = fg_mask_pre_prior.unsqueeze(-1).repeat([1, 1, 4])
             pred_bboxes_pos = torch.masked_select(flatten_bboxes,
                                                   bbox_mask).reshape([-1, 4])
             target_bboxes_pos = torch.masked_select(target_bboxes,
                                                     bbox_mask).reshape([-1, 4])
             bbox_weight = torch.masked_select(target_scores.sum(-1),
-                                              fg_mask).unsqueeze(-1)
+                                              fg_mask_pre_prior).unsqueeze(-1)
             loss_iou = self.loss_bbox(
                 pred_bboxes_pos,
                 target_bboxes_pos,

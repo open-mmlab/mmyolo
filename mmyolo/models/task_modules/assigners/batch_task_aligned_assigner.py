@@ -7,8 +7,7 @@ import torch.nn.functional as F
 from mmengine import Config
 from torch import Tensor
 
-from mmyolo.models.task_modules.assigners import (select_candidates_in_gts,
-                                                  select_highest_overlaps)
+from .utils import select_candidates_in_gts, select_highest_overlaps
 from mmyolo.registry import TASK_UTILS
 
 
@@ -202,10 +201,10 @@ class BatchTaskAlignedAssigner(nn.Module):
         """
         pred_scores = pred_scores.permute(0, 2, 1)
         gt_labels = gt_labels.to(torch.long)
-        ind = torch.zeros([2, batch_size, num_gt], dtype=torch.long)
-        ind[0] = torch.arange(end=batch_size).view(-1, 1).repeat(1, num_gt)
-        ind[1] = gt_labels.squeeze(-1)
-        bbox_scores = pred_scores[ind[0], ind[1]]
+        idx = torch.zeros([2, batch_size, num_gt], dtype=torch.long)
+        idx[0] = torch.arange(end=batch_size).view(-1, 1).repeat(1, num_gt)
+        idx[1] = gt_labels.squeeze(-1)
+        bbox_scores = pred_scores[idx[0], idx[1]]
 
         overlaps = self.iou_calculator(gt_bboxes, pred_bboxes)
         alignment_metrics = bbox_scores.pow(self.alpha) * overlaps.pow(
