@@ -66,12 +66,3 @@ Models:
         Metrics:
           box AP: 51.3
     Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_l_syncbn_8xb32-300e_coco/rtmdet_l_syncbn_8xb32-300e_coco_20220926_150401-40c754b5.pth
-
-  - Name: rtmdet_x_8xb32-300e_coco
-    In Collection: RTMDet
-    Config: configs/rtmdet/rtmdet_x_8xb32-300e_coco.py
-    Metadata:
-      Training Memory (GB): 61.1
-      Epochs: 300
-    Results:
-      - Task: Object Detection
