@@ -7,9 +7,8 @@ import torch.nn.functional as F
 from mmengine import Config
 from torch import Tensor
 
+from mmyolo.models.task_modules.assigners import select_candidates_in_gts, select_highest_overlaps
 from mmyolo.registry import TASK_UTILS
-from .batch_atss_assigner import (select_candidates_in_gts,
-                                  select_highest_overlaps)
 
 
 @TASK_UTILS.register_module()
@@ -21,33 +20,35 @@ class BatchTaskAlignedAssigner(nn.Module):
     def __init__(self,
                  num_classes: int,
                  topk: int = 13,
-                 iou_calculator: Config = dict(type='mmdet.BboxOverlaps2D'),
                  alpha: float = 1.0,
                  beta: float = 6.0,
+                 iou_calculator: Config = dict(type='mmdet.BboxOverlaps2D'),
                  eps: float = 1e-9):
         super().__init__()
-        self.topk = topk
         self.num_classes = num_classes
+        self.topk = topk
         self.alpha = alpha
         self.beta = beta
-        self.eps = eps
-
         self.iou_calculator = TASK_UTILS.build(iou_calculator)
+        self.eps = eps
 
     @torch.no_grad()
     def forward(
-            self, pred_scores: Tensor, pred_bboxes: Tensor,
-            priors_points: Tensor, gt_labels: Tensor, gt_bboxes: Tensor,
-            pad_bbox_flag: Tensor) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+            self,
+            priors_points: Tensor,
+            pred_scores: Tensor,
+            gt_labels: Tensor,
+            gt_bboxes: Tensor,
+            pad_bbox_flag: Tensor,
+            pred_bboxes: Tensor
+    ) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
         """Get assigner result.
 
         Args:
-            pred_scores (Tensor): Scores of predict bboxes,
-                shape(batch_size, num_priors, num_classes)
-            pred_bboxes (Tensor): Predict bboxes,
-                shape(batch_size, num_priors, 4)
             priors_points (Tensor): Priors cx cy points,
                 shape (num_priors, 2).
+            pred_scores (Tensor): Scores of predict bboxes,
+                shape(batch_size, num_priors, num_classes)
             gt_labels (Tensor): Ground true labels,
                 shape(batch_size, num_gt, 1)
             gt_bboxes (Tensor): Ground true bboxes,
@@ -55,6 +56,8 @@ class BatchTaskAlignedAssigner(nn.Module):
             pad_bbox_flag (Tensor): Ground truth bbox mask,
                 1 means bbox, 0 means no bbox,
                 shape(batch_size, num_gt, 1)
+            pred_bboxes (Tensor): Predict bboxes,
+                shape(batch_size, num_priors, 4)
         Returns:
             assigned_labels (Tensor): Assigned labels,
                 shape(batch_size, num_priors)
@@ -92,18 +95,23 @@ class BatchTaskAlignedAssigner(nn.Module):
         pos_align_metrics = alignment_metrics.max(axis=-1, keepdim=True)[0]
         pos_overlaps = (overlaps * pos_mask).max(axis=-1, keepdim=True)[0]
         norm_align_metric = (
-            alignment_metrics * pos_overlaps /
-            (pos_align_metrics + self.eps)).max(-2)[0].unsqueeze(-1)
+                alignment_metrics * pos_overlaps /
+                (pos_align_metrics + self.eps)).max(-2)[0].unsqueeze(-1)
         assigned_scores = assigned_scores * norm_align_metric
 
         return (assigned_labels, assigned_bboxes, assigned_scores,
                 fg_mask_pre_prior.bool())
 
-    def get_pos_mask(self, pred_scores: Tensor, pred_bboxes: Tensor,
-                     gt_labels: Tensor, gt_bboxes: Tensor,
-                     priors_points: Tensor, pad_bbox_flag: Tensor,
+    def get_pos_mask(self,
+                     pred_scores: Tensor,
+                     pred_bboxes: Tensor,
+                     gt_labels: Tensor,
+                     gt_bboxes: Tensor,
+                     priors_points: Tensor,
+                     pad_bbox_flag: Tensor,
                      batch_size: int,
-                     num_gt: int) -> Tuple[Tensor, Tensor, Tensor]:
+                     num_gt: int
+                     ) -> Tuple[Tensor, Tensor, Tensor]:
         """Get possible mask.
 
         Args:
@@ -183,23 +191,23 @@ class BatchTaskAlignedAssigner(nn.Module):
         return alignment_metrics, overlaps
 
     def select_topk_candidates(self,
-                               metrics: Tensor,
-                               largest: bool = True,
+                               align_scores: Tensor,
+                               using_largest_topk: bool = True,
                                topk_mask: Optional[Tensor] = None) -> Tensor:
         """Compute alignment metric between all bbox and gt.
 
         Args:
-            metrics (Tensor): Alignment metrics, Scores of predict bbox,
+            align_scores (Tensor): Alignment scores of predict bboxes,
                 shape(batch_size, num_gt, num_priors)
-            largest (bool): Controls whether to return largest or
+            using_largest_topk (bool): Controls whether to using largest or
                 smallest elements.
             topk_mask (Tensor): Topk mask, shape(batch_size, num_gt, self.topk)
         Returns:
             Tensor: Topk candidates mask, shape(batch_size, num_gt, num_priors)
         """
-        num_priors = metrics.shape[-1]
+        num_priors = align_scores.shape[-1]
         topk_metrics, topk_idxs = torch.topk(
-            metrics, self.topk, axis=-1, largest=largest)
+            align_scores, self.topk, axis=-1, largest=using_largest_topk)
         if topk_mask is None:
             topk_mask = (topk_metrics.max(axis=-1, keepdim=True) >
                          self.eps).tile([1, 1, self.topk])
@@ -208,7 +216,7 @@ class BatchTaskAlignedAssigner(nn.Module):
         is_in_topk = F.one_hot(topk_idxs, num_priors).sum(axis=-2)
         is_in_topk = torch.where(is_in_topk > 1, torch.zeros_like(is_in_topk),
                                  is_in_topk)
-        return is_in_topk.to(metrics.dtype)
+        return is_in_topk.to(align_scores.dtype)
 
     def get_targets(self, gt_labels: Tensor, gt_bboxes: Tensor,
                     assigned_gt_inds: Tensor, fg_mask_pre_prior: Tensor,

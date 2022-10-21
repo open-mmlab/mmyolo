@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from mmdet.utils import ConfigType
 from torch import Tensor
 
+from mmyolo.models.task_modules.assigners import select_candidates_in_gts, select_highest_overlaps
 from mmyolo.registry import TASK_UTILS
 
 
@@ -38,76 +39,6 @@ def bbox_center_distance(bboxes: Tensor,
     return distances, priors_points
 
 
-def select_candidates_in_gts(priors_cxy_points: Tensor,
-                             gt_bboxes: Tensor,
-                             eps: float = 1e-9) -> Tensor:
-    """Select the positive priors' center in gt.
-
-    Args:
-        priors_cxy_points (Tensor): Priors center xy points,
-            shape(num_priors, 2)
-        gt_bboxes (Tensor): Ground true bboxes,
-            shape(batch_size, num_gt, 4)
-        eps (float): Default to 1e-9.
-    Return:
-        (Tensor): shape(batch_size, num_gt, num_priors)
-    """
-    batch_size, num_gt, _ = gt_bboxes.size()
-    gt_bboxes = gt_bboxes.reshape([-1, 4])
-
-    priors_number = priors_cxy_points.size(0)
-    priors_cxy_points = priors_cxy_points.unsqueeze(0).repeat(
-        batch_size * num_gt, 1, 1)
-
-    # calculate the left, top, right, bottom distance between positive
-    # prior center and gt side
-    gt_bboxes_lt = gt_bboxes[:, 0:2].unsqueeze(1).repeat(1, priors_number, 1)
-    gt_bboxes_rb = gt_bboxes[:, 2:4].unsqueeze(1).repeat(1, priors_number, 1)
-    bbox_deltas = torch.cat(
-        [priors_cxy_points - gt_bboxes_lt, gt_bboxes_rb - priors_cxy_points],
-        dim=-1)
-    bbox_deltas = bbox_deltas.reshape([batch_size, num_gt, priors_number, -1])
-
-    return (bbox_deltas.min(axis=-1)[0] > eps).to(gt_bboxes.dtype)
-
-
-def select_highest_overlaps(pos_mask: Tensor, overlaps: Tensor,
-                            num_gt: int) -> Tuple[Tensor, Tensor, Tensor]:
-    """If an anchor box is assigned to multiple gts, the one with the highest
-    iou will be selected.
-
-    Args:
-        pos_mask (Tensor): The assigned positive sample mask,
-            shape(batch_size, num_gt, num_priors)
-        overlaps (Tensor): IoU between all bbox and ground true,
-            shape(batch_size, num_gt, num_priors)
-        num_gt (int): Number of ground true.
-    Return:
-        gt_idx_pre_prior (Tensor): Target ground true index,
-            shape(batch_size, num_priors)
-        fg_mask_pre_prior (Tensor): Force matching ground true,
-            shape(batch_size, num_priors)
-        pos_mask (Tensor): The assigned positive sample mask,
-            shape(batch_size, num_gt, num_priors)
-    """
-    fg_mask_pre_prior = pos_mask.sum(axis=-2)
-
-    # Make sure the positive sample matches the only one and is the largest IoU
-    if fg_mask_pre_prior.max() > 1:
-        mask_multi_gts = (fg_mask_pre_prior.unsqueeze(1) > 1).repeat(
-            [1, num_gt, 1])
-        index = overlaps.argmax(axis=1)
-        is_max_overlaps = F.one_hot(index, num_gt)
-        is_max_overlaps = \
-            is_max_overlaps.permute(0, 2, 1).to(overlaps.dtype)
-
-        pos_mask = torch.where(mask_multi_gts, is_max_overlaps, pos_mask)
-        fg_mask_pre_prior = pos_mask.sum(axis=-2)
-
-    gt_idx_pre_prior = pos_mask.argmax(axis=-2)
-    return gt_idx_pre_prior, fg_mask_pre_prior, pos_mask
-
-
 @TASK_UTILS.register_module()
 class BatchATSSAssigner(nn.Module):
     """Adaptive Training Sample Selection Assigner.
@@ -119,8 +50,9 @@ class BatchATSSAssigner(nn.Module):
     def __init__(
             self,
             num_classes: int,
-            iou_calculator: ConfigType = dict(type='mmdet.BboxOverlaps2D'),
-            topk: int = 9):
+            topk: int = 9,
+            iou_calculator: ConfigType = dict(type='mmdet.BboxOverlaps2D')
+    ):
         super(BatchATSSAssigner).__init__()
         self.num_classes = num_classes
         self.topk = topk
