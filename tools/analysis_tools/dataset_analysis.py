@@ -76,7 +76,7 @@ def show_bbox_wh_ratio(less_equal, equal, greater_equal, classes, idx, out):
         startangle=50)
     plt.axis('equal')
     plt.title(f'Current Display Category:{classes[idx]}')
-    out_dir = f'{out}/func_3'
+    out_dir = os.path.join(out, 'show_bbox_wh_ratio')
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     fig.savefig(f'{out_dir}/{classes[idx]}.jpg')  # Save Image
