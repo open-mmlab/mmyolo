@@ -343,10 +343,10 @@ class YOLOv6Head(YOLOv5Head):
             target_labels, target_bboxes, target_scores, fg_mask = \
                 self.assigner(
                     flatten_priors[:, :2],
-                    pred_scores.detach(),
                     gt_labels,
                     gt_bboxes,
                     mask_gt,
+                    pred_scores.detach(),
                     flatten_bboxes.detach()
                 )
 
