@@ -23,13 +23,14 @@ Note:
     If these files are detected, the script will organize the dataset.
     The image paths in these files must be ABSOLUTE paths.
     3. Once the script finishes, the result files will be saved in the
-    directory named 'annotations' in the root directory of your dataset. The
-    corresponding images will be kept in `.jpg` format. The root directory
-    folder may look like this in the root directory after the converting:
+    directory named 'annotations' in the root directory of your dataset.
+    The default output file is result.json. The root directory folder may
+    look like this in the root directory after the converting:
     .
     └── $ROOT_PATH
         ├── annotations
-        │    ├── train.json
+        │    ├── result.json
+        │    └── ...
         ├── classes.txt
         ├── labels
         │    ├── a.txt
@@ -47,7 +48,6 @@ Note:
 import argparse
 import os
 import os.path as osp
-import shutil
 
 import mmcv
 import mmengine
@@ -130,26 +130,6 @@ def organize_by_existing_files(image_dir: str, existed_categories: list):
     return image_list[0], image_list[1], image_list[2]
 
 
-def copy_image_by_category(yolo_image_dir, cat_out_folder, image):
-    """Allocate the images according to their categories in separate folder."""
-    # support both .jpg, .png, and .jpeg
-    img_suffix = osp.splitext(image)[1].lower()
-    if img_suffix not in IMG_EXTENSIONS:
-        raise Exception(
-            "Only supports '.jpg', '.png', and '.jpeg' image formats")
-
-    img_path = osp.join(yolo_image_dir, image)
-    img_name = osp.splitext(image)[0]
-    new_img_path = osp.join(cat_out_folder, f'{img_name}.jpg')
-    img_data = mmcv.imread(str(img_path))
-
-    if img_suffix == '.jpg':
-        shutil.copyfile(img_path, new_img_path)
-    else:
-        mmcv.imwrite(img_data, new_img_path)
-    check_existence(new_img_path)
-
-
 def convert_yolo_to_coco(image_dir: str):
     """Convert annotations from yolo style to coco style.
 
@@ -189,13 +169,8 @@ def convert_yolo_to_coco(image_dir: str):
     if not osp.exists(output_folder):
         os.makedirs(output_folder)
         check_existence(output_folder)
-    for category in existed_categories:
-        cat_out_folder = osp.join(output_folder, category)
-        if not osp.exists(cat_out_folder):
-            os.makedirs(cat_out_folder)
-        check_existence(cat_out_folder)
 
-    # start the conversion and allocate images
+    # start the convert procedure
     with open(yolo_class_txt) as f:
         classes = f.read().strip().split()
 
@@ -231,16 +206,10 @@ def convert_yolo_to_coco(image_dir: str):
         if existed_categories != []:
             if image in train_img:
                 dataset = train_dataset
-                cat_out_folder = output_folder + '/train'
-                copy_image_by_category(yolo_image_dir, cat_out_folder, image)
             elif image in val_img:
                 dataset = val_dataset
-                cat_out_folder = output_folder + '/val'
-                copy_image_by_category(yolo_image_dir, cat_out_folder, image)
             elif image in test_img:
                 dataset = test_dataset
-                cat_out_folder = output_folder + 'test'
-                copy_image_by_category(yolo_image_dir, cat_out_folder, image)
 
         dataset['images'].append(img_info_dict)
 
@@ -279,7 +248,7 @@ def convert_yolo_to_coco(image_dir: str):
                 mmengine.dump(test_dataset, out_file)
 
     # simple statistics
-    print(f'All data has been converted. Please check at {output_folder} !')
+    print(f'Process finished! Please check at {output_folder} .')
     print(f'Number of images found: {total}, converted: {converted},',
           f'and skipped: {skipped}. Total annotation count: {obj_count}.')
     print('You can use tools/analysis_tools/browse_coco_json.py to visualize!')
