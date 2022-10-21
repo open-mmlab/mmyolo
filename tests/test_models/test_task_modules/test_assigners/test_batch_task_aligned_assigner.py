@@ -38,9 +38,9 @@ class TestBatchTaskAlignedAssigner(TestCase):
                                           12.]]).unsqueeze(0).repeat(
                                               batch_size, 2100, 1)
 
-        assign_result = assigner.forward(pred_scores, pred_bboxes,
-                                         priors_points, gt_labels, gt_bboxes,
-                                         pad_bbox_flag)
+        assign_result = assigner.forward(priors_points, gt_labels,
+                                         gt_bboxes, pad_bbox_flag,
+                                         pred_scores, pred_bboxes)
 
         assigned_labels = assign_result['assigned_labels']
         assigned_bboxes = assign_result['assigned_bboxes']
