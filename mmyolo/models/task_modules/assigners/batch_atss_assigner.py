@@ -146,7 +146,7 @@ class BatchATSSAssigner(nn.Module):
                 shape(batch_size, num_gt, 4)
             pad_bbox_flag (Tensor): Ground truth bbox mask,
                 1 means bbox, 0 means no bbox,
-                shape(batch_size, num_gt, 1),
+                shape(batch_size, num_gt, 1)
             pred_bboxes (Tensor): Predicted bounding boxes,
                 shape(batch_size, num_priors, 4),
 
