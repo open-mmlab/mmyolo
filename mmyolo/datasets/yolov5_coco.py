@@ -1,24 +1,17 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Any, Optional
 
-from mmdet.datasets import CocoDataset
+from mmdet.datasets import BaseDetDataset, CocoDataset
 
 from ..registry import DATASETS, TASK_UTILS
 
 
-@DATASETS.register_module()
-class YOLOv5CocoDataset(CocoDataset):
-    """Dataset for YOLOv5 COCO Dataset.
-
-    We only add `BatchShapePolicy` function compared with CocoDataset. See
-    `mmyolo/datasets/utils.py#BatchShapePolicy` for details
-    """
+class BatchShapePolicyDataset(BaseDetDataset):
 
     def __init__(self,
                  *args,
                  batch_shapes_cfg: Optional[dict] = None,
                  **kwargs):
-
         self.batch_shapes_cfg = batch_shapes_cfg
         super().__init__(*args, **kwargs)
 
@@ -57,3 +50,13 @@ class YOLOv5CocoDataset(CocoDataset):
             return self.pipeline(data_info)
         else:
             return super().prepare_data(idx)
+
+
+@DATASETS.register_module()
+class YOLOv5CocoDataset(BatchShapePolicyDataset, CocoDataset):
+    """Dataset for YOLOv5 COCO Dataset.
+
+    We only add `BatchShapePolicy` function compared with CocoDataset. See
+    `mmyolo/datasets/utils.py#BatchShapePolicy` for details
+    """
+    pass

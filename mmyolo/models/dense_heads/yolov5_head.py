@@ -203,11 +203,12 @@ class YOLOv5Head(BaseDenseHead):
         assert len(self.obj_level_weights) == len(
             self.featmap_strides) == self.num_levels
         if self.prior_match_thr != 4.0:
-            print_log("""!!!Now, you've changed the prior_match_thr
-                        parameter to something other than 4.0. Please make sure
-                        that you have modified both the regression formula in
-                        bbox_coder and before loss_box computation,
-                        otherwise the accuracy may be degraded!!!""")
+            print_log(
+                "!!!Now, you've changed the prior_match_thr "
+                'parameter to something other than 4.0. Please make sure '
+                'that you have modified both the regression formula in '
+                'bbox_coder and before loss_box computation, '
+                'otherwise the accuracy may be degraded!!!')
 
         priors_base_sizes = torch.tensor(
             self.prior_generator.base_sizes, dtype=torch.float)
