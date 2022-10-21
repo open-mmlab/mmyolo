@@ -13,5 +13,7 @@ model = dict(
         widen_factor=widen_factor,
     ),
     bbox_head=dict(
+        type='YOLOv6Head',
         head_module=dict(widen_factor=widen_factor),
-        loss_bbox=dict(iou_mode='siou', )))
+        loss_bbox=dict(iou_mode='siou'),
+    ))

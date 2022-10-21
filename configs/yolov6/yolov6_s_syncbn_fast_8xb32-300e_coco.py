@@ -64,7 +64,16 @@ model = dict(
             widen_factor=widen_factor,
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg=dict(type='SiLU', inplace=True),
-            featmap_strides=[8, 16, 32])),
+            featmap_strides=[8, 16, 32]),
+        loss_bbox=dict(
+            type='IoULoss',
+            iou_mode='giou',
+            bbox_format='xyxy',
+            eps=1e-10,
+            reduction='mean',
+            loss_weight=2.5,
+            return_iou=False),
+    ),
     train_cfg=dict(
         initial_epoch=4,
         initial_assigner=dict(
