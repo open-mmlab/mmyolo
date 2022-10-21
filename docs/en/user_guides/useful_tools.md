@@ -128,7 +128,7 @@ python tools/dataset_converters/yolo2coco.py  /path/to/the/root/dir/of/your_data
 
 Instructions:
 
-1. `image-dir` is the root directory of the yolo-style dataset, which should contain `images`, `labels`, and `classes.txt`. `classes.txt` is the class declaration corresponding to the current dataset. One class a line. The structure of the root directory should be formatted as this example shows:
+1. `image_dir` is the root directory of the yolo-style dataset, which should contain `images`, `labels`, and `classes.txt`. `classes.txt` is the class declaration corresponding to the current dataset. One class a line. The structure of the root directory should be formatted as this example shows:
 
 ```bash
 .
