@@ -12,6 +12,9 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
     ),
-    bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
+    bbox_head=dict(
+        head_module=dict(widen_factor=widen_factor),
+        loss_bbox=dict(iou_mode='siou'),
+    ))
 
 default_hooks = dict(param_scheduler=dict(lr_factor=0.02, ))

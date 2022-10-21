@@ -5,6 +5,7 @@ data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 num_last_epochs = 15
+num_classes = 80
 
 # parameters that often need to be modified
 img_scale = (640, 640)  # height, width
@@ -59,21 +60,35 @@ model = dict(
         type='YOLOv6Head',
         head_module=dict(
             type='YOLOv6HeadModule',
-            num_classes=80,
+            num_classes=num_classes,
             in_channels=[128, 256, 512],
             widen_factor=widen_factor,
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg=dict(type='SiLU', inplace=True),
-            featmap_strides=[8, 16, 32])),
+            featmap_strides=[8, 16, 32]),
+        loss_bbox=dict(
+            type='IoULoss',
+            iou_mode='giou',
+            bbox_format='xyxy',
+            eps=1e-10,
+            reduction='mean',
+            loss_weight=2.5,
+            return_iou=False),
+    ),
     train_cfg=dict(
         initial_epoch=4,
         initial_assigner=dict(
             type='BatchATSSAssigner',
+            num_classes=num_classes,
             topk=9,
-            iou2d_calculator=dict(type='mmdet.BboxOverlaps2D'),
-            num_classes=80),
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D')),
         assigner=dict(
-            type='BatchTaskAlignedAssigner', topk=13, alpha=1, beta=6),
+            type='BatchTaskAlignedAssigner',
+            num_classes=num_classes,
+            topk=13,
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
+            alpha=1,
+            beta=6),
     ),
     test_cfg=dict(
         multi_label=True,
