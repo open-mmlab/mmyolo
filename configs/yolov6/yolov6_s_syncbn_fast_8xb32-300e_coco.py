@@ -216,7 +216,18 @@ default_hooks = dict(
         lr_factor=0.01,
         max_epochs=max_epochs))
 
-custom_hooks = [dict(switch_epoch=max_epochs - num_last_epochs)]
+custom_hooks = [
+    dict(
+        type='EMAHook',
+        ema_type='ExpMomentumEMA',
+        momentum=0.0001,
+        update_buffers=True,
+        priority=49),
+    dict(
+        type='mmdet.PipelineSwitchHook',
+        switch_epoch=max_epochs - num_last_epochs,
+        switch_pipeline=_base_.train_pipeline_stage2)
+]
 
 train_cfg = dict(
     max_epochs=max_epochs,
