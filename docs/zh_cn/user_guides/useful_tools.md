@@ -123,7 +123,7 @@ python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
 1.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化数据集分析，同时得到的结果图片直接保存到当前运行目录中：
 
 ```shell
-python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py
 ```
 
 2.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化数据集分析，同时得到的结果图片直接保存到目录 `work-dir/dataset_analysis`：
