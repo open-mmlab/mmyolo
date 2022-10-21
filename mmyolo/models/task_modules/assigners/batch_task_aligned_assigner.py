@@ -58,7 +58,7 @@ class BatchTaskAlignedAssigner(nn.Module):
     @torch.no_grad()
     def forward(self, priors_points: Tensor, gt_labels: Tensor,
                 gt_bboxes: Tensor, pad_bbox_flag: Tensor, pred_scores: Tensor,
-                pred_bboxes: Tensor) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+                pred_bboxes: Tensor) -> dict:
         """Assign gt to bboxes.
 
         The assignment is done in following steps
@@ -84,24 +84,28 @@ class BatchTaskAlignedAssigner(nn.Module):
             pred_bboxes (Tensor): Predict bboxes,
                 shape(batch_size, num_priors, 4)
         Returns:
-            assigned_labels (Tensor): Assigned labels,
-                shape(batch_size, num_priors)
-            assigned_bboxes (Tensor): Assigned boxes,
-                shape(batch_size, num_priors, 4)
-            assigned_scores (Tensor): Assigned scores,
-                shape(batch_size, num_priors, num_classes)
-            fg_mask_pre_prior (Tensor): Force ground truth matching mask,
-                shape(batch_size, num_priors)
+            assigned_result (dict) Assigned result:
+                assigned_labels (Tensor): Assigned labels,
+                    shape(batch_size, num_priors)
+                assigned_bboxes (Tensor): Assigned boxes,
+                    shape(batch_size, num_priors, 4)
+                assigned_scores (Tensor): Assigned scores,
+                    shape(batch_size, num_priors, num_classes)
+                fg_mask_pre_prior (Tensor): Force ground truth matching mask,
+                    shape(batch_size, num_priors)
         """
         batch_size = pred_scores.size(0)
         num_gt = gt_bboxes.size(1)
 
+        assigned_result = {
+            'assigned_labels': gt_bboxes.new_full(pred_scores[..., 0].shape, self.num_classes),
+            'assigned_bboxes': gt_bboxes.new_full(pred_bboxes.shape, 0),
+            'assigned_scores': gt_bboxes.new_full(pred_scores.shape, 0),
+            'fg_mask_pre_prior': gt_bboxes.new_full(pred_scores[..., 0].shape, 0)
+        }
+
         if num_gt == 0:
-            return (gt_bboxes.new_full(pred_scores[..., 0].shape,
-                                       self.num_classes),
-                    gt_bboxes.new_full(pred_bboxes.shape, 0),
-                    gt_bboxes.new_full(pred_scores.shape, 0),
-                    gt_bboxes.new_full(pred_scores[..., 0].shape, 0))
+            return assigned_result
 
         pos_mask, alignment_metrics, overlaps = self.get_pos_mask(
             priors_points, gt_labels, gt_bboxes, pad_bbox_flag, pred_scores,
@@ -120,12 +124,15 @@ class BatchTaskAlignedAssigner(nn.Module):
         pos_align_metrics = alignment_metrics.max(axis=-1, keepdim=True)[0]
         pos_overlaps = (overlaps * pos_mask).max(axis=-1, keepdim=True)[0]
         norm_align_metric = (
-            alignment_metrics * pos_overlaps /
-            (pos_align_metrics + self.eps)).max(-2)[0].unsqueeze(-1)
+                alignment_metrics * pos_overlaps /
+                (pos_align_metrics + self.eps)).max(-2)[0].unsqueeze(-1)
         assigned_scores = assigned_scores * norm_align_metric
 
-        return (assigned_labels, assigned_bboxes, assigned_scores,
-                fg_mask_pre_prior.bool())
+        assigned_result['assigned_labels'] = assigned_labels
+        assigned_result['assigned_bboxes'] = assigned_bboxes
+        assigned_result['assigned_scores'] = assigned_scores
+        assigned_result['fg_mask_pre_prior'] = fg_mask_pre_prior.bool()
+        return assigned_result
 
     def get_pos_mask(self, priors_points: Tensor, gt_labels: Tensor,
                      gt_bboxes: Tensor, pad_bbox_flag: Tensor,

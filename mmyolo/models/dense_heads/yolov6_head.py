@@ -330,8 +330,7 @@ class YOLOv6Head(YOLOv5Head):
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if self.epoch < self.initial_epoch:
-            target_labels, target_bboxes, target_scores, fg_mask_pre_prior = \
-                self.initial_assigner(
+            assigned_result = self.initial_assigner(
                     flatten_anchors,
                     n_anchors_list,
                     gt_labels,
@@ -340,8 +339,7 @@ class YOLOv6Head(YOLOv5Head):
                     flatten_bboxes.detach()
                 )
         else:
-            target_labels, target_bboxes, target_scores, fg_mask_pre_prior = \
-                self.assigner(
+            assigned_result = self.assigner(
                     flatten_priors[:, :2],
                     gt_labels,
                     gt_bboxes,
@@ -350,22 +348,27 @@ class YOLOv6Head(YOLOv5Head):
                     flatten_bboxes.detach()
                 )
 
+        assigned_labels = assigned_result['assigned_labels']
+        assigned_bboxes = assigned_result['assigned_bboxes']
+        assigned_scores = assigned_result['assigned_scores']
+        fg_mask_pre_prior = assigned_result['fg_mask_pre_prior']
+
         # cls loss
-        target_labels = torch.where(
-            fg_mask_pre_prior > 0, target_labels,
-            torch.full_like(target_labels, self.num_classes))
-        one_hot_label = F.one_hot(target_labels.long(),
+        assigned_labels = torch.where(
+            fg_mask_pre_prior > 0, assigned_labels,
+            torch.full_like(assigned_labels, self.num_classes))
+        one_hot_label = F.one_hot(assigned_labels.long(),
                                   self.num_classes + 1)[..., :-1]
-        loss_cls = self.varifocal_loss(pred_scores, target_scores,
+        loss_cls = self.varifocal_loss(pred_scores, assigned_scores,
                                        one_hot_label)
 
         # rescale bbox
         stride_tensor = flatten_priors[..., [2]]
-        target_bboxes /= stride_tensor
+        assigned_bboxes /= stride_tensor
         flatten_bboxes /= stride_tensor
 
-        target_scores_sum = target_scores.sum()
-        loss_cls /= target_scores_sum
+        assigned_scores_sum = assigned_scores.sum()
+        loss_cls /= assigned_scores_sum
 
         # select positive samples mask
         num_pos = fg_mask_pre_prior.sum()
@@ -374,15 +377,15 @@ class YOLOv6Head(YOLOv5Head):
             bbox_mask = fg_mask_pre_prior.unsqueeze(-1).repeat([1, 1, 4])
             pred_bboxes_pos = torch.masked_select(flatten_bboxes,
                                                   bbox_mask).reshape([-1, 4])
-            target_bboxes_pos = torch.masked_select(target_bboxes,
+            assigned_bboxes_pos = torch.masked_select(assigned_bboxes,
                                                     bbox_mask).reshape([-1, 4])
-            bbox_weight = torch.masked_select(target_scores.sum(-1),
+            bbox_weight = torch.masked_select(assigned_scores.sum(-1),
                                               fg_mask_pre_prior).unsqueeze(-1)
             loss_iou = self.loss_bbox(
                 pred_bboxes_pos,
-                target_bboxes_pos,
+                assigned_bboxes_pos,
                 weight=bbox_weight,
-                avg_factor=target_scores_sum)
+                avg_factor=assigned_scores_sum)
 
         else:
             loss_iou = torch.tensor(0.).to(flatten_bbox_preds.device)

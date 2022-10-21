@@ -66,7 +66,7 @@ class BatchATSSAssigner(nn.Module):
         gt_bboxes: Tensor,
         pad_bbox_flag: Tensor,
         pred_bboxes: Optional[Tensor] = None
-    ) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+    ) -> dict:
         r"""Get assigner result
         Args:
             priors (Tensor): Model priors, shape(num_priors, 4).
@@ -82,21 +82,25 @@ class BatchATSSAssigner(nn.Module):
                 shape(batch_size, num_priors, 4),
 
         Returns:
-            assigned_labels (Tensor): shape(batch_size, num_gt)
-            assigned_bboxes (Tensor): shape(batch_size, num_gt, 4)
-            assigned_scores (Tensor):
-            fg_mask_pre_prior (Tensor): shape(bs, num_gt)
+            assigned_result (dict): Assigned result
+                'assigned_labels' (Tensor): shape(batch_size, num_gt)
+                'assigned_bboxes' (Tensor): shape(batch_size, num_gt, 4)
+                'assigned_scores' (Tensor):
+                    shape(batch_size, num_gt, number_classes)
+                'fg_mask_pre_prior' (Tensor): shape(bs, num_gt)
         """
         batch_size = gt_bboxes.size(0)
         num_gt, num_priors = gt_bboxes.size(1), priors.size(0)
 
+        assigned_result = {
+            'assigned_labels': gt_bboxes.new_full([batch_size, num_priors], self.num_classes),
+            'assigned_bboxes': gt_bboxes.new_full([batch_size, num_priors, 4], 0),
+            'assigned_scores': gt_bboxes.new_full( [batch_size, num_priors, self.num_classes], 0),
+            'fg_mask_pre_prior': gt_bboxes.new_full([batch_size, num_priors], 0)
+        }
+
         if num_gt == 0:
-            return (gt_bboxes.new_full([batch_size, num_priors],
-                                       self.num_classes),
-                    gt_bboxes.new_full([batch_size, num_priors, 4], 0),
-                    gt_bboxes.new_full(
-                        [batch_size, num_priors, self.num_classes],
-                        0), gt_bboxes.new_full([batch_size, num_priors], 0))
+            return assigned_result
 
         # compute iou between all bbox and gt
         overlaps = self.iou_calculator(gt_bboxes.reshape([-1, 4]), priors)
@@ -141,9 +145,11 @@ class BatchATSSAssigner(nn.Module):
             ious = ious.max(axis=-2)[0].unsqueeze(-1)
             assigned_scores *= ious
 
-        # TODO change it to dict
-        return assigned_labels.long(
-        ), assigned_bboxes, assigned_scores, fg_mask_pre_prior.bool()
+        assigned_result['assigned_labels'] = assigned_labels.long()
+        assigned_result['assigned_bboxes'] = assigned_bboxes
+        assigned_result['assigned_scores'] = assigned_scores
+        assigned_result['fg_mask_pre_prior'] = fg_mask_pre_prior.bool()
+        return assigned_result
 
     def select_topk_candidates(self, distances: Tensor,
                                num_level_priors: List[int],
