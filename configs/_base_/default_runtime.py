@@ -25,10 +25,10 @@ log_level = 'INFO'
 load_from = None
 resume = False
 
-file_client_args = dict(
-        backend='petrel',
-        path_mapping=dict({
-            './data/': 's3://openmmlab/datasets/detection/',
-            'data/': 's3://openmmlab/datasets/detection/'
-        }))
-# file_client_args = dict(backend='disk')
+# file_client_args = dict(
+#         backend='petrel',
+#         path_mapping=dict({
+#             './data/': 's3://openmmlab/datasets/detection/',
+#             'data/': 's3://openmmlab/datasets/detection/'
+#         }))
+file_client_args = dict(backend='disk')
