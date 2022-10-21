@@ -115,7 +115,7 @@ For a description of the functions of this script, see [Dataset analysis script]
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
-                                              [--output-dir ${OUTPUT_DIR}] \
+                                              [--output-dir ${OUTPUT_DIR}]
 ```
 
 E,g:
