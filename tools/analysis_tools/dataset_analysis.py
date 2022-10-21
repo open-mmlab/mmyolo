@@ -115,7 +115,7 @@ def show_bbox_area(cfg, classes, cat_area_s_num, cat_area_m_num,
         plt.text(x2, y2 + 5, y2, ha='center', fontsize=4)
     for x3, y3 in enumerate(cat_area_l_num):
         plt.text(x3 + width, y3 + 8, y3, ha='center', fontsize=4)
-    out_dir = f'{out}/func_4'
+    out_dir = os.path.join(out, 'show_bbox_area')
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     fig.savefig(f'{out_dir}/{cfg.dataset_type}.jpg')  # Save Image
