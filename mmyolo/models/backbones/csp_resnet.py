@@ -128,7 +128,40 @@ class BasicBlock(nn.Module):
 
 @MODELS.register_module()
 class CSPResNet(BaseBackbone):
-    """CSP-ResNet backbone used in PYOLOE."""
+    """CSP-ResNet backbone used in PPYOLOE.
+
+    Args:
+        arch (str): Architecture of CSPNeXt, from {P5, P6}.
+            Defaults to P5.
+        deepen_factor (float): Depth multiplier, multiply number of
+            blocks in CSP layer by this amount. Defaults to 1.0.
+        widen_factor (float): Width multiplier, multiply number of
+            channels in each layer by this amount. Defaults to 1.0.
+        out_indices (Sequence[int]): Output from which stages.
+            Defaults to (2, 3, 4).
+        frozen_stages (int): Stages to be frozen (stop grad and set eval
+            mode). -1 means not freezing any parameters. Defaults to -1.
+        plugins (list[dict]): List of plugins for stages, each dict contains:
+            - cfg (dict, required): Cfg dict to build plugin.
+            - stages (tuple[bool], optional): Stages to apply plugin, length
+              should be same as 'num_stages'.
+        arch_ovewrite (list): Overwrite default arch settings.
+            Defaults to None.
+        norm_cfg (:obj:`ConfigDict` or dict): Dictionary to construct and
+            config norm layer. Defaults to dict(type='BN', requires_grad=True).
+        act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
+            Defaults to dict(type='SiLU').
+        norm_eval (bool): Whether to set norm layers to eval mode, namely,
+            freeze running stats (mean and var). Note: Effect on Batch Norm
+            and its variants only.
+        init_cfg (:obj:`ConfigDict` or dict or list[dict] or
+            list[:obj:`ConfigDict`]): Initialization config dict.
+        use_large_stem (bool): Whether to use large stem layer.
+            Defaults to False.
+        use_alpha (bool): Whether to use alpha in `RepVGGBlock`. PPYOLOE do
+            not use, but PPYOLOE+ use.
+            Defaults to False.
+    """
     # From left to right:
     # in_channels, out_channels, num_blocks, add_identity, use_spp
     arch_settings = {
@@ -138,12 +171,13 @@ class CSPResNet(BaseBackbone):
 
     def __init__(self,
                  arch: str = 'P5',
-                 plugins: Union[dict, List[dict]] = None,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  input_channels: int = 3,
                  out_indices: Tuple[int] = (2, 3, 4),
                  frozen_stages: int = -1,
+                 plugins: Union[dict, List[dict]] = None,
+                 arch_ovewrite: dict = None,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
                  act_cfg: ConfigType = dict(type='Swish'),
@@ -151,10 +185,13 @@ class CSPResNet(BaseBackbone):
                  init_cfg: OptMultiConfig = None,
                  use_large_stem: bool = False,
                  use_alpha: bool = False):
+        arch_setting = self.arch_settings[arch]
+        if arch_ovewrite:
+            arch_setting = arch_ovewrite
         self.use_large_stem = use_large_stem
         self.use_alpha = use_alpha
         super().__init__(
-            self.arch_settings[arch],
+            arch_setting,
             deepen_factor,
             widen_factor,
             input_channels=input_channels,

@@ -35,7 +35,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
 
     def __init__(self,
                  in_channels: List[int],
-                 out_channels: int,
+                 out_channels: List[int],
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  num_csp_blocks: int = 1,

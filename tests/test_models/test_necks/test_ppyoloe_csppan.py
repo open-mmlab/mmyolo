@@ -15,7 +15,7 @@ class TestPPYOLOECSPPAN(TestCase):
         s = 64
         in_channels = [8, 16, 32]
         feat_sizes = [s // 2**i for i in range(4)]  # [32, 16, 8]
-        out_channels = 24
+        out_channels = [8, 16, 32]
         feats = [
             torch.rand(1, in_channels[i], feat_sizes[i], feat_sizes[i])
             for i in range(len(in_channels))
@@ -25,5 +25,25 @@ class TestPPYOLOECSPPAN(TestCase):
         outs = neck(feats)
         assert len(outs) == len(feats)
         for i in range(len(feats)):
-            assert outs[i].shape[1] == out_channels
+            assert outs[i].shape[1] == out_channels[i]
+            assert outs[i].shape[2] == outs[i].shape[3] == s // (2**i)
+
+    def test_drop_block(self):
+        s = 64
+        in_channels = [8, 16, 32]
+        feat_sizes = [s // 2**i for i in range(4)]  # [32, 16, 8]
+        out_channels = [8, 16, 32]
+        feats = [
+            torch.rand(1, in_channels[i], feat_sizes[i], feat_sizes[i])
+            for i in range(len(in_channels))
+        ]
+        neck = PPYOLOECSPPAN(
+            in_channels=in_channels,
+            out_channels=out_channels,
+            use_drop_block=True)
+        neck.train()
+        outs = neck(feats)
+        assert len(outs) == len(feats)
+        for i in range(len(feats)):
+            assert outs[i].shape[1] == out_channels[i]
             assert outs[i].shape[2] == outs[i].shape[3] == s // (2**i)
