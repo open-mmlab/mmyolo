@@ -97,11 +97,12 @@ jobs:
           command: |
             git clone -b main --depth 1 https://github.com/open-mmlab/mmengine.git /home/circleci/mmengine
             git clone -b dev-3.x --depth 1 https://github.com/open-mmlab/mmdetection.git /home/circleci/mmdetection
+            git clone -b dev-1.x --depth 1 https://github.com/open-mmlab/mmdeploy.git /home/circleci/mmdeploy --recurse-submodules
       - run:
           name: Build Docker image
           command: |
             docker build .circleci/docker -t mmyolo:gpu --build-arg PYTORCH=<< parameters.torch >> --build-arg CUDA=<< parameters.cuda >> --build-arg CUDNN=<< parameters.cudnn >>
-            docker run --gpus all -t -d -v /home/circleci/project:/mmyolo -v /home/circleci/mmengine:/mmengine -v /home/circleci/mmdetection:/mmdetection -w /mmyolo --name mmyolo mmyolo:gpu
+            docker run --gpus all -t -d -v /home/circleci/project:/mmyolo -v /home/circleci/mmengine:/mmengine -v /home/circleci/mmdeploy:/mmdeploy -v /home/circleci/mmdetection:/mmdetection -w /mmyolo --name mmyolo mmyolo:gpu
       - run:
           name: Install mmyolo dependencies
           command: |
@@ -111,6 +112,10 @@ jobs:
             docker exec mmyolo pip install -e /mmdetection
             docker exec mmyolo pip install -r requirements/albu.txt
             docker exec mmyolo pip install -r requirements/tests.txt
+      - run:
+          name: Build mmdeploy onnxruntime
+          command: |
+            docker exec mmyolo python mmdeploy/tools/scripts/build_ubuntu_x64_ort.py
       - run:
           name: Build and install
           command: |
