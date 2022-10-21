@@ -35,9 +35,10 @@ class BatchTaskAlignedAssigner(nn.Module):
         self.iou_calculator = TASK_UTILS.build(iou_calculator)
 
     @torch.no_grad()
-    def forward(self, pred_scores: Tensor, pred_bboxes: Tensor,
-                priors_points: Tensor, gt_labels: Tensor, gt_bboxes: Tensor,
-                pad_bbox_flag: Tensor):
+    def forward(
+            self, pred_scores: Tensor, pred_bboxes: Tensor,
+            priors_points: Tensor, gt_labels: Tensor, gt_bboxes: Tensor,
+            pad_bbox_flag: Tensor) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
         """Get assigner result.
 
         Args:
