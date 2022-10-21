@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Tuple
+from typing import List, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -73,7 +73,7 @@ class CSPResStage(nn.Module):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         if self.conv_down is not None:
             x = self.conv_down(x)
         y1 = self.conv1(x)
@@ -117,7 +117,7 @@ class BasicBlock(nn.Module):
             mode='ppyoloe')
         self.shortcut = shortcut
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         y = self.conv1(x)
         y = self.conv2(y)
         if self.shortcut:
@@ -138,6 +138,7 @@ class CSPResNet(BaseBackbone):
 
     def __init__(self,
                  arch: str = 'P5',
+                 plugins: Union[dict, List[dict]] = None,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  input_channels: int = 3,
@@ -158,6 +159,7 @@ class CSPResNet(BaseBackbone):
             widen_factor,
             input_channels=input_channels,
             out_indices=out_indices,
+            plugins=plugins,
             frozen_stages=frozen_stages,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg,
@@ -230,7 +232,6 @@ class CSPResNet(BaseBackbone):
         out_channels = make_divisible(out_channels, self.widen_factor)
         num_blocks = make_round(num_blocks, self.deepen_factor)
 
-        stage = []
         cspres_layer = CSPResStage(
             BasicBlock,
             in_channels,
@@ -240,5 +241,6 @@ class CSPResNet(BaseBackbone):
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg,
             use_alpha=self.use_alpha)
-        stage.append(cspres_layer)
-        return stage
+        return [
+            cspres_layer,
+        ]

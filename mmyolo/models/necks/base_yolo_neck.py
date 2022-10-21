@@ -33,7 +33,7 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
 
     def __init__(self,
                  in_channels: List[int],
-                 out_channels: int,
+                 out_channels: List[int],
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  freeze_all: bool = False,

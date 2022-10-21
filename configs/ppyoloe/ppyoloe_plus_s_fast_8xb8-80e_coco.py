@@ -2,7 +2,7 @@ _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
 data_root = 'data/coco/'
-dataset_type = 'PPYOLOECocoDataset'
+dataset_type = 'mmdet.CocoDataset'
 
 # parameters that often need to be modified
 img_scale = (640, 640)  # height, width
@@ -15,10 +15,14 @@ train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
 
-strides = [8, 16, 32]
-
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
+
+strides = [8, 16, 32]
+
+# single-scale training is recommended to
+# be turned on, which can speed up training.
+env_cfg = dict(cudnn_benchmark=True)
 
 model = dict(
     type='YOLODetector',
@@ -36,7 +40,7 @@ model = dict(
         use_large_stem=True,
         use_alpha=True),
     neck=dict(
-        type='PPYOLOECustomCSPPAN',
+        type='PPYOLOECSPPAN',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         in_channels=[256, 512, 1024],

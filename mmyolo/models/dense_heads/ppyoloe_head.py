@@ -138,7 +138,6 @@ class PPYOLOEHeadModule(BaseModule):
             self.reg_preds.append(
                 nn.Conv2d(in_c, 4 * (self.reg_max + 1), 3, padding=1))
 
-        # TODO: use ConvModule
         self.proj_conv = nn.Conv2d(self.reg_max + 1, 1, 1, bias=False)
         self.proj = nn.Parameter(
             torch.linspace(0, self.reg_max, self.reg_max + 1),

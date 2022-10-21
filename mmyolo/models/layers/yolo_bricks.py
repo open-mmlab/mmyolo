@@ -369,7 +369,9 @@ class EffectiveSELayer(nn.Module):
     TODO: doc
     """
 
-    def __init__(self, channels, act_cfg=dict(type='HSigmoid')):
+    def __init__(self,
+                 channels: int,
+                 act_cfg: ConfigType = dict(type='HSigmoid')):
         super().__init__()
         assert isinstance(act_cfg, dict)
         self.fc = ConvModule(channels, channels, 1, act_cfg=None)
@@ -377,7 +379,7 @@ class EffectiveSELayer(nn.Module):
         act_cfg_ = act_cfg.copy()  # type: ignore
         self.activate = build_activation_layer(act_cfg_)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x_se = x.mean((2, 3), keepdim=True)
         x_se = self.fc(x_se)
         return x * self.activate(x_se)

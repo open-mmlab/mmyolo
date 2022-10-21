@@ -192,7 +192,7 @@ class SPP(nn.Module):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         outs = [x]
 
         for pool in self.pool:
@@ -235,7 +235,7 @@ class BasicBlock(nn.Module):
             mode='ppyoloe')
         self.shortcut = shortcut
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         y = self.conv1(x)
         y = self.conv2(y)
         if self.shortcut:
@@ -258,6 +258,10 @@ class CSPStage(nn.Module):
                  spp: bool = False):
         super().__init__()
 
+        self.norm_cfg = norm_cfg
+        self.act_cfg = act_cfg
+        self.spp = spp
+
         middle_channels = int(output_channels // 2)
         self.conv1 = ConvModule(
             input_channels,
@@ -271,27 +275,8 @@ class CSPStage(nn.Module):
             1,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
-        self.convs = nn.Sequential()
-
-        next_input_channels = middle_channels
-        for i in range(num_layer):
-            self.convs.add_module(
-                str(i),
-                block_fn(
-                    next_input_channels,
-                    middle_channels,
-                    norm_cfg=norm_cfg,
-                    act_cfg=act_cfg,
-                    shortcut=False))
-
-            if i == (num_layer - 1) // 2 and spp:
-                self.convs.add_module(
-                    'spp',
-                    SPP(middle_channels * 4,
-                        middle_channels,
-                        1, [5, 9, 13],
-                        act_cfg=act_cfg))
-            next_input_channels = middle_channels
+        self.convs = self.build_convs_layer(block_fn, middle_channels,
+                                            num_layer)
         self.conv3 = ConvModule(
             middle_channels * 2,
             output_channels,
@@ -299,7 +284,31 @@ class CSPStage(nn.Module):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
-    def forward(self, x):
+    def build_convs_layer(self, block_fn: nn.Module, middle_channels: int,
+                          num_layer: int):
+        convs = nn.Sequential()
+
+        for i in range(num_layer):
+            convs.add_module(
+                str(i),
+                block_fn(
+                    middle_channels,
+                    middle_channels,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg,
+                    shortcut=False))
+
+            if i == (num_layer - 1) // 2 and self.spp:
+                convs.add_module(
+                    'spp',
+                    SPP(middle_channels * 4,
+                        middle_channels,
+                        1, [5, 9, 13],
+                        act_cfg=self.act_cfg))
+
+        return convs
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         y1 = self.conv1(x)
         y2 = self.conv2(x)
         y2 = self.convs(y2)
@@ -309,12 +318,12 @@ class CSPStage(nn.Module):
 
 
 @MODELS.register_module()
-class PPYOLOECustomCSPPAN(BaseYOLONeck):
-    """CustomCSPPAN in PPYOLOE."""
+class PPYOLOECSPPAN(BaseYOLONeck):
+    """CSPPAN in PPYOLOE."""
 
     def __init__(self,
-                 in_channels=[256, 512, 1024],
-                 out_channels=[256, 512, 1024],
+                 in_channels: List[int] = [256, 512, 1024],
+                 out_channels: List[int] = [256, 512, 1024],
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  drop_block: bool = False,
@@ -353,22 +362,26 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
         Returns:
             nn.Module: The reduce layer.
         """
-        if idx == 2:
+        if idx == len(self.in_channels) - 1:
             # fpn_stage
-            layer = []
-            for j in range(self.num_stage):
-                layer.append(
-                    CSPStage(
-                        BasicBlock,
-                        input_channels=make_divisible(self.in_channels[idx],
-                                                      self.widen_factor),
-                        output_channels=make_divisible(self.out_channels[idx],
-                                                       self.widen_factor),
-                        num_layer=make_round(self.num_block,
-                                             self.deepen_factor),
-                        norm_cfg=self.norm_cfg,
-                        act_cfg=self.act_cfg,
-                        spp=self.spp))
+            in_channels = make_divisible(self.in_channels[idx],
+                                         self.widen_factor)
+            output_channels = make_divisible(self.out_channels[idx],
+                                             self.widen_factor)
+            channels = [in_channels] + [output_channels] * self.num_stage
+            num_layer = make_round(self.num_block, self.deepen_factor)
+
+            layer = [
+                CSPStage(
+                    BasicBlock,
+                    input_channels=channels[i],
+                    output_channels=channels[i + 1],
+                    num_layer=num_layer,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg,
+                    spp=self.spp) for i in range(self.num_stage)
+            ]
+
             if self.drop_block:
                 layer.append(
                     DropBlock2d(
@@ -405,28 +418,31 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
             nn.Module: The top down layer.
         """
         # fpn_stage
-        layer = []
         in_channels = make_divisible(
             self.in_channels[idx - 1], self.widen_factor) + (
                 make_divisible(self.out_channels[idx], self.widen_factor) // 2)
         out_channels = make_divisible(self.out_channels[idx - 1],
                                       self.widen_factor)
-        for j in range(self.num_stage):
-            layer.append(
-                CSPStage(
-                    BasicBlock,
-                    input_channels=in_channels if j == 0 else out_channels,
-                    output_channels=out_channels,
-                    num_layer=make_round(self.num_block, self.deepen_factor),
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg,
-                    spp=False))
+        channels = [in_channels] + [out_channels] * self.num_stage
+        num_layer = make_round(self.num_block, self.deepen_factor)
+
+        layer = [
+            CSPStage(
+                BasicBlock,
+                input_channels=channels[i],
+                output_channels=channels[i + 1],
+                num_layer=num_layer,
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg,
+                spp=False) for i in range(self.num_stage)
+        ]
+
         if self.drop_block:
             layer.append(
                 DropBlock2d(
                     drop_prob=1 - self.keep_prob, block_size=self.block_size))
-        layer = nn.Sequential(*layer)
-        return layer
+
+        return nn.Sequential(*layer)
 
     def build_downsample_layer(self, idx: int) -> nn.Module:
         """build downsample layer.
@@ -459,28 +475,31 @@ class PPYOLOECustomCSPPAN(BaseYOLONeck):
             nn.Module: The bottom up layer.
         """
         # pan_stage
-        layer = []
         in_channels = make_divisible(
             self.out_channels[idx + 1], self.widen_factor) + make_divisible(
                 self.out_channels[idx], self.widen_factor)
         out_channels = make_divisible(self.out_channels[idx + 1],
                                       self.widen_factor)
-        for j in range(self.num_stage):
-            layer.append(
-                CSPStage(
-                    BasicBlock,
-                    input_channels=in_channels if j == 0 else out_channels,
-                    output_channels=out_channels,
-                    num_layer=make_round(self.num_block, self.deepen_factor),
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg,
-                    spp=False))
+        channels = [in_channels] + [out_channels] * self.num_stage
+        num_layer = make_round(self.num_block, self.deepen_factor)
+
+        layer = [
+            CSPStage(
+                BasicBlock,
+                input_channels=channels[i],
+                output_channels=channels[i + 1],
+                num_layer=num_layer,
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg,
+                spp=False) for i in range(self.num_stage)
+        ]
+
         if self.drop_block:
             layer.append(
                 DropBlock2d(
                     drop_prob=self.keep_prob, block_size=self.block_size))
-        layer = nn.Sequential(*layer)
-        return layer
+
+        return nn.Sequential(*layer)
 
     def build_out_layer(self, *args, **kwargs) -> nn.Module:
         """build out layer."""
