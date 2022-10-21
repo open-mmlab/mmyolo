@@ -37,7 +37,7 @@ def show_bbox_num(cfg, classes, cat_nums, out):
     plt.title(cfg.dataset_type)
     for x, y in enumerate(cat_nums):
         plt.text(x, y + 10, '%s' % y, ha='center', fontsize=4)
-    out_dir = f'{out}/func_1'
+    out_dir = os.path.join(out, 'show_bbox_num')
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     fig.savefig(f'{out_dir}/{cfg.dataset_type}.jpg')  # Save Image
