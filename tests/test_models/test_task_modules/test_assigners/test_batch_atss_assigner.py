@@ -9,11 +9,12 @@ from mmyolo.models.task_modules.assigners import BatchATSSAssigner
 class TestBatchATSSAssigner(TestCase):
 
     def test_batch_atss_assigner(self):
+        num_classes = 2
+        batch_size = 2
         batch_atss_assigner = BatchATSSAssigner(
             topk=9,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
-            num_classes=80)
-        batch_size = 16
+            num_classes=num_classes)
         priors = torch.FloatTensor([[-16., -16., 24., 24.],
                                     [-8., -16., 32.,
                                      24.], [0., -16., 40., 24.],
@@ -42,17 +43,18 @@ class TestBatchATSSAssigner(TestCase):
         self.assertEqual(assigned_bboxes.shape,
                          torch.Size([batch_size, 8400, 4]))
         self.assertEqual(assigned_scores.shape,
-                         torch.Size([batch_size, 8400, 80]))
+                         torch.Size([batch_size, 8400, num_classes]))
         self.assertEqual(fg_mask_pre_prior_bool.shape,
                          torch.Size([batch_size, 8400]))
 
     def test_batch_atss_assigner_with_empty_gt(self):
         """Test corner case where an image might have no true detections."""
+        num_classes = 2
+        batch_size = 2
         batch_atss_assigner = BatchATSSAssigner(
             topk=9,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
-            num_classes=80)
-        batch_size = 16
+            num_classes=num_classes)
         priors = torch.FloatTensor([[-16., -16., 24., 24.],
                                     [-8., -16., 32.,
                                      24.], [0., -16., 40., 24.],
@@ -80,7 +82,7 @@ class TestBatchATSSAssigner(TestCase):
         self.assertEqual(assigned_bboxes.shape,
                          torch.Size([batch_size, 8400, 4]))
         self.assertEqual(assigned_scores.shape,
-                         torch.Size([batch_size, 8400, 80]))
+                         torch.Size([batch_size, 8400, num_classes]))
         self.assertEqual(fg_mask_pre_prior_bool.shape,
                          torch.Size([batch_size, 8400]))
 
@@ -91,8 +93,8 @@ class TestBatchATSSAssigner(TestCase):
         batch_atss_assigner = BatchATSSAssigner(
             topk=9,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
-            num_classes=80)
-        batch_size = 16
+            num_classes=2)
+        batch_size = 2
         priors = torch.empty(0, 1)
         gt_bboxes = torch.FloatTensor([
             [0, 0, 60, 93],
@@ -121,8 +123,8 @@ class TestBatchATSSAssigner(TestCase):
         batch_atss_assigner = BatchATSSAssigner(
             topk=9,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
-            num_classes=80)
-        batch_size = 16
+            num_classes=2)
+        batch_size = 2
         priors = torch.empty(0, 1)
         gt_bboxes = torch.empty(batch_size, 2, 4)
         gt_labels = torch.empty(batch_size, 2, 1)
