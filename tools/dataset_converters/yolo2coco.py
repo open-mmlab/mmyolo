@@ -1,7 +1,7 @@
 """This script helps to convert yolo-style dataset to the coco format.
 
 Usage:
-    $ python yolo2coco.py --image-dir /path/to/dataset   # the root dir
+    $ python yolo2coco.py /path/to/dataset   # the root dir
 
 Note:
     1. Before running this script, please make sure the root directory
