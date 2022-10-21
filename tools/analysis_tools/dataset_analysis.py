@@ -52,7 +52,7 @@ def show_bbox_wh(which_cat_w, which_cat_h, classes, idx, out):
     plt.xlabel('Width of bbox')
     plt.ylabel('High of bbox')
     plt.title(f'Current Display Category:{classes[idx]}')
-    out_dir = f'{out}/func_2'
+    out_dir = os.path.join(out, 'show_bbox_wh')
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     fig.savefig(f'{out_dir}/{classes[idx]}.jpg')  # Save Image
