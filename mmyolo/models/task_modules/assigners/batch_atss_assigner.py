@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import torch
 import torch.nn as nn
@@ -77,7 +77,7 @@ def select_highest_overlaps(pos_mask: Tensor, overlaps: Tensor,
     iou will be selected.
 
     Args:
-        pos_mask (Tensor): Possible mask,
+        pos_mask (Tensor): The assigned positive sample mask,
             shape(batch_size, num_gt, num_priors)
         overlaps (Tensor): IoU between all bbox and ground true,
             shape(batch_size, num_gt, num_priors)
@@ -87,7 +87,7 @@ def select_highest_overlaps(pos_mask: Tensor, overlaps: Tensor,
             shape(batch_size, num_priors)
         fg_mask_pre_prior (Tensor): Force matching ground true,
             shape(batch_size, num_priors)
-        pos_mask (Tensor): Possible mask,
+        pos_mask (Tensor): The assigned positive sample mask,
             shape(batch_size, num_gt, num_priors)
     """
     fg_mask_pre_prior = pos_mask.sum(axis=-2)
@@ -117,24 +117,28 @@ class BatchATSSAssigner(nn.Module):
     """
 
     def __init__(
-            self,
-            topk: int = 9,
-            iou_calculator: ConfigType = dict(type='mmdet.BboxOverlaps2D'),
-            num_classes: int = 80):
+        self,
+        num_classes: int,
+        topk: int = 9,
+        iou_calculator: ConfigType = dict(type='mmdet.BboxOverlaps2D')):
         super().__init__()
-        self.topk = topk
         self.num_classes = num_classes
+        self.topk = topk
         self.iou_calculator = TASK_UTILS.build(iou_calculator)
 
     @torch.no_grad()
     def forward(
-            self, priors: torch.Tensor, num_level_priors: List,
-            gt_labels: torch.Tensor, gt_bboxes: torch.Tensor,
-            pad_bbox_flag: torch.Tensor, pred_bboxes: torch.Tensor
+        self,
+        priors: Tensor,
+        num_level_priors: List,
+        gt_labels: Tensor,
+        gt_bboxes: Tensor,
+        pad_bbox_flag: Tensor,
+        pred_bboxes: Optional[Tensor] = None
     ) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
         r"""Get assigner result
         Args:
-            priors (Tensor): model predictions, it can be anchors, points,
+            priors (Tensor): Priors, it can be anchors, points,
                 or bboxes predicted by the model, shape(num_priors, 4).
             num_level_priors (List): Number of bboxes in each level, len(3)
             gt_labels (Tensor): Ground truth label,
