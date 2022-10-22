@@ -331,21 +331,21 @@ class YOLOv6Head(YOLOv5Head):
 
         if self.epoch < self.initial_epoch:
             assigned_result = self.initial_assigner(
+                    flatten_bboxes.detach(),
                     flatten_anchors,
                     n_anchors_list,
                     gt_labels,
                     gt_bboxes,
-                    pad_bbox_flag,
-                    flatten_bboxes.detach()
+                    pad_bbox_flag
                 )
         else:
             assigned_result = self.assigner(
+                    flatten_bboxes.detach(),
+                    pred_scores.detach(),
                     flatten_priors[:, :2],
                     gt_labels,
                     gt_bboxes,
-                    pad_bbox_flag,
-                    pred_scores.detach(),
-                    flatten_bboxes.detach()
+                    pad_bbox_flag
                 )
 
         assigned_labels = assigned_result['assigned_labels']
