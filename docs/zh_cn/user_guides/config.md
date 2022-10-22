@@ -549,7 +549,7 @@ pre_transform = _base_.pre_transform # 变量 pre_transform 等于 _base_ 中定
 - `[data preprocessor type]` (可选)：`fast` 表示调用 [YOLOv5DetDataPreprocessor](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/data_preprocessors/data_preprocessor.py#L9) 并配合 [yolov5_collate](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/datasets/utils.py#L12) 进行数据预处理，训练速度比默认的 `mmdet.DetDataPreprocessor` 更快，但是对多任务处理的灵活性较低。
 - `{training settings}`：训练设置的信息，例如 batch 大小、数据增强、损失、参数调度方式和训练最大轮次/迭代。 例如：`8xb16-300e_coco` 表示使用 8 个 GPU 每个 GPU 16 张图，并训练 300 个 epoch。
   缩写介绍:
-  - `{gpu x batch_per_gpu}`：GPU 数和每个 GPU 的样本数。例如 `4x4b` 是 4 个 GPU 每个 GPU 4 张图的缩写。如果没有注明，默认为 8 卡每卡 2 张图。
+  - `{gpu x batch_per_gpu}`：GPU 数和每个 GPU 的样本数。例如 `4x4b` 是 4 个 GPU 每个 GPU 4 张图的缩写。
   - `{schedule}`：训练方案，MMYOLO 中默认为 300 个 epoch。
 - `{training dataset information}`：训练数据集，例如 `coco`, `cityscapes`, `voc-0712`, `wider-face`, `balloon`。
 - `[testing dataset information]` (可选)：测试数据集，用于训练和测试在不同数据集上的模型配置。 如果没有注明，则表示训练和测试的数据集类型相同。

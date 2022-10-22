@@ -554,7 +554,7 @@ The file name is divided into 8 name fields, which have 4 required parts and 4 o
 - `[data preprocessor type]` (optional): `fast` incorporates  [YOLOv5DetDataPreprocessor](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/data_preprocessors/data_preprocessor.py#L9)  and [yolov5_collate](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/datasets/utils.py#L12) to preprocess data. The training speed is faster than the default `mmdet.DetDataPreprocessor`, while results in extending the overall pipeline to multi-task learning.
 - `{training settings}`: Information of training settings such as batch size, augmentations, loss trick, scheduler, and epochs/iterations. For example: `8xb16-300e_coco` means using 8-GPUs x 16-images-per-GPU, and train 300 epochs.
   Some abbreviations:
-  - `{gpu x batch_per_gpu}`:  GPUs and samples per GPU.  For example, `4xb4` is the short term of 4-GPUs x 4-images-per-GPU. And `8xb2` is used by default if not mentioned.
+  - `{gpu x batch_per_gpu}`:  GPUs and samples per GPU.  For example, `4xb4` is the short term of 4-GPUs x 4-images-per-GPU.
   - `{schedule}`: training schedule, default option in MMYOLO is 300 epochs.
 - `{training dataset information}`: Training dataset names like `coco`, `cityscapes`, `voc-0712`, `wider-face`, and `balloon`.
 - `[testing dataset information]` (optional): Testing dataset name for models trained on one dataset but tested on another. If not mentioned, it means the model was trained and tested on the same dataset type.
