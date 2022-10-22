@@ -41,10 +41,25 @@ def bbox_center_distance(bboxes: Tensor,
 
 @TASK_UTILS.register_module()
 class BatchATSSAssigner(nn.Module):
-    """Adaptive Training Sample Selection Assigner.
+    """Assign a batch of corresponding gt bboxes or background to each prior.
 
     This code is based on
     https://github.com/meituan/YOLOv6/blob/main/yolov6/assigners/atss_assigner.py
+
+    Each proposal will be assigned with `0` or a positive integer
+    indicating the ground truth index.
+
+    - 0: negative sample, no assigned gt
+    - positive integer: positive sample, index (1-based) of assigned gt
+
+    If ``alpha`` is not None, it means that the dynamic cost
+    ATSSAssigner is adopted, which is currently only used in the DDOD.
+
+    Args:
+        num_classes (int): number of class
+        iou_calculator (:obj:`ConfigDict` or dict): Config dict for iou
+            calculator. Defaults to ``dict(type='BboxOverlaps2D')``
+        topk (int): number of priors selected in each level
     """
 
     def __init__(
@@ -54,22 +69,38 @@ class BatchATSSAssigner(nn.Module):
             topk: int = 9):
         super().__init__()
         self.num_classes = num_classes
-        self.topk = topk
         self.iou_calculator = TASK_UTILS.build(iou_calculator)
+        self.topk = topk
 
     @torch.no_grad()
     def forward(
         self,
+        pred_bboxes: Tensor,
         priors: Tensor,
         num_level_priors: List,
         gt_labels: Tensor,
         gt_bboxes: Tensor,
-        pad_bbox_flag: Tensor,
-        pred_bboxes: Optional[Tensor] = None
+        pad_bbox_flag: Tensor
     ) -> dict:
-        r"""Get assigner result
+        """Assign gt to priors.
+
+        The assignment is done in following steps
+
+        1. compute iou between all prior (prior of all pyramid levels) and gt
+        2. compute center distance between all prior and gt
+        3. on each pyramid level, for each gt, select k prior whose center
+           are closest to the gt center, so we total select k*l prior as
+           candidates for each gt
+        4. get corresponding iou for the these candidates, and compute the
+           mean and std, set mean + std as the iou threshold
+        5. select these candidates whose iou are greater than or equal to
+           the threshold as positive
+        6. limit the positive sample's center in gt
+
         Args:
-            priors (Tensor): Model priors, shape(num_priors, 4).
+            pred_bboxes (Tensor): Predicted bounding boxes,
+                shape(batch_size, num_priors, 4)
+            priors (Tensor): Model priors, shape(num_priors, 4)
             num_level_priors (List): Number of bboxes in each level, len(3)
             gt_labels (Tensor): Ground truth label,
                 shape(batch_size, num_gt, 1)
@@ -78,9 +109,6 @@ class BatchATSSAssigner(nn.Module):
             pad_bbox_flag (Tensor): Ground truth bbox mask,
                 1 means bbox, 0 means no bbox,
                 shape(batch_size, num_gt, 1)
-            pred_bboxes (Tensor): Predicted bounding boxes,
-                shape(batch_size, num_priors, 4),
-
         Returns:
             assigned_result (dict): Assigned result
                 'assigned_labels' (Tensor): shape(batch_size, num_gt)
@@ -102,11 +130,11 @@ class BatchATSSAssigner(nn.Module):
         if num_gt == 0:
             return assigned_result
 
-        # compute iou between all bbox and gt
+        # compute iou between all prior (prior of all pyramid levels) and gt
         overlaps = self.iou_calculator(gt_bboxes.reshape([-1, 4]), priors)
         overlaps = overlaps.reshape([batch_size, -1, num_priors])
 
-        # compute center distance between all bbox and gt
+        # compute center distance between all prior and gt
         distances, priors_points = bbox_center_distance(
             gt_bboxes.reshape([-1, 4]), priors)
         distances = distances.reshape([batch_size, -1, num_priors])

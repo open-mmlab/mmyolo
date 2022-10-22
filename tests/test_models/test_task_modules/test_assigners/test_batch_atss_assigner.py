@@ -35,8 +35,7 @@ class TestBatchATSSAssigner(TestCase):
                                           12.]]).unsqueeze(0).repeat(
             batch_size, 21, 1)
         batch_assign_result = batch_atss_assigner.forward(
-            priors, num_level_bboxes, gt_labels, gt_bboxes, pad_bbox_flag,
-            pred_bboxes)
+            pred_bboxes, priors, num_level_bboxes, gt_labels, gt_bboxes, pad_bbox_flag)
 
         assigned_labels = batch_assign_result['assigned_labels']
         assigned_bboxes = batch_assign_result['assigned_bboxes']
@@ -77,8 +76,7 @@ class TestBatchATSSAssigner(TestCase):
         gt_labels = torch.empty(batch_size, 2, 1)
 
         batch_assign_result = batch_atss_assigner.forward(
-            priors, num_level_bboxes, gt_labels, gt_bboxes, pad_bbox_flag,
-            pred_bboxes)
+            pred_bboxes, priors, num_level_bboxes, gt_labels, gt_bboxes, pad_bbox_flag)
 
         assigned_labels = batch_assign_result['assigned_labels']
         assigned_bboxes = batch_assign_result['assigned_bboxes']
@@ -118,9 +116,9 @@ class TestBatchATSSAssigner(TestCase):
             batch_size, 21, 1)
 
         with self.assertRaises(AssertionError):
-            _ = batch_atss_assigner.forward(priors, num_level_bboxes,
+            _ = batch_atss_assigner.forward(pred_bboxes, priors, num_level_bboxes,
                                             gt_labels, gt_bboxes,
-                                            pad_bbox_flag, pred_bboxes)
+                                            pad_bbox_flag)
 
     def test_batch_atss_assigner_with_empty_boxes_and_gt(self):
         """Test corner case where a network might predict no boxes and no
@@ -137,6 +135,6 @@ class TestBatchATSSAssigner(TestCase):
         pad_bbox_flag = torch.empty(batch_size, 2, 1)
         pred_bboxes = torch.empty(batch_size, 84, 4)
         with self.assertRaises(AssertionError):
-            _ = batch_atss_assigner.forward(priors, num_level_bboxes,
+            _ = batch_atss_assigner.forward(pred_bboxes, priors, num_level_bboxes,
                                             gt_labels, gt_bboxes,
-                                            pad_bbox_flag, pred_bboxes)
+                                            pad_bbox_flag)
