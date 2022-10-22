@@ -4,7 +4,7 @@ MMYOLO 和其他 OpenMMLab 仓库使用 [MMEngine 的配置文件系统](https:/
 
 ## 配置文件的内容
 
-MMYOLO 采用模块化设计，所有功能的模块都可以通过配置文件进行配置。 以 [YOLOv5-s](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py) 为例，我们将根据不同的功能模块介绍配置文件中的各个字段：
+MMYOLO 采用模块化设计，所有功能的模块都可以通过配置文件进行配置。 以 [yolov5_s-v61_syncbn_8xb16-300e_coco.py](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) 为例，我们将根据不同的功能模块介绍配置文件中的各个字段：
 
 ### 重要参数
 
@@ -151,7 +151,7 @@ train_dataloader = dict( # 训练 dataloader 配置
         pipeline=train_pipeline)) # 这是由之前创建的 train_pipeline 定义的数据处理流程
 ```
 
-YOLOv5 测试阶段采用 `Letter Resize` 的方法来将所有的测试图像统一到相同尺度，进而有效保留了图像的长宽比。因此我们在验证和评测时，都采用相同的数据流进行推理。
+YOLOv5 测试阶段采用 [Letter Resize](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/datasets/transforms/transforms.py#L116) 的方法来将所有的测试图像统一到相同尺度，进而有效保留了图像的长宽比。因此我们在验证和评测时，都采用相同的数据流进行推理。
 
 ```python
 test_pipeline = [ # 测试数据处理流程
@@ -542,14 +542,14 @@ pre_transform = _base_.pre_transform # 变量 pre_transform 等于 _base_ 中定
 
 文件名分为 8 个部分，其中 4 个必填部分、4 个可选部分。 每个部分用 `_` 连接，每个部分内的单词应该用 `-` 连接。`{}` 表示必填部分，`[]` 表示选填部分。
 
-- `{algorithm name}`: 算法的名称。 它可以是检测器名称，例如 `yolov5`, `yolov6`, `yolox` 等。
-- `{component names}`: 算法中使用的组件名称，如 backbone、neck 等。例如 yolov5_s代表其深度缩放因子`deepen_factor=0.33` 以及其宽度缩放因子 `widen_factor=0.5`。
-- `[version_id]` (可选): 由于 YOLO 系列算法迭代速度远快于传统目标检测算法，因此采用 `version id` 来区分不同子版本之间的差异。例如 YOLOv5 的 3.0 版本采用 `Focus` 层作为第一个下采样层，而 6.0 以后的版本采用 `Conv` 层作为第一个下采样层。
-- `[norm_setting]` (可选): `bn` 表示 `Batch Normalization`， `syncbn` 表示 `Synchronized Batch Normalization`。
-- `[data preprocessor type]` (可选): `fast` 表示调用 `YOLOv5DetDataPreprocessor` 并配合 `yolov5_collate` 进行数据预处理，训练速度比默认的 `mmdet.DetDataPreprocessor` 更快，但是对多任务处理的灵活性较低。
-- `{training settings}`: 训练设置的信息，例如 batch 大小、数据增强、损失、参数调度方式和训练最大轮次/迭代。 例如：`8xb16-300e_coco` 表示使用 8 个 gpu 每个 gpu 16 张图，并训练 300 个 epoch。
+- `{algorithm name}`：算法的名称。 它可以是检测器名称，例如 `yolov5`, `yolov6`, `yolox` 等。
+- `{component names}`：算法中使用的组件名称，如 backbone、neck 等。例如 yolov5_s代表其深度缩放因子`deepen_factor=0.33` 以及其宽度缩放因子 `widen_factor=0.5`。
+- `[version_id]` (可选)：由于 YOLO 系列算法迭代速度远快于传统目标检测算法，因此采用 `version id` 来区分不同子版本之间的差异。例如 YOLOv5 的 3.0 版本采用 `Focus` 层作为第一个下采样层，而 6.0 以后的版本采用 `Conv` 层作为第一个下采样层。
+- `[norm_setting]` (可选)：`bn` 表示 `Batch Normalization`， `syncbn` 表示 `Synchronized Batch Normalization`。
+- `[data preprocessor type]` (可选)：`fast` 表示调用 [YOLOv5DetDataPreprocessor](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/data_preprocessors/data_preprocessor.py#L9) 并配合 [yolov5_collate](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/datasets/utils.py#L12) 进行数据预处理，训练速度比默认的 `mmdet.DetDataPreprocessor` 更快，但是对多任务处理的灵活性较低。
+- `{training settings}`：训练设置的信息，例如 batch 大小、数据增强、损失、参数调度方式和训练最大轮次/迭代。 例如：`8xb16-300e_coco` 表示使用 8 个 gpu 每个 gpu 16 张图，并训练 300 个 epoch。
   缩写介绍:
-  - `{gpu x batch_per_gpu}`: GPU 数和每个 GPU 的样本数。`bN` 表示每个 GPU 上的 batch 大小为 N。例如 `4x4b` 是 4 个 GPU 每个 GPU 4 张图的缩写。如果没有注明，默认为 8 卡每卡 2 张图。
-  - `{schedule}`: 训练方案，MMYOLO 中默认为 300 个 epoch。
-- `{training dataset information}`: 训练数据集，例如 `coco`, `cityscapes`, `voc-0712`, `wider-face`, `balloon`。
-- `[testing dataset information]` (可选): 测试数据集，用于训练和测试在不同数据集上的模型配置。 如果没有注明，则表示训练和测试的数据集类型相同。
+  - `{gpu x batch_per_gpu}`：GPU 数和每个 GPU 的样本数。`bN` 表示每个 GPU 上的 batch 大小为 N。例如 `4x4b` 是 4 个 GPU 每个 GPU 4 张图的缩写。如果没有注明，默认为 8 卡每卡 2 张图。
+  - `{schedule}`：训练方案，MMYOLO 中默认为 300 个 epoch。
+- `{training dataset information}`：训练数据集，例如 `coco`, `cityscapes`, `voc-0712`, `wider-face`, `balloon`。
+- `[testing dataset information]` (可选)：测试数据集，用于训练和测试在不同数据集上的模型配置。 如果没有注明，则表示训练和测试的数据集类型相同。
