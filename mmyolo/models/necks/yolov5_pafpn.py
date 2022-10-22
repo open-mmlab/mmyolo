@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List
+from typing import List, Union
 
 import torch
 import torch.nn as nn
@@ -35,7 +35,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
 
     def __init__(self,
                  in_channels: List[int],
-                 out_channels: List[int],
+                 out_channels: Union[List[int], int],
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  num_csp_blocks: int = 1,

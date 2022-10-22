@@ -131,7 +131,8 @@ def main():
         '--src',
         default='ppyoloe_plus_crn_s_80e_coco.pdparams',
         help='src ppyoloe model path')
-    parser.add_argument('--dst', default='mmppyoloe_plus.pt', help='save path')
+    parser.add_argument(
+        '--dst', default='mmppyoloe_plus_s.pt', help='save path')
     args = parser.parse_args()
     convert(args.src, args.dst)
 

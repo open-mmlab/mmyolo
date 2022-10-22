@@ -30,7 +30,15 @@ model = dict(
         type='mmdet.DetDataPreprocessor',
         mean=[0., 0., 0.],
         std=[255., 255., 255.],
-        bgr_to_rgb=True),
+        bgr_to_rgb=True,
+        pad_size_divisor=32,
+        batch_augments=[
+            dict(
+                type='mmdet.BatchSyncRandomResize',
+                random_size_range=(320, 800),
+                size_divisor=32,
+                interval=10)
+        ]),
     backbone=dict(
         type='CSPResNet',
         deepen_factor=deepen_factor,
@@ -47,7 +55,7 @@ model = dict(
         out_channels=[192, 384, 768],
         norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
         act_cfg=dict(type='Swish'),
-        spp=True,
+        use_spp=True,
         num_stage=1,
         num_block=3,
     ),

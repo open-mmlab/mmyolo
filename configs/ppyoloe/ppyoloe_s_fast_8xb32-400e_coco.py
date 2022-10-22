@@ -2,7 +2,7 @@ _base_ = './ppyoloe_plus_s_fast_8xb8-80e_coco.py'
 
 # TODO: training on ppyoloe need to be implement.
 train_batch_size_per_gpu = 32
-max_epochs = 300
+max_epochs = 400
 
 model = dict(
     data_preprocessor=dict(

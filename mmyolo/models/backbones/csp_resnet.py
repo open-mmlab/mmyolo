@@ -5,32 +5,104 @@ import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
 from mmdet.utils import ConfigType, OptMultiConfig
+from torch import Tensor
 
 from mmyolo.models.backbones import BaseBackbone
 from mmyolo.models.layers.yolo_bricks import EffectiveSELayer, RepVGGBlock
-from mmyolo.models.utils import make_divisible, make_round
 from mmyolo.registry import MODELS
 
 
-class CSPResStage(nn.Module):
-    """PPYOLOE Backbone Stage."""
+class BasicBlock(nn.Module):
+    """PPYOLOE Backbone BasicBlock.
+
+    Args:
+         in_channels (int): The input channels of this Module.
+         out_channels (int): The output channels of this Module.
+         norm_cfg (dict): Config dict for normalization layer.
+             Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
+         act_cfg (dict): Config dict for activation layer.
+             Defaults to dict(type='Swish').
+         shortcut (bool): Whether to add inputs and outputs together
+         at the end of this layer. Defaults to True.
+         use_alpha (bool): Whether to use `alpha` parameter at 1x1 conv.
+    """
 
     def __init__(self,
-                 block_fn: nn.Module,
-                 input_channels: int,
-                 output_channels: int,
-                 num_layer: int,
-                 stride: int = 1,
+                 in_channels: int,
+                 out_channels: int,
                  norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.03, eps=0.001),
+                     type='BN', momentum=0.1, eps=1e-5),
                  act_cfg: ConfigType = dict(type='Swish'),
-                 use_attn: bool = True,
+                 shortcut: bool = True,
                  use_alpha: bool = False):
         super().__init__()
-        middle_channels = (input_channels + output_channels) // 2
+        assert in_channels == out_channels
+        assert act_cfg is None or isinstance(act_cfg, dict)
+        self.conv1 = ConvModule(
+            in_channels,
+            out_channels,
+            3,
+            stride=1,
+            padding=1,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+        self.conv2 = RepVGGBlock(
+            out_channels,
+            out_channels,
+            use_alpha=use_alpha,
+            act_cfg=act_cfg,
+            norm_cfg=norm_cfg,
+            use_bn_first=False)
+        self.shortcut = shortcut
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward process.
+        Args:
+            inputs (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output tensor.
+        """
+        y = self.conv1(x)
+        y = self.conv2(y)
+        if self.shortcut:
+            return x + y
+        else:
+            return y
+
+
+class CSPResStage(nn.Module):
+    """PPYOLOE Backbone Stage.
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        out_channels (int): The output channels of this Module.
+        num_block (int): Number of block in this stage.
+        stride (int): Stride of the convolution.
+            Defaults to 1.
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='Swish').
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 num_block: int,
+                 block: nn.Module = BasicBlock,
+                 stride: int = 1,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.1, eps=1e-5),
+                 act_cfg: ConfigType = dict(type='Swish'),
+                 use_effective_se: bool = True,
+                 use_alpha: bool = False):
+        super().__init__()
+        middle_channels = (in_channels + out_channels) // 2
         if stride == 2:
             self.conv_down = ConvModule(
-                input_channels,
+                in_channels,
                 middle_channels,
                 3,
                 stride=2,
@@ -52,15 +124,15 @@ class CSPResStage(nn.Module):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
         self.blocks = nn.Sequential(*[
-            block_fn(
+            block(
                 middle_channels // 2,
                 middle_channels // 2,
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg,
                 shortcut=True,
-                use_alpha=use_alpha) for i in range(num_layer)
+                use_alpha=use_alpha) for i in range(num_block)
         ])
-        if use_attn:
+        if use_effective_se:
             self.attn = EffectiveSELayer(
                 middle_channels, act_cfg=dict(type='HSigmoid'))
         else:
@@ -68,12 +140,16 @@ class CSPResStage(nn.Module):
 
         self.conv3 = ConvModule(
             middle_channels,
-            output_channels,
+            out_channels,
             1,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward process
+         Args:
+             x (Tensor): The input tensor.
+         """
         if self.conv_down is not None:
             x = self.conv_down(x)
         y1 = self.conv1(x)
@@ -83,47 +159,6 @@ class CSPResStage(nn.Module):
             y = self.attn(y)
         y = self.conv3(y)
         return y
-
-
-class BasicBlock(nn.Module):
-    """PPYOLOE Backbone BasicBlock."""
-
-    def __init__(self,
-                 input_channels: int,
-                 output_channels: int,
-                 norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='Swish'),
-                 shortcut: bool = True,
-                 use_alpha: bool = False):
-        super().__init__()
-        assert input_channels == output_channels
-        assert act_cfg is None or isinstance(act_cfg, dict)
-        self.conv1 = ConvModule(
-            input_channels,
-            output_channels,
-            3,
-            stride=1,
-            padding=1,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg)
-
-        self.conv2 = RepVGGBlock(
-            output_channels,
-            output_channels,
-            alpha=use_alpha,
-            act_cfg=act_cfg,
-            norm_cfg=norm_cfg,
-            mode='ppyoloe')
-        self.shortcut = shortcut
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        y = self.conv1(x)
-        y = self.conv2(y)
-        if self.shortcut:
-            return x + y
-        else:
-            return y
 
 
 @MODELS.register_module()
@@ -148,7 +183,8 @@ class CSPResNet(BaseBackbone):
         arch_ovewrite (list): Overwrite default arch settings.
             Defaults to None.
         norm_cfg (:obj:`ConfigDict` or dict): Dictionary to construct and
-            config norm layer. Defaults to dict(type='BN', requires_grad=True).
+            config norm layer. Defaults to dict(type='BN', momentum=0.1,
+            eps=1e-5).
         act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
             Defaults to dict(type='SiLU').
         norm_eval (bool): Whether to set norm layers to eval mode, namely,
@@ -159,14 +195,13 @@ class CSPResNet(BaseBackbone):
         use_large_stem (bool): Whether to use large stem layer.
             Defaults to False.
         use_alpha (bool): Whether to use alpha in `RepVGGBlock`. PPYOLOE do
-            not use, but PPYOLOE+ use.
+            not use alpha, but PPYOLOE+ use.
             Defaults to False.
     """
     # From left to right:
-    # in_channels, out_channels, num_blocks, add_identity, use_spp
+    # in_channels, out_channels, num_blocks
     arch_settings = {
-        'P5': [[64, 128, 3, True, False], [128, 256, 6, True, False],
-               [256, 512, 6, True, False], [512, 1024, 3, True, False]]
+        'P5': [[64, 128, 3], [128, 256, 6], [256, 512, 6], [512, 1024, 3]]
     }
 
     def __init__(self,
@@ -188,6 +223,11 @@ class CSPResNet(BaseBackbone):
         arch_setting = self.arch_settings[arch]
         if arch_ovewrite:
             arch_setting = arch_ovewrite
+        arch_setting = [[
+            int(in_channels * widen_factor),
+            int(out_channels * widen_factor),
+            round(num_blocks * deepen_factor)
+        ] for in_channels, out_channels, num_blocks in arch_setting]
         self.use_large_stem = use_large_stem
         self.use_alpha = use_alpha
         super().__init__(
@@ -209,27 +249,23 @@ class CSPResNet(BaseBackbone):
             stem = nn.Sequential(
                 ConvModule(
                     self.input_channels,
-                    make_divisible(self.arch_setting[0][0], self.widen_factor)
-                    // 2,
+                    self.arch_setting[0][0] // 2,
                     3,
                     stride=2,
                     padding=1,
                     act_cfg=self.act_cfg,
                     norm_cfg=self.norm_cfg),
                 ConvModule(
-                    make_divisible(self.arch_setting[0][0],
-                                   self.widen_factor) // 2,
-                    make_divisible(self.arch_setting[0][0], self.widen_factor)
-                    // 2,
+                    self.arch_setting[0][0] // 2,
+                    self.arch_setting[0][0] // 2,
                     3,
                     stride=1,
                     padding=1,
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg),
                 ConvModule(
-                    make_divisible(self.arch_setting[0][0], self.widen_factor)
-                    // 2,
-                    make_divisible(self.arch_setting[0][0], self.widen_factor),
+                    self.arch_setting[0][0] // 2,
+                    self.arch_setting[0][0],
                     3,
                     stride=1,
                     padding=1,
@@ -239,17 +275,15 @@ class CSPResNet(BaseBackbone):
             stem = nn.Sequential(
                 ConvModule(
                     self.input_channels,
-                    make_divisible(self.arch_setting[0][0], self.widen_factor)
-                    // 2,
+                    self.arch_setting[0][0] // 2,
                     3,
                     stride=2,
                     padding=1,
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg),
                 ConvModule(
-                    make_divisible(self.arch_setting[0][0], self.widen_factor)
-                    // 2,
-                    make_divisible(self.arch_setting[0][0], self.widen_factor),
+                    self.arch_setting[0][0] // 2,
+                    self.arch_setting[0][0],
                     3,
                     stride=1,
                     padding=1,
@@ -264,20 +298,15 @@ class CSPResNet(BaseBackbone):
             stage_idx (int): The index of a stage layer.
             setting (list): The architecture setting of a stage layer.
         """
-        in_channels, out_channels, num_blocks, add_identity, _ = setting
-        in_channels = make_divisible(in_channels, self.widen_factor)
-        out_channels = make_divisible(out_channels, self.widen_factor)
-        num_blocks = make_round(num_blocks, self.deepen_factor)
+        in_channels, out_channels, num_blocks = setting
 
         cspres_layer = CSPResStage(
-            BasicBlock,
             in_channels,
             out_channels,
             num_blocks,
+            BasicBlock,
             2,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg,
             use_alpha=self.use_alpha)
-        return [
-            cspres_layer,
-        ]
+        return [cspres_layer]

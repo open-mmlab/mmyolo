@@ -210,6 +210,10 @@ class YOLOv5Head(BaseDenseHead):
                 'bbox_coder and before loss_box computation, '
                 'otherwise the accuracy may be degraded!!!')
 
+        if self.num_classes == 1:
+            print_log('!!!You are using `YOLOv5Head` with num_classes == 1.'
+                      ' The loss_cls will be 0. This is a normal phenomenon.')
+
         priors_base_sizes = torch.tensor(
             self.prior_generator.base_sizes, dtype=torch.float)
         featmap_strides = torch.tensor(

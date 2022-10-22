@@ -1,7 +1,10 @@
-_base_ = './ppyoloe_plus_s_fast_8xb8-80e_coco.py'
+_base_ = './ppyoloe_s_fast_8xb32-300e_coco.py'
 
-deepen_factor = 1.0
-widen_factor = 1.0
+deepen_factor = 1.33
+widen_factor = 1.25
+
+# TODO: training on ppyoloe need to be implement.
+train_batch_size_per_gpu = 16
 
 model = dict(
     backbone=dict(

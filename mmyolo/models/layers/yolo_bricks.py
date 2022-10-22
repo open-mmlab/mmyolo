@@ -117,8 +117,15 @@ class RepVGGBlock(nn.Module):
         groups (int, optional): Number of blocked connections from input
             channels to output channels. Default: 1
         padding_mode (string, optional): Default: 'zeros'
-        deploy (bool): Whether in deploy mode. Default: False
         use_se (bool): Whether to use se. Default: False
+        use_alpha (bool): Whether to use `alpha` parameter at 1x1 conv.
+            In PPYOLOE+ model backbone, `use_alpha` will be set to True.
+            Default: False.
+        use_bn_first (bool): Whether to use bn layer before conv.
+            In YOLOv6 and YLOv7, this will be set to True.
+            In PPYOLOE, this will be set to False.
+            Default: True.
+        deploy (bool): Whether in deploy mode. Default: False
     """
 
     def __init__(self,
@@ -133,10 +140,10 @@ class RepVGGBlock(nn.Module):
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True),
-                 deploy: bool = False,
                  use_se: bool = False,
-                 alpha: bool = False,
-                 mode=None):
+                 use_alpha: bool = False,
+                 use_bn_first=True,
+                 deploy: bool = False):
         super().__init__()
         self.deploy = deploy
         self.groups = groups
@@ -145,7 +152,6 @@ class RepVGGBlock(nn.Module):
 
         assert kernel_size == 3
         assert padding == 1
-        assert mode in [None, 'ppyoloe']
 
         padding_11 = padding - kernel_size // 2
 
@@ -156,7 +162,7 @@ class RepVGGBlock(nn.Module):
         else:
             self.se = nn.Identity()
 
-        if alpha:
+        if use_alpha:
             alpha = torch.ones([
                 1,
             ], dtype=torch.float32, requires_grad=True)
@@ -177,12 +183,11 @@ class RepVGGBlock(nn.Module):
                 padding_mode=padding_mode)
 
         else:
-            if mode == 'ppyoloe':
-                self.rbr_identity = None
-            else:
+            if use_bn_first and (out_channels == in_channels) and stride == 1:
                 self.rbr_identity = build_norm_layer(
-                    norm_cfg, num_features=in_channels
-                )[1] if out_channels == in_channels and stride == 1 else None
+                    norm_cfg, num_features=in_channels)[1]
+            else:
+                self.rbr_identity = None
 
             self.rbr_dense = ConvModule(
                 in_channels=in_channels,
@@ -364,8 +369,14 @@ class EffectiveSELayer(nn.Module):
     """Effective Squeeze-Excitation.
 
     From `CenterMask : Real-Time Anchor-Free Instance Segmentation`
-    - https://arxiv.org/abs/1911.06667
-    TODO: doc
+    arxiv (https://arxiv.org/abs/1911.06667)
+    This code referenced to
+    https://github.com/youngwanLEE/CenterMask/blob/72147e8aae673fcaf4103ee90a6a6b73863e7fa1/maskrcnn_benchmark/modeling/backbone/vovnet.py#L108-L121  # noqa
+
+    Args:
+        channels (int): The input and output channels of this Module.
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='HSigmoid').
     """
 
     def __init__(self,
@@ -378,10 +389,56 @@ class EffectiveSELayer(nn.Module):
         act_cfg_ = act_cfg.copy()  # type: ignore
         self.activate = MODELS.build(act_cfg_)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward process
+         Args:
+             x (Tensor): The input tensor.
+         """
         x_se = x.mean((2, 3), keepdim=True)
         x_se = self.fc(x_se)
         return x * self.activate(x_se)
+
+
+class ESEAttn(nn.Module):
+    """Effective Squeeze-and-Excitation Attention Module.
+
+    Args:
+        feat_channels (int): The input (and output) channels of the SE layer.
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='Swish').
+    """
+
+    def __init__(self,
+                 feat_channels: int,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.1, eps=1e-5),
+                 act_cfg: ConfigType = dict(type='Swish')):
+        super().__init__()
+        self.fc = nn.Conv2d(feat_channels, feat_channels, 1)
+        self.sig = nn.Sigmoid()
+        self.conv = ConvModule(
+            feat_channels,
+            feat_channels,
+            1,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+        self._init_weights()
+
+    def _init_weights(self):
+        """Init weights."""
+        nn.init.normal_(self.fc.weight, mean=0, std=0.001)
+
+    def forward(self, feat: Tensor, avg_feat: Tensor) -> Tensor:
+        """Forward process
+         Args:
+             feat (Tensor): The input tensor.
+             avg_feat (Tensor): Average pooling feature tensor.
+         """
+        weight = self.sig(self.fc(avg_feat))
+        return self.conv(feat * weight)
 
 
 class ELANBlock(BaseModule):
@@ -703,3 +760,56 @@ class SPPFCSPBlock(BaseModule):
                 torch.cat([x1] + [m(x1) for m in self.poolings], 1))
         x2 = self.short_layers(x)
         return self.final_conv(torch.cat((x1, x2), dim=1))
+
+
+class SPP(nn.Module):
+    """Spatial pyramid pooling layer.
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        out_channels (int): The output channels of this Module.
+        kernel_size (int | tuple[int]): Size of the convolving kernel.
+            Same as that in ``nn._ConvNd``.
+        pool_kernel_sizes (tuple[int]): Sequential of kernel sizes of pooling
+            layers. Default: (5, 9, 13).
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='Swish').
+    """
+
+    def __init__(self,
+                 input_channels: int,
+                 out_channels: int,
+                 kernel_size: int,
+                 pool_kernel_sizes: Tuple[int] = (5, 9, 13),
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.1, eps=1e-5),
+                 act_cfg: ConfigType = dict(type='Swish')):
+        super().__init__()
+        self.poolings = nn.ModuleList([
+            nn.MaxPool2d(
+                kernel_size=ks, stride=1, padding=ks // 2, ceil_mode=False)
+            for ks in pool_kernel_sizes
+        ])
+        self.conv = ConvModule(
+            input_channels,
+            out_channels,
+            kernel_size,
+            padding=kernel_size // 2,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward process
+        Args:
+            x (Tensor): The input tensor.
+        """
+        outs = [x]
+
+        for pool in self.poolings:
+            outs.append(pool(x))
+        y = torch.cat(outs, axis=1)
+
+        y = self.conv(y)
+        return y

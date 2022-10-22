@@ -5,7 +5,6 @@ from typing import Sequence, Union
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mmcv.cnn import ConvModule
 from mmdet.models.utils import multi_apply
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
                          OptMultiConfig)
@@ -14,40 +13,8 @@ from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS
-from ..utils import make_divisible
+from ..layers.yolo_bricks import ESEAttn
 from .yolov5_head import YOLOv5Head
-
-
-class ESEAttn(nn.Module):
-    """ESEAttn layer.
-
-    Args:
-        feat_channels
-    """
-
-    def __init__(self,
-                 feat_channels: int,
-                 norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='Swish')):
-        super().__init__()
-        self.fc = nn.Conv2d(feat_channels, feat_channels, 1)
-        self.sig = nn.Sigmoid()
-        self.conv = ConvModule(
-            feat_channels,
-            feat_channels,
-            1,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg)
-
-        self._init_weights()
-
-    def _init_weights(self):
-        nn.init.normal_(self.fc.weight, mean=0, std=0.001)
-
-    def forward(self, feat, avg_feat):
-        weight = self.sig(self.fc(avg_feat))
-        return self.conv(feat * weight)
 
 
 @MODELS.register_module()
@@ -97,30 +64,32 @@ class PPYOLOEHeadModule(BaseModule):
 
         in_channels = []
         for channel in self.in_channels:
-            channel = make_divisible(channel, widen_factor)
+            channel = int(channel * widen_factor)
             in_channels.append(channel)
         self.in_channels = in_channels
 
         self._init_layers()
 
     def init_weights(self, prior_prob=0.01):
+        """Initialize the weight and bias of PPYOLOE head."""
         for conv in self.cls_preds:
             b = conv.bias.view(-1, )
             b.data.fill_(-math.log((1 - prior_prob) / prior_prob))
-            conv.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+            conv.bias = nn.Parameter(b.view(-1), requires_grad=True)
             w = conv.weight
             w.data.fill_(0.)
-            conv.weight = torch.nn.Parameter(w, requires_grad=True)
+            conv.weight = nn.Parameter(w, requires_grad=True)
 
         for conv in self.reg_preds:
             b = conv.bias.view(-1, )
             b.data.fill_(1.0)
-            conv.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
+            conv.bias = nn.Parameter(b.view(-1), requires_grad=True)
             w = conv.weight
             w.data.fill_(0.)
-            conv.weight = torch.nn.Parameter(w, requires_grad=True)
+            conv.weight = nn.Parameter(w, requires_grad=True)
 
     def _init_layers(self):
+        """initialize conv layers in PPYOLOE head."""
         self.cls_preds = nn.ModuleList()
         self.reg_preds = nn.ModuleList()
         self.cls_stems = nn.ModuleList()
@@ -142,11 +111,11 @@ class PPYOLOEHeadModule(BaseModule):
         self.proj = nn.Parameter(
             torch.linspace(0, self.reg_max, self.reg_max + 1),
             requires_grad=False)
-        self.proj_conv.weight = torch.nn.Parameter(
+        self.proj_conv.weight = nn.Parameter(
             self.proj.view([1, self.reg_max + 1, 1, 1]).clone().detach(),
             requires_grad=False)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         """Forward features from the upstream network.
 
         Args:
@@ -161,9 +130,9 @@ class PPYOLOEHeadModule(BaseModule):
         return multi_apply(self.forward_single, x, self.cls_stems,
                            self.cls_preds, self.reg_stems, self.reg_preds)
 
-    def forward_single(self, x: torch.Tensor, cls_stem: nn.ModuleList,
+    def forward_single(self, x: Tensor, cls_stem: nn.ModuleList,
                        cls_pred: nn.ModuleList, reg_stem: nn.ModuleList,
-                       reg_pred: nn.ModuleList) -> torch.Tensor:
+                       reg_pred: nn.ModuleList) -> Tensor:
         """Forward feature of a single scale level."""
         b, _, h, w = x.shape
         hw = h * w
@@ -179,9 +148,23 @@ class PPYOLOEHeadModule(BaseModule):
 
 @MODELS.register_module()
 class PPYOLOEHead(YOLOv5Head):
-    """YOLOv5Head head used in `YOLOv5`.
+    """PPYOLOEHead head used in `PPYOLOE`.
 
     Args:
+        head_module(nn.Module): Base module used for YOLOv5Head
+        prior_generator(dict): Points generator feature maps in
+            2D points-based detectors.
+        bbox_coder (:obj:`ConfigDict` or dict): Config of bbox coder.
+        loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
+        loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
+        loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
+        train_cfg (:obj:`ConfigDict` or dict, optional): Training config of
+            anchor head. Defaults to None.
+        test_cfg (:obj:`ConfigDict` or dict, optional): Testing config of
+            anchor head. Defaults to None.
+        init_cfg (:obj:`ConfigDict` or list[:obj:`ConfigDict`] or dict or
+            list[dict], optional): Initialization config dict.
+            Defaults to None.
     """
 
     def __init__(self,
@@ -218,7 +201,7 @@ class PPYOLOEHead(YOLOv5Head):
             init_cfg=init_cfg)
 
     def special_init(self):
-        """"""
+        """Not Implenent."""
         pass
 
     def loss_by_feat(
