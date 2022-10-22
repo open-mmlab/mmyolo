@@ -182,16 +182,16 @@ class BatchTaskAlignedAssigner(nn.Module):
         alignment_metrics, overlaps = self.get_box_metrics(
             pred_bboxes, pred_scores, gt_labels, gt_bboxes, batch_size, num_gt)
 
-        # get in_gts mask
-        mask_in_gts = select_candidates_in_gts(priors_points, gt_bboxes)
+        # get is_in_gts mask
+        is_in_gts = select_candidates_in_gts(priors_points, gt_bboxes)
 
         # get topk_metric mask
-        mask_topk = self.select_topk_candidates(
-            alignment_metrics * mask_in_gts,
+        topk_metric = self.select_topk_candidates(
+            alignment_metrics * is_in_gts,
             topk_mask=pad_bbox_flag.repeat([1, 1, self.topk]).bool())
 
         # merge all mask to a final mask
-        pos_mask = mask_topk * mask_in_gts * pad_bbox_flag
+        pos_mask = topk_metric * is_in_gts * pad_bbox_flag
 
         return pos_mask, alignment_metrics, overlaps
 
@@ -230,13 +230,13 @@ class BatchTaskAlignedAssigner(nn.Module):
         return alignment_metrics, overlaps
 
     def select_topk_candidates(self,
-                               align_scores: Tensor,
+                               alignment_gt_metrics: Tensor,
                                using_largest_topk: bool = True,
                                topk_mask: Optional[Tensor] = None) -> Tensor:
         """Compute alignment metric between all bbox and gt.
 
         Args:
-            align_scores (Tensor): Alignment scores of predict bboxes,
+            alignment_gt_metrics (Tensor): Alignment metric of gt candidates,
                 shape(batch_size, num_gt, num_priors)
             using_largest_topk (bool): Controls whether to using largest or
                 smallest elements.
@@ -244,9 +244,12 @@ class BatchTaskAlignedAssigner(nn.Module):
         Returns:
             Tensor: Topk candidates mask, shape(batch_size, num_gt, num_priors)
         """
-        num_priors = align_scores.shape[-1]
+        num_priors = alignment_gt_metrics.shape[-1]
         topk_metrics, topk_idxs = torch.topk(
-            align_scores, self.topk, axis=-1, largest=using_largest_topk)
+            alignment_gt_metrics,
+            self.topk,
+            axis=-1,
+            largest=using_largest_topk)
         if topk_mask is None:
             topk_mask = (topk_metrics.max(axis=-1, keepdim=True) >
                          self.eps).tile([1, 1, self.topk])
@@ -255,7 +258,7 @@ class BatchTaskAlignedAssigner(nn.Module):
         is_in_topk = F.one_hot(topk_idxs, num_priors).sum(axis=-2)
         is_in_topk = torch.where(is_in_topk > 1, torch.zeros_like(is_in_topk),
                                  is_in_topk)
-        return is_in_topk.to(align_scores.dtype)
+        return is_in_topk.to(alignment_gt_metrics.dtype)
 
     def get_targets(self, gt_labels: Tensor, gt_bboxes: Tensor,
                     assigned_gt_idxs: Tensor, fg_mask_pre_prior: Tensor,
