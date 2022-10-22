@@ -330,23 +330,15 @@ class YOLOv6Head(YOLOv5Head):
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if self.epoch < self.initial_epoch:
-            assigned_result = self.initial_assigner(
-                    flatten_bboxes.detach(),
-                    flatten_anchors,
-                    n_anchors_list,
-                    gt_labels,
-                    gt_bboxes,
-                    pad_bbox_flag
-                )
+            assigned_result = self.initial_assigner(flatten_bboxes.detach(),
+                                                    flatten_anchors,
+                                                    n_anchors_list, gt_labels,
+                                                    gt_bboxes, pad_bbox_flag)
         else:
-            assigned_result = self.assigner(
-                    flatten_bboxes.detach(),
-                    pred_scores.detach(),
-                    flatten_priors[:, :2],
-                    gt_labels,
-                    gt_bboxes,
-                    pad_bbox_flag
-                )
+            assigned_result = self.assigner(flatten_bboxes.detach(),
+                                            pred_scores.detach(),
+                                            flatten_priors[:, :2], gt_labels,
+                                            gt_bboxes, pad_bbox_flag)
 
         assigned_labels = assigned_result['assigned_labels']
         assigned_bboxes = assigned_result['assigned_bboxes']
@@ -377,10 +369,10 @@ class YOLOv6Head(YOLOv5Head):
             bbox_mask = fg_mask_pre_prior.unsqueeze(-1).repeat([1, 1, 4])
             pred_bboxes_pos = torch.masked_select(flatten_bboxes,
                                                   bbox_mask).reshape([-1, 4])
-            assigned_bboxes_pos = torch.masked_select(assigned_bboxes,
-                                                    bbox_mask).reshape([-1, 4])
-            bbox_weight = torch.masked_select(assigned_scores.sum(-1),
-                                              fg_mask_pre_prior).unsqueeze(-1)
+            assigned_bboxes_pos = torch.masked_select(
+                assigned_bboxes, bbox_mask).reshape([-1, 4])
+            bbox_weight = torch.masked_select(
+                assigned_scores.sum(-1), fg_mask_pre_prior).unsqueeze(-1)
             loss_iou = self.loss_bbox(
                 pred_bboxes_pos,
                 assigned_bboxes_pos,

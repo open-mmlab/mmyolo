@@ -7,8 +7,8 @@ import torch.nn.functional as F
 from mmengine import Config
 from torch import Tensor
 
-from .utils import select_candidates_in_gts, select_highest_overlaps
 from mmyolo.registry import TASK_UTILS
+from .utils import select_candidates_in_gts, select_highest_overlaps
 
 
 @TASK_UTILS.register_module()
@@ -57,13 +57,13 @@ class BatchTaskAlignedAssigner(nn.Module):
 
     @torch.no_grad()
     def forward(
-            self,
-            pred_bboxes: Tensor,
-            pred_scores: Tensor,
-            priors_points: Tensor,
-            gt_labels: Tensor,
-            gt_bboxes: Tensor,
-            pad_bbox_flag: Tensor,
+        self,
+        pred_bboxes: Tensor,
+        pred_scores: Tensor,
+        priors_points: Tensor,
+        gt_labels: Tensor,
+        gt_bboxes: Tensor,
+        pad_bbox_flag: Tensor,
     ) -> dict:
         """Assign gt to bboxes.
 
@@ -104,18 +104,22 @@ class BatchTaskAlignedAssigner(nn.Module):
         num_gt = gt_bboxes.size(1)
 
         assigned_result = {
-            'assigned_labels': gt_bboxes.new_full(pred_scores[..., 0].shape, self.num_classes),
-            'assigned_bboxes': gt_bboxes.new_full(pred_bboxes.shape, 0),
-            'assigned_scores': gt_bboxes.new_full(pred_scores.shape, 0),
-            'fg_mask_pre_prior': gt_bboxes.new_full(pred_scores[..., 0].shape, 0)
+            'assigned_labels':
+            gt_bboxes.new_full(pred_scores[..., 0].shape, self.num_classes),
+            'assigned_bboxes':
+            gt_bboxes.new_full(pred_bboxes.shape, 0),
+            'assigned_scores':
+            gt_bboxes.new_full(pred_scores.shape, 0),
+            'fg_mask_pre_prior':
+            gt_bboxes.new_full(pred_scores[..., 0].shape, 0)
         }
 
         if num_gt == 0:
             return assigned_result
 
         pos_mask, alignment_metrics, overlaps = self.get_pos_mask(
-            pred_bboxes, pred_scores, priors_points, gt_labels, gt_bboxes, pad_bbox_flag,
-            batch_size, num_gt)
+            pred_bboxes, pred_scores, priors_points, gt_labels, gt_bboxes,
+            pad_bbox_flag, batch_size, num_gt)
 
         (assigned_gt_idxs, fg_mask_pre_prior,
          pos_mask) = select_highest_overlaps(pos_mask, overlaps, num_gt)
@@ -130,8 +134,8 @@ class BatchTaskAlignedAssigner(nn.Module):
         pos_align_metrics = alignment_metrics.max(axis=-1, keepdim=True)[0]
         pos_overlaps = (overlaps * pos_mask).max(axis=-1, keepdim=True)[0]
         norm_align_metric = (
-                alignment_metrics * pos_overlaps /
-                (pos_align_metrics + self.eps)).max(-2)[0].unsqueeze(-1)
+            alignment_metrics * pos_overlaps /
+            (pos_align_metrics + self.eps)).max(-2)[0].unsqueeze(-1)
         assigned_scores = assigned_scores * norm_align_metric
 
         assigned_result['assigned_labels'] = assigned_labels
@@ -140,9 +144,9 @@ class BatchTaskAlignedAssigner(nn.Module):
         assigned_result['fg_mask_pre_prior'] = fg_mask_pre_prior.bool()
         return assigned_result
 
-    def get_pos_mask(self, pred_bboxes: Tensor, pred_scores: Tensor, priors_points: Tensor, gt_labels: Tensor,
-                     gt_bboxes: Tensor, pad_bbox_flag: Tensor,
-                     batch_size: int,
+    def get_pos_mask(self, pred_bboxes: Tensor, pred_scores: Tensor,
+                     priors_points: Tensor, gt_labels: Tensor,
+                     gt_bboxes: Tensor, pad_bbox_flag: Tensor, batch_size: int,
                      num_gt: int) -> Tuple[Tensor, Tensor, Tensor]:
         """Get possible mask.
 
@@ -172,8 +176,8 @@ class BatchTaskAlignedAssigner(nn.Module):
         """
 
         # Compute alignment metric between all bbox and gt
-        alignment_metrics, overlaps = self.get_box_metrics(pred_bboxes, pred_scores,
-                                                           gt_labels, gt_bboxes, batch_size, num_gt)
+        alignment_metrics, overlaps = self.get_box_metrics(
+            pred_bboxes, pred_scores, gt_labels, gt_bboxes, batch_size, num_gt)
 
         # get in_gts mask
         mask_in_gts = select_candidates_in_gts(priors_points, gt_bboxes)
@@ -188,9 +192,9 @@ class BatchTaskAlignedAssigner(nn.Module):
 
         return pos_mask, alignment_metrics, overlaps
 
-    def get_box_metrics(self, pred_bboxes: Tensor, pred_scores: Tensor, gt_labels: Tensor, gt_bboxes: Tensor,
-
-                        batch_size: int, num_gt: int) -> Tuple[Tensor, Tensor]:
+    def get_box_metrics(self, pred_bboxes: Tensor, pred_scores: Tensor,
+                        gt_labels: Tensor, gt_bboxes: Tensor, batch_size: int,
+                        num_gt: int) -> Tuple[Tensor, Tensor]:
         """Compute alignment metric between all bbox and gt.
 
         Args:
