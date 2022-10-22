@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Optional, Tuple
+from typing import List, Tuple
 
 import torch
 import torch.nn as nn
@@ -7,8 +7,8 @@ import torch.nn.functional as F
 from mmdet.utils import ConfigType
 from torch import Tensor
 
-from .utils import select_candidates_in_gts, select_highest_overlaps
 from mmyolo.registry import TASK_UTILS
+from .utils import select_candidates_in_gts, select_highest_overlaps
 
 
 def bbox_center_distance(bboxes: Tensor,
@@ -70,15 +70,9 @@ class BatchATSSAssigner(nn.Module):
         self.topk = topk
 
     @torch.no_grad()
-    def forward(
-        self,
-        pred_bboxes: Tensor,
-        priors: Tensor,
-        num_level_priors: List,
-        gt_labels: Tensor,
-        gt_bboxes: Tensor,
-        pad_bbox_flag: Tensor
-    ) -> dict:
+    def forward(self, pred_bboxes: Tensor, priors: Tensor,
+                num_level_priors: List, gt_labels: Tensor, gt_bboxes: Tensor,
+                pad_bbox_flag: Tensor) -> dict:
         """Assign gt to priors.
 
         The assignment is done in following steps
@@ -118,10 +112,14 @@ class BatchATSSAssigner(nn.Module):
         num_gt, num_priors = gt_bboxes.size(1), priors.size(0)
 
         assigned_result = {
-            'assigned_labels': gt_bboxes.new_full([batch_size, num_priors], self.num_classes),
-            'assigned_bboxes': gt_bboxes.new_full([batch_size, num_priors, 4], 0),
-            'assigned_scores': gt_bboxes.new_full( [batch_size, num_priors, self.num_classes], 0),
-            'fg_mask_pre_prior': gt_bboxes.new_full([batch_size, num_priors], 0)
+            'assigned_labels':
+            gt_bboxes.new_full([batch_size, num_priors], self.num_classes),
+            'assigned_bboxes':
+            gt_bboxes.new_full([batch_size, num_priors, 4], 0),
+            'assigned_scores':
+            gt_bboxes.new_full([batch_size, num_priors, self.num_classes], 0),
+            'fg_mask_pre_prior':
+            gt_bboxes.new_full([batch_size, num_priors], 0)
         }
 
         if num_gt == 0:
