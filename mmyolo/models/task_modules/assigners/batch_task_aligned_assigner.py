@@ -179,8 +179,9 @@ class BatchTaskAlignedAssigner(nn.Module):
         """
 
         # Compute alignment metric between all bbox and gt
-        alignment_metrics, overlaps = self.get_box_metrics(
-            pred_bboxes, pred_scores, gt_labels, gt_bboxes, batch_size, num_gt)
+        alignment_metrics, overlaps = \
+            self.get_box_metrics(pred_bboxes, pred_scores, gt_labels,
+                                 gt_bboxes, batch_size, num_gt)
 
         # get is_in_gts mask
         is_in_gts = select_candidates_in_gts(priors_points, gt_bboxes)
@@ -240,9 +241,11 @@ class BatchTaskAlignedAssigner(nn.Module):
                 shape(batch_size, num_gt, num_priors)
             using_largest_topk (bool): Controls whether to using largest or
                 smallest elements.
-            topk_mask (Tensor): Topk mask, shape(batch_size, num_gt, self.topk)
+            topk_mask (Tensor): Topk mask,
+                shape(batch_size, num_gt, self.topk)
         Returns:
-            Tensor: Topk candidates mask, shape(batch_size, num_gt, num_priors)
+            Tensor: Topk candidates mask,
+                shape(batch_size, num_gt, num_priors)
         """
         num_priors = alignment_gt_metrics.shape[-1]
         topk_metrics, topk_idxs = torch.topk(
