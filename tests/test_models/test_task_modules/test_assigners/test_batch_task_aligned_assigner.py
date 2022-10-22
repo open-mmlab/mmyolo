@@ -18,11 +18,18 @@ class TestBatchTaskAlignedAssigner(TestCase):
             topk=13,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             eps=1e-9)
-        pred_scores = torch.FloatTensor([[0.1, 0.2], [0.2, 0.3], [0.3, 0.4],
-                                         [0.4, 0.5]]).unsqueeze(0).repeat(
-                                             batch_size, 21, 1)
-        priors_points = torch.FloatTensor([[4., 4.], [12., 4.], [20., 4.],
-                                           [28., 4.]]).repeat(21, 1)
+        pred_scores = torch.FloatTensor([
+            [0.1, 0.2],
+            [0.2, 0.3],
+            [0.3, 0.4],
+            [0.4, 0.5],
+        ]).unsqueeze(0).repeat(batch_size, 21, 1)
+        priors_points = torch.FloatTensor([
+            [4., 4.],
+            [12., 4.],
+            [20., 4.],
+            [28., 4.],
+        ]).repeat(21, 1)
         gt_bboxes = torch.FloatTensor([
             [0, 0, 60, 93],
             [229, 0, 532, 157],
@@ -31,12 +38,12 @@ class TestBatchTaskAlignedAssigner(TestCase):
                                       ]).unsqueeze(0).repeat(batch_size, 1, 1)
         pad_bbox_flag = torch.FloatTensor([[1], [0]]).unsqueeze(0).repeat(
             batch_size, 1, 1)
-        pred_bboxes = torch.FloatTensor([[-4., -4., 12., 12.],
-                                         [4., -4., 20., 12.],
-                                         [12., -4., 28., 12.],
-                                         [20., -4., 36.,
-                                          12.]]).unsqueeze(0).repeat(
-                                              batch_size, 21, 1)
+        pred_bboxes = torch.FloatTensor([
+            [-4., -4., 12., 12.],
+            [4., -4., 20., 12.],
+            [12., -4., 28., 12.],
+            [20., -4., 36., 12.],
+        ]).unsqueeze(0).repeat(batch_size, 21, 1)
 
         assign_result = assigner.forward(pred_bboxes, pred_scores,
                                          priors_points, gt_labels, gt_bboxes,
