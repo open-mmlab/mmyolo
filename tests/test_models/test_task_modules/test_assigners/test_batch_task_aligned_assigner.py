@@ -17,8 +17,7 @@ class TestBatchTaskAlignedAssigner(TestCase):
             beta=6,
             topk=13,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
-            eps=1e-9
-        )
+            eps=1e-9)
         pred_scores = torch.FloatTensor([[0.1, 0.2], [0.2, 0.3], [0.3, 0.4],
                                          [0.4, 0.5]]).unsqueeze(0).repeat(
                                              batch_size, 21, 1)
@@ -28,8 +27,8 @@ class TestBatchTaskAlignedAssigner(TestCase):
             [0, 0, 60, 93],
             [229, 0, 532, 157],
         ]).unsqueeze(0).repeat(batch_size, 1, 1)
-        gt_labels = torch.LongTensor([[0], [1]]).unsqueeze(0).repeat(
-            batch_size, 1, 1)
+        gt_labels = torch.LongTensor([[0], [1]
+                                      ]).unsqueeze(0).repeat(batch_size, 1, 1)
         pad_bbox_flag = torch.FloatTensor([[1], [0]]).unsqueeze(0).repeat(
             batch_size, 1, 1)
         pred_bboxes = torch.FloatTensor([[-4., -4., 12., 12.],
@@ -39,8 +38,9 @@ class TestBatchTaskAlignedAssigner(TestCase):
                                           12.]]).unsqueeze(0).repeat(
                                               batch_size, 21, 1)
 
-        assign_result = assigner.forward(pred_bboxes, pred_scores, priors_points, gt_labels,
-                                         gt_bboxes, pad_bbox_flag)
+        assign_result = assigner.forward(pred_bboxes, pred_scores,
+                                         priors_points, gt_labels, gt_bboxes,
+                                         pad_bbox_flag)
 
         assigned_labels = assign_result['assigned_labels']
         assigned_bboxes = assign_result['assigned_bboxes']
@@ -48,9 +48,8 @@ class TestBatchTaskAlignedAssigner(TestCase):
         fg_mask_pre_prior = assign_result['fg_mask_pre_prior']
 
         self.assertEqual(assigned_labels.shape, torch.Size([batch_size, 84]))
-        self.assertEqual(assigned_bboxes.shape,
-                         torch.Size([batch_size, 84, 4]))
+        self.assertEqual(assigned_bboxes.shape, torch.Size([batch_size, 84,
+                                                            4]))
         self.assertEqual(assigned_scores.shape,
                          torch.Size([batch_size, 84, num_classes]))
-        self.assertEqual(fg_mask_pre_prior.shape,
-                         torch.Size([batch_size, 84]))
+        self.assertEqual(fg_mask_pre_prior.shape, torch.Size([batch_size, 84]))
