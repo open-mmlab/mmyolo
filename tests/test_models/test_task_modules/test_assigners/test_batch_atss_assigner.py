@@ -15,25 +15,31 @@ class TestBatchATSSAssigner(TestCase):
             topk=3,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             num_classes=num_classes)
-        priors = torch.FloatTensor([[-16., -16., 24., 24.],
-                                    [-8., -16., 32.,
-                                     24.], [0., -16., 40., 24.],
-                                    [8., -16., 48., 24.]]).repeat(21, 1)
-        gt_bboxes = torch.FloatTensor([[0, 0, 60, 93],
-                                       [229, 0, 532,
-                                        157]]).unsqueeze(0).repeat(
-                                            batch_size, 1, 1)
-        gt_labels = torch.LongTensor([[0], [11]
-                                      ]).unsqueeze(0).repeat(batch_size, 1, 1)
+        priors = torch.FloatTensor([
+            [-16., -16., 24., 24.],
+            [-8., -16., 32., 24.],
+            [0., -16., 40., 24.],
+            [8., -16., 48., 24.],
+        ]).repeat(21, 1)
+        gt_bboxes = torch.FloatTensor([
+            [0, 0, 60, 93],
+            [229, 0, 532, 157],
+        ]).unsqueeze(0).repeat(batch_size, 1, 1)
+        gt_labels = torch.LongTensor([
+            [0],
+            [11],
+        ]).unsqueeze(0).repeat(batch_size, 1, 1)
         num_level_bboxes = [64, 16, 4]
-        pad_bbox_flag = torch.FloatTensor([[1], [0]]).unsqueeze(0).repeat(
-            batch_size, 1, 1)
-        pred_bboxes = torch.FloatTensor([[-4., -4., 12., 12.],
-                                         [4., -4., 20., 12.],
-                                         [12., -4., 28., 12.],
-                                         [20., -4., 36.,
-                                          12.]]).unsqueeze(0).repeat(
-                                              batch_size, 21, 1)
+        pad_bbox_flag = torch.FloatTensor([
+            [1],
+            [0],
+        ]).unsqueeze(0).repeat(batch_size, 1, 1)
+        pred_bboxes = torch.FloatTensor([
+            [-4., -4., 12., 12.],
+            [4., -4., 20., 12.],
+            [12., -4., 28., 12.],
+            [20., -4., 36., 12.],
+        ]).unsqueeze(0).repeat(batch_size, 21, 1)
         batch_assign_result = batch_atss_assigner.forward(
             pred_bboxes, priors, num_level_bboxes, gt_labels, gt_bboxes,
             pad_bbox_flag)
@@ -58,19 +64,23 @@ class TestBatchATSSAssigner(TestCase):
             topk=3,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             num_classes=num_classes)
-        priors = torch.FloatTensor([[-16., -16., 24., 24.],
-                                    [-8., -16., 32.,
-                                     24.], [0., -16., 40., 24.],
-                                    [8., -16., 48., 24.]]).repeat(21, 1)
+        priors = torch.FloatTensor([
+            [-16., -16., 24., 24.],
+            [-8., -16., 32., 24.],
+            [0., -16., 40., 24.],
+            [8., -16., 48., 24.],
+        ]).repeat(21, 1)
         num_level_bboxes = [64, 16, 4]
-        pad_bbox_flag = torch.FloatTensor([[1], [0]]).unsqueeze(0).repeat(
-            batch_size, 1, 1)
-        pred_bboxes = torch.FloatTensor([[-4., -4., 12., 12.],
-                                         [4., -4., 20., 12.],
-                                         [12., -4., 28., 12.],
-                                         [20., -4., 36.,
-                                          12.]]).unsqueeze(0).repeat(
-                                              batch_size, 21, 1)
+        pad_bbox_flag = torch.FloatTensor([
+            [1],
+            [0],
+        ]).unsqueeze(0).repeat(batch_size, 1, 1)
+        pred_bboxes = torch.FloatTensor([
+            [-4., -4., 12., 12.],
+            [4., -4., 20., 12.],
+            [12., -4., 28., 12.],
+            [20., -4., 36., 12.],
+        ]).unsqueeze(0).repeat(batch_size, 21, 1)
 
         gt_bboxes = torch.empty(batch_size, 2, 4)
         gt_labels = torch.empty(batch_size, 2, 1)
@@ -103,17 +113,19 @@ class TestBatchATSSAssigner(TestCase):
             [0, 0, 60, 93],
             [229, 0, 532, 157],
         ]).unsqueeze(0).repeat(batch_size, 1, 1)
-        gt_labels = torch.LongTensor([[0], [11]
-                                      ]).unsqueeze(0).repeat(batch_size, 1, 1)
+        gt_labels = torch.LongTensor([
+            [0],
+            [11],
+        ]).unsqueeze(0).repeat(batch_size, 1, 1)
         num_level_bboxes = [0, 0, 0]
         pad_bbox_flag = torch.FloatTensor([[1], [0]]).unsqueeze(0).repeat(
             batch_size, 1, 1)
-        pred_bboxes = torch.FloatTensor([[-4., -4., 12., 12.],
-                                         [4., -4., 20., 12.],
-                                         [12., -4., 28., 12.],
-                                         [20., -4., 36.,
-                                          12.]]).unsqueeze(0).repeat(
-                                              batch_size, 21, 1)
+        pred_bboxes = torch.FloatTensor([
+            [-4., -4., 12., 12.],
+            [4., -4., 20., 12.],
+            [12., -4., 28., 12.],
+            [20., -4., 36., 12.],
+        ]).unsqueeze(0).repeat(batch_size, 21, 1)
 
         with self.assertRaises(AssertionError):
             _ = batch_atss_assigner.forward(pred_bboxes, priors,
