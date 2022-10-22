@@ -52,9 +52,6 @@ class BatchATSSAssigner(nn.Module):
     - 0: negative sample, no assigned gt
     - positive integer: positive sample, index (1-based) of assigned gt
 
-    If ``alpha`` is not None, it means that the dynamic cost
-    ATSSAssigner is adopted, which is currently only used in the DDOD.
-
     Args:
         num_classes (int): number of class
         iou_calculator (:obj:`ConfigDict` or dict): Config dict for iou
