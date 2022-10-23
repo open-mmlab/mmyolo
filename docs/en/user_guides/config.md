@@ -286,7 +286,7 @@ optim_wrapper = dict(  # Optimizer wrapper config
     constructor='YOLOv5OptimizerConstructor') # The constructor for YOLOv5 optimizer
 ```
 
-`param_scheduler` is the field that configures methods of adjusting optimization hyperparameters such as learning rate and momentum. Users can combine multiple schedulers to create a desired parameter adjustment strategy. Find more in the [parameter scheduler tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/param_scheduler.html). In the YOLOv5 config, no parameter optimizer is introduced.
+`param_scheduler` is the field that configures methods of adjusting optimization hyperparameters such as learning rate and momentum. Users can combine multiple schedulers to create a desired parameter adjustment strategy. Find more in the [parameter scheduler tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/param_scheduler.html). In YOLOv5, parameter scheduling is complex to implement and difficult to implement with `param_scheduler`. So we use `YOLOv5ParamSchedulerHook` to implement it (see next section), which is simpler but less versatile.
 
 ```python
 param_scheduler = None
