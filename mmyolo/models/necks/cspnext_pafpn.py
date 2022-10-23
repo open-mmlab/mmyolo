@@ -27,7 +27,7 @@ class CSPNeXtPAFPN(BaseYOLONeck):
         use_depthwise (bool): Whether to use depthwise separable convolution in
             blocks. Defaults to False.
         expand_ratio (float): Ratio to adjust the number of channels of the
-            hidden layer. Default: 0.5
+            hidden layer. Defaults to 0.5.
         upsample_cfg (dict): Config dict for interpolate layer.
             Default: `dict(scale_factor=2, mode='nearest')`
         conv_cfg (dict, optional): Config dict for convolution layer.

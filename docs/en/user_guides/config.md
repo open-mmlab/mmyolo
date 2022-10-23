@@ -286,7 +286,7 @@ optim_wrapper = dict(  # Optimizer wrapper config
     constructor='YOLOv5OptimizerConstructor') # The constructor for YOLOv5 optimizer
 ```
 
-`param_scheduler` is the field that configures methods of adjusting optimization hyperparameters such as learning rate and momentum. Users can combine multiple schedulers to create a desired parameter adjustment strategy. Find more in the [parameter scheduler tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/param_scheduler.html). In MMYOLO, no parameter optimizer is introduced.
+`param_scheduler` is the field that configures methods of adjusting optimization hyperparameters such as learning rate and momentum. Users can combine multiple schedulers to create a desired parameter adjustment strategy. Find more in the [parameter scheduler tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/param_scheduler.html). In YOLOv5, parameter scheduling is complex to implement and difficult to implement with `param_scheduler`. So we use `YOLOv5ParamSchedulerHook` to implement it (see next section), which is simpler but less versatile.
 
 ```python
 param_scheduler = None
@@ -387,26 +387,29 @@ If you wish to inspect the config file, you may run `mim run mmdet print_config 
 Sometimes, you may set `_delete_=True` to ignore some of the fields in base configs.
 You may refer to the [mmengine config tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/config.html) for a simple illustration.
 
-In MMYOLO, for example, to change the backbone of YOLOv5 with the following config.
+In MMYOLO, for example, to change the backbone of RTMDet with the following config.
 
 ```python
 model = dict(
     type='YOLODetector',
     data_preprocessor=dict(...),
     backbone=dict(
-        type='YOLOv5CSPDarknet',
+        type='CSPNeXt',
+        arch='P5',
+        expand_ratio=0.5,
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+        channel_attention=True,
+        norm_cfg=dict(type='BN'),
         act_cfg=dict(type='SiLU', inplace=True)),
     neck=dict(...),
     bbox_head=dict(...))
 ```
 
-The `_delete_=True` would replace all old keys in the `backbone` field with new keys. For example, `YOLOv5` uses `YOLOv5CSPDarknet`, it is necessary to replace the backbone with `YOLOv6EfficientRep`. Since `YOLOv5CSPDarknet` and `YOLOv6EfficientRep` have different fields, you need to use `_delete_=True` to replace all old keys in the `backbone` field.
+If you want to change `CSPNeXt` to `YOLOv6EfficientRep` for the RTMDet backbone, because there are different fields (`channel_attention` and `expand_ratio`) in `CSPNeXt` and `YOLOv6EfficientRep`, you need to use `_delete_=True` to replace all the old keys in the `backbone` field with the new keys.
 
 ```python
-_base_ = '../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+_base_ = '../rtmdet/rtmdet_l_syncbn_8xb32-300e_coco.py'
 model = dict(
     backbone=dict(
         _delete_=True,
