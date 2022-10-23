@@ -287,7 +287,7 @@ optim_wrapper = dict(  # 优化器封装的配置
 
 ```
 
-`param_scheduler` 字段用于配置参数调度器（Parameter Scheduler）来调整优化器的超参数（例如学习率和动量）。 用户可以组合多个调度器来创建所需的参数调整策略。 在[参数调度器教程](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/param_scheduler.html) 和参数调度器 API 文档 中查找更多信息。在 MMYOLO 中，未引入任何参数调度器。
+`param_scheduler` 字段用于配置参数调度器（Parameter Scheduler）来调整优化器的超参数（例如学习率和动量）。 用户可以组合多个调度器来创建所需的参数调整策略。 在[参数调度器教程](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/param_scheduler.html) 和参数调度器 API 文档 中查找更多信息。在 YOLOv5 配置中，未引入任何参数调度器。
 
 ```python
 param_scheduler = None
