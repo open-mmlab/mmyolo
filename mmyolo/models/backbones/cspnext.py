@@ -34,6 +34,8 @@ class CSPNeXt(BaseBackbone):
               should be same as 'num_stages'.
         use_depthwise (bool): Whether to use depthwise separable convolution.
             Defaults to False.
+        expand_ratio (float): Ratio to adjust the number of channels of the
+            hidden layer. Default: 0.5.
         arch_ovewrite (list): Overwrite default arch settings.
             Defaults to None.
         channel_attention (bool): Whether to add channel attention in each
