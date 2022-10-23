@@ -386,26 +386,29 @@ _base_ = [
 
 有时，您也许会设置 `_delete_=True` 去忽略基础配置文件里的一些域内容。 您也许可以参照 [MMEngine 配置文件教程](https://mmengine.readthedocs.io/en/latest/tutorials/config.html) 来获得一些简单的指导。
 
-在 MMYOLO 里，例如为了改变  YOLOv5 的主干网络的某些内容：
+在 MMYOLO 里，例如为了改变 RTMDet 的主干网络的某些内容：
 
 ```python
 model = dict(
     type='YOLODetector',
     data_preprocessor=dict(...),
     backbone=dict(
-        type='YOLOv5CSPDarknet',
+        type='CSPNeXt',
+        arch='P5',
+        expand_ratio=0.5,
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+        channel_attention=True,
+        norm_cfg=dict(type='BN'),
         act_cfg=dict(type='SiLU', inplace=True)),
     neck=dict(...),
     bbox_head=dict(...))
 ```
 
-基础配置的 `YOLOv5` 使用 `YOLOv5CSPDarknet`，在需要将主干网络改成 `YOLOv6EfficientRep` 的时候，因为 `YOLOv5CSPDarknet` 和 `YOLOv6EfficientRep` 中有不同的字段，需要使用 `_delete_=True` 将新的键去替换 `backbone` 域内所有老的键。
+如果想把 RTMDet 主干网络的 `CSPNeXt` 改成 `YOLOv6EfficientRep`，因为 `CSPNeXt` 和 `YOLOv6EfficientRep` 中有不同的字段(`channel_attention` 和 `expand_ratio`)，这时候就需要使用 `_delete_=True` 将新的键去替换 `backbone` 域内所有老的键。
 
 ```python
-_base_ = '../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+_base_ = '../rtmdet/rtmdet_l_syncbn_8xb32-300e_coco.py'
 model = dict(
     backbone=dict(
         _delete_=True,
