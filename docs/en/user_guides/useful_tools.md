@@ -123,7 +123,7 @@ e.g:
 1. USe `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` to visualize dataset analysis.The resulting image is directly saved to the current running directory:
 
 ```shell
-python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py
 ```
 
 2. Use `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` to visualize dataset analysis.The picture will pop up directly and be saved to the directory `work-dir/dataset_analysis` at the same time:
