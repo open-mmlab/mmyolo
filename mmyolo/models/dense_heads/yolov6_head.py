@@ -309,7 +309,7 @@ class YOLOv6Head(YOLOv5Head):
         flatten_pred_bboxes = self.bbox_coder.decode(flatten_priors[..., :2],
                                                 flatten_pred_bboxes,
                                                 flatten_priors[..., 2])
-        # generate v6 anchor
+        # generate v6 priors
         cell_half_size = flatten_priors[:, 2:] * 2.5
         flatten_priors_gen = torch.zeros_like(flatten_priors)
         flatten_priors_gen[:, :2] = flatten_priors[:, :2] - cell_half_size
