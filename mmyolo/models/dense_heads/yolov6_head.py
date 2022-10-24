@@ -235,7 +235,8 @@ class YOLOv6Head(YOLOv5Head):
             test_cfg=test_cfg,
             init_cfg=init_cfg)
 
-        self.loss_bbox: nn.Module = MODELS.build(loss_bbox)
+        self.loss_bbox = MODELS.build(loss_bbox)
+        self.epoch = 0
 
     def special_init(self):
         """Since YOLO series algorithms will inherit from YOLOv5Head, but
@@ -289,29 +290,30 @@ class YOLOv6Head(YOLOv5Head):
             device=cls_scores[0].device,
             with_stride=True)
 
-        n_anchors_list = [len(n) for n in mlvl_priors]
+        num_level_priors = [len(n) for n in mlvl_priors]
 
         flatten_cls_preds = [
             cls_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1,
                                                  self.num_classes)
             for cls_pred in cls_scores
         ]
-        flatten_bbox_preds = [
+        flatten_pred_bboxes = [
             bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
             for bbox_pred in bbox_preds
         ]
 
         flatten_cls_preds = torch.cat(flatten_cls_preds, dim=1)
-        flatten_bbox_preds = torch.cat(flatten_bbox_preds, dim=1)
+        flatten_pred_bboxes = torch.cat(flatten_pred_bboxes, dim=1)
         flatten_priors = torch.cat(mlvl_priors, dim=0)
-        flatten_bboxes = self.bbox_coder.decode(flatten_priors[..., :2],
-                                                flatten_bbox_preds,
+
+        flatten_pred_bboxes = self.bbox_coder.decode(flatten_priors[..., :2],
+                                                flatten_pred_bboxes,
                                                 flatten_priors[..., 2])
         # generate v6 anchor
         cell_half_size = flatten_priors[:, 2:] * 2.5
-        flatten_anchors = torch.zeros_like(flatten_priors)
-        flatten_anchors[:, :2] = flatten_priors[:, :2] - cell_half_size
-        flatten_anchors[:, 2:] = flatten_priors[:, :2] + cell_half_size
+        flatten_priors_gen = torch.zeros_like(flatten_priors)
+        flatten_priors_gen[:, :2] = flatten_priors[:, :2] - cell_half_size
+        flatten_priors_gen[:, 2:] = flatten_priors[:, :2] + cell_half_size
 
         batch_size = flatten_cls_preds.shape[0]
 
@@ -330,12 +332,12 @@ class YOLOv6Head(YOLOv5Head):
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if self.epoch < self.initial_epoch:
-            assigned_result = self.initial_assigner(flatten_bboxes.detach(),
-                                                    flatten_anchors,
-                                                    n_anchors_list, gt_labels,
+            assigned_result = self.initial_assigner(flatten_pred_bboxes.detach(),
+                                                    flatten_priors_gen,
+                                                    num_level_priors, gt_labels,
                                                     gt_bboxes, pad_bbox_flag)
         else:
-            assigned_result = self.assigner(flatten_bboxes.detach(),
+            assigned_result = self.assigner(flatten_pred_bboxes.detach(),
                                             pred_scores.detach(),
                                             flatten_priors[:, :2], gt_labels,
                                             gt_bboxes, pad_bbox_flag)
@@ -357,7 +359,7 @@ class YOLOv6Head(YOLOv5Head):
         # rescale bbox
         stride_tensor = flatten_priors[..., [2]]
         assigned_bboxes /= stride_tensor
-        flatten_bboxes /= stride_tensor
+        flatten_pred_bboxes /= stride_tensor
 
         assigned_scores_sum = assigned_scores.sum()
         loss_cls /= assigned_scores_sum
@@ -367,7 +369,7 @@ class YOLOv6Head(YOLOv5Head):
         if num_pos > 0:
             # iou loss
             bbox_mask = fg_mask_pre_prior.unsqueeze(-1).repeat([1, 1, 4])
-            pred_bboxes_pos = torch.masked_select(flatten_bboxes,
+            pred_bboxes_pos = torch.masked_select(flatten_pred_bboxes,
                                                   bbox_mask).reshape([-1, 4])
             assigned_bboxes_pos = torch.masked_select(
                 assigned_bboxes, bbox_mask).reshape([-1, 4])
@@ -380,7 +382,7 @@ class YOLOv6Head(YOLOv5Head):
                 avg_factor=assigned_scores_sum)
 
         else:
-            loss_iou = torch.tensor(0.).to(flatten_bbox_preds.device)
+            loss_iou = torch.tensor(0.).to(flatten_pred_bboxes.device)
 
         _, world_size = get_dist_info()
         return dict(

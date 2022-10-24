@@ -62,7 +62,7 @@ class BatchTaskAlignedAssigner(nn.Module):
         self,
         pred_bboxes: Tensor,
         pred_scores: Tensor,
-        priors_points: Tensor,
+        priors: Tensor,
         gt_labels: Tensor,
         gt_bboxes: Tensor,
         pad_bbox_flag: Tensor,
@@ -82,8 +82,7 @@ class BatchTaskAlignedAssigner(nn.Module):
                 shape(batch_size, num_priors, 4)
             pred_scores (Tensor): Scores of predict bboxes,
                 shape(batch_size, num_priors, num_classes)
-            priors_points (Tensor): Priors cx cy points,
-                shape (num_priors, 2).
+            priors (Tensor): Model priors,  shape (num_priors, 2)
             gt_labels (Tensor): Ground true labels,
                 shape(batch_size, num_gt, 1)
             gt_bboxes (Tensor): Ground true bboxes,
@@ -120,7 +119,7 @@ class BatchTaskAlignedAssigner(nn.Module):
             return assigned_result
 
         pos_mask, alignment_metrics, overlaps = self.get_pos_mask(
-            pred_bboxes, pred_scores, priors_points, gt_labels, gt_bboxes,
+            pred_bboxes, pred_scores, priors, gt_labels, gt_bboxes,
             pad_bbox_flag, batch_size, num_gt)
 
         (assigned_gt_idxs, fg_mask_pre_prior,
@@ -147,7 +146,7 @@ class BatchTaskAlignedAssigner(nn.Module):
         return assigned_result
 
     def get_pos_mask(self, pred_bboxes: Tensor, pred_scores: Tensor,
-                     priors_points: Tensor, gt_labels: Tensor,
+                     priors: Tensor, gt_labels: Tensor,
                      gt_bboxes: Tensor, pad_bbox_flag: Tensor, batch_size: int,
                      num_gt: int) -> Tuple[Tensor, Tensor, Tensor]:
         """Get possible mask.
@@ -157,8 +156,7 @@ class BatchTaskAlignedAssigner(nn.Module):
                 shape(batch_size, num_priors, 4)
             pred_scores (Tensor): Scores of predict bbox,
                 shape(batch_size, num_priors, num_classes)
-            priors_points (Tensor): Priors cx cy points,
-                shape (num_priors, 2).
+            priors (Tensor): Model priors, shape (num_priors, 2)
             gt_labels (Tensor): Ground true labels,
                 shape(batch_size, num_gt, 1)
             gt_bboxes (Tensor): Ground true bboxes,
@@ -183,7 +181,7 @@ class BatchTaskAlignedAssigner(nn.Module):
                                  gt_bboxes, batch_size, num_gt)
 
         # get is_in_gts mask
-        is_in_gts = select_candidates_in_gts(priors_points, gt_bboxes)
+        is_in_gts = select_candidates_in_gts(priors, gt_bboxes)
 
         # get topk_metric mask
         topk_metric = self.select_topk_candidates(
