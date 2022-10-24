@@ -53,7 +53,6 @@ class BatchTaskAlignedAssigner(nn.Module):
         self.alpha = alpha
         self.beta = beta
         self.eps = eps
-        self.iou_calculator = TASK_UTILS.build(iou_calculator)
 
         self.iou_calculator = TASK_UTILS.build(iou_calculator)
         self.eps = eps

@@ -164,7 +164,7 @@ class BatchATSSAssigner(nn.Module):
 
         # soft label with iou
         if pred_bboxes is not None:
-            ious = self.iou_calculator(gt_bboxes, pred_bboxes) * pos_mask
+            ious = yolov6_iou_calculator(gt_bboxes, pred_bboxes) * pos_mask
             ious = ious.max(axis=-2)[0].unsqueeze(-1)
             assigned_scores *= ious
 
