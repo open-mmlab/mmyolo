@@ -85,7 +85,6 @@ model = dict(
             type='BatchTaskAlignedAssigner',
             num_classes=num_classes,
             topk=13,
-            iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             alpha=1,
             beta=6),
     ),

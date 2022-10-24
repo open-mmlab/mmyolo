@@ -108,6 +108,36 @@ def select_highest_overlaps(pos_mask: Tensor, overlaps: Tensor,
     return gt_idx_pre_prior, fg_mask_pre_prior, pos_mask
 
 
+def yolov6_iou_calculator(bbox1: Tensor, bbox2: Tensor, eps: float = 1e-9) -> Tensor:
+    """Calculate iou for batch.
+
+    Args:
+        bbox1 (Tensor): shape(batch size, num_gt, 4)
+        bbox2 (Tensor): shape(batch size, num_priors, 4)
+        eps (float): Default to 1e-9.
+    Return:
+        (Tensor): IoU, shape(size, num_gt, num_priors)
+    """
+    bbox1 = bbox1.unsqueeze(2)  # [N, M1, 4] -> [N, M1, 1, 4]
+    bbox2 = bbox2.unsqueeze(1)  # [N, M2, 4] -> [N, 1, M2, 4]
+
+    # calculate xy info of predict and gt bbox
+    bbox1_x1y1, bbox1_x2y2 = bbox1[:, :, :, 0:2], bbox1[:, :, :, 2:4]
+    bbox2_x1y1, bbox2_x2y2 = bbox2[:, :, :, 0:2], bbox2[:, :, :, 2:4]
+
+    # calculate overlap area
+    overlap = (torch.minimum(bbox1_x2y2, bbox2_x2y2) -
+               torch.maximum(bbox1_x1y1, bbox2_x1y1)).clip(0).prod(-1)
+
+    # calculate bbox area
+    bbox1_area = (bbox1_x2y2 - bbox1_x1y1).clip(0).prod(-1)
+    bbox2_area = (bbox2_x2y2 - bbox2_x1y1).clip(0).prod(-1)
+
+    union = bbox1_area + bbox2_area - overlap + eps
+
+    return overlap / union
+
+
 @TASK_UTILS.register_module()
 class BatchATSSAssigner(nn.Module):
     """Adaptive Training Sample Selection Assigner.
@@ -206,7 +236,7 @@ class BatchATSSAssigner(nn.Module):
 
         # soft label with iou
         if pred_bboxes is not None:
-            ious = self.iou_calculator(gt_bboxes, pred_bboxes) * pos_mask
+            ious = yolov6_iou_calculator(gt_bboxes, pred_bboxes) * pos_mask
             ious = ious.max(axis=-2)[0].unsqueeze(-1)
             assigned_scores *= ious
 
