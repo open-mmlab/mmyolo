@@ -19,11 +19,11 @@ class TestBatchTaskAlignedAssigner(TestCase):
             [0.3, 0.4],
             [0.4, 0.5],
         ]).unsqueeze(0).repeat(batch_size, 21, 1)
-        priors_points = torch.FloatTensor([
-            [4., 4.],
-            [12., 4.],
-            [20., 4.],
-            [28., 4.],
+        priors = torch.FloatTensor([
+            [0, 0, 4., 4.],
+            [0, 0, 12., 4.],
+            [0, 0, 20., 4.],
+            [0, 0, 28., 4.],
         ]).repeat(21, 1)
         gt_bboxes = torch.FloatTensor([
             [0, 0, 60, 93],
@@ -40,9 +40,8 @@ class TestBatchTaskAlignedAssigner(TestCase):
             [20., -4., 36., 12.],
         ]).unsqueeze(0).repeat(batch_size, 21, 1)
 
-        assign_result = assigner.forward(pred_bboxes, pred_scores,
-                                         priors_points, gt_labels, gt_bboxes,
-                                         pad_bbox_flag)
+        assign_result = assigner.forward(pred_bboxes, pred_scores, priors,
+                                         gt_labels, gt_bboxes, pad_bbox_flag)
 
         assigned_labels = assign_result['assigned_labels']
         assigned_bboxes = assign_result['assigned_bboxes']
