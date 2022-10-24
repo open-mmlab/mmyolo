@@ -144,8 +144,8 @@ class BatchTaskAlignedAssigner(nn.Module):
         return assigned_result
 
     def get_pos_mask(self, pred_bboxes: Tensor, pred_scores: Tensor,
-                     priors: Tensor, gt_labels: Tensor,
-                     gt_bboxes: Tensor, pad_bbox_flag: Tensor, batch_size: int,
+                     priors: Tensor, gt_labels: Tensor, gt_bboxes: Tensor,
+                     pad_bbox_flag: Tensor, batch_size: int,
                      num_gt: int) -> Tuple[Tensor, Tensor, Tensor]:
         """Get possible mask.
 

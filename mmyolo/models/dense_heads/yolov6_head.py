@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
-from typing import Sequence, Union
+from typing import Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -156,10 +156,11 @@ class YOLOv6HeadModule(BaseModule):
         return multi_apply(self.forward_single, x, self.stems, self.cls_convs,
                            self.cls_preds, self.reg_convs, self.reg_preds)
 
-    def forward_single(self, x: torch.Tensor, stem: nn.ModuleList,
+    @staticmethod
+    def forward_single(x: torch.Tensor, stem: nn.ModuleList,
                        cls_conv: nn.ModuleList, cls_pred: nn.ModuleList,
                        reg_conv: nn.ModuleList,
-                       reg_pred: nn.ModuleList) -> torch.Tensor:
+                       reg_pred: nn.ModuleList) -> Tuple[Tensor, Tensor]:
         """Forward feature of a single scale level."""
         y = stem(x)
         cls_x = y
@@ -201,14 +202,14 @@ class YOLOv6Head(YOLOv5Head):
                      offset=0.5,
                      strides=[8, 16, 32]),
                  bbox_coder: ConfigType = dict(type='DistancePointBBoxCoder'),
-                 loss_cls=dict(
+                 loss_cls: ConfigType = dict(
                      type='mmdet.VarifocalLoss',
                      use_sigmoid=True,
                      alpha=0.75,
                      gamma=2.0,
                      iou_weighted=True,
                      loss_weight=1.0),
-                 loss_bbox=dict(
+                 loss_bbox: ConfigType = dict(
                      type='IoULoss',
                      iou_mode='giou',
                      bbox_format='xyxy',
@@ -307,8 +308,8 @@ class YOLOv6Head(YOLOv5Head):
         flatten_priors = torch.cat(mlvl_priors, dim=0)
 
         flatten_pred_bboxes = self.bbox_coder.decode(flatten_priors[..., :2],
-                                                flatten_pred_bboxes,
-                                                flatten_priors[..., 2])
+                                                     flatten_pred_bboxes,
+                                                     flatten_priors[..., 2])
         # generate v6 priors
         cell_half_size = flatten_priors[:, 2:] * 2.5
         flatten_priors_gen = torch.zeros_like(flatten_priors)
@@ -332,10 +333,9 @@ class YOLOv6Head(YOLOv5Head):
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if self.epoch < self.initial_epoch:
-            assigned_result = self.initial_assigner(flatten_pred_bboxes.detach(),
-                                                    flatten_priors_gen,
-                                                    num_level_priors, gt_labels,
-                                                    gt_bboxes, pad_bbox_flag)
+            assigned_result = self.initial_assigner(
+                flatten_pred_bboxes.detach(), flatten_priors_gen,
+                num_level_priors, gt_labels, gt_bboxes, pad_bbox_flag)
         else:
             assigned_result = self.assigner(flatten_pred_bboxes.detach(),
                                             pred_scores.detach(),
@@ -388,7 +388,8 @@ class YOLOv6Head(YOLOv5Head):
         return dict(
             loss_cls=loss_cls * world_size, loss_bbox=loss_iou * world_size)
 
-    def preprocess(self, batch_gt_instances, batch_size):
+    @staticmethod
+    def preprocess(batch_gt_instances: Tensor, batch_size: int) -> Tensor:
         targets_list = np.zeros((batch_size, 1, 5)).tolist()
         for i, item in enumerate(batch_gt_instances.cpu().numpy().tolist()):
             targets_list[int(item[0])].append(item[1:])
@@ -401,12 +402,12 @@ class YOLOv6Head(YOLOv5Head):
                                         1:, :]).to(batch_gt_instances.device)
         return targets
 
-    def varifocal_loss(self,
-                       pred_score,
-                       gt_score,
-                       label,
-                       alpha=0.75,
-                       gamma=2.0):
+    @staticmethod
+    def varifocal_loss(pred_score: Tensor,
+                       gt_score: Tensor,
+                       label: Tensor,
+                       alpha: float = 0.75,
+                       gamma: float = 2.0) -> Tensor:
         weight = alpha * pred_score.pow(gamma) * (1 - label) + gt_score * label
         with torch.cuda.amp.autocast(enabled=False):
             loss = (F.binary_cross_entropy(
