@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
-from typing import Sequence, Union
+from typing import Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -142,7 +142,7 @@ class YOLOv6HeadModule(BaseModule):
             w.data.fill_(0.)
             conv.weight.data = w
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         """Forward features from the upstream network.
 
         Args:
@@ -156,10 +156,10 @@ class YOLOv6HeadModule(BaseModule):
         return multi_apply(self.forward_single, x, self.stems, self.cls_convs,
                            self.cls_preds, self.reg_convs, self.reg_preds)
 
-    def forward_single(self, x: torch.Tensor, stem: nn.ModuleList,
+    def forward_single(self, x: Tensor, stem: nn.ModuleList,
                        cls_conv: nn.ModuleList, cls_pred: nn.ModuleList,
                        reg_conv: nn.ModuleList,
-                       reg_pred: nn.ModuleList) -> torch.Tensor:
+                       reg_pred: nn.ModuleList) -> Tuple[Tensor, Tensor]:
         """Forward feature of a single scale level."""
         y = stem(x)
         cls_x = y
@@ -201,14 +201,14 @@ class YOLOv6Head(YOLOv5Head):
                      offset=0.5,
                      strides=[8, 16, 32]),
                  bbox_coder: ConfigType = dict(type='DistancePointBBoxCoder'),
-                 loss_cls=dict(
+                 loss_cls: ConfigType = dict(
                      type='mmdet.VarifocalLoss',
                      use_sigmoid=True,
                      alpha=0.75,
                      gamma=2.0,
                      iou_weighted=True,
                      loss_weight=1.0),
-                 loss_bbox=dict(
+                 loss_bbox: ConfigType = dict(
                      type='IoULoss',
                      iou_mode='giou',
                      bbox_format='xyxy',
@@ -235,7 +235,8 @@ class YOLOv6Head(YOLOv5Head):
             test_cfg=test_cfg,
             init_cfg=init_cfg)
 
-        self.loss_bbox: nn.Module = MODELS.build(loss_bbox)
+        self.loss_bbox = MODELS.build(loss_bbox)
+        self.epoch = 0
 
     def special_init(self):
         """Since YOLO series algorithms will inherit from YOLOv5Head, but
@@ -289,38 +290,34 @@ class YOLOv6Head(YOLOv5Head):
             device=cls_scores[0].device,
             with_stride=True)
 
-        n_anchors_list = [len(n) for n in mlvl_priors]
+        num_level_priors = [len(n) for n in mlvl_priors]
 
         flatten_cls_preds = [
             cls_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1,
                                                  self.num_classes)
             for cls_pred in cls_scores
         ]
-        flatten_bbox_preds = [
+        flatten_pred_bboxes = [
             bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
             for bbox_pred in bbox_preds
         ]
 
         flatten_cls_preds = torch.cat(flatten_cls_preds, dim=1)
-        flatten_bbox_preds = torch.cat(flatten_bbox_preds, dim=1)
+        flatten_pred_bboxes = torch.cat(flatten_pred_bboxes, dim=1)
         flatten_priors = torch.cat(mlvl_priors, dim=0)
-        flatten_bboxes = self.bbox_coder.decode(flatten_priors[..., :2],
-                                                flatten_bbox_preds,
-                                                flatten_priors[..., 2])
-        # generate v6 anchor
-        cell_half_size = flatten_priors[:, 2:] * 2.5
-        flatten_anchors = torch.zeros_like(flatten_priors)
-        flatten_anchors[:, :2] = flatten_priors[:, :2] - cell_half_size
-        flatten_anchors[:, 2:] = flatten_priors[:, :2] + cell_half_size
+
+        flatten_pred_bboxes = self.bbox_coder.decode(flatten_priors[..., :2],
+                                                     flatten_pred_bboxes,
+                                                     flatten_priors[..., 2])
 
         batch_size = flatten_cls_preds.shape[0]
 
-        # targets
-        targets = self.preprocess(batch_gt_instances, batch_size)
+        # gt_info
+        gt_info = self.preprocess(batch_gt_instances, batch_size)
 
-        gt_labels = targets[:, :, :1]
-        gt_bboxes = targets[:, :, 1:]  # xyxy
-        mask_gt = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
+        gt_labels = gt_info[:, :, :1]
+        gt_bboxes = gt_info[:, :, 1:]  # xyxy
+        pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
 
         # get epoch information from message hub
         message_hub = MessageHub.get_current_instance()
@@ -330,85 +327,81 @@ class YOLOv6Head(YOLOv5Head):
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if self.epoch < self.initial_epoch:
-            target_labels, target_bboxes, target_scores, fg_mask = \
-                self.initial_assigner(
-                    flatten_anchors,
-                    n_anchors_list,
-                    gt_labels,
-                    gt_bboxes,
-                    mask_gt,
-                    flatten_bboxes.detach(),
-                    )
+            assigned_result = self.initial_assigner(
+                flatten_pred_bboxes.detach(), flatten_priors, num_level_priors,
+                gt_labels, gt_bboxes, pad_bbox_flag)
         else:
-            target_labels, target_bboxes, target_scores, fg_mask = \
-                self.assigner(
-                    pred_scores.detach(),
-                    flatten_bboxes.detach(),
-                    flatten_priors[:, :2],
-                    gt_labels,
-                    gt_bboxes,
-                    mask_gt)
+            assigned_result = self.assigner(flatten_pred_bboxes.detach(),
+                                            pred_scores.detach(),
+                                            flatten_priors, gt_labels,
+                                            gt_bboxes, pad_bbox_flag)
+
+        assigned_labels = assigned_result['assigned_labels']
+        assigned_bboxes = assigned_result['assigned_bboxes']
+        assigned_scores = assigned_result['assigned_scores']
+        fg_mask_pre_prior = assigned_result['fg_mask_pre_prior']
 
         # cls loss
-        target_labels = torch.where(
-            fg_mask > 0, target_labels,
-            torch.full_like(target_labels, self.num_classes))
-        one_hot_label = F.one_hot(target_labels.long(),
+        assigned_labels = torch.where(
+            fg_mask_pre_prior > 0, assigned_labels,
+            torch.full_like(assigned_labels, self.num_classes))
+        one_hot_label = F.one_hot(assigned_labels.long(),
                                   self.num_classes + 1)[..., :-1]
-        loss_cls = self.varifocal_loss(pred_scores, target_scores,
+        loss_cls = self.varifocal_loss(pred_scores, assigned_scores,
                                        one_hot_label)
 
         # rescale bbox
         stride_tensor = flatten_priors[..., [2]]
-        target_bboxes /= stride_tensor
-        flatten_bboxes /= stride_tensor
+        assigned_bboxes /= stride_tensor
+        flatten_pred_bboxes /= stride_tensor
 
-        target_scores_sum = target_scores.sum()
-        loss_cls /= target_scores_sum
+        assigned_scores_sum = assigned_scores.sum()
+        loss_cls /= assigned_scores_sum
 
         # select positive samples mask
-        num_pos = fg_mask.sum()
+        num_pos = fg_mask_pre_prior.sum()
         if num_pos > 0:
             # iou loss
-            bbox_mask = fg_mask.unsqueeze(-1).repeat([1, 1, 4])
-            pred_bboxes_pos = torch.masked_select(flatten_bboxes,
-                                                  bbox_mask).reshape([-1, 4])
-            target_bboxes_pos = torch.masked_select(target_bboxes,
-                                                    bbox_mask).reshape([-1, 4])
-            bbox_weight = torch.masked_select(target_scores.sum(-1),
-                                              fg_mask).unsqueeze(-1)
+            prior_bbox_mask = fg_mask_pre_prior.unsqueeze(-1).repeat([1, 1, 4])
+            pred_bboxes_pos = torch.masked_select(
+                flatten_pred_bboxes, prior_bbox_mask).reshape([-1, 4])
+            assigned_bboxes_pos = torch.masked_select(
+                assigned_bboxes, prior_bbox_mask).reshape([-1, 4])
+            bbox_weight = torch.masked_select(
+                assigned_scores.sum(-1), fg_mask_pre_prior).unsqueeze(-1)
             loss_iou = self.loss_bbox(
                 pred_bboxes_pos,
-                target_bboxes_pos,
+                assigned_bboxes_pos,
                 weight=bbox_weight,
-                avg_factor=target_scores_sum)
+                avg_factor=assigned_scores_sum)
 
         else:
-            loss_iou = torch.tensor(0.).to(flatten_bbox_preds.device)
+            loss_iou = torch.tensor(0.).to(flatten_pred_bboxes.device)
 
         _, world_size = get_dist_info()
         return dict(
             loss_cls=loss_cls * world_size, loss_bbox=loss_iou * world_size)
 
-    def preprocess(self, batch_gt_instances, batch_size):
-        targets_list = np.zeros((batch_size, 1, 5)).tolist()
+    @staticmethod
+    def preprocess(batch_gt_instances: Tensor, batch_size: int) -> Tensor:
+        gt_info_list = np.zeros((batch_size, 1, 5)).tolist()
         for i, item in enumerate(batch_gt_instances.cpu().numpy().tolist()):
-            targets_list[int(item[0])].append(item[1:])
-        max_len = max(len(target) for target in targets_list)
-        targets = torch.from_numpy(
+            gt_info_list[int(item[0])].append(item[1:])
+        max_len = max(len(gt_info) for gt_info in gt_info_list)
+        return torch.from_numpy(
             np.array(
                 list(
                     map(lambda l: l + [[-1, 0, 0, 0, 0]] * (max_len - len(l)),
-                        targets_list)))[:,
+                        gt_info_list)))[:,
                                         1:, :]).to(batch_gt_instances.device)
-        return targets
 
-    def varifocal_loss(self,
-                       pred_score,
-                       gt_score,
-                       label,
-                       alpha=0.75,
-                       gamma=2.0):
+    # TODO This will be refactored and deleted later.
+    @staticmethod
+    def varifocal_loss(pred_score: Tensor,
+                       gt_score: Tensor,
+                       label: Tensor,
+                       alpha: float = 0.75,
+                       gamma: float = 2.0) -> Tensor:
         weight = alpha * pred_score.pow(gamma) * (1 - label) + gt_score * label
         with torch.cuda.amp.autocast(enabled=False):
             loss = (F.binary_cross_entropy(
