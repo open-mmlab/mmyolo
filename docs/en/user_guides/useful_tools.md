@@ -117,15 +117,21 @@ Function 1: Display the distribution map of categories and number of bbox instan
 <div align=center>
 < img src="https://user-images.githubusercontent.com/90811472/196891728-4c2f1ab3-01cb-445f-a6b8-39752387c40f.jpg"/>
 </div>
+
 Function 2: Display the width and height distribution of categories and bbox instances
+
 <div align=center>
 < img src="https://user-images.githubusercontent.com/90811472/196891895-ae2bc906-fd63-4896-9c3c-a819c3ce24a6.jpg"/>
 </div>
+
 Function 3: Display the distribution map of category and bbox instance width/height ratio
+
 <div align=center>
 < img src="https://user-images.githubusercontent.com/90811472/197392631-8788b4d0-951b-4922-a459-265e055c0ed9.jpg"/>
 </div>
+
 Function 4: Display the distribution map of category and bbox instance area based on the rules of large, medium and small objects
+
 <div align=center>
 < img src="https://user-images.githubusercontent.com/90811472/196891947-42a972fc-5bdb-486e-ace9-f5ded4419783.jpg"/>
 </div>

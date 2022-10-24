@@ -117,15 +117,21 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
 <div align=center>
 < img src="https://user-images.githubusercontent.com/90811472/196891728-4c2f1ab3-01cb-445f-a6b8-39752387c40f.jpg"/>
 </div>
+
 功能二：显示类别和bbox实例宽、高的分布图
+
 <div align=center>
 < img src="https://user-images.githubusercontent.com/90811472/196891895-ae2bc906-fd63-4896-9c3c-a819c3ce24a6.jpg"/>
 </div>
+
 功能三：显示类别和bbox实例宽/高比例的分布图
+
 <div align=center>
 < img src="https://user-images.githubusercontent.com/90811472/197392631-8788b4d0-951b-4922-a459-265e055c0ed9.jpg"/>
 </div>
+
 功能四：基于物体大、中、小规则下，显示类别和bbox实例面积的分布图
+
 <div align=center>
 < img src="https://user-images.githubusercontent.com/90811472/196891947-42a972fc-5bdb-486e-ace9-f5ded4419783.jpg"/>
 </div>
