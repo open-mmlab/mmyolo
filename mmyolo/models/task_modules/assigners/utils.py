@@ -7,13 +7,13 @@ import torch.nn.functional as F
 from torch import Tensor
 
 
-def select_candidates_in_gts(priors_cxy_points: Tensor,
+def select_candidates_in_gts(priors_points: Tensor,
                              gt_bboxes: Tensor,
                              eps: float = 1e-9) -> Tensor:
     """Select the positive priors' center in gt.
 
     Args:
-        priors_cxy_points (Tensor): Priors center xy points,
+        priors_points (Tensor): Model priors points,
             shape(num_priors, 2)
         gt_bboxes (Tensor): Ground true bboxes,
             shape(batch_size, num_gt, 4)
@@ -24,8 +24,8 @@ def select_candidates_in_gts(priors_cxy_points: Tensor,
     batch_size, num_gt, _ = gt_bboxes.size()
     gt_bboxes = gt_bboxes.reshape([-1, 4])
 
-    priors_number = priors_cxy_points.size(0)
-    priors_cxy_points = priors_cxy_points.unsqueeze(0).repeat(
+    priors_number = priors_points.size(0)
+    priors_points = priors_points.unsqueeze(0).repeat(
         batch_size * num_gt, 1, 1)
 
     # calculate the left, top, right, bottom distance between positive
@@ -33,7 +33,7 @@ def select_candidates_in_gts(priors_cxy_points: Tensor,
     gt_bboxes_lt = gt_bboxes[:, 0:2].unsqueeze(1).repeat(1, priors_number, 1)
     gt_bboxes_rb = gt_bboxes[:, 2:4].unsqueeze(1).repeat(1, priors_number, 1)
     bbox_deltas = torch.cat(
-        [priors_cxy_points - gt_bboxes_lt, gt_bboxes_rb - priors_cxy_points],
+        [priors_points - gt_bboxes_lt, gt_bboxes_rb - priors_points],
         dim=-1)
     bbox_deltas = bbox_deltas.reshape([batch_size, num_gt, priors_number, -1])
 
