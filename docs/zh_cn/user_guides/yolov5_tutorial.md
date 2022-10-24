@@ -10,14 +10,18 @@ conda activate open-mmlab
 conda install pytorch torchvision -c pytorch
 # conda install pytorch torchvision cpuonly -c pytorch
 pip install -U openmim
-mim install mmengine
-mim install "mmcv>=2.0.0rc1"
-mim install "mmdet>=3.0.0rc0"
+mim install "mmengine==0.1.0"
+mim install "mmcv>=2.0.0rc1,<2.1.0"
+mim install "mmdet>=3.0.0rc0,<3.1.0"
 # for albumentations
-pip install -r requirements/albu.txt
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
-pip install -v -e .
+# Install albumentations
+pip install -r requirements/albu.txt
+# Install MMYOLO
+mim install -v -e .
+# "-v" 指详细说明，或更多的输出
+# "-e" 表示在可编辑模式下安装项目，因此对代码所做的任何本地修改都会生效，从而无需重新安装。
 ```
 
 详细环境配置操作请查看 [get_started](../get_started.md)
@@ -81,7 +85,6 @@ test_evaluator = val_evaluator
 model = dict(bbox_head=dict(head_module=dict(num_classes=1)))
 
 default_hooks = dict(logger=dict(interval=1))
-
 ```
 
 以上配置从 `./yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py` 中继承，并根据 balloon 数据的特点更新了 `data_root`、`metainfo`、`train_dataloader`、`val_dataloader`、`num_classes` 等配置。
@@ -136,10 +139,10 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 # 命令行中设置 model.backbone.frozen_stages=4
 cd mmyolo
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
-                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' model.backbone.frozen_stages=4
+                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' model.backbone.frozen_stages=4 custom_hooks=None
 ```
 
-### 可视化相关
+### 训练验证中可视化相关
 
 #### 验证阶段可视化
 
@@ -217,7 +220,17 @@ visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='Tensorbo
 tensorboard --logdir=work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon
 ```
 
-### 模型推理
+## 模型测试
+
+如果你训练时候设置了 `custom_hooks=None`，那么在模型测试过程中依然需要设置 `custom_hooks=None`
+
+```shell
+python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
+                     work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/epoch_300.pth \
+                     --show-dir show_results  --cfg-options custom_hooks=None
+```
+
+如果你没有设置 `custom_hooks=None`，那么测试命令如下：
 
 ```shell
 python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
@@ -225,7 +238,7 @@ python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.p
                      --show-dir show_results
 ```
 
-运行以上推理命令，推理结果图片会自动保存至 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/show_results` 文件夹中。下面为其中一张结果图片，左图为实际标注，右图为模型推理结果。
+运行以上测试命令，推理结果图片会自动保存至 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/show_results` 文件夹中。下面为其中一张结果图片，左图为实际标注，右图为模型推理结果。
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/27466624/190913272-f99709e5-c798-46b8-aede-30f4e91683a3.jpg" alt="result_img"/>

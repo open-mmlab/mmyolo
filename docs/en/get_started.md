@@ -2,6 +2,14 @@
 
 ## Prerequisites
 
+Compatible MMEngine, MMCV and MMDetection versions are shown as below. Please install the correct version to avoid installation issues.
+
+| MMYOLO version |   MMDetection version    |     MMEngine version     |      MMCV version       |
+| :------------: | :----------------------: | :----------------------: | :---------------------: |
+|      main      | mmdet>=3.0.0rc1, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.1.1      | mmdet>=3.0.0rc1, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.1.0      | mmdet>=3.0.0rc0, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+
 In this section, we demonstrate how to prepare an environment with PyTorch.
 
 MMDetection works on Linux, Windows, and macOS. It requires Python 3.6+, CUDA 9.2+, and PyTorch 1.7+.
@@ -41,11 +49,9 @@ conda install pytorch torchvision cpuonly -c pytorch
 
 ```shell
 pip install -U openmim
-mim install mmengine
-mim install "mmcv>=2.0.0rc1"
-mim install "mmdet>=3.0.0rc0"
-# for albumentations
-pip install -r requirements/albu.txt
+mim install "mmengine==0.1.0"
+mim install "mmcv>=2.0.0rc1,<2.1.0"
+mim install "mmdet>=3.0.0rc1,<3.1.0"
 ```
 
 **Note:**
@@ -61,7 +67,10 @@ Case a: If you develop and run mmdet directly, install it from source:
 ```shell
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
-pip install -v -e .
+# Install albumentations
+pip install -r requirements/albu.txt
+# Install MMYOLO
+mim install -v -e .
 # "-v" means verbose, or more output
 # "-e" means installing a project in editable mode,
 # thus any local modifications made to the code will take effect without reinstallation.
@@ -83,17 +92,31 @@ To verify whether MMYOLO is installed correctly, we provide some sample codes to
 mim download mmyolo --config yolov5_s-v61_syncbn_fast_8xb16-300e_coco --dest .
 ```
 
-The downloading will take several seconds or more, depending on your network environment. When it is done, you will find two files `yolov5_s-v61_syncbn_8xb16-300e_coco.py` and `yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth` in your current folder.
+The downloading will take several seconds or more, depending on your network environment. When it is done, you will find two files `yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py` and `yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth` in your current folder.
 
 **Step 2.** Verify the inference demo.
 
 Option (a). If you install MMYOLO from source, just run the following command.
 
 ```shell
-python demo/image_demo.py demo/demo.jpg yolov5_s-v61_syncbn_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --device cpu --out-file result.jpg
+python demo/image_demo.py demo/demo.jpg \
+                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
+
+# Optional parameters
+# --out-dir ./output *The detection results are output to the specified directory. When args have action --show, the script do not save results. Default: ./output
+# --device cuda:0    *The computing resources used, including cuda and cpu. Default: cuda:0
+# --show             *Display the results on the screen. Default: False
+# --score-thr 0.3    *Confidence threshold. Default: 0.3
 ```
 
-You will see a new image `result.jpg` on your current folder, where bounding boxes are plotted.
+You will see a new image on your `output` folder, where bounding boxes are plotted.
+
+Supported input types:
+
+- Single image, include `jpg`, `jpeg`, `png`, `ppm`, `bmp`, `pgm`, `tif`, `tiff`, `webp`.
+- Folder, all image files in the folder will be traversed and the corresponding results will be output.
+- URL, will automatically download from the URL and the corresponding results will be output.
 
 Option (b). If you install MMYOLO with MIM, open your python interpreter and copy&paste the following codes.
 
@@ -102,7 +125,7 @@ from mmdet.apis import init_detector, inference_detector
 from mmyolo.utils import register_all_modules
 
 register_all_modules()
-config_file = 'yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+config_file = 'yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 checkpoint_file = 'yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 model = init_detector(config_file, checkpoint_file, device='cpu')  # or device='cuda:0'
 inference_detector(model, 'demo/demo.jpg')
@@ -132,7 +155,7 @@ To install MMEngine with pip instead of MIM, please follow \[MMEngine installati
 For example, you can install MMEngine by the following command.
 
 ```shell
-pip install mmengine
+pip install "mmengine==0.1.0"
 ```
 
 #### Install MMCV without MIM
@@ -185,9 +208,9 @@ thus we only need to install MMEngine, MMCV, MMDetection, and MMYOLO with the fo
 
 ```shell
 !pip3 install openmim
-!mim install mmengine
+!mim install "mmengine==0.1.0"
 !mim install "mmcv>=2.0.0rc1,<2.1.0"
-!mim install "mmdet>=3.0.0.rc0"
+!mim install "mmdet>=3.0.0.rc1"
 ```
 
 **Step 2.** Install MMYOLO from the source.
@@ -214,13 +237,23 @@ Within Jupyter, the exclamation mark `!` is used to call external executables an
 
 We provide a [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile) to build an image. Ensure that your [docker version](https://docs.docker.com/engine/install/) >=19.03.
 
+Reminder: If you find out that your download speed is very slow, we suggest that you can canceling the comments in the last two lines of `Optional` in the [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile#L19-L20) to obtain a rocket like download speed:
+
+```dockerfile
+# (Optional)
+RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu\//http:\/\/mirrors.aliyun.com\/ubuntu\//g' /etc/apt/sources.list && \
+    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+Build Command：
+
 ```shell
 # build an image with PyTorch 1.9, CUDA 11.1
 # If you prefer other versions, just modified the Dockerfile
 docker build -t mmyolo docker/
 ```
 
-Run it with
+Run it with:
 
 ```shell
 export DATA_DIR=/path/to/your/dataset

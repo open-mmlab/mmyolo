@@ -2,6 +2,14 @@
 
 ## 依赖
 
+下表为 MMYOLO 和 MMEngine, MMCV, MMDetection 依赖库的版本要求，请安装正确的版本以避免安装问题。
+
+| MMYOLO version |   MMDetection version    |     MMEngine version     |      MMCV version       |
+| :------------: | :----------------------: | :----------------------: | :---------------------: |
+|      main      | mmdet>=3.0.0rc1, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.1.1      | mmdet>=3.0.0rc1, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.1.0      | mmdet>=3.0.0rc0, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+
 本节中，我们将演示如何用 PyTorch 准备一个环境。
 
 MMYOLO 支持在 Linux，Windows 和 macOS 上运行。它需要 Python 3.6 以上，CUDA 9.2 以上和 PyTorch 1.7 以上。
@@ -41,11 +49,9 @@ conda install pytorch torchvision cpuonly -c pytorch
 
 ```shell
 pip install -U openmim
-mim install mmengine
-mim install "mmcv>=2.0.0rc1"
-mim install "mmdet>=3.0.0rc0"
-# for albumentations
-pip install -r requirements/albu.txt
+mim install "mmengine==0.1.0"
+mim install "mmcv>=2.0.0rc1,<2.1.0"
+mim install "mmdet>=3.0.0rc1,<3.1.0"
 ```
 
 **注意：**
@@ -61,7 +67,10 @@ b. 如果使用 albumentations，我们建议使用 pip install -r requirements/
 ```shell
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
-pip install -v -e .
+# Install albumentations
+pip install -r requirements/albu.txt
+# Install MMYOLO
+mim install -v -e .
 # "-v" 指详细说明，或更多的输出
 # "-e" 表示在可编辑模式下安装项目，因此对代码所做的任何本地修改都会生效，从而无需重新安装。
 ```
@@ -91,12 +100,22 @@ mim download mmyolo --config yolov5_s-v61_syncbn_fast_8xb16-300e_coco --dest .
 ```shell
 python demo/image_demo.py demo/demo.jpg \
                           yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
-                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
-                          --device cpu \
-                          --out-file result.jpg
+                          yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
+
+# 可选参数
+# --out-dir ./output *检测结果输出到指定目录下，默认为./output, 当--show参数存在时，不保存检测结果
+# --device cuda:0    *使用的计算资源，包括cuda, cpu等，默认为cuda:0
+# --show             *使用该参数表示在屏幕上显示检测结果，默认为False
+# --score-thr 0.3    *置信度阈值，默认为0.3
 ```
 
-你会在当前文件夹中看到一个新的图像 `result.jpg`，图像中包含有网络预测的检测框。
+运行结束后，在 `output` 文件夹中可以看到检测结果图像，图像中包含有网络预测的检测框。
+
+支持输入类型包括
+
+- 单张图片, 支持 `jpg`, `jpeg`, `png`, `ppm`, `bmp`, `pgm`, `tif`, `tiff`, `webp`。
+- 文件目录，会遍历文件目录下所有图片文件，并输出对应结果。
+- 网址，会自动从对应网址下载图片，并输出结果。
 
 方案 2. 如果你通过 MIM 安装的 MMYOLO， 那么可以打开你的 Python 解析器，复制并粘贴以下代码：
 
@@ -138,7 +157,7 @@ inference_detector(model, 'demo/demo.jpg')
 例如，你可以通过以下命令安装 MMEngine：
 
 ```shell
-pip install mmengine
+pip install "mmengine==0.1.0"
 ```
 
 #### 不使用 MIM 安装 MMCV
@@ -190,9 +209,9 @@ pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 
 ```shell
 !pip3 install openmim
-!mim install mmengine
+!mim install "mmengine==0.1.0"
 !mim install "mmcv>=2.0.0rc1,<2.1.0"
-!mim install "mmdet>=3.0.0.rc0"
+!mim install "mmdet>=3.0.0.rc1"
 ```
 
 **步骤 2.** 使用源码安装 MMYOLO：
@@ -218,6 +237,16 @@ print(mmyolo.__version__)
 #### 通过 Docker 使用 MMYOLO
 
 我们提供了一个 [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile) 来构建一个镜像。请确保你的 [docker版本](https://docs.docker.com/engine/install/) >=`19.03`。
+
+温馨提示；国内用户建议取消掉 [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/master/docker/Dockerfile#L19-L20) 里面 `Optional` 后两行的注释，可以获得火箭一般的下载提速：
+
+```dockerfile
+# (Optional)
+RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu\//http:\/\/mirrors.aliyun.com\/ubuntu\//g' /etc/apt/sources.list && \
+    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+构建命令：
 
 ```shell
 # build an image with PyTorch 1.9, CUDA 11.1

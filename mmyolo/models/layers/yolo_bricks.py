@@ -1,13 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Optional, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
 import torch.nn as nn
-from mmcv.cnn import ConvModule
-from mmdet.utils import ConfigType, OptMultiConfig
+from mmcv.cnn import ConvModule, MaxPool2d, build_norm_layer
+from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmengine.model import BaseModule
 from mmengine.utils import digit_version
+from torch import Tensor
 
 from mmyolo.registry import MODELS
 
@@ -49,7 +50,7 @@ class SPPFBottleneck(BaseModule):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 kernel_sizes: Union[int, Tuple[int]] = 5,
+                 kernel_sizes: Union[int, Sequence[int]] = 5,
                  conv_cfg: ConfigType = None,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
@@ -129,6 +130,9 @@ class RepVGGBlock(nn.Module):
                  dilation: Union[int, Tuple[int]] = 1,
                  groups: Optional[int] = 1,
                  padding_mode: Optional[str] = 'zeros',
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='ReLU', inplace=True),
                  deploy: bool = False,
                  use_se: bool = False):
         super().__init__()
@@ -142,7 +146,7 @@ class RepVGGBlock(nn.Module):
 
         padding_11 = padding - kernel_size // 2
 
-        self.nonlinearity = nn.ReLU()
+        self.nonlinearity = MODELS.build(act_cfg)
 
         if use_se:
             raise NotImplementedError('se block not supported yet')
@@ -162,9 +166,10 @@ class RepVGGBlock(nn.Module):
                 padding_mode=padding_mode)
 
         else:
-            self.rbr_identity = nn.BatchNorm2d(
-                num_features=in_channels, momentum=0.03, eps=0.001
-            ) if out_channels == in_channels and stride == 1 else None
+            self.rbr_identity = build_norm_layer(
+                norm_cfg, num_features=in_channels
+            )[1] if out_channels == in_channels and stride == 1 else None
+
             self.rbr_dense = ConvModule(
                 in_channels=in_channels,
                 out_channels=out_channels,
@@ -173,7 +178,7 @@ class RepVGGBlock(nn.Module):
                 padding=padding,
                 groups=groups,
                 bias=False,
-                norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+                norm_cfg=norm_cfg,
                 act_cfg=None)
             self.rbr_1x1 = ConvModule(
                 in_channels=in_channels,
@@ -183,7 +188,7 @@ class RepVGGBlock(nn.Module):
                 padding=padding_11,
                 groups=groups,
                 bias=False,
-                norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+                norm_cfg=norm_cfg,
                 act_cfg=None)
 
     def forward(self, inputs: torch.Tensor) -> torch.Tensor:
@@ -329,3 +334,324 @@ class RepStageBlock(nn.Module):
         if self.block is not None:
             x = self.block(x)
         return x
+
+
+class ELANBlock(BaseModule):
+    """Efficient layer aggregation networks for YOLOv7.
+
+    - if mode is `reduce_channel_2x`, the output channel will be
+      reduced by a factor of 2
+    - if mode is `no_change_channel`, the output channel does not change.
+    - if mode is `expand_channel_2x`, the output channel will be
+      expanded by a factor of 2
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        mode (str): Output channel mode. Defaults to `expand_channel_2x`.
+        num_blocks (int): The number of blocks in the main branch.
+            Defaults to 2.
+        conv_cfg (dict): Config dict for convolution layer. Defaults to None.
+            which means using conv2d. Defaults to None.
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='SiLU', inplace=True).
+        init_cfg (dict or list[dict], optional): Initialization config dict.
+            Defaults to None.
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 mode: str = 'expand_channel_2x',
+                 num_blocks: int = 2,
+                 conv_cfg: OptConfigType = None,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 init_cfg: OptMultiConfig = None):
+        super().__init__(init_cfg=init_cfg)
+
+        assert mode in ('expand_channel_2x', 'no_change_channel',
+                        'reduce_channel_2x')
+
+        if mode == 'expand_channel_2x':
+            mid_channels = in_channels // 2
+            block_channels = mid_channels
+            final_conv_in_channels = 2 * in_channels
+            final_conv_out_channels = 2 * in_channels
+        elif mode == 'no_change_channel':
+            mid_channels = in_channels // 4
+            block_channels = mid_channels
+            final_conv_in_channels = in_channels
+            final_conv_out_channels = in_channels
+        else:
+            mid_channels = in_channels // 2
+            block_channels = mid_channels // 2
+            final_conv_in_channels = in_channels * 2
+            final_conv_out_channels = in_channels // 2
+
+        self.main_conv = ConvModule(
+            in_channels,
+            mid_channels,
+            1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+        self.short_conv = ConvModule(
+            in_channels,
+            mid_channels,
+            1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+        self.blocks = nn.ModuleList()
+        for _ in range(num_blocks):
+            if mode == 'reduce_channel_2x':
+                internal_block = ConvModule(
+                    mid_channels,
+                    block_channels,
+                    3,
+                    padding=1,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg)
+            else:
+                internal_block = nn.Sequential(
+                    ConvModule(
+                        mid_channels,
+                        block_channels,
+                        3,
+                        padding=1,
+                        conv_cfg=conv_cfg,
+                        norm_cfg=norm_cfg,
+                        act_cfg=act_cfg),
+                    ConvModule(
+                        block_channels,
+                        block_channels,
+                        3,
+                        padding=1,
+                        conv_cfg=conv_cfg,
+                        norm_cfg=norm_cfg,
+                        act_cfg=act_cfg))
+            mid_channels = block_channels
+            self.blocks.append(internal_block)
+
+        self.final_conv = ConvModule(
+            final_conv_in_channels,
+            final_conv_out_channels,
+            1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward process
+         Args:
+             x (Tensor): The input tensor.
+         """
+        x_short = self.short_conv(x)
+        x_main = self.main_conv(x)
+        block_outs = []
+        x_block = x_main
+        for block in self.blocks:
+            x_block = block(x_block)
+            block_outs.append(x_block)
+        x_final = torch.cat((*block_outs[::-1], x_main, x_short), dim=1)
+        return self.final_conv(x_final)
+
+
+class MaxPoolAndStrideConvBlock(BaseModule):
+    """Max pooling and stride conv layer for YOLOv7.
+
+    - if mode is `reduce_channel_2x`, the output channel will
+    be reduced by a factor of 2
+    - if mode is `no_change_channel`, the output channel does not change.
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        mode (str): Output channel mode. `reduce_channel_2x` or
+            `no_change_channel`. Defaults to `reduce_channel_2x`
+        conv_cfg (dict): Config dict for convolution layer. Defaults to None.
+            which means using conv2d. Defaults to None.
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='SiLU', inplace=True).
+        init_cfg (dict or list[dict], optional): Initialization config dict.
+            Defaults to None.
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 mode: str = 'reduce_channel_2x',
+                 conv_cfg: OptConfigType = None,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 init_cfg: OptMultiConfig = None):
+        super().__init__(init_cfg=init_cfg)
+
+        assert mode in ('no_change_channel', 'reduce_channel_2x')
+
+        if mode == 'reduce_channel_2x':
+            out_channels = in_channels // 2
+        else:
+            out_channels = in_channels
+
+        self.maxpool_branches = nn.Sequential(
+            MaxPool2d(2, 2),
+            ConvModule(
+                in_channels,
+                out_channels,
+                1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg))
+        self.stride_conv_branches = nn.Sequential(
+            ConvModule(
+                in_channels,
+                out_channels,
+                1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg),
+            ConvModule(
+                out_channels,
+                out_channels,
+                3,
+                stride=2,
+                padding=1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg))
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward process
+        Args:
+            x (Tensor): The input tensor.
+        """
+        maxpool_out = self.maxpool_branches(x)
+        stride_conv_out = self.stride_conv_branches(x)
+        return torch.cat([stride_conv_out, maxpool_out], dim=1)
+
+
+class SPPFCSPBlock(BaseModule):
+    """Spatial pyramid pooling - Fast (SPPF) layer with CSP for
+     YOLOv7
+
+     Args:
+         in_channels (int): The input channels of this Module.
+         out_channels (int): The output channels of this Module.
+         expand_ratio (float): Expand ratio of SPPCSPBlock.
+            Defaults to 0.5.
+         kernel_sizes (int, tuple[int]): Sequential or number of kernel
+             sizes of pooling layers. Defaults to 5.
+         conv_cfg (dict): Config dict for convolution layer. Defaults to None.
+             which means using conv2d. Defaults to None.
+         norm_cfg (dict): Config dict for normalization layer.
+             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+         act_cfg (dict): Config dict for activation layer.
+             Defaults to dict(type='SiLU', inplace=True).
+         init_cfg (dict or list[dict], optional): Initialization config dict.
+             Defaults to None.
+     """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 expand_ratio: float = 0.5,
+                 kernel_sizes: Union[int, Sequence[int]] = 5,
+                 conv_cfg: OptConfigType = None,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 init_cfg: OptMultiConfig = None):
+        super().__init__(init_cfg=init_cfg)
+        mid_channels = int(2 * out_channels * expand_ratio)
+
+        self.main_layers = nn.Sequential(
+            ConvModule(
+                in_channels,
+                mid_channels,
+                1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg),
+            ConvModule(
+                mid_channels,
+                mid_channels,
+                3,
+                padding=1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg),
+            ConvModule(
+                mid_channels,
+                mid_channels,
+                1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg),
+        )
+
+        self.kernel_sizes = kernel_sizes
+        if isinstance(kernel_sizes, int):
+            self.poolings = nn.MaxPool2d(
+                kernel_size=kernel_sizes, stride=1, padding=kernel_sizes // 2)
+        else:
+            self.poolings = nn.ModuleList([
+                nn.MaxPool2d(kernel_size=ks, stride=1, padding=ks // 2)
+                for ks in kernel_sizes
+            ])
+
+        self.fuse_layers = nn.Sequential(
+            ConvModule(
+                4 * mid_channels,
+                mid_channels,
+                1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg),
+            ConvModule(
+                mid_channels,
+                mid_channels,
+                3,
+                padding=1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg))
+
+        self.short_layers = ConvModule(
+            in_channels,
+            mid_channels,
+            1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+        self.final_conv = ConvModule(
+            2 * mid_channels,
+            out_channels,
+            1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+    def forward(self, x) -> Tensor:
+        """Forward process
+        Args:
+            x (Tensor): The input tensor.
+        """
+        x1 = self.main_layers(x)
+        if isinstance(self.kernel_sizes, int):
+            y1 = self.poolings(x1)
+            y2 = self.poolings(y1)
+            x1 = self.fuse_layers(
+                torch.cat([x1] + [y1, y2, self.poolings(y2)], 1))
+        else:
+            x1 = self.fuse_layers(
+                torch.cat([x1] + [m(x1) for m in self.poolings], 1))
+        x2 = self.short_layers(x)
+        return self.final_conv(torch.cat((x1, x2), dim=1))

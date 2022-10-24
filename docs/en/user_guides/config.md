@@ -4,11 +4,11 @@ MMYOLO and other OpenMMLab repositories use [MMEngine's config system](https://m
 
 ## Config file content
 
-MMYOLO uses a modular design, all modules with different functions can be configured through the config. Taking [YOLOv5-s](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py) as an example, we will introduce each field in the config according to different function modules:
+MMYOLO uses a modular design, all modules with different functions can be configured through the config. Taking [yolov5_s-v61_syncbn_8xb16-300e_coco.py](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) as an example, we will introduce each field in the config according to different function modules:
 
 ### Important parameters
 
-When changing the training configuration, it is frequently necessary to modify the following parameters. For example, the scaling factors `deepen_factor` and `widen_factor`, are used by the network in MMYOLO to control the size of the model. So we recommend defining these parameters separately in the configuration file.
+When changing the training configuration, it is usually necessary to modify the following parameters. For example, the scaling factors `deepen_factor` and `widen_factor` are used by the network to control the size of the model in MMYOLO. So we recommend defining these parameters separately in the configuration file.
 
 ```python
 img_scale = (640, 640)            # height of image, width of image
@@ -55,7 +55,7 @@ model = dict(
         norm_cfg=dict(type='BN', momentum=0.03, eps=0.001), # The config of normalization layers.
         act_cfg=dict(type='SiLU', inplace=True)), # The config of activation function
     bbox_head=dict(
-        type='YOLOv5Head', # THe type of BBox head is 'YOLOv5Head', we also support 'YOLOv6Head', 'YOLOXHead'
+        type='YOLOv5Head', # The type of BBox head is 'YOLOv5Head', we also support 'YOLOv6Head', 'YOLOXHead'
         head_module=dict(
             type='YOLOv5HeadModule', # The type of Head module is 'YOLOv5HeadModule', we also support 'YOLOv6HeadModule', 'YOLOXHeadModule'
             num_classes=80, # Number of classes for classification
@@ -69,7 +69,7 @@ model = dict(
             strides=strides), # The strides of the anchor generator. This is consistent with the FPN feature strides. The strides will be taken as base_sizes if base_sizes is not set.
     ),
     test_cfg=dict(
-        multi_label=True, # The config of multi-label for multi-clas prediction. THe default setting is True.
+        multi_label=True, # The config of multi-label for multi-clas prediction. The default setting is True.
         nms_pre=30000,  # The number of boxes before NMS
         score_thr=0.001, # Threshold to filter out boxes.
         nms=dict(type='nms', # Type of NMS
@@ -79,7 +79,7 @@ model = dict(
 
 ### Dataset and evaluator config
 
-[Dataloaders](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader) are required for the training, validation, and testing of the [runner](https://mmengine.readthedocs.io/en/latest/tutorials/runner.html). Dataset and data pipeline need to be set to build the dataloader. Due to the complexity of this part, we use intermediate variables to simplify the writing of dataloader configs. More complex data augmentation methods are adopted in lightweight object detection in MMYOLO. Therefore, MMYOLO has a wider range of dataset configurations than other models in MMDetection.
+[Dataloaders](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader) are required for the training, validation, and testing of the [runner](https://mmengine.readthedocs.io/en/latest/tutorials/runner.html). Dataset and data pipeline need to be set to build the dataloader. Due to the complexity of this part, we use intermediate variables to simplify the writing of dataloader configs. More complex data augmentation methods are adopted for the lightweight object detection algorithms in MMYOLO. Therefore, MMYOLO has a wider range of dataset configurations than other models in MMDetection.
 
 The training and testing data flow of YOLOv5 have a certain difference. We will introduce them separately here.
 
@@ -151,7 +151,7 @@ train_dataloader = dict( # Train dataloader config
         pipeline=train_pipeline))
 ```
 
-In the testing phase of YOLOv5, the `Letter Resize` method resizes all the test images to the same scale, which preserves the aspect ratio of all testing images. Therefore, the validation and testing phases share the same data pipeline.
+In the testing phase of YOLOv5, the [Letter Resize](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/datasets/transforms/transforms.py#L116) method resizes all the test images to the same scale, which preserves the aspect ratio of all testing images. Therefore, the validation and testing phases share the same data pipeline.
 
 ```python
 test_pipeline = [ # Validation/ Testing dataloader config
@@ -210,7 +210,7 @@ val_evaluator = dict(  # Validation evaluator config
 test_evaluator = val_evaluator  # Testing evaluator config
 ```
 
-Since the test dataset has no annotation files, the test_dataloader and test_evaluator config in MMYOLO are generally equal to the val's. If you want to save the detection results on the test dataset, you can write the config like this:
+Since the test dataset has no annotation files, the test_dataloader and test_evaluator config in MMYOLO are generally the same as the val's. If you want to save the detection results on the test dataset, you can write the config like this:
 
 ```python
 # inference on test dataset and
@@ -270,7 +270,7 @@ test_cfg = dict(type='TestLoop')  # The testing loop type
 
 ### Optimization config
 
-`optim_wrapper` is the field to configure optimization-related settings. The optimizer wrapper not only provides the functions of the optimizer, but also supports functions such as gradient clipping, mixed precision training, etc. Find more in [optimizer wrapper tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/optimizer.html).
+`optim_wrapper` is the field to configure optimization-related settings. The optimizer wrapper not only provides the functions of the optimizer but also supports functions such as gradient clipping, mixed precision training, etc. Find out more in the [optimizer wrapper tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/optimizer.html).
 
 ```python
 optim_wrapper = dict(  # Optimizer wrapper config
@@ -286,7 +286,7 @@ optim_wrapper = dict(  # Optimizer wrapper config
     constructor='YOLOv5OptimizerConstructor') # The constructor for YOLOv5 optimizer
 ```
 
-`param_scheduler` is a field that configures methods of adjusting optimization hyperparameters such as learning rate and momentum. Users can combine multiple schedulers to create a desired parameter adjustment strategy. Find more in [parameter scheduler tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/param_scheduler.html). In MMYOLO, no parameter optimizer is introduced.
+`param_scheduler` is the field that configures methods of adjusting optimization hyperparameters such as learning rate and momentum. Users can combine multiple schedulers to create a desired parameter adjustment strategy. Find more in the [parameter scheduler tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/param_scheduler.html). In YOLOv5, parameter scheduling is complex to implement and difficult to implement with `param_scheduler`. So we use `YOLOv5ParamSchedulerHook` to implement it (see next section), which is simpler but less versatile.
 
 ```python
 param_scheduler = None
@@ -296,7 +296,7 @@ param_scheduler = None
 
 Users can attach hooks to training, validation, and testing loops to insert some operations during running. There are two different hook fields, one is `default_hooks` and the other is `custom_hooks`.
 
-`default_hooks` is a dict of hook configs. `default_hooks` are the hooks that must required at runtime. They have default priority which should not be modified. If not set, runner will use the default values. To disable a default hook, users can set its config to `None`.
+`default_hooks` is a dict of hook configs for the hooks that must be required at the runtime. They have default priority which should not be modified. If not set, the runner will use the default values. To disable a default hook, users can set its config to `None`.
 
 ```python
 default_hooks = dict(
@@ -311,7 +311,7 @@ default_hooks = dict(
         max_keep_ckpts=3)) # The maximum checkpoints to keep.
 ```
 
-`custom_hooks` is a list of hook configs. Users can develop their own hooks and insert them in this field.
+`custom_hooks` is a list of hook configs. Users can develop their hooks and insert them in this field.
 
 ```python
 custom_hooks = [
@@ -354,14 +354,14 @@ resume = False  # Whether to resume from the checkpoint defined in `load_from`. 
 
 `config/_base_` contains default runtime. The configs that are composed of components from `_base_` are called _primitive_.
 
-For all configs under the same folder, it is recommended to have only **one** _primitive_ config. All other configs should inherit from the _primitive_ config. In this way, the maximum of inheritance level is 3.
+For all configs under the same folder, it is recommended to have only **one** _primitive_ config. All other configs should be inherited  from the _primitive_ config. In this way, the maximum inheritance level is 3.
 
 For easy understanding, we recommend contributors inherit from existing methods.
 For example, if some modification is made based on YOLOv5-s, such as modifying the depth of the network, users may first inherit the `_base_ = ./yolov5_s-v61_syncbn_8xb16-300e_coco.py `, then modify the necessary fields in the config files.
 
 If you are building an entirely new method that does not share the structure with any of the existing methods, you may create a folder `yolov100` under `configs`,
 
-Please refer to [mmengine config tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/config.html) for detailed documentation.
+Please refer to the [mmengine config tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/config.html) for more details.
 
 By setting the `_base_` field, we can set which files the current configuration file inherits from.
 
@@ -385,28 +385,31 @@ If you wish to inspect the config file, you may run `mim run mmdet print_config 
 ### Ignore some fields in the base configs
 
 Sometimes, you may set `_delete_=True` to ignore some of the fields in base configs.
-You may refer to [mmengine config tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/config.html) for simple illustration.
+You may refer to the [mmengine config tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/config.html) for a simple illustration.
 
-In MMYOLO, for example, to change the backbone of YOLOv5 with the following config.
+In MMYOLO, for example, to change the backbone of RTMDet with the following config.
 
 ```python
 model = dict(
     type='YOLODetector',
     data_preprocessor=dict(...),
     backbone=dict(
-        type='YOLOv5CSPDarknet',
+        type='CSPNeXt',
+        arch='P5',
+        expand_ratio=0.5,
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+        channel_attention=True,
+        norm_cfg=dict(type='BN'),
         act_cfg=dict(type='SiLU', inplace=True)),
     neck=dict(...),
     bbox_head=dict(...))
 ```
 
-The `_delete_=True` would replace all old keys in `backbone` field with new keys. For example, `YOLOv5` uses `YOLOv5CSPDarknet`, it is necessary to replace the backbone to `YOLOv6EfficientRep`. Since `YOLOv5CSPDarknet` and `YOLOv6EfficientRep` have different fields, you need to use `_delete_=True` to replace all old keys in the `backbone` field.
+If you want to change `CSPNeXt` to `YOLOv6EfficientRep` for the RTMDet backbone, because there are different fields (`channel_attention` and `expand_ratio`) in `CSPNeXt` and `YOLOv6EfficientRep`, you need to use `_delete_=True` to replace all the old keys in the `backbone` field with the new keys.
 
 ```python
-_base_ = '../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+_base_ = '../rtmdet/rtmdet_l_syncbn_8xb32-300e_coco.py'
 model = dict(
     backbone=dict(
         _delete_=True,
@@ -421,10 +424,10 @@ model = dict(
 
 ### Use intermediate variables in configs
 
-Some intermediate variables are used in the configs files, like `train_pipeline`/`test_pipeline` in datasets. It's worth noting that when modifying intermediate variables in the children configs, user need to pass the intermediate variables into corresponding fields again.
-For example, we would like to change the `image_scale` during training and add `YOLOv5MixUp` data augmentation, `img_scale/train_pipeline/test_pipeline` are intermediate variable we would like modify.
+Some intermediate variables are used in the configs files, like `train_pipeline` and `test_pipeline` in datasets. It's worth noting that when modifying intermediate variables in the children configs, users need to pass the intermediate variables into corresponding fields again.
+For example, we would like to change the `image_scale` during training and add `YOLOv5MixUp` data augmentation, `img_scale/train_pipeline/test_pipeline` are intermediate variables we would like to modify.
 
-**Notice**: `YOLOv5MixUp` requires adding the `pre_transform` and `mosaic_affine_pipeline` to its own `pre_transform` field. Please refer to [The description of YOLOv5 algorithm and its implementation](../algorithm_descriptions/yolov5_description.md) for detailed process and diagrams.
+**Notice**: `YOLOv5MixUp` requires adding the `pre_transform` and `mosaic_affine_pipeline` to its `train_pipeline` field. Please refer to [The description of YOLOv5 algorithm and its implementation](../algorithm_descriptions/yolov5_description.md) for detailed processes and diagrams.
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -494,9 +497,9 @@ val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 ```
 
-Firstly, we define new `train_pipeline`/`test_pipeline` and pass them to `data`.
+We first define a new `train_pipeline`/`test_pipeline` and pass it into `data`.
 
-Similarly, we need to change every `norm_cfg` to switch `SyncBN` normalization to `BN` and `MMSyncBN`.
+Likewise, if we want to switch from `SyncBN` to `BN` or `MMSyncBN`, we need to modify every `norm_cfg` in the configuration file.
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -509,7 +512,7 @@ model = dict(
 
 ### Reuse variables in \_base\_ file
 
-If the users want to reuse the variables in the base file, they can get a copy of the corresponding variable by using `{{_base_.xxx}}`. The latest version of MMEngine also support reusing variables without `{{}}` usage.
+If the users want to reuse the variables in the base file, they can get a copy of the corresponding variable by using `{{_base_.xxx}}`. The latest version of MMEngine also supports reusing variables without `{{}}` usage.
 
 E.g:
 
@@ -531,13 +534,11 @@ When submitting jobs using `tools/train.py` or `tools/test.py`, you may specify 
 
 - Update keys inside a list of configs.
 
-  Some config dicts are composed as a list in your config. For example, the training pipeline `train_dataloader.dataset.pipeline` is normally a list
-  e.g. `[dict(type='LoadImageFromFile'), ...]`. If you want to change `'LoadImageFromFile'` to `'LoadImageFromNDArray'` in the pipeline,  you may specify `--cfg-options data.train.pipeline.0.type=LoadImageFromNDArray`.
+  Some config dicts are composed as a list in your config. For example, the training pipeline `train_dataloader.dataset.pipeline` is normally a list, e.g. `[dict(type='LoadImageFromFile'), ...]`. If you want to change `'LoadImageFromFile'` to `'LoadImageFromNDArray'` in the pipeline, you may specify `--cfg-options data.train.pipeline.0.type=LoadImageFromNDArray`.
 
 - Update values of list/tuples.
 
-  If the value to be updated is a list or a tuple. For example, the config file normally sets `model.data_preprocessor.mean=[123.675, 116.28, 103.53]`. If you want to change the mean values, you may specify `--cfg-options model.data_preprocessor.mean="[127,127,127]"`. Note that the quotation mark `"` is necessary to
-  support list/tuple data types, and that **NO** white space is allowed inside the quotation marks in the specified value.
+  Sometimes the value to update is a list or a tuple, for example, the config file normally sets `model.data_preprocessor.mean=[123.675, 116.28, 103.53]`. If you want to change the mean values, you may specify `--cfg-options model.data_preprocessor.mean="[127,127,127]"`. Note that the quotation mark `"` is necessary to support list/tuple data types, and that **NO** white space is allowed inside the quotation marks in the specified value.
 
 ## Config name style
 
@@ -547,16 +548,16 @@ We follow the below style to name config files. Contributors are advised to foll
 {algorithm name}_{model component names [component1]_[component2]_[...]}-[version id]_[norm setting]_[data preprocessor type]_{training settings}_{training dataset information}_{testing dataset information}.py
 ```
 
-The file name is divided into 8 name fields, which has 4 required parts and 4 optional parts. All parts and components are connected with `_` and words of each part or component should be connected with `-`. `{}` indicates the required name field, `[]` indicates the optional name field.
+The file name is divided into 8 name fields, which have 4 required parts and 4 optional parts. All parts and components are connected with `_` and words of each part or component should be connected with `-`. `{}` indicates the required name field, and `[]` indicates the optional name field.
 
-- `{algorithm name}`: The name of the algorithm. It can be a detector name such as `yolov5`, `yolov6`, `yolox` etc.
+- `{algorithm name}`: The name of the algorithm. It can be a detector name such as `yolov5`, `yolov6`, `yolox`, etc.
 - `{component names}`:  Names of the components used in the algorithm such as backbone, neck, etc. For example, `yolov5_s` means its `deepen_factor` is `0.33` and its `widen_factor` is `0.5`.
-- `[version_id]` (optional): Since the evolution of YOLO series is much faster than traditional object detection algorithms, `version id` is used to distinguish the differences between different sub-versions. E.g, YOLOv5-3.0 uses the `Focus` layer as the stem layer, and YOLOv5-6.0 uses the `Conv` layer as the stem layer.
+- `[version_id]` (optional): Since the evolution of the YOLO series is much faster than traditional object detection algorithms, `version id` is used to distinguish the differences between different sub-versions. E.g, YOLOv5-3.0 uses the `Focus` layer as the stem layer, and YOLOv5-6.0 uses the `Conv` layer as the stem layer.
 - `[norm_setting]` (optional): `bn` indicates `Batch Normalization`, `syncbn` indicates `Synchronized Batch Normalization`。
-- `[data preprocessor type]` (optional): `fast` incorporates `YOLOv5DetDataPreprocessor` and `yolov5_collate` to preprocess data. The training speed is faster than default `mmdet.DetDataPreprocessor`, while results in extending tge overall pipeline to multi-task learning.
-- `{training settings}`: Information of training settings such as batch size, augmentations, loss trick, scheduler, and epochs/iterations. For example: `8xb16-300e_coco` means using 8-gpus x 16-images-per-gpu, and train 300 epochs.
+- `[data preprocessor type]` (optional): `fast` incorporates  [YOLOv5DetDataPreprocessor](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/data_preprocessors/data_preprocessor.py#L9)  and [yolov5_collate](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/datasets/utils.py#L12) to preprocess data. The training speed is faster than the default `mmdet.DetDataPreprocessor`, while results in extending the overall pipeline to multi-task learning.
+- `{training settings}`: Information of training settings such as batch size, augmentations, loss trick, scheduler, and epochs/iterations. For example: `8xb16-300e_coco` means using 8-GPUs x 16-images-per-GPU, and train 300 epochs.
   Some abbreviations:
-  - `{gpu x batch_per_gpu}`:  GPUs and samples per GPU. `bN` indicates N batch size per GPU. E.g. `4xb4` is the short term of 4-gpus x 4-images-per-gpu. And `8xb2` is used by default if not mentioned.
+  - `{gpu x batch_per_gpu}`:  GPUs and samples per GPU.  For example, `4xb4` is the short term of 4-GPUs x 4-images-per-GPU.
   - `{schedule}`: training schedule, default option in MMYOLO is 300 epochs.
-- `{training dataset information}`: Training dataset names like `coco`, `cityscapes`, `voc-0712`, `wider-face`, `balloon`.
+- `{training dataset information}`: Training dataset names like `coco`, `cityscapes`, `voc-0712`, `wider-face`, and `balloon`.
 - `[testing dataset information]` (optional): Testing dataset name for models trained on one dataset but tested on another. If not mentioned, it means the model was trained and tested on the same dataset type.

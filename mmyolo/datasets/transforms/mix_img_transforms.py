@@ -2,7 +2,7 @@
 import collections
 import copy
 from abc import ABCMeta, abstractmethod
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import mmcv
 import numpy as np
@@ -21,10 +21,21 @@ class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
     Suitable for training on multiple images mixed data augmentation like
     mosaic and mixup.
 
+    Cached mosaic transform will random select images from the cache
+    and combine them into one output image if use_cached is True.
+
     Args:
         pre_transform(Sequence[str]): Sequence of transform object or
-            config dict to be composed.
+            config dict to be composed. Defaults to None.
         prob(float): The transformation probability. Defaults to 1.0.
+        use_cached (bool): Whether to use cache. Defaults to False.
+        max_cached_images (int): The maximum length of the cache. The larger
+            the cache, the stronger the randomness of this transform. As a
+            rule of thumb, providing 10 caches for each image suffices for
+            randomness. Defaults to 40.
+        random_pop (bool): Whether to randomly pop a result from the cache
+            when the cache is full. If set to False, use FIFO popping method.
+            Defaults to True.
         max_refetch (int): The maximum number of retry iterations for getting
             valid results from the pipeline. If the number of iterations is
             greater than `max_refetch`, but results is still None, then the
@@ -34,26 +45,31 @@ class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
     def __init__(self,
                  pre_transform: Optional[Sequence[str]] = None,
                  prob: float = 1.0,
+                 use_cached: bool = False,
+                 max_cached_images: int = 40,
+                 random_pop: bool = True,
                  max_refetch: int = 15):
 
         self.max_refetch = max_refetch
         self.prob = prob
 
+        self.use_cached = use_cached
+        self.max_cached_images = max_cached_images
+        self.random_pop = random_pop
+        self.results_cache = []
+
         if pre_transform is None:
             self.pre_transform = None
         else:
-            _transforms = []
-            for transform in pre_transform:
-                if isinstance(transform, dict):
-                    _transforms.append(TRANSFORMS.build(transform))
-            self.pre_transform = Compose(_transforms)
+            self.pre_transform = Compose(pre_transform)
 
     @abstractmethod
-    def get_indexes(self, dataset: BaseDataset) -> Union[list, int]:
+    def get_indexes(self, dataset: Union[BaseDataset,
+                                         list]) -> Union[list, int]:
         """Call function to collect indexes.
 
         Args:
-            dataset (:obj:`Dataset`): The dataset.
+            dataset (:obj:`Dataset` or list): The dataset or cached list.
 
         Returns:
             list or int: indexes.
@@ -72,6 +88,7 @@ class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
         """
         pass
 
+    @autocast_box_type()
     def transform(self, results: dict) -> dict:
         """Data augmentation function.
 
@@ -94,23 +111,46 @@ class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
         if random.uniform(0, 1) > self.prob:
             return results
 
-        assert 'dataset' in results
+        if self.use_cached:
+            # Be careful: deep copying can be very time-consuming
+            # if results includes dataset.
+            dataset = results.pop('dataset', None)
+            self.results_cache.append(copy.deepcopy(results))
+            if len(self.results_cache) > self.max_cached_images:
+                if self.random_pop:
+                    index = random.randint(0, len(self.results_cache) - 1)
+                else:
+                    index = 0
+                self.results_cache.pop(index)
 
-        # Be careful: deep copying can be very time-consuming
-        # if results includes dataset.
-        dataset = results.pop('dataset')
+            if len(self.results_cache) <= 4:
+                return results
+        else:
+            assert 'dataset' in results
+            # Be careful: deep copying can be very time-consuming
+            # if results includes dataset.
+            dataset = results.pop('dataset', None)
 
         for _ in range(self.max_refetch):
             # get index of one or three other images
-            indexes = self.get_indexes(dataset)
+            if self.use_cached:
+                indexes = self.get_indexes(self.results_cache)
+            else:
+                indexes = self.get_indexes(dataset)
+
             if not isinstance(indexes, collections.abc.Sequence):
                 indexes = [indexes]
 
-            # get images information will be used for Mosaic or MixUp
-            mix_results = [
-                copy.deepcopy(dataset.get_data_info(index))
-                for index in indexes
-            ]
+            if self.use_cached:
+                mix_results = [
+                    copy.deepcopy(self.results_cache[i]) for i in indexes
+                ]
+            else:
+                # get images information will be used for Mosaic or MixUp
+                mix_results = [
+                    copy.deepcopy(dataset.get_data_info(index))
+                    for index in indexes
+                ]
 
             if self.pre_transform is not None:
                 for i, data in enumerate(mix_results):
@@ -207,6 +247,14 @@ class Mosaic(BaseMixImageTransform):
             config dict to be composed.
         prob (float): Probability of applying this transformation.
             Defaults to 1.0.
+        use_cached (bool): Whether to use cache. Defaults to False.
+        max_cached_images (int): The maximum length of the cache. The larger
+            the cache, the stronger the randomness of this transform. As a
+            rule of thumb, providing 10 caches for each image suffices for
+            randomness. Defaults to 40.
+        random_pop (bool): Whether to randomly pop a result from the cache
+            when the cache is full. If set to False, use FIFO popping method.
+            Defaults to True.
         max_refetch (int): The maximum number of retry iterations for getting
             valid results from the pipeline. If the number of iterations is
             greater than `max_refetch`, but results is still None, then the
@@ -220,23 +268,35 @@ class Mosaic(BaseMixImageTransform):
                  pad_val: float = 114.0,
                  pre_transform: Sequence[dict] = None,
                  prob: float = 1.0,
+                 use_cached: bool = False,
+                 max_cached_images: int = 40,
+                 random_pop: bool = True,
                  max_refetch: int = 15):
         assert isinstance(img_scale, tuple)
         assert 0 <= prob <= 1.0, 'The probability should be in range [0,1]. ' \
                                  f'got {prob}.'
+        if use_cached:
+            assert max_cached_images >= 4, 'The length of cache must >= 4, ' \
+                                           f'but got {max_cached_images}.'
+
         super().__init__(
-            pre_transform=pre_transform, prob=prob, max_refetch=max_refetch)
+            pre_transform=pre_transform,
+            prob=prob,
+            use_cached=use_cached,
+            max_cached_images=max_cached_images,
+            random_pop=random_pop,
+            max_refetch=max_refetch)
 
         self.img_scale = img_scale
         self.center_ratio_range = center_ratio_range
         self.bbox_clip_border = bbox_clip_border
         self.pad_val = pad_val
 
-    def get_indexes(self, dataset: BaseDataset) -> List[np.ndarray]:
+    def get_indexes(self, dataset: Union[BaseDataset, list]) -> list:
         """Call function to collect indexes.
 
         Args:
-            dataset (:obj:`Dataset`): The dataset.
+            dataset (:obj:`Dataset` or list): The dataset or cached list.
 
         Returns:
             list: indexes.
@@ -244,7 +304,6 @@ class Mosaic(BaseMixImageTransform):
         indexes = [random.randint(0, len(dataset)) for _ in range(3)]
         return indexes
 
-    @autocast_box_type()
     def mix_img_transform(self, results: dict) -> dict:
         """Mixed image data transformation.
 
@@ -446,6 +505,14 @@ class YOLOv5MixUp(BaseMixImageTransform):
             config dict to be composed.
         prob (float): Probability of applying this transformation.
             Defaults to 1.0.
+        use_cached (bool): Whether to use cache. Defaults to False.
+        max_cached_images (int): The maximum length of the cache. The larger
+            the cache, the stronger the randomness of this transform. As a
+            rule of thumb, providing 10 caches for each image suffices for
+            randomness. Defaults to 20.
+        random_pop (bool): Whether to randomly pop a result from the cache
+            when the cache is full. If set to False, use FIFO popping method.
+            Defaults to True.
         max_refetch (int): The maximum number of iterations. If the number of
             iterations is greater than `max_iters`, but gt_bbox is still
             empty, then the iteration is terminated. Defaults to 15.
@@ -456,24 +523,34 @@ class YOLOv5MixUp(BaseMixImageTransform):
                  beta: float = 32.0,
                  pre_transform: Sequence[dict] = None,
                  prob: float = 1.0,
+                 use_cached: bool = False,
+                 max_cached_images: int = 20,
+                 random_pop: bool = True,
                  max_refetch: int = 15):
+        if use_cached:
+            assert max_cached_images >= 2, 'The length of cache must >= 2, ' \
+                                           f'but got {max_cached_images}.'
         super().__init__(
-            pre_transform=pre_transform, prob=prob, max_refetch=max_refetch)
+            pre_transform=pre_transform,
+            prob=prob,
+            use_cached=use_cached,
+            max_cached_images=max_cached_images,
+            random_pop=random_pop,
+            max_refetch=max_refetch)
         self.alpha = alpha
         self.beta = beta
 
-    def get_indexes(self, dataset: BaseDataset) -> int:
+    def get_indexes(self, dataset: Union[BaseDataset, list]) -> int:
         """Call function to collect indexes.
 
         Args:
-            dataset (:obj:`Dataset`): The dataset.
+            dataset (:obj:`Dataset` or list): The dataset or cached list.
 
         Returns:
             int: indexes.
         """
         return random.randint(0, len(dataset))
 
-    @autocast_box_type()
     def mix_img_transform(self, results: dict) -> dict:
         """YOLOv5 MixUp transform function.
 
@@ -576,6 +653,14 @@ class YOLOXMixUp(BaseMixImageTransform):
             config dict to be composed.
         prob (float): Probability of applying this transformation.
             Defaults to 1.0.
+        use_cached (bool): Whether to use cache. Defaults to False.
+        max_cached_images (int): The maximum length of the cache. The larger
+            the cache, the stronger the randomness of this transform. As a
+            rule of thumb, providing 10 caches for each image suffices for
+            randomness. Defaults to 20.
+        random_pop (bool): Whether to randomly pop a result from the cache
+            when the cache is full. If set to False, use FIFO popping method.
+            Defaults to True.
         max_refetch (int): The maximum number of iterations. If the number of
             iterations is greater than `max_iters`, but gt_bbox is still
             empty, then the iteration is terminated. Defaults to 15.
@@ -589,28 +674,38 @@ class YOLOXMixUp(BaseMixImageTransform):
                  bbox_clip_border: bool = True,
                  pre_transform: Sequence[dict] = None,
                  prob: float = 1.0,
+                 use_cached: bool = False,
+                 max_cached_images: int = 20,
+                 random_pop: bool = True,
                  max_refetch: int = 15):
         assert isinstance(img_scale, tuple)
+        if use_cached:
+            assert max_cached_images >= 2, 'The length of cache must >= 2, ' \
+                                           f'but got {max_cached_images}.'
         super().__init__(
-            pre_transform=pre_transform, prob=prob, max_refetch=max_refetch)
+            pre_transform=pre_transform,
+            prob=prob,
+            use_cached=use_cached,
+            max_cached_images=max_cached_images,
+            random_pop=random_pop,
+            max_refetch=max_refetch)
         self.img_scale = img_scale
         self.ratio_range = ratio_range
         self.flip_ratio = flip_ratio
         self.pad_val = pad_val
         self.bbox_clip_border = bbox_clip_border
 
-    def get_indexes(self, dataset: BaseDataset) -> int:
+    def get_indexes(self, dataset: Union[BaseDataset, list]) -> int:
         """Call function to collect indexes.
 
         Args:
-            dataset (:obj:`Dataset`): The dataset.
+            dataset (:obj:`Dataset` or list): The dataset or cached list.
 
         Returns:
             int: indexes.
         """
         return random.randint(0, len(dataset))
 
-    @autocast_box_type()
     def mix_img_transform(self, results: dict) -> dict:
         """YOLOX MixUp transform function.
 

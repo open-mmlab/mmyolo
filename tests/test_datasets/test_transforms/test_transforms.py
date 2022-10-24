@@ -75,11 +75,50 @@ class TestLetterResize(unittest.TestCase):
         # Test stretch_only
         transform = LetterResize(scale=(640, 640), stretch_only=True)
         results = transform(copy.deepcopy(self.data_info1))
-        self.assertEqual(results['img_shape'], (460, 613, 3))
+        self.assertEqual(results['img_shape'], (460, 672, 3))
         self.assertTrue((results['gt_bboxes'] == np.array(
             [[0., 0., 230., 251.99998474121094]])).all())
         self.assertTrue((results['batch_shape'] == np.array([460, 672])).all())
         self.assertTrue((results['pad_param'] == np.array([0, 0, 0, 0])).all())
+
+        # Test
+        transform = LetterResize(scale=(640, 640), pad_val=dict(img=144))
+        rng = np.random.RandomState(0)
+        for _ in range(5):
+            input_h, input_w = np.random.randint(100, 700), np.random.randint(
+                100, 700)
+            output_h, output_w = np.random.randint(100,
+                                                   700), np.random.randint(
+                                                       100, 700)
+            data_info = dict(
+                img=np.random.random((input_h, input_w, 3)),
+                gt_bboxes=np.array([[0, 0, 10, 10]], dtype=np.float32),
+                batch_shape=np.array([output_h, output_w], dtype=np.int64),
+                gt_masks=BitmapMasks(
+                    rng.rand(1, input_h, input_w),
+                    height=input_h,
+                    width=input_w))
+            results = transform(data_info)
+            self.assertEqual(results['img_shape'], (output_h, output_w, 3))
+            self.assertTrue(
+                (results['batch_shape'] == np.array([output_h,
+                                                     output_w])).all())
+
+        # Test without batchshape
+        transform = LetterResize(scale=(640, 640), pad_val=dict(img=144))
+        rng = np.random.RandomState(0)
+        for _ in range(5):
+            input_h, input_w = np.random.randint(100, 700), np.random.randint(
+                100, 700)
+            data_info = dict(
+                img=np.random.random((input_h, input_w, 3)),
+                gt_bboxes=np.array([[0, 0, 10, 10]], dtype=np.float32),
+                gt_masks=BitmapMasks(
+                    rng.rand(1, input_h, input_w),
+                    height=input_h,
+                    width=input_w))
+            results = transform(data_info)
+            self.assertEqual(results['img_shape'], (640, 640, 3))
 
 
 class TestYOLOv5KeepRatioResize(unittest.TestCase):
@@ -98,7 +137,6 @@ class TestYOLOv5KeepRatioResize(unittest.TestCase):
         self.data_info2 = dict(img=np.random.random((300, 400, 3)))
 
     def test_yolov5_keep_ratio_resize(self):
-
         # test assertion for invalid keep_ratio
         with self.assertRaises(AssertionError):
             transform = YOLOv5KeepRatioResize(scale=(640, 640))
@@ -192,6 +230,13 @@ class TestLoadAnnotations(unittest.TestCase):
             (results['gt_ignore_flags'] == np.array([False, False])).all())
         self.assertEqual(results['gt_ignore_flags'].dtype, bool)
 
+        # test empty instance
+        results = transform({})
+        self.assertIn('gt_bboxes', results)
+        self.assertTrue(results['gt_bboxes'].shape == (0, 4))
+        self.assertIn('gt_ignore_flags', results)
+        self.assertTrue(results['gt_ignore_flags'].shape == (0, ))
+
     def test_load_labels(self):
         transform = LoadAnnotations(
             with_bbox=False,
@@ -204,6 +249,11 @@ class TestLoadAnnotations(unittest.TestCase):
         self.assertTrue((results['gt_bboxes_labels'] == np.array([1,
                                                                   2])).all())
         self.assertEqual(results['gt_bboxes_labels'].dtype, np.int64)
+
+        # test empty instance
+        results = transform({})
+        self.assertIn('gt_bboxes_labels', results)
+        self.assertTrue(results['gt_bboxes_labels'].shape == (0, ))
 
 
 class TestYOLOv5RandomAffine(unittest.TestCase):

@@ -20,14 +20,14 @@
 
 [![PyPI](https://img.shields.io/pypi/v/mmyolo)](https://pypi.org/project/mmyolo)
 [![docs](https://img.shields.io/badge/docs-latest-blue)](https://mmyolo.readthedocs.io/en/latest/)
-[![badge](https://github.com/open-mmlab/mmyolo/workflows/build/badge.svg)](https://github.com/open-mmlab/mmyolo/actions)
+[![deploy](https://github.com/open-mmlab/mmyolo/workflows/deploy/badge.svg)](https://github.com/open-mmlab/mmyolo/actions)
 [![codecov](https://codecov.io/gh/open-mmlab/mmyolo/branch/master/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmyolo)
 [![license](https://img.shields.io/github/license/open-mmlab/mmyolo.svg)](https://github.com/open-mmlab/mmyolo/blob/master/LICENSE)
 [![open issues](https://isitmaintained.com/badge/open/open-mmlab/mmyolo.svg)](https://github.com/open-mmlab/mmyolo/issues)
 [![issue resolution](https://isitmaintained.com/badge/resolution/open-mmlab/mmyolo.svg)](https://github.com/open-mmlab/mmyolo/issues)
 
 [📘Documentation](https://mmyolo.readthedocs.io/en/latest/) |
-[🛠️Installation](https://mmyolo.readthedocs.io/en/latest/install.html) |
+[🛠️Installation](https://mmyolo.readthedocs.io/en/latest/get_started.html) |
 [👀Model Zoo](https://mmyolo.readthedocs.io/en/latest/model_zoo.html) |
 [🆕Update News](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html) |
 [🤔Reporting Issues](https://github.com/open-mmlab/mmyolo/issues/new/choose)
@@ -45,8 +45,6 @@ English | [简体中文](README_zh-CN.md)
 MMYOLO is an open source toolbox for YOLO series algorithms based on PyTorch and [MMDetection](https://github.com/open-mmlab/mmdetection). It is a part of the [OpenMMLab](https://openmmlab.com/) project.
 
 The master branch works with **PyTorch 1.6+**.
-
-<img src="https://user-images.githubusercontent.com/12907710/137271636-56ba1cd2-b110-4812-8221-b4c120320aa9.png"/>
 <img src="https://user-images.githubusercontent.com/45811724/190993591-bd3f1f11-1c30-4b93-b5f4-05c9ff64ff7f.gif"/>
 
 <details open>
@@ -71,12 +69,10 @@ The master branch works with **PyTorch 1.6+**.
 
 ## What's New
 
-**v0.1.0** was released on 21/9/2022:
+**v0.1.1** was released on 29/9/2022:
 
-- Unified component interfaces based on [OpenMMLab 2.0](https://github.com/open-mmlab) and [MMDetection 3.0](https://github.com/open-mmlab/mmdetection/tree/3.x)
-- Support YOLOv5/YOLOX training, support YOLOv6 inference. Deployment will be supported soon.
-- Refactored YOLOX from MMDetection to accelerate training and inference.
-- Detailed introduction and advanced tutorials are provided, see the [English tutorial](https://mmyolo.readthedocs.io/en/latest).
+- Support [RTMDet](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet).
+- Support for backbone customization plugins and update How-to documentation.
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
@@ -88,14 +84,15 @@ MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps
 conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
 conda activate open-mmlab
 pip install openmim
-mim install mmengine
-mim install "mmcv>=2.0.0rc1"
-mim install "mmdet>=3.0.0rc0"
-# for albumentations
-pip install -r requirements/albu.txt
+mim install "mmengine==0.1.0"
+mim install "mmcv>=2.0.0rc1,<2.1.0"
+mim install "mmdet>=3.0.0rc1,<3.1.0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
-mim install -e .
+# Install albumentations
+pip install -r requirements/albu.txt
+# Install MMYOLO
+mim install -v -e .
 ```
 
 ## Tutorial
@@ -125,7 +122,8 @@ For different parts from MMDetection, we have also prepared user guides and adva
 
 - Advanced Guides
 
-  - [How to](https://mmyolo.readthedocs.io/en/3.x/advanced_guides/index.html#how-to)
+  - [Data flow](docs/en/advanced_guides/data_flow.md)
+  - [How to](docs/en/advanced_guides/how_to.md)
 
 ## Overview of Benchmark and Model Zoo
 
@@ -136,6 +134,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 
 - [x] [YOLOv5](configs/yolov5)
 - [x] [YOLOX](configs/yolox)
+- [x] [RTMDet](configs/rtmdet)
 - [ ] [YOLOv6](configs/yolov6)(Inference only)
 
 </details>
@@ -166,6 +165,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         <li>YOLOv5CSPDarknet</li>
         <li>YOLOXCSPDarknet</li>
         <li>EfficientRep</li>
+        <li>CSPNeXt</li>
       </ul>
       </td>
       <td>
@@ -173,6 +173,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         <li>YOLOv5PAFPN</li>
         <li>YOLOv6RepPAFPN</li>
         <li>YOLOXPAFPN</li>
+        <li>CSPNeXtPAFPN</li>
       </ul>
       </td>
       <td>

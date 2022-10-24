@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Tuple
+from typing import List, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -20,6 +20,11 @@ class YOLOv5CSPDarknet(BaseBackbone):
     Args:
         arch (str): Architecture of CSP-Darknet, from {P5, P6}.
             Defaults to P5.
+        plugins (list[dict]): List of plugins for stages, each dict contains:
+
+            - cfg (dict, required): Cfg dict to build plugin.
+            - stages (tuple[bool], optional): Stages to apply plugin, length
+              should be same as 'num_stages'.
         deepen_factor (float): Depth multiplier, multiply number of
             blocks in CSP layer by this amount. Defaults to 1.0.
         widen_factor (float): Width multiplier, multiply number of
@@ -62,6 +67,7 @@ class YOLOv5CSPDarknet(BaseBackbone):
 
     def __init__(self,
                  arch: str = 'P5',
+                 plugins: Union[dict, List[dict]] = None,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  input_channels: int = 3,
@@ -78,6 +84,7 @@ class YOLOv5CSPDarknet(BaseBackbone):
             widen_factor,
             input_channels=input_channels,
             out_indices=out_indices,
+            plugins=plugins,
             frozen_stages=frozen_stages,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg,
@@ -151,6 +158,11 @@ class YOLOXCSPDarknet(BaseBackbone):
     Args:
         arch (str): Architecture of CSP-Darknet, from {P5, P6}.
             Defaults to P5.
+        plugins (list[dict]): List of plugins for stages, each dict contains:
+
+            - cfg (dict, required): Cfg dict to build plugin.
+            - stages (tuple[bool], optional): Stages to apply plugin, length
+              should be same as 'num_stages'.
         deepen_factor (float): Depth multiplier, multiply number of
             blocks in CSP layer by this amount. Defaults to 1.0.
         widen_factor (float): Width multiplier, multiply number of
@@ -194,6 +206,7 @@ class YOLOXCSPDarknet(BaseBackbone):
 
     def __init__(self,
                  arch: str = 'P5',
+                 plugins: Union[dict, List[dict]] = None,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  input_channels: int = 3,
@@ -207,8 +220,8 @@ class YOLOXCSPDarknet(BaseBackbone):
                  init_cfg: OptMultiConfig = None):
         self.spp_kernal_sizes = spp_kernal_sizes
         super().__init__(self.arch_settings[arch], deepen_factor, widen_factor,
-                         input_channels, out_indices, frozen_stages, norm_cfg,
-                         act_cfg, norm_eval, init_cfg)
+                         input_channels, out_indices, frozen_stages, plugins,
+                         norm_cfg, act_cfg, norm_eval, init_cfg)
 
     def build_stem_layer(self) -> nn.Module:
         """Build a stem layer."""

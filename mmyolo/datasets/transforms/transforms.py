@@ -167,13 +167,14 @@ class LetterResize(MMDET_Resize):
 
         # Use batch_shape if a batch_shape policy is configured
         if 'batch_shape' in results:
-            self.scale = tuple(results['batch_shape'])
+            scale = tuple(results['batch_shape'])
+        else:
+            scale = self.scale
 
         image_shape = image.shape[:2]  # height, width
 
         # Scale ratio (new / old)
-        ratio = min(self.scale[0] / image_shape[0],
-                    self.scale[1] / image_shape[1])
+        ratio = min(scale[0] / image_shape[0], scale[1] / image_shape[1])
 
         # only scale down, do not scale up (for better test mAP)
         if not self.allow_scale_up:
@@ -187,7 +188,7 @@ class LetterResize(MMDET_Resize):
 
         # padding height & width
         padding_h, padding_w = [
-            self.scale[0] - no_pad_shape[0], self.scale[1] - no_pad_shape[1]
+            scale[0] - no_pad_shape[0], scale[1] - no_pad_shape[1]
         ]
         if self.use_mini_pad:
             # minimum rectangle padding
@@ -196,20 +197,14 @@ class LetterResize(MMDET_Resize):
         elif self.stretch_only:
             # stretch to the specified size directly
             padding_h, padding_w = 0.0, 0.0
-            no_pad_shape = (self.scale[0], self.scale[1])
-            ratio = [
-                self.scale[0] / image_shape[0], self.scale[1] / image_shape[1]
-            ]  # height, width ratios
+            no_pad_shape = (scale[0], scale[1])
+            ratio = [scale[0] / image_shape[0],
+                     scale[1] / image_shape[1]]  # height, width ratios
 
-        # divide padding into 2 sides
-        padding_h /= 2
-        padding_w /= 2
-
-        if image_shape[::-1] != no_pad_shape:
+        if image_shape != no_pad_shape:
             # compare with no resize and padding size
-            image = mmcv.imrescale(
-                image,
-                no_pad_shape,
+            image = mmcv.imresize(
+                image, (no_pad_shape[1], no_pad_shape[0]),
                 interpolation=self.interpolation,
                 backend=self.backend)
 
@@ -221,10 +216,10 @@ class LetterResize(MMDET_Resize):
             results['scale_factor'] = scale_factor
 
         # padding
-        top_padding, bottom_padding = int(round(padding_h - 0.1)), int(
-            round(padding_h + 0.1))
-        left_padding, right_padding = int(round(padding_w - 0.1)), int(
-            round(padding_w + 0.1))
+        top_padding, left_padding = int(round(padding_h // 2 - 0.1)), int(
+            round(padding_w // 2 - 0.1))
+        bottom_padding = padding_h - top_padding
+        right_padding = padding_w - left_padding
 
         padding_list = [
             top_padding, bottom_padding, left_padding, right_padding
@@ -257,7 +252,8 @@ class LetterResize(MMDET_Resize):
             results['scale_factor'][0]
         gt_mask_width = results['gt_masks'].width * \
             results['scale_factor'][1]
-        gt_masks = results['gt_masks'].rescale((gt_mask_height, gt_mask_width))
+        gt_masks = results['gt_masks'].resize(
+            (int(round(gt_mask_height)), int(round(gt_mask_width))))
 
         # padding the gt_masks
         if len(gt_masks) == 0:
@@ -367,7 +363,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         """
         gt_bboxes = []
         gt_ignore_flags = []
-        for instance in results['instances']:
+        for instance in results.get('instances', []):
             if instance['ignore_flag'] == 0:
                 gt_bboxes.append(instance['bbox'])
                 gt_ignore_flags.append(instance['ignore_flag'])
@@ -392,7 +388,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
             dict: The dict contains loaded label annotations.
         """
         gt_bboxes_labels = []
-        for instance in results['instances']:
+        for instance in results.get('instances', []):
             if instance['ignore_flag'] == 0:
                 gt_bboxes_labels.append(instance['bbox_label'])
         results['gt_bboxes_labels'] = np.array(
