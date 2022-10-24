@@ -317,11 +317,11 @@ class YOLOv6Head(YOLOv5Head):
 
         batch_size = flatten_cls_preds.shape[0]
 
-        # targets
-        targets = self.preprocess(batch_gt_instances, batch_size)
+        # gt_info
+        gt_info = self.preprocess(batch_gt_instances, batch_size)
 
-        gt_labels = targets[:, :, :1]
-        gt_bboxes = targets[:, :, 1:]  # xyxy
+        gt_labels = gt_info[:, :, :1]
+        gt_bboxes = gt_info[:, :, 1:]  # xyxy
         pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
 
         # get epoch information from message hub
@@ -367,11 +367,11 @@ class YOLOv6Head(YOLOv5Head):
         num_pos = fg_mask_pre_prior.sum()
         if num_pos > 0:
             # iou loss
-            bbox_mask = fg_mask_pre_prior.unsqueeze(-1).repeat([1, 1, 4])
-            pred_bboxes_pos = torch.masked_select(flatten_pred_bboxes,
-                                                  bbox_mask).reshape([-1, 4])
+            prior_bbox_mask = fg_mask_pre_prior.unsqueeze(-1).repeat([1, 1, 4])
+            pred_bboxes_pos = torch.masked_select(
+                flatten_pred_bboxes, prior_bbox_mask).reshape([-1, 4])
             assigned_bboxes_pos = torch.masked_select(
-                assigned_bboxes, bbox_mask).reshape([-1, 4])
+                assigned_bboxes, prior_bbox_mask).reshape([-1, 4])
             bbox_weight = torch.masked_select(
                 assigned_scores.sum(-1), fg_mask_pre_prior).unsqueeze(-1)
             loss_iou = self.loss_bbox(
@@ -389,17 +389,16 @@ class YOLOv6Head(YOLOv5Head):
 
     @staticmethod
     def preprocess(batch_gt_instances: Tensor, batch_size: int) -> Tensor:
-        targets_list = np.zeros((batch_size, 1, 5)).tolist()
+        gt_info_list = np.zeros((batch_size, 1, 5)).tolist()
         for i, item in enumerate(batch_gt_instances.cpu().numpy().tolist()):
-            targets_list[int(item[0])].append(item[1:])
-        max_len = max(len(target) for target in targets_list)
-        targets = torch.from_numpy(
+            gt_info_list[int(item[0])].append(item[1:])
+        max_len = max(len(gt_info) for gt_info in gt_info_list)
+        return torch.from_numpy(
             np.array(
                 list(
                     map(lambda l: l + [[-1, 0, 0, 0, 0]] * (max_len - len(l)),
-                        targets_list)))[:,
+                        gt_info_list)))[:,
                                         1:, :]).to(batch_gt_instances.device)
-        return targets
 
     @staticmethod
     def varifocal_loss(pred_score: Tensor,
