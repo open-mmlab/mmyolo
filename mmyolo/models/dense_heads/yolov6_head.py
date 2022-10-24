@@ -309,11 +309,6 @@ class YOLOv6Head(YOLOv5Head):
         flatten_pred_bboxes = self.bbox_coder.decode(flatten_priors[..., :2],
                                                      flatten_pred_bboxes,
                                                      flatten_priors[..., 2])
-        # generate v6 priors
-        cell_half_size = flatten_priors[:, 2:] * 2.5
-        flatten_priors_gen = torch.zeros_like(flatten_priors)
-        flatten_priors_gen[:, :2] = flatten_priors[:, :2] - cell_half_size
-        flatten_priors_gen[:, 2:] = flatten_priors[:, :2] + cell_half_size
 
         batch_size = flatten_cls_preds.shape[0]
 
@@ -333,12 +328,12 @@ class YOLOv6Head(YOLOv5Head):
 
         if self.epoch < self.initial_epoch:
             assigned_result = self.initial_assigner(
-                flatten_pred_bboxes.detach(), flatten_priors_gen,
-                num_level_priors, gt_labels, gt_bboxes, pad_bbox_flag)
+                flatten_pred_bboxes.detach(), flatten_priors, num_level_priors,
+                gt_labels, gt_bboxes, pad_bbox_flag)
         else:
             assigned_result = self.assigner(flatten_pred_bboxes.detach(),
                                             pred_scores.detach(),
-                                            flatten_priors[:, :2], gt_labels,
+                                            flatten_priors, gt_labels,
                                             gt_bboxes, pad_bbox_flag)
 
         assigned_labels = assigned_result['assigned_labels']
