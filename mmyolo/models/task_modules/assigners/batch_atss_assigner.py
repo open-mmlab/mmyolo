@@ -109,6 +109,13 @@ class BatchATSSAssigner(nn.Module):
                     shape(batch_size, num_gt, number_classes)
                 'fg_mask_pre_prior' (Tensor): shape(bs, num_gt)
         """
+        # generate priors
+        cell_half_size = priors[:, 2:] * 2.5
+        priors_gen = torch.zeros_like(priors)
+        priors_gen[:, :2] = priors[:, :2] - cell_half_size
+        priors_gen[:, 2:] = priors[:, :2] + cell_half_size
+        priors = priors_gen
+
         batch_size = gt_bboxes.size(0)
         num_gt, num_priors = gt_bboxes.size(1), priors.size(0)
 

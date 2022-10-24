@@ -79,7 +79,7 @@ class BatchTaskAlignedAssigner(nn.Module):
                 shape(batch_size, num_priors, 4)
             pred_scores (Tensor): Scores of predict bboxes,
                 shape(batch_size, num_priors, num_classes)
-            priors (Tensor): Model priors,  shape (num_priors, 2)
+            priors (Tensor): Model priors,  shape (num_priors, 4)
             gt_labels (Tensor): Ground true labels,
                 shape(batch_size, num_gt, 1)
             gt_bboxes (Tensor): Ground true bboxes,
@@ -98,6 +98,9 @@ class BatchTaskAlignedAssigner(nn.Module):
                 fg_mask_pre_prior (Tensor): Force ground truth matching mask,
                     shape(batch_size, num_priors)
         """
+        # (num_priors, 4) -> (num_priors, 2)
+        priors = priors[:, :2]
+
         batch_size = pred_scores.size(0)
         num_gt = gt_bboxes.size(1)
 
