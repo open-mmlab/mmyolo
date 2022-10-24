@@ -8,7 +8,8 @@ from mmdet.utils import ConfigType
 from torch import Tensor
 
 from mmyolo.registry import TASK_UTILS
-from .utils import select_candidates_in_gts, select_highest_overlaps
+from .utils import (select_candidates_in_gts, select_highest_overlaps,
+                    yolov6_iou_calculator)
 
 
 def bbox_center_distance(bboxes: Tensor,
@@ -164,7 +165,7 @@ class BatchATSSAssigner(nn.Module):
 
         # soft label with iou
         if pred_bboxes is not None:
-            ious = self.iou_calculator(gt_bboxes, pred_bboxes) * pos_mask
+            ious = yolov6_iou_calculator(gt_bboxes, pred_bboxes) * pos_mask
             ious = ious.max(axis=-2)[0].unsqueeze(-1)
             assigned_scores *= ious
 
