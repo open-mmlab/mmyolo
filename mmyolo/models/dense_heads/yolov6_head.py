@@ -156,9 +156,9 @@ class YOLOv6HeadModule(BaseModule):
         return multi_apply(self.forward_single, x, self.stems, self.cls_convs,
                            self.cls_preds, self.reg_convs, self.reg_preds)
 
-    @staticmethod
-    def forward_single(x: Tensor, stem: nn.ModuleList, cls_conv: nn.ModuleList,
-                       cls_pred: nn.ModuleList, reg_conv: nn.ModuleList,
+    def forward_single(self, x: Tensor, stem: nn.ModuleList,
+                       cls_conv: nn.ModuleList, cls_pred: nn.ModuleList,
+                       reg_conv: nn.ModuleList,
                        reg_pred: nn.ModuleList) -> Tuple[Tensor, Tensor]:
         """Forward feature of a single scale level."""
         y = stem(x)
@@ -395,6 +395,7 @@ class YOLOv6Head(YOLOv5Head):
                         gt_info_list)))[:,
                                         1:, :]).to(batch_gt_instances.device)
 
+    # TODO This will be refactored and deleted later.
     @staticmethod
     def varifocal_loss(pred_score: Tensor,
                        gt_score: Tensor,
