@@ -8,7 +8,8 @@ from mmdet.utils import ConfigType
 from torch import Tensor
 
 from mmyolo.registry import TASK_UTILS
-from .utils import select_candidates_in_gts, select_highest_overlaps
+from .utils import (select_candidates_in_gts, select_highest_overlaps,
+                    yolov6_iou_calculator)
 
 
 def bbox_center_distance(bboxes: Tensor,

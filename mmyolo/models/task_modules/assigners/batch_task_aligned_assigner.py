@@ -4,11 +4,11 @@ from typing import Optional, Tuple
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from mmengine import Config
 from torch import Tensor
 
 from mmyolo.registry import TASK_UTILS
-from .utils import select_candidates_in_gts, select_highest_overlaps
+from .utils import (select_candidates_in_gts, select_highest_overlaps,
+                    yolov6_iou_calculator)
 
 
 @TASK_UTILS.register_module()
@@ -35,8 +35,6 @@ class BatchTaskAlignedAssigner(nn.Module):
             Defaults to 1.0
         beta (float): Hyper-parameters related to alignment_metrics.
             Defaults to 6.
-        iou_calculator (:obj:`ConfigDict` or dict): Config dict for iou
-            calculator. Defaults to ``dict(type='BboxOverlaps2D')``
         eps (float): Eps to avoid log(0). Default set to 1e-9
     """
 
@@ -45,7 +43,6 @@ class BatchTaskAlignedAssigner(nn.Module):
                  topk: int = 13,
                  alpha: float = 1.0,
                  beta: float = 6.0,
-                 iou_calculator: Config = dict(type='mmdet.BboxOverlaps2D'),
                  eps: float = 1e-9):
         super().__init__()
         self.num_classes = num_classes
@@ -221,7 +218,7 @@ class BatchTaskAlignedAssigner(nn.Module):
         idx[1] = gt_labels.squeeze(-1)
         bbox_scores = pred_scores[idx[0], idx[1]]
 
-        overlaps = self.iou_calculator(gt_bboxes, pred_bboxes)
+        overlaps = yolov6_iou_calculator(gt_bboxes, pred_bboxes)
         alignment_metrics = bbox_scores.pow(self.alpha) * overlaps.pow(
             self.beta)
 
