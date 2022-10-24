@@ -142,7 +142,7 @@ class YOLOv6HeadModule(BaseModule):
             w.data.fill_(0.)
             conv.weight.data = w
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         """Forward features from the upstream network.
 
         Args:
@@ -157,9 +157,8 @@ class YOLOv6HeadModule(BaseModule):
                            self.cls_preds, self.reg_convs, self.reg_preds)
 
     @staticmethod
-    def forward_single(x: torch.Tensor, stem: nn.ModuleList,
-                       cls_conv: nn.ModuleList, cls_pred: nn.ModuleList,
-                       reg_conv: nn.ModuleList,
+    def forward_single(x: Tensor, stem: nn.ModuleList, cls_conv: nn.ModuleList,
+                       cls_pred: nn.ModuleList, reg_conv: nn.ModuleList,
                        reg_pred: nn.ModuleList) -> Tuple[Tensor, Tensor]:
         """Forward feature of a single scale level."""
         y = stem(x)
