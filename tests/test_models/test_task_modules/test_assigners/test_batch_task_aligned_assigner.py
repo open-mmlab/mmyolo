@@ -12,12 +12,7 @@ class TestBatchTaskAlignedAssigner(TestCase):
         batch_size = 2
         num_classes = 4
         assigner = BatchTaskAlignedAssigner(
-            num_classes=num_classes,
-            alpha=1,
-            beta=6,
-            topk=13,
-            iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
-            eps=1e-9)
+            num_classes=num_classes, alpha=1, beta=6, topk=13, eps=1e-9)
         pred_scores = torch.FloatTensor([
             [0.1, 0.2],
             [0.2, 0.3],
