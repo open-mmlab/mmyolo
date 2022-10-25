@@ -21,6 +21,7 @@ Example:
 import argparse
 import os.path as osp
 import random
+from typing import Tuple
 
 import numpy as np
 import torch
@@ -32,8 +33,8 @@ from mmengine.config import Config
 from mmengine.fileio import dump
 from mmengine.logging import MMLogger
 from mmengine.utils import ProgressBar
-from scipy.cluster.vq import kmeans
 from scipy.optimize import differential_evolution
+from torch import Tensor
 
 from mmyolo.utils import register_all_modules
 
@@ -60,7 +61,7 @@ def parse_args():
         type=int,
         help='Maximum iterations for optimizer.')
     parser.add_argument(
-        '--thr',
+        '--prior_match_thr',
         default=4.0,
         type=float,
         help='anchor-label gt_filter_sizes ratio threshold hyperparameter.'
@@ -241,80 +242,88 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
     Args:
         num_anchors (int) : Number of anchors.
         iters (int): Maximum iterations for k-means.
-        thr (float): anchor-label width height ratio threshold hyperparameter.
+        prior_match_thr (float): anchor-label width height
+            ratio threshold hyperparameter.
     """
 
-    def __init__(self, num_anchors, iters, thr=4.0, **kwargs):
+    def __init__(self, num_anchors, iters, prior_match_thr=4.0, **kwargs):
 
         super().__init__(**kwargs)
         self.num_anchors = num_anchors
         self.iters = iters
-        self.thr = 1 / thr
+        self.prior_match_thr = prior_match_thr
 
     def optimize(self):
-        anchors = self.kmeans_anchors()
-        self.save_result(anchors, self.out_dir)
-
-    def generate_gtwh_kwh(self):
-        r'''generate gt_bbox with width and height,
-           also return init cluster center_anchors
-
-           Return:
-               gt_filter_sizes: Tensor(gt_nums, 2) the gt width and height
-                   after augment scale and small box filter
-               center_anchors: np.array(num_anchors, 2) kmeans evolved anchors
-        '''
-        # According to the uniform distribution,
-        # the scaling scale between 0.9 and 1.1 is randomly generated
-        scale = np.random.uniform(
-            0.9, 1.1, size=(self.bbox_whs.shape[0], 1))  # augment scale
-        gt_sizes = np.array([l[:, ] * s for s, l in zip(scale, self.bbox_whs)])
-        # Filter
-        small_gt_cnt = (gt_sizes < 3.0).any(1).sum()
-        if small_gt_cnt:
-            self.logger.info('WARNING: Extremely small objects found:' +
-                             f' {small_gt_cnt} of {len(gt_sizes)} labels' +
-                             'are <3 pixels in size')
-        # filter > 2 pixels
-        gt_filter_sizes = gt_sizes[(gt_sizes >= 2.0).any(1)].astype(np.float32)
-        # K-means init
-        try:
-            self.logger.info(f'Running kmeans for {self.num_anchors} anchors' +
-                             'on {len(gt_filter_sizes)} points...')
-            # apply overdetermined constraint
-            assert self.num_anchors <= len(gt_filter_sizes)
-            sigmas = gt_filter_sizes.std(0)  # sigmas for whitening
-            center_anchors = kmeans(
-                gt_filter_sizes / sigmas, self.num_anchors,
-                iter=30)[0] * sigmas  # points
-            # kmeans may return fewer points than requested
-            # if gt_filter_sizes is insufficient or too similar
-            assert self.num_anchors == len(center_anchors)
-        except Exception:
-            self.logger.warning(
-                'WARNING: switching strategies from kmeans to random init')
-            center_anchors = np.sort(
-                np.random.rand(self.num_anchors * 2)).reshape(
-                    self.num_anchors, 2) * self.input_shape[0]  # random init
-        gt_filter_sizes, gt_sizes = (
-            torch.tensor(x, dtype=torch.float32)
-            for x in (gt_filter_sizes, gt_sizes))
-        # sort small to large
-        center_anchors = center_anchors[np.argsort(center_anchors.prod(1))]
-        return gt_filter_sizes, center_anchors
-
-    def kmeans_anchors(self):
         self.logger.info(
-            f'Start cluster {self.num_anchors} YOLO anchors with K-means...')
-        self.gt_filter_sizes, cluster_centers = self.generate_gtwh_kwh()
+            f'Start cluster {self.num_anchors} YOLOv5 anchors with K-means...')
+        bbox_whs = torch.from_numpy(self.bbox_whs).to(
+            self.device, dtype=torch.float32)
+        anchors = self.anchor_generate(
+            bbox_whs,
+            num=self.num_anchors,
+            img_size=self.input_shape[0],
+            prior_match_thr=self.prior_match_thr,
+            iters=self.iters)
+        best_ratio, mean_matched = self.anchor_metric(bbox_whs, anchors)
+        self.logger.info(f'{mean_matched:.2f} anchors/target {best_ratio:.3f} '
+                         'Best Possible Recall (BPR). ')
+        self.save_result(anchors.tolist(), self.out_dir)
 
-        prog_bar = ProgressBar(self.iters)
+    def anchor_generate(self,
+                        box_size: Tensor,
+                        num: int = 9,
+                        img_size: int = 640,
+                        prior_match_thr: float = 4.0,
+                        iters: int = 1000) -> Tensor:
+        """cluster boxes metric with anchors.
 
-        fitness = self.anchor_fitness(cluster_centers)
-        cluster_shape = cluster_centers.shape
+        Args:
+            box_size (Tensor): The size of the bxes, which shape is
+                (box_num, 2),the number 2 means width and height.
+            num (int): number of anchors.
+            img_size (int): image size used for training
+            prior_match_thr (float): width/height ratio threshold
+                 used for training
+            iters (int): iterations to evolve anchors using genetic algorithm
+
+        Returns:
+            anchors (Tensor): kmeans evolved anchors
+        """
+
+        thr = 1 / prior_match_thr
+
+        # step1: filter small bbox
+        box_size = self._filter_box(box_size)
+        assert num <= len(box_size)
+
+        # step2: init anchors
+        try:
+            from scipy.cluster.vq import kmeans
+            self.logger.info('beginning init anchors with scipy kmeans method')
+            sigmas = box_size.std(0).cpu().numpy()  # sigmas for whitening
+            anchors = kmeans(
+                box_size.cpu().numpy() / sigmas, num, iter=30)[0] * sigmas
+            # kmeans may return fewer points than requested
+            # if width/height is insufficient or too similar
+            assert num == len(anchors)
+        except Exception:
+            self.logger.warning('switching strategies from'
+                                ' kmeans to random init')
+            anchors = np.sort(np.random.rand(num * 2)).reshape(num,
+                                                               2) * img_size
+
+        self.logger.info('init done, beginning evolve anchors...')
+        # sort small to large
+        anchors = torch.tensor(anchors[np.argsort(anchors.prod(1))]).to(
+            box_size.device, dtype=torch.float32)
+
+        # step3: evolve anchors
+        prog_bar = ProgressBar(iters)
+        fitness = self._anchor_fitness(box_size, anchors, thr)
+        cluster_shape = anchors.shape
         mutation_prob, sigma = 0.9, 0.1
 
-        for _ in range(self.iters):
+        for _ in range(iters):
             mutate_result = np.ones(cluster_shape)
             # mutate until a change occurs (prevent duplicates)
             while (mutate_result == 1).all():
@@ -322,34 +331,96 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
                     (np.random.random(cluster_shape) < mutation_prob) *
                     random.random() * np.random.randn(*cluster_shape) * sigma +
                     1).clip(0.3, 3.0)
-            new_cluster_centers = (cluster_centers.copy() *
-                                   mutate_result).clip(min=2.0)
-            new_fitness = self.anchor_fitness(new_cluster_centers)
+            mutate_result = torch.from_numpy(mutate_result).to(box_size.device)
+            new_anchors = (anchors.clone() * mutate_result).clip(min=2.0)
+            new_fitness = self._anchor_fitness(box_size, new_anchors, thr)
             if new_fitness > fitness:
                 fitness = new_fitness
-                cluster_centers = new_cluster_centers.copy()
+                anchors = new_anchors.clone()
 
             prog_bar.update()
         print('\n')
         # sort small to large
-        anchors = cluster_centers[np.argsort(cluster_centers.prod(1))]
+        anchors = anchors[torch.argsort(anchors.prod(1))]
         self.logger.info(f'Anchor cluster finish. fitness = {fitness:.4f}')
 
         return anchors
 
-    def metric(self, anchors, gt_filter_sizes):  # compute metric
-        # gt_filter_sizes(gt) shape is [N, 2], means width and height of N gt
-        # anchors(anchor) shape is [num_anchors,2],
-        #           means YOLOv5 width and height of num_anchors
-        ratio = gt_filter_sizes[:, None] / anchors[None]
-        metric_r = torch.min(ratio, 1 / ratio).min(2)[0]  # ratio metric
-        best = metric_r.max(1)[0]  # best_metric
-        return metric_r, best
+    def anchor_metric(self,
+                      box_size: Tensor,
+                      anchors: Tensor,
+                      threshold: float = 4.0) -> Tuple:
+        """compute boxes metric with anchors.
 
-    def anchor_fitness(self, anchors):  # mutation fitness
-        _, best = self.metric(
-            torch.tensor(anchors, dtype=torch.float32), self.gt_filter_sizes)
-        return (best * (best > self.thr).float()).mean()  # fitness
+        Args:
+            box_size (Tensor): The size of the bxes, which shape
+                is (box_num, 2), the number 2 means width and height.
+            anchors (Tensor): The size of the bxes, which shape
+                is (anchor_num, 2), the number 2 means width and height.
+            threshold (float): the compare threshold of ratio
+
+        Returns:
+            Tuple: a tuple of metric result, best_ratio_mean and mean_matched
+        """
+        # step1: augment scale
+        # According to the uniform distribution,
+        # the scaling scale between 0.9 and 1.1 is randomly generated
+        scale = np.random.uniform(0.9, 1.1, size=(box_size.shape[0], 1))
+        box_size = torch.tensor(
+            np.array(
+                [l[:, ] * s for s, l in zip(scale,
+                                            box_size.cpu().numpy())])).to(
+                                                box_size.device,
+                                                dtype=torch.float32)
+        # step2: calculate ratio
+        min_ratio, best_ratio = self._metric(box_size, anchors)
+        mean_matched = (min_ratio > 1 / threshold).float().sum(1).mean()
+        best_ratio_mean = (best_ratio > 1 / threshold).float().mean()
+        return best_ratio_mean, mean_matched
+
+    def _filter_box(self, box_size: Tensor) -> Tensor:
+        small_cnt = (box_size < 3.0).any(1).sum()
+        if small_cnt:
+            self.logger.warning(
+                f'Extremely small objects found: {small_cnt} '
+                f'of {len(box_size)} labels are <3 pixels in size')
+        # filter > 2 pixels
+        filter_sizes = box_size[(box_size >= 2.0).any(1)]
+        return filter_sizes
+
+    def _anchor_fitness(self, box_size: Tensor, anchors: Tensor, thr: float):
+        """mutation fitness."""
+        _, best = self._metric(box_size, anchors)
+        return (best * (best > thr).float()).mean()
+
+    def _metric(self, box_size: Tensor, anchors: Tensor) -> Tuple:
+        """compute boxes metric with anchors.
+
+        Args:
+            box_size (Tensor): The size of the bxes, which shape is
+                (box_num, 2), the number 2 means width and height.
+            anchors (Tensor): The size of the bxes, which shape is
+                (anchor_num, 2), the number 2 means width and height.
+
+        Returns:
+            Tuple: a tuple of metric result, min_ratio and best_ratio
+        """
+
+        # ratio means the (width_1/width_2 and height_1/height_2) ratio of each
+        # box and anchor, the ratio shape is torch.Size([box_num,anchor_num,2])
+        ratio = box_size[:, None] / anchors[None]
+
+        # min_ratio records the min ratio of each box with all anchor,
+        # min_ratio.shape is torch.Size([box_num,anchor_num])
+        # notice: smaller ratio means worse shape-matched (w_1/w_2, h_1/h_2)
+        # between boxes and anchors
+        min_ratio = torch.min(ratio, 1 / ratio).min(2)[0]
+
+        # find the best shape-match ratio for each box
+        # box_best_ratio.shape is torch.Size([box_num])
+        best_ratio = min_ratio.max(1)[0]
+
+        return min_ratio, best_ratio
 
 
 class YOLODEAnchorOptimizer(BaseAnchorOptimizer):
@@ -505,7 +576,7 @@ def main():
             device=args.device,
             num_anchors=num_anchors,
             iters=args.iters,
-            thr=args.thr,
+            prior_match_thr=args.prior_match_thr,
             logger=logger,
             out_dir=args.output_dir)
     else:
