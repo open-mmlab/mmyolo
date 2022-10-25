@@ -61,6 +61,7 @@ jobs:
           command: |
             git clone -b dev-1.x --depth 1 https://github.com/open-mmlab/mmdeploy.git mmdeploy --recurse-submodules
             python mmdeploy/tools/scripts/build_ubuntu_x64_ort.py
+            cd mmdeploy && pip install -e .
       - run:
           name: Install mmyolo dependencies
           command: |
