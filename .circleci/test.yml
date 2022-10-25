@@ -68,6 +68,9 @@ jobs:
           name: Install mmdeploy
           command: |
             git clone -b dev-1.x --depth 1 https://github.com/open-mmlab/mmdeploy.git mmdeploy --recurse-submodules
+            wget https://github.com/Kitware/CMake/releases/download/v3.20.0/cmake-3.20.0-linux-x86_64.tar.gz
+            tar -xzvf cmake-3.20.0-linux-x86_64.tar.gz
+            ln -sf $(pwd)/cmake-3.20.0-linux-x86_64/bin/* /usr/bin/
             cd mmdeploy && mkdir build && cd build && cmake .. -DCMAKE_C_COMPILER=gcc-7 -DCMAKE_CXX_COMPILER=g++-7 -DMMDEPLOY_BUILD_SDK=ON -DMMDEPLOY_BUILD_EXAMPLES=ON -DMMDEPLOY_BUILD_SDK_PYTHON_API=ON -DMMDEPLOY_TARGET_DEVICES=cpu -DMMDEPLOY_TARGET_BACKENDS=ort -DONNXRUNTIME_DIR=${ONNXRUNTIME_DIR}
             cd mmdeploy && pip install -e .
       - run:
