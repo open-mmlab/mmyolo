@@ -80,7 +80,7 @@ jobs:
             sudo ln -sf $(pwd)/cmake-3.20.0-linux-x86_64/bin/* /usr/bin/
             cd mmdeploy && mkdir build && cd build && cmake .. -DMMDEPLOY_TARGET_BACKENDS=ort -DONNXRUNTIME_DIR=/home/circleci/project/onnxruntime-linux-x64-1.8.1 && make -j8 && make install
             export LD_LIBRARY_PATH=/home/circleci/project/onnxruntime-linux-x64-1.8.1/lib:${LD_LIBRARY_PATH}
-            cd /home/circleci/project/mmdeploy && pip install -e .
+            cd /home/circleci/project/mmdeploy && python -m pip install -v -e .
       - run:
           name: Build and install
           command: |
