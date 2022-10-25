@@ -31,28 +31,28 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
                      | layer2 |    |  layer1   |
                      └────────┘    └───────────┘
     stride=16             v              ^
-    idx=1  ┌──────┐  ┌────────┐    ┌──────────┐    ┌───────┐
-    ─────> |reduce|─>|   cat  |    |bottom_up |───>|  out  |──> output1
-           |layer1|  └────────┘    |  layer0  |    | layer1|
-           └──────┘       v        └──────────┘    └───────┘
+    idx=1  ┌──────┐  ┌────────┐    ┌───────────┐    ┌───────┐
+    ─────> |reduce|─>|   cat  |    | bottom_up |───>|  out  |──> output1
+           |layer1|  └────────┘    |   layer0  |    | layer1|
+           └──────┘       v        └───────────┘    └───────┘
                      ┌────────┐          ^
-                     |top_down|    ┌──────────┐
-                     | layer2 |───>|    cat   |
-                     └────────┘    └──────────┘
+                     |top_down|    ┌───────────┐
+                     | layer2 |───>|    cat    |
+                     └────────┘    └───────────┘
                           v              ^
-                     ┌────────┐    ┌──────────┐
-                     |upsample|    |downsample|
-                     | layer1 |    |  layer0  |
-                     └────────┘    └──────────┘
+                     ┌────────┐    ┌───────────┐
+                     |upsample|    |downsample |
+                     | layer1 |    |  layer0   |
+                     └────────┘    └───────────┘
     stride=8              v              ^
     idx=0  ┌──────┐  ┌────────┐          |
     ─────> |reduce|─>|   cat  |          |
            |layer0|  └────────┘          |
            └──────┘       v              |
-                     ┌────────┐          |         ┌───────┐
-                     |top_down|──────────┴────────>|  out  |──> output0
-                     | layer1 |                    | layer0|
-                     └────────┘                    └───────┘
+                     ┌────────┐          |          ┌───────┐
+                     |top_down|──────────┴─────────>|  out  |──> output0
+                     | layer1 |                     | layer0|
+                     └────────┘                     └───────┘
 
     Args:
         in_channels (List[int]): Number of input channels per scale.
