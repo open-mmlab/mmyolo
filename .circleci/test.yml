@@ -69,7 +69,7 @@ jobs:
             wget https://github.com/Kitware/CMake/releases/download/v3.20.0/cmake-3.20.0-linux-x86_64.tar.gz
             tar -xzvf cmake-3.20.0-linux-x86_64.tar.gz
             sudo ln -sf $(pwd)/cmake-3.20.0-linux-x86_64/bin/* /usr/bin/
-            cd mmdeploy && mkdir build && cd build && cmake .. -DCMAKE_C_COMPILER=gcc-7 -DCMAKE_CXX_COMPILER=g++-7 -DMMDEPLOY_TARGET_DEVICES=cpu -DMMDEPLOY_TARGET_BACKENDS=ort -DONNXRUNTIME_DIR=/home/circleci/project/onnxruntime-linux-x64-1.8.1
+            cd mmdeploy && mkdir build && cd build && cmake .. -DMMDEPLOY_TARGET_BACKENDS=ort -DONNXRUNTIME_DIR=/home/circleci/project/onnxruntime-linux-x64-1.8.1
             export LD_LIBRARY_PATH=/home/circleci/project/onnxruntime-linux-x64-1.8.1/lib:${LD_LIBRARY_PATH}
             cd /home/circleci/project/mmdeploy && pip install -e .
       - run:
