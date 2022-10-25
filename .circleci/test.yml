@@ -74,6 +74,7 @@ jobs:
       - run:
           name: Install mmdeploy
           command: |
+            pip install setuptools
             git clone -b dev-1.x --depth 1 https://github.com/open-mmlab/mmdeploy.git mmdeploy --recurse-submodules
             wget https://github.com/Kitware/CMake/releases/download/v3.20.0/cmake-3.20.0-linux-x86_64.tar.gz
             tar -xzvf cmake-3.20.0-linux-x86_64.tar.gz
