@@ -74,8 +74,6 @@ jobs:
       - run:
           name: Install mmdeploy
           command: |
-            sudo apt install locate
-            locate frozen_graph_optimizations.h
             pip install setuptools
             git clone -b dev-1.x --depth 1 https://github.com/open-mmlab/mmdeploy.git mmdeploy --recurse-submodules
             wget https://github.com/Kitware/CMake/releases/download/v3.20.0/cmake-3.20.0-linux-x86_64.tar.gz
@@ -163,7 +161,7 @@ workflows:
                 - main
       - build_cpu:
           name: minimum_version_cpu
-          torch: 1.7.0
+          torch: 1.10.0
           torchvision: 0.8.1
           python: 3.8.0  # The lowest python 3.6.x version available on CircleCI images
           requires:
