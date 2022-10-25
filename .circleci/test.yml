@@ -74,6 +74,7 @@ jobs:
       - run:
           name: Install mmdeploy
           command: |
+            sudo apt install locate
             locate frozen_graph_optimizations.h
             pip install setuptools
             git clone -b dev-1.x --depth 1 https://github.com/open-mmlab/mmdeploy.git mmdeploy --recurse-submodules
