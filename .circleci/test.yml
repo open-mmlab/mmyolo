@@ -59,8 +59,8 @@ jobs:
       - run:
           name: Install mmdeploy
           command: |
-            git clone -b dev-1.x --depth 1 https://github.com/open-mmlab/mmdeploy.git /home/circleci/mmdeploy --recurse-submodules
-            python /home/circleci/mmdeploy/tools/scripts/build_ubuntu_x64_ort.py
+            git clone -b dev-1.x --depth 1 https://github.com/open-mmlab/mmdeploy.git mmdeploy --recurse-submodules
+            python mmdeploy/tools/scripts/build_ubuntu_x64_ort.py
       - run:
           name: Install mmyolo dependencies
           command: |
