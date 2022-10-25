@@ -63,6 +63,15 @@ jobs:
             wget https://github.com/microsoft/onnxruntime/releases/download/v1.8.1/onnxruntime-linux-x64-1.8.1.tgz
             tar xvf onnxruntime-linux-x64-1.8.1.tgz
       - run:
+          name: Install mmyolo dependencies
+          command: |
+            pip install -U openmim
+            mim install 'mmengine == 0.1.0'
+            mim install 'mmcv >= 2.0.0rc1'
+            pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
+            pip install -r requirements/albu.txt
+            pip install -r requirements/tests.txt
+      - run:
           name: Install mmdeploy
           command: |
             git clone -b dev-1.x --depth 1 https://github.com/open-mmlab/mmdeploy.git mmdeploy --recurse-submodules
@@ -72,15 +81,6 @@ jobs:
             cd mmdeploy && mkdir build && cd build && cmake .. -DMMDEPLOY_TARGET_BACKENDS=ort -DONNXRUNTIME_DIR=/home/circleci/project/onnxruntime-linux-x64-1.8.1 && make -j8 && make install
             export LD_LIBRARY_PATH=/home/circleci/project/onnxruntime-linux-x64-1.8.1/lib:${LD_LIBRARY_PATH}
             cd /home/circleci/project/mmdeploy && pip install -e .
-      - run:
-          name: Install mmyolo dependencies
-          command: |
-            pip install -U openmim
-            mim install 'mmengine == 0.1.0'
-            mim install 'mmcv >= 2.0.0rc1'
-            pip install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
-            pip install -r requirements/albu.txt
-            pip install -r requirements/tests.txt
       - run:
           name: Build and install
           command: |
