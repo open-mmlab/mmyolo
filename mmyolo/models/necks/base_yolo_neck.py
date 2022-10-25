@@ -15,6 +15,45 @@ from mmyolo.registry import MODELS
 class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
     """Base neck used in YOLO series.
 
+           P5 neck model structure diagram
+
+                                   ┌───────────┐    ┌───────┐
+                                   | bottom_up |───>|  out  |──> output2
+                                   |  layer1   |    | layer2|
+    stride=32                      └───────────┘    └───────┘
+    idx=2  ┌──────┐                      ^
+    ─────> |reduce|                ┌───────────┐
+           |layer2|──────┬────────>|    cat    |
+           └──────┘      |         └───────────┘
+                         v               ^
+                     ┌────────┐    ┌───────────┐
+                     |upsample|    |downsample |
+                     | layer2 |    |  layer1   |
+                     └────────┘    └───────────┘
+    stride=16             v              ^
+    idx=1  ┌──────┐  ┌────────┐    ┌──────────┐    ┌───────┐
+    ─────> |reduce|─>|   cat  |    |bottom_up |───>|  out  |──> output1
+           |layer1|  └────────┘    |  layer0  |    | layer1|
+           └──────┘       v        └──────────┘    └───────┘
+                     ┌────────┐          ^
+                     |top_down|    ┌──────────┐
+                     | layer2 |───>|    cat   |
+                     └────────┘    └──────────┘
+                          v              ^
+                     ┌────────┐    ┌──────────┐
+                     |upsample|    |downsample|
+                     | layer1 |    |  layer0  |
+                     └────────┘    └──────────┘
+    stride=8              v              ^
+    idx=0  ┌──────┐  ┌────────┐          |
+    ─────> |reduce|─>|   cat  |          |
+           |layer0|  └────────┘          |
+           └──────┘       v              |
+                     ┌────────┐          |         ┌───────┐
+                     |top_down|──────────┴────────>|  out  |──> output0
+                     | layer1 |                    | layer0|
+                     └────────┘                    └───────┘
+
     Args:
         in_channels (List[int]): Number of input channels per scale.
         out_channels (int): Number of output channels (used at each scale)
