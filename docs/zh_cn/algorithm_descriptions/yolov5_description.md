@@ -8,17 +8,15 @@
 
 以上结构图由 RangeKing@github 绘制。
 
-YOLOv5 是一个面向实时工业应用而开源的目标检测算法，受到了广泛关注。我们认为让 YOLOv5 爆火的原因不单纯在于 YOLOv5 算法本身的优异性，
-更多的在于开源库的实用和鲁棒性。简单来说 YOLOv5 开源库的主要特点为：
+YOLOv5 是一个面向实时工业应用而开源的目标检测算法，受到了广泛关注。我们认为让 YOLOv5 爆火的原因不单纯在于 YOLOv5 算法本身的优异性，更多的在于开源库的实用和鲁棒性。简单来说 YOLOv5 开源库的主要特点为：
 
 1. **友好和完善的部署支持**
-2. **算法训练速度极快**，在 300 epoch 情况下训练时长和大部分 one-stage 算法如 RetinaNet、ATSS 和 two-stage 算法如 Faster R-CNN
-   12 epoch 时间接近
+2. **算法训练速度极快**，在 300 epoch 情况下训练时长和大部分 one-stage 算法如 RetinaNet、ATSS 和 two-stage 算法如 Faster R-CNN 在 12 epoch 的训练时间接近
 3. 框架进行了**非常多的 corner case 优化**，功能和文档也比较丰富
 
-本文将从 YOLOv5 算法本身原理讲起，然后重点分析 MMYOLO 中的实现。关于 YOLOv5 的使用指南和速度等对比请阅读后续文档。
+本文将从 YOLOv5 算法本身原理讲起，然后重点分析 MMYOLO 中的实现。关于 YOLOv5 的使用指南和速度等对比请阅读本文的后续内容。
 
-希望本文能够成为你入门和掌握 YOLOv5 的核心文档。由于 YOLOv5 本身也在不断迭代更新，因此我们也会不断的更新本文档。请注意阅读最新版本。
+希望本文能够成为你入门和掌握 YOLOv5 的核心文档。由于 YOLOv5 本身也在不断迭代更新，我们也会不断的更新本文档。请注意阅读最新版本。
 
 MMYOLO 实现配置：https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/
 
@@ -36,10 +34,9 @@ YOLOv5 官方 release 地址：https://github.com/ultralytics/yolov5/releases/ta
 <img alt="YOLOv5精度速度图" src="https://user-images.githubusercontent.com/40284075/190542279-37734629-2b59-4bd8-a9bf-757875a93eed.png"/>
 </div>
 
-性能如上表所示。YOLOv5 有 P5 和 P6 两个不同训练输入尺度的模型，P6 即为 1280x1280 输入的大模型，通常用的是 P5 常规模型，
-输入尺寸是 640x640 。本文解读的也是 P5 模型结构。
+性能如上表所示。YOLOv5 有 P5 和 P6 两个不同训练输入尺度的模型，P6 即为 1280x1280 输入的大模型，通常用的是 P5 常规模型，输入尺寸是 640x640 。本文解读的也是 P5 模型结构。
 
-通常来说，目标检测算法都可以分成如下数据增强、模型结构、loss 计算等组件，YOLOv5 也一样，如下所示：
+通常来说，目标检测算法都可以分成数据增强、模型结构、loss 计算等组件，YOLOv5 也一样，如下所示：
 
 <div align=center >
 <img alt="训练测试策略" src="https://user-images.githubusercontent.com/40284075/190542423-f6b20d8e-c82a-4a34-9065-c161c5e29e7c.png"/>
@@ -58,10 +55,9 @@ YOLOv5 目标检测算法中使用的数据增强比较多，包括：
 - **HSV 颜色空间增强**
 - **随机水平翻转**
 
-其中 Mosaic 数据增强概率为 1，表示一定会触发，而对于 small 和 nano 两个版本的模型不使用 MixUp，其他的 l/m/x 系列模型则采用了 0.1 的概率
-触发 MixUp。小模型能力有限，一般不会采用 MixUp 等强数据增强策略。
+其中 Mosaic 数据增强概率为 1，表示一定会触发，而对于 small 和 nano 两个版本的模型不使用 MixUp，其他的 l/m/x 系列模型则采用了 0.1 的概率触发 MixUp。小模型能力有限，一般不会采用 MixUp 等强数据增强策略。
 
-其核心的 Mosaic + RandomAffine+ MixUp 过程简要绘制如下：
+其核心的 Mosaic + RandomAffine + MixUp 过程简要绘制如下：
 
 <div align=center >
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190542598-bbf4a159-cc9d-4bac-892c-46ef99267994.png"/>
@@ -78,8 +74,8 @@ YOLOv5 目标检测算法中使用的数据增强比较多，包括：
 Mosaic 属于混合类数据增强，因为它在运行时候需要 4 张图片拼接，变相的相当于增加了训练的 batch size。其运行过程简要概况为：
 
 1. 随机生成拼接后 4 张图的交接中心点坐标，此时就相当于确定了 4 张拼接图片的交接点
-2. 随机出另外 3 张图片的索引以及读取对应的标注
-3. 对每张图片采用保持宽高比的 resize 操作缩放到指定大小
+2. 随机选出另外 3 张图片的索引以及读取对应的标注
+3. 对每张图片采用保持宽高比的 resize 操作将其缩放到指定大小
 4. 按照上下左右规则，计算每张图片在待输出图片中应该放置的位置，因为图片可能出界故还需要计算裁剪坐标
 5. 利用裁剪坐标将缩放后的图片裁剪，然后贴到前面计算出的位置，其余位置全部补 114 像素值
 6. 对每张图片的标注也进行相应处理
@@ -98,8 +94,7 @@ Mosaic 属于混合类数据增强，因为它在运行时候需要 4 张图片�
 1. 对图片进行随机几何仿射变换
 2. 将 Mosaic 输出的扩大 4 倍的图片还原为 640x640 尺寸
 
-随机仿射变换包括平移、旋转、缩放、错切等几何增强操作，同时由于 Mosaic 和 RandomAffine 属于比较强的增强操作，会引入较大噪声，
-因此需要对增强后的标注进行处理，过滤规则为
+随机仿射变换包括平移、旋转、缩放、错切等几何增强操作，同时由于 Mosaic 和 RandomAffine 属于比较强的增强操作，会引入较大噪声，因此需要对增强后的标注进行处理，过滤规则为：
 
 1. 增强后的 gt bbox 宽高要大于 wh_thr
 2. 增强后的 gt bbox 面积和增强前的 gt bbox 面积要大于 ar_thr，防止增强太严重
@@ -114,12 +109,12 @@ Mosaic 属于混合类数据增强，因为它在运行时候需要 4 张图片�
 </div>
 
 MixUp 和 Mosaic 类似，也是属于混合图片类增强，其是随机从另外一张图，然后两种图随机混合而成。其实现方法有多种，常见的做法是：
-要么 label 直接拼接起来，要么 label 也采用 alpha 混合，作者的做法非常简单，对 label 直接拼接即可，而图片通过分布采样混合。
+要么 label 直接拼接起来，要么 label 也采用 alpha 混合，原作者的做法非常简单，对 label 即直接拼接，而图片通过分布采样混合。
 
 需要特别注意的是：
-**YOLOv5 实现的 MixUp 中，随机出来的另一张图也需要经过 Mosaic 马赛克 + RandomAffine 随机仿射变换 增强后才能混合。这个和其他开源库实现可能不太一样**。
+**YOLOv5 实现的 MixUp 中，随机出来的另一张图也需要经过 Mosaic 马赛克 + RandomAffine 随机仿射变换 的增强后才能混合。这个和其他开源库实现可能不太一样**。
 
-#### 1.1.4 图像模糊和其他数据增强
+#### 1.1.4 图像模糊和其他数据增强策略
 
 <div align=center >
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190543533-8b9ece51-676b-4a7d-a7d0-597e2dd1d42e.png"/>
@@ -131,19 +126,17 @@ MixUp 和 Mosaic 类似，也是属于混合图片类增强，其是随机从另
 - **HSV 颜色空间增强**
 - **随机水平翻转**
 
-MMDetection 开源库中已经对 Albu 第三方数据增强库进行了封装，使得用户可以简单的通过配置即可使用 Albu 库中提供的任何数据增强功能。
-而 HSV 颜色空间增强和随机水平翻转都是属于比较常规的数据增强，不需要特殊介绍。
+MMDetection 开源库中已经对 Albu 第三方数据增强库进行了封装，使用户可以简单的通过配置即可使用 Albu 库中提供的任何数据增强功能。而 HSV 颜色空间增强和随机水平翻转都是属于比较常规的数据增强，不需要特殊介绍。
 
 #### 1.1.5 MMYOLO 实现解析
 
-常规的单图数据增强例如随机翻转等比较容易实现，而 Mosiac 类的混合数据增强则不太容易。在 MMDetection 复现的 YOLOX 算法中
-提出了 MultiImageMixDataset 数据集包装器的概念，其实现过程如下：
+常规的单图数据增强例如随机翻转等比较容易实现，而 Mosiac 类的混合数据增强则不太容易。在 MMDetection 复现的 YOLOX 算法中提出了 MultiImageMixDataset 数据集包装器的概念，其实现过程如下：
 
 <div align=center >
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190543666-d5a22ed7-46a0-4696-990a-12ebde7f8907.png"/>
 </div>
 
-对于 Mosiac 等混合类数据增强，会额外实现一个 `get_indexes` 方法用来获取其他图片索引，然后得到 4 张图片信息后就可以进行 Mosiac 增强了。
+对于 Mosiac 等混合类数据增强策略，会需要额外实现一个 `get_indexes` 方法来获取其他图片索引，然后用得到的 4 张图片信息就可以进行 Mosiac 增强了。
 以 MMDetection 中实现的 YOLOX 为例，其配置文件写法如下所示：
 
 ```python
@@ -173,14 +166,13 @@ train_dataset = dict(
     pipeline=train_pipeline)
 ```
 
-MultiImageMixDataset 数据集包装其传入一个包括 Mosaic 和 RandAffine 等数据增强，而 CocoDataset 中也需要传入一个包括图片和
-标注加载的 pipeline。通过这种方式就可以快速的实现混合类数据增强。
+MultiImageMixDataset 数据集包装器传入一个包括 Mosaic 和 RandAffine 等数据增强，而 CocoDataset 中也需要传入一个包括图片和标注加载的 pipeline。通过这种方式就可以快速的实现混合类数据增强。
 
 但是上述实现有一个缺点：
 **对于不熟悉 MMDetection 的用户来说，其经常会忘记 Mosaic 必须要和 MultiImageMixDataset 配合使用，否则会报错，而且这样会加大复杂度和理解难度**。
 
-为了解决这个问题，在 MMYOLO 中进一步进行了简化。直接让 pipeline 能够获取到 dataset 对象，此时就可以将 Mosaic 等混合类数据增强的实现
-和使用变成和随机翻转一样。此时在 MMYOLO 中 YOLOX 的配置写法变成如下所示：
+为了解决这个问题，在 MMYOLO 中我们进一步进行了简化。直接让 pipeline 能够获取到 dataset 对象，此时就可以将 Mosaic 等混合类数据增强的实现和使用变成和随机翻转一样。
+此时在 MMYOLO 中 YOLOX 的配置写法变成如下所示：
 
 ```python
 pre_transform = [
@@ -209,10 +201,9 @@ train_pipeline = [
 ]
 ```
 
-此时就不再需要 MultiImageMixDataset 了，使用和理解上会更加简单。
+这样就不再需要 MultiImageMixDataset 了，使用和理解上会更加简单。
 
-回到 YOLOv5 配置上，因为 YOLOv5 实现的 MixUp 中，随机出来的另一张图也需要经过 Mosaic 马赛克+RandomAffine 随机仿射变换 增强后才能混合，
-故YOLOv5-m 数据增强配置如下所示：
+回到 YOLOv5 配置上，因为 YOLOv5 实现的 MixUp 中，随机出来的另一张图也需要经过 Mosaic 马赛克+RandomAffine 随机仿射变换 增强后才能混合，故YOLOv5-m 数据增强配置如下所示：
 
 ```python
 pre_transform = [
@@ -255,8 +246,7 @@ train_pipeline = [
 
 YOLOv5 网络结构是标准的 `CSPDarknet` + `PAFPN` + `非解耦 Head`。
 
-YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决定。其中 `deepen_factor` 控制网络结构深度，即 `CSPLayer` 中 `DarknetBottleneck` 模块堆叠的数量；`widen_factor` 控制网络结构宽度，即模块输出特征图的通道数。以 YOLOv5-l 为例，
-其 `deepen_factor = widen_factor = 1.0` ，整体结构图如上所示。
+YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决定。其中 `deepen_factor` 控制网络结构深度，即 `CSPLayer` 中 `DarknetBottleneck` 模块堆叠的数量；`widen_factor` 控制网络结构宽度，即模块输出特征图的通道数。以 YOLOv5-l 为例，其 `deepen_factor = widen_factor = 1.0` ，整体结构图如上所示。
 
 图的上半部分为模型总览；下半部分为具体网络结构，其中的模块均标有序号，方便用户与 YOLOv5 官方仓库的配置文件对应；中间部分为各子模块的具体构成。
 
@@ -264,33 +254,28 @@ YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决�
 
 #### 1.2.1 Backbone
 
-在 MMYOLO 中 `CSPDarknet` 继承自 `BaseBackbone`，整体结构和 `ResNet` 类似，共 5 层结构，
-包含 1 个 `Stem Layer` 和 4 个 `Stage Layer`：
+在 MMYOLO 中 `CSPDarknet` 继承自 `BaseBackbone`，整体结构和 `ResNet` 类似，共 5 层结构，包含 1 个 `Stem Layer` 和 4 个 `Stage Layer`：
 
 - `Stem Layer` 是 1 个 6x6 kernel 的 `ConvModule`，相较于 v6.1 版本之前的 `Focus` 模块更加高效。
-- 前 3 个 `Stage Layer` 由 1 个 `ConvModule` 和 1 个 `CSPLayer` 组成。如上图 Details 部分，
-  其中 `ConvModule` 为 3x3 `Conv2d` + `BatchNorm` + `SiLU 激活函数`。`CSPLayer` 即 YOLOv5 官方仓库中的 C3 模块，由 3 个 `ConvModule` + n 个 `DarknetBottleneck`(带残差连接) 组成。
+- 前 3 个 `Stage Layer` 均由 1 个 `ConvModule` 和 1 个 `CSPLayer` 组成。如上图 Details 部分所示。
+  其中 `ConvModule` 为 3x3的 `Conv2d` + `BatchNorm` + `SiLU 激活函数`。`CSPLayer` 即 YOLOv5 官方仓库中的 C3 模块，由 3 个 `ConvModule` + n 个 `DarknetBottleneck`(带残差连接) 组成。
 - 第 4 个 `Stage Layer` 在最后增加了 `SPPF` 模块。`SPPF` 模块是将输入串行通过多个 5x5 大小的 `MaxPool2d` 层，与 `SPP`  模块效果相同，但速度更快。
-- P5 模型结构会在 `Stage Layer` 2-4 之后分别输出，进入 `Neck` 结构，共抽取三个输出特征图，以 640x640 输入图片为例，
-  其输出特征为 (B,256,80,80)、 (B,512,40,40) 和 (B,1024,20,20)，stride 为 8/16/32。
+- P5 模型结构会在 `Stage Layer` 2-4 之后分别输出对应结果进入 `Neck` 结构，抽取三个输出特征图，以 640x640 输入图片为例，其输出特征为 (B,256,80,80)、 (B,512,40,40) 和 (B,1024,20,20)，对应的 stride 为 8/16/32。
 
 #### 1.2.2 Neck
 
-YOLOv5 官方仓库的配置文件中并没有 Neck 部分，为方便用户与其他目标检测网络结构相对应，
-我们将官方仓库的 `Head` 拆分成 `PAFPN` 和 `Head` 两部分。
+YOLOv5 官方仓库的配置文件中并没有 Neck 部分，为方便用户与其他目标检测网络结构相对应，我们将官方仓库的 `Head` 拆分成 `PAFPN` 和 `Head` 两部分。
 
 基于 `BaseYOLONeck` 结构，YOLOv5 `Neck` 也是遵循同一套构建流程，对于不存在的模块，我们采用 `nn.Identity` 代替。
 
-Neck 模块输出特征图和 Backbone 完全一致即为 (B,256,80,80)、 (B,512,40,40) 和  (B,1024,20,20)。
+Neck 模块输出的特征图和 Backbone 完全一致即为 (B,256,80,80)、 (B,512,40,40) 和  (B,1024,20,20)。
 
 #### 1.2.3 Head
 
-YOLOv5 Head 结构和 YOLOv3 完全一样 `为非解耦 Head`。Head 模块只包括 3 个不共享权重的卷积，用于将输入特征图进行变换而已。
+YOLOv5 Head 结构和 YOLOv3 完全一样，为 `非解耦 Head`。Head 模块只包括 3 个不共享权重的卷积，用于将输入特征图进行变换而已。
 
-前面的 PAFPN 依然是输出 3 个不同尺度的特征图，shape 为(B,256,80,80)、 (B,512,40,40) 和 (B,1024,20,20)。
-由于 YOLOv5 是非解耦输出即分类和 bbox 检测等都是在同一个卷积的不同通道中完成，以 COCO 80 类为例，在输入为 640x640 分辨率情况下，
-其 Head 模块输出的 shape 分别为 (B, 3x(4+1+80),80,80), (B, 3x(4+1+80),40,40) 和 (B, 3x(4+1+80),20,20。
-其中 3 表示 3 个 anchor，4 表示 bbox 预测分支，1 表示 obj 预测分支，80 表示类别预测分支。
+前面的 PAFPN 依然是输出 3 个不同尺度的特征图，shape 为 (B,256,80,80)、 (B,512,40,40) 和 (B,1024,20,20)。
+由于 YOLOv5 是非解耦输出，即分类和 bbox 检测等都是在同一个卷积的不同通道中完成。以 COCO 80 类为例，在输入为 640x640 分辨率情况下，其 Head 模块输出的 shape 分别为 (B, 3x(4+1+80),80,80), (B, 3x(4+1+80),40,40) 和 (B, 3x(4+1+80),20,20)。其中 3 表示 3 个 anchor，4 表示 bbox 预测分支，1 表示 obj 预测分支，80 表示类别预测分支。
 
 ### 1.3 正负样本匹配策略
 
@@ -300,13 +285,10 @@ YOLOv5 Head 结构和 YOLOv3 完全一样 `为非解耦 Head`。Head 模块只�
 YOLOV5 的匹配策略简单总结为：**采用了 anchor 和 gt_bbox 的 shape 匹配度作为划分规则，同时引入跨邻域网格策略来增加正样本**。
 其主要包括如下两个核心步骤：
 
-1. 对于任何一个输出层，抛弃了常用的基于 Max IoU 匹配的规则，而是直接采用 shape 规则匹配，
-   也就是该 GT Bbox 和当前层的 Anchor 计算宽高比，如果宽高比例大于设定阈值，则说明该 GT Bbox 和 Anchor 匹配度不够，
-   将该 GT Bbox 过滤暂时丢掉，在该层预测中该 GT Bbox 对应的网格内的预测位置认为是负样本
-2. 对于剩下的 GT Bbox(也就是匹配上的 GT Bbox)，计算其落在哪个网格内，同时利用四舍五入规则，
-   找出最近的两个网格，将这三个网格都认为是负责预测该 GT Bbox 的，可以发现粗略估计正样本数相比前 YOLO 系列，至少增加了三倍
+1. 对于任何一个输出层，抛弃了常用的基于 Max IoU 匹配的规则，而是直接采用 shape 规则匹配，也就是该 GT Bbox 和当前层的 Anchor 计算宽高比，如果宽高比例大于设定阈值，则说明该 GT Bbox 和 Anchor 匹配度不够，将该 GT Bbox 过滤暂时丢掉，在该层预测中该 GT Bbox 对应的网格内的预测位置认为是负样本
+2. 对于剩下的 GT Bbox(也就是匹配上的 GT Bbox)，计算其落在哪个网格内，同时利用四舍五入规则，找出最近的两个网格，将这三个网格都认为是负责预测该 GT Bbox 的，可以粗略估计正样本数相比之前的 YOLO 系列，至少增加了三倍
 
-下面对每个部分进行详细说明。部分描述和图示直接或间接参考自官方 [Repo](https://github.com/ultralytics/YOLOv5/issues/6998#44)。
+下面会对每个部分进行详细说明，部分描述和图示直接或间接参考自官方 [Repo](https://github.com/ultralytics/YOLOv5/issues/6998#44)。
 
 #### 1.3.1 Anchor 设置
 
@@ -337,8 +319,7 @@ anchors = [[(10, 13), (16, 30), (33, 23)], [(30, 61), (62, 45), (59, 119)],
 
 #### 1.3.2 Bbox 编解码过程
 
-在 Anchor-based 算法中，预测框通常会基于 Anchor 进行变换，然后预测变换量，这对应 GT Bbox 编码过程，而在预测后需要进行 Pred Bbox 解码，
-还原为真实尺度的 Bbox，这对应 Pred Bbox 解码过程。
+在 Anchor-based 算法中，预测框通常会基于 Anchor 进行变换，然后预测变换量，这对应 GT Bbox 编码过程，而在预测后需要进行 Pred Bbox 解码，还原为真实尺度的 Bbox，这对应 Pred Bbox 解码过程。
 
 在 YOLOv3 中，回归公式为：
 
@@ -366,7 +347,7 @@ b_w=a_w\cdot(2\cdot\sigma(t_w))^2   \\
 b_h=a_h\cdot(2\cdot\sigma(t_h))^2
 ```
 
-改进之处主要有以下几点：
+改进之处主要有以下两点：
 
 - 中心点坐标范围从 (0, 1) 调整至 (-0.5, 1.5)
 - 宽高范围从
@@ -416,7 +397,7 @@ r^{max}=max(r_w^{max}, r_h^{max})   \\
 if\ \ r_{max} < prior\_match\_thr:   match!
 ```
 
-此处我们用一个 GT Bbox 与 P3 特征图的 Prior 进行匹配的案例进行讲解+图示：
+此处我们用一个 GT Bbox 与 P3 特征图的 Prior 进行匹配的案例进行讲解和图示：
 
 <div align=center >
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190547195-60d6cd7a-b12a-4c6f-9cc8-13f48c8ab1e0.png"/>
@@ -434,7 +415,7 @@ h\_{gt}\ /\ h\_{prior}\ =\ 4.8\ >\ prior\_match\_thr
 
 GT Bbox (cx, cy, w, h) 值为 (26, 37, 36, 24)，
 
-Prior WH 值为 \[(15, 5), (24, 16), (16, 24)\]，其中在 P3 特征图上，stride为 8，通过计算 prior2，prior3 能够 match。
+Prior WH 值为 \[(15, 5), (24, 16), (16, 24)\]，其中在 P3 特征图上，stride 为 8，通过计算 prior2，prior3 能够 match。
 
 计算过程如下：
 
@@ -449,7 +430,7 @@ GT_y^{center_grid}=37/8=4.625
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190549304-020ec19e-6d54-4d40-8f43-f78b8d6948aa.png"/>
 </div>
 
-(2.2) 将 GT Bbox 中心点所在的 grid 分成四个象限，**由于中心点落在了左下角的象限当中，那么会将物体的左、下两个 grid 也认为是正样本**
+**(2.2)** 将 GT Bbox 中心点所在的 grid 分成四个象限，**由于中心点落在了左下角的象限当中，那么会将物体的左、下两个 grid 也认为是正样本**
 
 <div align=center >
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190549310-e5da53e3-eae3-4085-bd0a-1843ac8ca653.png"/>
@@ -491,13 +472,13 @@ YOLOv5 中总共包含 3 个 Loss，分别为：
 - Objectness loss：使用的是 BCE loss
 - Location loss：使用的是 CIoU loss
 
-三个 loss 按照一定比例汇总。
+三个 loss 按照一定比例汇总：
 
 ```{math}
 Loss=\lambda_1L_{cls}+\lambda_2L_{obj}+\lambda_3L_{loc}
 ```
 
-在 Objectness loss 中，P3,P4,P5 层的 Objectness loss 按照不同权重进行相加，默认的设置是
+P3、P4、P5 层对应的 Objectness loss 按照不同权重进行相加，默认的设置是
 
 ```python
 obj_level_weights=[4., 1., 0.4]
@@ -527,24 +508,23 @@ alpha = v / (v - ious + (1 + eps))
 
 ### 1.5 优化策略和训练过程
 
-YOLOv5 对每个优化器参数组进行非常精细的控制，简单来说包括如下部分。
+YOLOv5 对每个优化器的参数组进行非常精细的控制，简单来说包括如下部分。
 
 #### 1.5.1 优化器分组
 
 将优化参数分成 Conv/Bias/BN 三组，在 WarmUp 阶段，不同组采用不同的 lr 以及 momentum 更新曲线。
-同时在 WarmUp 阶段采用的是 iter-based 更新策略，而非 WarmUp 阶段则变成epoch-based 更新策略，可谓是 trick 十足。
+同时在 WarmUp 阶段采用的是 iter-based 更新策略，而在非 WarmUp 阶段则变成 epoch-based 更新策略，可谓是 trick 十足。
 
-MMYOLO 中是采用 YOLOv5OptimizerConstructor 优化器构造器实现优化器参数分组。
-优化器构造器的作用就是对一些特殊的参数组初始化过程进行精细化控制，因此可以很好的满足需求。
+MMYOLO 中是采用 YOLOv5OptimizerConstructor 优化器构造器实现优化器参数分组。优化器构造器的作用就是对一些特殊的参数组初始化过程进行精细化控制，因此可以很好的满足需求。
 
-而不同的参数组采用不同的调度曲线功能则是通过 YOLOv5ParamSchedulerHook 实现。
+而不同的参数组采用不同的调度曲线功能则是通过 YOLOv5ParamSchedulerHook 实现。而不同的参数组采用不同的调度曲线功能则是通过 YOLOv5ParamSchedulerHook 实现。
 
 #### 1.5.2 weight decay 参数自适应
 
 作者针对不同的 batch size 采用了不同的 weight decay 策略，具体来说为：
 
-1. 当训练batch size  \<= 64 时，weight decay 不变
-2. 当训练batch size  > 64 时，weight decay 会根据总 batch size 进行线性缩放
+1. 当训练 batch size \<= 64 时，weight decay 不变
+2. 当训练 batch size > 64 时，weight decay 会根据总 batch size 进行线性缩放
 
 MMYOLO 也是通过 YOLOv5OptimizerConstructor 实现。
 
@@ -564,9 +544,9 @@ MMYOLO 也是通过 YOLOv5OptimizerConstructor 实现。
 
 ### 1.6 推理和后处理过程
 
-#### 1.6.1 推理过程
+YOLOv5 后处理过程和 YOLOv3 非常类似，实际上 YOLO 系列的后处理逻辑都是类似的。
 
-YOLOv5 后处理过程和 YOLOv3 非常类似，实际上 YOLO 系列的后处理逻辑都是类似的。其核心控制参数为：
+#### 1.6.1 核心控制参数
 
 1. **multi_label**
 
@@ -594,12 +574,9 @@ max_per_img 表示最终保留的最大检测框数目，通常设置为 300。
 **(1) 维度变换**
 
 YOLOv5 输出特征图尺度为 80x80、40x40 和 20x20 的三个特征图，每个位置共 3 个 anchor，因此输出特征图通道为 3x(5+80)=255。
-YOLOv5 是非解耦输出头，而其他大部分算法都是解耦输出头，为了统一后处理逻辑，我们提前将其进行解耦，
-分成了类别预测分支、bbox 预测分支和 obj 预测分支。
+YOLOv5 是非解耦输出头，而其他大部分算法都是解耦输出头，为了统一后处理逻辑，我们提前将其进行解耦，分成了类别预测分支、bbox 预测分支和 obj 预测分支。
 
-将三个不同尺度的类别预测分支、bbox 预测分支和 obj 预测分支进行拼接，并进行维度变换。为了后续方便处理，会将原先的通道维度置换到最后，
-类别预测分支、bbox 预测分支和 obj 预测分支的 shape
-分别为 (b, 3x80x80+3x40x40+3x20x20, 80)=(b,25200,80)，(b,25200,4)，(b,25200,1)。
+将三个不同尺度的类别预测分支、bbox 预测分支和 obj 预测分支进行拼接，并进行维度变换。为了后续方便处理，会将原先的通道维度置换到最后，类别预测分支、bbox 预测分支和 obj 预测分支的 shape 分别为 (b, 3x80x80+3x40x40+3x20x20, 80)=(b,25200,80)，(b,25200,4)，(b,25200,1)。
 
 **(2) 解码还原到原图尺度**
 
@@ -620,11 +597,10 @@ YOLOv5 是非解耦输出头，而其他大部分算法都是解耦输出头，�
 
 #### 1.6.2 batch shape 策略
 
-为了加速验证集的推理过程，作者提出了 batch shape 策略，其核心原则是：**确保在 batch 推理过程中同一个 batch 内的图片 pad 像素最少，
-不要求整个验证过程中所有 batch 的图片尺度一样**。
+为了加速验证集的推理过程，作者提出了 batch shape 策略，其核心原则是：**确保在 batch 推理过程中同一个 batch 内的图片 pad 像素最少，不要求整个验证过程中所有 batch 的图片尺度一样**。
 
 其大概流程是：将整个测试或者验证数据的宽高比进行排序，然后依据 batch 设置将排序后的图片组成一个 batch，
-同时计算这个 batch 内最佳的 batch shape，防止 pad 像素过多，最佳 batch shape 计算原则为在保持宽高比的情况下进行 pad，不追求正方形图片输出。
+同时计算这个 batch 内最佳的 batch shape，防止 pad 像素过多。最佳 batch shape 计算原则为在保持宽高比的情况下进行 pad，不追求正方形图片输出。
 
 ```python
         image_shapes = []
@@ -665,5 +641,4 @@ YOLOv5 是非解耦输出头，而其他大部分算法都是解耦输出头，�
 
 ## 2 总结
 
-本文对 YOLOv5 原理和在 MMYOLO 实现进行了详细解析，希望能帮助用户理解算法实现过程。同时请注意：由于 YOLOv5 本身也在不断更新，
-本开源库也会不断迭代，请及时阅读和同步最新版本。
+本文对 YOLOv5 原理和在 MMYOLO 实现进行了详细解析，希望能帮助用户理解算法实现过程。同时请注意：由于 YOLOv5 本身也在不断更新，本开源库也会不断迭代，请及时阅读和同步最新版本。
