@@ -21,7 +21,7 @@ class BasicBlock(nn.Module):
          norm_cfg (dict): Config dict for normalization layer.
              Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
          act_cfg (dict): Config dict for activation layer.
-             Defaults to dict(type='Swish').
+             Defaults to dict(type='SiLU').
          shortcut (bool): Whether to add inputs and outputs together
          at the end of this layer. Defaults to True.
          use_alpha (bool): Whether to use `alpha` parameter at 1x1 conv.
@@ -32,7 +32,7 @@ class BasicBlock(nn.Module):
                  out_channels: int,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='Swish'),
+                 act_cfg: ConfigType = dict(type='SiLU'),
                  shortcut: bool = True,
                  use_alpha: bool = False):
         super().__init__()
@@ -84,7 +84,7 @@ class CSPResStage(nn.Module):
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
         act_cfg (dict): Config dict for activation layer.
-            Defaults to dict(type='Swish').
+            Defaults to dict(type='SiLU').
     """
 
     def __init__(self,
@@ -95,7 +95,7 @@ class CSPResStage(nn.Module):
                  stride: int = 1,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='Swish'),
+                 act_cfg: ConfigType = dict(type='SiLU'),
                  use_effective_se: bool = True,
                  use_alpha: bool = False):
         super().__init__()
@@ -215,7 +215,7 @@ class CSPResNet(BaseBackbone):
                  arch_ovewrite: dict = None,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='Swish'),
+                 act_cfg: ConfigType = dict(type='SiLU'),
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None,
                  use_large_stem: bool = False,

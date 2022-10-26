@@ -24,7 +24,7 @@ class CSPStage(nn.Module):
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
         act_cfg (dict): Config dict for activation layer.
-            Defaults to dict(type='Swish').
+            Defaults to dict(type='SiLU').
         use_spp (bool): Whether to use `SPP` layer.
             Defaults to False.
     """
@@ -36,7 +36,7 @@ class CSPStage(nn.Module):
                  block: nn.Module = BasicBlock,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='Swish'),
+                 act_cfg: ConfigType = dict(type='SiLU'),
                  use_spp: bool = False):
         super().__init__()
 
@@ -125,7 +125,7 @@ class PPYOLOECSPPAN(BaseYOLONeck):
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
         act_cfg (dict): Config dict for activation layer.
-            Defaults to dict(type='Swish').
+            Defaults to dict(type='SiLU').
         init_cfg (dict or list[dict], optional): Initialization config dict.
             Defaults to None.
         num_stage (int): Number of stage per layer.
@@ -149,7 +149,7 @@ class PPYOLOECSPPAN(BaseYOLONeck):
                  freeze_all: bool = False,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='Swish'),
+                 act_cfg: ConfigType = dict(type='SiLU'),
                  init_cfg: OptMultiConfig = None,
                  num_stage: int = 1,
                  num_block: int = 3,

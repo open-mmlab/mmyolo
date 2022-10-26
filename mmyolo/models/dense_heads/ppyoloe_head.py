@@ -35,7 +35,7 @@ class PPYOLOEHeadModule(BaseModule):
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
         act_cfg (dict): Config dict for activation layer.
-            Defaults to dict(type='Swish').
+            Defaults to dict(type='SiLU').
         init_cfg (dict or list[dict], optional): Initialization config dict.
             Defaults to None.
     """
@@ -49,7 +49,7 @@ class PPYOLOEHeadModule(BaseModule):
                  reg_max: int = 16,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='Swish'),
+                 act_cfg: ConfigType = dict(type='SiLU'),
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg=init_cfg)
 

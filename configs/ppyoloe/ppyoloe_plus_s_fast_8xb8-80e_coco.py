@@ -2,7 +2,7 @@ _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
 data_root = 'data/coco/'
-dataset_type = 'mmdet.CocoDataset'
+dataset_type = 'YOLOv5CocoDataset'
 
 # parameters that often need to be modified
 img_scale = (640, 640)  # height, width
@@ -20,31 +20,19 @@ persistent_workers = True
 
 strides = [8, 16, 32]
 
-# single-scale training is recommended to
-# be turned on, which can speed up training.
-env_cfg = dict(cudnn_benchmark=True)
-
 model = dict(
     type='YOLODetector',
     data_preprocessor=dict(
-        type='mmdet.DetDataPreprocessor',
+        type='YOLOv5DetDataPreprocessor',
         mean=[0., 0., 0.],
         std=[255., 255., 255.],
-        bgr_to_rgb=True,
-        pad_size_divisor=32,
-        batch_augments=[
-            dict(
-                type='mmdet.BatchSyncRandomResize',
-                random_size_range=(320, 800),
-                size_divisor=32,
-                interval=10)
-        ]),
+        bgr_to_rgb=True),
     backbone=dict(
         type='CSPResNet',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
-        act_cfg=dict(type='Swish'),
+        act_cfg=dict(type='SiLU'),
         use_large_stem=True,
         use_alpha=True),
     neck=dict(
@@ -54,7 +42,7 @@ model = dict(
         in_channels=[256, 512, 1024],
         out_channels=[192, 384, 768],
         norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
-        act_cfg=dict(type='Swish'),
+        act_cfg=dict(type='SiLU'),
         use_spp=True,
         num_stage=1,
         num_block=3,
