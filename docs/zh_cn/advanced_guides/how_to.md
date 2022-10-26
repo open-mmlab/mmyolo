@@ -30,6 +30,8 @@ model = dict(
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
+deepen_factor = {{_base_.deepen_factor}}
+widen_factor = {{_base_.widen_factor}}
 model = dict(
     type='YOLODetector',
     neck=[
@@ -38,7 +40,7 @@ model = dict(
             deepen_factor=deepen_factor,
             widen_factor=widen_factor,
             in_channels=[256, 512, 1024],
-            out_channels=[256, 512, 1024],
+            out_channels=[256, 512, 1024], # 因为受到widen_factor的影响，YOLOv5PAFPN的的out_channel=out_channel*widen_factor
             num_csp_blocks=3,
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg=dict(type='SiLU', inplace=True)),
@@ -55,4 +57,6 @@ model = dict(
             # disable zero_init_offset to follow official implementation
             zero_init_offset=False)
     ]
+    bbox_head=dict(head_module=dict(in_channels=[512,512,512]))# 因为受到widen_factor的影响，YOLOv5HeadModuled的in_channel*widen_factor才会等于最后一个neck的out_channle
+)
 ```
