@@ -27,7 +27,8 @@ class YOLOXHeadModule(BaseModule):
     Args:
         num_classes (int): Number of categories excluding the background
             category.
-        in_channels (Union[int, Sequence]): Number of channels in the input feature map.
+        in_channels (Union[int, Sequence]): Number of channels in the input 
+            feature map.
         widen_factor (float): Width multiplier, multiply number of
             channels in each layer by this amount. Default: 1.0.
         num_base_priors (int): The number of priors (points) at a point
