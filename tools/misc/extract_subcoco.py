@@ -28,11 +28,12 @@ from pycocotools.coco import COCO
 
 
 # TODO: Currently only supports coco2017
-def _process_data(args, in_dataset_type: str, out_dataset_type: str):
+def _process_data(args,
+                  in_dataset_type: str,
+                  out_dataset_type: str,
+                  year: str = '2017'):
     assert in_dataset_type in ('train', 'val')
     assert out_dataset_type in ('train', 'val')
-
-    year = '2017'
 
     int_ann_file_name = f'annotations/instances_{in_dataset_type}{year}.json'
     out_ann_file_name = f'annotations/instances_{out_dataset_type}{year}.json'
@@ -94,6 +95,7 @@ def parse_args():
         help='Whether to use the training set when extract the training set. '
         'The training subset is extracted from the validation set by '
         'default which can speed up.')
+    parser.add_argument('--seed', default=-1, type=int, help='seed')
     args = parser.parse_args()
     return args
 
@@ -104,15 +106,21 @@ def main():
         'The file will be overwritten in place, ' \
         'so the same folder is not allowed !'
 
+    seed = int(args.seed)
+    if seed != -1:
+        print(f'Set the global seed: {seed}')
+        np.random.seed(int(args.seed))
+
     _make_dirs(args.out_dir)
 
-    print('start processing train dataset')
+    print('====Start processing train dataset====')
     if args.use_training_set:
         _process_data(args, 'train', 'train')
     else:
         _process_data(args, 'val', 'train')
-    print('start processing val dataset')
+    print('\n====Start processing val dataset====')
     _process_data(args, 'val', 'val')
+    print(f'\n Result save to {args.out_dir}')
 
 
 if __name__ == '__main__':
