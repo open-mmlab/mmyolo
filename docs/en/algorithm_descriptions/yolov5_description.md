@@ -96,7 +96,7 @@ The `Head` structure of YOLOv5 is exactly the same as YOLOv3, which is a `non-de
 
 The `PAFPN` outputs three feature maps of different scales, whose shapes are (B,256,80,80), (B,512,40,40) and (B,1024,20,20) accordingly.
 
-Since YOLOv5 has a non-decoupled output, that is, classification and bbox detection results are all in different channels of the same convolution module. Taking the COCO 80 class as an example, when the input is 640x640 resolution, the output shapes of the Head module are (B, 3x(4+1+80),80,80), (B, 3x(4+1+80),40,40) and (B, 3x(4+1+80),20,20). 3 represents three anchors, 4 represents the bbox prediction branch, 1 represents the obj prediction branch, and 80 represents the class prediction branch.
+Since YOLOv5 has a non-decoupled output, that is, classification and bbox detection results are all in different channels of the same convolution module. Taking the COCO 80 class as an example, when the input is 640x640 resolution, the output shapes of the Head module are `(B, 3x(4+1+80),80,80)`, `(B, 3x(4+1+80),40,40)` and `(B, 3x(4+1+80),20,20)`. 3 represents three anchors, 4 represents the bbox prediction branch, 1 represents the obj prediction branch, and 80 represents the class prediction branch.
 
 ### 1.3 Positive and negative sample matching strategy
 
