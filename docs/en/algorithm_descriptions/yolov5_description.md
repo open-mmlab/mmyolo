@@ -28,7 +28,7 @@ YOLOv5 official repository: https://github.com/ultralytics/yolov5
 YOLOv5 official release: https://github.com/ultralytics/yolov5/releases/tag/v6.1
 
 <div align=center >
-<img alt="YOLOv5精度图" src="https://user-images.githubusercontent.com/40284075/190542120-29d46b7e-ce3c-436a-9933-cfc9f86787bf.png"/>
+<img alt="YOLOv5 accuracy" src="https://user-images.githubusercontent.com/40284075/190542120-29d46b7e-ce3c-436a-9933-cfc9f86787bf.png"/>
 </div>
 
 <div align=center >
