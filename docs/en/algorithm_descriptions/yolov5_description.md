@@ -40,7 +40,7 @@ The performance is shown in the table above. YOLOv5 has two models with differen
 Object detection algorithms can generally be divided into data augmentation, model structure, loss calculation, etc. It is the same as YOLOv5:
 
 <div align=center >
-<img alt="训练测试策略" src="https://user-images.githubusercontent.com/40284075/190542423-f6b20d8e-c82a-4a34-9065-c161c5e29e7c.png"/>
+<img alt="Strategy" src="https://user-images.githubusercontent.com/40284075/190542423-f6b20d8e-c82a-4a34-9065-c161c5e29e7c.png"/>
 </div>
 
 Now we will briefly analyze the principle and our specific implementation in MMYOLO.
