@@ -57,6 +57,12 @@ jobs:
             python -V
             pip install torch==<< parameters.torch >>+cpu torchvision==<< parameters.torchvision >>+cpu -f https://download.pytorch.org/whl/torch_stable.html
       - run:
+          name: Install ONNXRuntime
+          command: |
+            pip install onnxruntime==1.8.1
+            wget https://github.com/microsoft/onnxruntime/releases/download/v1.8.1/onnxruntime-linux-x64-1.8.1.tgz
+            tar xvf onnxruntime-linux-x64-1.8.1.tgz
+      - run:
           name: Install mmyolo dependencies
           command: |
             pip install -U openmim
@@ -66,12 +72,24 @@ jobs:
             pip install -r requirements/albu.txt
             pip install -r requirements/tests.txt
       - run:
+          name: Install mmdeploy
+          command: |
+            pip install setuptools
+            git clone -b dev-1.x --depth 1 https://github.com/open-mmlab/mmdeploy.git mmdeploy --recurse-submodules
+            wget https://github.com/Kitware/CMake/releases/download/v3.20.0/cmake-3.20.0-linux-x86_64.tar.gz
+            tar -xzvf cmake-3.20.0-linux-x86_64.tar.gz
+            sudo ln -sf $(pwd)/cmake-3.20.0-linux-x86_64/bin/* /usr/bin/
+            cd mmdeploy && mkdir build && cd build && cmake .. -DMMDEPLOY_TARGET_BACKENDS=ort -DONNXRUNTIME_DIR=/home/circleci/project/onnxruntime-linux-x64-1.8.1 && make -j8 && make install
+            export LD_LIBRARY_PATH=/home/circleci/project/onnxruntime-linux-x64-1.8.1/lib:${LD_LIBRARY_PATH}
+            cd /home/circleci/project/mmdeploy && python -m pip install -v -e .
+      - run:
           name: Build and install
           command: |
             pip install -e .
       - run:
           name: Run unittests
           command: |
+            export LD_LIBRARY_PATH=/home/circleci/project/onnxruntime-linux-x64-1.8.1/lib:${LD_LIBRARY_PATH}
             coverage run --branch --source mmyolo -m pytest tests/
             coverage xml
             coverage report -m
@@ -144,8 +162,8 @@ workflows:
                 - main
       - build_cpu:
           name: minimum_version_cpu
-          torch: 1.7.0
-          torchvision: 0.8.1
+          torch: 1.8.0
+          torchvision: 0.9.0
           python: 3.8.0  # The lowest python 3.6.x version available on CircleCI images
           requires:
             - lint
