@@ -38,23 +38,27 @@ from torch import Tensor
 
 from mmyolo.utils import register_all_modules
 
+try:
+    from scipy.cluster.vq import kmeans
+except ImportError:
+    kmeans = None
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Optimize anchor parameters.')
     parser.add_argument('config', help='Train config file path.')
     parser.add_argument(
-        '--device', default='cuda:0', help='Device used for calculating.')
-    parser.add_argument(
         '--input-shape',
         type=int,
         nargs='+',
-        default=[608, 608],
-        help='input image size')
+        default=[640, 640],
+        help='input image size, represent [width, height]')
     parser.add_argument(
         '--algorithm',
         default='differential_evolution',
         help='Algorithm used for anchor optimizing.'
-        'Support k-means and differential_evolution for YOLO.')
+        'Support k-means and differential_evolution for YOLO,'
+        'and v5-k-means is special for YOLOV5.')
     parser.add_argument(
         '--iters',
         default=1000,
@@ -64,8 +68,24 @@ def parse_args():
         '--prior_match_thr',
         default=4.0,
         type=float,
-        help='anchor-label gt_filter_sizes ratio threshold hyperparameter.'
-        'used for training, default=4.0')
+        help='anchor-label gt_filter_sizes ratio threshold hyperparameter used'
+        ' for training, default=4.0, this parameter is unique to v5-k-means')
+    parser.add_argument(
+        '--mutation_args',
+        type=float,
+        nargs='+',
+        default=[0.9, 0.1],
+        help='paramter of anchor optimize method genetic algorithm, '
+        'represent [prob, sigma], this parameter is unique to v5-k-means')
+    parser.add_argument(
+        '--augment_args',
+        type=float,
+        nargs='+',
+        default=[0.9, 1.1],
+        help='scale factor of box size augment when metric box and anchor, '
+        'represent [min, max], this parameter is unique to v5-k-means')
+    parser.add_argument(
+        '--device', default='cuda:0', help='Device used for calculating.')
     parser.add_argument(
         '--output-dir',
         default=None,
@@ -246,16 +266,25 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
             ratio threshold hyperparameter.
     """
 
-    def __init__(self, num_anchors, iters, prior_match_thr=4.0, **kwargs):
+    def __init__(self,
+                 num_anchors,
+                 iters,
+                 prior_match_thr=4.0,
+                 mutation_args=[0.9, 0.1],
+                 augment_args=[0.9, 1.1],
+                 **kwargs):
 
         super().__init__(**kwargs)
         self.num_anchors = num_anchors
         self.iters = iters
         self.prior_match_thr = prior_match_thr
+        [self.mutation_prob, self.mutation_sigma] = mutation_args
+        [self.augment_min, self.augment_max] = augment_args
 
     def optimize(self):
         self.logger.info(
             f'Start cluster {self.num_anchors} YOLOv5 anchors with K-means...')
+
         bbox_whs = torch.from_numpy(self.bbox_whs).to(
             self.device, dtype=torch.float32)
         anchors = self.anchor_generate(
@@ -297,18 +326,29 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
         assert num <= len(box_size)
 
         # step2: init anchors
-        try:
-            from scipy.cluster.vq import kmeans
-            self.logger.info('beginning init anchors with scipy kmeans method')
-            sigmas = box_size.std(0).cpu().numpy()  # sigmas for whitening
-            anchors = kmeans(
-                box_size.cpu().numpy() / sigmas, num, iter=30)[0] * sigmas
-            # kmeans may return fewer points than requested
-            # if width/height is insufficient or too similar
-            assert num == len(anchors)
-        except Exception:
-            self.logger.warning('switching strategies from'
-                                ' kmeans to random init')
+        if kmeans:
+            try:
+                self.logger.info(
+                    'beginning init anchors with scipy kmeans method')
+                # sigmas for whitening
+                sigmas = box_size.std(0).cpu().numpy()
+                anchors = kmeans(
+                    box_size.cpu().numpy() / sigmas, num, iter=30)[0] * sigmas
+                # kmeans may return fewer points than requested
+                # if width/height is insufficient or too similar
+                assert num == len(anchors)
+            except Exception:
+                self.logger.warning(
+                    'scipy kmeans method cannot get enough points '
+                    'because of width/height is insufficient or too similar, '
+                    'now switching strategies from kmeans to random init.')
+                anchors = np.sort(np.random.rand(num * 2)).reshape(
+                    num, 2) * img_size
+        else:
+            self.logger.info(
+                'cannot found scipy package, switching strategies from kmeans '
+                'to random init, you can install scipy package to '
+                'get better anchor init')
             anchors = np.sort(np.random.rand(num * 2)).reshape(num,
                                                                2) * img_size
 
@@ -317,20 +357,20 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
         anchors = torch.tensor(anchors[np.argsort(anchors.prod(1))]).to(
             box_size.device, dtype=torch.float32)
 
-        # step3: evolve anchors
+        # step3: evolve anchors use Genetic Algorithm
         prog_bar = ProgressBar(iters)
         fitness = self._anchor_fitness(box_size, anchors, thr)
         cluster_shape = anchors.shape
-        mutation_prob, sigma = 0.9, 0.1
 
         for _ in range(iters):
             mutate_result = np.ones(cluster_shape)
             # mutate until a change occurs (prevent duplicates)
             while (mutate_result == 1).all():
+                # mutate_result is scale factor of anchors, between 0.3 and 3
                 mutate_result = (
-                    (np.random.random(cluster_shape) < mutation_prob) *
-                    random.random() * np.random.randn(*cluster_shape) * sigma +
-                    1).clip(0.3, 3.0)
+                    (np.random.random(cluster_shape) < self.mutation_prob) *
+                    random.random() * np.random.randn(*cluster_shape) *
+                    self.mutation_sigma + 1).clip(0.3, 3.0)
             mutate_result = torch.from_numpy(mutate_result).to(box_size.device)
             new_anchors = (anchors.clone() * mutate_result).clip(min=2.0)
             new_fitness = self._anchor_fitness(box_size, new_anchors, thr)
@@ -363,9 +403,10 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
             Tuple: a tuple of metric result, best_ratio_mean and mean_matched
         """
         # step1: augment scale
-        # According to the uniform distribution,
-        # the scaling scale between 0.9 and 1.1 is randomly generated
-        scale = np.random.uniform(0.9, 1.1, size=(box_size.shape[0], 1))
+        # According to the uniform distribution,the scaling scale between
+        # augment_min and augment_max is randomly generated
+        scale = np.random.uniform(
+            self.augment_min, self.augment_max, size=(box_size.shape[0], 1))
         box_size = torch.tensor(
             np.array(
                 [l[:, ] * s for s, l in zip(scale,
@@ -412,8 +453,7 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
 
         # min_ratio records the min ratio of each box with all anchor,
         # min_ratio.shape is torch.Size([box_num,anchor_num])
-        # notice: smaller ratio means worse shape-matched (w_1/w_2, h_1/h_2)
-        # between boxes and anchors
+        # notice:smaller ratio means worse shape-match of boxes and anchors
         min_ratio = torch.min(ratio, 1 / ratio).min(2)[0]
 
         # find the best shape-match ratio for each box
@@ -577,6 +617,8 @@ def main():
             num_anchors=num_anchors,
             iters=args.iters,
             prior_match_thr=args.prior_match_thr,
+            mutation_args=args.mutation_args,
+            augment_args=args.augment_args,
             logger=logger,
             out_dir=args.output_dir)
     else:
