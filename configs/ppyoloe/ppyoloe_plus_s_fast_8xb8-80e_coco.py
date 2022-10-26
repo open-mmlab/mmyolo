@@ -68,6 +68,36 @@ model = dict(
         nms=dict(type='nms', iou_threshold=0.7),
         max_per_img=300))
 
+# TODO: 要开展验证
+train_pipeline = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args={{_base_.file_client_args}}),
+    dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='PPYOLOERandomDistort'),
+    dict(type='PPYOLOERandomExpand'),
+    dict(type='PPYOLOERandomCrop'),
+    dict(type='mmdet.RandomFlip', prob=0.5),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
+                   'flip_direction'))
+]
+
+train_dataloader = dict(
+    batch_size=train_batch_size_per_gpu,
+    num_workers=train_num_workers,
+    persistent_workers=True,
+    pin_memory=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_root,
+        ann_file='annotations/instances_train2017.json',
+        data_prefix=dict(img='train2017/'),
+        filter_cfg=dict(filter_empty_gt=True, min_size=0),
+        pipeline=train_pipeline))
+
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
@@ -103,12 +133,35 @@ val_dataloader = dict(
 
 test_dataloader = val_dataloader
 
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(
+        type='SGD', lr=0.001, momentum=0.9, weight_decay=5e-4, nesterov=False),
+    paramwise_cfg=dict(norm_decay_mult=0., bias_decay_mult=0.))
+
+default_hooks = dict(
+    param_scheduler=dict(
+        type='PPYOLOEParamSchedulerHook',
+        warmup_min_iter=1000,
+        start_factor=0.,
+        warmup_epochs=5,
+        min_lr_ratio=0.0,
+        total_epochs=96),
+    checkpoint=dict(
+        type='CheckpointHook', interval=save_epoch_intervals,
+        max_keep_ckpts=3))
+
 val_evaluator = dict(
     type='mmdet.CocoMetric',
     proposal_nums=(100, 1, 10),
     ann_file=data_root + 'annotations/instances_val2017.json',
     metric='bbox')
 test_evaluator = val_evaluator
+
+train_cfg = dict(
+    type='EpochBasedTrainLoop',
+    max_epochs=max_epochs,
+    val_interval=save_epoch_intervals)
 
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')

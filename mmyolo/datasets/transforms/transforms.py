@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
-from typing import Tuple, Union
+from numbers import Number
+from typing import Sequence, Tuple, Union
 
 import cv2
 import mmcv
@@ -9,6 +10,7 @@ import torch
 from mmcv.transforms import BaseTransform
 from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
+from mmdet.datasets.transforms import RandomCrop
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
@@ -661,3 +663,307 @@ class YOLOv5RandomAffine(BaseTransform):
         translation_matrix = np.array([[1, 0., x], [0., 1, y], [0., 0., 1.]],
                                       dtype=np.float32)
         return translation_matrix
+
+
+@TRANSFORMS.register_module()
+class PPYOLOERandomDistort(BaseTransform):
+
+    def __init__(self,
+                 hue=[-18, 18, 0.5],
+                 saturation=[0.5, 1.5, 0.5],
+                 contrast=[0.5, 1.5, 0.5],
+                 brightness=[0.5, 1.5, 0.5],
+                 random_apply=True,
+                 count=4,
+                 random_channel=False):
+        self.hue = hue
+        self.saturation = saturation
+        self.contrast = contrast
+        self.brightness = brightness
+        self.random_apply = random_apply
+        self.count = count
+        self.random_channel = random_channel
+
+    def transform_hue(self, results):
+        low, high, prob = self.hue
+        if np.random.uniform(0., 1.) < prob:
+            return results
+
+        img = results['img']
+        img = img.astype(np.float32)
+        # it works, but result differ from HSV version
+        delta = np.random.uniform(low, high)
+        u = np.cos(delta * np.pi)
+        w = np.sin(delta * np.pi)
+        bt = np.array([[1.0, 0.0, 0.0], [0.0, u, -w], [0.0, w, u]])
+        tyiq = np.array([[0.299, 0.587, 0.114], [0.596, -0.274, -0.321],
+                         [0.211, -0.523, 0.311]])
+        ityiq = np.array([[1.0, 0.956, 0.621], [1.0, -0.272, -0.647],
+                          [1.0, -1.107, 1.705]])
+        t = np.dot(np.dot(ityiq, bt), tyiq).T
+        img = np.dot(img, t)
+        results['img'] = img
+        return results
+
+    def transform_saturation(self, results):
+        low, high, prob = self.saturation
+
+        if np.random.uniform(0., 1.) < prob:
+            return results
+        img = results['img']
+        delta = np.random.uniform(low, high)
+        img = img.astype(np.float32)
+        # it works, but result differ from HSV version
+        gray = img * np.array([[[0.299, 0.587, 0.114]]], dtype=np.float32)
+        gray = gray.sum(axis=2, keepdims=True)
+        gray *= (1.0 - delta)
+        img *= delta
+        img += gray
+        results['img'] = img
+        return results
+
+    def transform_contrast(self, results):
+        low, high, prob = self.contrast
+
+        if np.random.uniform(0., 1.) < prob:
+            return results
+        img = results['img']
+        delta = np.random.uniform(low, high)
+        img = img.astype(np.float32)
+        img *= delta
+        results['img'] = img
+        return results
+
+    def transform_brightness(self, results):
+        low, high, prob = self.brightness
+        if np.random.uniform(0., 1.) < prob:
+            return results
+        img = results['img']
+        delta = np.random.uniform(low, high)
+        img = img.astype(np.float32)
+        img += delta
+        results['img'] = img
+        return results
+
+    def transform(self, results: dict) -> dict:
+        # img = results['img']
+        if self.random_apply:
+            functions = [
+                self.transform_brightness, self.transform_contrast,
+                self.transform_saturation, self.transform_hue
+            ]
+            distortions = np.random.permutation(functions)[:self.count]
+            for func in distortions:
+                results = func(results)
+            return results
+        raise NotImplementedError
+
+
+@TRANSFORMS.register_module()
+class PPYOLOERandomExpand(LetterResize):
+
+    def __init__(self, ratio=4., prob=0.5, fill_value=(127.5, 127.5, 127.5)):
+        assert ratio > 1.01, 'expand ratio must be larger than 1.01'
+        self.ratio = ratio
+        self.prob = prob
+        assert isinstance(fill_value, (Number, Sequence)), \
+            'fill value must be either float or sequence'
+        if isinstance(fill_value, Number):
+            fill_value = (fill_value, ) * 3
+        if not isinstance(fill_value, tuple):
+            fill_value = tuple(fill_value)
+        self.fill_value = fill_value
+
+    def _resize_img(self, results: dict):
+        if np.random.uniform(0., 1.) < self.prob:
+            return results
+
+        img = results['img']
+        height, width = img.shape[:2]
+        ratio = np.random.uniform(1., self.ratio)
+        h = int(height * ratio)
+        w = int(width * ratio)
+        if not h > height or not w > width:
+            return results
+        y = np.random.randint(0, h - height)
+        x = np.random.randint(0, w - width)
+        # offsets, size = [x, y], [h, w]
+        left_padding = x
+        top_padding = y
+        right_padding = h - height - left_padding
+        bottom_padding = w - width - top_padding
+
+        img = mmcv.impad(
+            img=img,
+            padding=(left_padding, top_padding, right_padding, bottom_padding),
+            pad_val=self.fill_value,
+            padding_mode='constant')
+        if 'scale_factor' not in results:
+            results['scale_factor'] = np.array([1, 1], dtype=np.float32)
+        results['img'] = img
+        results['img_shape'] = img.shape
+        results['pad_param'] = np.array(
+            [top_padding, bottom_padding, left_padding, right_padding],
+            dtype=np.float32)
+
+
+class PPYOLOERandomCrop(RandomCrop):
+    """
+    TODO: 没搞完
+    """
+
+    def __init__(self,
+                 aspect_ratio=[.5, 2.],
+                 thresholds=[.0, .1, .3, .5, .7, .9],
+                 scaling=[.3, 1.],
+                 num_attempts=50,
+                 allow_no_crop=True,
+                 cover_all_box=False,
+                 is_mask_crop=False):
+        self.aspect_ratio = aspect_ratio
+        self.thresholds = thresholds
+        self.scaling = scaling
+        self.num_attempts = num_attempts
+        self.allow_no_crop = allow_no_crop
+        self.cover_all_box = cover_all_box
+        self.is_mask_crop = is_mask_crop
+
+    def transform(self, results: dict) -> Union[dict, None]:
+        if 'gt_bboxes' in results and len(results['gt_bboxes']) == 0:
+            return results
+
+        h, w = results['img'].shape[:2]
+        gt_bbox = results['gt_bboxes']
+
+        # NOTE Original method attempts to generate one candidate for each
+        # threshold then randomly sample one from the resulting list.
+        # Here a short circuit approach is taken, i.e., randomly choose a
+        # threshold and attempt to find a valid crop, and simply return the
+        # first one found.
+        # The probability is not exactly the same, kinda resembling the
+        # "Monty Hall" problem. Actually carrying out the attempts will affect
+        # observability (just like opening doors in the "Monty Hall" game).
+        thresholds = list(self.thresholds)
+        if self.allow_no_crop:
+            thresholds.append('no_crop')
+        np.random.shuffle(thresholds)
+
+        for thresh in thresholds:
+            if thresh == 'no_crop':
+                return results
+
+            found = False
+            for i in range(self.num_attempts):
+                scale = np.random.uniform(*self.scaling)
+                if self.aspect_ratio is not None:
+                    min_ar, max_ar = self.aspect_ratio
+                    aspect_ratio = np.random.uniform(
+                        max(min_ar, scale**2), min(max_ar, scale**-2))
+                    h_scale = scale / np.sqrt(aspect_ratio)
+                    w_scale = scale * np.sqrt(aspect_ratio)
+                else:
+                    h_scale = np.random.uniform(*self.scaling)
+                    w_scale = np.random.uniform(*self.scaling)
+                crop_h = h * h_scale
+                crop_w = w * w_scale
+                if self.aspect_ratio is None:
+                    if crop_h / crop_w < 0.5 or crop_h / crop_w > 2.0:
+                        continue
+
+                crop_h = int(crop_h)
+                crop_w = int(crop_w)
+                crop_y = np.random.randint(0, h - crop_h)
+                crop_x = np.random.randint(0, w - crop_w)
+                crop_box = [crop_x, crop_y, crop_x + crop_w, crop_y + crop_h]
+                # TODO: 这里能不能求？
+                iou = self._iou_matrix(
+                    gt_bbox, torch.Tensor([crop_box], dtype=np.float32))
+                if iou.max() < thresh:
+                    continue
+
+                if self.cover_all_box and iou.min() < thresh:
+                    continue
+
+                cropped_box, valid_ids = self._crop_box_with_center_constraint(
+                    gt_bbox, np.array(crop_box, dtype=np.float32))
+                if valid_ids.size > 0:
+                    found = True
+                    break
+
+            if found:
+                if self.is_mask_crop and 'gt_masks' in results and len(
+                        results['gt_masks']) > 0:
+                    raise NotImplementedError
+                    # crop_polys = self.crop_segms(
+                    #     sample['gt_poly'],
+                    #     valid_ids,
+                    #     np.array(
+                    #         crop_box, dtype=np.int64),
+                    #     h,
+                    #     w)
+                    # if [] in crop_polys:
+                    #     delete_id = list()
+                    #     valid_polys = list()
+                    #     for id, crop_poly in enumerate(crop_polys):
+                    #         if crop_poly == []:
+                    #             delete_id.append(id)
+                    #         else:
+                    #             valid_polys.append(crop_poly)
+                    #     valid_ids = np.delete(valid_ids, delete_id)
+                    #     if len(valid_polys) == 0:
+                    #         return sample
+                    #     sample['gt_poly'] = valid_polys
+                    # else:
+                    #     sample['gt_poly'] = crop_polys
+
+                # if 'gt_segm' in sample:
+                #     sample['gt_segm'] = self._crop_segm(sample['gt_segm'],
+                #                                         crop_box)
+                #     sample['gt_segm'] = np.take(
+                #         sample['gt_segm'], valid_ids, axis=0)
+
+        #         results['image'] = self._crop_image(results['img'], crop_box)
+        #         results['gt_bbox'] = np.take(cropped_box, valid_ids, axis=0)
+        #         results['gt_class'] = np.take(
+        #             results['gt_class'], valid_ids, axis=0)
+        #         if 'gt_score' in sample:
+        #             sample['gt_score'] = np.take(
+        #                 sample['gt_score'], valid_ids, axis=0)
+        #
+        #         if 'is_crowd' in sample:
+        #             sample['is_crowd'] = np.take(
+        #                 sample['is_crowd'], valid_ids, axis=0)
+        #
+        #         if 'difficult' in sample:
+        #             sample['difficult'] = np.take(
+        #                 sample['difficult'], valid_ids, axis=0)
+        #
+        #         return sample
+        #
+        # return sample
+
+    def _iou_matrix(self, a, b):
+        tl_i = torch.maximum(a[:, np.newaxis, :2], b[:, :2])
+        br_i = torch.minimum(a[:, np.newaxis, 2:], b[:, 2:])
+
+        area_i = torch.prod(br_i - tl_i, dim=2) * (tl_i < br_i).all(dim=2)
+        area_a = torch.prod(a[:, 2:] - a[:, :2], dim=1)
+        area_b = torch.prod(b[:, 2:] - b[:, :2], dim=1)
+        area_o = (area_a[:, np.newaxis] + area_b - area_i)
+        return area_i / (area_o + 1e-10)
+
+    def _crop_box_with_center_constraint(self, box, crop):
+        cropped_box = box.copy()
+
+        cropped_box[:, :2] = torch.maximum(box[:, :2], crop[:2])
+        cropped_box[:, 2:] = torch.minimum(box[:, 2:], crop[2:])
+        cropped_box[:, :2] -= crop[:2]
+        cropped_box[:, 2:] -= crop[:2]
+
+        centers = (box[:, :2] + box[:, 2:]) / 2
+        valid = np.logical_and(crop[:2] <= centers,
+                               centers < crop[2:]).all(axis=1)
+        valid = np.logical_and(
+            valid, (cropped_box[:, :2] < cropped_box[:, 2:]).all(axis=1))
+
+        return cropped_box, np.where(valid)[0]
