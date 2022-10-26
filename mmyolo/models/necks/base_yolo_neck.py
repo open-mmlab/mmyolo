@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from abc import ABCMeta, abstractmethod
-from typing import List
+from typing import List, Union
 
 import torch
 import torch.nn as nn
@@ -22,6 +22,9 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
             blocks in CSP layer by this amount. Defaults to 1.0.
         widen_factor (float): Width multiplier, multiply number of
             channels in each layer by this amount. Defaults to 1.0.
+        upsample_feats_cat_first (bool): Whether the output features are
+            concat first after upsampling in the topdown module.
+            Defaults to True. Currently only YOLOv7 is false.
         freeze_all(bool): Whether to freeze the model. Defaults to False
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to None.
@@ -33,19 +36,22 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
 
     def __init__(self,
                  in_channels: List[int],
-                 out_channels: int,
+                 out_channels: Union[int, List[int]],
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
+                 upsample_feats_cat_first: bool = True,
                  freeze_all: bool = False,
                  norm_cfg: ConfigType = None,
                  act_cfg: ConfigType = None,
-                 init_cfg: OptMultiConfig = None):
+                 init_cfg: OptMultiConfig = None,
+                 **kwargs):
         super().__init__(init_cfg)
         self.in_channels = in_channels
         self.out_channels = out_channels
         self.deepen_factor = deepen_factor
         self.widen_factor = widen_factor
         self.freeze_all = freeze_all
+        self.upsample_feats_cat_first = upsample_feats_cat_first
 
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
@@ -133,9 +139,12 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
             upsample_feat = self.upsample_layers[len(self.in_channels) - 1 -
                                                  idx](
                                                      feat_high)
-
+            if self.upsample_feats_cat_first:
+                top_down_layer_inputs = torch.cat([upsample_feat, feat_low], 1)
+            else:
+                top_down_layer_inputs = torch.cat([feat_low, upsample_feat], 1)
             inner_out = self.top_down_layers[len(self.in_channels) - 1 - idx](
-                torch.cat([upsample_feat, feat_low], 1))
+                top_down_layer_inputs)
             inner_outs.insert(0, inner_out)
 
         # bottom-up path
