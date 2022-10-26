@@ -57,6 +57,6 @@ model = dict(
             # disable zero_init_offset to follow official implementation
             zero_init_offset=False)
     ]
-    bbox_head=dict(head_module=dict(in_channels=[512,512,512]))# 因为受到widen_factor的影响，YOLOv5HeadModuled的in_channel*widen_factor才会等于最后一个neck的out_channle
+    bbox_head=dict(head_module=dict(in_channels=[512,512,512]))# 因为 out_channels 由 widen_factor 控制，YOLOv5HeadModuled 的 in_channels * widen_factor 才会等于最后一个 neck 的 out_channlels
 )
 ```
