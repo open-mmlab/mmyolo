@@ -22,24 +22,24 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
      +-----------+
      |   input   |
      +-----------+
-          vvv
+           v
      +-----------+
      |   stem    |
      |   layer   |
      +-----------+
-          vvv
+           v
      +-----------+
      |   stage   |
      |  layer 1  |
      +-----------+
-          vvv
+           v
      +-----------+
      |   stage   |
      |  layer 2  |
      +-----------+
-          vvv
+           v
          ......
-          vvv
+           v
      +-----------+
      |   stage   |
      |  layer n  |
