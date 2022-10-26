@@ -86,7 +86,8 @@ def backend_model():
 
 
 def test_visualize(backend_model):
-    input_dict, _ = task_processor.create_input(img, input_shape=img_shape)
+    img_path = 'tests/data/color.jpg'
+    input_dict, _ = task_processor.create_input(img_path, input_shape=img_shape)
     results = backend_model.test_step(input_dict)[0]
     with TemporaryDirectory() as dir:
         filename = dir + 'tmp.jpg'
