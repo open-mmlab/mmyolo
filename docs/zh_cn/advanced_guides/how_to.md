@@ -30,8 +30,8 @@ model = dict(
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
-deepen_factor = {{_base_.deepen_factor}}
-widen_factor = {{_base_.widen_factor}}
+deepen_factor = _base_.deepen_factor
+widen_factor = _base_.widen_factor
 model = dict(
     type='YOLODetector',
     neck=[
