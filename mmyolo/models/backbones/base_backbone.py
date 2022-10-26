@@ -16,6 +16,37 @@ from mmyolo.registry import MODELS
 class BaseBackbone(BaseModule, metaclass=ABCMeta):
     """BaseBackbone backbone used in YOLO series.
 
+    .. code:: text
+
+     Backbone model structure diagram
+     +-----------+
+     |   input   |
+     +-----------+
+           v
+     +-----------+
+     |   stem    |
+     |   layer   |
+     +-----------+
+           v
+     +-----------+
+     |   stage   |
+     |  layer 1  |
+     +-----------+
+           v
+     +-----------+
+     |   stage   |
+     |  layer 2  |
+     +-----------+
+           v
+         ......
+           v
+     +-----------+
+     |   stage   |
+     |  layer n  |
+     +-----------+
+     In P5 model, n=4
+     In P6 model, n=5
+
     Args:
         arch_setting (dict): Architecture of BaseBackbone.
         plugins (list[dict]): List of plugins for stages, each dict contains:
