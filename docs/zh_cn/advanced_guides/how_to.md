@@ -40,7 +40,7 @@ model = dict(
             deepen_factor=deepen_factor,
             widen_factor=widen_factor,
             in_channels=[256, 512, 1024],
-            out_channels=[256, 512, 1024], # 因为受到widen_factor的影响，YOLOv5PAFPN的的out_channel=out_channel*widen_factor
+            out_channels=[256, 512, 1024], # 因为 out_channels 由 widen_factor 控制，YOLOv5PAFPN 的 out_channels = out_channels * widen_factor
             num_csp_blocks=3,
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg=dict(type='SiLU', inplace=True)),
