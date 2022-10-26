@@ -213,7 +213,7 @@ python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --num-img 10
 python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --num-img 20 --use-training-set
 ```
 
-3. Set the global seed to 1. Default is no setting
+3. Set the global seed to 1. The default is no setting.
 
 ```shell
 python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --num-img 20 --use-training-set --seed 1
