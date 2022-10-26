@@ -15,8 +15,7 @@ from mmyolo.registry import MODELS
 class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
     """Base neck used in YOLO series.
 
-           P5 neck model structure diagram
-
+    P5 neck model structure diagram
                                    ┌───────────┐    ┌───────┐
                                    | bottom_up |───>|  out  |──> output2
                                    |  layer1   |    | layer2|
@@ -26,6 +25,59 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
            |layer2|──────┬────────>|    cat    |
            └──────┘      |         └───────────┘
                          v               ^
+                     ┌────────┐    ┌───────────┐
+                     |upsample|    |downsample |
+                     | layer2 |    |  layer1   |
+                     └────────┘    └───────────┘
+    stride=16             v              ^
+    idx=1  ┌──────┐  ┌────────┐    ┌───────────┐    ┌───────┐
+    ─────> |reduce|─>|   cat  |    | bottom_up |───>|  out  |──> output1
+           |layer1|  └────────┘    |   layer0  |    | layer1|
+           └──────┘       v        └───────────┘    └───────┘
+                     ┌────────┐          ^
+                     |top_down|    ┌───────────┐
+                     | layer2 |───>|    cat    |
+                     └────────┘    └───────────┘
+                          v              ^
+                     ┌────────┐    ┌───────────┐
+                     |upsample|    |downsample |
+                     | layer1 |    |  layer0   |
+                     └────────┘    └───────────┘
+    stride=8              v              ^
+    idx=0  ┌──────┐  ┌────────┐          |
+    ─────> |reduce|─>|   cat  |          |
+           |layer0|  └────────┘          |
+           └──────┘       v              |
+                     ┌────────┐          |          ┌───────┐
+                     |top_down|──────────┴─────────>|  out  |──> output0
+                     | layer1 |                     | layer0|
+                     └────────┘                     └───────┘
+
+
+    P6 neck model structure diagram
+                                   ┌───────────┐    ┌───────┐
+                                   | bottom_up |───>|  out  |──> output3
+                                   |  layer2   |    | layer3|
+    stride=64                      └───────────┘    └───────┘
+    idx=3  ┌──────┐                      ^
+    ─────> |reduce|                ┌───────────┐
+           |layer3|───────┬───────>|    cat    |
+           └──────┘       |        └───────────┘
+                          v              ^
+                     ┌────────┐    ┌───────────┐
+                     |upsample|    |downsample |
+                     | layer3 |    |  layer2   |
+                     └────────┘    └───────────┘
+    stride=32             v              ^
+    idx=2  ┌──────┐  ┌────────┐    ┌───────────┐    ┌───────┐
+    ─────> |reduce|─>|   cat  |    | bottom_up |───>|  out  |──> output2
+           |layer2|  └────────┘    |   layer1  |    | layer2|
+           └──────┘       v        └───────────┘    └───────┘
+                     ┌────────┐          ^
+                     |top_down|    ┌───────────┐
+                     | layer3 |───>|    cat    |
+                     └────────┘    └───────────┘
+                          v              ^
                      ┌────────┐    ┌───────────┐
                      |upsample|    |downsample |
                      | layer2 |    |  layer1   |
