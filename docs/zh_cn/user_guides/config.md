@@ -526,7 +526,7 @@ pre_transform = _base_.pre_transform # 变量 pre_transform 等于 _base_ 中定
 
 - 更新配置列表中的键
 
-  在配置文件里，一些字典型的配置被包含在列表中。例如，数据训练流程 `data.train.pipeline` 通常是一个列表，比如 `[dict(type='LoadImageFromFile'), ...]`。如果需要将 `'LoadImageFromFile'` 改成 `'LoadImageFromWebcam'`，需要写成下述形式：`--cfg-options data.train.pipeline.0.type=LoadImageFromWebcam`.
+  在配置文件里，一些字典型的配置被包含在列表中。例如，数据训练流程 `data.train.pipeline` 通常是一个列表，比如 `[dict(type='LoadImageFromFile'), ...]`。如果需要将 `'LoadImageFromFile'` 改成 `'LoadImageFromNDArray'`，需要写成下述形式：`--cfg-options data.train.pipeline.0.type=LoadImageFromNDArray`.
 
 - 更新列表或元组的值
 
