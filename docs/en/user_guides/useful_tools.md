@@ -183,3 +183,32 @@ python tools/model_converters/yolox_to_mmyolo.py --src yolox_s.pth --dst mmyolox
 ```
 
 The converted `mmyolox.pt` can be used by MMYOLO.
+
+## Extracts a subset of COCO
+
+The training dataset of the COCO2017 dataset includes 118k images, and the validation set includes 5k images, which is a relatively large dataset. Loading JSON in debugging or quick verification scenarios will consume more resources and bring slower startup speed.
+The `extract_subcoco.py` script provides the ability to extract a specified number of images. The user can use the `-num-img` parameter to get a COCO subset of the specified number of images.
+
+Currently, only support COCO2017. In the future will support user-defined datasets of standard coco JSON format.
+
+The root path folder format is as follows:
+
+```text
+├── root
+│   ├── annotations
+│   ├── train2017
+│   ├── val2017
+│   ├── test2017
+```
+
+1. Extract 10 training images and 10 validation images using only 5k validation sets.
+
+```shell
+python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --num-img 10
+```
+
+2. Extract 20 training images using the training set and 20 validation images using the validation set.
+
+```shell
+python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --num-img 20 --use-training-set
+```
