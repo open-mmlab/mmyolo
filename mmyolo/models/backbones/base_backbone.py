@@ -19,31 +19,31 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
     .. code:: text
 
      Backbone model structure diagram
-     ┌───────────┐
+     +-----------+
      |   input   |
-     └───────────┘
-           v
-     ┌───────────┐
+     +-----------+
+          vvv
+     +-----------+
      |   stem    |
      |   layer   |
-     └───────────┘
-           v
-     ┌───────────┐
+     +-----------+
+          vvv
+     +-----------+
      |   stage   |
      |  layer 1  |
-     └───────────┘
-           v
-     ┌───────────┐
+     +-----------+
+          vvv
+     +-----------+
      |   stage   |
      |  layer 2  |
-     └───────────┘
-           v
+     +-----------+
+          vvv
          ......
-           v
-     ┌───────────┐
+          vvv
+     +-----------+
      |   stage   |
      |  layer n  |
-     └───────────┘
+     +-----------+
      In P5 model, n=4
      In P6 model, n=5
 
@@ -51,8 +51,8 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
         arch_setting (dict): Architecture of BaseBackbone.
         plugins (list[dict]): List of plugins for stages, each dict contains:
 
-            ─ cfg (dict, required): Cfg dict to build plugin.
-            ─ stages (tuple[bool], optional): Stages to apply plugin, length
+            - cfg (dict, required): Cfg dict to build plugin.
+            - stages (tuple[bool], optional): Stages to apply plugin, length
               should be same as 'num_stages'.
         deepen_factor (float): Depth multiplier, multiply number of
             blocks in CSP layer by this amount. Defaults to 1.0.
@@ -62,7 +62,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
         out_indices (Sequence[int]): Output from which stages.
             Defaults to (2, 3, 4).
         frozen_stages (int): Stages to be frozen (stop grad and set eval
-            mode). ─1 means not freezing any parameters. Defaults to ─1.
+            mode). -1 means not freezing any parameters. Defaults to -1.
         norm_cfg (dict): Dictionary to construct and config norm layer.
             Defaults to None.
         act_cfg (dict): Config dict for activation layer.
@@ -95,7 +95,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
             i for i in range(len(arch_setting) + 1))
 
         if frozen_stages not in range(-1, len(arch_setting) + 1):
-            raise ValueError('"frozen_stages" must be in range(─1, '
+            raise ValueError('"frozen_stages" must be in range(-1, '
                              'len(arch_setting) + 1). But received '
                              f'{frozen_stages}')
 
@@ -158,15 +158,15 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
 
         Suppose ``stage_idx=0``, the structure of blocks in the stage would be:
 
-        .. code─block:: none
+        .. code-block:: none
 
-            conv1 ─> conv2 ─> conv3 ─> yyy
+            conv1 -> conv2 -> conv3 -> yyy
 
         Suppose 'stage_idx=1', the structure of blocks in the stage would be:
 
-        .. code─block:: none
+        .. code-block:: none
 
-            conv1 ─> conv2 ─> conv3 ─> xxx ─> yyy
+            conv1 -> conv2 -> conv3 -> xxx -> yyy
 
 
         Args:
