@@ -133,7 +133,7 @@ albu_train_transforms = [
 ]
 
 pre_transform = [
-    dict(type='LoadImageFromFile', file_client_args={{file_client_args}}),
+    dict(type='LoadImageFromFile', file_client_args=file_client_args),
     dict(type='LoadAnnotations', with_bbox=True)
 ]
 
@@ -185,7 +185,7 @@ train_dataloader = dict(
         pipeline=train_pipeline))
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args={{file_client_args}}),
+    dict(type='LoadImageFromFile', file_client_args=file_client_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
