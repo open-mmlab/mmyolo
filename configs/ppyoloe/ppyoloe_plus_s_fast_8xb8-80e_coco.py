@@ -28,27 +28,30 @@ model = dict(
         std=[255., 255., 255.],
         bgr_to_rgb=True),
     backbone=dict(
-        type='CSPResNet',
+        type='PPYOLOECSPResNet',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         block_cfg=dict(
             type='PPYOLOEBasicBlock', shortcut=True, use_alpha=True),
         norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
         act_cfg=dict(type='SiLU', inplace=True),
+        effective_se_cfg=dict(
+            type='EffectiveSELayer', act_cfg=dict(type='HSigmoid')),
         use_large_stem=True),
     neck=dict(
-        type='PPYOLOECSPPAN',
-        deepen_factor=deepen_factor,
-        widen_factor=widen_factor,
+        type='PPYOLOECSPPAFPN',
         in_channels=[256, 512, 1024],
         out_channels=[192, 384, 768],
+        deepen_factor=deepen_factor,
+        widen_factor=widen_factor,
+        num_csplayer=1,
+        num_blocks_per_layer=3,
         block_cfg=dict(
             type='PPYOLOEBasicBlock', shortcut=False, use_alpha=False),
         norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
         act_cfg=dict(type='SiLU', inplace=True),
-        use_spp=True,
-        num_stages_per_layer=1,
-        num_blocks_per_stage=3),
+        drop_block_cfg=None,
+        use_spp=True),
     bbox_head=dict(
         type='PPYOLOEHead',
         head_module=dict(
@@ -75,7 +78,7 @@ test_pipeline = [
         height=img_scale[0],
         keep_ratio=False,
         interpolation='bicubic'),
-    dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
