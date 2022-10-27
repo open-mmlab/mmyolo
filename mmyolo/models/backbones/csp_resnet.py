@@ -38,7 +38,7 @@ class PPYOLOECSPResNet(BaseBackbone):
             eps=1e-5).
         act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
             Defaults to dict(type='SiLU', inplace=True).
-        effective_se_cfg (dict): Config dict for `EffectiveSELayer`.
+        attention_cfg (dict): Config dict for `EffectiveSELayer`.
             Defaults to dict(type='EffectiveSELayer',
             act_cfg=dict(type='HSigmoid')).
         norm_eval (bool): Whether to set norm layers to eval mode, namely,
@@ -69,7 +69,7 @@ class PPYOLOECSPResNet(BaseBackbone):
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-                 effective_se_cfg: ConfigType = dict(
+                 attention_cfg: ConfigType = dict(
                      type='EffectiveSELayer', act_cfg=dict(type='HSigmoid')),
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None,
@@ -84,7 +84,7 @@ class PPYOLOECSPResNet(BaseBackbone):
         ] for in_channels, out_channels, num_blocks in arch_setting]
         self.block_cfg = block_cfg
         self.use_large_stem = use_large_stem
-        self.effective_se_cfg = effective_se_cfg
+        self.attention_cfg = attention_cfg
 
         super().__init__(
             arch_setting,
@@ -164,6 +164,6 @@ class PPYOLOECSPResNet(BaseBackbone):
             stride=2,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg,
-            effective_se_cfg=self.effective_se_cfg,
+            attention_cfg=self.attention_cfg,
             use_spp=False)
         return [cspres_layer]

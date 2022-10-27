@@ -57,6 +57,8 @@ def convert(src, dst):
                 if k.startswith('neck.fpn_stages.0.0.'):
                     name = k.replace('neck.fpn_stages.0.0.',
                                      'neck.reduce_layers.2.0.')
+                    if '.spp.' in name:
+                        name = name.replace('.spp.conv.', '.spp.conv2.')
                 # neck.fpn_stages.1.0.conv1.conv.weight
                 # -> neck.top_down_layers.0.0.conv1.conv.weight
                 elif k.startswith('neck.fpn_stages.1.0.'):

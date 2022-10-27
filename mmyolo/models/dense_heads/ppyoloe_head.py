@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import math
 from typing import Sequence, Union
 
 import torch
@@ -8,12 +7,12 @@ import torch.nn.functional as F
 from mmdet.models.utils import multi_apply
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
                          OptMultiConfig)
-from mmengine.model import BaseModule
+from mmengine.model import BaseModule, bias_init_with_prob
 from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS
-from ..layers.yolo_bricks import ESEAttn
+from ..layers.yolo_bricks import PPYOLOESELayer
 from .yolov5_head import YOLOv5Head
 
 
@@ -71,21 +70,14 @@ class PPYOLOEHeadModule(BaseModule):
 
     def init_weights(self, prior_prob=0.01):
         """Initialize the weight and bias of PPYOLOE head."""
+        super().init_weights()
         for conv in self.cls_preds:
-            b = conv.bias.view(-1, )
-            b.data.fill_(-math.log((1 - prior_prob) / prior_prob))
-            conv.bias = nn.Parameter(b.view(-1), requires_grad=True)
-            w = conv.weight
-            w.data.fill_(0.)
-            conv.weight = nn.Parameter(w, requires_grad=True)
+            conv.bias.data.fill_(bias_init_with_prob(prior_prob))
+            conv.weight.data.fill_(0.)
 
         for conv in self.reg_preds:
-            b = conv.bias.view(-1, )
-            b.data.fill_(1.0)
-            conv.bias = nn.Parameter(b.view(-1), requires_grad=True)
-            w = conv.weight
-            w.data.fill_(0.)
-            conv.weight = nn.Parameter(w, requires_grad=True)
+            conv.bias.data.fill_(1.0)
+            conv.weight.data.fill_(0.)
 
     def _init_layers(self):
         """initialize conv layers in PPYOLOE head."""
@@ -94,17 +86,19 @@ class PPYOLOEHeadModule(BaseModule):
         self.cls_stems = nn.ModuleList()
         self.reg_stems = nn.ModuleList()
 
-        for in_c in self.in_channels:
+        for in_channel in self.in_channels:
             self.cls_stems.append(
-                ESEAttn(in_c, norm_cfg=self.norm_cfg, act_cfg=self.act_cfg))
+                PPYOLOESELayer(
+                    in_channel, norm_cfg=self.norm_cfg, act_cfg=self.act_cfg))
             self.reg_stems.append(
-                ESEAttn(in_c, norm_cfg=self.norm_cfg, act_cfg=self.act_cfg))
+                PPYOLOESELayer(
+                    in_channel, norm_cfg=self.norm_cfg, act_cfg=self.act_cfg))
 
-        for in_c in self.in_channels:
+        for in_channel in self.in_channels:
             self.cls_preds.append(
-                nn.Conv2d(in_c, self.num_classes, 3, padding=1))
+                nn.Conv2d(in_channel, self.num_classes, 3, padding=1))
             self.reg_preds.append(
-                nn.Conv2d(in_c, 4 * (self.reg_max + 1), 3, padding=1))
+                nn.Conv2d(in_channel, 4 * (self.reg_max + 1), 3, padding=1))
 
         self.proj_conv = nn.Conv2d(self.reg_max + 1, 1, 1, bias=False)
         self.proj = nn.Parameter(

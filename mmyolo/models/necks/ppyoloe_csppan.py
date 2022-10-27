@@ -94,18 +94,18 @@ class PPYOLOECSPPAFPN(BaseYOLONeck):
         """
         if idx == len(self.in_channels) - 1:
             # fpn_stage
-            channels = [self.in_channels[idx]
-                        ] + [self.out_channels[idx]] * self.num_csplayer
+            in_channels = self.in_channels[idx]
+            out_channels = self.out_channels[idx]
 
             layer = [
                 CSPResLayer(
-                    in_channels=channels[i],
-                    out_channels=channels[i + 1],
+                    in_channels=in_channels if i == 0 else out_channels,
+                    out_channels=out_channels,
                     num_block=self.num_blocks_per_layer,
                     block_cfg=self.block_cfg,
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg,
-                    effective_se_cfg=None,
+                    attention_cfg=None,
                     use_spp=self.use_spp) for i in range(self.num_csplayer)
             ]
 
@@ -144,17 +144,16 @@ class PPYOLOECSPPAFPN(BaseYOLONeck):
         # fpn_stage
         in_channels = self.in_channels[idx - 1] + self.out_channels[idx] // 2
         out_channels = self.out_channels[idx - 1]
-        channels = [in_channels] + [out_channels] * self.num_csplayer
 
         layer = [
             CSPResLayer(
-                in_channels=channels[i],
-                out_channels=channels[i + 1],
+                in_channels=in_channels if i == 0 else out_channels,
+                out_channels=out_channels,
                 num_block=self.num_blocks_per_layer,
                 block_cfg=self.block_cfg,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg,
-                effective_se_cfg=None,
+                attention_cfg=None,
                 use_spp=False) for i in range(self.num_csplayer)
         ]
 
@@ -194,17 +193,16 @@ class PPYOLOECSPPAFPN(BaseYOLONeck):
         # pan_stage
         in_channels = self.out_channels[idx + 1] + self.out_channels[idx]
         out_channels = self.out_channels[idx + 1]
-        channels = [in_channels] + [out_channels] * self.num_csplayer
 
         layer = [
             CSPResLayer(
-                in_channels=channels[i],
-                out_channels=channels[i + 1],
+                in_channels=in_channels if i == 0 else out_channels,
+                out_channels=out_channels,
                 num_block=self.num_blocks_per_layer,
                 block_cfg=self.block_cfg,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg,
-                effective_se_cfg=None,
+                attention_cfg=None,
                 use_spp=False) for i in range(self.num_csplayer)
         ]
 

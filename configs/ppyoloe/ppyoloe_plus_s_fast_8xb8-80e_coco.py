@@ -35,7 +35,7 @@ model = dict(
             type='PPYOLOEBasicBlock', shortcut=True, use_alpha=True),
         norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
         act_cfg=dict(type='SiLU', inplace=True),
-        effective_se_cfg=dict(
+        attention_cfg=dict(
             type='EffectiveSELayer', act_cfg=dict(type='HSigmoid')),
         use_large_stem=True),
     neck=dict(

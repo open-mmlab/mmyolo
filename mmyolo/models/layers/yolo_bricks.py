@@ -30,13 +30,20 @@ else:
 
 class SPPFBottleneck(BaseModule):
     """Spatial pyramid pooling - Fast (SPPF) layer for
-    YOLOv5 and YOLOX by Glenn Jocher
+    YOLOv5, YOLOX and PPYOLOE by Glenn Jocher
 
     Args:
         in_channels (int): The input channels of this Module.
         out_channels (int): The output channels of this Module.
         kernel_sizes (int, tuple[int]): Sequential or number of kernel
             sizes of pooling layers. Defaults to 5.
+        use_conv_first (bool): Whether to use conv before pooling layer.
+            In YOLOv5 and YOLOX, the para set to True.
+            In PPYOLOE, the para set to False.
+            Defaults to True.
+        mid_channels_scale (float): Channel multiplier, multiply in_channels
+            by this amount to get mid_channels. This parameter is valid only
+            when use_conv_fist=True.Defaults to 0.5.
         conv_cfg (dict): Config dict for convolution layer. Defaults to None.
             which means using conv2d. Defaults to None.
         norm_cfg (dict): Config dict for normalization layer.
@@ -51,33 +58,42 @@ class SPPFBottleneck(BaseModule):
                  in_channels: int,
                  out_channels: int,
                  kernel_sizes: Union[int, Sequence[int]] = 5,
+                 use_conv_first: bool = True,
+                 mid_channels_scale: float = 0.5,
                  conv_cfg: ConfigType = None,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg)
-        mid_channels = in_channels // 2
-        self.conv1 = ConvModule(
-            in_channels,
-            mid_channels,
-            1,
-            stride=1,
-            conv_cfg=conv_cfg,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg)
+
+        if use_conv_first:
+            mid_channels = int(in_channels * mid_channels_scale)
+            self.conv1 = ConvModule(
+                in_channels,
+                mid_channels,
+                1,
+                stride=1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg)
+        else:
+            mid_channels = in_channels
+            self.conv1 = None
         self.kernel_sizes = kernel_sizes
         if isinstance(kernel_sizes, int):
             self.poolings = nn.MaxPool2d(
                 kernel_size=kernel_sizes, stride=1, padding=kernel_sizes // 2)
+            conv2_in_channels = mid_channels * 4
         else:
             self.poolings = nn.ModuleList([
                 nn.MaxPool2d(kernel_size=ks, stride=1, padding=ks // 2)
                 for ks in kernel_sizes
             ])
+            conv2_in_channels = mid_channels * (len(kernel_sizes) + 1)
 
         self.conv2 = ConvModule(
-            mid_channels * 4,
+            conv2_in_channels,
             out_channels,
             1,
             conv_cfg=conv_cfg,
@@ -89,7 +105,8 @@ class SPPFBottleneck(BaseModule):
         Args:
             x (Tensor): The input tensor.
         """
-        x = self.conv1(x)
+        if self.conv1:
+            x = self.conv1(x)
         if isinstance(self.kernel_sizes, int):
             y1 = self.poolings(x)
             y2 = self.poolings(y1)
@@ -400,8 +417,14 @@ class EffectiveSELayer(nn.Module):
         return x * self.activate(x_se)
 
 
-class ESEAttn(nn.Module):
-    """Effective Squeeze-and-Excitation Attention Module.
+class PPYOLOESELayer(nn.Module):
+    """Squeeze-and-Excitation Attention Module for PPYOLOE.
+        There are some differences between the current implementation and
+        SELayer in mmdet:
+            1. For fast speed and avoiding double inference in ppyoloe,
+               use `F.adaptive_avg_pool2d` before PPYOLOESELayer.
+            2. Special ways to init weights.
+            3. Different convolution order.
 
     Args:
         feat_channels (int): The input (and output) channels of the SE layer.
@@ -763,59 +786,6 @@ class SPPFCSPBlock(BaseModule):
         return self.final_conv(torch.cat((x1, x2), dim=1))
 
 
-class SPP(nn.Module):
-    """Spatial pyramid pooling layer.
-
-    Args:
-        in_channels (int): The input channels of this Module.
-        out_channels (int): The output channels of this Module.
-        kernel_size (int | tuple[int]): Size of the convolving kernel.
-            Same as that in ``nn._ConvNd``.
-        pool_kernel_sizes (tuple[int]): Sequential of kernel sizes of pooling
-            layers. Default: (5, 9, 13).
-        norm_cfg (dict): Config dict for normalization layer.
-            Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
-        act_cfg (dict): Config dict for activation layer.
-            Defaults to dict(type='SiLU').
-    """
-
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 kernel_size: int,
-                 pool_kernel_sizes: Tuple[int] = (5, 9, 13),
-                 norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='SiLU', inplace=True)):
-        super().__init__()
-        self.poolings = nn.ModuleList([
-            nn.MaxPool2d(
-                kernel_size=ks, stride=1, padding=ks // 2, ceil_mode=False)
-            for ks in pool_kernel_sizes
-        ])
-        self.conv = ConvModule(
-            in_channels,
-            out_channels,
-            kernel_size,
-            padding=kernel_size // 2,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg)
-
-    def forward(self, x: Tensor) -> Tensor:
-        """Forward process
-        Args:
-            x (Tensor): The input tensor.
-        """
-        outs = [x]
-
-        for pool in self.poolings:
-            outs.append(pool(x))
-        y = torch.cat(outs, axis=1)
-
-        y = self.conv(y)
-        return y
-
-
 @MODELS.register_module()
 class PPYOLOEBasicBlock(nn.Module):
     """PPYOLOE Backbone BasicBlock.
@@ -895,10 +865,10 @@ class CSPResLayer(nn.Module):
             Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
         act_cfg (dict): Config dict for activation layer.
             Defaults to dict(type='SiLU', inplace=True).
-        effective_se_cfg (dict, optional): Config dict for `EffectiveSELayer`.
+        attention_cfg (dict, optional): Config dict for `EffectiveSELayer`.
             Defaults to dict(type='EffectiveSELayer',
             act_cfg=dict(type='HSigmoid')).
-        use_spp (bool): Whether to use `SPP` layer.
+        use_spp (bool): Whether to use `SPPFBottleneck` layer.
             Defaults to False.
     """
 
@@ -912,7 +882,7 @@ class CSPResLayer(nn.Module):
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-                 effective_se_cfg: OptMultiConfig = dict(
+                 attention_cfg: OptMultiConfig = dict(
                      type='EffectiveSELayer', act_cfg=dict(type='HSigmoid')),
                  use_spp: bool = False):
         super().__init__()
@@ -922,7 +892,7 @@ class CSPResLayer(nn.Module):
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
         self.use_spp = use_spp
-        assert effective_se_cfg is None or isinstance(effective_se_cfg, dict)
+        assert attention_cfg is None or isinstance(attention_cfg, dict)
 
         if stride == 2:
             conv1_in_channels = conv2_in_channels = conv3_in_channels = (
@@ -965,10 +935,10 @@ class CSPResLayer(nn.Module):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
-        if effective_se_cfg:
-            effective_se_cfg = effective_se_cfg.copy()
-            effective_se_cfg['channels'] = blocks_channels * 2
-            self.attn = MODELS.build(effective_se_cfg)
+        if attention_cfg:
+            attention_cfg = attention_cfg.copy()
+            attention_cfg['channels'] = blocks_channels * 2
+            self.attn = MODELS.build(attention_cfg)
         else:
             self.attn = None
 
@@ -991,9 +961,12 @@ class CSPResLayer(nn.Module):
             if i == (self.num_block - 1) // 2 and self.use_spp:
                 blocks.add_module(
                     'spp',
-                    SPP(blocks_channels * 4,
+                    SPPFBottleneck(
                         blocks_channels,
-                        1, [5, 9, 13],
+                        blocks_channels,
+                        kernel_sizes=[5, 9, 13],
+                        use_conv_first=False,
+                        conv_cfg=None,
                         norm_cfg=self.norm_cfg,
                         act_cfg=self.act_cfg))
 
