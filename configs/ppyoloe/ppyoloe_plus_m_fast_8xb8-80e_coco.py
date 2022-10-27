@@ -4,10 +4,7 @@ deepen_factor = 0.67
 widen_factor = 0.75
 
 model = dict(
-    backbone=dict(
-        type='CSPResNet',
-        deepen_factor=deepen_factor,
-        widen_factor=widen_factor),
+    backbone=dict(deepen_factor=deepen_factor, widen_factor=widen_factor),
     neck=dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,

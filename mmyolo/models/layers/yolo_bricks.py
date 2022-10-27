@@ -407,14 +407,14 @@ class ESEAttn(nn.Module):
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
         act_cfg (dict): Config dict for activation layer.
-            Defaults to dict(type='SiLU').
+            Defaults to dict(type='SiLU', inplace=True).
     """
 
     def __init__(self,
                  feat_channels: int,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='SiLU')):
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True)):
         super().__init__()
         self.fc = nn.Conv2d(feat_channels, feat_channels, 1)
         self.sig = nn.Sigmoid()
@@ -785,7 +785,7 @@ class SPP(nn.Module):
                  pool_kernel_sizes: Tuple[int] = (5, 9, 13),
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='SiLU')):
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True)):
         super().__init__()
         self.poolings = nn.ModuleList([
             nn.MaxPool2d(

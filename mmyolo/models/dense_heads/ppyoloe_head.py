@@ -35,7 +35,7 @@ class PPYOLOEHeadModule(BaseModule):
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
         act_cfg (dict): Config dict for activation layer.
-            Defaults to dict(type='SiLU').
+            Defaults to dict(type='SiLU', inplace=True).
         init_cfg (dict or list[dict], optional): Initialization config dict.
             Defaults to None.
     """
@@ -49,7 +49,7 @@ class PPYOLOEHeadModule(BaseModule):
                  reg_max: int = 16,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='SiLU'),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg=init_cfg)
 
@@ -59,14 +59,13 @@ class PPYOLOEHeadModule(BaseModule):
         self.num_base_priors = num_base_priors
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
-        self.in_channels = in_channels
         self.reg_max = reg_max
 
-        in_channels = []
-        for channel in self.in_channels:
-            channel = int(channel * widen_factor)
-            in_channels.append(channel)
-        self.in_channels = in_channels
+        if isinstance(in_channels, int):
+            self.in_channels = [int(in_channels * widen_factor)
+                                ] * self.num_levels
+        else:
+            self.in_channels = [int(i * widen_factor) for i in in_channels]
 
         self._init_layers()
 
@@ -201,7 +200,7 @@ class PPYOLOEHead(YOLOv5Head):
             init_cfg=init_cfg)
 
     def special_init(self):
-        """Not Implenent."""
+        """Not Implenented."""
         pass
 
     def loss_by_feat(

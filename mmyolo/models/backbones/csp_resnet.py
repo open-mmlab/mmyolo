@@ -12,7 +12,8 @@ from mmyolo.models.layers.yolo_bricks import EffectiveSELayer, RepVGGBlock
 from mmyolo.registry import MODELS
 
 
-class BasicBlock(nn.Module):
+@MODELS.register_module()
+class PPYOLOEBasicBlock(nn.Module):
     """PPYOLOE Backbone BasicBlock.
 
     Args:
@@ -21,7 +22,7 @@ class BasicBlock(nn.Module):
          norm_cfg (dict): Config dict for normalization layer.
              Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
          act_cfg (dict): Config dict for activation layer.
-             Defaults to dict(type='SiLU').
+             Defaults to dict(type='SiLU', inplace=True).
          shortcut (bool): Whether to add inputs and outputs together
          at the end of this layer. Defaults to True.
          use_alpha (bool): Whether to use `alpha` parameter at 1x1 conv.
@@ -32,11 +33,10 @@ class BasicBlock(nn.Module):
                  out_channels: int,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='SiLU'),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  shortcut: bool = True,
                  use_alpha: bool = False):
         super().__init__()
-        assert in_channels == out_channels
         assert act_cfg is None or isinstance(act_cfg, dict)
         self.conv1 = ConvModule(
             in_channels,
@@ -79,25 +79,29 @@ class CSPResStage(nn.Module):
         in_channels (int): The input channels of this Module.
         out_channels (int): The output channels of this Module.
         num_block (int): Number of block in this stage.
+        block_cfg (dict): Config dict for block. Defaults to
+            dict(type='PPYOLOEBasicBlock', shortcut=True, use_alpha=True)
         stride (int): Stride of the convolution.
             Defaults to 1.
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
         act_cfg (dict): Config dict for activation layer.
-            Defaults to dict(type='SiLU').
+            Defaults to dict(type='SiLU', inplace=True).
+        use_effective_se (bool): Whether to use `EffectiveSELayer`
+            after block layer. Defaults to True.
     """
 
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
                  num_block: int,
-                 block: nn.Module = BasicBlock,
+                 block_cfg: ConfigType = dict(
+                     type='PPYOLOEBasicBlock', shortcut=True, use_alpha=True),
                  stride: int = 1,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='SiLU'),
-                 use_effective_se: bool = True,
-                 use_alpha: bool = False):
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 use_effective_se: bool = True):
         super().__init__()
         middle_channels = (in_channels + out_channels) // 2
         if stride == 2:
@@ -123,15 +127,14 @@ class CSPResStage(nn.Module):
             1,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
-        self.blocks = nn.Sequential(*[
-            block(
-                middle_channels // 2,
-                middle_channels // 2,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg,
-                shortcut=True,
-                use_alpha=use_alpha) for i in range(num_block)
-        ])
+
+        block_cfg['in_channels'] = middle_channels // 2
+        block_cfg['out_channels'] = middle_channels // 2
+        block_cfg['norm_cfg'] = norm_cfg
+        block_cfg['act_cfg'] = act_cfg
+
+        self.blocks = nn.Sequential(
+            *[MODELS.build(block_cfg) for i in range(num_block)])
         if use_effective_se:
             self.attn = EffectiveSELayer(
                 middle_channels, act_cfg=dict(type='HSigmoid'))
@@ -182,20 +185,19 @@ class CSPResNet(BaseBackbone):
               should be same as 'num_stages'.
         arch_ovewrite (list): Overwrite default arch settings.
             Defaults to None.
+        block_cfg (dict): Config dict for block. Defaults to
+            dict(type='PPYOLOEBasicBlock', shortcut=True, use_alpha=True)
         norm_cfg (:obj:`ConfigDict` or dict): Dictionary to construct and
             config norm layer. Defaults to dict(type='BN', momentum=0.1,
             eps=1e-5).
         act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
-            Defaults to dict(type='SiLU').
+            Defaults to dict(type='SiLU', inplace=True).
         norm_eval (bool): Whether to set norm layers to eval mode, namely,
             freeze running stats (mean and var). Note: Effect on Batch Norm
             and its variants only.
         init_cfg (:obj:`ConfigDict` or dict or list[dict] or
             list[:obj:`ConfigDict`]): Initialization config dict.
         use_large_stem (bool): Whether to use large stem layer.
-            Defaults to False.
-        use_alpha (bool): Whether to use alpha in `RepVGGBlock`. PPYOLOE do
-            not use alpha, but PPYOLOE+ use.
             Defaults to False.
     """
     # From left to right:
@@ -213,13 +215,14 @@ class CSPResNet(BaseBackbone):
                  frozen_stages: int = -1,
                  plugins: Union[dict, List[dict]] = None,
                  arch_ovewrite: dict = None,
+                 block_cfg: ConfigType = dict(
+                     type='PPYOLOEBasicBlock', shortcut=True, use_alpha=True),
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='SiLU'),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None,
-                 use_large_stem: bool = False,
-                 use_alpha: bool = False):
+                 use_large_stem: bool = False):
         arch_setting = self.arch_settings[arch]
         if arch_ovewrite:
             arch_setting = arch_ovewrite
@@ -228,8 +231,9 @@ class CSPResNet(BaseBackbone):
             int(out_channels * widen_factor),
             round(num_blocks * deepen_factor)
         ] for in_channels, out_channels, num_blocks in arch_setting]
+        self.block_cfg = block_cfg
         self.use_large_stem = use_large_stem
-        self.use_alpha = use_alpha
+
         super().__init__(
             arch_setting,
             deepen_factor,
@@ -304,9 +308,8 @@ class CSPResNet(BaseBackbone):
             in_channels,
             out_channels,
             num_blocks,
-            BasicBlock,
+            self.block_cfg,
             2,
             norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg,
-            use_alpha=self.use_alpha)
+            act_cfg=self.act_cfg)
         return [cspres_layer]
