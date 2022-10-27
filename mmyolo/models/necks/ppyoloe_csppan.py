@@ -1,114 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import List, Union
 
-import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
 from mmdet.utils import ConfigType, OptMultiConfig
-from torch import Tensor
 
-from mmyolo.models.layers.yolo_bricks import SPP
+from mmyolo.models.backbones.csp_resnet import CSPResStage
 from mmyolo.models.necks import BaseYOLONeck
 from mmyolo.registry import MODELS
-
-
-class CSPStage(nn.Module):
-    """PPYOLOE Neck Stage.
-
-    Args:
-        in_channels (int): The input channels of this Module.
-        out_channels (int): The output channels of this Module.
-        num_block (int): Number of block in this stage.
-        block_cfg (dict): Config dict for block. Defaults to
-            dict(type='PPYOLOEBasicBlock', shortcut=False, use_alpha=False)
-        norm_cfg (dict): Config dict for normalization layer.
-            Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
-        act_cfg (dict): Config dict for activation layer.
-            Defaults to dict(type='SiLU', inplace=True).
-        use_spp (bool): Whether to use `SPP` layer.
-            Defaults to False.
-    """
-
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 num_block: int,
-                 block_cfg: ConfigType = dict(
-                     type='PPYOLOEBasicBlock', shortcut=False,
-                     use_alpha=False),
-                 norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.1, eps=1e-5),
-                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-                 use_spp: bool = False):
-        super().__init__()
-
-        self.norm_cfg = norm_cfg
-        self.act_cfg = act_cfg
-        self.use_spp = use_spp
-
-        middle_channels = int(out_channels // 2)
-        self.conv1 = ConvModule(
-            in_channels,
-            middle_channels,
-            1,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg)
-        self.conv2 = ConvModule(
-            in_channels,
-            middle_channels,
-            1,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg)
-        self.convs = self.build_convs_layer(block_cfg, middle_channels,
-                                            num_block)
-        self.conv3 = ConvModule(
-            middle_channels * 2,
-            out_channels,
-            1,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg)
-
-    def build_convs_layer(self, block_cfg: ConfigType, middle_channels: int,
-                          num_block: int) -> nn.Module:
-        """Build convs layer maybe with `SPP`
-
-        Args:
-            block (nn.Module): Basic unit of CSPStage. Defaults to BasicBlock.
-            middle_channels: The channels of this Module.
-            num_block (int): Number of block in this stage.
-        """
-        convs = nn.Sequential()
-
-        block_cfg = block_cfg.copy()
-        block_cfg['in_channels'] = middle_channels
-        block_cfg['out_channels'] = middle_channels
-        block_cfg['norm_cfg'] = self.norm_cfg
-        block_cfg['act_cfg'] = self.act_cfg
-
-        for i in range(num_block):
-            convs.add_module(str(i), MODELS.build(block_cfg))
-
-            if i == (num_block - 1) // 2 and self.use_spp:
-                convs.add_module(
-                    'spp',
-                    SPP(middle_channels * 4,
-                        middle_channels,
-                        1, [5, 9, 13],
-                        act_cfg=self.act_cfg))
-
-        return convs
-
-    def forward(self, x: Tensor) -> Tensor:
-        """Forward process
-         Args:
-             x (Tensor): The input tensor.
-         """
-        y1 = self.conv1(x)
-        y2 = self.conv2(x)
-        y2 = self.convs(y2)
-        y = torch.cat([y1, y2], axis=1)
-        y = self.conv3(y)
-        return y
 
 
 @MODELS.register_module()
@@ -132,9 +31,9 @@ class PPYOLOECSPPAN(BaseYOLONeck):
             Defaults to dict(type='SiLU', inplace=True).
         init_cfg (dict or list[dict], optional): Initialization config dict.
             Defaults to None.
-        num_stage (int): Number of stage per layer.
+        num_stages_per_layer (int): Number of stages per layer.
             Defaults to 1.
-        num_block (int): Number of block per stage.
+        num_blocks_per_stage (int): Number of blocks per stage.
             Defaults to 3.
         use_spp (bool): Whether to use `SPP` in reduce layer.
             Defaults to False.
@@ -158,8 +57,8 @@ class PPYOLOECSPPAN(BaseYOLONeck):
                      type='BN', momentum=0.1, eps=1e-5),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  init_cfg: OptMultiConfig = None,
-                 num_stage: int = 1,
-                 num_block: int = 3,
+                 num_stages_per_layer: int = 1,
+                 num_blocks_per_stage: int = 3,
                  use_spp: bool = False,
                  use_drop_block: bool = False,
                  drop_block_cfg: ConfigType = dict(
@@ -168,8 +67,8 @@ class PPYOLOECSPPAN(BaseYOLONeck):
                      block_size=3,
                      warm_iters=0)):
         self.block_cfg = block_cfg
-        self.num_stage = num_stage
-        self.num_block = round(num_block * deepen_factor)
+        self.num_stages_per_layer = num_stages_per_layer
+        self.num_blocks_per_stage = round(num_blocks_per_stage * deepen_factor)
         self.use_spp = use_spp
         self.use_drop_block = use_drop_block
         self.drop_block_cfg = drop_block_cfg
@@ -199,18 +98,21 @@ class PPYOLOECSPPAN(BaseYOLONeck):
         """
         if idx == len(self.in_channels) - 1:
             # fpn_stage
-            channels = [self.in_channels[idx]
-                        ] + [self.out_channels[idx]] * self.num_stage
+            channels = [
+                self.in_channels[idx]
+            ] + [self.out_channels[idx]] * self.num_stages_per_layer
 
             layer = [
-                CSPStage(
+                CSPResStage(
                     in_channels=channels[i],
                     out_channels=channels[i + 1],
-                    num_block=self.num_block,
+                    num_block=self.num_blocks_per_stage,
                     block_cfg=self.block_cfg,
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg,
-                    use_spp=self.use_spp) for i in range(self.num_stage)
+                    use_effective_se=False,
+                    use_spp=self.use_spp)
+                for i in range(self.num_stages_per_layer)
             ]
 
             if self.use_drop_block:
@@ -248,17 +150,18 @@ class PPYOLOECSPPAN(BaseYOLONeck):
         # fpn_stage
         in_channels = self.in_channels[idx - 1] + self.out_channels[idx] // 2
         out_channels = self.out_channels[idx - 1]
-        channels = [in_channels] + [out_channels] * self.num_stage
+        channels = [in_channels] + [out_channels] * self.num_stages_per_layer
 
         layer = [
-            CSPStage(
+            CSPResStage(
                 in_channels=channels[i],
                 out_channels=channels[i + 1],
-                num_block=self.num_block,
+                num_block=self.num_blocks_per_stage,
                 block_cfg=self.block_cfg,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg,
-                use_spp=False) for i in range(self.num_stage)
+                use_effective_se=False,
+                use_spp=False) for i in range(self.num_stages_per_layer)
         ]
 
         if self.use_drop_block:
@@ -297,17 +200,18 @@ class PPYOLOECSPPAN(BaseYOLONeck):
         # pan_stage
         in_channels = self.out_channels[idx + 1] + self.out_channels[idx]
         out_channels = self.out_channels[idx + 1]
-        channels = [in_channels] + [out_channels] * self.num_stage
+        channels = [in_channels] + [out_channels] * self.num_stages_per_layer
 
         layer = [
-            CSPStage(
+            CSPResStage(
                 in_channels=channels[i],
                 out_channels=channels[i + 1],
-                num_block=self.num_block,
+                num_block=self.num_blocks_per_stage,
                 block_cfg=self.block_cfg,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg,
-                use_spp=False) for i in range(self.num_stage)
+                use_effective_se=False,
+                use_spp=False) for i in range(self.num_stages_per_layer)
         ]
 
         if self.use_drop_block:

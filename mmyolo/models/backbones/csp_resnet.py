@@ -8,7 +8,7 @@ from mmdet.utils import ConfigType, OptMultiConfig
 from torch import Tensor
 
 from mmyolo.models.backbones import BaseBackbone
-from mmyolo.models.layers.yolo_bricks import EffectiveSELayer, RepVGGBlock
+from mmyolo.models.layers.yolo_bricks import SPP, EffectiveSELayer, RepVGGBlock
 from mmyolo.registry import MODELS
 
 
@@ -78,10 +78,14 @@ class CSPResStage(nn.Module):
     Args:
         in_channels (int): The input channels of this Module.
         out_channels (int): The output channels of this Module.
-        num_block (int): Number of block in this stage.
-        block_cfg (dict): Config dict for block. Defaults to
-            dict(type='PPYOLOEBasicBlock', shortcut=True, use_alpha=True)
-        stride (int): Stride of the convolution.
+        num_block (int): Number of blocks in this stage.
+        block_cfg (dict): Config dict for block. Default config is
+            suitable for PPYOLOE+ backbone. And in PPYOLOE+ neck,
+            block_cfg is set to dict(type='PPYOLOEBasicBlock',
+            shortcut=False, use_alpha=False). Defaults to
+            dict(type='PPYOLOEBasicBlock', shortcut=True, use_alpha=True).
+        stride (int): Stride of the convolution. In backbone, the stride
+            must be set to 2. In neck, the stride must be set to 1.
             Defaults to 1.
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
@@ -89,6 +93,8 @@ class CSPResStage(nn.Module):
             Defaults to dict(type='SiLU', inplace=True).
         use_effective_se (bool): Whether to use `EffectiveSELayer`
             after block layer. Defaults to True.
+        use_spp (bool): Whether to use `SPP` layer.
+            Defaults to False.
     """
 
     def __init__(self,
@@ -101,53 +107,90 @@ class CSPResStage(nn.Module):
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-                 use_effective_se: bool = True):
+                 use_effective_se: bool = True,
+                 use_spp: bool = False):
         super().__init__()
-        middle_channels = (in_channels + out_channels) // 2
+
+        self.num_block = num_block
+        self.block_cfg = block_cfg
+        self.norm_cfg = norm_cfg
+        self.act_cfg = act_cfg
+        self.use_spp = use_spp
+
         if stride == 2:
+            conv1_in_channels = conv2_in_channels = conv3_in_channels = (
+                in_channels + out_channels) // 2
+            blocks_channels = conv1_in_channels // 2
             self.conv_down = ConvModule(
                 in_channels,
-                middle_channels,
+                conv1_in_channels,
                 3,
                 stride=2,
                 padding=1,
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg)
         else:
+            conv1_in_channels = conv2_in_channels = in_channels
+            conv3_in_channels = out_channels
+            blocks_channels = out_channels // 2
             self.conv_down = None
+
         self.conv1 = ConvModule(
-            middle_channels,
-            middle_channels // 2,
+            conv1_in_channels,
+            blocks_channels,
             1,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
+
         self.conv2 = ConvModule(
-            middle_channels,
-            middle_channels // 2,
+            conv2_in_channels,
+            blocks_channels,
             1,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
-        block_cfg = block_cfg.copy()
-        block_cfg['in_channels'] = middle_channels // 2
-        block_cfg['out_channels'] = middle_channels // 2
-        block_cfg['norm_cfg'] = norm_cfg
-        block_cfg['act_cfg'] = act_cfg
-
-        self.blocks = nn.Sequential(
-            *[MODELS.build(block_cfg) for i in range(num_block)])
-        if use_effective_se:
-            self.attn = EffectiveSELayer(
-                middle_channels, act_cfg=dict(type='HSigmoid'))
-        else:
-            self.attn = None
+        self.blocks = self.build_blocks_layer(blocks_channels)
 
         self.conv3 = ConvModule(
-            middle_channels,
+            conv3_in_channels,
             out_channels,
             1,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
+
+        if use_effective_se:
+            self.attn = EffectiveSELayer(
+                blocks_channels * 2, act_cfg=dict(type='HSigmoid'))
+        else:
+            self.attn = None
+
+    def build_blocks_layer(self, blocks_channels: int) -> nn.Module:
+        """Build blocks layer.
+
+        Args:
+            blocks_channels: The channels of this Module.
+        """
+        blocks = nn.Sequential()
+        block_cfg = self.block_cfg.copy()
+        block_cfg.update(
+            dict(
+                in_channels=blocks_channels,
+                out_channels=blocks_channels,
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg))
+
+        for i in range(self.num_block):
+            blocks.add_module(str(i), MODELS.build(block_cfg))
+
+            if i == (self.num_block - 1) // 2 and self.use_spp:
+                blocks.add_module(
+                    'spp',
+                    SPP(blocks_channels * 4,
+                        blocks_channels,
+                        1, [5, 9, 13],
+                        act_cfg=self.act_cfg))
+
+        return blocks
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward process
@@ -306,11 +349,11 @@ class CSPResNet(BaseBackbone):
         in_channels, out_channels, num_blocks = setting
 
         cspres_layer = CSPResStage(
-            in_channels,
-            out_channels,
-            num_blocks,
-            self.block_cfg,
-            2,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            num_block=num_blocks,
+            block_cfg=self.block_cfg,
+            stride=2,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
         return [cspres_layer]

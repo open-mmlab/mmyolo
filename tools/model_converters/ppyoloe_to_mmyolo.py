@@ -66,13 +66,15 @@ def convert(src, dst):
                     name = k.replace('neck.fpn_stages.2.0.',
                                      'neck.top_down_layers.1.0.')
                 else:
-                    raise NotImplementedError('Not implement.')
+                    raise NotImplementedError('Not implemented.')
+                name = name.replace('.0.convs.', '.0.blocks.')
             elif k.startswith('neck.fpn_routes.'):
                 # neck.fpn_routes.0.conv.weight
                 # -> neck.upsample_layers.0.0.conv.weight
                 index = k.split('.')[2]
                 name = 'neck.upsample_layers.' + index + '.0.' + '.'.join(
                     k.split('.')[-2:])
+                name = name.replace('.0.convs.', '.0.blocks.')
             elif k.startswith('neck.pan_stages.'):
                 # neck.pan_stages.0.0.conv1.conv.weight
                 # -> neck.bottom_up_layers.1.0.conv1.conv.weight
@@ -80,6 +82,7 @@ def convert(src, dst):
                 name = k.replace(
                     'neck.pan_stages.' + ind,
                     'neck.bottom_up_layers.' + ('0' if ind == '1' else '1'))
+                name = name.replace('.0.convs.', '.0.blocks.')
             elif k.startswith('neck.pan_routes.'):
                 # neck.pan_routes.0.conv.weight
                 # -> neck.downsample_layers.0.conv.weight
@@ -87,6 +90,7 @@ def convert(src, dst):
                 name = k.replace(
                     'neck.pan_routes.' + ind,
                     'neck.downsample_layers.' + ('0' if ind == '1' else '1'))
+                name = name.replace('.0.convs.', '.0.blocks.')
 
             else:
                 raise NotImplementedError('Not implement.')

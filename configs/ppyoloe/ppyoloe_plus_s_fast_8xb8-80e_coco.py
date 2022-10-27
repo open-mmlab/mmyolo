@@ -47,9 +47,8 @@ model = dict(
         norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
         act_cfg=dict(type='SiLU', inplace=True),
         use_spp=True,
-        num_stage=1,
-        num_block=3,
-    ),
+        num_stages_per_layer=1,
+        num_blocks_per_stage=3),
     bbox_head=dict(
         type='PPYOLOEHead',
         head_module=dict(
@@ -58,8 +57,7 @@ model = dict(
             in_channels=[192, 384, 768],
             widen_factor=widen_factor,
             featmap_strides=strides,
-            num_base_priors=1),
-    ),
+            num_base_priors=1)),
     test_cfg=dict(
         multi_label=True,
         nms_pre=1000,
