@@ -73,10 +73,10 @@ def bbox_overlaps(pred: torch.Tensor,
     enclose_w = enclose_wh[:, 0]
     enclose_h = enclose_wh[:, 1]
 
-    if iou_mode  == 'ciou':
+    if iou_mode == 'ciou':
         enclose_area = enclose_w**2 + enclose_h**2 + eps
 
-        left =  ((bbox2_x1 + bbox2_x2) - (bbox1_x1 + bbox1_x2))**2 / 4
+        left = ((bbox2_x1 + bbox2_x2) - (bbox1_x1 + bbox1_x2))**2 / 4
         right = ((bbox2_y1 + bbox2_y2) - (bbox1_y1 + bbox1_y2))**2 / 4
         rho2 = left + right
 
@@ -101,7 +101,7 @@ def bbox_overlaps(pred: torch.Tensor,
         sigma_cw = (bbox2_x1 + bbox2_x2) / 2 - (bbox1_x1 + bbox1_x2) / 2
         # (b_cy_gt-b_cy)
         sigma_ch = (bbox2_y1 + bbox2_y2) / 2 - (bbox1_y1 + bbox1_y2) / 2
-        sigma = torch.pow(sigma_cw ** 2 + sigma_ch ** 2, 0.5)
+        sigma = torch.pow(sigma_cw**2 + sigma_ch**2, 0.5)
 
         # try to minimize alpha
         sin_alpha = torch.abs(sigma_ch) / sigma
