@@ -20,7 +20,7 @@ class CSPStage(nn.Module):
         out_channels (int): The output channels of this Module.
         num_block (int): Number of block in this stage.
         block_cfg (dict): Config dict for block. Defaults to
-            dict(type='PPYOLOEBasicBlock', shortcut=True, use_alpha=False)
+            dict(type='PPYOLOEBasicBlock', shortcut=False, use_alpha=False)
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
         act_cfg (dict): Config dict for activation layer.
@@ -34,7 +34,8 @@ class CSPStage(nn.Module):
                  out_channels: int,
                  num_block: int,
                  block_cfg: ConfigType = dict(
-                     type='PPYOLOEBasicBlock', shortcut=True, use_alpha=False),
+                     type='PPYOLOEBasicBlock', shortcut=False,
+                     use_alpha=False),
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
@@ -81,6 +82,8 @@ class CSPStage(nn.Module):
         block_cfg = block_cfg.copy()
         block_cfg['in_channels'] = middle_channels
         block_cfg['out_channels'] = middle_channels
+        block_cfg['norm_cfg'] = self.norm_cfg
+        block_cfg['act_cfg'] = self.act_cfg
 
         for i in range(num_block):
             convs.add_module(str(i), MODELS.build(block_cfg))
@@ -149,7 +152,8 @@ class PPYOLOECSPPAN(BaseYOLONeck):
                  widen_factor: float = 1.0,
                  freeze_all: bool = False,
                  block_cfg: ConfigType = dict(
-                     type='PPYOLOEBasicBlock', shortcut=True, use_alpha=True),
+                     type='PPYOLOEBasicBlock', shortcut=False,
+                     use_alpha=False),
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.1, eps=1e-5),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),

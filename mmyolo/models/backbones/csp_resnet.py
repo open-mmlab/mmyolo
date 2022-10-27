@@ -128,6 +128,7 @@ class CSPResStage(nn.Module):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
+        block_cfg = block_cfg.copy()
         block_cfg['in_channels'] = middle_channels // 2
         block_cfg['out_channels'] = middle_channels // 2
         block_cfg['norm_cfg'] = norm_cfg
