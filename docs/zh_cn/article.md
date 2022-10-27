@@ -6,7 +6,9 @@
 
 ### 文章
 
+- [社区协作，简洁易用，快来开箱新一代 YOLO 系列开源库](https://zhuanlan.zhihu.com/p/575615805)
 - [MMYOLO 社区倾情贡献，RTMDet 原理社区开发者解读来啦！](https://zhuanlan.zhihu.com/p/569777684)
+- [玩转 MMYOLO 基础类第一期： 配置文件太复杂？继承用法看不懂？配置全解读来了](https://zhuanlan.zhihu.com/p/577715188)
 
 ### 视频
 
@@ -18,17 +20,35 @@
 
 #### 基础类
 
+|       |    内容    |                                                                         视频                                                                          |                    课程中的代码/文档                     |
+| :---: | :--------: | :---------------------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------------------: |
+| 第1讲 | 配置全解读 | [![Link](http://i1.hdslb.com/bfs/archive/e06daf640ea39b3c0700bb4dc758f1a253f33e13.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1214y157ck) | [配置全解读文档](https://zhuanlan.zhihu.com/p/577715188) |
+
 #### 实用类
 
 #### 源码解读类
 
+#### 演示类
+
+|       |     内容     |                                                                         视频                                                                          |
+| :---: | :----------: | :---------------------------------------------------------------------------------------------------------------------------------------------------: |
+| 第1期 | 特征图可视化 | [![Link](http://i0.hdslb.com/bfs/archive/081f300c84d6556f40d984cfbe801fc0644ff449.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1214y157ck) |
+
 ## MMEngine 解读文章和资源
+
+- [从 MMCV 到 MMEngine，架构升级，体验升级！](https://zhuanlan.zhihu.com/p/571830155)
 
 ## MMCV 解读文章和资源
 
+- [MMCV 全新升级，新增超全数据变换功能，还有两大变化](https://zhuanlan.zhihu.com/p/572550592)
 - [手把手教你如何高效地在 MMCV 中贡献算子](https://zhuanlan.zhihu.com/p/464492627)
 
 ## MMDetection 解读文章和资源
+
+## 文章
+
+- [MMDetection 3.0：目标检测新基准与前沿](https://zhuanlan.zhihu.com/p/575246786)
+- [MMDetection 支持数据增强神器 Simple Copy Paste 全过程](https://zhuanlan.zhihu.com/p/559940982)
 
 ## 知乎问答和资源
 
