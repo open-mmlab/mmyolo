@@ -9,6 +9,7 @@
 - [社区协作，简洁易用，快来开箱新一代 YOLO 系列开源库](https://zhuanlan.zhihu.com/p/575615805)
 - [MMYOLO 社区倾情贡献，RTMDet 原理社区开发者解读来啦！](https://zhuanlan.zhihu.com/p/569777684)
 - [玩转 MMYOLO 基础类第一期： 配置文件太复杂？继承用法看不懂？配置全解读来了](https://zhuanlan.zhihu.com/p/577715188)
+- [玩转 MMYOLO 工具类第一期： 特征图可视化](https://zhuanlan.zhihu.com/p/578141381?)
 
 ### 视频
 
