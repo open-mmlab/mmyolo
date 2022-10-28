@@ -87,7 +87,7 @@ def bbox_overlaps(pred: torch.Tensor,
         rho2 = left_item + right_item  # rho^2 (ρ^2)
 
         # Width and height ratio (v)
-        wh_ratio = (4 / math.pi**2) * \
+        wh_ratio = (4 / (math.pi**2)) * \
                     torch.pow(torch.atan(w2 / h2) - torch.atan(w1 / h1), 2)
 
         with torch.no_grad():
