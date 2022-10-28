@@ -80,7 +80,8 @@ def bbox_overlaps(pred: torch.Tensor,
         # rho2(ρ^2):
         # euclidean distance between bbox2(pred) and bbox1(gt) center point,
         # then ** 2
-        # because xywh -> center xy and bbox wh, so need to / 4
+        # because bbox format is xyxy -> left-top xy and right-bottom xy,
+        # so need to / 4 to get center point
         left_item = ((bbox2_x1 + bbox2_x2) - (bbox1_x1 + bbox1_x2))**2 / 4
         right_item = ((bbox2_y1 + bbox2_y2) - (bbox1_y1 + bbox1_y2))**2 / 4
         rho2 = left_item + right_item  # rho^2 (ρ^2)
