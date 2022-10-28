@@ -1,0 +1,6 @@
+include requirements/*.txt
+include mmyolo/VERSION
+include mmyolo/.mim/model-index.yml
+include mmyolo/.mim/demo/*/*
+recursive-include mmyolo/.mim/configs *.py *.yml
+recursive-include mmyolo/.mim/tools *.sh *.py
