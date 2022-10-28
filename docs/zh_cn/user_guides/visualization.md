@@ -75,7 +75,7 @@ python demo/featmap_vis_demo.py demo/dog.jpg \
 <img src="https://user-images.githubusercontent.com/17425982/198520580-c1b24d50-2e90-4ba5-af51-5a7dcb9db945.png" width="800" alt="image"/>
 </div>
 
-实际上上述代码存在上面所示的图片和特征图不对齐问题，解决办法有两个：
+实际上上述代码存在图片和特征图不对齐问题，解决办法有两个：
 
 1. 修改 YOLOv5 配置，让后处理只是简单的 Resize 即可，这对于可视化是没有啥影响的
 
@@ -110,8 +110,8 @@ test_pipeline = [
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
-    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False),
+        file_client_args=_base_.file_client_args),
+    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # 这里将 LetterResize 修改成 mmdet.Resize
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
         type='mmdet.PackDetInputs',
