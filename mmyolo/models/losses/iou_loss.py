@@ -71,8 +71,8 @@ def bbox_overlaps(pred: torch.Tensor,
     enclose_x2y2 = torch.max(pred[:, 2:], target[:, 2:])
     enclose_wh = (enclose_x2y2 - enclose_x1y1).clamp(min=0)
 
-    enclose_w = enclose_wh[:, 0] # cw
-    enclose_h = enclose_wh[:, 1] # ch
+    enclose_w = enclose_wh[:, 0]  # cw
+    enclose_h = enclose_wh[:, 1]  # ch
 
     if iou_mode == 'ciou':
         enclose_area = enclose_w**2 + enclose_h**2 + eps  # c^2
@@ -119,24 +119,27 @@ def bbox_overlaps(pred: torch.Tensor,
         # choose minimize alpha, sin(alpha)
         sin_alpha = torch.abs(sigma_ch) / sigma
         sin_beta = torch.abs(sigma_cw) / sigma
-        sin_alpha = torch.where(sin_alpha <= math.sin(math.pi / 4), sin_alpha, sin_beta)
+        sin_alpha = torch.where(sin_alpha <= math.sin(math.pi / 4), sin_alpha,
+                                sin_beta)
 
         # Angle cost = 1 - 2 * ( sin^2 ( arcsin(x) - (pi / 4) ) )
         angle_cost = torch.cos(torch.arcsin(sin_alpha) * 2 - math.pi / 2)
 
         # Distance cost = Σ_(t=x,y) (1 - e ^ (- γ ρ_t))
-        rho_x = (sigma_cw / enclose_w)**2 # ρ_x
-        rho_y = (sigma_ch / enclose_h)**2 # ρ_y
-        gamma = 2 - angle_cost # γ
-        distance_cost = (1 - torch.exp(-1 * gamma * rho_x)) + (1 - torch.exp(-1 * gamma * rho_y))
+        rho_x = (sigma_cw / enclose_w)**2  # ρ_x
+        rho_y = (sigma_ch / enclose_h)**2  # ρ_y
+        gamma = 2 - angle_cost  # γ
+        distance_cost = (1 - torch.exp(-1 * gamma * rho_x)) + (
+            1 - torch.exp(-1 * gamma * rho_y))
 
         # Shape cost = Ω = Σ_(t=w,h) ( ( 1 - ( e ^ (-ω_t) ) ) ^ θ )
-        theta = 4.0 # θ
-        omiga_w = torch.abs(w1 - w2) / torch.max(w1, w2) # ω_w
-        omiga_h = torch.abs(h1 - h2) / torch.max(h1, h2) # ω_h
-        shape_cost = torch.pow(1 - torch.exp(-1 * omiga_w), theta) + torch.pow(1 - torch.exp(-1 * omiga_h), theta)
+        theta = 4.0  # θ
+        omiga_w = torch.abs(w1 - w2) / torch.max(w1, w2)  # ω_w
+        omiga_h = torch.abs(h1 - h2) / torch.max(h1, h2)  # ω_h
+        shape_cost = torch.pow(1 - torch.exp(-1 * omiga_w), theta) + torch.pow(
+            1 - torch.exp(-1 * omiga_h), theta)
 
-        ious = ious - ((distance_cost + shape_cost) / 2)
+        ious = ious - ((distance_cost + shape_cost) * 0.5)
 
     return ious.clamp(min=-1.0, max=1.0)
 
