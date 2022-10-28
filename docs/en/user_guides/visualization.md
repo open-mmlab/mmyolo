@@ -17,24 +17,24 @@ You can use the `Visualizer` provided in MMYOLO for feature map visualization, w
 
 You can use `demo/featmap_vis_demo.py` to get a quick view of the visualization results. To better understand all functions, we list all primary parameters and their features here as follows:
 
-- `img`: used to identify the image to visualize. Either a single image file or a list of image paths is supported.
+- `img`: Identify the image to visualize. Either a single image file or a list of image paths is supported.
 
-- `config`: used to identify the configuration file for the algorithm.
+- `config`: Identify the configuration file for the algorithm.
 
-- `checkpoint`: used to identify the weight file of the corresponding algorithm.
+- `checkpoint`: Identify the weight file of the corresponding algorithm.
 
-- `--out-file`: used to identify the path and file name to save the obtained feature map on your device.
+- `--out-file`: Identify the path and file name to save the obtained feature map on your device.
 
-- `--device`: used to identify the hardware used for image inference. For example, `--device cuda:0` means use the first GPU, whereas `--device cpu` means use CPU.
+- `--device`: Identify the hardware used for image inference. For example, `--device cuda:0` means use the first GPU, whereas `--device cpu` means use CPU.
 
-- `--score-thr`: used to identify the confidence threshold. Only bboxes whose confidence scores are higher than this threshold will be displayed.
+- `--score-thr`: Identify the confidence threshold. Only bboxes whose confidence scores are higher than this threshold will be displayed.
 
-- `--preview-model`: used to identify if there is a need to preview the model. This could make users understand the structure of the feature layer more straightforwardly.
+- `--preview-model`: Identify if there is a need to preview the model. This could make users understand the structure of the feature layer more straightforwardly.
 
-- `--target-layers`: used to identify the specific layer to get its visualized feature map.
+- `--target-layers`: Identify the specific layer to get its visualized feature map.
 
-  - when there is only one parameter, the feature map of that specific layer will be visualized. For example, `--target-layers backbone` ,  `--target-layers neck` ,  `--target-layers backbone.stage4`, etc.
-  - when the parameter is a list, all feature maps of the corresponding layers will be visualized. For example, `--target-layers backbone.stage4 neck` means that the stage4 layer of the backbone and the three layers of the neck are output simultaneously, a total of four layers of feature maps.
+  - When there is only one parameter, the feature map of that specific layer will be visualized. For example, `--target-layers backbone` ,  `--target-layers neck` ,  `--target-layers backbone.stage4`, etc.
+  - When the parameter is a list, all feature maps of the corresponding layers will be visualized. For example, `--target-layers backbone.stage4 neck` means that the stage4 layer of the backbone and the three layers of the neck are output simultaneously, a total of four layers of feature maps.
 
 - `--channel-reduction`: used to identify if there is a need to compress multiple channels into a single channel and then display it overlaid with the picture as the input tensor usually has multiple channels. Three parameters can be used here:
 
