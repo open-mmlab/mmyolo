@@ -66,13 +66,14 @@ class YOLOv6HeadModule(BaseModule):
         self.num_base_priors = num_base_priors
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
-        self.in_channels = in_channels
 
-        in_channels = []
-        for channel in self.in_channels:
-            channel = make_divisible(channel, widen_factor)
-            in_channels.append(channel)
-        self.in_channels = in_channels
+        if isinstance(in_channels, int):
+            self.in_channels = [make_divisible(in_channels, widen_factor)
+                                ] * self.num_levels
+        else:
+            self.in_channels = [
+                make_divisible(i, widen_factor) for i in in_channels
+            ]
         self.prior_prob = 1e-2
 
         self._init_layers()

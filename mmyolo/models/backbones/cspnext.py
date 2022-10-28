@@ -28,12 +28,13 @@ class CSPNeXt(BaseBackbone):
         frozen_stages (int): Stages to be frozen (stop grad and set eval
             mode). -1 means not freezing any parameters. Defaults to -1.
         plugins (list[dict]): List of plugins for stages, each dict contains:
-
-            - cfg (dict, required): Cfg dict to build plugin.
+            - cfg (dict, required): Cfg dict to build plugin.Defaults to
             - stages (tuple[bool], optional): Stages to apply plugin, length
               should be same as 'num_stages'.
         use_depthwise (bool): Whether to use depthwise separable convolution.
             Defaults to False.
+        expand_ratio (float): Ratio to adjust the number of channels of the
+            hidden layer. Defaults to 0.5.
         arch_ovewrite (list): Overwrite default arch settings.
             Defaults to None.
         channel_attention (bool): Whether to add channel attention in each
@@ -43,7 +44,7 @@ class CSPNeXt(BaseBackbone):
         norm_cfg (:obj:`ConfigDict` or dict): Dictionary to construct and
             config norm layer. Defaults to dict(type='BN', requires_grad=True).
         act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
-            Defaults to dict(type='SiLU').
+            Defaults to dict(type='SiLU', inplace=True).
         norm_eval (bool): Whether to set norm layers to eval mode, namely,
             freeze running stats (mean and var). Note: Effect on Batch Norm
             and its variants only.

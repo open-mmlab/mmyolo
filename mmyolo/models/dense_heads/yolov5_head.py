@@ -27,7 +27,8 @@ class YOLOv5HeadModule(BaseModule):
     Args:
         num_classes (int): Number of categories excluding the background
             category.
-        in_channels (int): Number of channels in the input feature map.
+        in_channels (Union[int, Sequence]): Number of channels in the input
+            feature map.
         widen_factor (float): Width multiplier, multiply number of
             channels in each layer by this amount. Default: 1.0.
         num_base_priors:int: The number of priors (points) at a point
@@ -48,7 +49,6 @@ class YOLOv5HeadModule(BaseModule):
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg=init_cfg)
         self.num_classes = num_classes
-        self.in_channels = in_channels
         self.widen_factor = widen_factor
 
         self.featmap_strides = featmap_strides
@@ -56,11 +56,13 @@ class YOLOv5HeadModule(BaseModule):
         self.num_levels = len(self.featmap_strides)
         self.num_base_priors = num_base_priors
 
-        in_channels = []
-        for channel in self.in_channels:
-            channel = make_divisible(channel, self.widen_factor)
-            in_channels.append(channel)
-        self.in_channels = in_channels
+        if isinstance(in_channels, int):
+            self.in_channels = [make_divisible(in_channels, widen_factor)
+                                ] * self.num_levels
+        else:
+            self.in_channels = [
+                make_divisible(i, widen_factor) for i in in_channels
+            ]
 
         self._init_layers()
 
@@ -203,11 +205,16 @@ class YOLOv5Head(BaseDenseHead):
         assert len(self.obj_level_weights) == len(
             self.featmap_strides) == self.num_levels
         if self.prior_match_thr != 4.0:
-            print_log("""!!!Now, you've changed the prior_match_thr
-                        parameter to something other than 4.0. Please make sure
-                        that you have modified both the regression formula in
-                        bbox_coder and before loss_box computation,
-                        otherwise the accuracy may be degraded!!!""")
+            print_log(
+                "!!!Now, you've changed the prior_match_thr "
+                'parameter to something other than 4.0. Please make sure '
+                'that you have modified both the regression formula in '
+                'bbox_coder and before loss_box computation, '
+                'otherwise the accuracy may be degraded!!!')
+
+        if self.num_classes == 1:
+            print_log('!!!You are using `YOLOv5Head` with num_classes == 1.'
+                      ' The loss_cls will be 0. This is a normal phenomenon.')
 
         priors_base_sizes = torch.tensor(
             self.prior_generator.base_sizes, dtype=torch.float)
