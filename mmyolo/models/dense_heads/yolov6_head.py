@@ -17,6 +17,7 @@ from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS, TASK_UTILS
+from ..losses import varifocal_loss
 from ..utils import make_divisible
 from .yolov5_head import YOLOv5Head
 
@@ -347,8 +348,7 @@ class YOLOv6Head(YOLOv5Head):
             torch.full_like(assigned_labels, self.num_classes))
         one_hot_label = F.one_hot(assigned_labels.long(),
                                   self.num_classes + 1)[..., :-1]
-        loss_cls = self.varifocal_loss(pred_scores, assigned_scores,
-                                       one_hot_label)
+        loss_cls = varifocal_loss(pred_scores, assigned_scores, one_hot_label)
 
         # rescale bbox
         stride_tensor = flatten_priors[..., [2]]
@@ -394,17 +394,3 @@ class YOLOv6Head(YOLOv5Head):
                     map(lambda l: l + [[-1, 0, 0, 0, 0]] * (max_len - len(l)),
                         gt_info_list)))[:,
                                         1:, :]).to(batch_gt_instances.device)
-
-    # TODO This will be refactored and deleted later.
-    @staticmethod
-    def varifocal_loss(pred_score: Tensor,
-                       gt_score: Tensor,
-                       label: Tensor,
-                       alpha: float = 0.75,
-                       gamma: float = 2.0) -> Tensor:
-        weight = alpha * pred_score.pow(gamma) * (1 - label) + gt_score * label
-        with torch.cuda.amp.autocast(enabled=False):
-            loss = (F.binary_cross_entropy(
-                pred_score.float(), gt_score.float(), reduction='none') *
-                    weight).sum()
-        return loss
