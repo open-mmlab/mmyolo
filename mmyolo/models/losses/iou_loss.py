@@ -75,15 +75,17 @@ def bbox_overlaps(pred: torch.Tensor,
     enclose_h = enclose_wh[:, 1]
 
     if iou_mode == 'ciou':
-        enclose_area = enclose_w**2 + enclose_h**2 + eps
+        enclose_area = enclose_w**2 + enclose_h**2 + eps  # c^2
 
-        # rho2(ρ^2): euclidean distance between bbox2(pred) and bbox1(gt),
+        # rho2(ρ^2):
+        # euclidean distance between bbox2(pred) and bbox1(gt) center point,
         # then ** 2
+        # because xywh -> center xy and bbox wh, so need to / 4
         left_item = ((bbox2_x1 + bbox2_x2) - (bbox1_x1 + bbox1_x2))**2 / 4
         right_item = ((bbox2_y1 + bbox2_y2) - (bbox1_y1 + bbox1_y2))**2 / 4
-        rho2 = left_item + right_item
+        rho2 = left_item + right_item  # rho^2 (ρ^2)
 
-        # Width and height ratio
+        # Width and height ratio (v)
         wh_ratio = (4 / math.pi**2) * \
                     torch.pow(torch.atan(w2 / h2) - torch.atan(w1 / h1), 2)
 
