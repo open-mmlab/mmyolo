@@ -58,7 +58,7 @@ def bbox_overlaps(pred: torch.Tensor,
     # Union
     w1, h1 = bbox1_x2 - bbox1_x1, bbox1_y2 - bbox1_y1
     w2, h2 = bbox2_x2 - bbox2_x1, bbox2_y2 - bbox2_y1
-    union = w1 * h1 + w2 * h2 - overlap + eps
+    union = (w1 * h1) + (w2 * h2) - overlap + eps
 
     h1 += eps
     h2 += eps
@@ -103,22 +103,26 @@ def bbox_overlaps(pred: torch.Tensor,
 
     elif iou_mode == 'siou':
         # SIoU: https://arxiv.org/pdf/2205.12740.pdf
-        # Distance cost
-        # b_cx_gt-b_cx
+
+        # Angle cost = 1 - 2 * ( sin^2 ( arcsin(x) - (pi / 4) ) )
+        # x = sin(alpha)
+
+        # calculate sigma (σ):
+        # euclidean distance between bbox2(pred) and bbox1(gt) center point,
+        # left_item = b_cx_gt - b_cx
         sigma_cw = (bbox2_x1 + bbox2_x2) / 2 - (bbox1_x1 + bbox1_x2) / 2
-        # (b_cy_gt-b_cy)
+        # right_item = b_cy_gt - b_cy
         sigma_ch = (bbox2_y1 + bbox2_y2) / 2 - (bbox1_y1 + bbox1_y2) / 2
+        # sigma = √( (sigma_cw ** 2) - (sigma_ch ** 2) )
         sigma = torch.pow(sigma_cw**2 + sigma_ch**2, 0.5)
 
-        # try to minimize alpha
+        # try to minimize alpha, sin(alpha)
         sin_alpha = torch.abs(sigma_cw) / sigma
         sin_beta = torch.abs(sigma_ch) / sigma
 
         threshold = pow(2, 0.5) / 2
         sin_alpha = torch.where(sin_alpha > threshold, sin_beta, sin_alpha)
 
-        # Angle cost
-        # 1 - 2 * sin ^ ( 2 * ( arcsin(x) - pi / 4 ) )
         angle_cost = torch.cos(torch.arcsin(sin_alpha) * 2 - math.pi / 2)
 
         # Distance cost
