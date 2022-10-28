@@ -6,7 +6,7 @@
 <img src="https://user-images.githubusercontent.com/89863442/190903635-27bbc619-9bf8-43a8-aea8-ea13b9dad28c.jpg" width="1000" alt="image"/>
 </div>
 
-Visualization can provide an intuitive explanation to the training and testing process of the deep learning model.
+Visualization can provide an intuitive explanation of the training and testing process of the deep learning model.
 
 You can use the `Visualizer` provided in MMYOLO for feature map visualization, which has the following features:
 
