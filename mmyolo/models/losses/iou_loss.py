@@ -15,13 +15,12 @@ def bbox_overlaps(pred: torch.Tensor,
                   target: torch.Tensor,
                   iou_mode: str = 'ciou',
                   bbox_format: str = 'xywh',
-                  is_aligned: bool = False,
                   eps: float = 1e-7) -> torch.Tensor:
     r"""Calculate overlap between two set of bboxes.
     `Implementation of paper `Enhancing Geometric Factors into
     Model Learning and Inference for Object Detection and Instance
     Segmentation <https://arxiv.org/abs/2005.03572>`_.
-    In the CIoU implementation of YOLOv5 and mmdetection, there is a slight
+    In the CIoU implementation of YOLOv5 and MMDetection, there is a slight
     difference in the way the alpha parameter is computed.
     mmdet version:
         alpha = (ious > 0.5).float() * v / (1 - ious + v)
@@ -35,7 +34,6 @@ def bbox_overlaps(pred: torch.Tensor,
             Defaults to "ciou".
         bbox_format (str): Options are "xywh" and "xyxy".
             Defaults to "xywh".
-        is_aligned (bool):
         eps (float): Eps to avoid log(0).
     Returns:
         Tensor: shape (n,).
@@ -46,16 +44,24 @@ def bbox_overlaps(pred: torch.Tensor,
         pred = HorizontalBoxes.cxcywh_to_xyxy(pred)
         target = HorizontalBoxes.cxcywh_to_xyxy(target)
 
-    # overlap
-    lt = torch.max(pred[:, :2], target[:, :2])
-    rb = torch.min(pred[:, 2:], target[:, 2:])
-    wh = (rb - lt).clamp(min=0)
-    overlap = wh[:, 0] * wh[:, 1]
+    bbox1_x1, bbox1_y1 = pred[:, 0], pred[:, 1]
+    bbox1_x2, bbox1_y2 = pred[:, 2], pred[:, 3]
+    bbox2_x1, bbox2_y1 = target[:, 0], target[:, 1]
+    bbox2_x2, bbox2_y2 = target[:, 2], target[:, 3]
 
-    # union
-    ap = (pred[:, 2] - pred[:, 0]) * (pred[:, 3] - pred[:, 1])
-    ag = (target[:, 2] - target[:, 0]) * (target[:, 3] - target[:, 1])
-    union = ap + ag - overlap + eps
+    # Overlap
+    overlap = (torch.min(bbox1_x2, bbox2_x2) -
+               torch.max(bbox1_x1, bbox2_x1)).clamp(0) * \
+              (torch.min(bbox1_y2, bbox2_y2) -
+               torch.max(bbox1_y1, bbox2_y1)).clamp(0)
+
+    # Union
+    w1, h1 = bbox1_x2 - bbox1_x1, bbox1_y2 - bbox1_y1
+    w2, h2 = bbox2_x2 - bbox2_x1, bbox2_y2 - bbox2_y1
+    union = (w1 * h1) + (w2 * h2) - overlap + eps
+
+    h1 = bbox1_y2 - bbox1_y1 + eps
+    h2 = bbox1_y2 - bbox1_y1 + eps
 
     # IoU
     ious = overlap / union
@@ -65,57 +71,75 @@ def bbox_overlaps(pred: torch.Tensor,
     enclose_x2y2 = torch.max(pred[:, 2:], target[:, 2:])
     enclose_wh = (enclose_x2y2 - enclose_x1y1).clamp(min=0)
 
-    cw = enclose_wh[:, 0]
-    ch = enclose_wh[:, 1]
+    enclose_w = enclose_wh[:, 0]  # cw
+    enclose_h = enclose_wh[:, 1]  # ch
 
-    b1_x1, b1_y1 = pred[:, 0], pred[:, 1]
-    b1_x2, b1_y2 = pred[:, 2], pred[:, 3]
-    b2_x1, b2_y1 = target[:, 0], target[:, 1]
-    b2_x2, b2_y2 = target[:, 2], target[:, 3]
+    if iou_mode == 'ciou':
+        enclose_area = enclose_w**2 + enclose_h**2 + eps  # c^2
 
-    w1, h1 = b1_x2 - b1_x1, b1_y2 - b1_y1 + eps
-    w2, h2 = b2_x2 - b2_x1, b2_y2 - b2_y1 + eps
+        # rho2(ρ^2):
+        # euclidean distance between bbox2(pred) and bbox1(gt) center point,
+        # then ** 2
+        # because bbox format is xyxy -> left-top xy and right-bottom xy,
+        # so need to / 4 to get center point
+        left_item = ((bbox2_x1 + bbox2_x2) - (bbox1_x1 + bbox1_x2))**2 / 4
+        right_item = ((bbox2_y1 + bbox2_y2) - (bbox1_y1 + bbox1_y2))**2 / 4
+        rho2 = left_item + right_item  # rho^2 (ρ^2)
 
-    if iou_mode in ['ciou']:
-        c2 = cw**2 + ch**2 + eps
-
-        left = ((b2_x1 + b2_x2) - (b1_x1 + b1_x2))**2 / 4
-        right = ((b2_y1 + b2_y2) - (b1_y1 + b1_y2))**2 / 4
-        rho2 = left + right
-
-        factor = 4 / math.pi**2
-        v = factor * torch.pow(torch.atan(w2 / h2) - torch.atan(w1 / h1), 2)
+        # Width and height ratio (v)
+        wh_ratio = (4 / (math.pi**2)) * torch.pow(
+            torch.atan(w2 / h2) - torch.atan(w1 / h1), 2)
 
         with torch.no_grad():
-            alpha = v / (v - ious + (1 + eps))
+            alpha = wh_ratio / (wh_ratio - ious + (1 + eps))
 
         # CIoU
-        ious = ious - (rho2 / c2 + alpha * v)
+        ious = ious - ((rho2 / enclose_area) + (alpha * wh_ratio))
 
     elif iou_mode == 'giou':
-        c_area = cw * ch + eps  # convex area
-        ious = ious - (c_area - union) / c_area
+        # GIoU
+        convex_area = enclose_w * enclose_h + eps  # convex area
+        ious = ious - (convex_area - union) / convex_area
 
     elif iou_mode == 'siou':
-        # SIoU Loss https://arxiv.org/pdf/2205.12740.pdf
-        s_cw = (b2_x1 + b2_x2 - b1_x1 - b1_x2) * 0.5
-        s_ch = (b2_y1 + b2_y2 - b1_y1 - b1_y2) * 0.5
-        sigma = torch.pow(s_cw**2 + s_ch**2, 0.5)
-        sin_alpha_1 = torch.abs(s_cw) / sigma
-        sin_alpha_2 = torch.abs(s_ch) / sigma
-        threshold = pow(2, 0.5) / 2
-        sin_alpha = torch.where(sin_alpha_1 > threshold, sin_alpha_2,
-                                sin_alpha_1)
+        # SIoU: https://arxiv.org/pdf/2205.12740.pdf
+
+        # Angle cost = 1 - 2 * ( sin^2 ( arcsin(x) - (pi / 4) ) )
+        # x = sin(alpha)
+
+        # calculate sigma (σ):
+        # euclidean distance between bbox2(pred) and bbox1(gt) center point,
+        # left_item = b_cx_gt - b_cx
+        sigma_cw = (bbox2_x1 + bbox2_x2) / 2 - (bbox1_x1 + bbox1_x2) / 2
+        # right_item = b_cy_gt - b_cy
+        sigma_ch = (bbox2_y1 + bbox2_y2) / 2 - (bbox1_y1 + bbox1_y2) / 2
+        # sigma = √( (sigma_cw ** 2) - (sigma_ch ** 2) )
+        sigma = torch.pow(sigma_cw**2 + sigma_ch**2, 0.5)
+
+        # choose minimize alpha, sin(alpha)
+        sin_alpha = torch.abs(sigma_ch) / sigma
+        sin_beta = torch.abs(sigma_cw) / sigma
+        sin_alpha = torch.where(sin_alpha <= math.sin(math.pi / 4), sin_alpha,
+                                sin_beta)
+
+        # Angle cost = 1 - 2 * ( sin^2 ( arcsin(x) - (pi / 4) ) )
         angle_cost = torch.cos(torch.arcsin(sin_alpha) * 2 - math.pi / 2)
-        rho_x = (s_cw / cw)**2
-        rho_y = (s_ch / ch)**2
-        gamma = angle_cost - 2
-        distance_cost = 2 - torch.exp(gamma * rho_x) - torch.exp(gamma * rho_y)
-        omiga_w = torch.abs(w1 - w2) / torch.max(w1, w2)
-        omiga_h = torch.abs(h1 - h2) / torch.max(h1, h2)
-        shape_cost = torch.pow(1 - torch.exp(-1 * omiga_w), 4) + torch.pow(
-            1 - torch.exp(-1 * omiga_h), 4)
-        ious = ious - 0.5 * (distance_cost + shape_cost)
+
+        # Distance cost = Σ_(t=x,y) (1 - e ^ (- γ ρ_t))
+        rho_x = (sigma_cw / enclose_w)**2  # ρ_x
+        rho_y = (sigma_ch / enclose_h)**2  # ρ_y
+        gamma = 2 - angle_cost  # γ
+        distance_cost = (1 - torch.exp(-1 * gamma * rho_x)) + (
+            1 - torch.exp(-1 * gamma * rho_y))
+
+        # Shape cost = Ω = Σ_(t=w,h) ( ( 1 - ( e ^ (-ω_t) ) ) ^ θ )
+        theta = 4.0  # θ
+        omiga_w = torch.abs(w1 - w2) / torch.max(w1, w2)  # ω_w
+        omiga_h = torch.abs(h1 - h2) / torch.max(h1, h2)  # ω_h
+        shape_cost = torch.pow(1 - torch.exp(-1 * omiga_w), theta) + torch.pow(
+            1 - torch.exp(-1 * omiga_h), theta)
+
+        ious = ious - ((distance_cost + shape_cost) * 0.5)
 
     return ious.clamp(min=-1.0, max=1.0)
 
@@ -158,7 +182,7 @@ class IoULoss(nn.Module):
         pred: torch.Tensor,
         target: torch.Tensor,
         weight: Optional[torch.Tensor] = None,
-        avg_factor: Optional[str] = None,
+        avg_factor: Optional[float] = None,
         reduction_override: Optional[Union[str, bool]] = None
     ) -> Tuple[Union[torch.Tensor, torch.Tensor], torch.Tensor]:
         """Forward function.
