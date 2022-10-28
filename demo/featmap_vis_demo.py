@@ -164,23 +164,25 @@ def main(args):
         img = mmcv.imconvert(img, 'bgr', 'rgb')
 
         shown_imgs = []
+        visualizer.add_datasample(
+            'result',
+            img,
+            data_sample=result,
+            draw_gt=False,
+            show=False,
+            wait_time=0,
+            out_file=None,
+            pred_score_thr=args.score_thr)
+        drawn_img = visualizer.get_image()
+
         for featmap in flatten_featmaps:
-            drawn_img = visualizer.draw_featmap(
+            shown_img = visualizer.draw_featmap(
                 featmap[0],
-                img,
+                drawn_img,
                 channel_reduction=channel_reduction,
                 topk=args.topk,
                 arrangement=args.arrangement)
-            visualizer.add_datasample(
-                'result',
-                drawn_img,
-                data_sample=result,
-                draw_gt=False,
-                show=False,
-                wait_time=0,
-                out_file=None,
-                pred_score_thr=args.score_thr)
-            shown_imgs.append(visualizer.get_image())
+            shown_imgs.append(shown_img)
 
         shown_imgs = auto_arrange_imgs(shown_imgs)
 
