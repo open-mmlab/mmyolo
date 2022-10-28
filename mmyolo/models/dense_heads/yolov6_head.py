@@ -5,7 +5,6 @@ from typing import Sequence, Tuple, Union
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from mmcv.cnn import ConvModule
 from mmdet.models.utils import multi_apply
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
@@ -17,7 +16,6 @@ from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS, TASK_UTILS
-from ..losses import varifocal_loss
 from ..utils import make_divisible
 from .yolov5_head import YOLOv5Head
 
@@ -209,6 +207,7 @@ class YOLOv6Head(YOLOv5Head):
                      alpha=0.75,
                      gamma=2.0,
                      iou_weighted=True,
+                     reduction='sum',
                      loss_weight=1.0),
                  loss_bbox: ConfigType = dict(
                      type='IoULoss',
@@ -238,6 +237,7 @@ class YOLOv6Head(YOLOv5Head):
             init_cfg=init_cfg)
 
         self.loss_bbox = MODELS.build(loss_bbox)
+        self.loss_cls = MODELS.build(loss_cls)
         self.epoch = 0
 
     def special_init(self):
@@ -347,9 +347,8 @@ class YOLOv6Head(YOLOv5Head):
         assigned_labels = torch.where(
             fg_mask_pre_prior > 0, assigned_labels,
             torch.full_like(assigned_labels, self.num_classes))
-        one_hot_label = F.one_hot(assigned_labels.long(),
-                                  self.num_classes + 1)[..., :-1]
-        loss_cls = varifocal_loss(pred_scores, assigned_scores, one_hot_label)
+
+        loss_cls = self.loss_cls(flatten_cls_preds, assigned_scores)
 
         # rescale bbox
         stride_tensor = flatten_priors[..., [2]]
