@@ -6,14 +6,16 @@
 <img src="https://user-images.githubusercontent.com/89863442/190903635-27bbc619-9bf8-43a8-aea8-ea13b9dad28c.jpg" width="1000" alt="image"/>
 </div>
 
-Visualization can provide an intuitive explanation of the training and testing process of the deep learning model.
+Visualization can provide an intuitive explanation to the training and testing process of the deep learning model.
 
 You can use the `Visualizer` provided in MMYOLO for feature map visualization, which has the following features:
 
 - Support basic drawing interfaces and feature map visualization.
 - Support selecting different layers in the model to get the feature map. The display methods include `squeeze_mean`, `select_max`, and `topk`. Users can also customize the layout of the feature map display with `arrangement`.
 
-## Feature map drawing
+## Feature map generation
+
+You can use `demo/featmap_vis_demo.py` to get a quick view of the visualization results. To better understand all functions, we list all primary parameters and their features here as follows:
 
 - `img`: used to identify the image to visualize. Either a single image file or a list of image paths is supported.
 
