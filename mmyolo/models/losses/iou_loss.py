@@ -58,9 +58,12 @@ def bbox_overlaps(pred: torch.Tensor,
                torch.max(bbox1_y1, bbox2_y1)).clamp(0)
 
     # Union
-    w1, h1 = bbox1_x2 - bbox1_x1, bbox1_y2 - bbox1_y1 + eps  # TODO need + eps?
-    w2, h2 = bbox2_x2 - bbox2_x1, bbox2_y2 - bbox2_y1 + eps
+    w1, h1 = bbox1_x2 - bbox1_x1, bbox1_y2 - bbox1_y1
+    w2, h2 = bbox2_x2 - bbox2_x1, bbox2_y2 - bbox2_y1
     union = w1 * h1 + w2 * h2 - overlap + eps
+
+    h1 += eps
+    h2 += eps
 
     # IoU
     ious = overlap / union
@@ -104,8 +107,8 @@ def bbox_overlaps(pred: torch.Tensor,
         sigma = torch.pow(sigma_cw**2 + sigma_ch**2, 0.5)
 
         # try to minimize alpha
-        sin_alpha = torch.abs(sigma_ch) / sigma
-        sin_beta = torch.abs(sigma_cw) / sigma
+        sin_alpha = torch.abs(sigma_cw) / sigma
+        sin_beta = torch.abs(sigma_ch) / sigma
 
         threshold = pow(2, 0.5) / 2
         sin_alpha = torch.where(sin_alpha > threshold, sin_beta, sin_alpha)
