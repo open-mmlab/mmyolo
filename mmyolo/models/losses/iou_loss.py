@@ -15,7 +15,6 @@ def bbox_overlaps(pred: torch.Tensor,
                   target: torch.Tensor,
                   iou_mode: str = 'ciou',
                   bbox_format: str = 'xywh',
-                  is_aligned: bool = False,
                   eps: float = 1e-7) -> torch.Tensor:
     r"""Calculate overlap between two set of bboxes.
     `Implementation of paper `Enhancing Geometric Factors into
@@ -35,7 +34,6 @@ def bbox_overlaps(pred: torch.Tensor,
             Defaults to "ciou".
         bbox_format (str): Options are "xywh" and "xyxy".
             Defaults to "xywh".
-        is_aligned (bool):
         eps (float): Eps to avoid log(0).
     Returns:
         Tensor: shape (n,).
@@ -79,18 +77,21 @@ def bbox_overlaps(pred: torch.Tensor,
     if iou_mode == 'ciou':
         enclose_area = enclose_w**2 + enclose_h**2 + eps
 
-        left = ((bbox2_x1 + bbox2_x2) - (bbox1_x1 + bbox1_x2))**2 / 4
-        right = ((bbox2_y1 + bbox2_y2) - (bbox1_y1 + bbox1_y2))**2 / 4
-        rho2 = left + right
+        # rho2(ρ^2): euclidean distance between bbox2(pred) and bbox1(gt),
+        # then ** 2
+        left_item = ((bbox2_x1 + bbox2_x2) - (bbox1_x1 + bbox1_x2))**2 / 4
+        right_item = ((bbox2_y1 + bbox2_y2) - (bbox1_y1 + bbox1_y2))**2 / 4
+        rho2 = left_item + right_item
 
-        factor = 4 / math.pi**2
-        v = factor * torch.pow(torch.atan(w2 / h2) - torch.atan(w1 / h1), 2)
+        # Width and height ratio
+        wh_ratio = (4 / math.pi**2) * \
+                    torch.pow(torch.atan(w2 / h2) - torch.atan(w1 / h1), 2)
 
         with torch.no_grad():
-            alpha = v / (v - ious + (1 + eps))
+            alpha = wh_ratio / (wh_ratio - ious + (1 + eps))
 
         # CIoU
-        ious = ious - (rho2 / enclose_area + alpha * v)
+        ious = ious - ((rho2 / enclose_area) + (alpha * wh_ratio))
 
     elif iou_mode == 'giou':
         # GIoU
