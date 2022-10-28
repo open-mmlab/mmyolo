@@ -42,7 +42,7 @@ You can use `demo/featmap_vis_demo.py` to get a quick view of the visualization 
   - `select_max`: Sum the input channel C in the spatial space, and the dimension becomes (C, ). Then select the channel with the largest value.
   - `None`: Indicates that no compression is required. In this case, the `topk` feature maps with the highest activation degree can be selected to display through the `topk` parameter.
 
-- `--topk`: Valid only when the `channel_reduction` parameter is `None`. Once it is valid, it selects the `topk` channels according to the activation degree, and then display i
+- `--topk`: Valid only when the `channel_reduction` parameter is `None`. Once it is valid, it selects the `topk` channels according to the activation degree, and then displays i
 
   - If `topk` is not -1, topk channels will be selected to display in order of the activation degree.
   - If `topk` is -1, channel number C must be either 1 or 3 to indicate that the input data is a picture. Otherwise, an error will prompt the user to compress the channel with `channel_reduction`.
