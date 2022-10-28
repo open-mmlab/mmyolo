@@ -3,7 +3,7 @@ from typing import Sequence, Union
 
 import torch
 import torch.nn as nn
-from mmcv.cnn import ConvModule
+import torch.nn.functional as F
 from mmdet.models.utils import multi_apply
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
                          OptMultiConfig)
@@ -12,34 +12,30 @@ from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS
-from ..utils import make_divisible
+from ..layers.yolo_bricks import PPYOLOESELayer
 from .yolov5_head import YOLOv5Head
 
 
 @MODELS.register_module()
-class YOLOv6HeadModule(BaseModule):
-    """YOLOv6Head head module used in `YOLOv6.
-
-    <https://arxiv.org/pdf/2209.02976>`_.
+class PPYOLOEHeadModule(BaseModule):
+    """PPYOLOEHead head module used in `PPYOLOE`
 
     Args:
         num_classes (int): Number of categories excluding the background
             category.
-        in_channels (Union[int, Sequence]): Number of channels in the input
-            feature map.
+        in_channels (int): Number of channels in the input feature map.
         widen_factor (float): Width multiplier, multiply number of
             channels in each layer by this amount. Default: 1.0.
         num_base_priors:int: The number of priors (points) at a point
             on the feature grid.
         featmap_strides (Sequence[int]): Downsample factor of each feature map.
-             Defaults to [8, 16, 32].
-            None, otherwise False. Defaults to "auto".
-        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
-            layer. Defaults to dict(type='BN', momentum=0.03, eps=0.001).
-        act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
-            Defaults to None.
-        init_cfg (:obj:`ConfigDict` or list[:obj:`ConfigDict`] or dict or
-            list[dict], optional): Initialization config dict.
+             Defaults to (8, 16, 32).
+        reg_max (int): TOOD reg_max param.
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='SiLU', inplace=True).
+        init_cfg (dict or list[dict], optional): Initialization config dict.
             Defaults to None.
     """
 
@@ -49,8 +45,9 @@ class YOLOv6HeadModule(BaseModule):
                  widen_factor: float = 1.0,
                  num_base_priors: int = 1,
                  featmap_strides: Sequence[int] = (8, 16, 32),
+                 reg_max: int = 16,
                  norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.03, eps=0.001),
+                     type='BN', momentum=0.1, eps=1e-5),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg=init_cfg)
@@ -61,78 +58,57 @@ class YOLOv6HeadModule(BaseModule):
         self.num_base_priors = num_base_priors
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
+        self.reg_max = reg_max
 
         if isinstance(in_channels, int):
-            self.in_channels = [make_divisible(in_channels, widen_factor)
+            self.in_channels = [int(in_channels * widen_factor)
                                 ] * self.num_levels
         else:
-            self.in_channels = [
-                make_divisible(i, widen_factor) for i in in_channels
-            ]
+            self.in_channels = [int(i * widen_factor) for i in in_channels]
 
         self._init_layers()
 
-    def init_weights(self):
-        """Initialize weights of the head."""
-        # Use prior in model initialization to improve stability
+    def init_weights(self, prior_prob=0.01):
+        """Initialize the weight and bias of PPYOLOE head."""
         super().init_weights()
+        for conv in self.cls_preds:
+            conv.bias.data.fill_(bias_init_with_prob(prior_prob))
+            conv.weight.data.fill_(0.)
 
-        for m in self.modules():
-            if isinstance(m, torch.nn.Conv2d):
-                m.reset_parameters()
-
-        bias_init = bias_init_with_prob(0.01)
-        for conv_cls in self.cls_preds:
-            conv_cls.bias.data.fill_(bias_init)
+        for conv in self.reg_preds:
+            conv.bias.data.fill_(1.0)
+            conv.weight.data.fill_(0.)
 
     def _init_layers(self):
-        """initialize conv layers in YOLOv6 head."""
-        # Init decouple head
-        self.cls_convs = nn.ModuleList()
-        self.reg_convs = nn.ModuleList()
+        """initialize conv layers in PPYOLOE head."""
         self.cls_preds = nn.ModuleList()
         self.reg_preds = nn.ModuleList()
-        self.stems = nn.ModuleList()
-        for i in range(self.num_levels):
-            self.stems.append(
-                ConvModule(
-                    in_channels=self.in_channels[i],
-                    out_channels=self.in_channels[i],
-                    kernel_size=1,
-                    stride=1,
-                    padding=1 // 2,
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg))
-            self.cls_convs.append(
-                ConvModule(
-                    in_channels=self.in_channels[i],
-                    out_channels=self.in_channels[i],
-                    kernel_size=3,
-                    stride=1,
-                    padding=3 // 2,
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg))
-            self.reg_convs.append(
-                ConvModule(
-                    in_channels=self.in_channels[i],
-                    out_channels=self.in_channels[i],
-                    kernel_size=3,
-                    stride=1,
-                    padding=3 // 2,
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg))
-            self.cls_preds.append(
-                nn.Conv2d(
-                    in_channels=self.in_channels[i],
-                    out_channels=self.num_base_priors * self.num_classes,
-                    kernel_size=1))
-            self.reg_preds.append(
-                nn.Conv2d(
-                    in_channels=self.in_channels[i],
-                    out_channels=self.num_base_priors * 4,
-                    kernel_size=1))
+        self.cls_stems = nn.ModuleList()
+        self.reg_stems = nn.ModuleList()
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        for in_channel in self.in_channels:
+            self.cls_stems.append(
+                PPYOLOESELayer(
+                    in_channel, norm_cfg=self.norm_cfg, act_cfg=self.act_cfg))
+            self.reg_stems.append(
+                PPYOLOESELayer(
+                    in_channel, norm_cfg=self.norm_cfg, act_cfg=self.act_cfg))
+
+        for in_channel in self.in_channels:
+            self.cls_preds.append(
+                nn.Conv2d(in_channel, self.num_classes, 3, padding=1))
+            self.reg_preds.append(
+                nn.Conv2d(in_channel, 4 * (self.reg_max + 1), 3, padding=1))
+
+        self.proj_conv = nn.Conv2d(self.reg_max + 1, 1, 1, bias=False)
+        self.proj = nn.Parameter(
+            torch.linspace(0, self.reg_max, self.reg_max + 1),
+            requires_grad=False)
+        self.proj_conv.weight = nn.Parameter(
+            self.proj.view([1, self.reg_max + 1, 1, 1]).clone().detach(),
+            requires_grad=False)
+
+    def forward(self, x: Tensor) -> Tensor:
         """Forward features from the upstream network.
 
         Args:
@@ -143,35 +119,35 @@ class YOLOv6HeadModule(BaseModule):
             predictions.
         """
         assert len(x) == self.num_levels
-        return multi_apply(self.forward_single, x, self.stems, self.cls_convs,
-                           self.cls_preds, self.reg_convs, self.reg_preds)
 
-    def forward_single(self, x: torch.Tensor, stem: nn.ModuleList,
-                       cls_conv: nn.ModuleList, cls_pred: nn.ModuleList,
-                       reg_conv: nn.ModuleList,
-                       reg_pred: nn.ModuleList) -> torch.Tensor:
+        return multi_apply(self.forward_single, x, self.cls_stems,
+                           self.cls_preds, self.reg_stems, self.reg_preds)
+
+    def forward_single(self, x: Tensor, cls_stem: nn.ModuleList,
+                       cls_pred: nn.ModuleList, reg_stem: nn.ModuleList,
+                       reg_pred: nn.ModuleList) -> Tensor:
         """Forward feature of a single scale level."""
-        y = stem(x)
-        cls_x = y
-        reg_x = y
-        cls_feat = cls_conv(cls_x)
-        reg_feat = reg_conv(reg_x)
+        b, _, h, w = x.shape
+        hw = h * w
+        avg_feat = F.adaptive_avg_pool2d(x, (1, 1))
+        cls_logit = cls_pred(cls_stem(x, avg_feat) + x)
+        reg_dist = reg_pred(reg_stem(x, avg_feat))
+        reg_dist = reg_dist.reshape([-1, 4, self.reg_max + 1,
+                                     hw]).permute(0, 2, 3, 1)
+        reg_dist = self.proj_conv(F.softmax(reg_dist, dim=1))
 
-        cls_score = cls_pred(cls_feat)
-        bbox_pred = reg_pred(reg_feat)
-
-        return cls_score, bbox_pred
+        return cls_logit, reg_dist
 
 
-# Training mode is currently not supported
 @MODELS.register_module()
-class YOLOv6Head(YOLOv5Head):
-    """YOLOv6Head head used in `YOLOv6 <https://arxiv.org/pdf/2209.02976>`_.
+class PPYOLOEHead(YOLOv5Head):
+    """PPYOLOEHead head used in `PPYOLOE`.
 
     Args:
-        head_module(nn.Module): Base module used for YOLOv6Head
-        prior_generator(dict): Points generator feature maps
-            in 2D points-based detectors.
+        head_module(nn.Module): Base module used for YOLOv5Head
+        prior_generator(dict): Points generator feature maps in
+            2D points-based detectors.
+        bbox_coder (:obj:`ConfigDict` or dict): Config of bbox coder.
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
         loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
         loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
@@ -218,11 +194,7 @@ class YOLOv6Head(YOLOv5Head):
             init_cfg=init_cfg)
 
     def special_init(self):
-        """Since YOLO series algorithms will inherit from YOLOv5Head, but
-        different algorithms have special initialization process.
-
-        The special_init function is designed to deal with this situation.
-        """
+        """Not Implenented."""
         pass
 
     def loss_by_feat(

@@ -35,7 +35,7 @@ class CSPNeXtPAFPN(BaseYOLONeck):
         norm_cfg (dict): Config dict for normalization layer.
             Default: dict(type='BN')
         act_cfg (dict): Config dict for activation layer.
-            Default: dict(type='Swish')
+            Default: dict(type='SiLU', inplace=True)
         init_cfg (dict or list[dict], optional): Initialization config dict.
             Default: None.
     """

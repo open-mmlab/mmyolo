@@ -44,7 +44,7 @@ class CSPNeXt(BaseBackbone):
         norm_cfg (:obj:`ConfigDict` or dict): Dictionary to construct and
             config norm layer. Defaults to dict(type='BN', requires_grad=True).
         act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
-            Defaults to dict(type='SiLU').
+            Defaults to dict(type='SiLU', inplace=True).
         norm_eval (bool): Whether to set norm layers to eval mode, namely,
             freeze running stats (mean and var). Note: Effect on Batch Norm
             and its variants only.
