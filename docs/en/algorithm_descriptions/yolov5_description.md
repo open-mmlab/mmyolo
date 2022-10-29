@@ -59,6 +59,7 @@ Many data augmentation methods are used in YOLOv5, including:
 The Mosaic data augmentation probability is 1, which means it will always be triggered. MixUp is not used for the small and nano models, and the probability is set to 0.1 for other l/m/x series models. This is because small models have limited capabilities and generally do not use strong data augmentation strategies like MixUp.
 
 The core `Mosaic + RandomAffine + MixUp` process can be shown as follows:
+
 (To be finished)
 
 ### 1.2 Network structure
@@ -71,7 +72,7 @@ The size of the YOLOv5 network structure is determined by the `deepen_factor` an
 
 The upper part of the figure is an overview of the model; the lower part is the specific network structure, in which the modules are marked with numbers in serial, which is convenient for users to correspond to the configuration files of the YOLOv5 official repository. The middle part is the detailed composition of each sub-module.
 
-If you want to use \*\*netron \*\* to visualize the details of the network structure diagram, you can directly open the ONNX file format exported by MMDeploy in netron.
+If you want to use **netron** to visualize the details of the network structure, just open the ONNX file format exported by MMDeploy in netron.
 
 #### 1.2.1 Backbone
 
@@ -96,11 +97,192 @@ The `Head` structure of YOLOv5 is exactly the same as YOLOv3, which is a `non-de
 
 The `PAFPN` outputs three feature maps of different scales, whose shapes are (B,256,80,80), (B,512,40,40) and (B,1024,20,20) accordingly.
 
-Since YOLOv5 has a non-decoupled output, that is, classification and bbox detection results are all in different channels of the same convolution module. Taking the COCO 80 class as an example, when the input is 640x640 resolution, the output shapes of the Head module are `(B, 3x(4+1+80),80,80)`, `(B, 3x(4+1+80),40,40)` and `(B, 3x(4+1+80),20,20)`. 3 represents three anchors, 4 represents the bbox prediction branch, 1 represents the obj prediction branch, and 80 represents the class prediction branch.
+Since YOLOv5 has a non-decoupled output, that is, classification and bbox detection results are all in different channels of the same convolution module. Taking the COCO dataset as an example, when the input is 640x640 resolution, the output shapes of the Head module are `(B, 3x(4+1+80),80,80)`, `(B, 3x(4+1+80),40,40)` and `(B, 3x(4+1+80),20,20)`. `3` represents three anchors, `4` represents the bbox prediction branch, `1` represents the obj prediction branch, and `80` represents the class prediction branch of the COCO dataset.
 
 ### 1.3 Positive and negative sample matching strategy
 
-(To be finished)
+The core of the positive and negative sample matching strategy is to determine which positions in all positions of the predicted feature map should be positive or negative and even which samples will be ignored.
+
+This is the one of the most significant components of the object detection algorithm because a good strategy can improve the algorithm's performance.
+
+The matching strategy of YOLOv5 can be briefly summarized as calculating the shape-matching rate between anchor and gt_bbox. Plus, the cross-neighborhood grid is also introduced to get more positive samples.
+
+It consists the following two main steps:
+
+1. For any output layer, instead of the commonly used strategy based on Max IoU matching, YOLOv5 switched to comparing the shape matching ratio. First, the GT Bbox and the anchor of the current layer are used to calculate the aspect ratio. If the ratio is greater than the threshold, the GT Bbox and Anchor are considered not matched. Then the current GT Bbox is temporarily discarded, and the predicted position in the grid of this GT Bbox in the current layer is considered as a negative sample.
+2. For the remaining GT Bboxes (the matched GT Bboxes) YOLOv5 calculates which grid they fall in. Using the rounding rule to find the nearest two grids and considering all three grids as a group which is responsible for predicting the GT Bbox. We can be roughly estimate that the number of positive samples has increased by at least three times compared to the previous YOLO series algorithms.
+
+Now we will explain each part of the matching strategy in detail. Some descriptions and illustrations are either directly or indirectly referenced from the official [repo](https://github.com/ultralytics/YOLOv5/issues/6998#44).
+
+#### 1.3.1 Anchor settings
+
+YOLOv5 is an anchor-based object detection algorithm. The anchor sizes are obtained in the same way as YOLOv3, which is by clustering using the K-means algorithm.
+
+When users change the data, they can use the anchor analysis tool in MMDetection to determine the appropriate anchor size for their dataset.
+
+If MMDetection is installed via `mim`, you can use the following command to analyze the anchor:
+
+```shell
+mim run mmdet optimize_anchors ${CONFIG} --algorithm k-means
+--input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} --output-dir ${OUTPUT_DIR}
+```
+
+If MMDetection is installed in other ways, you can go to MMDetection directory and use the following command to analyze the anchor:
+
+```shell
+python tools/analysis_tools/optimize_anchors.py ${CONFIG} --algorithm k-means
+  --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} --output-dir ${OUTPUT_DIR}
+```
+
+Then modify the default anchor size setting in the [config file](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py):
+
+```python
+anchors = [[(10, 13), (16, 30), (33, 23)], [(30, 61), (62, 45), (59, 119)],
+           [(116, 90), (156, 198), (373, 326)]]
+```
+
+#### 1.3.2 Bbox encoding and decoding process
+
+In anchor-based algorithms, the predicted bounding box will transform based on the pre-set anchors. Then, the transformation amount is predicted, known as the GT Bbox encoding process. Finally, the Pred Bbox decoding needs to be performed after the prediction to restore the bboxes to the original scale, known as the Pred Bbox decoding process.
+
+In YOLOv3, the bbox regression formula is:
+
+```{math}
+b_x=\sigma(t_x)+c_x  \\
+b_y=\sigma(t_y)+c_y  \\
+b_w=a_w\cdot e^{t_w} \\
+b_h=a_h\cdot e^{t_h} \\
+```
+
+In the above formula，
+
+```{math}
+a_w represents the width of the anchor \\
+c_x represents the coordinate of the grid \\
+\sigma represents the Sigmoid function.
+```
+
+However, the regression formula in YOLOv5 is：
+
+```{math}
+b_x=(2\cdot\sigma(t_x)-0.5)+c_x   \\
+b_y=(2\cdot\sigma(t_y)-0.5)+c_y   \\
+b_w=a_w\cdot(2\cdot\sigma(t_w))^2   \\
+b_h=a_h\cdot(2\cdot\sigma(t_h))^2
+```
+
+Two main changes are:
+
+- adjusted the range of the center point coordinate from (0, 1) to (-0.5, 1.5);
+- adjusted the width and height from
+
+```{math}
+(0，+\infty)
+```
+
+to
+
+```{math}
+(0，4a_{wh})
+```
+
+The changes have the two benefits:
+
+- It will be **better to predict zero and one** with the changed center point range, which makes the bbox coordinate regression more accurate.
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190546778-83001bac-4e71-4b9a-8de8-bd41146495af.png"/>
+</div>
+
+- `exp(x)` in the width and height regression formula is unbounded, which may cause the **gradient out of control** and make the training stage unstable. The revised width-height regression in YOLOv5 optimizes this problem.
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190546793-5364d6d3-7891-4af3-98e3-9f06970f3163.png"/>
+</div>
+
+#### 1.3.3 Matching strategy
+
+Note: in MMYOLO, **we call anchor as prior** for both anchor-based and anchor-free networks.
+
+Positive sample matching consists of the following two steps:
+
+(1) Scale comparison
+
+Compare the scale of the WH in the GT BBox and the WH in the Prior:
+
+```{math}
+r_w = w\_{gt} / w\_{pt}    \\
+r_h = h\_{gt} / h\_{pt}    \\
+r_w^{max}=max(r_w, 1/r_w)  \\
+r_h^{max}=max(r_h, 1/r_h)  \\
+r^{max}=max(r_w^{max}, r_h^{max})   \\
+if\ \ r_{max} < prior\_match\_thr:   match!
+```
+
+Taking the matching process of the GT Bbox and the Prior of the P3 feature map as the example:
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190547195-60d6cd7a-b12a-4c6f-9cc8-13f48c8ab1e0.png"/>
+</div>
+
+The reason why Prior 1 fails to match the GT Bbox is because:
+
+```{math}
+h\_{gt}\ /\ h\_{prior}\ =\ 4.8\ >\ prior\_match\_thr
+```
+
+(2) Assign corresponded positive samples to the matched GT BBox in step 1
+
+We still use the example in the previous step.
+
+The value of (cx, cy, w, h) of the GT BBox is (26, 37, 36, 24), and the WH value of the Prior is \[(15, 5), (24, 16), (16, 24)\]. In the P3 feature map, the stride is eight. Prior 2 and prior 3 are matched.
+
+The detailed process can be described as:
+
+(2.1) Map the center point coordinates of the GT Bbox to the grid of P3.
+
+```{math}
+GT_x^{center_grid}=26/8=3.25  \\
+GT_y^{center_grid}=37/8=4.625
+```
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190549304-020ec19e-6d54-4d40-8f43-f78b8d6948aa.png"/>
+</div>
+
+(2.2) Divide the grid where the center point of GT Bbox locates into four quadrants. **Since the center point falls in the lower left quadrant, the left and lower grids of the object will also be considered positive samples**.
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190549310-e5da53e3-eae3-4085-bd0a-1843ac8ca653.png"/>
+</div>
+
+The following picture shows the distribution of positive samples when the center point falls to different positions:
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190549613-eb47e70a-a2c1-4729-9fb7-f5ce7007842b.png"/>
+</div>
+
+So what improvements does the Assign method bring to YOLOv5?
+
+- One GT Bbox can match multiple Priors.
+
+- When a GT Bbox matches a Prior, at most three positive samples can be assigned.
+
+- These strategies can **moderately alleviate the problem of unbalanced positive and negative samples, which is very common in object detection algorithms**.
+
+The regression method in YOLOv5 corresponds to the Assign method:
+
+1. Center point regression:
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190549684-21776c33-9ef8-4818-9530-14f750a18d63.png"/>
+</div>
+
+2. WH regression:
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190549696-3da08c06-753a-4108-be47-64495ea480f2.png"/>
+</div>
 
 ### 1.4 Loss design
 
