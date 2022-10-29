@@ -49,7 +49,7 @@ You can use `demo/featmap_vis_demo.py` to get a quick view of the visualization 
 
 - Considering that the input feature map is usually very small, the function will upsample the feature map by default for easy visualization.
 
-**Note: When the image and feature map scales are different, the `draw_featmap` function will automatically perform upsampling alignment. If your image has an operation such as `Pad` in the preprocessing during the inference, the feature map obtained is processed with `Pad`, which may cause misalignment problems if you directly upsample the image.**
+**Note: When the image and feature map scales are different, the `draw_featmap` function will automatically perform an upsampling alignment. If your image has an operation such as `Pad` in the preprocessing during the inference, the feature map obtained is processed with `Pad`, which may cause misalignment problems if you directly upsample the image.**
 
 ## Usage examples
 
