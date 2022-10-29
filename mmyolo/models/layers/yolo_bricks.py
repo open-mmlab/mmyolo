@@ -30,13 +30,20 @@ else:
 
 class SPPFBottleneck(BaseModule):
     """Spatial pyramid pooling - Fast (SPPF) layer for
-    YOLOv5 and YOLOX by Glenn Jocher
+    YOLOv5, YOLOX and PPYOLOE by Glenn Jocher
 
     Args:
         in_channels (int): The input channels of this Module.
         out_channels (int): The output channels of this Module.
         kernel_sizes (int, tuple[int]): Sequential or number of kernel
             sizes of pooling layers. Defaults to 5.
+        use_conv_first (bool): Whether to use conv before pooling layer.
+            In YOLOv5 and YOLOX, the para set to True.
+            In PPYOLOE, the para set to False.
+            Defaults to True.
+        mid_channels_scale (float): Channel multiplier, multiply in_channels
+            by this amount to get mid_channels. This parameter is valid only
+            when use_conv_fist=True.Defaults to 0.5.
         conv_cfg (dict): Config dict for convolution layer. Defaults to None.
             which means using conv2d. Defaults to None.
         norm_cfg (dict): Config dict for normalization layer.
@@ -51,33 +58,42 @@ class SPPFBottleneck(BaseModule):
                  in_channels: int,
                  out_channels: int,
                  kernel_sizes: Union[int, Sequence[int]] = 5,
+                 use_conv_first: bool = True,
+                 mid_channels_scale: float = 0.5,
                  conv_cfg: ConfigType = None,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg)
-        mid_channels = in_channels // 2
-        self.conv1 = ConvModule(
-            in_channels,
-            mid_channels,
-            1,
-            stride=1,
-            conv_cfg=conv_cfg,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg)
+
+        if use_conv_first:
+            mid_channels = int(in_channels * mid_channels_scale)
+            self.conv1 = ConvModule(
+                in_channels,
+                mid_channels,
+                1,
+                stride=1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg)
+        else:
+            mid_channels = in_channels
+            self.conv1 = None
         self.kernel_sizes = kernel_sizes
         if isinstance(kernel_sizes, int):
             self.poolings = nn.MaxPool2d(
                 kernel_size=kernel_sizes, stride=1, padding=kernel_sizes // 2)
+            conv2_in_channels = mid_channels * 4
         else:
             self.poolings = nn.ModuleList([
                 nn.MaxPool2d(kernel_size=ks, stride=1, padding=ks // 2)
                 for ks in kernel_sizes
             ])
+            conv2_in_channels = mid_channels * (len(kernel_sizes) + 1)
 
         self.conv2 = ConvModule(
-            mid_channels * 4,
+            conv2_in_channels,
             out_channels,
             1,
             conv_cfg=conv_cfg,
@@ -89,7 +105,8 @@ class SPPFBottleneck(BaseModule):
         Args:
             x (Tensor): The input tensor.
         """
-        x = self.conv1(x)
+        if self.conv1:
+            x = self.conv1(x)
         if isinstance(self.kernel_sizes, int):
             y1 = self.poolings(x)
             y2 = self.poolings(y1)
@@ -117,8 +134,15 @@ class RepVGGBlock(nn.Module):
         groups (int, optional): Number of blocked connections from input
             channels to output channels. Default: 1
         padding_mode (string, optional): Default: 'zeros'
-        deploy (bool): Whether in deploy mode. Default: False
         use_se (bool): Whether to use se. Default: False
+        use_alpha (bool): Whether to use `alpha` parameter at 1x1 conv.
+            In PPYOLOE+ model backbone, `use_alpha` will be set to True.
+            Default: False.
+        use_bn_first (bool): Whether to use bn layer before conv.
+            In YOLOv6 and YLOv7, this will be set to True.
+            In PPYOLOE, this will be set to False.
+            Default: True.
+        deploy (bool): Whether in deploy mode. Default: False
     """
 
     def __init__(self,
@@ -133,8 +157,10 @@ class RepVGGBlock(nn.Module):
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True),
-                 deploy: bool = False,
-                 use_se: bool = False):
+                 use_se: bool = False,
+                 use_alpha: bool = False,
+                 use_bn_first=True,
+                 deploy: bool = False):
         super().__init__()
         self.deploy = deploy
         self.groups = groups
@@ -153,6 +179,14 @@ class RepVGGBlock(nn.Module):
         else:
             self.se = nn.Identity()
 
+        if use_alpha:
+            alpha = torch.ones([
+                1,
+            ], dtype=torch.float32, requires_grad=True)
+            self.alpha = nn.Parameter(alpha, requires_grad=True)
+        else:
+            self.alpha = None
+
         if deploy:
             self.rbr_reparam = nn.Conv2d(
                 in_channels=in_channels,
@@ -166,9 +200,11 @@ class RepVGGBlock(nn.Module):
                 padding_mode=padding_mode)
 
         else:
-            self.rbr_identity = build_norm_layer(
-                norm_cfg, num_features=in_channels
-            )[1] if out_channels == in_channels and stride == 1 else None
+            if use_bn_first and (out_channels == in_channels) and stride == 1:
+                self.rbr_identity = build_norm_layer(
+                    norm_cfg, num_features=in_channels)[1]
+            else:
+                self.rbr_identity = None
 
             self.rbr_dense = ConvModule(
                 in_channels=in_channels,
@@ -206,9 +242,15 @@ class RepVGGBlock(nn.Module):
             id_out = 0
         else:
             id_out = self.rbr_identity(inputs)
-
-        return self.nonlinearity(
-            self.se(self.rbr_dense(inputs) + self.rbr_1x1(inputs) + id_out))
+        if self.alpha:
+            return self.nonlinearity(
+                self.se(
+                    self.rbr_dense(inputs) +
+                    self.alpha * self.rbr_1x1(inputs) + id_out))
+        else:
+            return self.nonlinearity(
+                self.se(
+                    self.rbr_dense(inputs) + self.rbr_1x1(inputs) + id_out))
 
     def get_equivalent_kernel_bias(self):
         """Derives the equivalent kernel and bias in a differentiable way.
@@ -219,8 +261,12 @@ class RepVGGBlock(nn.Module):
         kernel3x3, bias3x3 = self._fuse_bn_tensor(self.rbr_dense)
         kernel1x1, bias1x1 = self._fuse_bn_tensor(self.rbr_1x1)
         kernelid, biasid = self._fuse_bn_tensor(self.rbr_identity)
-        return kernel3x3 + self._pad_1x1_to_3x3_tensor(
-            kernel1x1) + kernelid, bias3x3 + bias1x1 + biasid
+        if self.alpha:
+            return kernel3x3 + self.alpha * self._pad_1x1_to_3x3_tensor(
+                kernel1x1) + kernelid, bias3x3 + self.alpha * bias1x1 + biasid
+        else:
+            return kernel3x3 + self._pad_1x1_to_3x3_tensor(
+                kernel1x1) + kernelid, bias3x3 + bias1x1 + biasid
 
     def _pad_1x1_to_3x3_tensor(self, kernel1x1):
         """Pad 1x1 tensor to 3x3.
@@ -334,6 +380,89 @@ class RepStageBlock(nn.Module):
         if self.block is not None:
             x = self.block(x)
         return x
+
+
+@MODELS.register_module()
+class EffectiveSELayer(nn.Module):
+    """Effective Squeeze-Excitation.
+
+    From `CenterMask : Real-Time Anchor-Free Instance Segmentation`
+    arxiv (https://arxiv.org/abs/1911.06667)
+    This code referenced to
+    https://github.com/youngwanLEE/CenterMask/blob/72147e8aae673fcaf4103ee90a6a6b73863e7fa1/maskrcnn_benchmark/modeling/backbone/vovnet.py#L108-L121  # noqa
+
+    Args:
+        channels (int): The input and output channels of this Module.
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='HSigmoid').
+    """
+
+    def __init__(self,
+                 channels: int,
+                 act_cfg: ConfigType = dict(type='HSigmoid')):
+        super().__init__()
+        assert isinstance(act_cfg, dict)
+        self.fc = ConvModule(channels, channels, 1, act_cfg=None)
+
+        act_cfg_ = act_cfg.copy()  # type: ignore
+        self.activate = MODELS.build(act_cfg_)
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward process
+         Args:
+             x (Tensor): The input tensor.
+         """
+        x_se = x.mean((2, 3), keepdim=True)
+        x_se = self.fc(x_se)
+        return x * self.activate(x_se)
+
+
+class PPYOLOESELayer(nn.Module):
+    """Squeeze-and-Excitation Attention Module for PPYOLOE.
+        There are some differences between the current implementation and
+        SELayer in mmdet:
+            1. For fast speed and avoiding double inference in ppyoloe,
+               use `F.adaptive_avg_pool2d` before PPYOLOESELayer.
+            2. Special ways to init weights.
+            3. Different convolution order.
+
+    Args:
+        feat_channels (int): The input (and output) channels of the SE layer.
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='SiLU', inplace=True).
+    """
+
+    def __init__(self,
+                 feat_channels: int,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.1, eps=1e-5),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True)):
+        super().__init__()
+        self.fc = nn.Conv2d(feat_channels, feat_channels, 1)
+        self.sig = nn.Sigmoid()
+        self.conv = ConvModule(
+            feat_channels,
+            feat_channels,
+            1,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+        self._init_weights()
+
+    def _init_weights(self):
+        """Init weights."""
+        nn.init.normal_(self.fc.weight, mean=0, std=0.001)
+
+    def forward(self, feat: Tensor, avg_feat: Tensor) -> Tensor:
+        """Forward process
+         Args:
+             feat (Tensor): The input tensor.
+             avg_feat (Tensor): Average pooling feature tensor.
+         """
+        weight = self.sig(self.fc(avg_feat))
+        return self.conv(feat * weight)
 
 
 class ELANBlock(BaseModule):
@@ -655,3 +784,205 @@ class SPPFCSPBlock(BaseModule):
                 torch.cat([x1] + [m(x1) for m in self.poolings], 1))
         x2 = self.short_layers(x)
         return self.final_conv(torch.cat((x1, x2), dim=1))
+
+
+@MODELS.register_module()
+class PPYOLOEBasicBlock(nn.Module):
+    """PPYOLOE Backbone BasicBlock.
+
+    Args:
+         in_channels (int): The input channels of this Module.
+         out_channels (int): The output channels of this Module.
+         norm_cfg (dict): Config dict for normalization layer.
+             Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
+         act_cfg (dict): Config dict for activation layer.
+             Defaults to dict(type='SiLU', inplace=True).
+         shortcut (bool): Whether to add inputs and outputs together
+         at the end of this layer. Defaults to True.
+         use_alpha (bool): Whether to use `alpha` parameter at 1x1 conv.
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.1, eps=1e-5),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 shortcut: bool = True,
+                 use_alpha: bool = False):
+        super().__init__()
+        assert act_cfg is None or isinstance(act_cfg, dict)
+        self.conv1 = ConvModule(
+            in_channels,
+            out_channels,
+            3,
+            stride=1,
+            padding=1,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+        self.conv2 = RepVGGBlock(
+            out_channels,
+            out_channels,
+            use_alpha=use_alpha,
+            act_cfg=act_cfg,
+            norm_cfg=norm_cfg,
+            use_bn_first=False)
+        self.shortcut = shortcut
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward process.
+        Args:
+            inputs (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output tensor.
+        """
+        y = self.conv1(x)
+        y = self.conv2(y)
+        if self.shortcut:
+            return x + y
+        else:
+            return y
+
+
+class CSPResLayer(nn.Module):
+    """PPYOLOE Backbone Stage.
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        out_channels (int): The output channels of this Module.
+        num_block (int): Number of blocks in this stage.
+        block_cfg (dict): Config dict for block. Default config is
+            suitable for PPYOLOE+ backbone. And in PPYOLOE neck,
+            block_cfg is set to dict(type='PPYOLOEBasicBlock',
+            shortcut=False, use_alpha=False). Defaults to
+            dict(type='PPYOLOEBasicBlock', shortcut=True, use_alpha=True).
+        stride (int): Stride of the convolution. In backbone, the stride
+            must be set to 2. In neck, the stride must be set to 1.
+            Defaults to 1.
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.1, eps=1e-5).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='SiLU', inplace=True).
+        attention_cfg (dict, optional): Config dict for `EffectiveSELayer`.
+            Defaults to dict(type='EffectiveSELayer',
+            act_cfg=dict(type='HSigmoid')).
+        use_spp (bool): Whether to use `SPPFBottleneck` layer.
+            Defaults to False.
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 num_block: int,
+                 block_cfg: ConfigType = dict(
+                     type='PPYOLOEBasicBlock', shortcut=True, use_alpha=True),
+                 stride: int = 1,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.1, eps=1e-5),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 attention_cfg: OptMultiConfig = dict(
+                     type='EffectiveSELayer', act_cfg=dict(type='HSigmoid')),
+                 use_spp: bool = False):
+        super().__init__()
+
+        self.num_block = num_block
+        self.block_cfg = block_cfg
+        self.norm_cfg = norm_cfg
+        self.act_cfg = act_cfg
+        self.use_spp = use_spp
+        assert attention_cfg is None or isinstance(attention_cfg, dict)
+
+        if stride == 2:
+            conv1_in_channels = conv2_in_channels = conv3_in_channels = (
+                in_channels + out_channels) // 2
+            blocks_channels = conv1_in_channels // 2
+            self.conv_down = ConvModule(
+                in_channels,
+                conv1_in_channels,
+                3,
+                stride=2,
+                padding=1,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg)
+        else:
+            conv1_in_channels = conv2_in_channels = in_channels
+            conv3_in_channels = out_channels
+            blocks_channels = out_channels // 2
+            self.conv_down = None
+
+        self.conv1 = ConvModule(
+            conv1_in_channels,
+            blocks_channels,
+            1,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+        self.conv2 = ConvModule(
+            conv2_in_channels,
+            blocks_channels,
+            1,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+        self.blocks = self.build_blocks_layer(blocks_channels)
+
+        self.conv3 = ConvModule(
+            conv3_in_channels,
+            out_channels,
+            1,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+        if attention_cfg:
+            attention_cfg = attention_cfg.copy()
+            attention_cfg['channels'] = blocks_channels * 2
+            self.attn = MODELS.build(attention_cfg)
+        else:
+            self.attn = None
+
+    def build_blocks_layer(self, blocks_channels: int) -> nn.Module:
+        """Build blocks layer.
+
+        Args:
+            blocks_channels: The channels of this Module.
+        """
+        blocks = nn.Sequential()
+        block_cfg = self.block_cfg.copy()
+        block_cfg.update(
+            dict(in_channels=blocks_channels, out_channels=blocks_channels))
+        block_cfg.setdefault('norm_cfg', self.norm_cfg)
+        block_cfg.setdefault('act_cfg', self.act_cfg)
+
+        for i in range(self.num_block):
+            blocks.add_module(str(i), MODELS.build(block_cfg))
+
+            if i == (self.num_block - 1) // 2 and self.use_spp:
+                blocks.add_module(
+                    'spp',
+                    SPPFBottleneck(
+                        blocks_channels,
+                        blocks_channels,
+                        kernel_sizes=[5, 9, 13],
+                        use_conv_first=False,
+                        conv_cfg=None,
+                        norm_cfg=self.norm_cfg,
+                        act_cfg=self.act_cfg))
+
+        return blocks
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward process
+         Args:
+             x (Tensor): The input tensor.
+         """
+        if self.conv_down is not None:
+            x = self.conv_down(x)
+        y1 = self.conv1(x)
+        y2 = self.blocks(self.conv2(x))
+        y = torch.cat([y1, y2], axis=1)
+        if self.attn is not None:
+            y = self.attn(y)
+        y = self.conv3(y)
+        return y
