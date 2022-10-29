@@ -61,7 +61,7 @@ def bbox_overlaps(pred: torch.Tensor,
     union = (w1 * h1) + (w2 * h2) - overlap + eps
 
     h1 = bbox1_y2 - bbox1_y1 + eps
-    h2 = bbox1_y2 - bbox1_y1 + eps
+    h2 = bbox2_y2 - bbox2_y1 + eps
 
     # IoU
     ious = overlap / union
