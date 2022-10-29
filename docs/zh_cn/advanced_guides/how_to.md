@@ -2,7 +2,7 @@
 
 本教程收集了任何如何使用 MMYOLO 进行 xxx 的答案。 如果您遇到有关`如何做`的问题及答案，请随时更新此文档！
 
-## 给骨干网络增加插件
+## 给主干网络增加插件
 
 MMYOLO 支持在 Backbone 的不同 Stage 后增加如 `none_local`、`dropblock` 等插件，用户可以直接通过修改 config 文件中 `backbone` 的 `plugins` 参数来实现对插件的管理。例如为 `YOLOv5` 增加 `GeneralizedAttention` 插件，其配置文件如下：
 
@@ -63,17 +63,17 @@ model = dict(
 )
 ```
 
-## 跨库使用骨干网络
+## 跨库使用主干网络
 
-OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation 中的模型注册表都继承自 MMEngine 中的根注册表，允许这些存储库直接使用彼此已经实现的模块。 因此用户可以在 MMYOLO 中使用来自 MMDetection、MMClassification 的骨干网络，而无需重新实现。
+OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation 中的模型注册表都继承自 MMEngine 中的根注册表，允许这些存储库直接使用彼此已经实现的模块。 因此用户可以在 MMYOLO 中使用来自 MMDetection、MMClassification 的主干网络，而无需重新实现。
 
 ```{note}
-使用其他骨干网络时，你需要保证骨干网络的输出通道与 Neck 的输入通道相匹配。
+使用其他主干网络时，你需要保证主干网络的输出通道与 Neck 的输入通道相匹配。
 ```
 
-### 使用在 MMDetection 中实现的骨干网络
+### 使用在 MMDetection 中实现的主干网络
 
-1. 假设想将 `ResNet-50` 作为 `YOLOv5` 的骨干网络，则配置文件如下：
+1. 假设想将 `ResNet-50` 作为 `YOLOv5` 的主干网络，则配置文件如下：
 
    ```python
    _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -108,7 +108,7 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
    )
    ```
 
-2. 假设想将 `SwinTransformer-Tiny` 作为 `YOLOv5` 的骨干网络，则配置文件如下：
+2. 假设想将 `SwinTransformer-Tiny` 作为 `YOLOv5` 的主干网络，则配置文件如下：
 
    ```python
    _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -152,9 +152,9 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
    )
    ```
 
-### 使用在 MMClassification 中实现的骨干网络
+### 使用在 MMClassification 中实现的主干网络
 
-1. 假设想将 `ConvNeXt-Tiny` 作为 `YOLOv5` 的骨干网络，则配置文件如下：
+1. 假设想将 `ConvNeXt-Tiny` 作为 `YOLOv5` 的主干网络，则配置文件如下：
 
    ```python
    _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -178,7 +178,7 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
            gap_before_final_norm=False,
            init_cfg=dict(
                type='Pretrained', checkpoint=checkpoint_file,
-               prefix='backbone.')), # MMCls 中骨干网络的预训练权重含义 prefix='backbone.'，为了正常加载权重，需要把这个 prefix 去掉。
+               prefix='backbone.')), # MMCls 中主干网络的预训练权重含义 prefix='backbone.'，为了正常加载权重，需要把这个 prefix 去掉。
        neck=dict(
            type='YOLOv5PAFPN',
            deepen_factor=deepen_factor,
@@ -194,7 +194,7 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
    )
    ```
 
-2. 假设想将 `MobileNetV3-small` 作为 `YOLOv5` 的骨干网络，则配置文件如下：
+2. 假设想将 `MobileNetV3-small` 作为 `YOLOv5` 的主干网络，则配置文件如下：
 
    ```python
    _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -216,7 +216,7 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
            init_cfg=dict(
                type='Pretrained',
                checkpoint=checkpoint_file,
-               prefix='backbone.')), # MMCls 中骨干网络的预训练权重含义 prefix='backbone.'，为了正常加载权重，需要把这个 prefix 去掉。
+               prefix='backbone.')), # MMCls 中主干网络的预训练权重含义 prefix='backbone.'，为了正常加载权重，需要把这个 prefix 去掉。
        neck=dict(
            type='YOLOv5PAFPN',
            deepen_factor=deepen_factor,
@@ -232,9 +232,9 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
    )
    ```
 
-### 通过 MMClassification 使用 TIMM 中实现的骨干网络
+### 通过 MMClassification 使用 TIMM 中实现的主干网络
 
-由于 MMClassification 提供了 Py**T**orch **Im**age **M**odels (`TIMM`) 骨干网络的封装，用户也可以通过 MMClassification 直接使用 `timm` 中的骨干网络。假设想将 `EfficientNet-B1`作为 `YOLOv5` 的骨干网络，则配置文件如下：
+由于 MMClassification 提供了 Py**T**orch **Im**age **M**odels (`TIMM`) 主干网络的封装，用户也可以通过 MMClassification 直接使用 `timm` 中的主干网络。假设想将 `EfficientNet-B1`作为 `YOLOv5` 的主干网络，则配置文件如下：
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -251,7 +251,7 @@ channels = [40, 112, 320]
 model = dict(
     backbone=dict(
         _delete_=True, # 将 _base_ 中关于 backbone 的字段删除
-        type='mmcls.TIMMBackbone', # 使用 mmcls 中的 TIMM 骨干网络
+        type='mmcls.TIMMBackbone', # 使用 mmcls 中的 TIMM 主干网络
         model_name='efficientnet_b1', # 使用 TIMM 中的 efficientnet_b1
         features_only=True,
         pretrained=True,
