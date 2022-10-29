@@ -95,13 +95,13 @@ When using other backbone networks, you need to ensure that the output channels 
        neck=dict(
            type='YOLOv5PAFPN',
            widen_factor=widen_factor,
-           in_channels=channels,
+           in_channels=channels, # Note: The 3 channels of ResNet-50 output are [512, 1024, 2048], which do not match the original yolov5-s neck and need to be changed.
            out_channels=channels),
        bbox_head=dict(
            type='YOLOv5Head',
            head_module=dict(
                type='YOLOv5HeadModule',
-               in_channels=channels,
+               in_channels=channels, # input channels of head need to be changed accordingly
                widen_factor=widen_factor))
    )
    ```
@@ -139,13 +139,13 @@ When using other backbone networks, you need to ensure that the output channels 
            type='YOLOv5PAFPN',
            deepen_factor=deepen_factor,
            widen_factor=widen_factor,
-           in_channels=channels,
+           in_channels=channels, # Note: The 3 channels of SwinTransformer-Tiny output are [192, 384, 768], which do not match the original yolov5-s neck and need to be changed.
            out_channels=channels),
        bbox_head=dict(
            type='YOLOv5Head',
            head_module=dict(
                type='YOLOv5HeadModule',
-               in_channels=channels,
+               in_channels=channels, # input channels of head need to be changed accordingly
                widen_factor=widen_factor))
    )
    ```
@@ -181,13 +181,13 @@ When using other backbone networks, you need to ensure that the output channels 
            type='YOLOv5PAFPN',
            deepen_factor=deepen_factor,
            widen_factor=widen_factor,
-           in_channels=channels,
+           in_channels=channels, # Note: The 3 channels of ConvNeXt-Tiny output are [192, 384, 768], which do not match the original yolov5-s neck and need to be changed.
            out_channels=channels),
        bbox_head=dict(
            type='YOLOv5Head',
            head_module=dict(
                type='YOLOv5HeadModule',
-               in_channels=channels,
+               in_channels=channels, # input channels of head need to be changed accordingly
                widen_factor=widen_factor))
    )
    ```
@@ -219,13 +219,13 @@ When using other backbone networks, you need to ensure that the output channels 
            type='YOLOv5PAFPN',
            deepen_factor=deepen_factor,
            widen_factor=widen_factor,
-           in_channels=channels,
+           in_channels=channels, # Note: The 3 channels of MobileNetV3 output are [24, 48, 96], which do not match the original yolov5-s neck and need to be changed.
            out_channels=channels),
        bbox_head=dict(
            type='YOLOv5Head',
            head_module=dict(
                type='YOLOv5HeadModule',
-               in_channels=channels,
+               in_channels=channels, # input channels of head need to be changed accordingly
                widen_factor=widen_factor))
    )
    ```
@@ -258,13 +258,17 @@ model = dict(
         type='YOLOv5PAFPN',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        in_channels=channels,
+        in_channels=channels, # Note: The 3 channels of EfficientNet-B1 output are [40, 112, 320], which do not match the original yolov5-s neck and need to be changed.
         out_channels=channels),
     bbox_head=dict(
         type='YOLOv5Head',
         head_module=dict(
             type='YOLOv5HeadModule',
-            in_channels=channels,
+            in_channels=channels, # input channels of head need to be changed accordingly
             widen_factor=widen_factor))
 )
+```
+
+```{note}
+The above is just a config to ensure that the training will work correctly. The training performance may not be optimal. Some backbones require specific learning rates, optimizers, and other hyperparameters. Related contents will be added later in the "Training Tips" section.
 ```

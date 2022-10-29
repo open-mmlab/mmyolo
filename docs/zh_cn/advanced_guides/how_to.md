@@ -65,7 +65,7 @@ model = dict(
 
 ## 跨库使用主干网络
 
-OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation 中的模型注册表都继承自 MMEngine 中的根注册表，允许这些存储库直接使用彼此已经实现的模块。 因此用户可以在 MMYOLO 中使用来自 MMDetection、MMClassification 的主干网络，而无需重新实现。
+OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation 中的模型注册表都继承自 MMEngine 中的根注册表，允许这些 OpenMMLab 开源库直接使用彼此已经实现的模块。 因此用户可以在 MMYOLO 中使用来自 MMDetection、MMClassification 的主干网络，而无需重新实现。
 
 ```{note}
 使用其他主干网络时，你需要保证主干网络的输出通道与 Neck 的输入通道相匹配。
@@ -97,13 +97,13 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
        neck=dict(
            type='YOLOv5PAFPN',
            widen_factor=widen_factor,
-           in_channels=channels,
+           in_channels=channels, # 注意：ResNet-50 输出的3个通道是 [512, 1024, 2048]，和原先的 yolov5-s neck 不匹配，需要更改
            out_channels=channels),
        bbox_head=dict(
            type='YOLOv5Head',
            head_module=dict(
                type='YOLOv5HeadModule',
-               in_channels=channels,
+               in_channels=channels, # head 部分输入通道也要做相应更改
                widen_factor=widen_factor))
    )
    ```
@@ -141,13 +141,13 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
            type='YOLOv5PAFPN',
            deepen_factor=deepen_factor,
            widen_factor=widen_factor,
-           in_channels=channels,
+           in_channels=channels, # 注意：SwinTransformer-Tiny 输出的3个通道是 [192, 384, 768]，和原先的 yolov5-s neck 不匹配，需要更改
            out_channels=channels),
        bbox_head=dict(
            type='YOLOv5Head',
            head_module=dict(
                type='YOLOv5HeadModule',
-               in_channels=channels,
+               in_channels=channels, # head 部分输入通道也要做相应更改
                widen_factor=widen_factor))
    )
    ```
@@ -183,13 +183,13 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
            type='YOLOv5PAFPN',
            deepen_factor=deepen_factor,
            widen_factor=widen_factor,
-           in_channels=channels,
+           in_channels=channels, # 注意：ConvNeXt-Tiny 输出的3个通道是 [192, 384, 768]，和原先的 yolov5-s neck 不匹配，需要更改
            out_channels=channels),
        bbox_head=dict(
            type='YOLOv5Head',
            head_module=dict(
                type='YOLOv5HeadModule',
-               in_channels=channels,
+               in_channels=channels, # head 部分输入通道也要做相应更改
                widen_factor=widen_factor))
    )
    ```
@@ -221,13 +221,13 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
            type='YOLOv5PAFPN',
            deepen_factor=deepen_factor,
            widen_factor=widen_factor,
-           in_channels=channels,
+           in_channels=channels, # 注意：MobileNetV3-small 输出的3个通道是 [24, 48, 96]，和原先的 yolov5-s neck 不匹配，需要更改
            out_channels=channels),
        bbox_head=dict(
            type='YOLOv5Head',
            head_module=dict(
                type='YOLOv5HeadModule',
-               in_channels=channels,
+               in_channels=channels, # head 部分输入通道也要做相应更改
                widen_factor=widen_factor))
    )
    ```
@@ -260,13 +260,17 @@ model = dict(
         type='YOLOv5PAFPN',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        in_channels=channels,
+        in_channels=channels, # 注意：EfficientNet-B1 输出的3个通道是 [40, 112, 320]，和原先的 yolov5-s neck 不匹配，需要更改
         out_channels=channels),
     bbox_head=dict(
         type='YOLOv5Head',
         head_module=dict(
             type='YOLOv5HeadModule',
-            in_channels=channels,
+            in_channels=channels, # head 部分输入通道也要做相应更改
             widen_factor=widen_factor))
 )
+```
+
+```{note}
+上述只是确保训练可以正确运行的配置，直接训练性能可能不是最优的。因为某些 backbone 需要配套特定的学习率、优化器等超参数。后续会在“训练技巧章节”补充相关内容。
 ```
