@@ -6,9 +6,9 @@
 <img src="https://user-images.githubusercontent.com/89863442/190903635-27bbc619-9bf8-43a8-aea8-ea13b9dad28c.jpg" width="1000" alt="image"/>
 </div>
 
-Visualization can provide an intuitive explanation of the training and testing process of the deep learning model.
+Visualization provides an intuitive explanation of the training and testing process of the deep learning model.
 
-You can use the `Visualizer` provided in MMYOLO for feature map visualization, which has the following features:
+In MMYOLO, you can use the `Visualizer` provided in MMEngine for feature map visualization, which has the following features:
 
 - Support basic drawing interfaces and feature map visualization.
 - Support selecting different layers in the model to get the feature map. The display methods include `squeeze_mean`, `select_max`, and `topk`. Users can also customize the layout of the feature map display with `arrangement`.
@@ -17,32 +17,32 @@ You can use the `Visualizer` provided in MMYOLO for feature map visualization, w
 
 You can use `demo/featmap_vis_demo.py` to get a quick view of the visualization results. To better understand all functions, we list all primary parameters and their features here as follows:
 
-- `img`: Identify the image to visualize. Either a single image file or a list of image paths is supported.
+- `img`: the image to visualize. Can be either a single image file or a list of image file paths.
 
-- `config`: Identify the configuration file for the algorithm.
+- `config`: the configuration file for the algorithm.
 
-- `checkpoint`: Identify the weight file of the corresponding algorithm.
+- `checkpoint`: the weight file of the corresponding algorithm.
 
-- `--out-file`: Identify the path and file name to save the obtained feature map on your device.
+- `--out-file`: the file path to save the obtained feature map on your device.
 
-- `--device`: Identify the hardware used for image inference. For example, `--device cuda:0` means use the first GPU, whereas `--device cpu` means use CPU.
+- `--device`: the hardware used for image inference. For example, `--device cuda:0` means use the first GPU, whereas `--device cpu` means use CPU.
 
-- `--score-thr`: Identify the confidence threshold. Only bboxes whose confidence scores are higher than this threshold will be displayed.
+- `--score-thr`: the confidence score threshold. Only bboxes whose confidence scores are higher than this threshold will be displayed.
 
-- `--preview-model`: Identify if there is a need to preview the model. This could make users understand the structure of the feature layer more straightforwardly.
+- `--preview-model`: if there is a need to preview the model. This could make users understand the structure of the feature layer more straightforwardly.
 
-- `--target-layers`: Identify the specific layer to get its visualized feature map.
+- `--target-layers`: the specific layer to get the visualized feature map result.
 
-  - When there is only one parameter, the feature map of that specific layer will be visualized. For example, `--target-layers backbone` ,  `--target-layers neck` ,  `--target-layers backbone.stage4`, etc.
-  - When the parameter is a list, all feature maps of the corresponding layers will be visualized. For example, `--target-layers backbone.stage4 neck` means that the stage4 layer of the backbone and the three layers of the neck are output simultaneously, a total of four layers of feature maps.
+  - If there is only one parameter, the feature map of that specific layer will be visualized. For example, `--target-layers backbone` ,  `--target-layers neck` ,  `--target-layers backbone.stage4`, etc.
+  - If the parameter is a list, all feature maps of the corresponding layers will be visualized. For example, `--target-layers backbone.stage4 neck` means that the stage4 layer of the backbone and the three layers of the neck are output simultaneously, a total of four layers of feature maps.
 
-- `--channel-reduction`: used to identify if there is a need to compress multiple channels into a single channel and then display it overlaid with the picture as the input tensor usually has multiple channels. Three parameters can be used here:
+- `--channel-reduction`: if needs to compress multiple channels into a single channel and then display it overlaid with the picture as the input tensor usually has multiple channels. Three parameters can be used here:
 
   - `squeeze_mean`: The input channel C will be compressed into one channel using the mean function, and the output dimension becomes (1, H, W).
   - `select_max`: Sum the input channel C in the spatial space, and the dimension becomes (C, ). Then select the channel with the largest value.
   - `None`: Indicates that no compression is required. In this case, the `topk` feature maps with the highest activation degree can be selected to display through the `topk` parameter.
 
-- `--topk`: Valid only when the `channel_reduction` parameter is `None`. It selects the `topk` channels according to the activation degree and then displays it overlaid with the image. The display layout can be specified using the `--arrangement` parameter, which is an array of two numbers separated by space. For example, `--topk 5 --arrangement 2 3` means the five feature maps with the highest activation degree are displayed in `2 rows and 3 columns`. Similarly, `--topk 7 --arrangement 3 3` means the seven feature maps with the highest activation degree are displayed in `3 rows and 3 columns`.
+- `--topk`: only valid when the `channel_reduction` parameter is `None`. It selects the `topk` channels according to the activation degree and then displays it overlaid with the image. The display layout can be specified using the `--arrangement` parameter, which is an array of two numbers separated by space. For example, `--topk 5 --arrangement 2 3` means the five feature maps with the highest activation degree are displayed in `2 rows and 3 columns`. Similarly, `--topk 7 --arrangement 3 3` means the seven feature maps with the highest activation degree are displayed in `3 rows and 3 columns`.
 
   - If `topk` is not -1, topk channels will be selected to display in order of the activation degree.
   - If `topk` is -1, channel number C must be either 1 or 3 to indicate that the input data is a picture. Otherwise, an error will prompt the user to compress the channel with `channel_reduction`.
