@@ -232,9 +232,9 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
    )
    ```
 
-### 通过 MMClassification 使用 TIMM 中实现的主干网络
+### 通过 MMClassification 使用 `timm` 中实现的主干网络
 
-由于 MMClassification 提供了 Py**T**orch **Im**age **M**odels (`TIMM`) 主干网络的封装，用户也可以通过 MMClassification 直接使用 `timm` 中的主干网络。假设想将 `EfficientNet-B1`作为 `YOLOv5` 的主干网络，则配置文件如下：
+由于 MMClassification 提供了 Py**T**orch **Im**age **M**odels (`timm`) 主干网络的封装，用户也可以通过 MMClassification 直接使用 `timm` 中的主干网络。假设想将 `EfficientNet-B1`作为 `YOLOv5` 的主干网络，则配置文件如下：
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -243,7 +243,7 @@ _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 # 以及： pip install timm，安装 timm
 # 导入 mmcls.models 使得可以调用 mmcls 中注册的模块
 custom_imports = dict(imports=['mmcls.models'], allow_failed_imports=False)
-checkpoint_file = 'https://download.openmmlab.com/mmclassification/v0/mobilenet_v3/convert/mobilenet_v3_small-8427ecf0.pth'  # noqa
+
 deepen_factor = _base_.deepen_factor
 widen_factor = 1.0
 channels = [40, 112, 320]
@@ -251,7 +251,7 @@ channels = [40, 112, 320]
 model = dict(
     backbone=dict(
         _delete_=True, # 将 _base_ 中关于 backbone 的字段删除
-        type='mmcls.TIMMBackbone', # 使用 mmcls 中的 TIMM 主干网络
+        type='mmcls.TIMMBackbone', # 使用 mmcls 中的 timm 主干网络
         model_name='efficientnet_b1', # 使用 TIMM 中的 efficientnet_b1
         features_only=True,
         pretrained=True,
