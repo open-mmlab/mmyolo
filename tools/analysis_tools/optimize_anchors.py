@@ -1,9 +1,10 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 """Optimize anchor settings on a specific dataset.
 
-This script provides two method to optimize YOLO anchors including k-means
-anchor cluster and differential evolution. You can use ``--algorithm k-means``
-and ``--algorithm differential_evolution`` to switch two method.
+This script provides three methods to optimize YOLO anchors including k-means
+anchor cluster, differential evolution and v5-k-means. You can use 
+``--algorithm k-means``, ``--algorithm differential_evolution`` and 
+``--algorithm v5-k-means`` to switch those methods.
 
 Example:
     Use k-means anchor cluster::
@@ -17,12 +18,19 @@ Example:
         --algorithm differential_evolution \
         --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
         --output-dir ${OUTPUT_DIR}
+    Use v5-k-means to optimize anchors::
+
+        python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
+        --algorithm v5-k-means \
+        --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
+        --prior_match_thr ${PRIOR_MATCH_THR} \
+        --output-dir ${OUTPUT_DIR}
 """
 import argparse
-import os.path as osp
 import random
+import os.path as osp
+from torch import Tensor
 from typing import Tuple
-
 import numpy as np
 import torch
 from mmdet.datasets import build_dataset
@@ -34,7 +42,6 @@ from mmengine.fileio import dump
 from mmengine.logging import MMLogger
 from mmengine.utils import ProgressBar
 from scipy.optimize import differential_evolution
-from torch import Tensor
 
 from mmyolo.utils import register_all_modules
 
@@ -255,24 +262,24 @@ class YOLOKMeansAnchorOptimizer(BaseAnchorOptimizer):
 
 
 class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
-    r"""YOLOv5 anchor optimizer using shape k-means.
+    r"""YOLOv5 anchor optimizer using shape k-means. 
     Code refer to `ultralytics/yolov5.
     <https://github.com/ultralytics/yolov5/blob/master/utils/autoanchor.py>`_.
 
     Args:
         num_anchors (int) : Number of anchors.
         iters (int): Maximum iterations for k-means.
-        prior_match_thr (float): anchor-label width height
+        prior_match_thr (float): anchor-label width height 
             ratio threshold hyperparameter.
     """
 
     def __init__(self,
-                 num_anchors,
-                 iters,
-                 prior_match_thr=4.0,
-                 mutation_args=[0.9, 0.1],
-                 augment_args=[0.9, 1.1],
-                 **kwargs):
+                num_anchors,
+                iters,
+                prior_match_thr = 4.0,
+                mutation_args = [0.9, 0.1],
+                augment_args = [0.9, 1.1],
+                **kwargs):
 
         super().__init__(**kwargs)
         self.num_anchors = num_anchors
@@ -288,16 +295,16 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
         bbox_whs = torch.from_numpy(self.bbox_whs).to(
             self.device, dtype=torch.float32)
         anchors = self.anchor_generate(
-            bbox_whs,
-            num=self.num_anchors,
-            img_size=self.input_shape[0],
-            prior_match_thr=self.prior_match_thr,
-            iters=self.iters)
+                    bbox_whs,
+                    num = self.num_anchors,
+                    img_size = self.input_shape[0],
+                    prior_match_thr = self.prior_match_thr,
+                    iters = self.iters)
         best_ratio, mean_matched = self.anchor_metric(bbox_whs, anchors)
         self.logger.info(f'{mean_matched:.2f} anchors/target {best_ratio:.3f} '
-                         'Best Possible Recall (BPR). ')
+        'Best Possible Recall (BPR). ')
         self.save_result(anchors.tolist(), self.out_dir)
-
+    
     def anchor_generate(self,
                         box_size: Tensor,
                         num: int = 9,
@@ -305,16 +312,16 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
                         prior_match_thr: float = 4.0,
                         iters: int = 1000) -> Tensor:
         """cluster boxes metric with anchors.
-
+        
         Args:
-            box_size (Tensor): The size of the bxes, which shape is
+            box_size (Tensor): The size of the bxes, which shape is 
                 (box_num, 2),the number 2 means width and height.
             num (int): number of anchors.
             img_size (int): image size used for training
             prior_match_thr (float): width/height ratio threshold
                  used for training
             iters (int): iterations to evolve anchors using genetic algorithm
-
+        
         Returns:
             anchors (Tensor): kmeans evolved anchors
         """
@@ -326,15 +333,15 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
         assert num <= len(box_size)
 
         # step2: init anchors
-        if kmeans:
+        if kmeans:            
             try:
                 self.logger.info(
                     'beginning init anchors with scipy kmeans method')
                 # sigmas for whitening
                 sigmas = box_size.std(0).cpu().numpy()
                 anchors = kmeans(
-                    box_size.cpu().numpy() / sigmas, num, iter=30)[0] * sigmas
-                # kmeans may return fewer points than requested
+                    box_size.cpu().numpy()/sigmas, num, iter = 30)[0] * sigmas
+                # kmeans may return fewer points than requested 
                 # if width/height is insufficient or too similar
                 assert num == len(anchors)
             except Exception:
@@ -342,77 +349,75 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
                     'scipy kmeans method cannot get enough points '
                     'because of width/height is insufficient or too similar, '
                     'now switching strategies from kmeans to random init.')
-                anchors = np.sort(np.random.rand(num * 2)).reshape(
-                    num, 2) * img_size
+                anchors = np.sort(
+                    np.random.rand(num * 2)).reshape(num, 2) * img_size
         else:
             self.logger.info(
                 'cannot found scipy package, switching strategies from kmeans '
                 'to random init, you can install scipy package to '
                 'get better anchor init')
-            anchors = np.sort(np.random.rand(num * 2)).reshape(num,
-                                                               2) * img_size
-
+            anchors = np.sort(
+                    np.random.rand(num * 2)).reshape(num, 2) * img_size
+        
         self.logger.info('init done, beginning evolve anchors...')
         # sort small to large
         anchors = torch.tensor(anchors[np.argsort(anchors.prod(1))]).to(
-            box_size.device, dtype=torch.float32)
+                box_size.device, dtype=torch.float32)
 
         # step3: evolve anchors use Genetic Algorithm
         prog_bar = ProgressBar(iters)
         fitness = self._anchor_fitness(box_size, anchors, thr)
         cluster_shape = anchors.shape
-
+        
         for _ in range(iters):
             mutate_result = np.ones(cluster_shape)
             # mutate until a change occurs (prevent duplicates)
             while (mutate_result == 1).all():
                 # mutate_result is scale factor of anchors, between 0.3 and 3
                 mutate_result = (
-                    (np.random.random(cluster_shape) < self.mutation_prob) *
-                    random.random() * np.random.randn(*cluster_shape) *
-                    self.mutation_sigma + 1).clip(0.3, 3.0)
+                        (np.random.random(cluster_shape) < self.mutation_prob)
+                        * random.random() * np.random.randn(*cluster_shape)
+                        * self.mutation_sigma + 1
+                    ).clip(0.3, 3.0)
             mutate_result = torch.from_numpy(mutate_result).to(box_size.device)
             new_anchors = (anchors.clone() * mutate_result).clip(min=2.0)
             new_fitness = self._anchor_fitness(box_size, new_anchors, thr)
             if new_fitness > fitness:
                 fitness = new_fitness
-                anchors = new_anchors.clone()
+                anchors =  new_anchors.clone()
 
             prog_bar.update()
         print('\n')
         # sort small to large
-        anchors = anchors[torch.argsort(anchors.prod(1))]
+        anchors = anchors[torch.argsort(anchors.prod(1))]    
         self.logger.info(f'Anchor cluster finish. fitness = {fitness:.4f}')
-
+        
         return anchors
 
     def anchor_metric(self,
-                      box_size: Tensor,
-                      anchors: Tensor,
-                      threshold: float = 4.0) -> Tuple:
+                    box_size: Tensor,
+                    anchors: Tensor,
+                    threshold: float = 4.0) -> Tuple:
         """compute boxes metric with anchors.
-
+        
         Args:
-            box_size (Tensor): The size of the bxes, which shape
+            box_size (Tensor): The size of the bxes, which shape 
                 is (box_num, 2), the number 2 means width and height.
-            anchors (Tensor): The size of the bxes, which shape
+            anchors (Tensor): The size of the bxes, which shape 
                 is (anchor_num, 2), the number 2 means width and height.
             threshold (float): the compare threshold of ratio
-
+        
         Returns:
             Tuple: a tuple of metric result, best_ratio_mean and mean_matched
         """
         # step1: augment scale
-        # According to the uniform distribution,the scaling scale between
+        # According to the uniform distribution,the scaling scale between  
         # augment_min and augment_max is randomly generated
         scale = np.random.uniform(
             self.augment_min, self.augment_max, size=(box_size.shape[0], 1))
         box_size = torch.tensor(
-            np.array(
-                [l[:, ] * s for s, l in zip(scale,
-                                            box_size.cpu().numpy())])).to(
-                                                box_size.device,
-                                                dtype=torch.float32)
+            np.array([l[:, ]*s for s, l in zip(scale, box_size.cpu().numpy())])
+        ).to(box_size.device, dtype=torch.float32)
         # step2: calculate ratio
         min_ratio, best_ratio = self._metric(box_size, anchors)
         mean_matched = (min_ratio > 1 / threshold).float().sum(1).mean()
@@ -430,38 +435,37 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
         return filter_sizes
 
     def _anchor_fitness(self, box_size: Tensor, anchors: Tensor, thr: float):
-        """mutation fitness."""
+        '''mutation fitness'''
         _, best = self._metric(box_size, anchors)
         return (best * (best > thr).float()).mean()
-
+    
     def _metric(self, box_size: Tensor, anchors: Tensor) -> Tuple:
         """compute boxes metric with anchors.
-
+        
         Args:
-            box_size (Tensor): The size of the bxes, which shape is
+            box_size (Tensor): The size of the bxes, which shape is 
                 (box_num, 2), the number 2 means width and height.
-            anchors (Tensor): The size of the bxes, which shape is
+            anchors (Tensor): The size of the bxes, which shape is 
                 (anchor_num, 2), the number 2 means width and height.
-
+        
         Returns:
             Tuple: a tuple of metric result, min_ratio and best_ratio
         """
 
-        # ratio means the (width_1/width_2 and height_1/height_2) ratio of each
+        # ratio means the (width_1/width_2 and height_1/height_2) ratio of each 
         # box and anchor, the ratio shape is torch.Size([box_num,anchor_num,2])
         ratio = box_size[:, None] / anchors[None]
-
+        
         # min_ratio records the min ratio of each box with all anchor,
         # min_ratio.shape is torch.Size([box_num,anchor_num])
-        # notice:smaller ratio means worse shape-match of boxes and anchors
+        # notice:smaller ratio means worse shape-match between boxes and anchors  
         min_ratio = torch.min(ratio, 1 / ratio).min(2)[0]
-
+        
         # find the best shape-match ratio for each box
         # box_best_ratio.shape is torch.Size([box_num])
         best_ratio = min_ratio.max(1)[0]
 
         return min_ratio, best_ratio
-
 
 class YOLODEAnchorOptimizer(BaseAnchorOptimizer):
     """YOLO anchor optimizer using differential evolution algorithm.
@@ -623,7 +627,7 @@ def main():
             out_dir=args.output_dir)
     else:
         raise NotImplementedError(
-            f'Only support k-means and differential_evolution, '
+            f'Only support k-means, differential_evolution, and v5-k-means '
             f'but get {args.algorithm}')
 
     optimizer.optimize()
