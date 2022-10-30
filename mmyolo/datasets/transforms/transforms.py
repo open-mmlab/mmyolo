@@ -363,7 +363,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         """
         gt_bboxes = []
         gt_ignore_flags = []
-        for instance in results['instances']:
+        for instance in results.get('instances', []):
             if instance['ignore_flag'] == 0:
                 gt_bboxes.append(instance['bbox'])
                 gt_ignore_flags.append(instance['ignore_flag'])
@@ -388,7 +388,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
             dict: The dict contains loaded label annotations.
         """
         gt_bboxes_labels = []
-        for instance in results['instances']:
+        for instance in results.get('instances', []):
             if instance['ignore_flag'] == 0:
                 gt_bboxes_labels.append(instance['bbox_label'])
         results['gt_bboxes_labels'] = np.array(
