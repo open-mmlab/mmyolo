@@ -110,9 +110,9 @@ def bbox_overlaps(pred: torch.Tensor,
         # calculate sigma (σ):
         # euclidean distance between bbox2(pred) and bbox1(gt) center point,
         # left_item = b_cx_gt - b_cx
-        sigma_cw = (bbox2_x1 + bbox2_x2) / 2 - (bbox1_x1 + bbox1_x2) / 2
+        sigma_cw = (bbox2_x1 + bbox2_x2) / 2 - (bbox1_x1 + bbox1_x2) / 2 + eps
         # right_item = b_cy_gt - b_cy
-        sigma_ch = (bbox2_y1 + bbox2_y2) / 2 - (bbox1_y1 + bbox1_y2) / 2
+        sigma_ch = (bbox2_y1 + bbox2_y2) / 2 - (bbox1_y1 + bbox1_y2) / 2 + eps
         # sigma = √( (sigma_cw ** 2) - (sigma_ch ** 2) )
         sigma = torch.pow(sigma_cw**2 + sigma_ch**2, 0.5)
 

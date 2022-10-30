@@ -348,7 +348,8 @@ class YOLOv6Head(YOLOv5Head):
             fg_mask_pre_prior > 0, assigned_labels,
             torch.full_like(assigned_labels, self.num_classes))
 
-        loss_cls = self.loss_cls(flatten_cls_preds, assigned_scores)
+        with torch.cuda.amp.autocast(enabled=False):
+            loss_cls = self.loss_cls(flatten_cls_preds, assigned_scores)
 
         # rescale bbox
         stride_tensor = flatten_priors[..., [2]]
@@ -356,7 +357,8 @@ class YOLOv6Head(YOLOv5Head):
         flatten_pred_bboxes /= stride_tensor
 
         assigned_scores_sum = assigned_scores.sum()
-        loss_cls /= assigned_scores_sum
+        if assigned_scores_sum > 0:
+            loss_cls /= assigned_scores_sum
 
         # select positive samples mask
         num_pos = fg_mask_pre_prior.sum()
