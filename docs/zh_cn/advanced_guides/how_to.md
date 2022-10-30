@@ -68,7 +68,8 @@ model = dict(
 OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation 中的模型注册表都继承自 MMEngine 中的根注册表，允许这些 OpenMMLab 开源库直接使用彼此已经实现的模块。 因此用户可以在 MMYOLO 中使用来自 MMDetection、MMClassification 的主干网络，而无需重新实现。
 
 ```{note}
-使用其他主干网络时，你需要保证主干网络的输出通道与 Neck 的输入通道相匹配。
+1. 使用其他主干网络时，你需要保证主干网络的输出通道与 Neck 的输入通道相匹配。
+2. 下面给出的配置文件，仅能确保训练可以正确运行，直接训练性能可能不是最优的。因为某些 backbone 需要配套特定的学习率、优化器等超参数。后续会在“训练技巧章节”补充训练调优相关内容。
 ```
 
 ### 使用在 MMDetection 中实现的主干网络
@@ -269,8 +270,4 @@ model = dict(
             in_channels=channels, # head 部分输入通道也要做相应更改
             widen_factor=widen_factor))
 )
-```
-
-```{note}
-上述只是确保训练可以正确运行的配置，直接训练性能可能不是最优的。因为某些 backbone 需要配套特定的学习率、优化器等超参数。后续会在“训练技巧章节”补充相关内容。
 ```

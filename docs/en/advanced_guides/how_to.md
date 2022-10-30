@@ -66,7 +66,8 @@ model = dict(
 The model registry in MMYOLO, MMDetection, MMClassification, and MMSegmentation all inherit from the root registry in MMEngine in the OpenMMLab 2.0 system, allowing these repositories to directly use modules already implemented by each other. Therefore, in MMYOLO, users can use backbone networks from MMDetection and MMClassification without reimplementation.
 
 ```{note}
-When using other backbone networks, you need to ensure that the output channels of the backbone network match the input channels of the neck network.
+1. When using other backbone networks, you need to ensure that the output channels of the backbone network match the input channels of the neck network.
+2. The configuration files given below only ensure that the training will work correctly, and their training performance may not be optimal. Because some backbones require specific learning rates, optimizers, and other hyperparameters. Related contents will be added in the "Training Tips" section later.
 ```
 
 ### Use backbone network implemented in MMDetection
@@ -267,8 +268,4 @@ model = dict(
             in_channels=channels, # input channels of head need to be changed accordingly
             widen_factor=widen_factor))
 )
-```
-
-```{note}
-The above is just a config to ensure that the training will work correctly. The training performance may not be optimal. Some backbones require specific learning rates, optimizers, and other hyperparameters. Related contents will be added later in the "Training Tips" section.
 ```
