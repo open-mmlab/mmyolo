@@ -8,7 +8,7 @@
 
 RangeKing@github provides the graph above. Thanks, RangeKing!
 
-YOLOv5 is an open-sourced object detection algorithm for real-time industrial applications which has received extensive attention. We believe that the reason for the explosion of YOLOv5 is not simply due to its excellent performance. It is more about the overall utility and robustness of its library.
+YOLOv5 is an open-sourced object detection algorithm for real-time industrial applications which has received extensive attention. The reason for the explosion of YOLOv5 is not simply due to its excellent performance. It is more about the overall utility and robustness of its library.
 In short, the main features of YOLOv5 are:
 
 1. **friendly and perfect deployment supports**
@@ -17,7 +17,7 @@ In short, the main features of YOLOv5 are:
 
 This article will start with the principle of the YOLOv5 algorithm and then focus on analyzing the implementation in MMYOLO. The follow-up part includes the guide and speed benchmark of YOLOv5.
 
-We hope this article can become your core document to get started and master YOLOv5. Since YOLOv5 is still constantly updated, we will also keep updating this document. So please always catch up with the latest version.
+We hope this article becomes your core document to start and master YOLOv5. Since YOLOv5 is still constantly updated, we will also keep updating this document. So please always catch up with the latest version.
 
 MMYOLO implementation configuration: https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/
 
@@ -32,12 +32,12 @@ YOLOv5 official release: https://github.com/ultralytics/yolov5/releases/tag/v6.1
 </div>
 
 <div align=center >
-<img alt="YOLOv5精度速度图" src="https://user-images.githubusercontent.com/40284075/190542279-37734629-2b59-4bd8-a9bf-757875a93eed.png"/>
+<img alt="YOLOv5 benchmark" src="https://user-images.githubusercontent.com/40284075/190542279-37734629-2b59-4bd8-a9bf-757875a93eed.png"/>
 </div>
 
-The performance is shown in the table above. YOLOv5 has two models with different scales. P6 is larger with a 1280x1280 input size, whereas P5 is the model which will be used more often. This article focuses on the structure of the P5 model.
+The performance is shown in the table above. YOLOv5 has two models with different scales. P6 is larger with a 1280x1280 input size, whereas P5 is the model used more often. This article focuses on the structure of the P5 model.
 
-Object detection algorithms can generally be divided into data augmentation, model structure, loss calculation, etc. It is the same as YOLOv5:
+Usually, we divide the object detection algorithm into different parts, such as data augmentation, model structure, loss calculation, etc. It is the same as YOLOv5:
 
 <div align=center >
 <img alt="Strategy" src="https://user-images.githubusercontent.com/40284075/190542423-f6b20d8e-c82a-4a34-9065-c161c5e29e7c.png"/>
@@ -52,15 +52,192 @@ Many data augmentation methods are used in YOLOv5, including:
 - **Mosaic**
 - **RandomAffine**
 - **MixUp**
-- **Image blue and other transformations with Albu**
+- **Image blue and other transformations using Albu**
 - **HSV color space enhancement**
 - **Random horizontal flips**
 
-The Mosaic data augmentation probability is 1, which means it will always be triggered. MixUp is not used for the small and nano models, and the probability is set to 0.1 for other l/m/x series models. This is because small models have limited capabilities and generally do not use strong data augmentation strategies like MixUp.
+The mosaic probability is set to `1`, so it will always be triggered. MixUp is not used for the small and nano models, and the probability is `0.1` for other l/m/x series models. As small models have limited capabilities, we generally do not use strong data augmentations like MixUp.
 
-The core `Mosaic + RandomAffine + MixUp` process can be shown as follows:
+The following picture demonstrates the `Mosaic + RandomAffine + MixUp` process.
 
-(To be finished)
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190542598-bbf4a159-cc9d-4bac-892c-46ef99267994.png"/>
+</div>
+
+#### 1.1.1 Mosaic
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190542619-d777894f-8928-4244-b39a-158eea416ccd.png"/>
+</div>
+
+Mosaic is a hybrid data augmentation method requiring four images to be stitched together, which is equivalent to increasing the training batch size.
+
+We can summarize the process as:
+
+1. Randomly generates coordinates of the intersection center point of the four spliced images.
+2. Randomly select the indexes of the other three images and read the corresponding annotations.
+3. Resizes each image to the specified size by maintaining each aspect ratio.
+4. Calculate the position of each image in the output image according to the top, bottom, left, and right rules. You also need to calculate the crop coordinates, as the image may be out of bounds.
+5. Uses the crop coordinates to crop the scaled image and paste it to the position calculated. The rest of the places will be pad with `114 pixels`.
+6. Process the label of each image accordingly.
+
+Note: since four images are stitched together, the output image area will be enlarged four times (from 640x640 to 1280x1280). Therefore, to revert to 640x640, you must add a **RandomAffine** transformation. Otherwise, the image area will always be four times larger.
+
+#### 1.1.2 RandomAffine
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190542871-14e91a42-329f-4084-aec5-b3e412e5364b.png"/>
+</div>
+
+RandomAffine has two purposes:
+
+1. Performs a stochastic geometric affine transformation to the image.
+2. Reduces the size of the image generated by Mosaic back to 640x640.
+
+RandomAffine includes geometric augmentations such as translation, rotation, scaling, misalignment, etc. Since Mosaic and RandomAffine are strong augmentations, they will introduce considerable noise. Therefore, the enhanced annotations need to be processed. The rules are
+
+1. The width and height of the enhanced gt bbox should be larger than wh_thr;
+2. The ratio of the area of gt bbox after and before the enhancement should be greater than ar_thr to prevent it from changing too much.
+3. The maximum aspect ratio should be smaller than area_thr to prevent it from changing too much.
+
+Object detection algorithms will rarely use this augmentation method as the annotation box becomes larger after the rotation, resulting in inaccuracy.
+
+#### 1.1.3 MixUp
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190543076-db60e4b2-0552-4cf4-ab45-259d1ccbd5a6.png"/>
+</div>
+
+MixUp, similar to Mosaic, is also a hybrid image augmentation. It randomly selects another image and mixes the two images together. There are various ways to do this, and the typical approach is to either stitch the label together directly or mix the label using `alpha` method.
+The original author's approach is straightforward: the label is directly stitched, and the images are mixed by distributional sampling.
+
+Note: **In YOLOv5's implementation of MixUP, the other random image must be processed by Mosaic+RandomAffine before the mixing process.** This may not be the same as implementations in other open-sourced libraries.
+
+#### 1.1.4 Image blur and other augmentations
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190543533-8b9ece51-676b-4a7d-a7d0-597e2dd1d42e.png"/>
+</div>
+
+The rest of the augmentations are:
+
+- **Image blue and other transformations using Albu**
+- **HSV color space enhancement**
+- **Random horizontal flips**
+
+The Albu library has been packaged in MMDetection so users can directly use all Albu's methods through simple configurations. As a very ordinary and common processing method, HSV will not be further introduced now.
+
+#### 1.1.5 The implementations in MMYOLO
+
+While conventional single-image augmentations such as random flip are relatively easy to implement, hybrid data augmentations like Mosaic are more complicated. Therefore, in MMDetection's reimplementation of YOLOX, a dataset wrapper called `MultiImageMixDataset` was introduced. The process is as follows:
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/40284075/190543666-d5a22ed7-46a0-4696-990a-12ebde7f8907.png"/>
+</div>
+
+For hybrid data augmentations such as Mosaic, you need to implement an additional `get_indexes` method to retrieve the index information of other images and then perform the enhancement.
+Take the YOLOX implementation in MMDetection as an example. The configuration file is like this:
+
+```python
+train_pipeline = [
+    dict(type='Mosaic', img_scale=img_scale, pad_val=114.0),
+    dict(
+        type='RandomAffine',
+        scaling_ratio_range=(0.1, 2),
+        border=(-img_scale[0] // 2, -img_scale[1] // 2)),
+    dict(
+        type='MixUp',
+        img_scale=img_scale,
+        ratio_range=(0.8, 1.6),
+        pad_val=114.0),
+    ...
+]
+
+train_dataset = dict(
+    # use MultiImageMixDataset wrapper to support mosaic and mixup
+    type='MultiImageMixDataset',
+    dataset=dict(
+        type='CocoDataset',
+        pipeline=[
+            dict(type='LoadImageFromFile'),
+            dict(type='LoadAnnotations', with_bbox=True)
+        ]),
+    pipeline=train_pipeline)
+```
+
+MultiImageMixDataset passes in a data augmentation method, including Mosaic and RandomAffine. CocoDataset also adds a pipeline to load the images and the annotations. This way, it is possible to quickly achieve a hybrid data augmentation method.
+
+However, the above implementation has one drawback: **For users unfamiliar with MMDetection, they often forget that Mosaic must be used with MultiImageMixDataset. Otherwise, it will return an error. Plus, this approach increases the complexity and difficulty of understanding**.
+
+To solve this problem, we have simplified it further in MMYOLO. By making the dataset object directly accessible to the pipeline, the implementation and the use of hybrid data augmentations can be the same as random flipping.
+
+The configuration of YOLOX in MMYOLO is written as follows:
+
+```python
+pre_transform = [
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations', with_bbox=True)
+]
+
+train_pipeline = [
+    *pre_transform,
+    dict(
+        type='Mosaic',
+        img_scale=img_scale,
+        pad_val=114.0,
+        pre_transform=pre_transform),
+    dict(
+        type='mmdet.RandomAffine',
+        scaling_ratio_range=(0.1, 2),
+        border=(-img_scale[0] // 2, -img_scale[1] // 2)),
+    dict(
+        type='YOLOXMixUp',
+        img_scale=img_scale,
+        ratio_range=(0.8, 1.6),
+        pad_val=114.0,
+        pre_transform=pre_transform),
+    ...
+]
+```
+
+This eliminates the need for the MultiImageMixDataset and makes it much easier to use and understand.
+
+Back to the YOLOv5 configuration, since the other randomly selected image in the MixUp also needs to be enhanced by Mosaic+RandomAffine before it can be used, the YOLOv5-m data enhancement configuration is as follows.
+
+```python
+pre_transform = [
+    dict(type='LoadImageFromFile'),
+    dict(type='LoadAnnotations', with_bbox=True)
+]
+
+mosaic_transform= [
+    dict(
+        type='Mosaic',
+        img_scale=img_scale,
+        pad_val=114.0,
+        pre_transform=pre_transform),
+    dict(
+        type='YOLOv5RandomAffine',
+        max_rotate_degree=0.0,
+        max_shear_degree=0.0,
+        scaling_ratio_range=(0.1, 1.9),  # scale = 0.9
+        border=(-img_scale[0] // 2, -img_scale[1] // 2),
+        border_val=(114, 114, 114))
+]
+
+train_pipeline = [
+    *pre_transform,
+    *mosaic_transform,
+    dict(
+        type='YOLOv5MixUp',
+        prob=0.1,
+        pre_transform=[
+            *pre_transform,
+            *mosaic_transform
+        ]),
+    ...
+]
+```
 
 ### 1.2 Network structure
 
@@ -76,26 +253,26 @@ If you want to use **netron** to visualize the details of the network structure,
 
 #### 1.2.1 Backbone
 
-`CSPDarknet` in MMYOLO inherits from `BaseBackbone`. The overall structure is similar to `ResNet` with a total of 5 layers of structure, including one `Stem Layer` and four `Stage Layer`:
+`CSPDarknet` in MMYOLO inherits from `BaseBackbone`. The overall structure is similar to `ResNet` with a total of 5 layers of design, including one `Stem Layer` and four `Stage Layer`:
 
 - `Stem Layer` is a `ConvModule` whose kernel size is 6x6. It is more efficient than the `Focus` module used before v6.1.
 - Each of the first three `Stage Layer` consists of one `ConvModule` and one `CSPLayer`, as shown in the Details part in the graph above. `ConvModule` is a 3x3 `Conv2d` + `BatchNorm` + `SiLU activation function` module. `CSPLayer` is the C3 module in the official YOLOv5 repository, consisting of three `ConvModule` + n `DarknetBottleneck` with residual connections.
 - The 4th `Stage Layer` adds an `SPPF` module at the end. The `SPPF` module is to serialize the input through multiple 5x5 `MaxPool2d` layers, which has the same effect as the `SPP` module but is faster.
-- The P5 model passes the corresponding results from the second to the forth `Stage Layer` to the `Neck` structure and extracts three output feature maps. Take a 640x640 input image as an example. The output features are (B, 256, 80, 80), (B,512,40,40) and (B,1024,20,20), the corresponding stride is 8/16/32.
+- The P5 model passes the corresponding results from the second to the fourth `Stage Layer` to the `Neck` structure and extracts three output feature maps. Take a 640x640 input image as an example. The output features are (B, 256, 80, 80), (B,512,40,40), and (B,1024,20,20), the corresponding stride is 8/16/32.
 
 #### 1.2.2 Neck
 
 There is no **Neck** part in the official YOLOv5. However, to facilitate users to correspond to other object detection networks easier, we split the `Head` of the official repository into `PAFPN` and `Head`.
 
-Based on the `BaseYOLONeck` structure, YOLOv5's `Neck` also follows the same build process. For non-existed modules, we use `nn.Identity` instead.
+Based on the `BaseYOLONeck` structure, YOLOv5's `Neck` also follows the same build process. However, for non-existed modules, we use `nn.Identity` instead.
 
-The feature maps output by the Neck module are exactly the same as the Backbone, which are (B,256,80,80), (B,512,40,40) and (B,1024,20,20).
+The feature maps output by the Neck module are the same as the Backbone, which is (B,256,80,80), (B,512,40,40), and (B,1024,20,20).
 
 #### 1.2.3 Head
 
-The `Head` structure of YOLOv5 is exactly the same as YOLOv3, which is a `non-decoupled Head`. The Head module includes three convolution modules that do not share weights. They are used only for input feature map transformation.
+The `Head` structure of YOLOv5 is the same as YOLOv3, which is a `non-decoupled Head`. The Head module includes three convolution modules that do not share weights. They are used only for input feature map transformation.
 
-The `PAFPN` outputs three feature maps of different scales, whose shapes are (B,256,80,80), (B,512,40,40) and (B,1024,20,20) accordingly.
+The `PAFPN` outputs three feature maps of different scales, whose shapes are (B,256,80,80), (B,512,40,40), and (B,1024,20,20) accordingly.
 
 Since YOLOv5 has a non-decoupled output, that is, classification and bbox detection results are all in different channels of the same convolution module. Taking the COCO dataset as an example, when the input is 640x640 resolution, the output shapes of the Head module are `(B, 3x(4+1+80),80,80)`, `(B, 3x(4+1+80),40,40)` and `(B, 3x(4+1+80),20,20)`. `3` represents three anchors, `4` represents the bbox prediction branch, `1` represents the obj prediction branch, and `80` represents the class prediction branch of the COCO dataset.
 
@@ -103,16 +280,16 @@ Since YOLOv5 has a non-decoupled output, that is, classification and bbox detect
 
 The core of the positive and negative sample matching strategy is to determine which positions in all positions of the predicted feature map should be positive or negative and even which samples will be ignored.
 
-This is the one of the most significant components of the object detection algorithm because a good strategy can improve the algorithm's performance.
+This is one of the most significant components of the object detection algorithm because a good strategy can improve the algorithm's performance.
 
 The matching strategy of YOLOv5 can be briefly summarized as calculating the shape-matching rate between anchor and gt_bbox. Plus, the cross-neighborhood grid is also introduced to get more positive samples.
 
-It consists the following two main steps:
+It consists of the following two main steps:
 
-1. For any output layer, instead of the commonly used strategy based on Max IoU matching, YOLOv5 switched to comparing the shape matching ratio. First, the GT Bbox and the anchor of the current layer are used to calculate the aspect ratio. If the ratio is greater than the threshold, the GT Bbox and Anchor are considered not matched. Then the current GT Bbox is temporarily discarded, and the predicted position in the grid of this GT Bbox in the current layer is considered as a negative sample.
-2. For the remaining GT Bboxes (the matched GT Bboxes) YOLOv5 calculates which grid they fall in. Using the rounding rule to find the nearest two grids and considering all three grids as a group which is responsible for predicting the GT Bbox. We can be roughly estimate that the number of positive samples has increased by at least three times compared to the previous YOLO series algorithms.
+1. For any output layer, instead of the commonly used strategy based on Max IoU matching, YOLOv5 switched to comparing the shape matching ratio. First, the GT Bbox and the anchor of the current layer are used to calculate the aspect ratio. If the ratio is greater than the threshold, the GT Bbox and Anchor are considered not matched. Then the current GT Bbox is temporarily discarded, and the predicted position in the grid of this GT Bbox in the current layer is regarded as a negative sample.
+2. For the remaining GT Bboxes (the matched GT Bboxes), YOLOv5 calculates which grid they fall in. Using the rounding rule to find the nearest two grids and considering all three grids as a group that is responsible for predicting the GT Bbox. The number of positive samples has increased by at least three times compared to the previous YOLO series algorithms.
 
-Now we will explain each part of the matching strategy in detail. Some descriptions and illustrations are either directly or indirectly referenced from the official [repo](https://github.com/ultralytics/YOLOv5/issues/6998#44).
+Now we will explain each part of the matching strategy in detail. Some descriptions and illustrations are directly or indirectly referenced from the official [repo](https://github.com/ultralytics/YOLOv5/issues/6998#44).
 
 #### 1.3.1 Anchor settings
 
@@ -364,7 +541,98 @@ This training strategy is not relatively standard, **For this reason, eight card
 
 ### 1.6 Inference and post-processing
 
-(To be finished)
+The YOLOv5 post-processing is very similar to YOLOv3. In fact, all post-processing stages of the YOLO series are similar.
+
+#### 1.6.1 Core parameters
+
+1. **multi_label**
+
+For multi-category prediction, you need to consider whether it is a multi-label case or not. Multi-label case predicts probabilities of more than one category at one location. As YOLOv5 uses sigmoid, it is possible that one object may have two different predictions. It is good to evaluate mAP, but not good to use.
+Therefore, multi_label is set to `True` during the evaluation and changed to `False` for inferencing and practical usage.
+
+2. **score_thr and nms_thr**
+
+The score_thr threshold is used for the score of each category, and the detection boxes with a score below the threshold are treated as background. nms_thr is used for nms process. During the evaluation, score_thr can be set very low, which improves the recall and the mAP. However, it is meaningless for practical usage and leads to a very slow inference performance. For this reason, different thresholds are set in the testing and inference phases.
+
+3. **nms_pre and max_per_img**
+
+nms_pre is the maximum number of frames to be preserved before NMS, which is used to prevent slowdown caused by too many input frames during the NMS process. max_per_img is the final maximum number of frames to be reserved, usually set to 300.
+
+Take the COCO dataset as an example. It has 80 classes, and the input size is 640x640.
+
+<div align=center >
+<img alt="image" src="https://user-images.githubusercontent.com/17425982/192942249-96b0fcfb-059f-48fe-862f-7d526a3a06d7.png"/>
+</div>
+
+The inference and post-processing include:
+
+**(1) Dimensional transformation**
+
+YOLOv5 outputs three feature maps, each is scaling at 80x80, 40x40, and 20x20. As three anchors are at each position, the output feature map channel is 3x(5+80)=255.
+YOLOv5 uses a non-decoupled output header, while most other algorithms are decoupled output headers. Therefore, to unify the post-processing logic, we decouple YOLOv5's header into the category prediction branch, bbox prediction branch, and obj prediction branch.
+
+The three scales of category prediction, bbox prediction, and obj prediction are stitched together and dimensionally transformed. For subsequent processing, the original channel dimensions are replaced at the end, and the shapes of the category prediction branch, bbox prediction branch, and obj prediction branch are (b, 3x80x80+3x40x40+3x20x20, 80)=(b,25200,80), (b,25200,4), and (b,25200,1), respectively.
+
+**(2) Decoding to the original graph scale**
+
+The classification branch and obj branch need to be computed with the sigmoid function, while the bbox prediction branch needs to be decoded and reduced to the actual original graph in xyxy format.
+
+**(3) First filtering**
+
+Iterate through each graph in the batch, and then use score_thr to threshold filter the category prediction scores to remove the prediction results below score_thr.
+
+**(4) Second filtering**
+
+Multiply the obj prediction scores and the filtered category prediction scores, and then still use score_thr for threshold filtering.
+It is also necessary to consider **multi_label and nms_pre in this process to ensure that the number of detected boxes after filtering is no more than nms_pre**.
+
+**(5) Rescale to original size and NMS**
+
+Based on the pre-processing process, restore the remaining detection frames to the original graph scale before the network output and perform NMS. The final output detection frame cannot be more than **max_per_img**.
+
+#### 1.6.2 batch shape strategy
+
+In order to speed up the inference process on the validation set, the authors propose the batch shape strategy, whose principle is to **ensure that the images within the same batch have the least number of pad pixels in the batch inference process, and do not require all the images in the batch to have the same scale throughout the validation process**.
+
+It first sorts images according to their aspect ratio of the entire test or validation set, and then forms a batch of the sorted images based on the settings.
+At the same time, the batch shape of the current batch is calculated to prevent too many pad pixels. We focus on padding with the original aspect ratio but not padding the image to a perfect square.
+
+```python
+        image_shapes = []
+        for data_info in data_list:
+            image_shapes.append((data_info['width'], data_info['height']))
+
+        image_shapes = np.array(image_shapes, dtype=np.float64)
+
+        n = len(image_shapes)  # number of images
+        batch_index = np.floor(np.arange(n) / self.batch_size).astype(
+            np.int)  # batch index
+        number_of_batches = batch_index[-1] + 1  # number of batches
+
+        aspect_ratio = image_shapes[:, 1] / image_shapes[:, 0]  # aspect ratio
+        irect = aspect_ratio.argsort()
+
+        data_list = [data_list[i] for i in irect]
+
+        aspect_ratio = aspect_ratio[irect]
+        # Set training image shapes
+        shapes = [[1, 1]] * number_of_batches
+        for i in range(number_of_batches):
+            aspect_ratio_index = aspect_ratio[batch_index == i]
+            min_index, max_index = aspect_ratio_index.min(
+            ), aspect_ratio_index.max()
+            if max_index < 1:
+                shapes[i] = [max_index, 1]
+            elif min_index > 1:
+                shapes[i] = [1, 1 / min_index]
+
+        batch_shapes = np.ceil(
+            np.array(shapes) * self.img_size / self.size_divisor +
+            self.pad).astype(np.int) * self.size_divisor
+
+        for i, data_info in enumerate(data_list):
+            data_info['batch_shape'] = batch_shapes[batch_index[i]]
+```
 
 ## 2 Sum up
 

@@ -97,7 +97,7 @@ Mosaic 属于混合类数据增强，因为它在运行时候需要 4 张图片�
 随机仿射变换包括平移、旋转、缩放、错切等几何增强操作，同时由于 Mosaic 和 RandomAffine 属于比较强的增强操作，会引入较大噪声，因此需要对增强后的标注进行处理，过滤规则为：
 
 1. 增强后的 gt bbox 宽高要大于 wh_thr
-2. 增强后的 gt bbox 面积和增强前的 gt bbox 面积要大于 ar_thr，防止增强太严重
+2. 增强后的 gt bbox 面积和增强前的 gt bbox 面积比要大于 ar_thr，防止增强太严重
 3. 最大宽高比要小于 area_thr，防止宽高比改变太多
 
 由于旋转后标注框会变大导致不准确，因此目标检测里面很少会使用旋转数据增强。
@@ -108,8 +108,7 @@ Mosaic 属于混合类数据增强，因为它在运行时候需要 4 张图片�
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190543076-db60e4b2-0552-4cf4-ab45-259d1ccbd5a6.png"/>
 </div>
 
-MixUp 和 Mosaic 类似，也是属于混合图片类增强，其是随机从另外一张图，然后两种图随机混合而成。其实现方法有多种，常见的做法是：
-要么 label 直接拼接起来，要么 label 也采用 alpha 混合，原作者的做法非常简单，对 label 即直接拼接，而图片通过分布采样混合。
+MixUp 和 Mosaic 类似也属于混合图片类增强方法。随机选出另外一张图后将两图再随机混合。具体实现方法有多种，常见的做法是要么将 label 直接拼接起来，要么将 label 也采用 alpha 方法混合。原作者的做法非常简单，对 label 即直接拼接，而图片通过分布采样混合。
 
 需要特别注意的是：
 **YOLOv5 实现的 MixUp 中，随机出来的另一张图也需要经过 Mosaic 马赛克 + RandomAffine 随机仿射变换 的增强后才能混合。这个和其他开源库实现可能不太一样**。
@@ -130,13 +129,13 @@ MMDetection 开源库中已经对 Albu 第三方数据增强库进行了封装�
 
 #### 1.1.5 MMYOLO 实现解析
 
-常规的单图数据增强例如随机翻转等比较容易实现，而 Mosiac 类的混合数据增强则不太容易。在 MMDetection 复现的 YOLOX 算法中提出了 MultiImageMixDataset 数据集包装器的概念，其实现过程如下：
+常规的单图数据增强例如随机翻转等比较容易实现，而 Mosaic 类的混合数据增强则不太容易。在 MMDetection 复现的 YOLOX 算法中提出了 MultiImageMixDataset 数据集包装器的概念，其实现过程如下：
 
 <div align=center >
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190543666-d5a22ed7-46a0-4696-990a-12ebde7f8907.png"/>
 </div>
 
-对于 Mosiac 等混合类数据增强策略，会需要额外实现一个 `get_indexes` 方法来获取其他图片索引，然后用得到的 4 张图片信息就可以进行 Mosiac 增强了。
+对于 Mosaic 等混合类数据增强策略，会需要额外实现一个 `get_indexes` 方法来获取其他图片索引，然后用得到的 4 张图片信息就可以进行 Mosaic 增强了。
 以 MMDetection 中实现的 YOLOX 为例，其配置文件写法如下所示：
 
 ```python
@@ -550,8 +549,7 @@ YOLOv5 后处理过程和 YOLOv3 非常类似，实际上 YOLO 系列的后处�
 
 1. **multi_label**
 
-对于多类别预测来说是否考虑多标签，也就是同一个预测位置中预测的多个类别概率，是否当做单类处理。因为 YOLOv5 采用 sigmoid 预测模式，
-在考虑多标签情况下可能会出现一个物体检测出两个不同类别的框，这有助于评估指标 mAP，但是不利于实际应用。
+对于多类别预测来说需要考虑是否是多标签任务，也就是同一个预测位置会预测的多个类别概率，和是否当作单类处理。因为 YOLOv5 采用 sigmoid 预测模式，在考虑多标签情况下可能会出现一个物体检测出两个不同类别的框，这有助于评估指标 mAP，但是不利于实际应用。
 因此在需要算评估指标时候 multi_label 是 True，而推理或者实际应用时候是 False
 
 2. **score_thr 和 nms_thr**
