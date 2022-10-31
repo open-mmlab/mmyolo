@@ -536,7 +536,7 @@ The training process is similar to most YOLO, including the following strategies
 3. The EMA strategy is used to smooth the model.
 4. Automatic mixed-precision training with AMP by default.
 
-What needs to be reminded is that YOLOv5 officially uses single-card v100 training for the small model with a bs is 128. However, m/l/x models are trained with different numbers of multi-cards.
+What needs to be reminded is that the official YOLOv5 repository uses single-card v100 training for the small model with a bs is 128. However, m/l/x models are trained with different numbers of multi-cards.
 This training strategy is not relatively standard, **For this reason, eight cards are used in MMYOLO, and each card sets the bs to 16. At the same time, in order to avoid performance differences, SyncBN is turned on during training**.
 
 ### 1.6 Inference and post-processing
