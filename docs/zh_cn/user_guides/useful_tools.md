@@ -110,52 +110,80 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
 
 ### 可视化数据集分析
 
-脚本 `tools/analysis_tools/dataset_analysis.py` 能够帮助用户得到四种功能的效果图，并直接保存可视化图片到指定文件夹内。在指定文件夹内还会生成四个功能对应的文件夹，便于大家对应使用。
+脚本 `tools/analysis_tools/dataset_analysis.py` 能够帮助用户得到四种功能的效果图，同时打印列表显示该数据集类别名称及对应数量，并将图片保存到当前运行目录下的 `dataset_analysis` 文件夹中。
 关于该脚本的功能的说明：
-功能一：显示类别和bbox实例个数的分布图
+通过 `main()` 的数据准备，得到每个子函数所需要的数据。
+功能一：显示类别和 bbox 实例个数的分布图，通过子函数 `def show_bbox_num(cfg, args, fig_set, class_name, class_num)` 生成。
 
-<div align=center>
-< img src="https://user-images.githubusercontent.com/90811472/196891728-4c2f1ab3-01cb-445f-a6b8-39752387c40f.jpg"/>
-</div>
+<img src="https://user-images.githubusercontent.com/90811472/196891728-4c2f1ab3-01cb-445f-a6b8-39752387c40f.jpg"/>
 
-功能二：显示类别和bbox实例宽、高的分布图
+功能二：显示类别和 bbox 实例宽、高的分布图，通过子函数 `def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name)` 生成。
 
-<div align=center>
-< img src="https://user-images.githubusercontent.com/90811472/196891895-ae2bc906-fd63-4896-9c3c-a819c3ce24a6.jpg"/>
-</div>
+<img src="https://user-images.githubusercontent.com/90811472/199019573-650b9652-eb14-4bc0-a5e8-650dfc578fc8.jpg"/>
 
-功能三：显示类别和bbox实例宽/高比例的分布图
+功能三：显示类别和 bbox 实例宽/高比例的分布图，通过子函数 `def show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio)` 生成。
 
-<div align=center>
-< img src="https://user-images.githubusercontent.com/90811472/197392631-8788b4d0-951b-4922-a459-265e055c0ed9.jpg"/>
-</div>
+<img src="https://user-images.githubusercontent.com/90811472/199019593-0f810a21-18d2-41ac-b4fa-baa8288bcb23.jpg"/>
 
-功能四：基于物体大、中、小规则下，显示类别和bbox实例面积的分布图
+功能四：基于面积规则下，显示类别和 bbox 实例面积的分布图，通过子函数 `def show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num)` 生成。
 
-<div align=center>
-< img src="https://user-images.githubusercontent.com/90811472/196891947-42a972fc-5bdb-486e-ace9-f5ded4419783.jpg"/>
-</div>
+<img src="https://user-images.githubusercontent.com/90811472/199022991-5388db47-d0f3-4201-9eee-13c5fab6bca9.jpg"/>
 
-其中，生成四个对应文件夹的说明， `show_bbox_num` 保存功能一所实现的图片， `show_bbox_wh` 保存功能二所实现的图片， `show_bbox_wh_ratio` 保存功能三所实现的图片， `show_bbox_area` 保存功能四所实现的图片。
+打印列表显示，通过脚本中子函数 `def show_class_list(class_name, class_num)` 生成。
+
+<img src="https://user-images.githubusercontent.com/90811472/199090989-15109bbf-f035-477d-8566-e2a28de0935d.jpg"/>
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
+                                              [-h] \
+                                              [--type ${TYPE}] \
+                                              [--class-name ${CLASS_NAME}] \
+                                              [--area-rule ${AREA_RULE}] \
+                                              [--func ${FUNC}] \
                                               [--output-dir ${OUTPUT_DIR}]
 ```
 
 例子：
 
-1.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化数据集分析，同时得到的结果图片直接保存到当前运行目录中：
+1.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 分析数据集，其中默认设置，数据加载类型为 `train` ，面积规则区间为 `[0,32**2,96**2,1e5**2]` ,数据集中所有类和四个功能效果图全部生成并将图片保存到当前运行目录下 `./dataset_analysis` 文件夹中：
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py
 ```
 
-2.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化数据集分析，同时得到的结果图片直接保存到目录 `work-dir/dataset_analysis`：
+2.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 分析数据集，通过 `--type` 设置将数据加载类型由默认的 `train` 改为 `val`：
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
-                                               --output-dir work-dir/dataset_analysis
+                                               --type val
+```
+
+3.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 分析数据集，通过 `--class-name` 设置将生成所有类显示改为特定类，以显示 `person` 和 `car` 类为例：
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
+                                               --class-name person car
+```
+
+4.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 分析数据集，通过 `--area-rule` 重新定义面积规则，以新增值为 `30 70 120` 为例，面积规则区间变为 `[0, 30**2, 70**2，120**2, 1e5**2]` ,目前只支持最多增加三个值：
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
+                                               --area-rule 30 70 120
+```
+
+5.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 分析数据集，通过 `--func` 设置，将显示四个功能效果图改为只显示 `功能一` 为例：
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
+                                               --func 1
+```
+
+6.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 分析数据集，通过 `--output-dir` 设置修改图片保存地址，以 `work_ir/dataset_analysis` 地址为例：
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
+                                               --output-dir work_dir/dataset_analysis
 ```
 
 ## 数据集转换

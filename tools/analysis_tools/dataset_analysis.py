@@ -22,23 +22,24 @@ def parse_args():
         '--type',
         default='train',
         type=str,
-        help='Data set type, such as train or val.')
+        help='Dataset set type, e.g., "train" or "val"')
     parser.add_argument(
         '--class-name',
-        default='all',
+        default=None,
         type=str,
-        help='The name of the dataset class,such as all classes or one class.')
+        nargs='+',
+        help='Display category-specific data, e.g., "bicycle", "person"')
     parser.add_argument(
         '--area-rule',
-        default=[32, 96],
+        default=None,
         type=int,
-        action='append',
-        help='Add a new data, customize area rules')
+        nargs='+',
+        help='Add a new data, customize area rules, e.g., 30,70,120')
     parser.add_argument(
         '--func',
-        default='all',
+        default=None,
         type=str,
-        help='Dataset analysis function selection')
+        help='Dataset analysis function selection, e.g., 1/2/3/4')
     parser.add_argument(
         '--output-dir',
         default='./',
@@ -236,15 +237,20 @@ def show_class_list(class_name, class_num):
 
     data_info = PrettyTable()
     data_info.title = 'Dataset analysis'
-    if len(class_name) % 25 != 0:
+
+    if len(class_name) < 25:
+        data_info.add_column('Class name', class_name)
+        data_info.add_column('bbox_num', class_num)
+    elif len(class_name) % 25 != 0 and len(class_name) > 25:
         col_num = int(len(class_name) / 25) + 1
         class_nums = class_num.tolist()
         for i in range(0, (col_num * 25) - len(class_name)):
             class_name.append('')
             class_nums.append('')
-    for i in range(0, len(class_name), 25):
-        data_info.add_column('Class name', class_name[i:i + 25])
-        data_info.add_column('bbox_num', class_nums[i:i + 25])
+        for i in range(0, len(class_name), 25):
+            data_info.add_column('Class name', class_name[i:i + 25])
+            data_info.add_column('bbox_num', class_nums[i:i + 25])
+    data_info.align['Class name'] = 'l'
     print(data_info)
 
 
@@ -275,27 +281,32 @@ def main():
         'out_name': cfg.dataset_type
     }
     fig_one_set = {
-        'figsize': [15, 10],
+        'figsize': [15, 12],
         'fontsize': 10,
         'xticks_angle': 0,
-        'out_name': args.class_name
+        'out_name': 'specific_class'
     }
 
     # Call the category name and save address
-    if args.class_name == 'all':
+    if args.class_name is None:
         classes = dataset.metainfo['CLASSES']
         classes_idx = [i for i in range(len(classes))]
         fig_set = fig_all_set
-    elif args.class_name:
-        assert args.class_name in dataset.metainfo['CLASSES']
-        classes = [args.class_name]
-        classes_idx = [dataset.metainfo['CLASSES'].index(args.class_name)]
-        fig_set = fig_one_set
     else:
-        raise RuntimeError('Please enter the correct classes name')
+        class_name_idx = []
+        for i in range(len(args.class_name)):
+            assert args.class_name[i] in dataset.metainfo['CLASSES']
+            class_idx = dataset.metainfo['CLASSES'].index(args.class_name[i])
+            class_name_idx.append(class_idx)
+        classes = args.class_name
+        classes_idx = class_name_idx
+        fig_set = fig_one_set
 
     # Building Area Rules
-    area_rules = [0] + args.area_rule + [1e5]
+    if args.area_rule is None:
+        area_rules = [0, 32, 96, 1e5]
+    else:
+        area_rules = [0] + args.area_rule + [1e5]
     area_rule = sorted(area_rules)
 
     # Build arrays or lists to store data for each category
@@ -311,12 +322,13 @@ def main():
     for img in data_list:
         for instance in img['instances']:
             if instance[
-                    'bbox_label'] in classes_idx and args.class_name == 'all':
+                    'bbox_label'] in classes_idx and args.class_name is None:
                 class_num[instance['bbox_label']] += 1
                 class_bbox[instance['bbox_label']].append(instance['bbox'])
-            elif instance['bbox_label'] in classes_idx and args.class_name:
-                class_num[0] += 1
-                class_bbox[0].append(instance['bbox'])
+            elif instance['bbox_label'] in classes_idx:
+                idx = classes_idx.index(instance['bbox_label'])
+                class_num[idx] += 1
+                class_bbox[idx].append(instance['bbox'])
         progress_bar.update()
 
     # Get the width, height and area of bbox corresponding to each category
@@ -343,13 +355,13 @@ def main():
         progress_bar_classes.update()
 
     # 3.draw Dataset Information
-    if args.func == '1' or args.func == 'all':
+    if args.func == '1' or args.func is None:
         show_bbox_num(cfg, args, fig_set, class_name, class_num)
-    if args.func == '2' or args.func == 'all':
+    if args.func == '2' or args.func is None:
         show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name)
-    if args.func == '3' or args.func == 'all':
+    if args.func == '3' or args.func is None:
         show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio)
-    if args.func == '4' or args.func == 'all':
+    if args.func == '4' or args.func is None:
         show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num)
     print('\nDraw End\n')
 
