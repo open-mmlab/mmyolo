@@ -111,6 +111,7 @@ class BaseAnchorOptimizer:
         dataset (obj:`Dataset`): Dataset object.
         input_shape (list[int]): Input image shape of the model.
             Format in [width, height].
+        num_anchor_per_level (list[int]) : Number of anchors for each level.
         logger (obj:`logging.Logger`): The logger for logging.
         device (str, optional): Device used for calculating.
             Default: 'cuda:0'
@@ -121,11 +122,14 @@ class BaseAnchorOptimizer:
     def __init__(self,
                  dataset,
                  input_shape,
+                 num_anchor_per_level,
                  logger,
                  device='cuda:0',
                  out_dir=None):
         self.dataset = dataset
         self.input_shape = input_shape
+        self.num_anchor_per_level = num_anchor_per_level
+        self.num_anchors = sum(num_anchor_per_level)
         self.logger = logger
         self.device = device
         self.out_dir = out_dir
@@ -180,9 +184,15 @@ class BaseAnchorOptimizer:
         raise NotImplementedError
 
     def save_result(self, anchors, path=None):
+
         anchor_results = []
-        for w, h in anchors:
-            anchor_results.append([round(w), round(h)])
+        start = 0
+        for num in self.num_anchor_per_level:
+            end = num + start
+            anchor_results.append([(round(w), round(h))
+                                   for w, h in anchors[start:end]])
+            start = end
+
         self.logger.info(f'Anchor optimize result:{anchor_results}')
         if path:
             json_path = osp.join(path, 'anchor_optimize_result.json')
@@ -195,14 +205,12 @@ class YOLOKMeansAnchorOptimizer(BaseAnchorOptimizer):
     <https://github.com/AlexeyAB/darknet/blob/master/src/detector.c>`_.
 
     Args:
-        num_anchors (int) : Number of anchors.
         iters (int): Maximum iterations for k-means.
     """
 
-    def __init__(self, num_anchors, iters, **kwargs):
+    def __init__(self, iters, **kwargs):
 
         super().__init__(**kwargs)
-        self.num_anchors = num_anchors
         self.iters = iters
 
     def optimize(self):
@@ -268,14 +276,12 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
     <https://github.com/ultralytics/yolov5/blob/master/utils/autoanchor.py>`_.
 
     Args:
-        num_anchors (int) : Number of anchors.
         iters (int): Maximum iterations for k-means.
         prior_match_thr (float): anchor-label width height
             ratio threshold hyperparameter.
     """
 
     def __init__(self,
-                 num_anchors,
                  iters,
                  prior_match_thr=4.0,
                  mutation_args=[0.9, 0.1],
@@ -283,7 +289,6 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
                  **kwargs):
 
         super().__init__(**kwargs)
-        self.num_anchors = num_anchors
         self.iters = iters
         self.prior_match_thr = prior_match_thr
         [self.mutation_prob, self.mutation_sigma] = mutation_args
@@ -461,7 +466,8 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
 
         # min_ratio records the min ratio of each box with all anchor,
         # min_ratio.shape is torch.Size([box_num,anchor_num])
-        # notice:smaller ratio means worse shape-match between box and anchor
+        # notice:
+        # smaller ratio means worse shape-match between boxes and anchors
         min_ratio = torch.min(ratio, 1 / ratio).min(2)[0]
 
         # find the best shape-match ratio for each box
@@ -475,7 +481,6 @@ class YOLODEAnchorOptimizer(BaseAnchorOptimizer):
     """YOLO anchor optimizer using differential evolution algorithm.
 
     Args:
-        num_anchors (int) : Number of anchors.
         iters (int): Maximum iterations for k-means.
         strategy (str): The differential evolution strategy to use.
             Should be one of:
@@ -507,7 +512,6 @@ class YOLODEAnchorOptimizer(BaseAnchorOptimizer):
     """
 
     def __init__(self,
-                 num_anchors,
                  iters,
                  strategy='best1bin',
                  population_size=15,
@@ -518,7 +522,6 @@ class YOLODEAnchorOptimizer(BaseAnchorOptimizer):
 
         super().__init__(**kwargs)
 
-        self.num_anchors = num_anchors
         self.iters = iters
         self.strategy = strategy
         self.population_size = population_size
@@ -591,7 +594,7 @@ def main():
         f'Only support optimize YOLOAnchor, but get {anchor_type}.'
 
     base_sizes = cfg.model.bbox_head.prior_generator.base_sizes
-    num_anchors = sum([len(sizes) for sizes in base_sizes])
+    num_anchor_per_level = [len(sizes) for sizes in base_sizes]
 
     train_data_cfg = cfg.train_dataloader
     while 'dataset' in train_data_cfg:
@@ -604,7 +607,7 @@ def main():
             dataset=dataset,
             input_shape=input_shape,
             device=args.device,
-            num_anchors=num_anchors,
+            num_anchor_per_level=num_anchor_per_level,
             iters=args.iters,
             logger=logger,
             out_dir=args.output_dir)
@@ -613,7 +616,7 @@ def main():
             dataset=dataset,
             input_shape=input_shape,
             device=args.device,
-            num_anchors=num_anchors,
+            num_anchor_per_level=num_anchor_per_level,
             iters=args.iters,
             logger=logger,
             out_dir=args.output_dir)
@@ -622,7 +625,7 @@ def main():
             dataset=dataset,
             input_shape=input_shape,
             device=args.device,
-            num_anchors=num_anchors,
+            num_anchor_per_level=num_anchor_per_level,
             iters=args.iters,
             prior_match_thr=args.prior_match_thr,
             mutation_args=args.mutation_args,
@@ -631,7 +634,7 @@ def main():
             out_dir=args.output_dir)
     else:
         raise NotImplementedError(
-            f'Only support k-means, differential_evolution, and v5-k-means '
+            f'Only support k-means and differential_evolution, '
             f'but get {args.algorithm}')
 
     optimizer.optimize()
