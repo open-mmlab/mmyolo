@@ -310,7 +310,7 @@ YOLOV5 的匹配策略简单总结为：**采用了 anchor 和 gt_bbox 的 shape
 
 #### 1.3.1 Anchor 设置
 
-YOLOv5 是 Anchor-based 的目标检测算法，其Anchor size 的获取方式与 YOLOv3 类似，也是使用聚类获得，其不同之处在于聚类使用的标准不再是基于IoU的，而是使用形状上的宽高比作为聚类准则(即 shape-match)。
+YOLOv5 是 Anchor-based 的目标检测算法，其 Anchor size 的获取方式与 YOLOv3 类似，也是使用聚类获得，其不同之处在于聚类使用的标准不再是基于 IoU 的，而是使用形状上的宽高比作为聚类准则(即 shape-match )。
 
 在用户更换了数据集后，可以使用 MMYOLO 里带有的 Anchor 分析工具，对自己的数据集进行分析，确定合适的 Anchor size。
 
