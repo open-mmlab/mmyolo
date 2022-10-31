@@ -213,7 +213,9 @@ default_hooks = dict(
         lr_factor=0.01,
         max_epochs=max_epochs),
     checkpoint=dict(
-        type='CheckpointHook', interval=save_epoch_intervals,
+        type='CheckpointHook',
+        interval=save_epoch_intervals,
+        save_best='auto',
         max_keep_ckpts=3))
 
 custom_hooks = [
@@ -222,6 +224,7 @@ custom_hooks = [
         ema_type='ExpMomentumEMA',
         momentum=0.0001,
         update_buffers=True,
+        strict_load=False,
         priority=49)
 ]
 
