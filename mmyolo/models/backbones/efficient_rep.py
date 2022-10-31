@@ -8,7 +8,6 @@ from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.models.layers.yolo_bricks import SPPFBottleneck
 from mmyolo.registry import MODELS
-from ..layers import RepStageBlock, RepVGGBlock
 from ..utils import make_divisible, make_round
 from .base_backbone import BaseBackbone
 
@@ -78,9 +77,11 @@ class YOLOv6EfficientRep(BaseBackbone):
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True),
                  norm_eval: bool = False,
-                 block: nn.Module = RepVGGBlock,
+                 block_cfg: ConfigType = dict(type='RepVGGBlock'),
+                 stage_cfg: ConfigType = dict(type='RepStageBlock'),
                  init_cfg: OptMultiConfig = None):
-        self.block = block
+        self.block_cfg = block_cfg
+        self.stage_cfg = stage_cfg
         super().__init__(
             self.arch_settings[arch],
             deepen_factor,
@@ -96,12 +97,17 @@ class YOLOv6EfficientRep(BaseBackbone):
 
     def build_stem_layer(self) -> nn.Module:
         """Build a stem layer."""
-        return self.block(
-            in_channels=self.input_channels,
-            out_channels=make_divisible(self.arch_setting[0][0],
-                                        self.widen_factor),
-            kernel_size=3,
-            stride=2)
+
+        block_cfg = self.block_cfg.copy()
+        block_cfg.update(
+            dict(
+                in_channels=self.input_channels,
+                out_channels=make_divisible(self.arch_setting[0][0],
+                                            self.widen_factor),
+                kernel_size=3,
+                stride=2,
+            ))
+        return MODELS.build(block_cfg)
 
     def build_stage_layer(self, stage_idx: int, setting: list) -> list:
         """Build a stage layer.
@@ -115,21 +121,28 @@ class YOLOv6EfficientRep(BaseBackbone):
         in_channels = make_divisible(in_channels, self.widen_factor)
         out_channels = make_divisible(out_channels, self.widen_factor)
         num_blocks = make_round(num_blocks, self.deepen_factor)
+        block_cfg = self.block_cfg.copy()
+        stage_cfg = self.stage_cfg.copy()
 
-        stage = []
+        stage_cfg.update(
+            in_channels=out_channels,
+            out_channels=out_channels,
+            n=num_blocks,
+            block_cfg=block_cfg,
+        )
 
-        ef_block = nn.Sequential(
-            self.block(
+        block_cfg = self.block_cfg.copy()
+        block_cfg.update(
+            dict(
                 in_channels=in_channels,
                 out_channels=out_channels,
                 kernel_size=3,
-                stride=2),
-            RepStageBlock(
-                in_channels=out_channels,
-                out_channels=out_channels,
-                n=num_blocks,
-                block=self.block,
-            ))
+                stride=2))
+        stage = []
+
+        ef_block = nn.Sequential(
+            MODELS.build(block_cfg), MODELS.build(stage_cfg))
+
         stage.append(ef_block)
 
         if use_spp:

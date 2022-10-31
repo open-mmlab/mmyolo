@@ -9,6 +9,7 @@ from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmengine.model import BaseModule
 from mmengine.utils import digit_version
 from torch import Tensor
+from torch.nn.parameter import Parameter
 
 from mmyolo.registry import MODELS
 
@@ -118,6 +119,7 @@ class SPPFBottleneck(BaseModule):
         return x
 
 
+@MODELS.register_module()
 class RepVGGBlock(nn.Module):
     """RepVGGBlock is a basic rep-style block, including training and deploy
     status This code is based on
@@ -348,38 +350,161 @@ class RepVGGBlock(nn.Module):
         self.deploy = True
 
 
-class RepStageBlock(nn.Module):
-    """RepStageBlock is a stage block with rep-style basic block.
-
-    Args:
-        in_channels (int): The input channels of this Module.
-        out_channels (int): The output channels of this Module.
-        n (int, tuple[int]): Number of blocks.  Defaults to 1.
-        block (nn.Module): Basic unit of RepStage. Defaults to RepVGGBlock.
-    """
+@MODELS.register_module()
+class BepC3StageBlock(nn.Module):
+    """Beer-mug RepC3 Block."""
 
     def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 n: int = 1,
-                 block: nn.Module = RepVGGBlock):
+                 in_channels,
+                 out_channels,
+                 n=1,
+                 e=0.5,
+                 concat=True,
+                 use_silu=False,
+                 block_cfg=dict(type='RepVGGBlock')
+                 ):  # ch_in, ch_out, number, shortcut, groups, expansion
         super().__init__()
-        self.conv1 = block(in_channels, out_channels)
-        self.block = nn.Sequential(*(block(out_channels, out_channels)
-                                     for _ in range(n - 1))) if n > 1 else None
+        c_ = int(out_channels * e)  # hidden channels
+        self.cv1 = Conv_C3(in_channels, c_, 1, 1)
+        self.cv2 = Conv_C3(in_channels, c_, 1, 1)
+        self.cv3 = Conv_C3(2 * c_, out_channels, 1, 1)
+        if use_silu:
+            self.cv1 = Conv_C3(in_channels, c_, 1, 1, act=nn.SiLU())
+            self.cv2 = Conv_C3(in_channels, c_, 1, 1, act=nn.SiLU())
+            self.cv3 = Conv_C3(2 * c_, out_channels, 1, 1, act=nn.SiLU())
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward process.
-        Args:
-            inputs (Tensor): The input tensor.
+        self.m = RepStageBlock(
+            in_channels=c_,
+            out_channels=c_,
+            n=n,
+            block_cfg=block_cfg,
+            bottle_block=BottleRep)
+        self.concat = concat
+        if not concat:
+            self.cv3 = Conv_C3(c_, out_channels, 1, 1)
 
-        Returns:
-            Tensor: The output tensor.
-        """
-        x = self.conv1(x)
-        if self.block is not None:
-            x = self.block(x)
-        return x
+    def forward(self, x):
+        if self.concat is True:
+            return self.cv3(
+                torch.cat((self.m(self.cv1(x)), self.cv2(x)), dim=1))
+        else:
+            return self.cv3(self.m(self.cv1(x)))
+
+
+class Conv_C3(nn.Module):
+    """Standard convolution in BepC3-Block."""
+
+    def __init__(self,
+                 c1,
+                 c2,
+                 k=1,
+                 s=1,
+                 p=None,
+                 g=1,
+                 act=True):  # ch_in, ch_out, kernel, stride, padding, groups
+        super().__init__()
+        self.conv = nn.Conv2d(
+            c1, c2, k, s, autopad(k, p), groups=g, bias=False)
+        self.bn = nn.BatchNorm2d(c2)
+        self.act = nn.ReLU() if act is True else (
+            act if isinstance(act, nn.Module) else nn.Identity())
+
+    def forward(self, x):
+        return self.act(self.bn(self.conv(x)))
+
+    def forward_fuse(self, x):
+        return self.act(self.conv(x))
+
+
+def autopad(k, p=None):  # kernel, padding
+    # Pad to 'same'
+    if p is None:
+        p = k // 2 if isinstance(k, int) else [x // 2 for x in k]  # auto-pad
+    return p
+
+
+class BottleRep(nn.Module):
+
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 block_cfg: ConfigType = dict(type='RepVGGBlock'),
+                 weight=False):
+        super().__init__()
+        conv1_cfg = block_cfg.copy()
+        conv2_cfg = block_cfg.copy()
+
+        conv1_cfg.update(
+            dict(in_channels=in_channels, out_channels=out_channels))
+        conv2_cfg.update(
+            dict(in_channels=out_channels, out_channels=out_channels))
+
+        self.conv1 = MODELS.build(conv1_cfg)
+        self.conv2 = MODELS.build(conv2_cfg)
+
+        if in_channels != out_channels:
+            self.shortcut = False
+        else:
+            self.shortcut = True
+        if weight:
+            self.alpha = Parameter(torch.ones(1))
+        else:
+            self.alpha = 1.0
+
+    def forward(self, x):
+        outputs = self.conv1(x)
+        outputs = self.conv2(outputs)
+        return outputs + self.alpha * x if self.shortcut else outputs
+
+
+@MODELS.register_module()
+class ConvWrapper(nn.Module):
+    """Wrapper for normal Conv with SiLU activation."""
+
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size=3,
+                 stride=1,
+                 groups=1,
+                 bias=True):
+        super().__init__()
+        self.block = Conv(in_channels, out_channels, kernel_size, stride,
+                          groups, bias)
+
+    def forward(self, x):
+        return self.block(x)
+
+
+class Conv(nn.Module):
+    """Normal Conv with SiLU activation."""
+
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size,
+                 stride,
+                 groups=1,
+                 bias=False):
+        super().__init__()
+        padding = kernel_size // 2
+        self.conv = nn.Conv2d(
+            in_channels,
+            out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            groups=groups,
+            bias=bias,
+        )
+        self.bn = nn.BatchNorm2d(out_channels)
+        self.act = nn.SiLU()
+
+    def forward(self, x):
+        return self.act(self.bn(self.conv(x)))
+
+    def forward_fuse(self, x):
+        return self.act(self.conv(x))
 
 
 @MODELS.register_module()
@@ -986,3 +1111,56 @@ class CSPResLayer(nn.Module):
             y = self.attn(y)
         y = self.conv3(y)
         return y
+
+
+@MODELS.register_module()
+class RepStageBlock(nn.Module):
+    """RepStageBlock is a stage block with rep-style basic block.
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        out_channels (int): The output channels of this Module.
+        n (int, tuple[int]): Number of blocks.  Defaults to 1.
+        block (nn.Module): Basic unit of RepStage. Defaults to RepVGGBlock.
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 n: int = 1,
+                 bottle_block=BottleRep,
+                 block_cfg: ConfigType = dict(type='RepVGGBlock')):
+        super().__init__()
+        block_cfg = block_cfg.copy()
+
+        block_cfg.update(
+            dict(in_channels=in_channels, out_channels=out_channels))
+
+        self.conv1 = MODELS.build(block_cfg)
+
+        block_cfg.update(
+            dict(in_channels=out_channels, out_channels=out_channels))
+        self.block = nn.Sequential(*(MODELS.build(block_cfg)
+                                     for _ in range(n - 1))) if n > 1 else None
+
+        if bottle_block == BottleRep:
+            self.conv1 = BottleRep(
+                in_channels, out_channels, block_cfg=block_cfg, weight=True)
+            n = n // 2
+            self.block = nn.Sequential(*(BottleRep(
+                out_channels, out_channels, block_cfg=block_cfg, weight=True)
+                                         for _ in range(n -
+                                                        1))) if n > 1 else None
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward process.
+        Args:
+            inputs (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output tensor.
+        """
+        x = self.conv1(x)
+        if self.block is not None:
+            x = self.block(x)
+        return x

@@ -7,7 +7,6 @@ from mmcv.cnn import ConvModule
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
-from ..layers import RepStageBlock, RepVGGBlock
 from ..utils import make_divisible, make_round
 from .base_yolo_neck import BaseYOLONeck
 
@@ -45,10 +44,12 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True),
-                 block: nn.Module = RepVGGBlock,
+                 block_cfg: ConfigType = dict(type='RepVGGBlock'),
+                 stage_cfg: ConfigType = dict(type='RepStageBlock'),
                  init_cfg: OptMultiConfig = None):
         self.num_csp_blocks = num_csp_blocks
-        self.block = block
+        self.block_cfg = block_cfg
+        self.stage_cfg = stage_cfg
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -110,14 +111,19 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The top down layer.
         """
-        layer0 = RepStageBlock(
+        stage_cfg = self.stage_cfg.copy()
+        block_cfg = self.block_cfg.copy()
+
+        stage_cfg.update(
             in_channels=make_divisible(
                 self.out_channels[idx - 1] + self.in_channels[idx - 1],
                 self.widen_factor),
             out_channels=make_divisible(self.out_channels[idx - 1],
                                         self.widen_factor),
             n=make_round(self.num_csp_blocks, self.deepen_factor),
-            block=self.block)
+            block_cfg=block_cfg)
+        layer0 = MODELS.build(stage_cfg)
+
         if idx == 1:
             return layer0
         elif idx == 2:
@@ -161,13 +167,21 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The bottom up layer.
         """
-        return RepStageBlock(
-            in_channels=make_divisible(self.out_channels[idx] * 2,
-                                       self.widen_factor),
-            out_channels=make_divisible(self.out_channels[idx + 1],
-                                        self.widen_factor),
-            n=make_round(self.num_csp_blocks, self.deepen_factor),
-            block=self.block)
+        in_channels = make_divisible(self.out_channels[idx] * 2,
+                                     self.widen_factor)
+        out_channels = make_divisible(self.out_channels[idx + 1],
+                                      self.widen_factor)
+        num_blocks = make_round(self.num_csp_blocks, self.deepen_factor)
+
+        stage_cfg = self.stage_cfg.copy()
+        stage_cfg.update(
+            dict(
+                in_channels=in_channels,
+                out_channels=out_channels,
+                n=num_blocks,
+                block_cfg=self.block_cfg))
+
+        return MODELS.build(stage_cfg)
 
     def build_out_layer(self, *args, **kwargs) -> nn.Module:
         """build out layer."""
