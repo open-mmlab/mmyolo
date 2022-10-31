@@ -92,7 +92,7 @@ html_theme_options = {
         },
     ],
     # Specify the language of shared menu
-    'menu_lang': 'cn',
+    'menu_lang': 'en',
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -100,8 +100,6 @@ html_theme_options = {
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 html_css_files = ['css/readthedocs.css']
-
-language = 'zh_CN'
 
 # -- Extension configuration -------------------------------------------------
 # Ignore >>> when copying code
