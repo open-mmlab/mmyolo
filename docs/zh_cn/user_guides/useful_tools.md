@@ -233,11 +233,11 @@ python tools/model_converters/yolox_to_mmyolo.py --src yolox_s.pth --dst mmyolox
 
 ## 优化锚框尺寸
 
-脚本 `tools/analysis_tools/optimize_anchors.py` 支持yolo系列中三种锚框生成方式，分别是 `k-means`、`differential_evolution`、`v5-k-means`.
+脚本 `tools/analysis_tools/optimize_anchors.py` 支持 yolo 系列中三种锚框生成方式，分别是 `k-means`、`differential_evolution`、`v5-k-means`.
 
 ### k-means
 
-在 k-means 方法中，使用的是基于IoU表示距离的聚类方法，具体使用命令如下:
+在 k-means 方法中，使用的是基于 IoU 表示距离的聚类方法，具体使用命令如下:
 
 ```shell
 python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
@@ -259,7 +259,7 @@ python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
 
 ### v5-k-means
 
-在 v5-k-means 方法中，使用的是yolov5中基于shape-match的聚类方式，具体使用命令如下:
+在 v5-k-means 方法中，使用的是 yolov5 中基于 shape-match 的聚类方式，具体使用命令如下:
 
 ```shell
 python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
