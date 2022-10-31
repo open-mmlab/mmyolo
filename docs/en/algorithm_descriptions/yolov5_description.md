@@ -74,10 +74,10 @@ Mosaic is a hybrid data augmentation method requiring four images to be stitched
 
 We can summarize the process as:
 
-1. Randomly generates coordinates of the intersection center point of the four spliced images.
+1. Randomly generates coordinates of the intersection point of the four spliced images.
 2. Randomly select the indexes of the other three images and read the corresponding annotations.
-3. Resizes each image to the specified size by maintaining each aspect ratio.
-4. Calculate the position of each image in the output image according to the top, bottom, left, and right rules. You also need to calculate the crop coordinates, as the image may be out of bounds.
+3. Resizes each image to the specified size by maintaining its aspect ratio.
+4. Calculate the position of each image in the output image according to the top, bottom, left, and right rule. You also need to calculate the crop coordinates because the image may be out of bounds.
 5. Uses the crop coordinates to crop the scaled image and paste it to the position calculated. The rest of the places will be pad with `114 pixels`.
 6. Process the label of each image accordingly.
 
