@@ -358,13 +358,13 @@ class BepC3StageBlock(nn.Module):
                  in_channels,
                  out_channels,
                  n=1,
-                 e=0.5,
+                 expansion=0.5,
                  concat=True,
                  use_silu=False,
                  block_cfg=dict(type='RepVGGBlock')
                  ):  # ch_in, ch_out, number, shortcut, groups, expansion
         super().__init__()
-        c_ = int(out_channels * e)  # hidden channels
+        c_ = int(out_channels * expansion)  # hidden channels
         self.cv1 = Conv_C3(in_channels, c_, 1, 1)
         self.cv2 = Conv_C3(in_channels, c_, 1, 1)
         self.cv3 = Conv_C3(2 * c_, out_channels, 1, 1)
@@ -1128,7 +1128,7 @@ class RepStageBlock(nn.Module):
                  in_channels: int,
                  out_channels: int,
                  n: int = 1,
-                 bottle_block=BottleRep,
+                 bottle_block=RepVGGBlock,
                  block_cfg: ConfigType = dict(type='RepVGGBlock')):
         super().__init__()
         block_cfg = block_cfg.copy()

@@ -9,6 +9,7 @@ from mmdet.utils import ConfigType, OptMultiConfig
 from mmyolo.registry import MODELS
 from ..utils import make_divisible, make_round
 from .base_yolo_neck import BaseYOLONeck
+from ..layers import RepStageBlock
 
 
 @MODELS.register_module()
@@ -45,11 +46,9 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True),
                  block_cfg: ConfigType = dict(type='RepVGGBlock'),
-                 stage_cfg: ConfigType = dict(type='RepStageBlock'),
                  init_cfg: OptMultiConfig = None):
         self.num_csp_blocks = num_csp_blocks
         self.block_cfg = block_cfg
-        self.stage_cfg = stage_cfg
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -111,10 +110,9 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The top down layer.
         """
-        stage_cfg = self.stage_cfg.copy()
         block_cfg = self.block_cfg.copy()
 
-        stage_cfg.update(
+        layer0 = RepStageBlock(
             in_channels=make_divisible(
                 self.out_channels[idx - 1] + self.in_channels[idx - 1],
                 self.widen_factor),
@@ -122,7 +120,6 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
                                         self.widen_factor),
             n=make_round(self.num_csp_blocks, self.deepen_factor),
             block_cfg=block_cfg)
-        layer0 = MODELS.build(stage_cfg)
 
         if idx == 1:
             return layer0
@@ -167,21 +164,15 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The bottom up layer.
         """
-        in_channels = make_divisible(self.out_channels[idx] * 2,
-                                     self.widen_factor)
-        out_channels = make_divisible(self.out_channels[idx + 1],
-                                      self.widen_factor)
-        num_blocks = make_round(self.num_csp_blocks, self.deepen_factor)
+        block_cfg = self.block_cfg.copy()
 
-        stage_cfg = self.stage_cfg.copy()
-        stage_cfg.update(
-            dict(
-                in_channels=in_channels,
-                out_channels=out_channels,
-                n=num_blocks,
-                block_cfg=self.block_cfg))
-
-        return MODELS.build(stage_cfg)
+        return RepStageBlock(
+            in_channels=make_divisible(self.out_channels[idx] * 2,
+                                       self.widen_factor),
+            out_channels=make_divisible(self.out_channels[idx + 1],
+                                        self.widen_factor),
+            n=make_round(self.num_csp_blocks, self.deepen_factor),
+            block_cfg=block_cfg)
 
     def build_out_layer(self, *args, **kwargs) -> nn.Module:
         """build out layer."""
@@ -194,3 +185,4 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
                 # In order to be consistent with the source code,
                 # reset the Conv2d initialization parameters
                 m.reset_parameters()
+
