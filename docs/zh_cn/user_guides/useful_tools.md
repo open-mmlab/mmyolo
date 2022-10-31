@@ -231,6 +231,44 @@ python tools/model_converters/yolox_to_mmyolo.py --src yolox_s.pth --dst mmyolox
 
 转换好的 `mmyolox.pt` 即可以在 MMYOLO 中使用。
 
+## 优化锚框尺寸
+
+脚本 `tools/analysis_tools/optimize_anchors.py` 支持 yolo 系列中三种锚框生成方式，分别是 `k-means`、`differential_evolution`、`v5-k-means`.
+
+### k-means
+
+在 k-means 方法中，使用的是基于 IoU 表示距离的聚类方法，具体使用命令如下:
+
+```shell
+python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
+    --algorithm k-means \
+    --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
+    --output-dir ${OUTPUT_DIR}
+```
+
+### differential_evolution
+
+在 differential_evolution 方法中，使用的是基于差分进化算法（简称 DE 算法）的聚类方式，其最小化目标函数为 `avg_iou_cost` ，具体使用命令如下:
+
+```shell
+python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
+    --algorithm differential_evolution \
+    --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
+    --output-dir ${OUTPUT_DIR}
+```
+
+### v5-k-means
+
+在 v5-k-means 方法中，使用的是 yolov5 中基于 shape-match 的聚类方式，具体使用命令如下:
+
+```shell
+python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
+    --algorithm v5-k-means \
+    --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
+    --prior_match_thr ${PRIOR_MATCH_THR} \
+    --output-dir ${OUTPUT_DIR}
+```
+
 ## 提取 COCO 子集
 
 COCO2017 数据集训练数据集包括 118K 张图片，验证集包括 5K 张图片，数据集比较大。在调试或者快速验证程序是否正确的场景下加载 json 会需要消耗较多资源和带来较慢的启动速度，这会导致程序体验不好。
