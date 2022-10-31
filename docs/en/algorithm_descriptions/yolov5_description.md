@@ -527,7 +527,7 @@ MMYOLO also implements through the YOLOv5OptimizerConstructor.
 
 #### 1.5.3 Gradient accumulation
 
-In order to maximize the performance under different batch sizes, the author sets the gradient accumulation function automatically when the total batch size is less than 64.
+To maximize the performance under different batch sizes, the author sets the gradient accumulation function automatically when the total batch size is less than 64.
 
 The training process is similar to most YOLO, including the following strategies:
 
