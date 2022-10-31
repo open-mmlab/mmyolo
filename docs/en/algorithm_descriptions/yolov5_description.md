@@ -575,7 +575,7 @@ The three scales of category prediction, bbox prediction, and obj prediction are
 
 **(2) Decoding to the original graph scale**
 
-The classification branch and obj branch need to be computed with the sigmoid function, while the bbox prediction branch needs to be decoded and reduced to the actual original graph in xyxy format.
+The classification branch and obj branch need to be computed with the sigmoid function, while the bbox prediction branch needs to be decoded and reduced to the original image in xyxy format.
 
 **(3) First filtering**
 
