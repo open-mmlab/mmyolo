@@ -320,7 +320,7 @@ anchors = [[(10, 13), (16, 30), (33, 23)], [(30, 61), (62, 45), (59, 119)],
 
 #### 1.3.2 Bbox encoding and decoding process
 
-In anchor-based algorithms, the predicted bounding box will transform based on the pre-set anchors. Then, the transformation amount is predicted, known as the GT Bbox encoding process. Finally, the Pred Bbox decoding needs to be performed after the prediction to restore the bboxes to the original scale, known as the Pred Bbox decoding process.
+The predicted bounding box will transform based on the pre-set anchors in anchor-based algorithms. Then, the transformation amount is predicted, known as the GT Bbox encoding process. Finally, the Pred Bbox decoding needs to be performed after the prediction to restore the bboxes to the original scale, known as the Pred Bbox decoding process.
 
 In YOLOv3, the bbox regression formula is:
 
