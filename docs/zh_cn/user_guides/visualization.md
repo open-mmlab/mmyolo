@@ -38,7 +38,7 @@ MMYOLO 中，将使用 MMEngine 提供的 `Visualizer` 可视化器进行特征�
 - `--channel-reduction`：输入的 Tensor 一般是包括多个通道的，`channel_reduction` 参数可以将多个通道压缩为单通道，然后和图片进行叠加显示，有以下三个参数可以设置：
 
   - `squeeze_mean`：将输入的 C 维度采用 mean 函数压缩为一个通道，输出维度变成 (1, H, W)。
-  - `select_max`：从输入的 C 维度中先在空间维度 sum，维度变成 (C, )，然后选择值最大的通道。
+  - `select_max`：将输入先在空间维度 sum，维度变成 (C, )，然后选择值最大的通道。
   - `None`：表示不需要压缩，此时可以通过 `topk` 参数可选择激活度最高的 `topk` 个特征图显示。
 
 - `--topk`：只有在 `channel_reduction` 参数为 `None` 的情况下， `topk` 参数才会生效，其会按照激活度排序选择 `topk` 个通道，然后和图片进行叠加显示，并且此时会通过 `--arrangement` 参数指定显示的布局，该参数表示为一个数组，两个数字需要以空格分开，例如： `--topk 5 --arrangement 2 3` 表示以 `2行 3列` 显示激活度排序最高的 5 张特征图， `--topk 7 --arrangement 3 3` 表示以 `3行 3列` 显示激活度排序最高的 7 张特征图。
@@ -47,6 +47,8 @@ MMYOLO 中，将使用 MMEngine 提供的 `Visualizer` 可视化器进行特征�
   - 如果 topk = -1，此时通道 C 必须是 1 或者 3 表示输入数据是图片，否则报错提示用户应该设置 `channel_reduction` 来压缩通道。
 
 - 考虑到输入的特征图通常非常小，函数默认将特征图进行上采样后方便进行可视化。
+
+**注意：当图片和特征图尺度不一样时候，`draw_featmap` 函数会自动进行上采样对齐。如果你的图片在推理过程中前处理存在类似 Pad 的操作此时得到的特征图也是 Pad 过的，那么直接上采样就可能会出现不对齐问题。**
 
 ## 用法示例
 
@@ -70,7 +72,58 @@ python demo/featmap_vis_demo.py demo/dog.jpg \
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/89863442/190939711-c498060d-ed98-4dca-aa02-b41ca82f51b0.jpg" width="800" alt="image"/>
+<img src="https://user-images.githubusercontent.com/17425982/198520580-c1b24d50-2e90-4ba5-af51-5a7dcb9db945.png" width="800" alt="image"/>
+</div>
+
+实际上上述代码存在图片和特征图不对齐问题，解决办法有两个：
+
+1. 修改 YOLOv5 配置，让后处理只是简单的 Resize 即可，这对于可视化是没有啥影响的
+
+2. 可视化时候图片应该用前处理后的，而不能用前处理前的
+
+**为了简单目前这里采用第一种解决办法，后续会采用第二种方案修复，让大家可以不修改配置即可使用**。具体来说是将原先的 `test_pipeline` 替换为仅仅 Resize 版本。
+
+旧的 `test_pipeline` 为：
+
+```python
+test_pipeline = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args={{_base_.file_client_args}}),
+    dict(type='YOLOv5KeepRatioResize', scale=img_scale),
+    dict(
+        type='LetterResize',
+        scale=img_scale,
+        allow_scale_up=False,
+        pad_val=dict(img=114)),
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor', 'pad_param'))
+]
+```
+
+修改为如下配置：
+
+```python
+test_pipeline = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args=_base_.file_client_args),
+    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # 这里将 LetterResize 修改成 mmdet.Resize
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor'))
+]
+```
+
+正确效果如下：
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/198521116-dbccade4-370c-4051-92bf-923ca8f60f24.png" width="800" alt="image"/>
 </div>
 
 (2) 将多通道特征图采用 `squeeze_mean` 参数压缩为单通道并显示, 通过提取 `neck` 层输出进行特征图可视化，将得到 `neck` 三个输出层的特征图：
@@ -84,21 +137,21 @@ python demo/featmap_vis_demo.py demo/dog.jpg \
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/89863442/190939718-b320239e-87f0-4a07-8525-b4087372e3fd.jpg" width="800" alt="image"/>
+<img src="https://user-images.githubusercontent.com/17425982/198521267-20202e3d-b1bc-4559-9085-e0af287636c8.png" width="800" alt="image"/>
 </div>
 
 (3) 将多通道特征图采用 `squeeze_mean` 参数压缩为单通道并显示, 通过提取 `backbone.stage4` 和 `backbone.stage3` 层输出进行特征图可视化，将得到两个输出层的特征图：
 
 ```shell
 python demo/featmap_vis_demo.py demo/dog.jpg \
-                                configs/yolov5/yolov5_s-v61_fast_syncbn_8xb16-300e_coco.py \
+                                configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
                                 yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
                                 --target-layers backbone.stage4 backbone.stage3 \
                                 --channel-reduction squeeze_mean
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/89863442/190939720-cf829954-cc15-4b31-9be3-229d4d95e458.jpg" width="800" alt="image"/>
+<img src="https://user-images.githubusercontent.com/17425982/198522004-c5782807-166a-45f3-96e3-7e6df5dc70ac.png" width="800" alt="image"/>
 </div>
 
 (4) 利用 `--topk 3 --arrangement 2 2` 参数选择多通道特征图中激活度最高的 3 个通道并采用 `2x2` 布局显示, 用户可以通过 `arrangement` 参数选择自己想要的布局，特征图将自动布局，先按每个层中的 `top3` 特征图按 `2x2` 的格式布局，再将每个层按 `2x2` 布局：
@@ -110,12 +163,11 @@ python demo/featmap_vis_demo.py demo/dog.jpg \
                                 --target-layers backbone.stage3 backbone.stage4 \
                                 --channel-reduction None \
                                 --topk 3 \
-                                --arrangement 2 2 \
-                                --out-file 4.jpg
+                                --arrangement 2 2
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/89863442/190939723-911c5e9b-dd33-42eb-be4a-ba45f03110a0.jpg" width="1200" alt="image"/>
+<img src="https://user-images.githubusercontent.com/17425982/198522489-8adee6ae-9915-4e9d-bf50-167b8a12c275.png" width="1200" alt="image"/>
 </div>
 
 (5) 存储绘制后的图片，在绘制完成后，可以选择本地窗口显示，也可以存储到本地，只需要加入参数 `--out-file xxx.jpg`：
@@ -126,5 +178,5 @@ python demo/featmap_vis_demo.py demo/dog.jpg \
                                 yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
                                 --target-layers backbone \
                                 --channel-reduction select_max \
-                                --out-file featmap_backbone
+                                --out-file featmap_backbone.jpg
 ```
