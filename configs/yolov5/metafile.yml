@@ -80,6 +80,54 @@ Models:
         Metrics:
           box AP: 48.8
     Weights: https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_l-v61_syncbn_fast_8xb16-300e_coco/yolov5_l-v61_syncbn_fast_8xb16-300e_coco_20220917_031007-096ef0eb.pth
+  - Name: yolov5_n-p6-v62_syncbn_fast_8xb16-300e_coco
+    In Collection: YOLOv5
+    Config: configs/yolov5/yolov5_n-p6-v62_syncbn_fast_8xb16-300e_coco.py
+    Metadata:
+      Training Memory (GB): 5.8
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 35.9
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_n-p6-v62_syncbn_fast_8xb16-300e_coco/yolov5_n-p6-v62_syncbn_fast_8xb16-300e_coco_20221027_224705-d493c5f3.pth
+  - Name: yolov5_s-p6-v62_syncbn_fast_8xb16-300e_coco
+    In Collection: YOLOv5
+    Config: configs/yolov5/yolov5_s-p6-v62_syncbn_fast_8xb16-300e_coco.py
+    Metadata:
+      Training Memory (GB): 10.5
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 44.4
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-p6-v62_syncbn_fast_8xb16-300e_coco/yolov5_s-p6-v62_syncbn_fast_8xb16-300e_coco_20221027_215044-58865c19.pth
+  - Name: yolov5_m-p6-v62_syncbn_fast_8xb16-300e_coco
+    In Collection: YOLOv5
+    Config: configs/yolov5/yolov5_m-p6-v62_syncbn_fast_8xb16-300e_coco.py
+    Metadata:
+      Training Memory (GB): 19.1
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 51.3
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_m-p6-v62_syncbn_fast_8xb16-300e_coco/yolov5_m-p6-v62_syncbn_fast_8xb16-300e_coco_20221027_230453-49564d58.pth
+  - Name: yolov5_l-p6-v62_syncbn_fast_8xb16-300e_coco
+    In Collection: YOLOv5
+    Config: configs/yolov5/yolov5_l-p6-v62_syncbn_fast_8xb16-300e_coco.py
+    Metadata:
+      Training Memory (GB): 30.5
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 53.7
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_l-p6-v62_syncbn_fast_8xb16-300e_coco/yolov5_l-p6-v62_syncbn_fast_8xb16-300e_coco_20221027_234308-7a2ba6bf.pth
   - Name: yolov5_n-v61_fast_1xb64-50e_voc
     In Collection: YOLOv5_VOC
     Config: configs/yolov5/voc/yolov5_n-v61_fast_1xb64-50e_voc.py

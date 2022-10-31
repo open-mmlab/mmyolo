@@ -62,7 +62,10 @@ class YOLOv5CSPDarknet(BaseBackbone):
     # in_channels, out_channels, num_blocks, add_identity, use_spp
     arch_settings = {
         'P5': [[64, 128, 3, True, False], [128, 256, 6, True, False],
-               [256, 512, 9, True, False], [512, 1024, 3, True, True]]
+               [256, 512, 9, True, False], [512, 1024, 3, True, True]],
+        'P6': [[64, 128, 3, True, False], [128, 256, 6, True, False],
+               [256, 512, 9, True, False], [512, 768, 3, True, False],
+               [768, 1024, 3, True, True]]
     }
 
     def __init__(self,

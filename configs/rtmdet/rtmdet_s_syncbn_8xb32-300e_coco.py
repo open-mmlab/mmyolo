@@ -70,6 +70,7 @@ custom_hooks = [
         ema_type='ExpMomentumEMA',
         momentum=0.0002,
         update_buffers=True,
+        strict_load=False,
         priority=49),
     dict(
         type='mmdet.PipelineSwitchHook',
