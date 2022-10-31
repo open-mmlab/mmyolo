@@ -8,8 +8,8 @@ Compatible MMEngine, MMCV and MMDetection versions are shown as below. Please in
 | :------------: | :----------------------: | :----------------------: | :---------------------: |
 |      main      | mmdet>=3.0.0rc2, \<3.1.0 | mmengine>=0.2.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
 |     0.1.2      | mmdet>=3.0.0rc2, \<3.1.0 | mmengine>=0.2.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
-|     0.1.1      | mmdet>=3.0.0rc1, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
-|     0.1.0      | mmdet>=3.0.0rc0, \<3.1.0 | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.1.1      |     mmdet==3.0.0rc1      | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.1.0      |     mmdet==3.0.0rc0      | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
 
 In this section, we demonstrate how to prepare an environment with PyTorch.
 
