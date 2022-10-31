@@ -592,7 +592,7 @@ Based on the pre-processing process, restore the remaining detection frames to t
 
 #### 1.6.2 batch shape strategy
 
-In order to speed up the inference process on the validation set, the authors propose the batch shape strategy, whose principle is to **ensure that the images within the same batch have the least number of pad pixels in the batch inference process, and do not require all the images in the batch to have the same scale throughout the validation process**.
+To speed up the inference process on the validation set, the authors propose the batch shape strategy, whose principle is to **ensure that the images within the same batch have the least number of pad pixels in the batch inference process and do not require all the images in the batch to have the same scale throughout the validation process**.
 
 It first sorts images according to their aspect ratio of the entire test or validation set, and then forms a batch of the sorted images based on the settings.
 At the same time, the batch shape of the current batch is calculated to prevent too many pad pixels. We focus on padding with the original aspect ratio but not padding the image to a perfect square.
