@@ -259,7 +259,7 @@ YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决�
 - 前 3 个 `Stage Layer` 均由 1 个 `ConvModule` 和 1 个 `CSPLayer` 组成。如上图 Details 部分所示。
   其中 `ConvModule` 为 3x3的 `Conv2d` + `BatchNorm` + `SiLU 激活函数`。`CSPLayer` 即 YOLOv5 官方仓库中的 C3 模块，由 3 个 `ConvModule` + n 个 `DarknetBottleneck`(带残差连接) 组成。
 - 第 4 个 `Stage Layer` 在最后增加了 `SPPF` 模块。`SPPF` 模块是将输入串行通过多个 5x5 大小的 `MaxPool2d` 层，与 `SPP`  模块效果相同，但速度更快。
-- P5 模型结构会在 `Stage Layer` 2-4 之后分别输出对应结果进入 `Neck` 结构，抽取三个输出特征图，以 640x640 输入图片为例，其输出特征为 (B,256,80,80)、 (B,512,40,40) 和 (B,1024,20,20)，对应的 stride 为 8/16/32。
+- P5 模型结构会在 `Stage Layer` 2-4 之后分别输出一个特征图进入 `Neck` 结构。以 640x640 输入图片为例，其输出特征为 (B,256,80,80)、 (B,512,40,40) 和 (B,1024,20,20)，对应的 stride 分别为 8/16/32。
 
 #### 1.2.2 Neck
 
