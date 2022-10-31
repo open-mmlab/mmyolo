@@ -72,7 +72,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The reduce layer.
         """
-        if idx == 2:
+        if idx == len(self.in_channels) - 1:
             layer = ConvModule(
                 make_divisible(self.in_channels[idx], self.widen_factor),
                 make_divisible(self.in_channels[idx - 1], self.widen_factor),
@@ -97,6 +97,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The top down layer.
         """
+
         if idx == 1:
             return CSPLayer(
                 make_divisible(self.in_channels[idx - 1] * 2,
@@ -106,7 +107,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
                 add_identity=False,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
-        elif idx == 2:
+        else:
             return nn.Sequential(
                 CSPLayer(
                     make_divisible(self.in_channels[idx - 1] * 2,
