@@ -636,4 +636,4 @@ At the same time, the batch shape of the current batch is calculated to prevent 
 
 ## 2 Sum up
 
-This article focuses on the principle of YOLOv5 and our implementation in MMYOLO in detail, hoping to help users understand the algorithm and the implementation process. At the same time, again, please note that since YOLOv5 itself is constantly being updated, this open-source library will also be constantly iterated. So please always check the latest version.
+This article focuses on the principle of YOLOv5 and our implementation in MMYOLO in detail, hoping to help users understand the algorithm and the implementation process. At the same time, again, please note that since YOLOv5 itself is constantly being updated, this open-source library will also be continuously iterated. So please always check the latest version.
