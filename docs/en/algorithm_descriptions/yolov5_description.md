@@ -11,9 +11,9 @@ RangeKing@github provides the graph above. Thanks, RangeKing!
 YOLOv5 is an open-sourced object detection algorithm for real-time industrial applications which has received extensive attention. The reason for the explosion of YOLOv5 is not simply due to its excellent performance. It is more about the overall utility and robustness of its library.
 In short, the main features of YOLOv5 are:
 
-1. **friendly and perfect deployment supports**
-2. **fast training speech**: the training time in the case of 300 epochs is similar to most of the one-stage and two-stage algorithms under 12 epochs, such as RetinaNet, ATSS, and Faster R-CNN.
-3. **abundant optimization for corner cases**: YOLOv5 has implemented many optimizations. The functions and documentation are richer as well.
+1. **Friendly and perfect deployment supports**
+2. **Fast training speed**: the training time in the case of 300 epochs is similar to most of the one-stage and two-stage algorithms under 12 epochs, such as RetinaNet, ATSS, and Faster R-CNN.
+3. **Abundant optimization for corner cases**: YOLOv5 has implemented many optimizations. The functions and documentation are richer as well.
 
 This article will start with the principle of the YOLOv5 algorithm and then focus on analyzing the implementation in MMYOLO. The follow-up part includes the guide and speed benchmark of YOLOv5.
 
