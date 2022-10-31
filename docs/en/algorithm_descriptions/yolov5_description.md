@@ -568,8 +568,8 @@ The inference and post-processing include:
 
 **(1) Dimensional transformation**
 
-YOLOv5 outputs three feature maps, each is scaling at 80x80, 40x40, and 20x20. As three anchors are at each position, the output feature map channel is 3x(5+80)=255.
-YOLOv5 uses a non-decoupled output header, while most other algorithms are decoupled output headers. Therefore, to unify the post-processing logic, we decouple YOLOv5's header into the category prediction branch, bbox prediction branch, and obj prediction branch.
+YOLOv5 outputs three feature maps. Each feature map is scaled at 80x80, 40x40, and 20x20. As three anchors are at each position, the output feature map channel is 3x(5+80)=255.
+YOLOv5 uses a non-decoupled Head, while most other algorithms use decoupled Head. Therefore, to unify the post-processing logic, we decouple YOLOv5's Head into the category prediction branch, the bbox prediction branch, and the obj prediction branch.
 
 The three scales of category prediction, bbox prediction, and obj prediction are stitched together and dimensionally transformed. For subsequent processing, the original channel dimensions are replaced at the end, and the shapes of the category prediction branch, bbox prediction branch, and obj prediction branch are (b, 3x80x80+3x40x40+3x20x20, 80)=(b,25200,80), (b,25200,4), and (b,25200,1), respectively.
 
