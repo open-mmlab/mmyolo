@@ -293,22 +293,13 @@ Now we will explain each part of the matching strategy in detail. Some descripti
 
 #### 1.3.1 Anchor settings
 
-YOLOv5 is an anchor-based object detection algorithm. The anchor sizes are obtained in the same way as YOLOv3, which is by clustering using the K-means algorithm.
+YOLOv5 is an anchor-based object detection algorithm. Similar to YOLOv3, the anchor sizes are still obtained by clustering. However, the difference compared with YOLOv3 is that instead of clustering based on IoU, YOLOv5 switched to using the aspect ratio on the width and height (shape-match based method).
 
-When users change the data, they can use the anchor analysis tool in MMDetection to determine the appropriate anchor size for their dataset.
-
-If MMDetection is installed via `mim`, you can use the following command to analyze the anchor:
+While training on customized data, user can use the tool in MMYOLO to analyze and get the appropriate anchor sizes of the dataset.
 
 ```shell
-mim run mmdet optimize_anchors ${CONFIG} --algorithm k-means
---input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} --output-dir ${OUTPUT_DIR}
-```
-
-If MMDetection is installed in other ways, you can go to MMDetection directory and use the following command to analyze the anchor:
-
-```shell
-python tools/analysis_tools/optimize_anchors.py ${CONFIG} --algorithm k-means
-  --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} --output-dir ${OUTPUT_DIR}
+python tools/analysis_tools/optimize_anchors.py ${CONFIG} --algorithm v5-k-means
+ --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} --output-dir ${OUTPUT_DIR}
 ```
 
 Then modify the default anchor size setting in the [config file](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py):
