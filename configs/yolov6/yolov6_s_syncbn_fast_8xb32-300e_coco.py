@@ -4,6 +4,7 @@ _base_ = './yolov6_s_syncbn_fast_8xb32-400e_coco.py'
 data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
+max_epochs = 300
 num_last_epochs = 15
 num_classes = 80
 
@@ -11,7 +12,6 @@ num_classes = 80
 img_scale = (640, 640)  # height, width
 deepen_factor = 0.33
 widen_factor = 0.5
-max_epochs = 300
 save_epoch_intervals = 10
 train_batch_size_per_gpu = 32
 train_num_workers = 8
@@ -70,7 +70,7 @@ model = dict(
             type='IoULoss',
             iou_mode='giou',
             bbox_format='xyxy',
-            eps=1e-10,
+            eps=1e-7,
             reduction='mean',
             loss_weight=2.5,
             return_iou=False),
@@ -221,6 +221,7 @@ custom_hooks = [
         type='EMAHook',
         ema_type='ExpMomentumEMA',
         momentum=0.0001,
+        strict_load=False,
         update_buffers=True,
         priority=49),
     dict(

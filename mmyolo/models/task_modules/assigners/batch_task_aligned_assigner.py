@@ -16,18 +16,14 @@ class BatchTaskAlignedAssigner(nn.Module):
     """This code referenced to
     https://github.com/meituan/YOLOv6/blob/main/yolov6/
     assigners/tal_assigner.py.
-
     Batch Task aligned assigner base on the paper:
     `TOOD: Task-aligned One-stage Object Detection.
     <https://arxiv.org/abs/2108.07755>`_.
-
     Assign a corresponding gt bboxes or background to a batch of
     predicted bboxes. Each bbox will be assigned with `0` or a
     positive integer indicating the ground truth index.
-
     - 0: negative sample, no assigned gt
     - positive integer: positive sample, index (1-based) of assigned gt
-
     Args:
         num_classes (int): number of class
         topk (int): number of bbox selected in each level
@@ -51,9 +47,6 @@ class BatchTaskAlignedAssigner(nn.Module):
         self.beta = beta
         self.eps = eps
 
-        self.iou_calculator = TASK_UTILS.build(iou_calculator)
-        self.eps = eps
-
     @torch.no_grad()
     def forward(
         self,
@@ -67,13 +60,11 @@ class BatchTaskAlignedAssigner(nn.Module):
         """Assign gt to bboxes.
 
         The assignment is done in following steps
-
         1. compute alignment metric between all bbox (bbox of all pyramid
            levels) and gt
         2. select top-k bbox as candidates for each gt
         3. limit the positive sample's center in gt (because the anchor-free
            detector only can predict positive distance)
-
         Args:
             pred_bboxes (Tensor): Predict bboxes,
                 shape(batch_size, num_priors, 4)

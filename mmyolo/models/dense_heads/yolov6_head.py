@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import math
 from typing import Sequence, Tuple, Union
 
 import numpy as np
@@ -11,7 +10,7 @@ from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
                          OptMultiConfig)
 from mmengine import MessageHub
 from mmengine.dist import get_dist_info
-from mmengine.model import BaseModule
+from mmengine.model import BaseModule, bias_init_with_prob
 from mmengine.structures import InstanceData
 from torch import Tensor
 
@@ -125,9 +124,10 @@ class YOLOv6HeadModule(BaseModule):
 
     def init_weights(self):
         super().init_weights()
+        bias_init = bias_init_with_prob(0.01)
         for conv in self.cls_preds:
             b = conv.bias.data.view(-1, )
-            b.fill_(-math.log((1 - self.prior_prob) / self.prior_prob))
+            b.fill_(bias_init)
             conv.bias.data = b.view(-1)
             w = conv.weight
             w.data.fill_(0.)
@@ -237,7 +237,6 @@ class YOLOv6Head(YOLOv5Head):
 
         self.loss_bbox = MODELS.build(loss_bbox)
         self.loss_cls = MODELS.build(loss_cls)
-        self.epoch = 0
 
     def special_init(self):
         """Since YOLO series algorithms will inherit from YOLOv5Head, but
@@ -311,10 +310,8 @@ class YOLOv6Head(YOLOv5Head):
                                                      flatten_pred_bboxes,
                                                      flatten_priors[..., 2])
 
-        batch_size = flatten_cls_preds.shape[0]
-
         # gt_info
-        gt_info = self.preprocess(batch_gt_instances, batch_size)
+        gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
 
         gt_labels = gt_info[:, :, :1]
         gt_bboxes = gt_info[:, :, 1:]  # xyxy
@@ -324,7 +321,6 @@ class YOLOv6Head(YOLOv5Head):
         message_hub = MessageHub.get_current_instance()
         self.epoch = message_hub.get_info('epoch')
 
-        # pred_scores = flatten_cls_preds.detach().sigmoid()
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if self.epoch < self.initial_epoch:
@@ -370,21 +366,22 @@ class YOLOv6Head(YOLOv5Head):
                 assigned_bboxes, prior_bbox_mask).reshape([-1, 4])
             bbox_weight = torch.masked_select(
                 assigned_scores.sum(-1), fg_mask_pre_prior).unsqueeze(-1)
-            loss_iou = self.loss_bbox(
+            loss_bbox = self.loss_bbox(
                 pred_bboxes_pos,
                 assigned_bboxes_pos,
                 weight=bbox_weight,
                 avg_factor=assigned_scores_sum)
 
         else:
-            loss_iou = torch.tensor(0.).to(flatten_pred_bboxes.device)
+            loss_bbox = flatten_pred_bboxes.sum() * 0
 
         _, world_size = get_dist_info()
         return dict(
-            loss_cls=loss_cls * world_size, loss_bbox=loss_iou * world_size)
+            loss_cls=loss_cls * world_size, loss_bbox=loss_bbox * world_size)
 
     @staticmethod
-    def preprocess(batch_gt_instances: Tensor, batch_size: int) -> Tensor:
+    def gt_instances_preprocess(batch_gt_instances: Tensor,
+                                batch_size: int) -> Tensor:
         gt_info_list = np.zeros((batch_size, 1, 5)).tolist()
         for i, item in enumerate(batch_gt_instances.cpu().numpy().tolist()):
             gt_info_list[int(item[0])].append(item[1:])

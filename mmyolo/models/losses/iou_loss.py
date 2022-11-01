@@ -104,9 +104,6 @@ def bbox_overlaps(pred: torch.Tensor,
     elif iou_mode == 'siou':
         # SIoU: https://arxiv.org/pdf/2205.12740.pdf
 
-        # Angle cost = 1 - 2 * ( sin^2 ( arcsin(x) - (pi / 4) ) )
-        # x = sin(alpha)
-
         # calculate sigma (σ):
         # euclidean distance between bbox2(pred) and bbox1(gt) center point,
         # left_item = b_cx_gt - b_cx

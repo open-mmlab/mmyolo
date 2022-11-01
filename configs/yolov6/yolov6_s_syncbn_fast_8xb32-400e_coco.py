@@ -5,13 +5,13 @@ data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 num_last_epochs = 15
+max_epochs = 400
 num_classes = 80
 
 # parameters that often need to be modified
 img_scale = (640, 640)  # height, width
 deepen_factor = 0.33
 widen_factor = 0.5
-max_epochs = 400
 save_epoch_intervals = 10
 train_batch_size_per_gpu = 32
 train_num_workers = 8
@@ -70,7 +70,7 @@ model = dict(
             type='IoULoss',
             iou_mode='giou',
             bbox_format='xyxy',
-            eps=1e-10,
+            eps=1e-7,
             reduction='mean',
             loss_weight=2.5,
             return_iou=False)),
@@ -225,6 +225,7 @@ custom_hooks = [
         ema_type='ExpMomentumEMA',
         momentum=0.0001,
         update_buffers=True,
+        strict_load=False,
         priority=49),
     dict(
         type='mmdet.PipelineSwitchHook',
