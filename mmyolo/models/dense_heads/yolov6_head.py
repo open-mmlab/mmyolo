@@ -239,7 +239,13 @@ class YOLOv6Head(YOLOv5Head):
             self.initial_assigner = TASK_UTILS.build(
                 self.train_cfg.initial_assigner)
             self.assigner = TASK_UTILS.build(self.train_cfg.assigner)
-        # TODO: Register common attributes to reduce calculation, such as grid_offset # noqa
+
+            # Add common attributes to reduce calculation
+            self.featmap_sizes = None
+            self.mlvl_priors = None
+            self.num_level_priors = None
+            self.flatten_priors = None
+            self.stride_tensor = None
 
     def loss_by_feat(
             self,
@@ -271,17 +277,28 @@ class YOLOv6Head(YOLOv5Head):
             dict[str, Tensor]: A dictionary of losses.
         """
 
+        # get epoch information from message hub
+        message_hub = MessageHub.get_current_instance()
+        current_epoch = message_hub.get_info('epoch')
+
         num_imgs = len(batch_img_metas)
         if batch_gt_instances_ignore is None:
             batch_gt_instances_ignore = [None] * num_imgs
-        featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
-        mlvl_priors = self.prior_generator.grid_priors(
-            featmap_sizes,
-            dtype=cls_scores[0].dtype,
-            device=cls_scores[0].device,
-            with_stride=True)
 
-        num_level_priors = [len(n) for n in mlvl_priors]
+        if self.featmap_sizes is None:
+            self.featmap_sizes = [
+                cls_score.shape[2:] for cls_score in cls_scores
+            ]
+
+            self.mlvl_priors = self.prior_generator.grid_priors(
+                self.featmap_sizes,
+                dtype=cls_scores[0].dtype,
+                device=cls_scores[0].device,
+                with_stride=True)
+
+            self.num_level_priors = [len(n) for n in self.mlvl_priors]
+            self.flatten_priors = torch.cat(self.mlvl_priors, dim=0)
+            self.stride_tensor = self.flatten_priors[..., [2]]
 
         flatten_cls_preds = [
             cls_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1,
@@ -293,54 +310,41 @@ class YOLOv6Head(YOLOv5Head):
             for bbox_pred in bbox_preds
         ]
 
-        flatten_cls_preds = torch.cat(flatten_cls_preds, dim=1)
-        flatten_pred_bboxes = torch.cat(flatten_pred_bboxes, dim=1)
-        flatten_priors = torch.cat(mlvl_priors, dim=0)
-
-        flatten_pred_bboxes = self.bbox_coder.decode(flatten_priors[..., :2],
-                                                     flatten_pred_bboxes,
-                                                     flatten_priors[..., 2])
-
         # gt_info
         gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
-
         gt_labels = gt_info[:, :, :1]
         gt_bboxes = gt_info[:, :, 1:]  # xyxy
         pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
 
-        # get epoch information from message hub
-        message_hub = MessageHub.get_current_instance()
-        current_epoch = message_hub.get_info('epoch')
-
+        # pred info
+        flatten_cls_preds = torch.cat(flatten_cls_preds, dim=1)
+        flatten_pred_bboxes = torch.cat(flatten_pred_bboxes, dim=1)
+        flatten_pred_bboxes = self.bbox_coder.decode(
+            self.flatten_priors[..., :2], flatten_pred_bboxes,
+            self.flatten_priors[..., 2])
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if current_epoch < self.initial_epoch:
             assigned_result = self.initial_assigner(
-                flatten_pred_bboxes.detach(), flatten_priors, num_level_priors,
-                gt_labels, gt_bboxes, pad_bbox_flag)
+                flatten_pred_bboxes.detach(), self.flatten_priors,
+                self.num_level_priors, gt_labels, gt_bboxes, pad_bbox_flag)
         else:
             assigned_result = self.assigner(flatten_pred_bboxes.detach(),
                                             pred_scores.detach(),
-                                            flatten_priors, gt_labels,
+                                            self.flatten_priors, gt_labels,
                                             gt_bboxes, pad_bbox_flag)
 
-        assigned_labels = assigned_result['assigned_labels']
         assigned_bboxes = assigned_result['assigned_bboxes']
         assigned_scores = assigned_result['assigned_scores']
         fg_mask_pre_prior = assigned_result['fg_mask_pre_prior']
 
         # cls loss
-        assigned_labels = torch.where(
-            fg_mask_pre_prior > 0, assigned_labels,
-            torch.full_like(assigned_labels, self.num_classes))
-
         with torch.cuda.amp.autocast(enabled=False):
             loss_cls = self.loss_cls(flatten_cls_preds, assigned_scores)
 
         # rescale bbox
-        stride_tensor = flatten_priors[..., [2]]
-        assigned_bboxes /= stride_tensor
-        flatten_pred_bboxes /= stride_tensor
+        assigned_bboxes /= self.stride_tensor
+        flatten_pred_bboxes /= self.stride_tensor
 
         # TODO: Add all_reduce makes training more stable
         assigned_scores_sum = assigned_scores.sum()
