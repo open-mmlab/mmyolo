@@ -1,7 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Sequence, Tuple, Union
 
-import numpy as np
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
@@ -382,9 +381,9 @@ class YOLOv6Head(YOLOv5Head):
     @staticmethod
     def gt_instances_preprocess(batch_gt_instances: Tensor,
                                 batch_size: int) -> Tensor:
-        """Split batch_gt_instances with batch size, from [all_gt_bboxes, 6] ->
-        [batch_size, number_gt, 5], if some shape of single batch not equal max
-        len, then using [-1., 0., 0., 0., 0.] to fill.
+        """Split batch_gt_instances with batch size, from [all_gt_bboxes, 6]
+        to [batch_size, number_gt, 5]. If some shape of single batch smaller
+        than gt bbox len, then using [-1., 0., 0., 0., 0.] to fill.
 
         Args:
             batch_gt_instances (Sequence[Tensor]): Ground truth
