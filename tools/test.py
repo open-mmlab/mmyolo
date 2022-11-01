@@ -9,7 +9,7 @@ from mmengine.config import Config, DictAction
 from mmengine.runner import Runner
 
 from mmyolo.registry import RUNNERS
-from mmyolo.utils import register_all_modules, switch_to_deploy
+from mmyolo.utils import register_all_modules
 
 
 # TODO: support fuse_conv_bn and format_only
@@ -89,6 +89,9 @@ def main():
     if args.show or args.show_dir:
         cfg = trigger_visualization_hook(cfg, args)
 
+    if args.deploy:
+        cfg.custom_hooks.append(dict(type='YOLOv6DeploySwitchHook'))
+
     # Dump predictions
     if args.out is not None:
         assert args.out.endswith(('.pkl', '.pickle')), \
@@ -103,9 +106,6 @@ def main():
         # build customized runner from the registry
         # if 'runner_type' is set in the cfg
         runner = RUNNERS.build(cfg)
-
-    if args.deploy:
-        switch_to_deploy(runner.model)
 
     # start testing
     runner.test()
