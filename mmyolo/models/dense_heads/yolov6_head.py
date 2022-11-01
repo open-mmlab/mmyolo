@@ -394,22 +394,28 @@ class YOLOv6Head(YOLOv5Head):
         Returns:
             Tensor: batch gt instances data, shape [batch_size, number_gt, 5]
         """
-        batch_target_list = []
-        max_target_len = 0
+
+        # sqlit batch gt instance [all_gt_bboxes, 6] ->
+        # [batch_size, number_gt_each_batch, 5]
+        batch_instance_list = []
+        max_gt_bbox_len = 0
         for i in range(batch_size):
-            batch_info = batch_gt_instances[batch_gt_instances[:, 0] == i, :]
-            batch_info = batch_info[:, 1:]
-            batch_target_list.append(batch_info)
-            if len(batch_info) > max_target_len:
-                max_target_len = len(batch_info)
+            single_batch_instance = \
+                batch_gt_instances[batch_gt_instances[:, 0] == i, :]
+            single_batch_instance = single_batch_instance[:, 1:]
+            batch_instance_list.append(single_batch_instance)
+            if len(single_batch_instance) > max_gt_bbox_len:
+                max_gt_bbox_len = len(single_batch_instance)
 
-        for index, target in enumerate(batch_target_list):
-            if target.shape[0] >= max_target_len:
+        # fill [-1., 0., 0., 0., 0.] if some shape of
+        # single batch not equal max_gt_bbox_len
+        for index, gt_instance in enumerate(batch_instance_list):
+            if gt_instance.shape[0] >= max_gt_bbox_len:
                 continue
-            pad_tensor = batch_gt_instances.new_full(
-                [max_target_len - target.shape[0], 5], 0)
-            pad_tensor[:, 0] = -1.
-            batch_target_list[index] = torch.cat(
-                (batch_target_list[index], pad_tensor), dim=0)
+            fill_tensor = batch_gt_instances.new_full(
+                [max_gt_bbox_len - gt_instance.shape[0], 5], 0)
+            fill_tensor[:, 0] = -1.
+            batch_instance_list[index] = torch.cat(
+                (batch_instance_list[index], fill_tensor), dim=0)
 
-        return torch.stack(batch_target_list)
+        return torch.stack(batch_instance_list)
