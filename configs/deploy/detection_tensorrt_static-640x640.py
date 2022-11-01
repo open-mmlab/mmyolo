@@ -11,3 +11,4 @@ backend_config = dict(
                     opt_shape=[1, 3, 640, 640],
                     max_shape=[1, 3, 640, 640])))
     ])
+use_efficientnms = False  # whether to replace TRTBatchedNMS plugin with EfficientNMS plugin # noqa E501
