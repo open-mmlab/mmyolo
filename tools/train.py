@@ -86,8 +86,9 @@ def main():
                 f'`OptimWrapper` but got {optim_wrapper}.')
             cfg.optim_wrapper.type = 'AmpOptimWrapper'
             cfg.optim_wrapper.loss_scale = 'dynamic'
-
-    cfg.resume = args.resume
+    
+    if args.resume:
+        cfg.resume = args.resume
 
     # build the runner from config
     if 'runner_type' not in cfg:
