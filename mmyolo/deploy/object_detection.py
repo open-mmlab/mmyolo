@@ -1,11 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Callable
 
+from mmengine import Config
+from mmengine.registry import Registry
+
 from mmdeploy.codebase.base import CODEBASE, MMCodebase
 from mmdeploy.codebase.mmdet.deploy import ObjectDetection
 from mmdeploy.utils import Codebase, Task
-from mmengine import Config
-from mmengine.registry import Registry
 
 MMYOLO_TASK = Registry('mmyolo_tasks')
 
