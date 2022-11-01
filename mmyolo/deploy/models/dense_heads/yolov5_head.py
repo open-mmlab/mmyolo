@@ -4,13 +4,13 @@ from functools import partial
 from typing import List, Optional, Tuple
 
 import torch
+from mmdeploy.codebase.mmdet import get_post_processing_params
+from mmdeploy.codebase.mmdet.models.layers import multiclass_nms
+from mmdeploy.core import FUNCTION_REWRITER
 from mmengine.config import ConfigDict
 from mmengine.structures import InstanceData
 from torch import Tensor
 
-from mmdeploy.codebase.mmdet import get_post_processing_params
-from mmdeploy.codebase.mmdet.models.layers import multiclass_nms
-from mmdeploy.core import FUNCTION_REWRITER
 from mmyolo.deploy.models.layers import efficient_nms
 from mmyolo.models.dense_heads import YOLOv5Head
 

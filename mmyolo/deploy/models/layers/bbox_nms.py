@@ -1,8 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
-from torch import Tensor
-
 from mmdeploy.core import mark
+from torch import Tensor
 
 
 def _efficient_nms(
