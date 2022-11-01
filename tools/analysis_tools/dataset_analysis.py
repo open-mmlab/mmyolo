@@ -402,13 +402,13 @@ def main():
         show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name)
         show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio)
         show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num)
-    elif args.func == '1':
+    elif args.func == 'show_bbox_num':
         show_bbox_num(cfg, args, fig_set, class_name, class_num)
-    elif args.func == '2':
+    elif args.func == 'show_bbox_wh':
         show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name)
-    elif args.func == '3':
+    elif args.func == 'show_bbox_wh_ratio':
         show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio)
-    elif args.func == '4':
+    elif args.func == 'show_bbox_area':
         show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num)
     else:
         raise RuntimeError(
