@@ -318,11 +318,11 @@ class YOLOv6Head(YOLOv5Head):
 
         # get epoch information from message hub
         message_hub = MessageHub.get_current_instance()
-        self.epoch = message_hub.get_info('epoch')
+        current_epoch = message_hub.get_info('epoch')
 
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
-        if self.epoch < self.initial_epoch:
+        if current_epoch < self.initial_epoch:
             assigned_result = self.initial_assigner(
                 flatten_pred_bboxes.detach(), flatten_priors, num_level_priors,
                 gt_labels, gt_bboxes, pad_bbox_flag)
