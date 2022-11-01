@@ -70,7 +70,6 @@ model = dict(
             type='IoULoss',
             iou_mode='giou',
             bbox_format='xyxy',
-            eps=1e-7,
             reduction='mean',
             loss_weight=2.5,
             return_iou=False)),
@@ -95,6 +94,8 @@ model = dict(
         nms=dict(type='nms', iou_threshold=0.65),
         max_per_img=300))
 
+# The training pipeline of YOLOv6 is basically the same as YOLOv5.
+# The difference is that Mosaic and RandomAffine will be closed in the last 15 epochs. # noqa
 pre_transform = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True)
@@ -162,9 +163,7 @@ train_dataloader = dict(
         pipeline=train_pipeline))
 
 test_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
@@ -196,6 +195,8 @@ val_dataloader = dict(
 
 test_dataloader = val_dataloader
 
+# Optimizer and learning rate scheduler of YOLOv6 are basically the same as YOLOv5. # noqa
+# The difference is that the scheduler_type of YOLOv6 is cosine.
 optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(

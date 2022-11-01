@@ -212,7 +212,6 @@ class YOLOv6Head(YOLOv5Head):
                      type='IoULoss',
                      iou_mode='giou',
                      bbox_format='xyxy',
-                     eps=1e-10,
                      reduction='mean',
                      loss_weight=2.5,
                      return_iou=False),
@@ -351,6 +350,7 @@ class YOLOv6Head(YOLOv5Head):
         assigned_bboxes /= stride_tensor
         flatten_pred_bboxes /= stride_tensor
 
+        # TODO: Add all_reduce makes training more stable
         assigned_scores_sum = assigned_scores.sum()
         if assigned_scores_sum > 0:
             loss_cls /= assigned_scores_sum
@@ -358,6 +358,7 @@ class YOLOv6Head(YOLOv5Head):
         # select positive samples mask
         num_pos = fg_mask_pre_prior.sum()
         if num_pos > 0:
+            # when num_pos > 0, the loss_bbox  will not report an error.
             # iou loss
             prior_bbox_mask = fg_mask_pre_prior.unsqueeze(-1).repeat([1, 1, 4])
             pred_bboxes_pos = torch.masked_select(
@@ -371,7 +372,6 @@ class YOLOv6Head(YOLOv5Head):
                 assigned_bboxes_pos,
                 weight=bbox_weight,
                 avg_factor=assigned_scores_sum)
-
         else:
             loss_bbox = flatten_pred_bboxes.sum() * 0
 

@@ -39,7 +39,7 @@ class BatchTaskAlignedAssigner(nn.Module):
                  topk: int = 13,
                  alpha: float = 1.0,
                  beta: float = 6.0,
-                 eps: float = 1e-9):
+                 eps: float = 1e-7):
         super().__init__()
         self.num_classes = num_classes
         self.topk = topk
