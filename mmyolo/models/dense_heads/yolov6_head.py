@@ -126,20 +126,12 @@ class YOLOv6HeadModule(BaseModule):
         super().init_weights()
         bias_init = bias_init_with_prob(0.01)
         for conv in self.cls_preds:
-            b = conv.bias.data.view(-1, )
-            b.fill_(bias_init)
-            conv.bias.data = b.view(-1)
-            w = conv.weight
-            w.data.fill_(0.)
-            conv.weight.data = w
+            conv.bias.data.fill_(bias_init)
+            conv.weight.data.fill_(0.)
 
         for conv in self.reg_preds:
-            b = conv.bias.data.view(-1, )
-            b.fill_(1.0)
-            conv.bias.data = b.view(-1)
-            w = conv.weight
-            w.data.fill_(0.)
-            conv.weight.data = w
+            conv.bias.data.fill_(1.0)
+            conv.weight.data.fill_(0.)
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward features from the upstream network.
@@ -248,6 +240,7 @@ class YOLOv6Head(YOLOv5Head):
             self.initial_assigner = TASK_UTILS.build(
                 self.train_cfg.initial_assigner)
             self.assigner = TASK_UTILS.build(self.train_cfg.assigner)
+        # TODO: Register common attributes to reduce calculation, such as grid_offset # noqa
 
     def loss_by_feat(
             self,
