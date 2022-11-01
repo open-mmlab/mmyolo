@@ -88,6 +88,8 @@ def yolov6_iou_calculator(bbox1: Tensor,
     Return:
         (Tensor): IoU, shape(size, num_gt, num_priors)
     """
+    # TODO:'mmdet.BboxOverlaps2D' will cause gradient inconsistency,
+    # which will be found and solved in a later version.
     bbox1 = bbox1.unsqueeze(2)  # [N, M1, 4] -> [N, M1, 1, 4]
     bbox2 = bbox2.unsqueeze(1)  # [N, M2, 4] -> [N, 1, M2, 4]
 
