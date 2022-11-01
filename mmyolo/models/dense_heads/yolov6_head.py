@@ -382,13 +382,34 @@ class YOLOv6Head(YOLOv5Head):
     @staticmethod
     def gt_instances_preprocess(batch_gt_instances: Tensor,
                                 batch_size: int) -> Tensor:
-        gt_info_list = np.zeros((batch_size, 1, 5)).tolist()
-        for i, item in enumerate(batch_gt_instances.cpu().numpy().tolist()):
-            gt_info_list[int(item[0])].append(item[1:])
-        max_len = max(len(gt_info) for gt_info in gt_info_list)
-        return torch.from_numpy(
-            np.array(
-                list(
-                    map(lambda l: l + [[-1, 0, 0, 0, 0]] * (max_len - len(l)),
-                        gt_info_list)))[:,
-                                        1:, :]).to(batch_gt_instances.device)
+        """Split batch_gt_instances with batch size, from [all_gt_bboxes, 6] ->
+        [batch_size, number_gt, 5], if some shape of single batch not equal max
+        len, then using [-1., 0., 0., 0., 0.] to fill.
+
+        Args:
+            batch_gt_instances (Sequence[Tensor]): Ground truth
+                instances for whole batch, shape [all_gt_bboxes, 6]
+            batch_size (int): Batch size.
+
+        Returns:
+            Tensor: batch gt instances data, shape [batch_size, number_gt, 5]
+        """
+        batch_target_list = []
+        max_target_len = 0
+        for i in range(batch_size):
+            batch_info = batch_gt_instances[batch_gt_instances[:, 0] == i, :]
+            batch_info = batch_info[:, 1:]
+            batch_target_list.append(batch_info)
+            if len(batch_info) > max_target_len:
+                max_target_len = len(batch_info)
+
+        for index, target in enumerate(batch_target_list):
+            if target.shape[0] >= max_target_len:
+                continue
+            pad_tensor = batch_gt_instances.new_full(
+                [max_target_len - target.shape[0], 5], 0)
+            pad_tensor[:, 0] = -1.
+            batch_target_list[index] = torch.cat(
+                (batch_target_list[index], pad_tensor), dim=0)
+
+        return torch.stack(batch_target_list)
