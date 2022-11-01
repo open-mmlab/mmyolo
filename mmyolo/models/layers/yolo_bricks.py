@@ -294,7 +294,7 @@ class RepVGGBlock(nn.Module):
         """
         if branch is None:
             return 0, 0
-        if isinstance(branch, nn.Sequential):
+        if isinstance(branch, ConvModule):
             kernel = branch.conv.weight
             running_mean = branch.bn.running_mean
             running_var = branch.bn.running_var

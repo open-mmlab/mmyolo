@@ -9,7 +9,7 @@ from mmengine.config import Config, DictAction
 from mmengine.runner import Runner
 
 from mmyolo.registry import RUNNERS
-from mmyolo.utils import register_all_modules
+from mmyolo.utils import register_all_modules, switch_to_deploy
 
 
 # TODO: support fuse_conv_bn and format_only
@@ -27,6 +27,10 @@ def parse_args():
         help='dump predictions to a pickle file for offline evaluation')
     parser.add_argument(
         '--show', action='store_true', help='show prediction results')
+    parser.add_argument(
+        '--deploy',
+        action='store_true',
+        help='Switch model to deployment mode')
     parser.add_argument(
         '--show-dir',
         help='directory where painted images will be saved. '
@@ -99,6 +103,9 @@ def main():
         # build customized runner from the registry
         # if 'runner_type' is set in the cfg
         runner = RUNNERS.build(cfg)
+
+    if args.deploy:
+        switch_to_deploy(runner.model)
 
     # start testing
     runner.test()
