@@ -12,7 +12,7 @@ from mmdeploy.codebase.mmdet import get_post_processing_params
 from mmdeploy.codebase.mmdet.models.layers import multiclass_nms
 from mmdeploy.core import FUNCTION_REWRITER
 from mmyolo.deploy.models.layers import efficient_nms
-from mmyolo.models.dense_heads import YOLOv5Head, YOLOv6Head
+from mmyolo.models.dense_heads import YOLOv5Head
 
 
 def yolov5_bbox_decoder(priors, bbox_preds, stride):
@@ -74,15 +74,15 @@ def yolov5_head__predict_by_feat(ctx,
             tensor in the tuple is (N, num_box), and each element
             represents the class label of the corresponding box.
     """
+    detector_type = type(self)
     deploy_cfg = ctx.cfg
     use_efficientnms = deploy_cfg.get('use_efficientnms', False)
     dtype = cls_scores[0].dtype
     device = cls_scores[0].device
-    _class = type(self)
     bbox_decoder = self.bbox_coder.decode
     nms_func = multiclass_nms
     if use_efficientnms:
-        if _class is YOLOv5Head:
+        if detector_type is YOLOv5Head:
             nms_func = partial(efficient_nms, box_coding=0)
             bbox_decoder = yolov5_bbox_decoder
         else:
@@ -121,7 +121,7 @@ def yolov5_head__predict_by_feat(ctx,
     ]
     flatten_bbox_preds = torch.cat(flatten_bbox_preds, dim=1)
 
-    if _class is not YOLOv6Head:
+    if objectnesses is not None:
         flatten_objectness = [
             objectness.permute(0, 2, 3, 1).reshape(num_imgs, -1)
             for objectness in objectnesses
