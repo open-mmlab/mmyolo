@@ -39,7 +39,8 @@ def parse_args():
         '--func',
         default=None,
         type=str,
-        help='Dataset analysis function selection, e.g., --func 1')
+        help='Dataset analysis function selection,'
+        ' e.g., show_bbox_num')
     parser.add_argument(
         '--output-dir',
         default='./',
@@ -412,7 +413,7 @@ def main():
         show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num)
     else:
         raise RuntimeError(
-            'Please enter the correct func name, e.g., --func 1 to 4')
+            'Please enter the correct func name, e.g., show_bbox_num')
 
     print('\nDraw End\n')
 

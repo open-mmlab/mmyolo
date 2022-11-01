@@ -113,23 +113,23 @@ python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncb
 脚本 `tools/analysis_tools/dataset_analysis.py` 能够帮助用户得到四种功能的效果图，同时打印列表显示该数据集类别名称及对应数量，并将图片保存到当前运行目录下的 `dataset_analysis` 文件夹中。
 关于该脚本的功能的说明：
 通过 `main()` 的数据准备，得到每个子函数所需要的数据。
-功能一：显示类别和 bbox 实例个数的分布图，通过子函数 `def show_bbox_num(cfg, args, fig_set, class_name, class_num)` 生成。
+功能一：显示类别和 bbox 实例个数的分布图，通过子函数 `show_bbox_num` 生成。
 
 <img src="https://user-images.githubusercontent.com/90811472/196891728-4c2f1ab3-01cb-445f-a6b8-39752387c40f.jpg"/>
 
-功能二：显示类别和 bbox 实例宽、高的分布图，通过子函数 `def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name)` 生成。
+功能二：显示类别和 bbox 实例宽、高的分布图，通过子函数 `show_bbox_wh` 生成。
 
 <img src="https://user-images.githubusercontent.com/90811472/199019573-650b9652-eb14-4bc0-a5e8-650dfc578fc8.jpg"/>
 
-功能三：显示类别和 bbox 实例宽/高比例的分布图，通过子函数 `def show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio)` 生成。
+功能三：显示类别和 bbox 实例宽/高比例的分布图，通过子函数 `show_bbox_wh_ratio` 生成。
 
 <img src="https://user-images.githubusercontent.com/90811472/199019593-0f810a21-18d2-41ac-b4fa-baa8288bcb23.jpg"/>
 
-功能四：基于面积规则下，显示类别和 bbox 实例面积的分布图，通过子函数 `def show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num)` 生成。
+功能四：基于面积规则下，显示类别和 bbox 实例面积的分布图，通过子函数 `show_bbox_area` 生成。
 
 <img src="https://user-images.githubusercontent.com/90811472/199022991-5388db47-d0f3-4201-9eee-13c5fab6bca9.jpg"/>
 
-打印列表显示，通过脚本中子函数 `def show_class_list(class_name, class_num)` 生成。
+打印列表显示，通过脚本中子函数 `show_class_list` 生成。
 
 <img src="https://user-images.githubusercontent.com/90811472/199090989-15109bbf-f035-477d-8566-e2a28de0935d.jpg"/>
 
@@ -176,7 +176,7 @@ python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_sync
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
-                                               --func 1
+                                               --func show_bbox_num
 ```
 
 6.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 分析数据集，通过 `--output-dir` 设置修改图片保存地址，以 `work_ir/dataset_analysis` 地址为例：
