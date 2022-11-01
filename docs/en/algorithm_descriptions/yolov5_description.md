@@ -8,7 +8,7 @@
 
 RangeKing@github provides the graph above. Thanks, RangeKing!
 
-YOLOv5 is an open-sourced object detection algorithm for real-time industrial applications which has received extensive attention. The reason for the explosion of YOLOv5 is not simply due to its excellent performance. It is more about the overall utility and robustness of its library.
+YOLOv5 is an open-source object detection algorithm for real-time industrial applications which has received extensive attention. The reason for the explosion of YOLOv5 is not simply due to its excellent performance. It is more about the overall utility and robustness of its library.
 In short, the main features of YOLOv5 are:
 
 1. **Friendly and perfect deployment supports**
@@ -111,7 +111,7 @@ Object detection algorithms will rarely use this augmentation method as the anno
 MixUp, similar to Mosaic, is also a hybrid image augmentation. It randomly selects another image and mixes the two images together. There are various ways to do this, and the typical approach is to either stitch the label together directly or mix the label using `alpha` method.
 The original author's approach is straightforward: the label is directly stitched, and the images are mixed by distributional sampling.
 
-Note: **In YOLOv5's implementation of MixUP, the other random image must be processed by Mosaic+RandomAffine before the mixing process.** This may not be the same as implementations in other open-sourced libraries.
+Note: **In YOLOv5's implementation of MixUP, the other random image must be processed by Mosaic+RandomAffine before the mixing process.** This may not be the same as implementations in other open-source libraries.
 
 #### 1.1.4 Image blur and other augmentations
 
