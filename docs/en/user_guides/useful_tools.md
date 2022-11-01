@@ -158,14 +158,14 @@ python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_sync
                                                --type val
 ```
 
-3.Use `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` analyze the dataset, change the display of all generated classes to specific classes. Take the display of `person` and `car` classes as an example:
+3.Use `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` analyze the dataset, change the display of all generated classes to specific classes. Take the display of `person` classes as an example:
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
                                                --class-name person car
 ```
 
-4.Use `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` analyze the dataset, redefine the area rule. Taking the new value added as `30 70 120` as an example, the area rule interval becomes `[0, 30**2, 70**2，120**2, 1e5**2]`. Currently, only three values can be added at most:
+4.Use `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` analyze the dataset, redefine the area rule. Taking the new value added as `120` as an example, the command entered is ` 32 96 120`, and the area rule interval becomes `[0, 32**2, 96**2，120**2, 1e5**2]`. Only one number can be added. To customize the area rule, the entered command must include `32 96`:
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \

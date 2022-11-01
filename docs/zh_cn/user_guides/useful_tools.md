@@ -158,18 +158,18 @@ python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_sync
                                                --type val
 ```
 
-3.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 分析数据集，通过 `--class-name` 设置将生成所有类显示改为特定类，以显示 `person` 和 `car` 类为例：
+3.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 分析数据集，通过 `--class-name` 设置将生成所有类显示改为特定类，以显示 `person` 为例：
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
-                                               --class-name person car
+                                               --class-name person
 ```
 
-4.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 分析数据集，通过 `--area-rule` 重新定义面积规则，以新增值为 `30 70 120` 为例，面积规则区间变为 `[0, 30**2, 70**2，120**2, 1e5**2]` ,目前只支持最多增加三个值：
+4.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 分析数据集，通过 `--area-rule` 重新定义面积规则，以新增值为 `120` 为例，输入的命令为 `32 96 120` ,面积规则区间则变为 `[0, 32**2, 96**2，120**2, 1e5**2]` 。只能添加一个数字，若要自定义面积规则，输入的命令中需要包含 `32 96`：
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
-                                               --area-rule 30 70 120
+                                               --area-rule 32 96 120
 ```
 
 5.使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 分析数据集，通过 `--func` 设置，将显示四个功能效果图改为只显示 `功能一` 为例：

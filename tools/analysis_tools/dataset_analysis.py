@@ -27,19 +27,19 @@ def parse_args():
         '--class-name',
         default=None,
         type=str,
-        nargs='+',
-        help='Display category-specific data, e.g., "bicycle", "person"')
+        help='Display category-specific data, e.g., "bicycle"')
     parser.add_argument(
         '--area-rule',
-        default=None,
+        default=[32, 96],
         type=int,
         nargs='+',
-        help='Add a new data, customize area rules, e.g., 30,70,120')
+        help='Add new value and redefine regional rules,'
+        ' e.g., 32 96 120,120 is new value')
     parser.add_argument(
         '--func',
         default=None,
         type=str,
-        help='Dataset analysis function selection, e.g., 1/2/3/4')
+        help='Dataset analysis function selection, e.g., --func 1')
     parser.add_argument(
         '--output-dir',
         default='./',
@@ -52,16 +52,21 @@ def parse_args():
 def show_bbox_num(cfg, args, fig_set, class_name, class_num):
     """Display the distribution map of categories and number of bbox
     instances."""
-
+    # Drawing function 1:
+    # Draw designs
     fig = plt.figure(
         figsize=(fig_set['figsize'][0], fig_set['figsize'][1]), dpi=600)
     plt.bar(class_name, class_num, align='center')
+
+    # Draw titles, labels and so on
     for x, y in enumerate(class_num):
         plt.text(x, y + 2, '%s' % y, ha='center', fontsize=fig_set['fontsize'])
     plt.xticks(rotation=fig_set['xticks_angle'])
     plt.xlabel('Category Name')
     plt.ylabel('Num of instances')
     plt.title(cfg.dataset_type)
+
+    # Save figuer
     out_dir = os.path.join(args.output_dir, 'dataset_analysis')
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -73,9 +78,12 @@ def show_bbox_num(cfg, args, fig_set, class_name, class_num):
 def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name):
     """Display the width and height distribution of categories and bbox
     instances."""
-
+    # Drawing function 2:
+    # Draw designs
     fig, ax = plt.subplots(
         figsize=(fig_set['figsize'][0], fig_set['figsize'][1]), dpi=600)
+
+    # Set the position of the map and label on the x-axis
     positions_w = list(range(0, 12 * len(class_name), 12))
     positions_h = list(range(6, 12 * len(class_name), 12))
     positions_x_lable = list(range(3, 12 * len(class_name) + 1, 12))
@@ -83,10 +91,14 @@ def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name):
         class_bbox_w, positions_w, showmeans=True, showmedians=True, widths=4)
     ax.violinplot(
         class_bbox_h, positions_h, showmeans=True, showmedians=True, widths=4)
+
+    # Draw titles, labels and so on
     plt.xticks(rotation=fig_set['xticks_angle'])
     plt.ylabel('The width or height of bbox')
     plt.xlabel('Class name')
     plt.title('Width or height distribution of classes and bbox instances')
+
+    # Draw the max, min and median of wide data in violin chart
     for i in range(len(class_bbox_w)):
         plt.text(
             positions_w[i],
@@ -106,6 +118,8 @@ def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name):
             f'{"%.2f" % min(class_bbox_w[i])}',
             ha='center',
             fontsize=fig_set['fontsize'])
+
+    # Draw the max, min and median of height data in violin chart
     for i in range(len(positions_h)):
         plt.text(
             positions_h[i],
@@ -125,6 +139,8 @@ def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name):
             f'{"%.2f" % min(class_bbox_h[i])}',
             ha='center',
             fontsize=fig_set['fontsize'])
+
+    # Draw Legend
     plt.setp(ax, xticks=positions_x_lable, xticklabels=class_name)
     labels = ['bbox_w', 'bbox_h']
     colors = ['steelblue', 'darkorange']
@@ -136,6 +152,8 @@ def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name):
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width, box.height * 0.8])
     ax.legend(loc='upper center', handles=patches, ncol=2)
+
+    # Save figuer
     out_dir = os.path.join(args.output_dir, 'dataset_analysis')
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -147,9 +165,12 @@ def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name):
 def show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio):
     """Display the distribution map of category and bbox instance width and
     height ratio."""
-
+    # Drawing function 3:
+    # Draw designs
     fig, ax = plt.subplots(
         figsize=(fig_set['figsize'][0], fig_set['figsize'][1]), dpi=600)
+
+    # Set the position of the map and label on the x-axis
     positions = list(range(0, 6 * len(class_name), 6))
     ax.violinplot(
         class_bbox_ratio,
@@ -157,10 +178,14 @@ def show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio):
         showmeans=True,
         showmedians=True,
         widths=5)
+
+    # Draw titles, labels and so on
     plt.xticks(rotation=fig_set['xticks_angle'])
     plt.ylabel('Ratio of width to height of bbox')
     plt.xlabel('Class name')
     plt.title('Width to height ratio distribution of class and bbox instances')
+
+    # Draw the max, min and median of wide data in violin chart
     for i in range(len(class_bbox_ratio)):
         plt.text(
             positions[i],
@@ -180,7 +205,11 @@ def show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio):
             f'{"%.2f" % min(class_bbox_ratio[i])}',
             ha='center',
             fontsize=fig_set['fontsize'])
+
+    # Set the position of the map and label on the x-axis
     plt.setp(ax, xticks=positions, xticklabels=class_name)
+
+    # Save figuer
     out_dir = os.path.join(args.output_dir, 'dataset_analysis')
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -192,13 +221,17 @@ def show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio):
 def show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num):
     """Display the distribution map of category and bbox instance area based on
     the rules of large, medium and small objects."""
-
+    # Drawing function 4:
+    # Set the direct distance of each label and the width of each histogram
+    # Set the required labels and colors
     positions = np.arange(0, 2 * len(class_name), 2)
     width = 0.4
-    fig = plt.figure(
-        figsize=(fig_set['figsize'][0], fig_set['figsize'][1]), dpi=600)
     labels = ['Small', 'Mediun', 'Large', 'Huge']
     colors = ['#438675', '#F7B469', '#6BA6DA', '#913221']
+
+    # Draw designs
+    fig = plt.figure(
+        figsize=(fig_set['figsize'][0], fig_set['figsize'][1]), dpi=600)
     for i in range(len(area_rule) - 1):
         area_num = [bbox_area_num[idx][i] for idx in range(len(class_name))]
         plt.bar(
@@ -210,20 +243,26 @@ def show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num):
         for idx, (x, y) in enumerate(zip(positions.tolist(), area_num)):
             plt.text(
                 x + width * i, y, y, ha='center', fontsize=fig_set['fontsize'])
+
+    # Draw titles, labels and so on
     plt.xticks(rotation=fig_set['xticks_angle'])
     plt.xticks(positions + width * ((len(area_rule) - 2) / 2), class_name)
-    patches = [
-        mpatches.Patch(color=colors[i], label=f'{labels[i]:s}')
-        for i in range(len(area_rule) - 1)
-    ]
     plt.ylabel('Class Area')
     plt.xlabel('Class Name')
     plt.title(
         'Area and number of large, medium and small objects of each class')
+
+    # Set and Draw Legend
+    patches = [
+        mpatches.Patch(color=colors[i], label=f'{labels[i]:s}')
+        for i in range(len(area_rule) - 1)
+    ]
     ax = plt.gca()
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width, box.height * 0.8])
     ax.legend(loc='upper center', handles=patches, ncol=len(area_rule) - 1)
+
+    # Save figuer
     out_dir = os.path.join(args.output_dir, 'dataset_analysis')
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -237,7 +276,8 @@ def show_class_list(class_name, class_num):
 
     data_info = PrettyTable()
     data_info.title = 'Dataset analysis'
-
+    # List Print Settings
+    # If the quantity is too large, 25 rows will be displayed in each column
     if len(class_name) < 25:
         data_info.add_column('Class name', class_name)
         data_info.add_column('bbox_num', class_num)
@@ -249,8 +289,11 @@ def show_class_list(class_name, class_num):
             class_nums.append('')
         for i in range(0, len(class_name), 25):
             data_info.add_column('Class name', class_name[i:i + 25])
-            data_info.add_column('bbox_num', class_nums[i:i + 25])
+            data_info.add_column('Bbox num', class_nums[i:i + 25])
+
+    # Align display data to the left
     data_info.align['Class name'] = 'l'
+    data_info.align['Bbox num'] = 'l'
     print(data_info)
 
 
@@ -267,10 +310,11 @@ def main():
     elif args.type == 'val':
         dataset = DATASETS.build(cfg.val_dataloader.dataset)
     else:
-        raise RuntimeError('Please enter the correct data type, train or val')
+        raise RuntimeError(
+            'Please enter the correct data type, e.g., train or val')
     data_list = dataset.load_data_list()
 
-    # TODO: 2.Prepare data
+    # 2.Prepare data
     progress_bar = ProgressBar(len(dataset))
 
     # Drawing settings
@@ -281,10 +325,10 @@ def main():
         'out_name': cfg.dataset_type
     }
     fig_one_set = {
-        'figsize': [15, 12],
+        'figsize': [15, 10],
         'fontsize': 10,
         'xticks_angle': 0,
-        'out_name': 'specific_class'
+        'out_name': args.class_name
     }
 
     # Call the category name and save address
@@ -292,21 +336,20 @@ def main():
         classes = dataset.metainfo['CLASSES']
         classes_idx = [i for i in range(len(classes))]
         fig_set = fig_all_set
-    else:
-        class_name_idx = []
-        for i in range(len(args.class_name)):
-            assert args.class_name[i] in dataset.metainfo['CLASSES']
-            class_idx = dataset.metainfo['CLASSES'].index(args.class_name[i])
-            class_name_idx.append(class_idx)
-        classes = args.class_name
-        classes_idx = class_name_idx
+    elif args.class_name in dataset.metainfo['CLASSES']:
+        classes = [args.class_name]
+        classes_idx = [dataset.metainfo['CLASSES'].index(args.class_name)]
         fig_set = fig_one_set
+    else:
+        raise RuntimeError('Please enter the correct class name, e.g., person')
 
     # Building Area Rules
-    if args.area_rule is None:
-        area_rules = [0, 32, 96, 1e5]
-    else:
+    if 32 in args.area_rule and 96 in args.area_rule and len(
+            args.area_rule) <= 3:
         area_rules = [0] + args.area_rule + [1e5]
+    else:
+        raise RuntimeError(
+            'Please enter the correct area rule, e.g., 32 96 120')
     area_rule = sorted(area_rules)
 
     # Build arrays or lists to store data for each category
@@ -325,10 +368,9 @@ def main():
                     'bbox_label'] in classes_idx and args.class_name is None:
                 class_num[instance['bbox_label']] += 1
                 class_bbox[instance['bbox_label']].append(instance['bbox'])
-            elif instance['bbox_label'] in classes_idx:
-                idx = classes_idx.index(instance['bbox_label'])
-                class_num[idx] += 1
-                class_bbox[idx].append(instance['bbox'])
+            elif instance['bbox_label'] in classes_idx and args.class_name:
+                class_num[0] += 1
+                class_bbox[0].append(instance['bbox'])
         progress_bar.update()
 
     # Get the width, height and area of bbox corresponding to each category
@@ -355,14 +397,23 @@ def main():
         progress_bar_classes.update()
 
     # 3.draw Dataset Information
-    if args.func == '1' or args.func is None:
+    if args.func is None:
         show_bbox_num(cfg, args, fig_set, class_name, class_num)
-    if args.func == '2' or args.func is None:
         show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name)
-    if args.func == '3' or args.func is None:
         show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio)
-    if args.func == '4' or args.func is None:
         show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num)
+    elif args.func == '1':
+        show_bbox_num(cfg, args, fig_set, class_name, class_num)
+    elif args.func == '2':
+        show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name)
+    elif args.func == '3':
+        show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio)
+    elif args.func == '4':
+        show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num)
+    else:
+        raise RuntimeError(
+            'Please enter the correct func name, e.g., --func 1 to 4')
+
     print('\nDraw End\n')
 
     # 4.Print Dataset Information
