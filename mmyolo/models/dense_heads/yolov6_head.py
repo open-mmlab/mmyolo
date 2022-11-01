@@ -324,16 +324,11 @@ class YOLOv6Head(YOLOv5Head):
                                             flatten_priors, gt_labels,
                                             gt_bboxes, pad_bbox_flag)
 
-        assigned_labels = assigned_result['assigned_labels']
         assigned_bboxes = assigned_result['assigned_bboxes']
         assigned_scores = assigned_result['assigned_scores']
         fg_mask_pre_prior = assigned_result['fg_mask_pre_prior']
 
         # cls loss
-        assigned_labels = torch.where(
-            fg_mask_pre_prior > 0, assigned_labels,
-            torch.full_like(assigned_labels, self.num_classes))
-
         with torch.cuda.amp.autocast(enabled=False):
             loss_cls = self.loss_cls(flatten_cls_preds, assigned_scores)
 
