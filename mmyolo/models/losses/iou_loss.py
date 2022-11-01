@@ -14,6 +14,7 @@ def bbox_overlaps(pred: torch.Tensor,
                   target: torch.Tensor,
                   iou_mode: str = 'ciou',
                   bbox_format: str = 'xywh',
+                  siou_theta: float = 4.0,
                   eps: float = 1e-7) -> torch.Tensor:
     r"""Calculate overlap between two set of bboxes.
     `Implementation of paper `Enhancing Geometric Factors into
@@ -33,6 +34,8 @@ def bbox_overlaps(pred: torch.Tensor,
             Defaults to "ciou".
         bbox_format (str): Options are "xywh" and "xyxy".
             Defaults to "xywh".
+        siou_theta (float): siou_theta for SIoU when calculate shape cost.
+            Defaults to 4.0.
         eps (float): Eps to avoid log(0).
     Returns:
         Tensor: shape (n,).
@@ -133,11 +136,11 @@ def bbox_overlaps(pred: torch.Tensor,
             1 - torch.exp(-1 * gamma * rho_y))
 
         # Shape cost = Ω = Σ_(t=w,h) ( ( 1 - ( e ^ (-ω_t) ) ) ^ θ )
-        theta = 4.0  # θ
         omiga_w = torch.abs(w1 - w2) / torch.max(w1, w2)  # ω_w
         omiga_h = torch.abs(h1 - h2) / torch.max(h1, h2)  # ω_h
-        shape_cost = torch.pow(1 - torch.exp(-1 * omiga_w), theta) + torch.pow(
-            1 - torch.exp(-1 * omiga_h), theta)
+        shape_cost = torch.pow(1 - torch.exp(-1 * omiga_w),
+                               siou_theta) + torch.pow(
+                                   1 - torch.exp(-1 * omiga_h), siou_theta)
 
         ious = ious - ((distance_cost + shape_cost) * 0.5)
 
