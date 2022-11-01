@@ -1,7 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Sequence, Tuple, Union
 
-import numpy as np
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
@@ -311,11 +310,11 @@ class YOLOv6Head(YOLOv5Head):
 
         # get epoch information from message hub
         message_hub = MessageHub.get_current_instance()
-        self.epoch = message_hub.get_info('epoch')
+        current_epoch = message_hub.get_info('epoch')
 
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
-        if self.epoch < self.initial_epoch:
+        if current_epoch < self.initial_epoch:
             assigned_result = self.initial_assigner(
                 flatten_pred_bboxes.detach(), flatten_priors, num_level_priors,
                 gt_labels, gt_bboxes, pad_bbox_flag)
@@ -375,13 +374,40 @@ class YOLOv6Head(YOLOv5Head):
     @staticmethod
     def gt_instances_preprocess(batch_gt_instances: Tensor,
                                 batch_size: int) -> Tensor:
-        gt_info_list = np.zeros((batch_size, 1, 5)).tolist()
-        for i, item in enumerate(batch_gt_instances.cpu().numpy().tolist()):
-            gt_info_list[int(item[0])].append(item[1:])
-        max_len = max(len(gt_info) for gt_info in gt_info_list)
-        return torch.from_numpy(
-            np.array(
-                list(
-                    map(lambda l: l + [[-1, 0, 0, 0, 0]] * (max_len - len(l)),
-                        gt_info_list)))[:,
-                                        1:, :]).to(batch_gt_instances.device)
+        """Split batch_gt_instances with batch size, from [all_gt_bboxes, 6] to
+        [batch_size, number_gt, 5]. If some shape of single batch smaller than
+        gt bbox len, then using [-1., 0., 0., 0., 0.] to fill.
+
+        Args:
+            batch_gt_instances (Sequence[Tensor]): Ground truth
+                instances for whole batch, shape [all_gt_bboxes, 6]
+            batch_size (int): Batch size.
+
+        Returns:
+            Tensor: batch gt instances data, shape [batch_size, number_gt, 5]
+        """
+
+        # sqlit batch gt instance [all_gt_bboxes, 6] ->
+        # [batch_size, number_gt_each_batch, 5]
+        batch_instance_list = []
+        max_gt_bbox_len = 0
+        for i in range(batch_size):
+            single_batch_instance = \
+                batch_gt_instances[batch_gt_instances[:, 0] == i, :]
+            single_batch_instance = single_batch_instance[:, 1:]
+            batch_instance_list.append(single_batch_instance)
+            if len(single_batch_instance) > max_gt_bbox_len:
+                max_gt_bbox_len = len(single_batch_instance)
+
+        # fill [-1., 0., 0., 0., 0.] if some shape of
+        # single batch not equal max_gt_bbox_len
+        for index, gt_instance in enumerate(batch_instance_list):
+            if gt_instance.shape[0] >= max_gt_bbox_len:
+                continue
+            fill_tensor = batch_gt_instances.new_full(
+                [max_gt_bbox_len - gt_instance.shape[0], 5], 0)
+            fill_tensor[:, 0] = -1.
+            batch_instance_list[index] = torch.cat(
+                (batch_instance_list[index], fill_tensor), dim=0)
+
+        return torch.stack(batch_instance_list)

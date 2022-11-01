@@ -10,7 +10,6 @@ from mmdet.structures.bbox import HorizontalBoxes
 from mmyolo.registry import MODELS
 
 
-# TODO: unify all code
 def bbox_overlaps(pred: torch.Tensor,
                   target: torch.Tensor,
                   iou_mode: str = 'ciou',
@@ -75,16 +74,19 @@ def bbox_overlaps(pred: torch.Tensor,
     enclose_h = enclose_wh[:, 1]  # ch
 
     if iou_mode == 'ciou':
-        enclose_area = enclose_w**2 + enclose_h**2 + eps  # c^2
+        # CIoU = IoU - ( (ρ^2(b_pred,b_gt) / c^2) + (alpha x v) )
 
-        # rho2(ρ^2):
-        # euclidean distance between bbox2(pred) and bbox1(gt) center point,
-        # then ** 2
-        # because bbox format is xyxy -> left-top xy and right-bottom xy,
-        # so need to / 4 to get center point
-        left_item = ((bbox2_x1 + bbox2_x2) - (bbox1_x1 + bbox1_x2))**2 / 4
-        right_item = ((bbox2_y1 + bbox2_y2) - (bbox1_y1 + bbox1_y2))**2 / 4
-        rho2 = left_item + right_item  # rho^2 (ρ^2)
+        # calculate enclose area (c^2)
+        enclose_area = enclose_w**2 + enclose_h**2 + eps
+
+        # calculate ρ^2(b_pred,b_gt):
+        # euclidean distance between b_pred(bbox2) and b_gt(bbox1)
+        # center point, because bbox format is xyxy -> left-top xy and
+        # right-bottom xy, so need to / 4 to get center point.
+        rho2_left_item = ((bbox2_x1 + bbox2_x2) - (bbox1_x1 + bbox1_x2))**2 / 4
+        rho2_right_item = ((bbox2_y1 + bbox2_y2) -
+                           (bbox1_y1 + bbox1_y2))**2 / 4
+        rho2 = rho2_left_item + rho2_right_item  # rho^2 (ρ^2)
 
         # Width and height ratio (v)
         wh_ratio = (4 / (math.pi**2)) * torch.pow(
@@ -97,18 +99,19 @@ def bbox_overlaps(pred: torch.Tensor,
         ious = ious - ((rho2 / enclose_area) + (alpha * wh_ratio))
 
     elif iou_mode == 'giou':
-        # GIoU
-        convex_area = enclose_w * enclose_h + eps  # convex area
+        # GIoU = IoU - ( (A_c - union) / A_c )
+        convex_area = enclose_w * enclose_h + eps  # convex area (A_c)
         ious = ious - (convex_area - union) / convex_area
 
     elif iou_mode == 'siou':
         # SIoU: https://arxiv.org/pdf/2205.12740.pdf
+        # SIoU = IoU - ( (Distance Cost + Shape Cost) / 2 )
 
         # calculate sigma (σ):
         # euclidean distance between bbox2(pred) and bbox1(gt) center point,
-        # left_item = b_cx_gt - b_cx
+        # sigma_cw = b_cx_gt - b_cx
         sigma_cw = (bbox2_x1 + bbox2_x2) / 2 - (bbox1_x1 + bbox1_x2) / 2 + eps
-        # right_item = b_cy_gt - b_cy
+        # sigma_ch = b_cy_gt - b_cy
         sigma_ch = (bbox2_y1 + bbox2_y2) / 2 - (bbox1_y1 + bbox1_y2) / 2 + eps
         # sigma = √( (sigma_cw ** 2) - (sigma_ch ** 2) )
         sigma = torch.pow(sigma_cw**2 + sigma_ch**2, 0.5)
