@@ -300,9 +300,7 @@ class YOLOv6Head(YOLOv5Head):
             self.flatten_priors = torch.cat(self.mlvl_priors, dim=0)
             self.stride_tensor = self.flatten_priors[..., [2]]
 
-
-
-        # gt_info
+        # gt info
         gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
         gt_labels = gt_info[:, :, :1]
         gt_bboxes = gt_info[:, :, 1:]  # xyxy
@@ -314,6 +312,7 @@ class YOLOv6Head(YOLOv5Head):
                                                  self.num_classes)
             for cls_pred in cls_scores
         ]
+
         flatten_pred_bboxes = [
             bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
             for bbox_pred in bbox_preds
