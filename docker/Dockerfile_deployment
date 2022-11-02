@@ -1,0 +1,52 @@
+FROM nvcr.io/nvidia/pytorch:22.04-py3
+
+WORKDIR /openmmlab
+ARG ONNXRUNTIME_VERSION=1.8.1
+ENV DEBIAN_FRONTEND=noninteractive
+ENV APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn
+
+RUN apt-key del 7fa2af80 \
+    && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub \
+    && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64/7fa2af80.pub
+
+# (Optional)
+# RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu\//http:\/\/mirrors.aliyun.com\/ubuntu\//g' /etc/apt/sources.list \
+# && pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+
+RUN apt-get update \
+    && apt-get install -y ffmpeg libsm6 libxext6 git ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+
+### get onnxruntime
+RUN wget -q https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTIME_VERSION}/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}.tgz \
+    && tar -zxvf onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}.tgz \
+    && pip install --no-cache-dir onnxruntime-gpu==${ONNXRUNTIME_VERSION}
+
+### install openmim mmengine mmcv mmdet
+RUN pip install --no-cache-dir openmim \
+    && mim install --no-cache-dir "mmengine>=0.2.0" "mmcv>=2.0.0rc1,<2.1.0" "mmdet>=3.0.0rc2,<3.1.0"
+
+# Install MMYOLO
+RUN git clone https://github.com/open-mmlab/mmyolo.git mmyolo \
+    && cd mmyolo \
+    && mim install --no-cache-dir -e . \
+    && cd ..
+
+### install mmdeploy
+ENV ONNXRUNTIME_DIR=/openmmlab/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}
+ENV TENSORRT_DIR=/usr/lib/x86_64-linux-gnu
+ENV CUDNN_DIR=/usr/lib/x86_64-linux-gnu
+ENV BACKUP_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=$ONNXRUNTIME_DIR/lib:$TENSORRT_DIR/lib:$CUDNN_DIR/lib64:$BACKUP_LD_LIBRARY_PATH
+
+RUN git clone https://github.com/open-mmlab/mmdeploy -b dev-1.x mmdeploy \
+    && cd mmdeploy \
+    && git submodule update --init --recursive \
+    && mkdir -p build \
+    && cd build \
+    && cmake -DMMDEPLOY_TARGET_BACKENDS="ort;trt" .. \
+    && make -j$(nproc) \
+    && cd .. \
+    && pip install -e .
