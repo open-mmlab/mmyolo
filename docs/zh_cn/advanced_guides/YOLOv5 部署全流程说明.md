@@ -193,8 +193,11 @@ use_efficientnms = False
 ## 模型转换
 
 本教程所使用的 `MMDeploy` 根目录为 `/home/openmmlab/dev/mmdeploy`，请注意修改为您的 `MMDeploy` 目录。
+预训练权重下载于 [yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth) ，保存在本地的 `/home/openmmlab/dev/mmdeploy/yolov5s.pth`。
 
-预训练权重下载于 https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth ，保存在本地的 `/home/openmmlab/dev/mmdeploy/yolov5s.pth`。
+```shell
+wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth -O /home/openmmlab/dev/mmdeploy/yolov5s.pth
+```
 
 命令行执行以下命令配置相关路径：
 
