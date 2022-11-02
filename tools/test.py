@@ -28,6 +28,10 @@ def parse_args():
     parser.add_argument(
         '--show', action='store_true', help='show prediction results')
     parser.add_argument(
+        '--deploy',
+        action='store_true',
+        help='Switch model to deployment mode')
+    parser.add_argument(
         '--show-dir',
         help='directory where painted images will be saved. '
         'If specified, it will be automatically saved '
@@ -84,6 +88,9 @@ def main():
 
     if args.show or args.show_dir:
         cfg = trigger_visualization_hook(cfg, args)
+
+    if args.deploy:
+        cfg.custom_hooks.append(dict(type='SwitchToDeployHook'))
 
     # Dump predictions
     if args.out is not None:
