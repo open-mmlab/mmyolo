@@ -24,7 +24,7 @@ RUN wget -q https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRU
     && tar -zxvf onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}.tgz \
     && pip install --no-cache-dir onnxruntime-gpu==${ONNXRUNTIME_VERSION}
 
-### install openmim mmengine mmcv mmdet
+# Install openmim mmengine mmcv mmdet
 RUN pip install --no-cache-dir openmim \
     && mim install --no-cache-dir "mmengine>=0.2.0" "mmcv>=2.0.0rc1,<2.1.0" "mmdet>=3.0.0rc2,<3.1.0"
 
