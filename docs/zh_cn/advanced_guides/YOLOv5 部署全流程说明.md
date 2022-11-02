@@ -18,11 +18,11 @@
 
 ### 静态输入配置
 
-#### (1) 修改模型配置文件
+#### (1) 模型配置文件
 
 当您需要部署静态输入模型时，您应该确保模型的输入尺寸是固定的，比如在测试流程或测试数据集加载时输入尺寸为 `640x640`。
 
-您需要修改 [`yolov5_s-deploy.py`](configs/deploy/model/yolov5_s-deploy.py) 中测试流程或测试数据集加载部分，如下所示：
+您可以查看 [`yolov5_s-deploy.py`](configs/deploy/model/yolov5_s-deploy.py) 中测试流程或测试数据集加载部分，如下所示：
 
 ```python
 _base_ = '../../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -46,14 +46,16 @@ test_dataloader = dict(
     dataset=dict(pipeline=test_pipeline, batch_shapes_cfg=None))
 ```
 
-由于 `yolov5` 在测试时会开启 `allow_scale_up` 和 `use_mini_pad` 改变输入图像的尺寸来取得更高的精度，但是会给部署静态输入模型造成输入尺寸不匹配的问题。因此我们需要额外修改模型配置来固定输入尺寸。
+由于 `yolov5` 在测试时会开启 `allow_scale_up` 和 `use_mini_pad` 改变输入图像的尺寸来取得更高的精度，但是会给部署静态输入模型造成输入尺寸不匹配的问题。
+
+该配置相比与原始配置文件进行了如下修改:
 
 - 关闭 `test_pipline` 中改变尺寸相关的配置，如 `LetterResize` 中 `allow_scale_up=False` 和 `use_mini_pad=False` 。
 - 关闭 `test_dataloader` 中 `batch shapes` 策略，即 `batch_shapes_cfg=None` 。
 
-#### (2) 修改部署配置文件
+#### (2) 部署配置文件
 
-当您部署在 `ONNXRuntime` 时，您可以选择并修改 [`detection_onnxruntime_static.py`](configs/deploy/detection_onnxruntime_static.py) ，如下所示：
+当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_static.py`](configs/deploy/detection_onnxruntime_static.py) ，如下所示：
 
 ```python
 _base_ = ['./base_static.py']
@@ -75,7 +77,7 @@ backend_config = dict(type='onnxruntime')
 
 默认配置中的 `post_processing` 后处理参数是当前模型与 `pytorch` 模型精度对齐的配置，若您需要修改相关参数，可以参考 [`部署必备指南`](./部署必备指南.md) 的详细介绍。
 
-当您部署在 `TensorRT` 时，您可以选择并修改 [`detection_tensorrt_static-640x640.py`](config/deploy/detection_tensorrt_static-640x640.py) ，如下所示：
+当您部署在 `TensorRT` 时，您可以查看 [`detection_tensorrt_static-640x640.py`](config/deploy/detection_tensorrt_static-640x640.py) ，如下所示：
 
 ```python
 _base_ = ['./base_static.py']
@@ -98,7 +100,7 @@ use_efficientnms = False
 
 ### 动态输入配置
 
-#### (1) 使用默认模型配置文件
+#### (1) 模型配置文件
 
 当您需要部署动态输入模型时，模型的输入可以为任意尺寸(`TensorRT` 会限制最小和最大输入尺寸)，因此使用默认的 [`yolov5_s-v61_syncbn_8xb16-300e_coco.py`](configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) 模型配置文件即可，其中数据处理和数据集加载器部分如下所示：
 
@@ -144,9 +146,9 @@ val_dataloader = dict(
 
 其中 `LetterResize` 类初始化传入了 `allow_scale_up=False` 控制输入的小图像是否上采样，同时默认 `use_mini_pad=False` 关闭了图片最小填充策略，`val_dataloader['dataset']`中传入了 `batch_shapes_cfg=batch_shapes_cfg`，即按照 `batch` 内的输入尺寸进行最小填充。上述策略会改变输入图像的尺寸，因此动态输入模型在测试时会按照上述数据集加载器动态输入。
 
-#### (2) 修改部署配置文件
+#### (2) 部署配置文件
 
-当您部署在 `ONNXRuntime` 时，您可以选择并修改 [`detection_onnxruntime_dynamic.py`](configs/deploy/detection_onnxruntime_dynamic.py) ，如下所示：
+当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_dynamic.py`](configs/deploy/detection_onnxruntime_dynamic.py) ，如下所示：
 
 ```python
 _base_ = ['./base_dynamic.py']
@@ -166,9 +168,9 @@ codebase_config = dict(
 backend_config = dict(type='onnxruntime')
 ```
 
-与静态输入配置仅有 `_base_ = ['./base_dynamic.py']` 不同，动态输入会额外继承 `dynamic_axes` 属性。其他修改与静态输入配置相同。
+与静态输入配置仅有 `_base_ = ['./base_dynamic.py']` 不同，动态输入会额外继承 `dynamic_axes` 属性。其他配置与静态输入配置相同。
 
-当您部署在 `TensorRT` 时，您可以选择并修改 [`detection_tensorrt_dynamic-192x192-960x960.py`](config/deploy/detection_tensorrt_dynamic-192x192-960x960.py) ，如下所示：
+当您部署在 `TensorRT` 时，您可以查看 [`detection_tensorrt_dynamic-192x192-960x960.py`](config/deploy/detection_tensorrt_dynamic-192x192-960x960.py) ，如下所示：
 
 ```python
 _base_ = ['./base_dynamic.py']
@@ -188,7 +190,9 @@ use_efficientnms = False
 
 本例构建网络以 `fp32` 模式即 `fp16_mode=False`，构建 `TensorRT` 构建引擎所使用的显存 `max_workspace_size=1 << 30` 即最大为 `1GB` 显存。
 
-同时修改了 `min_shape=[1, 3, 192, 192]`，`opt_shape=[1, 3, 640, 640]` ，`max_shape=[1, 3, 960, 960]` ，意为该模型所能接受的输入尺寸最小为 `192x192` ，最大为 `960x960`，最常见尺寸为 `640x640`。当您部署自己的模型时，需要根据您的输入图像尺寸进行调整。
+同时默认配置 `min_shape=[1, 3, 192, 192]`，`opt_shape=[1, 3, 640, 640]` ，`max_shape=[1, 3, 960, 960]` ，意为该模型所能接受的输入尺寸最小为 `192x192` ，最大为 `960x960`，最常见尺寸为 `640x640`。
+
+当您部署自己的模型时，需要根据您的输入图像尺寸进行调整。
 
 ## 模型转换
 
