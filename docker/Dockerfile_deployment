@@ -14,7 +14,7 @@ RUN apt-key del 7fa2af80 \
 # && pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 RUN apt-get update \
-    && apt-get install -y ffmpeg libsm6 libxext6 git ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 \
+    && apt-get install -y libopencv-dev ffmpeg libsm6 libxext6 git ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir openmim \
     && mim install --no-cache-dir "mmengine>=0.2.0" "mmcv>=2.0.0rc1,<2.1.0" "mmdet>=3.0.0rc2,<3.1.0"
 
 # Install MMYOLO
-RUN git clone https://github.com/open-mmlab/mmyolo.git -b dev mmyolo \
+RUN git clone https://github.com/open-mmlab/mmyolo.git mmyolo \
     && cd mmyolo \
     && mim install --no-cache-dir -e . \
     && cd ..
@@ -45,7 +45,10 @@ RUN git clone https://github.com/open-mmlab/mmdeploy -b dev-1.x mmdeploy \
     && git submodule update --init --recursive \
     && mkdir -p build \
     && cd build \
-    && cmake -DMMDEPLOY_TARGET_BACKENDS="ort;trt" .. \
+    && cmake -DMMDEPLOY_TARGET_BACKENDS="ort;trt" -DONNXRUNTIME_DIR=${ONNXRUNTIME_DIR} -DTENSORRT_DIR=${TENSORRT_DIR} -DCUDNN_DIR=${CUDNN_DIR} .. \
     && make -j$(nproc) \
+    && make install \
     && cd .. \
-    && pip install -e .
+    && pip install -e . \
+
+RUN pip install --no-cache-dir opencv-python==4.5.5.64 opencv-python-headless==4.5.5.64
