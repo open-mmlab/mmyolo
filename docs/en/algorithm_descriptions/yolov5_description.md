@@ -276,20 +276,20 @@ The `PAFPN` outputs three feature maps of different scales, whose shapes are (B,
 
 Since YOLOv5 has a non-decoupled output, that is, classification and bbox detection results are all in different channels of the same convolution module. Taking the COCO dataset as an example, when the input is 640x640 resolution, the output shapes of the Head module are `(B, 3x(4+1+80),80,80)`, `(B, 3x(4+1+80),40,40)` and `(B, 3x(4+1+80),20,20)`. `3` represents three anchors, `4` represents the bbox prediction branch, `1` represents the obj prediction branch, and `80` represents the class prediction branch of the COCO dataset.
 
-### 1.3 Positive and negative sample matching strategy
+### 1.3 Positive and negative sample assignment strategy
 
-The core of the positive and negative sample matching strategy is to determine which positions in all positions of the predicted feature map should be positive or negative and even which samples will be ignored.
+The core of the positive and negative sample assignment strategy is to determine which positions in all positions of the predicted feature map should be positive or negative and even which samples will be ignored.
 
 This is one of the most significant components of the object detection algorithm because a good strategy can improve the algorithm's performance.
 
-The matching strategy of YOLOv5 can be briefly summarized as calculating the shape-matching rate between anchor and gt_bbox. Plus, the cross-neighborhood grid is also introduced to get more positive samples.
+The assignment strategy of YOLOv5 can be briefly summarized as calculating the shape-matching rate between anchor and gt_bbox. Plus, the cross-neighborhood grid is also introduced to get more positive samples.
 
 It consists of the following two main steps:
 
 1. For any output layer, instead of the commonly used strategy based on Max IoU matching, YOLOv5 switched to comparing the shape matching ratio. First, the GT Bbox and the anchor of the current layer are used to calculate the aspect ratio. If the ratio is greater than the threshold, the GT Bbox and Anchor are considered not matched. Then the current GT Bbox is temporarily discarded, and the predicted position in the grid of this GT Bbox in the current layer is regarded as a negative sample.
 2. For the remaining GT Bboxes (the matched GT Bboxes), YOLOv5 calculates which grid they fall in. Using the rounding rule to find the nearest two grids and considering all three grids as a group that is responsible for predicting the GT Bbox. The number of positive samples has increased by at least three times compared to the previous YOLO series algorithms.
 
-Now we will explain each part of the matching strategy in detail. Some descriptions and illustrations are directly or indirectly referenced from the official [repo](https://github.com/ultralytics/YOLOv5/issues/6998#44).
+Now we will explain each part of the assignment strategy in detail. Some descriptions and illustrations are directly or indirectly referenced from the official [repo](https://github.com/ultralytics/YOLOv5/issues/6998#44).
 
 #### 1.3.1 Anchor settings
 
@@ -368,11 +368,11 @@ The changes have the two benefits:
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190546793-5364d6d3-7891-4af3-98e3-9f06970f3163.png"/>
 </div>
 
-#### 1.3.3 Matching strategy
+#### 1.3.3 Assignment strategy
 
 Note: in MMYOLO, **we call anchor as prior** for both anchor-based and anchor-free networks.
 
-Positive sample matching consists of the following two steps:
+Positive sample assignment consists of the following two steps:
 
 (1) Scale comparison
 
@@ -387,7 +387,7 @@ r^{max}=max(r_w^{max}, r_h^{max})   \\
 if\ \ r_{max} < prior\_match\_thr:   match!
 ```
 
-Taking the matching process of the GT Bbox and the Prior of the P3 feature map as the example:
+Taking the assignment process of the GT Bbox and the Prior of the P3 feature map as the example:
 
 <div align=center >
 <img alt="image" src="https://user-images.githubusercontent.com/40284075/190547195-60d6cd7a-b12a-4c6f-9cc8-13f48c8ab1e0.png"/>
