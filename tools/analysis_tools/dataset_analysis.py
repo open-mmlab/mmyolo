@@ -19,33 +19,38 @@ def parse_args():
         description='Distribution of categories and bbox instances')
     parser.add_argument('config', help='config file path')
     parser.add_argument(
-        '--type',
-        default='train',
-        type=str,
-        help='Dataset set type, e.g., "train" or "val"')
+        '--val-dataset',
+        default=False,
+        action='store_true',
+        help='The default train_dataset.'
+        'To change it to val_dataset, enter "--change-type"')
     parser.add_argument(
         '--class-name',
         default=None,
         type=str,
-        help='Display category-specific data, e.g., "bicycle"')
+        help='Display specific class, e.g., "bicycle"')
     parser.add_argument(
         '--area-rule',
-        default=[32, 96],
+        default=None,
         type=int,
         nargs='+',
-        help='Add new value and redefine regional rules,'
-        ' e.g., 32 96 120,120 is new value')
+        help='Redefine area rules,but no more than three numbers.'
+        ' e.g., 30 70 125')
     parser.add_argument(
         '--func',
         default=None,
         type=str,
-        help='Dataset analysis function selection,'
-        ' e.g., show_bbox_num')
+        choices=[
+            'show_bbox_num', 'show_bbox_wh', 'show_bbox_wh_ratio',
+            'show_bbox_area'
+        ],
+        help='Dataset analysis function selection.')
     parser.add_argument(
         '--output-dir',
         default='./',
         type=str,
-        help='Save address of dataset analysis visualization results')
+        help='Save address of dataset analysis visualization results,'
+        'Save in "./dataset_analysis/" by default')
     args = parser.parse_args()
     return args
 
@@ -53,7 +58,7 @@ def parse_args():
 def show_bbox_num(cfg, args, fig_set, class_name, class_num):
     """Display the distribution map of categories and number of bbox
     instances."""
-    # Drawing function 1:
+    print('\n\nDrawing bbox_num figure:')
     # Draw designs
     fig = plt.figure(
         figsize=(fig_set['figsize'][0], fig_set['figsize'][1]), dpi=600)
@@ -61,7 +66,7 @@ def show_bbox_num(cfg, args, fig_set, class_name, class_num):
 
     # Draw titles, labels and so on
     for x, y in enumerate(class_num):
-        plt.text(x, y + 2, '%s' % y, ha='center', fontsize=fig_set['fontsize'])
+        plt.text(x, y, '%s' % y, ha='center', fontsize=fig_set['fontsize'])
     plt.xticks(rotation=fig_set['xticks_angle'])
     plt.xlabel('Category Name')
     plt.ylabel('Num of instances')
@@ -74,12 +79,13 @@ def show_bbox_num(cfg, args, fig_set, class_name, class_num):
     out_name = fig_set['out_name']
     fig.savefig(f'{out_dir}/{out_name}_bbox_num.jpg')  # Save Image
     plt.close()
+    print(f'End and save in {out_dir}/{out_name}_bbox_num.jpg')
 
 
 def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name):
     """Display the width and height distribution of categories and bbox
     instances."""
-    # Drawing function 2:
+    print('\n\nDrawing bbox_wh figure:')
     # Draw designs
     fig, ax = plt.subplots(
         figsize=(fig_set['figsize'][0], fig_set['figsize'][1]), dpi=600)
@@ -161,12 +167,13 @@ def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name):
     out_name = fig_set['out_name']
     fig.savefig(f'{out_dir}/{out_name}_bbox_wh.jpg')  # Save Image
     plt.close()
+    print(f'End and save in {out_dir}/{out_name}_bbox_wh.jpg')
 
 
 def show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio):
     """Display the distribution map of category and bbox instance width and
     height ratio."""
-    # Drawing function 3:
+    print('\n\nDrawing bbox_wh_ratio figure:')
     # Draw designs
     fig, ax = plt.subplots(
         figsize=(fig_set['figsize'][0], fig_set['figsize'][1]), dpi=600)
@@ -217,12 +224,13 @@ def show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio):
     out_name = fig_set['out_name']
     fig.savefig(f'{out_dir}/{out_name}_bbox_ratio.jpg')  # Save Image
     plt.close()
+    print(f'End and save in {out_dir}/{out_name}_bbox_ratio.jpg')
 
 
 def show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num):
     """Display the distribution map of category and bbox instance area based on
     the rules of large, medium and small objects."""
-    # Drawing function 4:
+    print('\n\nDrawing bbox_area figure:')
     # Set the direct distance of each label and the width of each histogram
     # Set the required labels and colors
     positions = np.arange(0, 2 * len(class_name), 2)
@@ -270,31 +278,56 @@ def show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num):
     out_name = fig_set['out_name']
     fig.savefig(f'{out_dir}/{out_name}_bbox_area.jpg')  # Save Image
     plt.close()
+    print(f'End and save in {out_dir}/{out_name}_bbox_area.jpg')
 
 
-def show_class_list(class_name, class_num):
-    """Print the name of the dataset class and its corresponding quantity."""
-
-    data_info = PrettyTable()
-    data_info.title = 'Dataset analysis'
+def show_class_list(classes, class_num):
+    """Print the data of the class obtained by the current run."""
+    print('\n\nThe information obtained is as follows:')
+    class_info = PrettyTable()
+    class_info.title = 'Information of dataset class'
     # List Print Settings
     # If the quantity is too large, 25 rows will be displayed in each column
-    if len(class_name) < 25:
-        data_info.add_column('Class name', class_name)
-        data_info.add_column('bbox_num', class_num)
-    elif len(class_name) % 25 != 0 and len(class_name) > 25:
-        col_num = int(len(class_name) / 25) + 1
+    if len(classes) < 25:
+        class_info.add_column('Class name', classes)
+        class_info.add_column('Bbox num', class_num)
+    elif len(classes) % 25 != 0 and len(classes) > 25:
+        col_num = int(len(classes) / 25) + 1
         class_nums = class_num.tolist()
-        for i in range(0, (col_num * 25) - len(class_name)):
-            class_name.append('')
+        class_name_list = list(classes)
+        for i in range(0, (col_num * 25) - len(classes)):
+            class_name_list.append('')
             class_nums.append('')
-        for i in range(0, len(class_name), 25):
-            data_info.add_column('Class name', class_name[i:i + 25])
-            data_info.add_column('Bbox num', class_nums[i:i + 25])
+        for i in range(0, len(class_name_list), 25):
+            class_info.add_column('Class name', class_name_list[i:i + 25])
+            class_info.add_column('Bbox num', class_nums[i:i + 25])
 
     # Align display data to the left
-    data_info.align['Class name'] = 'l'
-    data_info.align['Bbox num'] = 'l'
+    class_info.align['Class name'] = 'l'
+    class_info.align['Bbox num'] = 'l'
+    print(class_info)
+
+
+def show_data_list(args, area_rule):
+    """Print run setup information."""
+    print('\n\nPrint current running information:')
+    data_info = PrettyTable()
+    data_info.title = 'Dataset information'
+    # Print the corresponding information according to the settings
+    if args.val_dataset is False:
+        data_info.add_column('Dataset type', ['train_dataset'])
+    elif args.val_dataset is True:
+        data_info.add_column('Dataset type', ['val_dataset'])
+    if args.class_name is None:
+        data_info.add_column('Class name', ['All classes'])
+    else:
+        data_info.add_column('Class name', [args.class_name])
+    if args.func is None:
+        data_info.add_column('Function', ['All function'])
+    else:
+        data_info.add_column('Function', [args.func])
+    data_info.add_column('Area rule', [area_rule])
+
     print(data_info)
 
 
@@ -306,22 +339,17 @@ def main():
     register_all_modules()
 
     # 1.Build Dataset
-    if args.type == 'train':
+    if args.val_dataset is False:
         dataset = DATASETS.build(cfg.train_dataloader.dataset)
-    elif args.type == 'val':
+    elif args.val_dataset is True:
         dataset = DATASETS.build(cfg.val_dataloader.dataset)
-    else:
-        raise RuntimeError(
-            'Please enter the correct data type, e.g., train or val')
+
     data_list = dataset.load_data_list()
-
     # 2.Prepare data
-    progress_bar = ProgressBar(len(dataset))
-
     # Drawing settings
     fig_all_set = {
         'figsize': [45, 18],
-        'fontsize': 4,
+        'fontsize': 5,
         'xticks_angle': 70,
         'out_name': cfg.dataset_type
     }
@@ -342,16 +370,17 @@ def main():
         classes_idx = [dataset.metainfo['CLASSES'].index(args.class_name)]
         fig_set = fig_one_set
     else:
-        raise RuntimeError('Please enter the correct class name, e.g., person')
+        raise RuntimeError(
+            f'Expected it to be one of class_name, but got {args.class_name}')
 
     # Building Area Rules
-    if 32 in args.area_rule and 96 in args.area_rule and len(
-            args.area_rule) <= 3:
+    if args.area_rule is None:
+        area_rule = [0, 32, 96, 1e5]
+    elif args.area_rule and len(args.area_rule) <= 3:
         area_rules = [0] + args.area_rule + [1e5]
+        area_rule = sorted(area_rules)
     else:
-        raise RuntimeError(
-            'Please enter the correct area rule, e.g., 32 96 120')
-    area_rule = sorted(area_rules)
+        raise RuntimeError('Expected the args.area_rule to be e.g. 30 60 120')
 
     # Build arrays or lists to store data for each category
     class_num = np.zeros((len(classes), ), dtype=np.int64)
@@ -362,7 +391,10 @@ def main():
     class_bbox_ratio = []
     bbox_area_num = []
 
+    show_data_list(args, area_rule)
     # Get the quantity and bbox data corresponding to each category
+    print('\nRead the information of each picture in the dataset:')
+    progress_bar = ProgressBar(len(dataset))
     for img in data_list:
         for instance in img['instances']:
             if instance[
@@ -373,26 +405,32 @@ def main():
                 class_num[0] += 1
                 class_bbox[0].append(instance['bbox'])
         progress_bar.update()
-
+    show_class_list(classes, class_num)
     # Get the width, height and area of bbox corresponding to each category
-    print('\n\nStart drawing')
+    print('\nRead bbox information in each class:')
     progress_bar_classes = ProgressBar(len(classes))
     for idx, (classes, classes_idx) in enumerate(zip(classes, classes_idx)):
         bbox = np.array(class_bbox[idx])
-        bbox_wh = bbox[:, 2:4] - bbox[:, 0:2]
-        bbox_ratio = bbox_wh[:, 0] / bbox_wh[:, 1]
-        bbox_area = bbox_wh[:, 0] * bbox_wh[:, 1]
+        bbox_area_nums = np.zeros((len(area_rule) - 1, ), dtype=np.int64)
+        if len(bbox) > 0:
+            bbox_wh = bbox[:, 2:4] - bbox[:, 0:2]
+            bbox_ratio = bbox_wh[:, 0] / bbox_wh[:, 1]
+            bbox_area = bbox_wh[:, 0] * bbox_wh[:, 1]
+            class_bbox_w.append(bbox_wh[:, 0].tolist())
+            class_bbox_h.append(bbox_wh[:, 1].tolist())
+            class_bbox_ratio.append(bbox_ratio.tolist())
+
+            # The area rule, there is an section between two numbers
+            for i in range(len(area_rule) - 1):
+                bbox_area_nums[i] = np.logical_and(
+                    bbox_area >= area_rule[i]**2,
+                    bbox_area < area_rule[i + 1]**2).sum()
+        elif len(bbox) == 0:
+            class_bbox_w.append([0])
+            class_bbox_h.append([0])
+            class_bbox_ratio.append([0])
 
         class_name.append(classes)
-        class_bbox_w.append(bbox_wh[:, 0].tolist())
-        class_bbox_h.append(bbox_wh[:, 1].tolist())
-        class_bbox_ratio.append(bbox_ratio)
-
-        bbox_area_nums = np.zeros((len(area_rule) - 1, ), dtype=np.int64)
-        for i in range(len(area_rule) - 1):
-            bbox_area_nums[i] = np.logical_and(
-                bbox_area >= area_rule[i]**2,
-                bbox_area < area_rule[i + 1]**2).sum()
         bbox_area_num.append(bbox_area_nums.tolist())
         progress_bar_classes.update()
 
@@ -413,11 +451,6 @@ def main():
     else:
         raise RuntimeError(
             'Please enter the correct func name, e.g., show_bbox_num')
-
-    print('\nDraw End\n')
-
-    # 4.Print Dataset Information
-    show_class_list(class_name, class_num)
 
 
 if __name__ == '__main__':
