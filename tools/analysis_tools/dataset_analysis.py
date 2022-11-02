@@ -379,7 +379,6 @@ def main():
     progress_bar_classes = ProgressBar(len(classes))
     for idx, (classes, classes_idx) in enumerate(zip(classes, classes_idx)):
         bbox = np.array(class_bbox[idx])
-        assert len(bbox) > 0, 'category: %s have no gt_bboxes.' % classes[idx]
         bbox_wh = bbox[:, 2:4] - bbox[:, 0:2]
         bbox_ratio = bbox_wh[:, 0] / bbox_wh[:, 1]
         bbox_area = bbox_wh[:, 0] * bbox_wh[:, 1]
