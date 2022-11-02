@@ -22,6 +22,11 @@ For years, YOLO series have been de facto industry-level standard for efficient 
 | YOLOv6-t |  P5  | 640  |  Yes   | Yes |          |  41.0  | [config](../yolov6/yolov6_t_syncbn_fast_8xb32-400e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_t_syncbn_fast_8xb32-400e_coco/yolov6_t_syncbn_fast_8xb32-400e_coco_20221030_143755-70a18b70.pth) \| [log](<>) |
 | YOLOv6-s |  P5  | 640  |  Yes   | Yes |          |  43.7  | [config](../yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco/yolov6_s_syncbn_fast_8xb32-400e_coco_20221030_202704-b542ae9f.pth) \| [log](<>) |
 
+**Note**:
+
+1. The performance is unstable and may fluctuate by about 0.3 mAP.
+2. YOLOv6-m,l,x will be supported in later version.
+
 ## Citation
 
 ```latex
