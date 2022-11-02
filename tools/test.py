@@ -90,7 +90,7 @@ def main():
         cfg = trigger_visualization_hook(cfg, args)
 
     if args.deploy:
-        cfg.custom_hooks.append(dict(type='YOLOv6DeploySwitchHook'))
+        cfg.custom_hooks.append(dict(type='SwitchToDeployHook'))
 
     # Dump predictions
     if args.out is not None:

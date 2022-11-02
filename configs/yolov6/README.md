@@ -16,9 +16,11 @@ For years, YOLO series have been de facto industry-level standard for efficient 
 
 ### COCO
 
-**Note**:
-
-1. We don't support training just yet. But you can use the `tools/model_converters/yolov6_to_mmyolo.py` script to convert the official weight.
+| Backbone | Arch | size | SyncBN | AMP | Mem (GB) | box AP |                           Config                            |                                                                                   Download                                                                                   |
+| :------: | :--: | :--: | :----: | :-: | :------: | :----: | :---------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| YOLOv6-n |  P5  | 640  |  Yes   | Yes |          |  36.2  | [config](../yolov6/yolov6_n_syncbn_fast_8xb32-400e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_n_syncbn_fast_8xb32-400e_coco/yolov6_n_syncbn_fast_8xb32-400e_coco_20221030_202726-b6b6e3ed.pth) \| [log](<>) |
+| YOLOv6-t |  P5  | 640  |  Yes   | Yes |          |  41.0  | [config](../yolov6/yolov6_t_syncbn_fast_8xb32-400e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_t_syncbn_fast_8xb32-400e_coco/yolov6_t_syncbn_fast_8xb32-400e_coco_20221030_143755-70a18b70.pth) \| [log](<>) |
+| YOLOv6-s |  P5  | 640  |  Yes   | Yes |          |  43.7  | [config](../yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco/yolov6_s_syncbn_fast_8xb32-400e_coco_20221030_202704-b542ae9f.pth) \| [log](<>) |
 
 ## Citation
 
