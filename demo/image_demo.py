@@ -41,7 +41,7 @@ def switch_deploy(args):
     from mmdeploy.apis.utils import build_task_processor
     from mmdeploy.utils import get_input_shape, load_config
 
-    deploy_cfg, model_cfg = load_config(args.deploy_cfg, args.model_cfg)
+    deploy_cfg, model_cfg = load_config(args.deploy_cfg, args.config)
     task_processor = build_task_processor(model_cfg, deploy_cfg, args.device)
     model = task_processor.build_backend_model([args.checkpoint])
     input_shape = get_input_shape(deploy_cfg)
