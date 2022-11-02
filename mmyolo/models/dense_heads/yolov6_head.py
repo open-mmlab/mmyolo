@@ -285,7 +285,9 @@ class YOLOv6Head(YOLOv5Head):
         if batch_gt_instances_ignore is None:
             batch_gt_instances_ignore = [None] * num_imgs
 
-        current_featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
+        current_featmap_sizes = [
+            cls_score.shape[2:] for cls_score in cls_scores
+        ]
         # If the shape does not equal, generate new one
         if current_featmap_sizes != self.featmap_sizes:
             self.featmap_sizes = current_featmap_sizes
