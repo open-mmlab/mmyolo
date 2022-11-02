@@ -20,7 +20,7 @@ class TestSingleStageDetector(TestCase):
 
     @parameterized.expand([
         'yolov5/yolov5_n-v61_syncbn_fast_8xb16-300e_coco.py',
-        'yolov6/yolov6_s_syncbn_8xb32-400e_coco.py',
+        'yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco.py',
         'yolox/yolox_tiny_8xb8-300e_coco.py',
         'rtmdet/rtmdet_tiny_syncbn_8xb32-300e_coco.py'
     ])
@@ -67,7 +67,7 @@ class TestSingleStageDetector(TestCase):
     @parameterized.expand([
         ('yolov5/yolov5_n-v61_syncbn_fast_8xb16-300e_coco.py', ('cuda',
                                                                 'cpu')),
-        ('yolov6/yolov6_s_syncbn_8xb32-400e_coco.py', ('cuda', 'cpu')),
+        ('yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco.py', ('cuda', 'cpu')),
         ('yolox/yolox_tiny_8xb8-300e_coco.py', ('cuda', 'cpu')),
         ('rtmdet/rtmdet_tiny_syncbn_8xb32-300e_coco.py', ('cuda', 'cpu'))
     ])
@@ -98,7 +98,7 @@ class TestSingleStageDetector(TestCase):
     @parameterized.expand([
         ('yolov5/yolov5_n-v61_syncbn_fast_8xb16-300e_coco.py', ('cuda',
                                                                 'cpu')),
-        ('yolov6/yolov6_s_syncbn_8xb32-400e_coco.py', ('cuda', 'cpu')),
+        ('yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco.py', ('cuda', 'cpu')),
         ('yolox/yolox_tiny_8xb8-300e_coco.py', ('cuda', 'cpu')),
         ('rtmdet/rtmdet_tiny_syncbn_8xb32-300e_coco.py', ('cuda', 'cpu'))
     ])

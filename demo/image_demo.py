@@ -11,7 +11,7 @@ from mmengine.logging import print_log
 from mmengine.utils import ProgressBar, scandir
 
 from mmyolo.registry import VISUALIZERS
-from mmyolo.utils import register_all_modules
+from mmyolo.utils import register_all_modules, switch_to_deploy
 
 IMG_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif',
                   '.tiff', '.webp')
@@ -30,7 +30,11 @@ def parse_args():
     parser.add_argument(
         '--show', action='store_true', help='Show the detection results')
     parser.add_argument(
-        '--score-thr', type=float, default=0.3, help='bbox score threshold')
+        '--deploy',
+        action='store_true',
+        help='Switch model to deployment mode')
+    parser.add_argument(
+        '--score-thr', type=float, default=0.3, help='Bbox score threshold')
     args = parser.parse_args()
     return args
 
@@ -41,6 +45,9 @@ def main(args):
 
     # build the model from a config file and a checkpoint file
     model = init_detector(args.config, args.checkpoint, device=args.device)
+
+    if args.deploy:
+        switch_to_deploy(model)
 
     # init visualizer
     visualizer = VISUALIZERS.build(model.cfg.visualizer)
