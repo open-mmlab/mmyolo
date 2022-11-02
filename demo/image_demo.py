@@ -24,6 +24,8 @@ def parse_args():
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
+        '--deploy_cfg', type=str, default=None, help='deploy config path')
+    parser.add_argument(
         '--out-dir', default='./output', help='Path to output file')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
@@ -35,16 +37,33 @@ def parse_args():
     return args
 
 
+def switch_deploy(args):
+    from mmdeploy.apis.utils import build_task_processor
+    from mmdeploy.utils import get_input_shape, load_config
+
+    deploy_cfg, model_cfg = load_config(args.deploy_cfg, args.model_cfg)
+    task_processor = build_task_processor(model_cfg, deploy_cfg, args.device)
+    model = task_processor.build_backend_model([args.checkpoint])
+    input_shape = get_input_shape(deploy_cfg)
+    visualizer = VISUALIZERS.build(task_processor.visualizer)
+    return model, task_processor, input_shape, visualizer
+
+
+def switch_pytorch(args):
+    model = init_detector(args.config, args.checkpoint, device=args.device)
+    visualizer = VISUALIZERS.build(model.cfg.visualizer)
+    visualizer.dataset_meta = model.dataset_meta
+    return model, visualizer
+
+
 def main(args):
     # register all modules in mmdet into the registries
     register_all_modules()
 
-    # build the model from a config file and a checkpoint file
-    model = init_detector(args.config, args.checkpoint, device=args.device)
-
-    # init visualizer
-    visualizer = VISUALIZERS.build(model.cfg.visualizer)
-    visualizer.dataset_meta = model.dataset_meta
+    if args.deploy_cfg is None:
+        model, visualizer = switch_pytorch(args)
+    else:
+        model, task_processor, input_shape, visualizer = switch_deploy(args)
 
     is_dir = os.path.isdir(args.img)
     is_url = args.img.startswith(('http:/', 'https:/'))
@@ -71,7 +90,6 @@ def main(args):
     # start detector inference
     progress_bar = ProgressBar(len(files))
     for file in files:
-        result = inference_detector(model, file)
         img = mmcv.imread(file)
         img = mmcv.imconvert(img, 'bgr', 'rgb')
         if is_dir:
@@ -79,6 +97,13 @@ def main(args):
         else:
             filename = os.path.basename(file)
         out_file = None if args.show else os.path.join(args.out_dir, filename)
+
+        if args.deploy_cfg is None:
+            result = inference_detector(model, file)
+        else:
+            data, _ = task_processor.create_input(file, input_shape)
+            result = model.test_step(data)[0]
+
         visualizer.add_datasample(
             filename,
             img,
