@@ -43,9 +43,11 @@ def switch_deploy(args):
 
     deploy_cfg, model_cfg = load_config(args.deploy_cfg, args.config)
     task_processor = build_task_processor(model_cfg, deploy_cfg, args.device)
+    dataset = task_processor.build_dataset(model_cfg.test_dataloader.dataset)
     model = task_processor.build_backend_model([args.checkpoint])
     input_shape = get_input_shape(deploy_cfg)
     visualizer = VISUALIZERS.build(task_processor.visualizer)
+    visualizer.dataset_meta = dataset.metainfo
     return model, task_processor, input_shape, visualizer
 
 
