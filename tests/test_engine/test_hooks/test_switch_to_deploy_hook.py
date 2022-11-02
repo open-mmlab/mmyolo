@@ -2,21 +2,21 @@
 from unittest import TestCase
 from unittest.mock import Mock
 
-from mmyolo.engine.hooks import YOLOv6DeploySwitchHook
+from mmyolo.engine.hooks import SwitchToDeployHook
 from mmyolo.models import RepVGGBlock
 from mmyolo.utils import register_all_modules
 
 register_all_modules()
 
 
-class TestYOLOv6DeploySwitchHook(TestCase):
+class TestSwitchToDeployHook(TestCase):
 
     def test(self):
 
         runner = Mock()
         runner.model = RepVGGBlock(256, 256)
 
-        hook = YOLOv6DeploySwitchHook()
+        hook = SwitchToDeployHook()
         self.assertFalse(runner.model.deploy)
 
         # test after change mode

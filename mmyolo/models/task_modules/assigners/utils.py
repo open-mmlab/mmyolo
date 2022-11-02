@@ -76,6 +76,8 @@ def select_highest_overlaps(pos_mask: Tensor, overlaps: Tensor,
     return gt_idx_pre_prior, fg_mask_pre_prior, pos_mask
 
 
+# TODO:'mmdet.BboxOverlaps2D' will cause gradient inconsistency,
+# which will be found and solved in a later version.
 def yolov6_iou_calculator(bbox1: Tensor,
                           bbox2: Tensor,
                           eps: float = 1e-9) -> Tensor:
@@ -88,8 +90,6 @@ def yolov6_iou_calculator(bbox1: Tensor,
     Return:
         (Tensor): IoU, shape(size, num_gt, num_priors)
     """
-    # TODO:'mmdet.BboxOverlaps2D' will cause gradient inconsistency,
-    # which will be found and solved in a later version.
     bbox1 = bbox1.unsqueeze(2)  # [N, M1, 4] -> [N, M1, 1, 4]
     bbox2 = bbox2.unsqueeze(1)  # [N, M2, 4] -> [N, 1, M2, 4]
 

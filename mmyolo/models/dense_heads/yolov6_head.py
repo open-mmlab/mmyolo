@@ -357,7 +357,8 @@ class YOLOv6Head(YOLOv5Head):
         # select positive samples mask
         num_pos = fg_mask_pre_prior.sum()
         if num_pos > 0:
-            # when num_pos > 0, the loss_bbox  will not report an error.
+            # when num_pos > 0, assigned_scores_sum will >0, so the loss_bbox
+            # will not report an error
             # iou loss
             prior_bbox_mask = fg_mask_pre_prior.unsqueeze(-1).repeat([1, 1, 4])
             pred_bboxes_pos = torch.masked_select(
