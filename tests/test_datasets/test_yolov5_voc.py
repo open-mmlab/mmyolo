@@ -63,21 +63,23 @@ class TestYOLOv5VocDataset(unittest.TestCase):
             assert 'dataset' not in data
 
     def test_concat_dataset(self):
-        dataset = ConcatDataset(datasets=[
-            dict(
-                type='YOLOv5VOCDataset',
-                data_root='tests/data/VOCdevkit/',
-                ann_file='VOC2007/ImageSets/Main/trainval.txt',
-                data_prefix=dict(sub_data_root='VOC2007/'),
-                filter_cfg=dict(filter_empty_gt=False, min_size=32),
-                pipeline=[]),
-            dict(
-                type='YOLOv5VOCDataset',
-                data_root='tests/data/VOCdevkit/',
-                ann_file='VOC2012/ImageSets/Main/trainval.txt',
-                data_prefix=dict(sub_data_root='VOC2012/'),
-                filter_cfg=dict(filter_empty_gt=False, min_size=32),
-                pipeline=[])
-        ])
+        dataset = ConcatDataset(
+            datasets=[
+                dict(
+                    type='YOLOv5VOCDataset',
+                    data_root='tests/data/VOCdevkit/',
+                    ann_file='VOC2007/ImageSets/Main/trainval.txt',
+                    data_prefix=dict(sub_data_root='VOC2007/'),
+                    filter_cfg=dict(filter_empty_gt=False, min_size=32),
+                    pipeline=[]),
+                dict(
+                    type='YOLOv5VOCDataset',
+                    data_root='tests/data/VOCdevkit/',
+                    ann_file='VOC2012/ImageSets/Main/trainval.txt',
+                    data_prefix=dict(sub_data_root='VOC2012/'),
+                    filter_cfg=dict(filter_empty_gt=False, min_size=32),
+                    pipeline=[])
+            ],
+            ignore_keys='DATASET_TYPE')
         dataset.full_init()
         self.assertEqual(len(dataset), 2)
