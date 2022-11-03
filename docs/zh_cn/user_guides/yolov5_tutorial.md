@@ -10,7 +10,7 @@ conda activate open-mmlab
 conda install pytorch torchvision -c pytorch
 # conda install pytorch torchvision cpuonly -c pytorch
 pip install -U openmim
-mim install "mmengine>=0.2.0"
+mim install "mmengine>=0.3.0"
 mim install "mmcv>=2.0.0rc1,<2.1.0"
 mim install "mmdet>=3.0.0rc2,<3.1.0"
 git clone https://github.com/open-mmlab/mmyolo.git
@@ -125,10 +125,8 @@ wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8x
 ```shell
 cd mmyolo
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
-                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' custom_hooks=None
+                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 ```
-
-注意： 原则上在微调阶段应该将 `EMAHook` 的 `strict_load` 初始化参数设置为 `False` 即命令为 `custom_hooks.0.strict_load=False`。但由于 MMEngine v0.1.0 为初期开发版本，目前这样设置会出现问题。因此暂时只能通过命令 `custom_hooks=None`，关闭 `custom_hooks` 使用，从而正确加载预训练权重。预计会在下个版本修复此问题。
 
 3. 冻结 backbone 进行训练
 
@@ -138,7 +136,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 # 命令行中设置 model.backbone.frozen_stages=4
 cd mmyolo
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
-                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' model.backbone.frozen_stages=4 custom_hooks=None
+                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' model.backbone.frozen_stages=4
 ```
 
 ### 训练验证中可视化相关
@@ -221,16 +219,6 @@ tensorboard --logdir=work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon
 
 ## 模型测试
 
-如果你训练时候设置了 `custom_hooks=None`，那么在模型测试过程中依然需要设置 `custom_hooks=None`
-
-```shell
-python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
-                     work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/epoch_300.pth \
-                     --show-dir show_results  --cfg-options custom_hooks=None
-```
-
-如果你没有设置 `custom_hooks=None`，那么测试命令如下：
-
 ```shell
 python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
                      work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/epoch_300.pth \
@@ -245,4 +233,4 @@ python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.p
 
 ## 模型部署
 
-正在准备中，敬请期待！
+请参考[这里](../deploy/yolov5_deployment.md)

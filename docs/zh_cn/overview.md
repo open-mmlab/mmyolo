@@ -44,9 +44,14 @@ MMYOLO 文件结构和 MMDetection 完全一致。为了能够充分复用 MMDet
    - [必备基础](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#id1)
    - [原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#id2)
 
-4. 参考以下教程深入了解：
+4. YOLO 系列部署教程：
+
+   - [部署必备教程](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/index.html#id1)
+   - [部署全流程说明](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/index.html#id2)
+
+5. 参考以下教程深入了解：
 
    - [数据流](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/index.html#id1)
    - [How to](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/index.html#how-to)
 
-5. [解读文章和资源汇总](article.md)
+6. [解读文章和资源汇总](article.md)

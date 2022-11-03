@@ -1,5 +1,53 @@
 # Changelog
 
+## v0.1.2（3/11/2022)
+
+### Highlights
+
+1. Support [YOLOv5/YOLOv6/YOLOX/RTMDet deployments](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy) for ONNXRuntime and TensorRT
+2. Support [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov6) s/t/n model training
+3. YOLOv5 supports [P6 model training which can input 1280-scale images](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5)
+4. YOLOv5 supports [VOC dataset training](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/voc)
+5. Support [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/main/configs/ppyoloe) and [YOLOv7](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov7) model inference and official weight conversion
+6. Add YOLOv5 replacement [backbone tutorial](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/advanced_guides/how_to.md#use-backbone-network-implemented-in-other-openmmlab-repositories) in How-to documentation
+
+### New Features
+
+1. Add `optimize_anchors` script (#175)
+2. Add `extract_subcoco` script (#186)
+3. Add `yolo2coco` conversion script (#161)
+4. Add `dataset_analysis` script (#172)
+5. Remove Albu version restrictions (#187)
+
+### Bug Fixes
+
+1. Fix the problem that `cfg.resume` does not work when set (#221)
+2. Fix the problem of not showing bbox in feature map visualization script (#204)
+3. uUpdate the metafile of RTMDet (#188)
+4. Fix a visualization error in `test_pipeline` (#166)
+5. Update badges (#140)
+
+### Improvements
+
+1. Optimize Readthedoc display page (#209)
+2. Add docstring for module structure diagram for base model (#196)
+3. Support for not including any instance logic in LoadAnnotations (#161)
+4. Update `image_demo` script to support folder and url paths (#128)
+5. Update pre-commit hook (#129)
+
+### Documentation
+
+1. Translate `yolov5_description.md`, `yolov5_tutorial.md` and `visualization.md` into English (#138, #198, #206)
+2. Add deployment-related Chinese documentation (#220)
+3. Update `config.md`, `faq.md` and `pull_request_template.md` (#190, #191, #200)
+4. Update the `article` page (#133)
+
+#### Contributors
+
+A total of 14 developers contributed to this release.
+
+Thank @imAzhou, @triple-Mu, @RangeKing, @PeterH0323, @xin-li-67, @Nioolek, @kitecats, @Bin-ze, @JiayuXu0, @cydiachen, @zhiqwang, @Zheng-LinXiao, @hhaAndroid, @wanghonglie
+
 ## v0.1.1（29/9/2022)
 
 Based on MMDetection's RTMDet high precision and low latency object detection algorithm, we have also released RTMDet and provided a Chinese document on the principle and implementation of RTMDet.
