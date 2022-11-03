@@ -342,7 +342,7 @@ export DATA_DIR=/path/to/your/dataset
 docker run --gpus all --shm-size=8g -it --name mmyolo -v ${DATA_DIR}:/openmmlab/mmyolo/data/coco mmyolo:v1
 ```
 
-`DATA_DIR` 是`coco` 数据的路径。
+`DATA_DIR` 是 COCO 数据的路径。
 
 复制以下脚本到 `docker` 容器 `/openmmlab/mmyolo/script.sh`:
 
