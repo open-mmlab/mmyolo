@@ -23,7 +23,7 @@ def parse_args():
         default=False,
         action='store_true',
         help='The default train_dataset.'
-        'To change it to val_dataset, enter "--change-type"')
+        'To change it to val_dataset, enter "--val-dataset"')
     parser.add_argument(
         '--class-name',
         default=None,
@@ -331,6 +331,29 @@ def show_data_list(args, area_rule):
     print(data_info)
 
 
+def show_dataset_classes(dataset_classes):
+    """When printing an error, all class names of the dataset."""
+    print('\n\nThe name of the class contained in the dataset:')
+    data_classes_info = PrettyTable()
+    data_classes_info.title = 'Information of dataset class'
+    # List Print Settings
+    # If the quantity is too large, 25 rows will be displayed in each column
+    if len(dataset_classes) < 25:
+        data_classes_info.add_column('Class name', dataset_classes)
+    elif len(dataset_classes) % 25 != 0 and len(dataset_classes) > 25:
+        col_num = int(len(dataset_classes) / 25) + 1
+        data_name_list = list(dataset_classes)
+        for i in range(0, (col_num * 25) - len(dataset_classes)):
+            data_name_list.append('')
+        for i in range(0, len(data_name_list), 25):
+            data_classes_info.add_column('Class name',
+                                         data_name_list[i:i + 25])
+
+    # Align display data to the left
+    data_classes_info.align['Class name'] = 'l'
+    print(data_classes_info)
+
+
 def main():
     args = parse_args()
     cfg = Config.fromfile(args.config)
@@ -349,7 +372,7 @@ def main():
     # Drawing settings
     fig_all_set = {
         'figsize': [45, 18],
-        'fontsize': 5,
+        'fontsize': 4,
         'xticks_angle': 70,
         'out_name': cfg.dataset_type
     }
@@ -370,8 +393,10 @@ def main():
         classes_idx = [dataset.metainfo['CLASSES'].index(args.class_name)]
         fig_set = fig_one_set
     else:
-        raise RuntimeError(
-            f'Expected it to be one of class_name, but got {args.class_name}')
+        dataset_classes = dataset.metainfo['CLASSES']
+        show_dataset_classes(dataset_classes)
+        raise RuntimeError(f'Expected args.class_name to be one of the list,'
+                           f'but got "{args.class_name}"')
 
     # Building Area Rules
     if args.area_rule is None:
@@ -380,7 +405,9 @@ def main():
         area_rules = [0] + args.area_rule + [1e5]
         area_rule = sorted(area_rules)
     else:
-        raise RuntimeError('Expected the args.area_rule to be e.g. 30 60 120')
+        raise RuntimeError(
+            f'Expected the "{args.area_rule}" to be e.g. 30 60 120, '
+            'and no more than three numbers.')
 
     # Build arrays or lists to store data for each category
     class_num = np.zeros((len(classes), ), dtype=np.int64)
