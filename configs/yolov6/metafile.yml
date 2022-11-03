@@ -31,8 +31,8 @@ Models:
       - Task: Object Detection
         Dataset: COCO
         Metrics:
-          box AP: 43.7
-    Weights: https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_t_syncbn_fast_8xb32-400e_coco/yolov6_t_syncbn_fast_8xb32-400e_coco_20221030_143755-cf0d278f.pth
+          box AP: 44.0
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco/yolov6_s_syncbn_fast_8xb32-400e_coco_20221102_203035-932e1d91.pth
   - Name: yolov6_n_syncbn_fast_8xb32-400e_coco
     In Collection: YOLOv6
     Config: configs/yolov6/yolov6_n_syncbn_fast_8xb32-400e_coco.py
