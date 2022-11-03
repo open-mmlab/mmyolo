@@ -249,6 +249,7 @@ MMYOLO 是一款由来自不同高校和企业的研发人员共同参与贡献�
 - [MMEditing](https://github.com/open-mmlab/mmediting): OpenMMLab 图像视频编辑工具箱
 - [MMGeneration](https://github.com/open-mmlab/mmgeneration): OpenMMLab 图片视频生成模型工具箱
 - [MMDeploy](https://github.com/open-mmlab/mmdeploy): OpenMMLab 模型部署框架
+- [MMEval](https://github.com/open-mmlab/mmeval):  OpenMMLab 机器学习算法评测库
 
 ## 欢迎加入 OpenMMLab 社区
 
