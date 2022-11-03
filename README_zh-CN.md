@@ -157,8 +157,8 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [x] [YOLOX](configs/yolox)
 - [x] [RTMDet](configs/rtmdet)
 - [x] [YOLOv6](configs/yolov6)
-- [ ] [PPYOLOE](configs/ppyoloe)((仅推理))
-- [ ] [YOLOv7](configs/yolov7)((仅推理))
+- [ ] [PPYOLOE](configs/ppyoloe)(仅推理)
+- [ ] [YOLOv7](configs/yolov7)(仅推理)
 
 </details>
 
