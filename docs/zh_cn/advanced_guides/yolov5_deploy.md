@@ -358,32 +358,30 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
   configs/deploy/model/yolov5_s-static.py \
   ${PATH_TO_CHECKPOINTS} \
   demo/demo.jpg \
-  --work-dir work_dir \
+  --work-dir work_dir_trt \
   --device cuda:0
 
 python3 ${MMDEPLOY_DIR}/tools/test.py \
   configs/deploy/detection_tensorrt_static-640x640.py \
   configs/deploy/model/yolov5_s-static.py \
-  --model work_dir/end2end.engine \
+  --model work_dir_trt/end2end.engine \
   --device cuda:0 \
-  --work-dir work_dir
-
-rm -rf work_dir
+  --work-dir work_dir_trt
 
 python3 ${MMDEPLOY_DIR}/tools/deploy.py \
   configs/deploy/detection_onnxruntime_static.py \
   configs/deploy/model/yolov5_s-static.py \
   ${PATH_TO_CHECKPOINTS} \
   demo/demo.jpg \
-  --work-dir work_dir \
+  --work-dir work_dir_ort \
   --device cpu
 
 python3 ${MMDEPLOY_DIR}/tools/test.py \
   configs/deploy/detection_onnxruntime_static.py \
   configs/deploy/model/yolov5_s-static.py \
-  --model work_dir/end2end.onnx \
+  --model work_dir_ort/end2end.onnx \
   --device cpu \
-  --work-dir work_dir
+  --work-dir work_dir_ort
 ```
 
 在 `/openmmlab/mmyolo` 下运行：
@@ -403,6 +401,30 @@ sh script.sh
   ![image](https://user-images.githubusercontent.com/92794867/199657283-95412e84-3ba4-463f-b4b2-4bf52ec4acbd.png)
 
 可以看到，经过 `MMDeploy` 部署的模型与 [MMYOLO-YOLOv5](`https://github.com/open-mmlab/mmyolo/tree/main/configs/yolov5`) 的 mAP-37.7 差距在 1% 以内。
+
+如果您需要测试您的模型推理速度，可以使用以下命令：
+
+- TensorRT
+
+```shell
+python3 ${MMDEPLOY_DIR}/tools/profiler.py \
+  configs/deploy/detection_tensorrt_static-640x640.py \
+  configs/deploy/model/yolov5_s-static.py \
+  data/coco/val2017 \
+  --model work_dir_trt/end2end.engine \
+  --device cuda:0
+```
+
+- ONNXRuntime
+
+```shell
+python3 ${MMDEPLOY_DIR}/tools/profiler.py \
+  configs/deploy/detection_tensorrt_static-640x640.py \
+  configs/deploy/model/yolov5_s-static.py \
+  data/coco/val2017 \
+  --model work_dir_trt/end2end.engine \
+  --device cpu
+```
 
 ## 模型推理
 
