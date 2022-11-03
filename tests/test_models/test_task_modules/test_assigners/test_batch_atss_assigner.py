@@ -152,12 +152,12 @@ class TestBatchATSSAssigner(TestCase):
             topk=3,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             num_classes=num_classes)
-        priors = torch.empty(84, 4)
-        gt_bboxes = torch.empty(batch_size, 0, 4)
-        gt_labels = torch.empty(batch_size, 0, 1)
+        priors = torch.zeros(84, 4)
+        gt_bboxes = torch.zeros(batch_size, 0, 4)
+        gt_labels = torch.zeros(batch_size, 0, 1)
         num_level_bboxes = [64, 16, 4]
-        pad_bbox_flag = torch.empty(batch_size, 0, 1)
-        pred_bboxes = torch.empty(batch_size, 0, 4)
+        pad_bbox_flag = torch.zeros(batch_size, 0, 1)
+        pred_bboxes = torch.zeros(batch_size, 0, 4)
 
         batch_assign_result = batch_atss_assigner.forward(
             pred_bboxes, priors, num_level_bboxes, gt_labels, gt_bboxes,
