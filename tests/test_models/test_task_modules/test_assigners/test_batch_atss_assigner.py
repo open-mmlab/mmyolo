@@ -82,8 +82,8 @@ class TestBatchATSSAssigner(TestCase):
             [20., -4., 36., 12.],
         ]).unsqueeze(0).repeat(batch_size, 21, 1)
 
-        gt_bboxes = torch.empty(batch_size, 2, 4)
-        gt_labels = torch.empty(batch_size, 2, 1)
+        gt_bboxes = torch.zeros(batch_size, 0, 4)
+        gt_labels = torch.zeros(batch_size, 0, 1)
 
         batch_assign_result = batch_atss_assigner.forward(
             pred_bboxes, priors, num_level_bboxes, gt_labels, gt_bboxes,
@@ -101,7 +101,7 @@ class TestBatchATSSAssigner(TestCase):
                          torch.Size([batch_size, 84, num_classes]))
         self.assertEqual(fg_mask_pre_prior.shape, torch.Size([batch_size, 84]))
 
-    def test_batch_atss_assigner_with_empty_boxes(self):
+    def test_batch_atss_assigner_with_empty_priors(self):
         """Test corner case where a network might predict no boxes."""
         num_classes = 2
         batch_size = 2
@@ -109,7 +109,7 @@ class TestBatchATSSAssigner(TestCase):
             topk=3,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             num_classes=num_classes)
-        priors = torch.empty(84, 4)
+        priors = torch.zeros(84, 4)
         gt_bboxes = torch.FloatTensor([
             [0, 0, 60, 93],
             [229, 0, 532, 157],
