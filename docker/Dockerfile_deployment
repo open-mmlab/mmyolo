@@ -27,15 +27,8 @@ RUN wget -q https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRU
     && pip install --no-cache-dir onnxruntime-gpu==${ONNXRUNTIME_VERSION} \
     && pip install pycuda
 
-# Install MMCV
-RUN pip install --no-cache-dir opencv-python==4.5.5.64 opencv-python-headless==4.5.5.64 \
-    && git clone https://github.com/open-mmlab/mmcv.git -b 2.x mmcv \
-    && cd mmcv \
-    && pip install --no-cache-dir -r requirements/optional.txt \
-    && MMCV_WITH_OPS=1 pip install --no-cache-dir -e . -v \
-    && cd ..
 
-# Install OPENMIM MMENGINE MMDET
+# Install OPENMIM MMENGINE MMCV MMDET
 RUN pip install --no-cache-dir openmim \
     && mim install --no-cache-dir "mmengine>=0.3.0" "mmcv>=2.0.0rc1,<2.1.0" "mmdet>=3.0.0rc2,<3.1.0"
 
