@@ -392,7 +392,7 @@ python3 ${MMDEPLOY_DIR}/tools/test.py \
 sh script.sh
 ```
 
-脚本会自动下在 `MMYOLO` 的 `YOLOv5` 预训练权重并使用 `MMDeploy` 进行模型转换和测试。您将会看到以下输出：
+脚本会自动下载 `MMYOLO` 的 `YOLOv5` 预训练权重并使用 `MMDeploy` 进行模型转换和测试。您将会看到以下输出：
 
 - TensorRT：
 
