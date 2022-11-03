@@ -20,7 +20,7 @@ RUN rm /etc/apt/sources.list.d/cuda.list \
 #    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 RUN apt-get update \
-    && apt-get install -y ffmpeg libsm6 libxext6 git ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 \
+    && apt-get install -y ffmpeg libsm6 libxext6 git ninja-build libglib2.0-0 libxrender-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
