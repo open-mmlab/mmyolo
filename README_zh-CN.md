@@ -69,11 +69,21 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 
 ## 最新进展
 
-**v0.1.1** 版本已经在 2022.9.29 发布：
+**v0.1.2** 版本已经在 2022.11.3 发布：
 
-- 支持了 [RTMDet](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet)
-- 新增了 [RTMDet 原理和实现全解析中文文档](https://github.com/open-mmlab/mmyolo/blob/main/docs/zh_cn/algorithm_descriptions/rtmdet_description.md)
-- 支持对 backbone 自定义插件，并且更新了 How-to 文档
+1. 支持 ONNXRuntime 和 TensorRT 的 [YOLOv5/YOLOv6/YOLOX/RTMDet 部署](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy)
+2. 支持 [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov6) s/t/n 模型训练
+3. YOLOv5 支持 [P6 大分辨率 1280 尺度训练](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5)
+4. YOLOv5 支持 [VOC 数据集训练](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/voc)
+5. 支持 [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/main/configs/ppyoloe) 和 [YOLOv7](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov7) 模型推理和官方权重转化
+6. How-to 文档中新增 YOLOv5 替换 [backbone 教程](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/advanced_guides/how_to.md#%E8%B7%A8%E5%BA%93%E4%BD%BF%E7%94%A8%E4%B8%BB%E5%B9%B2%E7%BD%91%E7%BB%9C)
+
+同时我们也推出了视频解读：
+
+1. 发布了[特征图可视化视频](https://www.bilibili.com/video/BV188411s7o8)
+2. 发布了 [YOLOv5 配置文件解读视频](https://www.bilibili.com/video/BV1214y157ck)
+3. 发布了 [RTMDet-s 特征图可视化视频 demo](https://www.bilibili.com/video/BV1je4y1478R)
+4. 发布了[源码解读和必备调试技巧视频](https://www.bilibili.com/video/BV1N14y1V7mB)
 
 发布历史和更新细节请参考 [更新日志](https://mmyolo.readthedocs.io/zh_CN/latest/notes/changelog.html)
 
@@ -122,6 +132,13 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
     - [YOLOv5 原理和实现全解析](docs/zh_cn/algorithm_descriptions/yolov5_description.md)
     - [RTMDet 原理和实现全解析](docs/zh_cn/algorithm_descriptions/rtmdet_description.md)
 
+- 算法部署
+
+  - [部署必备教程](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#部署必备教程)
+    - [部署必备教程](docs/zh_cn/deploy/basic_deployment_guide.md)
+  - [部署全流程说明](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#部署全流程说明)
+    - [YOLOv5 部署全流程说明](docs/zh_cn/deploy/yolov5_deployment.md)
+
 - 进阶指南
 
   - [数据流](docs/zh_cn/advanced_guides/data_flow.md)
@@ -139,7 +156,9 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [x] [YOLOv5](configs/yolov5)
 - [x] [YOLOX](configs/yolox)
 - [x] [RTMDet](configs/rtmdet)
-- [ ] [YOLOv6](configs/yolov6)(仅推理)
+- [x] [YOLOv6](configs/yolov6)
+- [ ] [PPYOLOE](configs/ppyoloe)(Inference only)
+- [ ] [YOLOv7](configs/yolov7)(Inference only)
 
 </details>
 

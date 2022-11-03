@@ -44,7 +44,12 @@ The detailed instruction of MMYOLO is as follows.
    - [Essential Basics](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#essential-basics)
    - [A full explanation of the model and implementation](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#algorithm-principles-and-implementation)
 
-4. Refer to the following tutorials for an in-depth look:
+4. YOLO series of Deploy tutorials
+
+   - [Basic Deployment Guide](https://mmyolo.readthedocs.io/en/latest/deploy/index.html#basic-deployment-guide)
+   - [Deployment Tutorial](https://mmyolo.readthedocs.io/en/latest/deploy/index.html#deployment-tutorial)
+
+5. Refer to the following tutorials for an in-depth look:
 
    - [Data flow](https://mmyolo.readthedocs.io/en/latest/advanced_guides/index.html#data-flow)
    - [How to](https://mmyolo.readthedocs.io/en/latest/advanced_guides/index.html#how-to)

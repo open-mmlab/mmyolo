@@ -27,6 +27,12 @@ Welcome to MMYOLO's documentation!
    advanced_guides/index.rst
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Deployment Guides
+
+   deploy/index.rst
+
+.. toctree::
    :maxdepth: 1
    :caption: API Reference
 

@@ -245,4 +245,4 @@ python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.p
 
 ## 模型部署
 
-正在准备中，敬请期待！
+请参考[这里](../deploy/yolov5_deployment.md)

@@ -69,10 +69,14 @@ The master branch works with **PyTorch 1.6+**.
 
 ## What's New
 
-**v0.1.1** was released on 29/9/2022:
+**v0.1.2** was released on 3/11/2022:
 
-- Support [RTMDet](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet).
-- Support for backbone customization plugins and update How-to documentation.
+1. Support [YOLOv5/YOLOv6/YOLOX/RTMDet deployments](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy) for ONNXRuntime and TensorRT
+2. Support [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov6) s/t/n model training
+3. YOLOv5 supports [P6 large resolution 1280 scale training](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5)
+4. YOLOv5 supports [VOC dataset training](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/voc)
+5. Support [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/main/configs/ppyoloe) and [YOLOv7](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov7) model inference and official weight convert
+6. Add YOLOv5 replacement [backbone tutorial](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/advanced_guides/how_to.md#use-backbone-network-implemented-in-other-openmmlab-repositories) in How-to documentation
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
@@ -107,7 +111,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 
   - [Train & Test](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#train-test)
     - [Learn about Configs with YOLOv5](docs/en/user_guides/config.md)
-  - [From getting started to deployment](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#get-started-to-deployment)
+  - [From getting started to deployment](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#get-started-to-deployment)
     - [From getting started to deployment with YOLOv5](docs/en/user_guides/yolov5_tutorial.md)
   - [Useful Tools](https://mmdetection.readthedocs.io/en/latest/user_guides/index.html#useful-tools)
     - [Visualization](docs/en/user_guides/visualization.md)
@@ -115,10 +119,17 @@ For different parts from MMDetection, we have also prepared user guides and adva
 
 - Algorithm description
 
-  - [Essential Basics](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#essential-basics)
+  - [Essential Basics](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#essential-basics)
     - [Model design-related instructions](docs/en/algorithm_descriptions/model_design.md)
-  - [Algorithm principles and implementation](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#algorithm-principles-and-implementation)
+  - [Algorithm principles and implementation](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#algorithm-principles-and-implementation)
     - [Algorithm principles and implementation with YOLOv5](docs/en/algorithm_descriptions/yolov5_description.md)
+
+- Deployment Guides
+
+  - [Basic Deployment Guide](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#basic-deployment-guide)
+    - [Basic Deployment Guide](docs/en/deploy/basic_deployment_guide.md)
+  - [Deployment Tutorial](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#deployment-tutorial)
+    - [Yolov5 Deployment](docs/en/deploy/yolov5_deployment.md)
 
 - Advanced Guides
 
@@ -135,7 +146,9 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 - [x] [YOLOv5](configs/yolov5)
 - [x] [YOLOX](configs/yolox)
 - [x] [RTMDet](configs/rtmdet)
-- [ ] [YOLOv6](configs/yolov6)(Inference only)
+- [x] [YOLOv6](configs/yolov6)
+- [ ] [PPYOLOE](configs/ppyoloe)(Inference only)
+- [ ] [YOLOv7](configs/yolov7)(Inference only)
 
 </details>
 
