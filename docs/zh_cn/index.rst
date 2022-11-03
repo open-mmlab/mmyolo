@@ -27,6 +27,12 @@
    advanced_guides/index.rst
 
 .. toctree::
+   :maxdepth: 2
+   :caption: 部署教程
+
+   deploy/index.rst
+
+.. toctree::
    :maxdepth: 1
    :caption: 解读文章和资源汇总
 

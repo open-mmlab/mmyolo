@@ -10,7 +10,7 @@ conda activate open-mmlab
 conda install pytorch torchvision -c pytorch
 # conda install pytorch torchvision cpuonly -c pytorch
 pip install -U openmim
-mim install "mmengine>=0.2.0"
+mim install "mmengine>=0.3.0"
 mim install "mmcv>=2.0.0rc1,<2.1.0"
 mim install "mmdet>=3.0.0rc2,<3.1.0"
 git clone https://github.com/open-mmlab/mmyolo.git
@@ -126,10 +126,8 @@ wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8x
 ```shell
 cd mmyolo
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
-                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' custom_hooks=None
+                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 ```
-
-Note: Ideally, the `strict_load` initialization parameter of `EMAHook` should be set to `False` during the fine-tuning phase, which makes the command `custom_hooks.0.strict_load=False`. However, because MMEngine v0.1.0 is the initial development version, there will be problems with this setting right now. Therefore, for the time being, you can only use the command `custom_hooks=None` to turn off `custom_hooks` to load the pre-training weights correctly. This issue is expected to be fixed in the next release.
 
 3. Freeze backbone to train
 
@@ -139,7 +137,7 @@ Freeze the four backbone stages by setting `model.backbone.frozen_stages=4` in t
 # Set model.backbone.frozen_stages=4 from the command line
 cd mmyolo
 python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
-                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' model.backbone.frozen_stages=4 custom_hooks=None
+                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' model.backbone.frozen_stages=4
 ```
 
 ### Visualization
@@ -220,16 +218,6 @@ tensorboard --logdir=work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon
 
 ## Model Testing
 
-If you set `custom_hooks=None` during training, you still need to set `custom_hooks=None` during model testing as well.
-
-```shell
-python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
-                      work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/epoch_300.pth \
-                      --show-dir show_results --cfg-options custom_hooks=None
-```
-
-If you don't set `custom_hooks=None` during training, the test command should be as follows:
-
 ```shell
 python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
                       work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/epoch_300.pth \
@@ -244,4 +232,4 @@ Run the above command, the inference result picture will be automatically saved 
 
 ## Model Deployment
 
-Under development...
+Please refer to [this](../deploy/yolov5_deployment.md)

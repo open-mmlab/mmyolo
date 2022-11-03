@@ -6,8 +6,8 @@ Compatible MMEngine, MMCV and MMDetection versions are shown as below. Please in
 
 | MMYOLO version |   MMDetection version    |     MMEngine version     |      MMCV version       |
 | :------------: | :----------------------: | :----------------------: | :---------------------: |
-|      main      | mmdet>=3.0.0rc2, \<3.1.0 | mmengine>=0.2.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
-|     0.1.2      | mmdet>=3.0.0rc2, \<3.1.0 | mmengine>=0.2.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|      main      | mmdet>=3.0.0rc2, \<3.1.0 | mmengine>=0.3.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.1.2      | mmdet>=3.0.0rc2, \<3.1.0 | mmengine>=0.3.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
 |     0.1.1      |     mmdet==3.0.0rc1      | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
 |     0.1.0      |     mmdet==3.0.0rc0      | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
 
@@ -50,9 +50,9 @@ conda install pytorch torchvision cpuonly -c pytorch
 
 ```shell
 pip install -U openmim
-mim install "mmengine>=0.2.0"
+mim install "mmengine>=0.3.0"
 mim install "mmcv>=2.0.0rc1,<2.1.0"
-mim install "mmdet>=3.0.0rc1,<3.1.0"
+mim install "mmdet>=3.0.0rc2,<3.1.0"
 ```
 
 **Note:**
@@ -156,7 +156,7 @@ To install MMEngine with pip instead of MIM, please follow \[MMEngine installati
 For example, you can install MMEngine by the following command.
 
 ```shell
-pip install "mmengine>=0.2.0"
+pip install "mmengine>=0.3.0"
 ```
 
 #### Install MMCV without MIM
