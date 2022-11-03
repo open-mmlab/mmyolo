@@ -2,9 +2,9 @@ FROM nvcr.io/nvidia/pytorch:22.04-py3
 
 WORKDIR /openmmlab
 ARG ONNXRUNTIME_VERSION=1.8.1
-ENV DEBIAN_FRONTEND=noninteractive
-ENV APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn
-ENV FORCE_CUDA="1"
+ENV DEBIAN_FRONTEND=noninteractive \
+    APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn \
+    FORCE_CUDA="1"
 
 RUN apt-key del 7fa2af80 \
     && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub \
@@ -46,11 +46,11 @@ RUN git clone https://github.com/open-mmlab/mmyolo.git -b dev mmyolo \
     && cd ..
 
 # Install MMDEPLOY
-ENV ONNXRUNTIME_DIR=/openmmlab/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}
-ENV TENSORRT_DIR=/usr/lib/x86_64-linux-gnu
-ENV CUDNN_DIR=/usr/lib/x86_64-linux-gnu
-ENV BACKUP_LD_LIBRARY_PATH=$LD_LIBRARY_PATH
-ENV LD_LIBRARY_PATH=$ONNXRUNTIME_DIR/lib:$TENSORRT_DIR/lib:$CUDNN_DIR/lib64:$BACKUP_LD_LIBRARY_PATH
+ENV ONNXRUNTIME_DIR=/openmmlab/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION} \
+    TENSORRT_DIR=/usr/lib/x86_64-linux-gnu \
+    CUDNN_DIR=/usr/lib/x86_64-linux-gnu \
+    BACKUP_LD_LIBRARY_PATH=$LD_LIBRARY_PATH \
+    LD_LIBRARY_PATH=$ONNXRUNTIME_DIR/lib:$TENSORRT_DIR/lib:$CUDNN_DIR/lib64:$BACKUP_LD_LIBRARY_PATH
 
 RUN git clone https://github.com/open-mmlab/mmdeploy -b dev-1.x mmdeploy \
     && cd mmdeploy \

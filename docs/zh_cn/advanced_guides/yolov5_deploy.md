@@ -316,6 +316,94 @@ python3 ${MMDEPLOY_DIR}/tools/test.py \
 
 **未来我们将会支持模型测速等更加实用的脚本**
 
+# 使用 DOCKER 部署测试
+
+`MMYOLO` 提供了一个 [`Dockerfile`](docker/Dockerfile_deployment) 用于构建镜像。请确保您的 `docker` 版本大于等于 `19.03`。
+
+温馨提示；国内用户建议取消掉 [`Dockerfile`](docker/Dockerfile_deployment) 里面 `Optional` 后两行的注释，可以获得火箭一般的下载提速：
+
+```dockerfile
+# (Optional)
+RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu\//http:\/\/mirrors.aliyun.com\/ubuntu\//g' /etc/apt/sources.list && \
+    pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+构建命令：
+
+```shell
+# build an image with PyTorch 1.12, CUDA 11.6, TensorRT 8.2.4 ONNXRuntime 1.8.1
+docker build -f docker/Dockerfile_deployment -t mmyolo:v1 .
+```
+
+用以下命令运行 Docker 镜像：
+
+```shell
+export DATA_DIR=/path/to/your/dataset
+docker run --gpus all --shm-size=8g -it --name mmyolo -v ${DATA_DIR}:/openmmlab/mmyolo/data/coco mmyolo:v1
+```
+
+`DATA_DIR` 是`coco` 数据的路径。
+
+复制以下脚本到 `docker` 容器 `/openmmlab/mmyolo/script.sh`:
+
+```bash
+#!/bin/bash
+wget -q https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+  -O yolov5s.pth
+export MMDEPLOY_DIR=/openmmlab/mmdeploy
+export PATH_TO_CHECKPOINTS=/openmmlab/mmyolo/yolov5s.pth
+
+python3 ${MMDEPLOY_DIR}/tools/deploy.py \
+  configs/deploy/detection_tensorrt_static-640x640.py \
+  configs/deploy/model/yolov5_s-static.py \
+  ${PATH_TO_CHECKPOINTS} \
+  demo/demo.jpg \
+  --work-dir work_dir \
+  --device cuda:0
+
+python3 ${MMDEPLOY_DIR}/tools/test.py \
+  configs/deploy/detection_tensorrt_static-640x640.py \
+  configs/deploy/model/yolov5_s-static.py \
+  --model work_dir/end2end.engine \
+  --device cuda:0 \
+  --work-dir work_dir
+
+rm -rf work_dir
+
+python3 ${MMDEPLOY_DIR}/tools/deploy.py \
+  configs/deploy/detection_onnxruntime_static.py \
+  configs/deploy/model/yolov5_s-static.py \
+  ${PATH_TO_CHECKPOINTS} \
+  demo/demo.jpg \
+  --work-dir work_dir \
+  --device cpu
+
+python3 ${MMDEPLOY_DIR}/tools/test.py \
+  configs/deploy/detection_onnxruntime_static.py \
+  configs/deploy/model/yolov5_s-static.py \
+  --model work_dir/end2end.onnx \
+  --device cpu \
+  --work-dir work_dir
+```
+
+在 `/openmmlab/mmyolo` 下运行：
+
+```shell
+sh script.sh
+```
+
+脚本会自动下在 `MMYOLO` 的 `YOLOv5` 预训练权重并使用 `MMDeploy` 进行模型转换和测试。您将会看到以下输出：
+
+- TensorRT：
+
+  ![image](https://user-images.githubusercontent.com/92794867/199657349-1bad9196-c00b-4a65-84f5-80f51e65a2bd.png)
+
+- ONNXRuntime：
+
+  ![image](https://user-images.githubusercontent.com/92794867/199657283-95412e84-3ba4-463f-b4b2-4bf52ec4acbd.png)
+
+可以看到，经过 `MMDeploy` 部署的模型与 [MMYOLO-YOLOv5](`https://github.com/open-mmlab/mmyolo/tree/main/configs/yolov5`) 的 mAP-37.7 差距在 1% 以内。
+
 ## 模型推理
 
 TODO
