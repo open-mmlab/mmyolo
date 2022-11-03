@@ -157,7 +157,10 @@ train_dataloader = dict(
                 data_prefix=dict(sub_data_root='VOC2012/'),
                 filter_cfg=dict(filter_empty_gt=False, min_size=32),
                 pipeline=train_pipeline)
-        ]),
+        ],
+        # Use ignore_keys to avoid judging metainfo is
+        # not equal in `ConcatDataset`.
+        ignore_keys='DATASET_TYPE'),
     collate_fn=dict(type='yolov5_collate'))
 
 test_pipeline = [
