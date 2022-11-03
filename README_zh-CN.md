@@ -82,7 +82,7 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 
 1. 发布了[特征图可视化视频](https://www.bilibili.com/video/BV188411s7o8)
 2. 发布了 [YOLOv5 配置文件解读视频](https://www.bilibili.com/video/BV1214y157ck)
-3. 发布了 [RTMDet-s 特征图可视化视频 demo](https://www.bilibili.com/video/BV1je4y1478R)
+3. 发布了 [RTMDet-s 特征图可视化 demo 视频](https://www.bilibili.com/video/BV1je4y1478R)
 4. 发布了[源码解读和必备调试技巧视频](https://www.bilibili.com/video/BV1N14y1V7mB)
 
 发布历史和更新细节请参考 [更新日志](https://mmyolo.readthedocs.io/zh_CN/latest/notes/changelog.html)
@@ -157,8 +157,8 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [x] [YOLOX](configs/yolox)
 - [x] [RTMDet](configs/rtmdet)
 - [x] [YOLOv6](configs/yolov6)
-- [ ] [PPYOLOE](configs/ppyoloe)(Inference only)
-- [ ] [YOLOv7](configs/yolov7)(Inference only)
+- [ ] [PPYOLOE](configs/ppyoloe)((仅推理))
+- [ ] [YOLOv7](configs/yolov7)((仅推理))
 
 </details>
 

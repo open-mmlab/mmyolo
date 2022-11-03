@@ -73,7 +73,7 @@ The master branch works with **PyTorch 1.6+**.
 
 1. Support [YOLOv5/YOLOv6/YOLOX/RTMDet deployments](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy) for ONNXRuntime and TensorRT
 2. Support [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov6) s/t/n model training
-3. YOLOv5 supports [P6 large resolution 1280 scale training](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5)
+3. YOLOv5 supports [P6 model training which can input 1280-scale images](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5)
 4. YOLOv5 supports [VOC dataset training](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/voc)
 5. Support [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/main/configs/ppyoloe) and [YOLOv7](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov7) model inference and official weight convert
 6. Add YOLOv5 replacement [backbone tutorial](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/advanced_guides/how_to.md#use-backbone-network-implemented-in-other-openmmlab-repositories) in How-to documentation
@@ -129,7 +129,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
   - [Basic Deployment Guide](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#basic-deployment-guide)
     - [Basic Deployment Guide](docs/en/deploy/basic_deployment_guide.md)
   - [Deployment Tutorial](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#deployment-tutorial)
-    - [Yolov5 Deployment](docs/en/deploy/yolov5_deployment.md)
+    - [YOLOv5 Deployment](docs/en/deploy/yolov5_deployment.md)
 
 - Advanced Guides
 

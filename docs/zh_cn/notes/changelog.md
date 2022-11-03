@@ -46,14 +46,14 @@
 
 1. 发布了[特征图可视化视频](https://www.bilibili.com/video/BV188411s7o8)
 2. 发布了 [YOLOv5 配置文件解读视频](https://www.bilibili.com/video/BV1214y157ck)
-3. 发布了 [RTMDet-s 特征图可视化视频 demo](https://www.bilibili.com/video/BV1je4y1478R)
+3. 发布了 [RTMDet-s 特征图可视化 demo 视频](https://www.bilibili.com/video/BV1je4y1478R)
 4. 发布了[源码解读和必备调试技巧视频](https://www.bilibili.com/video/BV1N14y1V7mB)
 
 ### 贡献者
 
 总共 14 位开发者参与了本次版本
 
-谢谢 @imAzhou, @triple-Mu, @RangeKing, @HinGwenWoong, @xin-li-67, @Nioolek, @kitecats, @Bin-ze, @JiayuXu0, @cydiachen, @zhiqwang, @Zheng-LinXiao, @hhaAndroid, @wanghonglie
+谢谢 @imAzhou, @triple-Mu, @RangeKing, @PeterH0323, @xin-li-67, @Nioolek, @kitecats, @Bin-ze, @JiayuXu0, @cydiachen, @zhiqwang, @Zheng-LinXiao, @hhaAndroid, @wanghonglie
 
 ## v0.1.1（29/9/2022)
 
