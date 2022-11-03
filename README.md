@@ -69,7 +69,7 @@ The master branch works with **PyTorch 1.6+**.
 
 ## What's New
 
-**v0.1.2** was released on 3/11/2022:
+💎 **v0.1.2** was released on 3/11/2022:
 
 1. Support [YOLOv5/YOLOv6/YOLOX/RTMDet deployments](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy) for ONNXRuntime and TensorRT
 2. Support [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov6) s/t/n model training
