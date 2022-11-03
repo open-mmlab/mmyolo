@@ -211,7 +211,7 @@ use_efficientnms = False
 设置 `MMDeploy` 根目录为环境变量 `MMDEPLOY_DIR` ，例如 `export MMDEPLOY_DIR=/the/root/path/of/MMDeploy`
 
 ```shell
-python3 &(MMDEPLOY_DIR)/tools/deploy.py \
+python3 ${MMDEPLOY_DIR}/tools/deploy.py \
     ${DEPLOY_CFG_PATH} \
     ${MODEL_CFG_PATH} \
     ${MODEL_CHECKPOINT_PATH} \
@@ -241,10 +241,10 @@ python3 &(MMDEPLOY_DIR)/tools/deploy.py \
 
 ## 模型评测
 
-当您将 PyTorch 模型转换为后端支持的模型后，您可能需要验证模型的精度，使用 `&(MMDEPLOY_DIR)/tools/test.py`
+当您将 PyTorch 模型转换为后端支持的模型后，您可能需要验证模型的精度，使用 `${MMDEPLOY_DIR}/tools/test.py`
 
 ```shell
-python3 &(MMDEPLOY_DIR)/tools/test.py \
+python3 ${MMDEPLOY_DIR}/tools/test.py \
     ${DEPLOY_CFG} \
     ${MODEL_CFG} \
     --model ${BACKEND_MODEL_FILES} \
@@ -284,31 +284,4 @@ python3 &(MMDEPLOY_DIR)/tools/test.py \
 - `--warmup`: 在计算推理时间之前进行预热，需要先开启 `speed-test`。
 - `--log-interval`: 每个日志之间的间隔，需要先设置 `speed-test`。
 
-注意：`&(MMDEPLOY_DIR)/tools/test.py` 中的其他参数用于速度测试。他们不影响评估。
-
-## 模型推理
-
-当您评测部署模型精度后，您可以使用 `mmyolo/demo/image_demo_deploy.py` 来测试本地图片并选择展示或保存可视化结果。
-
-```shell
-python3 demo/image_demo_deploy.py \
-    ${IMG} \
-    ${MODEL_CFG} \
-    ${DEPLOY_CFG} \
-    ${CHECKPOINT} \
-    [--out-dir ${OUTPUT_DIR}] \
-    [--device] ${DEVICE}\
-    [--show] \
-    [--score-thr ${SHOW_SCORE_THR}
-```
-
-### 参数描述
-
-- `img` ：待检测的图片路径，文件夹路径，或图片网址。
-- `model_cfg`: MMYOLO 模型配置文件。
-- `deploy_cfg`: 部署配置文件。
-- `CHECKPOINT`: 导出的后端模型。 例如, 如果我们导出了 TensorRT 模型，我们需要传入后缀为 ".engine" 文件路径。
-- `--out-dir`:  保存检测的可视化结果文件夹。
-- `--device`: 运行模型的设备。请注意，某些后端会限制设备。例如，TensorRT 必须在 cuda 上运行。
-- `--show`: 是否在屏幕上显示检测的可视化结果，当您开启此选项后，将会关闭保存可视化结果。
-- `--score-thr`: 确定是否显示检测边界框的阈值。
+注意：`${MMDEPLOY_DIR}/tools/test.py` 中的其他参数用于速度测试。他们不影响评估。
