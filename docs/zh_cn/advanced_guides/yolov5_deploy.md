@@ -316,7 +316,7 @@ python3 ${MMDEPLOY_DIR}/tools/test.py \
 
 **未来我们将会支持模型测速等更加实用的脚本**
 
-# 使用 DOCKER 部署测试
+# 使用 Docker 部署测试
 
 `MMYOLO` 提供了一个 [`Dockerfile`](docker/Dockerfile_deployment) 用于构建镜像。请确保您的 `docker` 版本大于等于 `19.03`。
 
