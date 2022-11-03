@@ -45,7 +45,7 @@ RUN git clone https://github.com/open-mmlab/mmyolo.git -b dev mmyolo \
     && mim install --no-cache-dir -e . \
     && cd ..
 
-### install MMDEPLOY
+# Install MMDEPLOY
 ENV ONNXRUNTIME_DIR=/openmmlab/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}
 ENV TENSORRT_DIR=/usr/lib/x86_64-linux-gnu
 ENV CUDNN_DIR=/usr/lib/x86_64-linux-gnu
