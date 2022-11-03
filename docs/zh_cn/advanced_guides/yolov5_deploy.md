@@ -215,7 +215,7 @@ export PATH_TO_CHECKPOINTS=/home/openmmlab/dev/mmdeploy/yolov5s.pth
 #### ONNXRuntime
 
 ```shell
-python3 &(MMDEPLOY_DIR)/tools/deploy.py \
+python3 ${MMDEPLOY_DIR}/tools/deploy.py \
     configs/deploy/detection_onnxruntime_static.py \
     configs/deploy/model/yolov5_s-static.py \
     ${PATH_TO_CHECKPOINTS} \
@@ -228,7 +228,7 @@ python3 &(MMDEPLOY_DIR)/tools/deploy.py \
 #### TensorRT
 
 ```bash
-python3 &(MMDEPLOY_DIR)/tools/deploy.py \
+python3 ${MMDEPLOY_DIR}/tools/deploy.py \
     configs/deploy/detection_tensorrt_static-640x640.py \
     configs/deploy/model/yolov5_s-static.py \
     ${PATH_TO_CHECKPOINTS} \
@@ -243,7 +243,7 @@ python3 &(MMDEPLOY_DIR)/tools/deploy.py \
 #### ONNXRuntime
 
 ```shell
-python3 &(MMDEPLOY_DIR)/tools/deploy.py \
+python3 ${MMDEPLOY_DIR}/tools/deploy.py \
     configs/deploy/detection_onnxruntime_dynamic.py \
     configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
     ${PATH_TO_CHECKPOINTS} \
@@ -256,7 +256,7 @@ python3 &(MMDEPLOY_DIR)/tools/deploy.py \
 #### TensorRT
 
 ```shell
-python3 &(MMDEPLOY_DIR)/tools/deploy.py \
+python3 ${MMDEPLOY_DIR}/tools/deploy.py \
     configs/deploy/detection_tensorrt_dynamic-192x192-960x960.py \
     configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py \
     ${PATH_TO_CHECKPOINTS} \
@@ -280,12 +280,12 @@ python3 &(MMDEPLOY_DIR)/tools/deploy.py \
 
 ## 模型评测
 
-当您转换模型成功后，可以使用 `&(MMDEPLOY_DIR)/tools/test.py` 工具对转换后的模型进行评测。下面是对 `ONNXRuntime` 和 `TensorRT` 静态模型的评测，动态模型评测修改传入模型配置即可。
+当您转换模型成功后，可以使用 `${MMDEPLOY_DIR}/tools/test.py` 工具对转换后的模型进行评测。下面是对 `ONNXRuntime` 和 `TensorRT` 静态模型的评测，动态模型评测修改传入模型配置即可。
 
 ### ONNXRuntime
 
 ```shell
-python3 &(MMDEPLOY_DIR)/tools/test.py \
+python3 ${MMDEPLOY_DIR}/tools/test.py \
         configs/deploy/detection_onnxruntime_static.py \
         configs/deploy/model/yolov5_s-static.py \
         --model work_dir/end2end.onnx  \
@@ -302,7 +302,7 @@ python3 &(MMDEPLOY_DIR)/tools/test.py \
 **注意**： TensorRT 需要执行设备是 `cuda`
 
 ```shell
-python3 &(MMDEPLOY_DIR)/tools/test.py \
+python3 ${MMDEPLOY_DIR}/tools/test.py \
         configs/deploy/detection_tensorrt_static-640x640.py \
         configs/deploy/model/yolov5_s-static.py \
         --model work_dir/end2end.engine  \

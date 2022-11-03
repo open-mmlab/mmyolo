@@ -4,6 +4,7 @@ WORKDIR /openmmlab
 ARG ONNXRUNTIME_VERSION=1.8.1
 ENV DEBIAN_FRONTEND=noninteractive
 ENV APT_KEY_DONT_WARN_ON_DANGEROUS_USAGE=DontWarn
+ENV FORCE_CUDA="1"
 
 RUN apt-key del 7fa2af80 \
     && apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/3bf863cc.pub \
@@ -14,26 +15,37 @@ RUN apt-key del 7fa2af80 \
 # && pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 RUN apt-get update \
-    && apt-get install -y libopencv-dev ffmpeg libsm6 libxext6 git ninja-build libglib2.0-0 libsm6 libxrender-dev libxext6 \
+    && apt-get install -y ffmpeg git libgl1-mesa-glx libopencv-dev \
+    libsm6 libspdlog-dev libssl-dev ninja-build libxext6 libxrender-dev \
+    libglib2.0-0 vim wget --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 # get onnxruntime
 RUN wget -q https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTIME_VERSION}/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}.tgz \
     && tar -zxvf onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}.tgz \
-    && pip install --no-cache-dir onnxruntime-gpu==${ONNXRUNTIME_VERSION}
+    && pip install --no-cache-dir onnxruntime-gpu==${ONNXRUNTIME_VERSION} \
+    && pip install pycuda
 
-# Install openmim mmengine mmcv mmdet
+# Install MMCV
+RUN pip install --no-cache-dir opencv-python==4.5.5.64 opencv-python-headless==4.5.5.64 \
+    && git clone https://github.com/open-mmlab/mmcv.git -b 2.x mmcv \
+    && cd mmcv \
+    && pip install --no-cache-dir -r requirements/optional.txt \
+    && MMCV_WITH_OPS=1 pip install --no-cache-dir -e . -v \
+    && cd ..
+
+# Install OPENMIM MMENGINE MMDET
 RUN pip install --no-cache-dir openmim \
     && mim install --no-cache-dir "mmengine>=0.2.0" "mmcv>=2.0.0rc1,<2.1.0" "mmdet>=3.0.0rc2,<3.1.0"
 
 # Install MMYOLO
-RUN git clone https://github.com/open-mmlab/mmyolo.git mmyolo \
+RUN git clone https://github.com/open-mmlab/mmyolo.git -b dev mmyolo \
     && cd mmyolo \
     && mim install --no-cache-dir -e . \
     && cd ..
 
-### install mmdeploy
+### install MMDEPLOY
 ENV ONNXRUNTIME_DIR=/openmmlab/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}
 ENV TENSORRT_DIR=/usr/lib/x86_64-linux-gnu
 ENV CUDNN_DIR=/usr/lib/x86_64-linux-gnu
@@ -49,6 +61,4 @@ RUN git clone https://github.com/open-mmlab/mmdeploy -b dev-1.x mmdeploy \
     && make -j$(nproc) \
     && make install \
     && cd .. \
-    && pip install -e . \
-
-RUN pip install --no-cache-dir opencv-python==4.5.5.64 opencv-python-headless==4.5.5.64
+    && pip install --no-cache-dir -e .
