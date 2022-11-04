@@ -87,7 +87,6 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg)
-
         self.num_stages = len(arch_setting)
         self.arch_setting = arch_setting
 
@@ -216,6 +215,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
 
     def forward(self, x: torch.Tensor) -> tuple:
         """Forward batch_inputs from the data_preprocessor."""
+        import pdb;pdb.set_trace()
         outs = []
         for i, layer_name in enumerate(self.layers):
             layer = getattr(self, layer_name)

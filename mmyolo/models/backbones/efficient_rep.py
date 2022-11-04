@@ -7,8 +7,8 @@ import torch.nn as nn
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.models.layers.yolo_bricks import SPPFBottleneck
+from ..layers import RepStageBlock, BepC3StageBlock
 from mmyolo.registry import MODELS
-from ..layers import RepStageBlock, RepVGGBlock
 from ..utils import make_divisible, make_round
 from .base_backbone import BaseBackbone
 
@@ -16,12 +16,10 @@ from .base_backbone import BaseBackbone
 @MODELS.register_module()
 class YOLOv6EfficientRep(BaseBackbone):
     """EfficientRep backbone used in YOLOv6.
-
     Args:
         arch (str): Architecture of BaseDarknet, from {P5, P6}.
             Defaults to P5.
         plugins (list[dict]): List of plugins for stages, each dict contains:
-
             - cfg (dict, required): Cfg dict to build plugin.
             - stages (tuple[bool], optional): Stages to apply plugin, length
               should be same as 'num_stages'.
@@ -44,7 +42,6 @@ class YOLOv6EfficientRep(BaseBackbone):
         block (nn.Module): block used to build each stage.
         init_cfg (Union[dict, list[dict]], optional): Initialization config
             dict. Defaults to None.
-
     Example:
         >>> from mmyolo.models import YOLOv6EfficientRep
         >>> import torch
@@ -78,9 +75,9 @@ class YOLOv6EfficientRep(BaseBackbone):
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True),
                  norm_eval: bool = False,
-                 block: nn.Module = RepVGGBlock,
+                 block_cfg: ConfigType = dict(type='RepVGGBlock'),
                  init_cfg: OptMultiConfig = None):
-        self.block = block
+        self.block_cfg = block_cfg
         super().__init__(
             self.arch_settings[arch],
             deepen_factor,
@@ -96,16 +93,20 @@ class YOLOv6EfficientRep(BaseBackbone):
 
     def build_stem_layer(self) -> nn.Module:
         """Build a stem layer."""
-        return self.block(
-            in_channels=self.input_channels,
-            out_channels=make_divisible(self.arch_setting[0][0],
-                                        self.widen_factor),
-            kernel_size=3,
-            stride=2)
+
+        block_cfg = self.block_cfg.copy()
+        block_cfg.update(
+            dict(
+                in_channels=self.input_channels,
+                out_channels=make_divisible(self.arch_setting[0][0],
+                                            self.widen_factor),
+                kernel_size=3,
+                stride=2,
+            ))
+        return MODELS.build(block_cfg)
 
     def build_stage_layer(self, stage_idx: int, setting: list) -> list:
         """Build a stage layer.
-
         Args:
             stage_idx (int): The index of a stage layer.
             setting (list): The architecture setting of a stage layer.
@@ -116,20 +117,26 @@ class YOLOv6EfficientRep(BaseBackbone):
         out_channels = make_divisible(out_channels, self.widen_factor)
         num_blocks = make_round(num_blocks, self.deepen_factor)
 
-        stage = []
-
-        ef_block = nn.Sequential(
-            self.block(
-                in_channels=in_channels,
-                out_channels=out_channels,
-                kernel_size=3,
-                stride=2),
-            RepStageBlock(
+        rep_stage_block =             RepStageBlock(
                 in_channels=out_channels,
                 out_channels=out_channels,
                 n=num_blocks,
-                block=self.block,
-            ))
+                block_cfg=self.block_cfg,
+            )
+
+        block_cfg = self.block_cfg.copy()
+        block_cfg.update(
+            dict(
+                in_channels=in_channels,
+                out_channels=out_channels,
+                kernel_size=3,
+                stride=2))
+        stage = []
+
+        ef_block = nn.Sequential(
+            MODELS.build(block_cfg),             
+            rep_stage_block)
+
         stage.append(ef_block)
 
         if use_spp:
