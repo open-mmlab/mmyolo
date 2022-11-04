@@ -9,6 +9,7 @@ from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmengine.model import BaseModule
 from mmengine.utils import digit_version
 from torch import Tensor
+from torch.nn.parameter import Parameter
 
 from mmyolo.registry import MODELS
 
@@ -31,7 +32,6 @@ else:
 class SPPFBottleneck(BaseModule):
     """Spatial pyramid pooling - Fast (SPPF) layer for
     YOLOv5, YOLOX and PPYOLOE by Glenn Jocher
-
     Args:
         in_channels (int): The input channels of this Module.
         out_channels (int): The output channels of this Module.
@@ -118,11 +118,11 @@ class SPPFBottleneck(BaseModule):
         return x
 
 
+@MODELS.register_module()
 class RepVGGBlock(nn.Module):
     """RepVGGBlock is a basic rep-style block, including training and deploy
     status This code is based on
     https://github.com/DingXiaoH/RepVGG/blob/main/repvgg.py.
-
     Args:
         in_channels (int): Number of channels in the input image
         out_channels (int): Number of channels produced by the convolution
@@ -231,7 +231,6 @@ class RepVGGBlock(nn.Module):
         """Forward process.
         Args:
             inputs (Tensor): The input tensor.
-
         Returns:
             Tensor: The output tensor.
         """
@@ -254,7 +253,6 @@ class RepVGGBlock(nn.Module):
 
     def get_equivalent_kernel_bias(self):
         """Derives the equivalent kernel and bias in a differentiable way.
-
         Returns:
             tuple: Equivalent kernel and bias
         """
@@ -272,7 +270,6 @@ class RepVGGBlock(nn.Module):
         """Pad 1x1 tensor to 3x3.
         Args:
             kernel1x1 (Tensor): The input 1x1 kernel need to be padded.
-
         Returns:
             Tensor: 3x3 kernel after padded.
         """
@@ -284,17 +281,15 @@ class RepVGGBlock(nn.Module):
     def _fuse_bn_tensor(self,
                         branch: nn.Module) -> Tuple[np.ndarray, torch.Tensor]:
         """Derives the equivalent kernel and bias of a specific branch layer.
-
         Args:
             branch (nn.Module): The layer that needs to be equivalently
                 transformed, which can be nn.Sequential or nn.Batchnorm2d
-
         Returns:
             tuple: Equivalent kernel and bias
         """
         if branch is None:
             return 0, 0
-        if isinstance(branch, ConvModule):
+        if isinstance(branch, nn.Sequential):
             kernel = branch.conv.weight
             running_mean = branch.bn.running_mean
             running_var = branch.bn.running_var
@@ -302,7 +297,7 @@ class RepVGGBlock(nn.Module):
             beta = branch.bn.bias
             eps = branch.bn.eps
         else:
-            assert isinstance(branch, (nn.SyncBatchNorm, nn.BatchNorm2d))
+            assert isinstance(branch, nn.BatchNorm2d)
             if not hasattr(self, 'id_tensor'):
                 input_dim = self.in_channels // self.groups
                 kernel_value = np.zeros((self.in_channels, input_dim, 3, 3),
@@ -348,49 +343,147 @@ class RepVGGBlock(nn.Module):
         self.deploy = True
 
 
-class RepStageBlock(nn.Module):
-    """RepStageBlock is a stage block with rep-style basic block.
-
-    Args:
-        in_channels (int): The input channels of this Module.
-        out_channels (int): The output channels of this Module.
-        n (int, tuple[int]): Number of blocks.  Defaults to 1.
-        block (nn.Module): Basic unit of RepStage. Defaults to RepVGGBlock.
-    """
+@MODELS.register_module()
+class BepC3StageBlock(nn.Module):
+    """Beer-mug RepC3 Block."""
 
     def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 n: int = 1,
-                 block: nn.Module = RepVGGBlock):
+                 in_channels,
+                 out_channels,
+                 n=1,
+                 expansion=0.5,
+                 concat=True,
+                 block_cfg=dict(type='RepVGGBlock'),
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='ReLU', inplace=True)
+                 ):  # ch_in, ch_out, number, shortcut, groups, expansion
         super().__init__()
-        self.conv1 = block(in_channels, out_channels)
-        self.block = nn.Sequential(*(block(out_channels, out_channels)
-                                     for _ in range(n - 1))) if n > 1 else None
+        c_ = int(out_channels * expansion)  # hidden channels
+        # self.cv1 = ConvModule(in_channels, c_, 1, 1,autopad(1, 1),groups=1, bias=False,norm_cfg=norm_cfg,act_cfg=act_cfg)
+        # self.cv2 = ConvModule(in_channels, c_, 1, 1,autopad(1, 1),groups=1, bias=False,norm_cfg=norm_cfg,act_cfg=act_cfg)
+        # self.cv3 = ConvModule(2 * c_, c_, out_channels, 1,autopad(1, 1),groups=1, bias=False,norm_cfg=norm_cfg,act_cfg=act_cfg)
+        self.cv1 = ConvModule(in_channels, c_, 1, 1,autopad(1, 1),groups=1, bias=False)
+        self.cv2 = Conv_C3(in_channels, c_, 1, 1)
+        self.cv3 = Conv_C3(2 * c_, out_channels, 1, 1)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Forward process.
-        Args:
-            inputs (Tensor): The input tensor.
+        if block_cfg['type'] == 'ConvWrapper':
+            self.cv1 = Conv_C3(in_channels, c_, 1, 1, act=nn.SiLU())
+            self.cv2 = Conv_C3(in_channels, c_, 1, 1, act=nn.SiLU())
+            self.cv3 = Conv_C3(2 * c_, out_channels, 1, 1, act=nn.SiLU())
 
-        Returns:
-            Tensor: The output tensor.
-        """
-        x = self.conv1(x)
-        if self.block is not None:
-            x = self.block(x)
-        return x
+        self.m = RepStageBlock(
+            in_channels=c_,
+            out_channels=c_,
+            n=n,
+            block_cfg=block_cfg,
+            bottle_block=BottleRep)
+        self.concat = concat
+        if not concat:
+            self.cv3 = Conv_C3(c_, out_channels, 1, 1)
+
+    def forward(self, x):
+        if self.concat is True:
+            return self.cv3(
+                torch.cat((self.m(self.cv1(x)), self.cv2(x)), dim=1))
+        else:
+            return self.cv3(self.m(self.cv1(x)))
+
+
+class Conv_C3(nn.Module):
+    """Standard convolution in BepC3-Block."""
+
+    def __init__(self,
+                 c1,
+                 c2,
+                 k=1,
+                 s=1,
+                 p=None,
+                 g=1,
+                 act=True):  # ch_in, ch_out, kernel, stride, padding, groups
+        super().__init__()
+        self.conv = nn.Conv2d(
+            c1, c2, k, s, autopad(k, p), groups=g, bias=False)
+        self.bn = nn.BatchNorm2d(c2)
+        self.act = nn.ReLU() if act is True else (
+            act if isinstance(act, nn.Module) else nn.Identity())
+
+    def forward(self, x):
+        return self.act(self.bn(self.conv(x)))
+
+    def forward_fuse(self, x):
+        return self.act(self.conv(x))
+
+
+def autopad(k, p=None):  # kernel, padding
+    # Pad to 'same'
+    if p is None:
+        p = k // 2 if isinstance(k, int) else [x // 2 for x in k]  # auto-pad
+    return p
+
+
+class BottleRep(nn.Module):
+
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 block_cfg: ConfigType = dict(type='RepVGGBlock'),
+                 weight=False):
+        super().__init__()
+        conv1_cfg = block_cfg.copy()
+        conv2_cfg = block_cfg.copy()
+
+        conv1_cfg.update(
+            dict(in_channels=in_channels, out_channels=out_channels))
+        conv2_cfg.update(
+            dict(in_channels=out_channels, out_channels=out_channels))
+
+        self.conv1 = MODELS.build(conv1_cfg)
+        self.conv2 = MODELS.build(conv2_cfg)
+
+        if in_channels != out_channels:
+            self.shortcut = False
+        else:
+            self.shortcut = True
+        if weight:
+            self.alpha = Parameter(torch.ones(1))
+        else:
+            self.alpha = 1.0
+
+    def forward(self, x):
+        outputs = self.conv1(x)
+        outputs = self.conv2(outputs)
+        return outputs + self.alpha * x if self.shortcut else outputs
+
+
+@MODELS.register_module()
+class ConvWrapper(nn.Module):
+    """Wrapper for normal Conv with SiLU activation."""
+
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size=3,
+                 stride=1,
+                 groups=1,
+                 bias=True,
+                 norm_cfg=None,
+                 act_cfg=dict(type='SiLU')):
+        super().__init__()
+        self.block = ConvModule(in_channels, out_channels, kernel_size, stride, padding=kernel_size // 2,
+                          groups=groups, bias=bias,norm_cfg=norm_cfg,act_cfg=act_cfg)
+
+    def forward(self, x):
+        return self.block(x)
 
 
 @MODELS.register_module()
 class EffectiveSELayer(nn.Module):
     """Effective Squeeze-Excitation.
-
     From `CenterMask : Real-Time Anchor-Free Instance Segmentation`
     arxiv (https://arxiv.org/abs/1911.06667)
     This code referenced to
     https://github.com/youngwanLEE/CenterMask/blob/72147e8aae673fcaf4103ee90a6a6b73863e7fa1/maskrcnn_benchmark/modeling/backbone/vovnet.py#L108-L121  # noqa
-
     Args:
         channels (int): The input and output channels of this Module.
         act_cfg (dict): Config dict for activation layer.
@@ -425,7 +518,6 @@ class PPYOLOESELayer(nn.Module):
                use `F.adaptive_avg_pool2d` before PPYOLOESELayer.
             2. Special ways to init weights.
             3. Different convolution order.
-
     Args:
         feat_channels (int): The input (and output) channels of the SE layer.
         norm_cfg (dict): Config dict for normalization layer.
@@ -467,13 +559,11 @@ class PPYOLOESELayer(nn.Module):
 
 class ELANBlock(BaseModule):
     """Efficient layer aggregation networks for YOLOv7.
-
     - if mode is `reduce_channel_2x`, the output channel will be
       reduced by a factor of 2
     - if mode is `no_change_channel`, the output channel does not change.
     - if mode is `expand_channel_2x`, the output channel will be
       expanded by a factor of 2
-
     Args:
         in_channels (int): The input channels of this Module.
         mode (str): Output channel mode. Defaults to `expand_channel_2x`.
@@ -593,11 +683,9 @@ class ELANBlock(BaseModule):
 
 class MaxPoolAndStrideConvBlock(BaseModule):
     """Max pooling and stride conv layer for YOLOv7.
-
     - if mode is `reduce_channel_2x`, the output channel will
     be reduced by a factor of 2
     - if mode is `no_change_channel`, the output channel does not change.
-
     Args:
         in_channels (int): The input channels of this Module.
         mode (str): Output channel mode. `reduce_channel_2x` or
@@ -669,7 +757,6 @@ class MaxPoolAndStrideConvBlock(BaseModule):
 class SPPFCSPBlock(BaseModule):
     """Spatial pyramid pooling - Fast (SPPF) layer with CSP for
      YOLOv7
-
      Args:
          in_channels (int): The input channels of this Module.
          out_channels (int): The output channels of this Module.
@@ -789,7 +876,6 @@ class SPPFCSPBlock(BaseModule):
 @MODELS.register_module()
 class PPYOLOEBasicBlock(nn.Module):
     """PPYOLOE Backbone BasicBlock.
-
     Args:
          in_channels (int): The input channels of this Module.
          out_channels (int): The output channels of this Module.
@@ -834,7 +920,6 @@ class PPYOLOEBasicBlock(nn.Module):
         """Forward process.
         Args:
             inputs (Tensor): The input tensor.
-
         Returns:
             Tensor: The output tensor.
         """
@@ -848,7 +933,6 @@ class PPYOLOEBasicBlock(nn.Module):
 
 class CSPResLayer(nn.Module):
     """PPYOLOE Backbone Stage.
-
     Args:
         in_channels (int): The input channels of this Module.
         out_channels (int): The output channels of this Module.
@@ -944,7 +1028,6 @@ class CSPResLayer(nn.Module):
 
     def build_blocks_layer(self, blocks_channels: int) -> nn.Module:
         """Build blocks layer.
-
         Args:
             blocks_channels: The channels of this Module.
         """
@@ -986,3 +1069,54 @@ class CSPResLayer(nn.Module):
             y = self.attn(y)
         y = self.conv3(y)
         return y
+
+
+@MODELS.register_module()
+class RepStageBlock(nn.Module):
+    """RepStageBlock is a stage block with rep-style basic block.
+    Args:
+        in_channels (int): The input channels of this Module.
+        out_channels (int): The output channels of this Module.
+        n (int, tuple[int]): Number of blocks.  Defaults to 1.
+        block (nn.Module): Basic unit of RepStage. Defaults to RepVGGBlock.
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 n: int = 1,
+                 bottle_block=RepVGGBlock,
+                 block_cfg: ConfigType = dict(type='RepVGGBlock')):
+        super().__init__()
+        block_cfg = block_cfg.copy()
+
+        block_cfg.update(
+            dict(in_channels=in_channels, out_channels=out_channels))
+
+        self.conv1 = MODELS.build(block_cfg)
+
+        block_cfg.update(
+            dict(in_channels=out_channels, out_channels=out_channels))
+        self.block = nn.Sequential(*(MODELS.build(block_cfg)
+                                     for _ in range(n - 1))) if n > 1 else None
+
+        if bottle_block == BottleRep:
+            self.conv1 = BottleRep(
+                in_channels, out_channels, block_cfg=block_cfg, weight=True)
+            n = n // 2
+            self.block = nn.Sequential(*(BottleRep(
+                out_channels, out_channels, block_cfg=block_cfg, weight=True)
+                                         for _ in range(n -
+                                                        1))) if n > 1 else None
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward process.
+        Args:
+            inputs (Tensor): The input tensor.
+        Returns:
+            Tensor: The output tensor.
+        """
+        x = self.conv1(x)
+        if self.block is not None:
+            x = self.block(x)
+        return x
