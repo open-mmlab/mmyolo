@@ -7,8 +7,8 @@ import torch.nn as nn
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.models.layers.yolo_bricks import SPPFBottleneck
-from ..layers import RepStageBlock, BepC3StageBlock
 from mmyolo.registry import MODELS
+from ..layers import BepC3StageBlock, RepStageBlock
 from ..utils import make_divisible, make_round
 from .base_backbone import BaseBackbone
 
@@ -107,6 +107,7 @@ class YOLOv6EfficientRep(BaseBackbone):
 
     def build_stage_layer(self, stage_idx: int, setting: list) -> list:
         """Build a stage layer.
+
         Args:
             stage_idx (int): The index of a stage layer.
             setting (list): The architecture setting of a stage layer.
@@ -117,12 +118,12 @@ class YOLOv6EfficientRep(BaseBackbone):
         out_channels = make_divisible(out_channels, self.widen_factor)
         num_blocks = make_round(num_blocks, self.deepen_factor)
 
-        rep_stage_block =             RepStageBlock(
-                in_channels=out_channels,
-                out_channels=out_channels,
-                n=num_blocks,
-                block_cfg=self.block_cfg,
-            )
+        rep_stage_block = RepStageBlock(
+            in_channels=out_channels,
+            out_channels=out_channels,
+            n=num_blocks,
+            block_cfg=self.block_cfg,
+        )
 
         block_cfg = self.block_cfg.copy()
         block_cfg.update(
@@ -133,9 +134,7 @@ class YOLOv6EfficientRep(BaseBackbone):
                 stride=2))
         stage = []
 
-        ef_block = nn.Sequential(
-            MODELS.build(block_cfg),             
-            rep_stage_block)
+        ef_block = nn.Sequential(MODELS.build(block_cfg), rep_stage_block)
 
         stage.append(ef_block)
 
@@ -156,6 +155,7 @@ class YOLOv6EfficientRep(BaseBackbone):
                 # In order to be consistent with the source code,
                 # reset the Conv2d initialization parameters
                 m.reset_parameters()
+
 
 @MODELS.register_module()
 class YOLOv6CSPBep(YOLOv6EfficientRep):
@@ -213,16 +213,18 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  input_channels: int = 3,
-                 expansion: float = 0.5, 
+                 expansion: float = 0.5,
                  out_indices: Tuple[int] = (2, 3, 4),
                  frozen_stages: int = -1,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True),
+                 csp_act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  norm_eval: bool = False,
                  block_cfg: ConfigType = dict(type='ConvWrapper'),
                  init_cfg: OptMultiConfig = None):
         self.expansion = expansion
+        self.csp_act_cfg = csp_act_cfg
         super().__init__(
             arch=arch,
             deepen_factor=deepen_factor,
@@ -237,9 +239,9 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
             block_cfg=block_cfg,
             init_cfg=init_cfg)
 
-
     def build_stage_layer(self, stage_idx: int, setting: list) -> list:
         """Build a stage layer.
+
         Args:
             stage_idx (int): The index of a stage layer.
             setting (list): The architecture setting of a stage layer.
@@ -250,14 +252,12 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
         num_blocks = make_round(num_blocks, self.deepen_factor)
 
         rep_stage_block = BepC3StageBlock(
-                in_channels=out_channels,
-                out_channels=out_channels,
-                n=num_blocks,
-                block_cfg=self.block_cfg,
-                norm_cfg=self.norm_cfg,
-                act_cfg=self.act_cfg
-            )
-
+            in_channels=out_channels,
+            out_channels=out_channels,
+            n=num_blocks,
+            block_cfg=self.block_cfg,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.csp_act_cfg)
         block_cfg = self.block_cfg.copy()
         block_cfg.update(
             dict(
@@ -267,9 +267,7 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
                 stride=2))
         stage = []
 
-        ef_block = nn.Sequential(
-            MODELS.build(block_cfg),             
-            rep_stage_block)
+        ef_block = nn.Sequential(MODELS.build(block_cfg), rep_stage_block)
 
         stage.append(ef_block)
 
@@ -279,6 +277,6 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
                 out_channels=out_channels,
                 kernel_sizes=5,
                 norm_cfg=self.norm_cfg,
-                act_cfg=self.act_cfg)
+                act_cfg=self.csp_act_cfg)
             stage.append(spp)
         return stage

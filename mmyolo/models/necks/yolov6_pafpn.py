@@ -7,14 +7,15 @@ from mmcv.cnn import ConvModule
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
+from ..layers import BepC3StageBlock, RepStageBlock
 from ..utils import make_divisible, make_round
 from .base_yolo_neck import BaseYOLONeck
-from ..layers import RepStageBlock, BepC3StageBlock
 
 
 @MODELS.register_module()
 class YOLOv6RepPAFPN(BaseYOLONeck):
     """Path Aggregation Network used in YOLOv6.
+
     Args:
         in_channels (List[int]): Number of input channels per scale.
         out_channels (int): Number of output channels (used at each scale)
@@ -60,6 +61,7 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
 
     def build_reduce_layer(self, idx: int) -> nn.Module:
         """build reduce layer.
+
         Args:
             idx (int): layer idx.
         Returns:
@@ -82,6 +84,7 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
 
     def build_upsample_layer(self, idx: int) -> nn.Module:
         """build upsample layer.
+
         Args:
             idx (int): layer idx.
         Returns:
@@ -98,6 +101,7 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
 
     def build_top_down_layer(self, idx: int) -> nn.Module:
         """build top down layer.
+
         Args:
             idx (int): layer idx.
         Returns:
@@ -130,6 +134,7 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
 
     def build_downsample_layer(self, idx: int) -> nn.Module:
         """build downsample layer.
+
         Args:
             idx (int): layer idx.
         Returns:
@@ -148,6 +153,7 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
 
     def build_bottom_up_layer(self, idx: int) -> nn.Module:
         """build bottom up layer.
+
         Args:
             idx (int): layer idx.
         Returns:
@@ -175,9 +181,11 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
                 # reset the Conv2d initialization parameters
                 m.reset_parameters()
 
+
 @MODELS.register_module()
 class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
     """Path Aggregation Network used in YOLOv6.
+
     Args:
         in_channels (List[int]): Number of input channels per scale.
         out_channels (int): Number of output channels (used at each scale)
@@ -202,15 +210,17 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
                  out_channels: int,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
-                 expansion: float = 0.5, 
+                 expansion: float = 0.5,
                  num_csp_blocks: int = 12,
                  freeze_all: bool = False,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True),
+                 csp_act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  block_cfg: ConfigType = dict(type='RepVGGBlock'),
                  init_cfg: OptMultiConfig = None):
         self.expansion = expansion
+        self.csp_act_cfg = csp_act_cfg
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -225,6 +235,7 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
 
     def build_reduce_layer(self, idx: int) -> nn.Module:
         """build reduce layer.
+
         Args:
             idx (int): layer idx.
         Returns:
@@ -247,6 +258,7 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
 
     def build_upsample_layer(self, idx: int) -> nn.Module:
         """build upsample layer.
+
         Args:
             idx (int): layer idx.
         Returns:
@@ -263,6 +275,7 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
 
     def build_top_down_layer(self, idx: int) -> nn.Module:
         """build top down layer.
+
         Args:
             idx (int): layer idx.
         Returns:
@@ -277,7 +290,10 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
             out_channels=make_divisible(self.out_channels[idx - 1],
                                         self.widen_factor),
             n=make_round(self.num_csp_blocks, self.deepen_factor),
-            block_cfg=block_cfg,expansion=self.expansion)
+            block_cfg=block_cfg,
+            expansion=self.expansion,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.csp_act_cfg)
 
         if idx == 1:
             return layer0
@@ -295,6 +311,7 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
 
     def build_downsample_layer(self, idx: int) -> nn.Module:
         """build downsample layer.
+
         Args:
             idx (int): layer idx.
         Returns:
@@ -313,6 +330,7 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
 
     def build_bottom_up_layer(self, idx: int) -> nn.Module:
         """build bottom up layer.
+
         Args:
             idx (int): layer idx.
         Returns:
@@ -326,7 +344,10 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
             out_channels=make_divisible(self.out_channels[idx + 1],
                                         self.widen_factor),
             n=make_round(self.num_csp_blocks, self.deepen_factor),
-            block_cfg=block_cfg,expansion=self.expansion)
+            block_cfg=block_cfg,
+            expansion=self.expansion,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.csp_act_cfg)
 
     def build_out_layer(self, *args, **kwargs) -> nn.Module:
         """build out layer."""

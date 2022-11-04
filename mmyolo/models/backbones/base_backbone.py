@@ -215,7 +215,6 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
 
     def forward(self, x: torch.Tensor) -> tuple:
         """Forward batch_inputs from the data_preprocessor."""
-        import pdb;pdb.set_trace()
         outs = []
         for i, layer_name in enumerate(self.layers):
             layer = getattr(self, layer_name)
