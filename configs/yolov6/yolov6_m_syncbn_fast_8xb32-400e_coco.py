@@ -51,4 +51,4 @@ train_pipeline = [
                    'flip_direction'))
 ]
 
-train_dataloader = dict( dataset=dict( pipeline=train_pipeline))
+train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
