@@ -183,7 +183,10 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
         norm_eval (bool): Whether to set norm layers to eval mode, namely,
             freeze running stats (mean and var). Note: Effect on Batch Norm
             and its variants only. Defaults to False.
-        block (nn.Module): block used to build each stage.
+        block_cfg (dict): Config dict for the block used to build each layer.
+            Defaults to dict(type='RepVGGBlock').
+        csp_act_cfg (dict): Config dict for activation layer used in each
+            stage. Defaults to dict(type='SiLU', inplace=True).
         init_cfg (Union[dict, list[dict]], optional): Initialization config
             dict. Defaults to None.
     Example:
