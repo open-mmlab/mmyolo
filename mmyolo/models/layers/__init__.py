@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .ema import ExpMomentumEMA
-from .yolo_bricks import (EffectiveSELayer, ELANBlock,
+from .yolo_bricks import (BepC3StageBlock, EffectiveSELayer, ELANBlock,
                           MaxPoolAndStrideConvBlock, PPYOLOEBasicBlock,
                           RepStageBlock, RepVGGBlock, SPPFBottleneck,
                           SPPFCSPBlock)
@@ -8,5 +8,5 @@ from .yolo_bricks import (EffectiveSELayer, ELANBlock,
 __all__ = [
     'SPPFBottleneck', 'RepVGGBlock', 'RepStageBlock', 'ExpMomentumEMA',
     'ELANBlock', 'MaxPoolAndStrideConvBlock', 'SPPFCSPBlock',
-    'PPYOLOEBasicBlock', 'EffectiveSELayer'
+    'PPYOLOEBasicBlock', 'EffectiveSELayer', 'BepC3StageBlock'
 ]
