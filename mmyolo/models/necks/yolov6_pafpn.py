@@ -29,8 +29,8 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
         act_cfg (dict): Config dict for activation layer.
             Defaults to dict(type='ReLU', inplace=True).
-        block (nn.Module): block used to build each layer.
-            Defaults to RepVGGBlock.
+        block_cfg (dict): Config dict for the block used to build each layer.
+            Defaults to dict(type='RepVGGBlock').
         init_cfg (dict or list[dict], optional): Initialization config dict.
             Defaults to None.
     """
@@ -199,8 +199,10 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
         act_cfg (dict): Config dict for activation layer.
             Defaults to dict(type='ReLU', inplace=True).
-        block (nn.Module): block used to build each layer.
-            Defaults to RepVGGBlock.
+        block_cfg (dict): Config dict for the block used to build each layer.
+            Defaults to dict(type='RepVGGBlock').
+        csp_act_cfg (dict): Config dict for activation layer used in each
+            stage. Defaults to dict(type='SiLU', inplace=True).
         init_cfg (dict or list[dict], optional): Initialization config dict.
             Defaults to None.
     """
