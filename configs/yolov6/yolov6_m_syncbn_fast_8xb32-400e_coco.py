@@ -9,13 +9,13 @@ model = dict(
         type='YOLOv6CSPBep',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        expansion=float(2) / 3,
+        expansion=2. / 3,
         block_cfg=dict(type='ConvWrapper')),
     neck=dict(
         type='YOLOv6CSPRepPAFPN',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        expansion=float(2) / 3,
+        expansion=2. / 3,
         block_cfg=dict(type='ConvWrapper')),
     bbox_head=dict(
         type='YOLOv6Head',
