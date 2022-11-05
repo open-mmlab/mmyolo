@@ -420,7 +420,7 @@ class Mosaic(BaseMixImageTransform):
                              center_position_xy[0], \
                              center_position_xy[1]
             crop_coord = img_shape_wh[0] - (x2 - x1), img_shape_wh[1] - (
-                y2 - y1), img_shape_wh[0], img_shape_wh[1]
+                    y2 - y1), img_shape_wh[0], img_shape_wh[1]
 
         elif loc == 'top_right':
             # index1 to top right part of image
@@ -455,6 +455,146 @@ class Mosaic(BaseMixImageTransform):
 
         paste_coord = x1, y1, x2, y2
         return paste_coord, crop_coord
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(img_scale={self.img_scale}, '
+        repr_str += f'center_ratio_range={self.center_ratio_range}, '
+        repr_str += f'pad_val={self.pad_val}, '
+        repr_str += f'prob={self.prob})'
+        return repr_str
+
+
+@TRANSFORMS.register_module()
+class Mosaic9(BaseMixImageTransform):
+    def __init__(self,
+                 img_scale: Tuple[int, int] = (640, 640),
+                 center_ratio_range: Tuple[float, float] = (0.5, 1.5),
+                 bbox_clip_border: bool = True,
+                 pad_val: float = 114.0,
+                 pre_transform: Sequence[dict] = None,
+                 prob: float = 1.0,
+                 use_cached: bool = False,
+                 max_cached_images: int = 50,
+                 random_pop: bool = True,
+                 max_refetch: int = 15):
+        assert isinstance(img_scale, tuple)
+        assert 0 <= prob <= 1.0, 'The probability should be in range [0,1]. ' \
+                                 f'got {prob}.'
+        if use_cached:
+            assert max_cached_images >= 9, 'The length of cache must >= 9, ' \
+                                           f'but got {max_cached_images}.'
+
+        super().__init__(
+            pre_transform=pre_transform,
+            prob=prob,
+            use_cached=use_cached,
+            max_cached_images=max_cached_images,
+            random_pop=random_pop,
+            max_refetch=max_refetch)
+
+        self.img_scale = img_scale
+        self.center_ratio_range = center_ratio_range
+        self.bbox_clip_border = bbox_clip_border
+        self.pad_val = pad_val
+
+    def get_indexes(self, dataset: Union[BaseDataset, list]) -> list:
+        """Call function to collect indexes.
+
+        Args:
+            dataset (:obj:`Dataset` or list): The dataset or cached list.
+
+        Returns:
+            list: indexes.
+        """
+        indexes = [random.randint(0, len(dataset)) for _ in range(8)]
+        return indexes
+
+    def mix_img_transform(self, results: dict) -> dict:
+        """Mixed image data transformation.
+
+        Args:
+            results (dict): Result dict.
+
+        Returns:
+            results (dict): Updated result dict.
+        """
+        assert 'mix_results' in results
+        # TODO
+        s = self.img_scale
+
+        mosaic_bboxes = []
+        mosaic_bboxes_labels = []
+
+        for i, results_patch in enumerate([results, *results['mix_results']]):
+            img = results_patch['img']
+            h, w = img.shape[:2]
+
+            # keep_ratio resize
+            scale_ratio_i = min(self.img_scale[0] / h,
+                                self.img_scale[1] / w)
+            img = mmcv.imresize(
+                img, (int(w * scale_ratio_i), int(h * scale_ratio_i)))
+
+            # place img in img9
+            if i == 0:  # center
+                img9 = np.full((s * 3, s * 3, img.shape[2]), self.pad_val, dtype=np.uint8)  # base image with 4 tiles
+                h0, w0 = h, w
+                c = s, s, s + w, s + h  # xmin, ymin, xmax, ymax (base) coordinates
+            elif i == 1:  # top
+                c = s, s - h, s + w, s
+            elif i == 2:  # top right
+                c = s + wp, s - h, s + wp + w, s
+            elif i == 3:  # right
+                c = s + w0, s, s + w0 + w, s + h
+            elif i == 4:  # bottom right
+                c = s + w0, s + hp, s + w0 + w, s + hp + h
+            elif i == 5:  # bottom
+                c = s + w0 - w, s + h0, s + w0, s + h0 + h
+            elif i == 6:  # bottom left
+                c = s + w0 - wp - w, s + h0, s + w0 - wp, s + h0 + h
+            elif i == 7:  # left
+                c = s - w, s + h0 - h, s, s + h0
+            elif i == 8:  # top left
+                c = s - w, s + h0 - hp - h, s, s + h0 - hp
+
+            padx, pady = c[:2]
+            x1, y1, x2, y2 = [max(x, 0) for x in c]  # allocate coords
+            # Image
+            img9[y1:y2, x1:x2] = img[y1 - pady:, x1 - padx:]  # img9[ymin:ymax, xmin:xmax]
+            hp, wp = h, w  # height, width previous
+
+            gt_bboxes_i = results_patch['gt_bboxes']
+            gt_bboxes_labels_i = results_patch['gt_bboxes_labels']
+            gt_bboxes_i.rescale_([scale_ratio_i, scale_ratio_i])
+            gt_bboxes_i.translate_([padx, pady])
+            mosaic_bboxes.append(gt_bboxes_i)
+            mosaic_bboxes_labels.append(gt_bboxes_labels_i)
+
+        # Offset
+        yc, xc = [int(random.uniform(0, s)) for _ in self.mosaic_border]  # mosaic center x, y
+        img9 = img9[yc:yc + 2 * s, xc:xc + 2 * s]
+
+        mosaic_bboxes = mosaic_bboxes[0].cat(mosaic_bboxes, 0)
+        mosaic_bboxes[:, [1, 3]] -= xc
+        mosaic_bboxes[:, [2, 4]] -= yc
+        mosaic_bboxes_labels = np.concatenate(mosaic_bboxes_labels, 0)
+
+        if self.bbox_clip_border:
+            mosaic_bboxes.clip_([2 * self.img_scale[0], 2 * self.img_scale[1]])
+        else:
+            # remove outside bboxes
+            inside_inds = mosaic_bboxes.is_inside(
+                [2 * self.img_scale[0], 2 * self.img_scale[1]]).numpy()
+            mosaic_bboxes = mosaic_bboxes[inside_inds]
+            mosaic_bboxes_labels = mosaic_bboxes_labels[inside_inds]
+
+        results['img'] = img9
+        results['img_shape'] = img9.shape
+        results['gt_bboxes'] = mosaic_bboxes
+        results['gt_bboxes_labels'] = mosaic_bboxes_labels
+        # results['gt_ignore_flags'] = mosaic_ignore_flags
+        return results
 
     def __repr__(self) -> str:
         repr_str = self.__class__.__name__
@@ -770,7 +910,7 @@ class YOLOXMixUp(BaseMixImageTransform):
         if padded_img.shape[1] > target_w:
             x_offset = random.randint(0, padded_img.shape[1] - target_w)
         padded_cropped_img = padded_img[y_offset:y_offset + target_h,
-                                        x_offset:x_offset + target_w]
+                             x_offset:x_offset + target_w]
 
         # 6. adjust bbox
         retrieve_gt_bboxes = retrieve_results['gt_bboxes']
