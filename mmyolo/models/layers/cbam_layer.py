@@ -5,6 +5,7 @@ import torch.nn as nn
 from mmcv.cnn import ConvModule
 from mmengine.model import BaseModule
 
+
 class ChannelAttention(nn.Module):
     def __init__(self, channels, ratio=16):
         super(ChannelAttention, self).__init__()
@@ -16,7 +17,7 @@ class ChannelAttention(nn.Module):
             kernel_size=1,
             stride=1,
             conv_cfg=None,
-            act_cfg=dict(type='ReLU',inplace=True))
+            act_cfg=dict(type='ReLU', inplace=True))
         self.conv2 = ConvModule(
             in_channels=int(channels / ratio),
             out_channels=channels,
@@ -60,10 +61,10 @@ class CBAMLayer(BaseModule):
       arxiv link: https://arxiv.org/abs/1807.06521v2
       Args:
           in_channels (int): The input (and output) channels of the CBAM layer.
-          ratio (int): Squeeze ratio in ChannelAttention, the intermediate channel will be
-              ``int(channels/ratio)``. Default: 16.
-          kernel_size(int): The size of the convolution kernel in SpatialAttention. The
-              value can only be 3 or 7. Default: 7.
+          ratio (int): Squeeze ratio in ChannelAttention, the intermediate
+              channel will be ``int(channels/ratio)``. Default: 16.
+          kernel_size(int): The size of the convolution kernel in
+              SpatialAttention. The value can only be 3 or 7. Default: 7.
     """
 
     def __init__(self,
