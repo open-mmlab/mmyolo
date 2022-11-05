@@ -26,7 +26,7 @@ model = dict(
 `cfg` 参数表示插件的具体配置， `stages` 参数表示是否在 backbone 对应的 stage 后面增加注意力模块，长度需要和 backbone 的 stage 数量相同。
 
 ### 使用注意力模块
-MMYOLO 中使用注意力模块与添加插件的方法类似，用户可以直接通过修改 config 文件中 `backbone` 的 `plugins` 参数来实现对插件的管理。例如为 `YOLOv5` 增加 `SE` 注意力模块，其配置文件如下：
+MMYOLO 中使用注意力模块与添加插件的方法类似，用户可以直接通过修改 config 文件中 `backbone` 的 `plugins` 参数来添加注意力模块。例如为 `YOLOv5` 增加 `SE` 注意力模块，其配置文件如下：
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -42,7 +42,6 @@ model = dict(
           stages=(False, False, True, True))
       ]))
 ```
-`cfg` 参数表示插件的具体配置， `stages` 参数表示是否在 backbone 对应的 stage 后面增加插件，长度需要和 backbone 的 stage 数量相同。
 
 ## 应用多个 Neck
 
