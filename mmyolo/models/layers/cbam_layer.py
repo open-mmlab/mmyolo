@@ -16,7 +16,7 @@ class ChannelAttention(nn.Module):
             kernel_size=1,
             stride=1,
             conv_cfg=None,
-            act_cfg=dict(dict(type='ReLU')))
+            act_cfg=dict(type='ReLU',inplace=True))
         self.conv2 = ConvModule(
             in_channels=int(channels / ratio),
             out_channels=channels,
@@ -57,6 +57,7 @@ class SpatialAttention(nn.Module):
 @MODELS.register_module()
 class CBAMLayer(BaseModule):
     """Convolutional Block Attention Module.
+      arxiv link: https://arxiv.org/abs/1807.06521v2
       Args:
           in_channels (int): The input (and output) channels of the CBAM layer.
           ratio (int): Squeeze ratio in ChannelAttention, the intermediate channel will be
