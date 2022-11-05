@@ -31,8 +31,6 @@ MMYOLO 中使用注意力模块与添加插件的方法类似，用户可以直�
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
-custom_imports = dict(imports=['mmyolo.models.layers.attention_layers'], allow_failed_imports=False)
-
 model = dict(
     type='YOLODetector',
     backbone=dict(
