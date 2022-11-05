@@ -73,7 +73,8 @@ class CBAMLayer(BaseModule):
                  kernel_size=7
                  ):
         super(CBAMLayer, self).__init__()
-        self.channel_attention = ChannelAttention(channels=in_channels, ratio=ratio)
+        self.channel_attention = ChannelAttention(channels=in_channels,
+                                                  ratio=ratio)
         self.spatial_attention = SpatialAttention(kernel_size)
 
     def forward(self, x):
