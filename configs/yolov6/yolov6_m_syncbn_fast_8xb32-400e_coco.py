@@ -38,7 +38,7 @@ mosaic_affine_pipeline = [
 ]
 
 train_pipeline = [
-    *_base_.pre_transform, *_base_.mosaic_affine_pipeline,
+    *_base_.pre_transform, *mosaic_affine_pipeline,
     dict(
         type='YOLOv5MixUp',
         prob=0.1,
