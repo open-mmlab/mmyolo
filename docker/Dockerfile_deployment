@@ -38,6 +38,7 @@ RUN git clone https://github.com/open-mmlab/mmcv.git -b 2.x mmcv \
     && mim install --no-cache-dir -r requirements/optional.txt \
     && MMCV_WITH_OPS=1 mim install --no-cache-dir -e . -v \
     && cd ..
+
 # Install MMYOLO
 RUN git clone https://github.com/open-mmlab/mmyolo.git -b dev mmyolo \
     && cd mmyolo \
@@ -48,8 +49,7 @@ RUN git clone https://github.com/open-mmlab/mmyolo.git -b dev mmyolo \
 ENV ONNXRUNTIME_DIR=/openmmlab/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION} \
     TENSORRT_DIR=/usr/lib/x86_64-linux-gnu \
     CUDNN_DIR=/usr/lib/x86_64-linux-gnu \
-    BACKUP_LD_LIBRARY_PATH=$LD_LIBRARY_PATH \
-    LD_LIBRARY_PATH=$ONNXRUNTIME_DIR/lib:$TENSORRT_DIR/lib:$CUDNN_DIR/lib64:$BACKUP_LD_LIBRARY_PATH
+    BACKUP_LD_LIBRARY_PATH=${ONNXRUNTIME_DIR}/lib:${TENSORRT_DIR}/lib:${CUDNN_DIR}/lib64:${LD_LIBRARY_PATH}
 
 RUN git clone https://github.com/open-mmlab/mmdeploy -b dev-1.x mmdeploy \
     && cd mmdeploy \
@@ -63,4 +63,4 @@ RUN git clone https://github.com/open-mmlab/mmdeploy -b dev-1.x mmdeploy \
     && mim install --no-cache-dir -e .
 
 # Fix undefined symbol bug
-    RUN echo -e "\nldconfig\nexport LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> /root/.bashrc
+    RUN echo -e "\nexport LD_LIBRARY_PATH=${BACKUP_LD_LIBRARY_PATH}\nldconfig" >> /root/.bashrc
