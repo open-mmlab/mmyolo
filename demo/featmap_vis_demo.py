@@ -9,7 +9,7 @@ import numpy as np
 import torch
 from mmdet.apis import inference_detector, init_detector
 from mmengine import Config, DictAction
-from mmengine.utils import scandir
+from mmengine.utils import ProgressBar, scandir
 
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
@@ -163,24 +163,25 @@ def main():
     is_url = args.img.startswith(('http:/', 'https:/'))
     is_file = os.path.splitext(args.img)[-1] in IMG_EXTENSIONS
 
-    images = []
+    image_list = []
     if is_dir:
         # when input source is dir
         for file in scandir(args.img, IMG_EXTENSIONS, recursive=True):
-            images.append(os.path.join(args.img, file))
+            image_list.append(os.path.join(args.img, file))
     elif is_url:
         # when input source is url
         filename = os.path.basename(
             urllib.parse.unquote(args.img).split('?')[0])
         torch.hub.download_url_to_file(args.img, filename)
-        images = [os.path.join(os.getcwd(), filename)]
+        image_list = [os.path.join(os.getcwd(), filename)]
     elif is_file:
         # when input source is single image
-        images = [args.img]
+        image_list = [args.img]
     else:
         print('Cannot find image file.')
 
-    for image_path in images:
+    progress_bar = ProgressBar(len(image_list))
+    for image_path in image_list:
         result, featmaps = activations_wrapper(image_path)
         if not isinstance(featmaps, Sequence):
             featmaps = [featmaps]
@@ -221,6 +222,7 @@ def main():
         shown_imgs.append(img)
         shown_imgs = auto_arrange_imgs(shown_imgs)
 
+        progress_bar.update()
         if args.out_dir is not None:
             mmcv.imwrite(
                 shown_imgs[..., ::-1],
