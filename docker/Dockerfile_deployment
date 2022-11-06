@@ -63,4 +63,4 @@ RUN git clone https://github.com/open-mmlab/mmdeploy -b dev-1.x mmdeploy \
     && mim install --no-cache-dir -e .
 
 # Fix undefined symbol bug
-RUN echo -e "\nldconfig" > /root/.bashrc
+    RUN echo -e "\nldconfig\nexport LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> /root/.bashrc
