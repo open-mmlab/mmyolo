@@ -39,7 +39,9 @@ def parse_args():
     return args
 
 
-def main(args):
+def main():
+    args = parse_args()
+
     # register all modules in mmdet into the registries
     register_all_modules()
 
@@ -55,7 +57,7 @@ def main(args):
 
     is_dir = os.path.isdir(args.img)
     is_url = args.img.startswith(('http:/', 'https:/'))
-    is_file = os.path.splitext(args.img)[-1] in (IMG_EXTENSIONS)
+    is_file = os.path.splitext(args.img)[-1] in IMG_EXTENSIONS
 
     files = []
     if is_dir:
@@ -102,5 +104,4 @@ def main(args):
 
 
 if __name__ == '__main__':
-    args = parse_args()
-    main(args)
+    main()

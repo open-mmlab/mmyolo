@@ -1,35 +1,45 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
+import os
+import urllib
 from typing import Sequence
 
 import mmcv
 import numpy as np
+import torch
 from mmdet.apis import inference_detector, init_detector
 from mmengine import Config, DictAction
+from mmengine.utils import scandir
 
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
 
+IMG_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif',
+                  '.tiff', '.webp')
+
 
 # TODO: Refine
 def parse_args():
-    parser = argparse.ArgumentParser(description='Visualize Featmaps')
-    parser.add_argument('img', help='Image file')
+    parser = argparse.ArgumentParser(description='Visualize feature map')
+    parser.add_argument(
+        'img', help='Image path, include image file, dir and URL.')
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
+    parser.add_argument('--out-dir', default=None, help='Path to output file')
+    parser.add_argument(
+        '--show', action='store_true', help='Show the feature map results')
     parser.add_argument(
         '--target-layers',
         default=['backbone'],
         nargs='+',
         type=str,
-        help='The target layers to get featmap, if not set, the tool will '
+        help='The target layers to get feature map, if not set, the tool will '
         'specify the backbone')
     parser.add_argument(
         '--preview-model',
         default=False,
         action='store_true',
         help='To preview all the model layers')
-    parser.add_argument('--out-file', default=None, help='Path to output file')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
@@ -109,7 +119,9 @@ def auto_arrange_imgs(imgs):
     return imgs
 
 
-def main(args):
+def main():
+    args = parse_args()
+
     # register all modules in mmdet into the registries
     register_all_modules()
 
@@ -124,9 +136,13 @@ def main(args):
 
     model = init_detector(args.config, args.checkpoint, device=args.device)
 
+    if not os.path.exists(args.out_dir):
+        os.mkdir(args.out_dir)
+
     if args.preview_model:
         print(model)
-        print('\n Please remove `--preview-model` to get the AM.')
+        print('\n This flag is only show model, if you want to continue, '
+              'please remove `--preview-model` to get the feature map.')
         return
 
     target_layers = []
@@ -143,9 +159,26 @@ def main(args):
     visualizer = VISUALIZERS.build(model.cfg.visualizer)
     visualizer.dataset_meta = model.dataset_meta
 
-    images = args.img
-    if not isinstance(images, list):
-        images = [images]
+    is_dir = os.path.isdir(args.img)
+    is_url = args.img.startswith(('http:/', 'https:/'))
+    is_file = os.path.splitext(args.img)[-1] in IMG_EXTENSIONS
+
+    images = []
+    if is_dir:
+        # when input source is dir
+        for file in scandir(args.img, IMG_EXTENSIONS, recursive=True):
+            images.append(os.path.join(args.img, file))
+    elif is_url:
+        # when input source is url
+        filename = os.path.basename(
+            urllib.parse.unquote(args.img).split('?')[0])
+        torch.hub.download_url_to_file(args.img, filename)
+        images = [os.path.join(os.getcwd(), filename)]
+    elif is_file:
+        # when input source is single image
+        images = [args.img]
+    else:
+        print('Cannot find image file.')
 
     for image_path in images:
         result, featmaps = activations_wrapper(image_path)
@@ -160,7 +193,7 @@ def main(args):
                 flatten_featmaps.append(featmap)
 
         # show the results
-        img = mmcv.imread(args.img)
+        img = mmcv.imread(image_path)
         img = mmcv.imconvert(img, 'bgr', 'rgb')
 
         shown_imgs = []
@@ -184,16 +217,21 @@ def main(args):
                 arrangement=args.arrangement)
             shown_imgs.append(shown_img)
 
+        # Add original image
+        shown_imgs.append(img)
         shown_imgs = auto_arrange_imgs(shown_imgs)
 
-        if args.out_file is not None:
-            mmcv.imwrite(shown_imgs[..., ::-1], args.out_file)
+        if args.out_dir is not None:
+            mmcv.imwrite(
+                shown_imgs[..., ::-1],
+                os.path.join(args.out_dir, os.path.basename(image_path)))
         else:
             visualizer.show(shown_imgs)
+
+    print('All done!')
 
 
 # Please refer to the usage tutorial:
 # https://github.com/open-mmlab/mmyolo/blob/main/docs/zh_cn/user_guides/visualization.md # noqa
 if __name__ == '__main__':
-    args = parse_args()
-    main(args)
+    main()
