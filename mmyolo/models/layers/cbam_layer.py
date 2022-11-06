@@ -63,7 +63,7 @@ class CBAMLayer(BaseModule):
           in_channels (int): The input (and output) channels of the CBAM layer.
           ratio (int): Squeeze ratio in ChannelAttention, the intermediate
               channel will be ``int(channels/ratio)``. Default: 16.
-          kernel_size(int): The size of the convolution kernel in
+          kernel_size (int): The size of the convolution kernel in
               SpatialAttention. The value can only be 3 or 7. Default: 7.
     """
 
