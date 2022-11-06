@@ -1,4 +1,4 @@
-_base_ = './yolov6_s_syncbn_fast_8xb32-400e_coco.py'
+_base_ = './yolov6_s_syncbn_fast_8xb32-300e_coco.py'
 
 deepen_factor = 0.6
 widen_factor = 0.75
@@ -10,13 +10,15 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         expansion=2. / 3,
-        block_cfg=dict(type='ConvWrapper')),
+        block_cfg=dict(type='RepVGGBlock'),
+        csp_act_cfg=dict(type='ReLU', inplace=True)),
     neck=dict(
         type='YOLOv6CSPRepPAFPN',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
+        block_cfg=dict(type='RepVGGBlock'),
         expansion=2. / 3,
-        block_cfg=dict(type='ConvWrapper')),
+        csp_act_cfg=dict(type='ReLU', inplace=True)),
     bbox_head=dict(
         type='YOLOv6Head',
         head_module=dict(widen_factor=widen_factor),

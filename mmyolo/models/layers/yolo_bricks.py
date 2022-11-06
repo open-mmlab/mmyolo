@@ -365,12 +365,12 @@ class BepC3StageBlock(nn.Module):
                  ):  # ch_in, ch_out, number, shortcut, groups, expansion
         super().__init__()
         c_ = int(out_channels * expansion)  # hidden channels
+
         self.cv1 = ConvModule(
             in_channels,
             c_,
             1,
             1,
-            autopad(1, 1),
             groups=1,
             bias=False,
             norm_cfg=norm_cfg,
@@ -380,7 +380,6 @@ class BepC3StageBlock(nn.Module):
             c_,
             1,
             1,
-            autopad(1, 1),
             groups=1,
             bias=False,
             norm_cfg=norm_cfg,
@@ -390,41 +389,10 @@ class BepC3StageBlock(nn.Module):
             out_channels,
             1,
             1,
-            autopad(1, 1),
             groups=1,
             bias=False,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
-
-        if block_cfg['type'] == 'ConvWrapper':
-            self.cv1 = ConvModule(
-                in_channels,
-                c_,
-                1,
-                1,
-                groups=1,
-                bias=False,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg)
-            self.cv2 = ConvModule(
-                in_channels,
-                c_,
-                1,
-                1,
-                groups=1,
-                bias=False,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg)
-            self.cv3 = ConvModule(
-                2 * c_,
-                out_channels,
-                1,
-                1,
-                groups=1,
-                bias=False,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg)
-
         self.m = RepStageBlock(
             in_channels=c_,
             out_channels=c_,
