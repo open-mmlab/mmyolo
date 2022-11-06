@@ -25,9 +25,11 @@ def parse_args():
         'img', help='Image path, include image file, dir and URL.')
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
-    parser.add_argument('--out-dir', default=None, help='Path to output file')
     parser.add_argument(
-        '--show', action='store_true', help='Show the feature map results')
+        '--out-dir',
+        default=None,
+        help=
+        'Path to output file, if not set this flag then will show each image')
     parser.add_argument(
         '--target-layers',
         default=['backbone'],
@@ -229,8 +231,7 @@ def main():
                                            args.img).replace('/', '_')
             else:
                 filename = os.path.basename(image_path)
-            out_file = None if args.show else os.path.join(
-                args.out_dir, filename)
+            out_file = os.path.join(args.out_dir, filename)
             mmcv.imwrite(shown_imgs[..., ::-1], out_file)
         else:
             visualizer.show(shown_imgs)
