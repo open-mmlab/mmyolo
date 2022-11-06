@@ -224,9 +224,12 @@ def main():
 
         progress_bar.update()
         if args.out_dir is not None:
-            mmcv.imwrite(
-                shown_imgs[..., ::-1],
-                os.path.join(args.out_dir, os.path.basename(image_path)))
+            if is_dir:
+                filename = os.path.relpath(image_path, args.img).replace('/', '_')
+            else:
+                filename = os.path.basename(image_path)
+            out_file = None if args.show else os.path.join(args.out_dir, filename)
+            mmcv.imwrite( shown_imgs[..., ::-1], out_file)
         else:
             visualizer.show(shown_imgs)
 
