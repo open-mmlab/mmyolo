@@ -28,8 +28,8 @@ def parse_args():
     parser.add_argument(
         '--out-dir',
         default=None,
-        help=
-        'Path to output file, if not set this flag then will show each image')
+        help='Path to output directory, '
+        'if the user not set this flag then will show each image')
     parser.add_argument(
         '--target-layers',
         default=['backbone'],
