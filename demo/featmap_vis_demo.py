@@ -104,7 +104,7 @@ def auto_arrange_imgs(imgs):
     if len_img <= col:
         imgs = np.concatenate(imgs, axis=1)
     else:
-        row = len_img // col + 1
+        row = round(len_img / col)
         fill_img_list = [np.ones(imgs[0].shape, dtype=np.uint8) * 255] * (
             row * col - len_img)
         imgs.extend(fill_img_list)
