@@ -260,6 +260,7 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
             in_channels=out_channels,
             out_channels=out_channels,
             n=num_blocks,
+            expansion=self.expansion,
             block_cfg=self.block_cfg,
             norm_cfg=self.norm_cfg,
             act_cfg=self.csp_act_cfg)

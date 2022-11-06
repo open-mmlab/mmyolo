@@ -1,4 +1,4 @@
-_base_ = './yolov6_m_syncbn_fast_8xb32-400e_coco.py'
+_base_ = './yolov6_m_syncbn_fast_8xb32-300e_coco.py'
 
 deepen_factor = 1
 widen_factor = 1
