@@ -48,8 +48,7 @@ RUN git clone https://github.com/open-mmlab/mmyolo.git -b dev mmyolo \
 # Install MMDEPLOY
 ENV ONNXRUNTIME_DIR=/openmmlab/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION} \
     TENSORRT_DIR=/usr/lib/x86_64-linux-gnu \
-    CUDNN_DIR=/usr/lib/x86_64-linux-gnu \
-    BACKUP_LD_LIBRARY_PATH=${ONNXRUNTIME_DIR}/lib:${TENSORRT_DIR}/lib:${CUDNN_DIR}/lib64:${LD_LIBRARY_PATH}
+    CUDNN_DIR=/usr/lib/x86_64-linux-gnu
 
 RUN git clone https://github.com/open-mmlab/mmdeploy -b dev-1.x mmdeploy \
     && cd mmdeploy \
@@ -63,4 +62,4 @@ RUN git clone https://github.com/open-mmlab/mmdeploy -b dev-1.x mmdeploy \
     && mim install --no-cache-dir -e .
 
 # Fix undefined symbol bug
-    RUN echo -e "\nexport LD_LIBRARY_PATH=${BACKUP_LD_LIBRARY_PATH}\nldconfig" >> /root/.bashrc
+    RUN echo -e "\nexport LD_LIBRARY_PATH=${ONNXRUNTIME_DIR}/lib:${TENSORRT_DIR}/lib:${CUDNN_DIR}/lib64:${LD_LIBRARY_PATH}\nldconfig" >> /root/.bashrc
