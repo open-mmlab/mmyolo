@@ -60,7 +60,7 @@ class YOLOv7HeadModule(YOLOv5HeadModule):
 
     def init_weights(self):
         """Initialize the bias of YOLOv5 head."""
-        super().init_weights()
+        super(YOLOv5HeadModule, self).init_weights()
         for mi, s in zip(self.convs_pred, self.featmap_strides):  # from
             mi = mi[1]  # nn.Conv2d
 

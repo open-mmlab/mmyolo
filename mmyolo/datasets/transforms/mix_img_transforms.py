@@ -522,11 +522,11 @@ class Mosaic9(BaseMixImageTransform):
         """
         assert 'mix_results' in results
         # TODO
-        s = self.img_scale
+        s = self.img_scale[0]
 
         mosaic_bboxes = []
         mosaic_bboxes_labels = []
-
+        mosaic_ignore_flags = []
         for i, results_patch in enumerate([results, *results['mix_results']]):
             img = results_patch['img']
             h, w = img.shape[:2]
@@ -535,6 +535,7 @@ class Mosaic9(BaseMixImageTransform):
             scale_ratio_i = min(self.img_scale[0] / h, self.img_scale[1] / w)
             img = mmcv.imresize(
                 img, (int(w * scale_ratio_i), int(h * scale_ratio_i)))
+            h, w = img.shape[:2]
 
             # place img in img9
             if i == 0:  # center
@@ -569,20 +570,24 @@ class Mosaic9(BaseMixImageTransform):
 
             gt_bboxes_i = results_patch['gt_bboxes']
             gt_bboxes_labels_i = results_patch['gt_bboxes_labels']
+            gt_ignore_flags_i = results_patch['gt_ignore_flags']
             gt_bboxes_i.rescale_([scale_ratio_i, scale_ratio_i])
             gt_bboxes_i.translate_([padx, pady])
             mosaic_bboxes.append(gt_bboxes_i)
             mosaic_bboxes_labels.append(gt_bboxes_labels_i)
+            mosaic_ignore_flags.append(gt_ignore_flags_i)
 
         # Offset
         yc, xc = (int(random.uniform(0, s))
-                  for _ in self.mosaic_border)  # mosaic center x, y
+                  for _ in self.img_scale)  # mosaic center x, y
         img9 = img9[yc:yc + 2 * s, xc:xc + 2 * s]
 
         mosaic_bboxes = mosaic_bboxes[0].cat(mosaic_bboxes, 0)
-        mosaic_bboxes[:, [1, 3]] -= xc
-        mosaic_bboxes[:, [2, 4]] -= yc
+        mosaic_bboxes.translate_([xc, yc])
+        # mosaic_bboxes[:, [1, 3]] -= xc
+        # mosaic_bboxes[:, [2, 4]] -= yc
         mosaic_bboxes_labels = np.concatenate(mosaic_bboxes_labels, 0)
+        mosaic_ignore_flags = np.concatenate(mosaic_ignore_flags, 0)
 
         if self.bbox_clip_border:
             mosaic_bboxes.clip_([2 * self.img_scale[0], 2 * self.img_scale[1]])
@@ -592,12 +597,13 @@ class Mosaic9(BaseMixImageTransform):
                 [2 * self.img_scale[0], 2 * self.img_scale[1]]).numpy()
             mosaic_bboxes = mosaic_bboxes[inside_inds]
             mosaic_bboxes_labels = mosaic_bboxes_labels[inside_inds]
+            mosaic_ignore_flags = mosaic_ignore_flags[inside_inds]
 
         results['img'] = img9
         results['img_shape'] = img9.shape
         results['gt_bboxes'] = mosaic_bboxes
         results['gt_bboxes_labels'] = mosaic_bboxes_labels
-        # results['gt_ignore_flags'] = mosaic_ignore_flags
+        results['gt_ignore_flags'] = mosaic_ignore_flags
         return results
 
     def __repr__(self) -> str:
