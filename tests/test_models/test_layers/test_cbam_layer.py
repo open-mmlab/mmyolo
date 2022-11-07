@@ -1,3 +1,5 @@
+# Copyright (c) OpenMMLab. All rights reserved.
+
 from unittest import TestCase
 
 import torch
@@ -13,7 +15,7 @@ class TestCBAMLayer(TestCase):
     def test_forward(self):
         # kernel size must be 3 or 7
         with self.assertRaisesRegex(AssertionError,
-                                    "kernel size must be 3 or 7"):
+                                    'kernel size must be 3 or 7'):
             CBAMLayer(16, kernel_size=5)
 
         images = torch.randn(2, 16, 20, 20)
