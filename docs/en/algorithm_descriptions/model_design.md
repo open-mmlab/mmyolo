@@ -5,7 +5,7 @@
 The structural graph is provided by RangeKing@GitHub. Thank you RangeKing！
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg" width=800 alt="base class">
+<img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" width=800 alt="BaseModule">
 </div>
 
 Most YOLO series algorithms adopt a unified algorithm-building structure, typically as Darknet + PAFPN. In order to let users quickly understand the YOLO series algorithm architecture, we deliberately designed the `BaseBackbone` + `BaseYOLONeck` structure, as shown in the above graph.
