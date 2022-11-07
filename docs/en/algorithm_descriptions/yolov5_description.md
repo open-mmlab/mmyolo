@@ -52,7 +52,7 @@ Many data augmentation methods are used in YOLOv5, including:
 - **Mosaic**
 - **RandomAffine**
 - **MixUp**
-- **Image blue and other transformations using Albu**
+- **Image blur and other transformations using Albu**
 - **HSV color space enhancement**
 - **Random horizontal flips**
 
@@ -121,7 +121,7 @@ Note: **In YOLOv5's implementation of MixUP, the other random image must be proc
 
 The rest of the augmentations are:
 
-- **Image blue and other transformations using Albu**
+- **Image blur and other transformations using Albu**
 - **HSV color space enhancement**
 - **Random horizontal flips**
 
