@@ -467,6 +467,7 @@ class Mosaic(BaseMixImageTransform):
 
 @TRANSFORMS.register_module()
 class Mosaic9(BaseMixImageTransform):
+
     def __init__(self,
                  img_scale: Tuple[int, int] = (640, 640),
                  center_ratio_range: Tuple[float, float] = (0.5, 1.5),
@@ -531,14 +532,15 @@ class Mosaic9(BaseMixImageTransform):
             h, w = img.shape[:2]
 
             # keep_ratio resize
-            scale_ratio_i = min(self.img_scale[0] / h,
-                                self.img_scale[1] / w)
+            scale_ratio_i = min(self.img_scale[0] / h, self.img_scale[1] / w)
             img = mmcv.imresize(
                 img, (int(w * scale_ratio_i), int(h * scale_ratio_i)))
 
             # place img in img9
             if i == 0:  # center
-                img9 = np.full((s * 3, s * 3, img.shape[2]), self.pad_val, dtype=np.uint8)  # base image with 4 tiles
+                img9 = np.full((s * 3, s * 3, img.shape[2]),
+                               self.pad_val,
+                               dtype=np.uint8)  # base image with 4 tiles
                 h0, w0 = h, w
                 c = s, s, s + w, s + h  # xmin, ymin, xmax, ymax (base) coordinates
             elif i == 1:  # top
@@ -559,9 +561,10 @@ class Mosaic9(BaseMixImageTransform):
                 c = s - w, s + h0 - hp - h, s, s + h0 - hp
 
             padx, pady = c[:2]
-            x1, y1, x2, y2 = [max(x, 0) for x in c]  # allocate coords
+            x1, y1, x2, y2 = (max(x, 0) for x in c)  # allocate coords
             # Image
-            img9[y1:y2, x1:x2] = img[y1 - pady:, x1 - padx:]  # img9[ymin:ymax, xmin:xmax]
+            img9[y1:y2, x1:x2] = img[y1 - pady:,
+                                     x1 - padx:]  # img9[ymin:ymax, xmin:xmax]
             hp, wp = h, w  # height, width previous
 
             gt_bboxes_i = results_patch['gt_bboxes']
@@ -572,7 +575,8 @@ class Mosaic9(BaseMixImageTransform):
             mosaic_bboxes_labels.append(gt_bboxes_labels_i)
 
         # Offset
-        yc, xc = [int(random.uniform(0, s)) for _ in self.mosaic_border]  # mosaic center x, y
+        yc, xc = (int(random.uniform(0, s))
+                  for _ in self.mosaic_border)  # mosaic center x, y
         img9 = img9[yc:yc + 2 * s, xc:xc + 2 * s]
 
         mosaic_bboxes = mosaic_bboxes[0].cat(mosaic_bboxes, 0)
@@ -910,7 +914,7 @@ class YOLOXMixUp(BaseMixImageTransform):
         if padded_img.shape[1] > target_w:
             x_offset = random.randint(0, padded_img.shape[1] - target_w)
         padded_cropped_img = padded_img[y_offset:y_offset + target_h,
-                             x_offset:x_offset + target_w]
+                                        x_offset:x_offset + target_w]
 
         # 6. adjust bbox
         retrieve_gt_bboxes = retrieve_results['gt_bboxes']

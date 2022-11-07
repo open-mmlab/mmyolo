@@ -13,6 +13,7 @@ from mmyolo.registry import (OPTIM_WRAPPER_CONSTRUCTORS, OPTIM_WRAPPERS,
 
 @OPTIM_WRAPPER_CONSTRUCTORS.register_module()
 class YOLOv7OptimizerConstructor:
+
     def __init__(self,
                  optim_wrapper_cfg: dict,
                  paramwise_cfg: Optional[dict] = None):
@@ -127,7 +128,9 @@ class YOLOv7OptimizerConstructor:
         # bias
         optimizer_cfg['params'].append({'params': pg2})
 
-        print_log('Optimizer groups: %g .bias, %g conv.weight, %g other' % (len(pg2), len(pg1), len(pg0)), 'current')
+        print_log(
+            'Optimizer groups: %g .bias, %g conv.weight, %g other' %
+            (len(pg2), len(pg1), len(pg0)), 'current')
         del pg0, pg1, pg2
 
         optimizer = OPTIMIZERS.build(optimizer_cfg)

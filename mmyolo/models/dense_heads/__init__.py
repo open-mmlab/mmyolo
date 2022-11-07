@@ -9,5 +9,6 @@ from .yolox_head import YOLOXHead, YOLOXHeadModule
 __all__ = [
     'YOLOv5Head', 'YOLOv6Head', 'YOLOXHead', 'YOLOv5HeadModule',
     'YOLOv6HeadModule', 'YOLOXHeadModule', 'RTMDetHead',
-    'RTMDetSepBNHeadModule', 'YOLOv7Head', 'PPYOLOEHead', 'PPYOLOEHeadModule', 'YOLOv7HeadModule'
+    'RTMDetSepBNHeadModule', 'YOLOv7Head', 'PPYOLOEHead', 'PPYOLOEHeadModule',
+    'YOLOv7HeadModule'
 ]

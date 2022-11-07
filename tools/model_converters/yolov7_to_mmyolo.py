@@ -140,7 +140,9 @@ convert_dict = {
     'model.104.rbr_1x1.1': 'neck.out_layers.2.rbr_1x1.bn',
 
     # head
-    'model.105.m': 'bbox_head.head_module.convs_pred'
+    'model.105.m.0': 'bbox_head.head_module.convs_pred.0.1',
+    'model.105.m.1': 'bbox_head.head_module.convs_pred.1.1',
+    'model.105.m.2': 'bbox_head.head_module.convs_pred.2.1'
 }
 
 
@@ -166,18 +168,27 @@ def convert(src, dst):
             new_key = key.replace(prefix, convert_dict[prefix])
             state_dict[new_key] = weight
             print(f'Convert {key} to {new_key}')
-        elif int(num) < 105 and int(num) != 51:
-            strs_key = key.split('.')[:4]
-            new_key = key.replace('.'.join(strs_key),
-                                  convert_dict['.'.join(strs_key)])
-            state_dict[new_key] = weight
-            print(f'Convert {key} to {new_key}')
-        else:
+        elif int(num) == 51:
             strs_key = key.split('.')[:3]
             new_key = key.replace('.'.join(strs_key),
                                   convert_dict['.'.join(strs_key)])
             state_dict[new_key] = weight
             print(f'Convert {key} to {new_key}')
+        else:
+            strs_key = key.split('.')[:4]
+            new_key = key.replace('.'.join(strs_key),
+                                  convert_dict['.'.join(strs_key)])
+            state_dict[new_key] = weight
+            print(f'Convert {key} to {new_key}')
+
+    # add ImplicitA and ImplicitM in YOLOv7-L
+    num_levels = 3
+    in_channels = [256, 512, 1024]
+    for i in range(num_levels):
+        implicit_a = f'bbox_head.head_module.convs_pred.{i}.0.implicit'
+        state_dict[implicit_a] = torch.zeros((1, in_channels[i], 1, 1))
+        implicit_m = f'bbox_head.head_module.convs_pred.{i}.2.implicit'
+        state_dict[implicit_m] = torch.ones((1, 3 * 85, 1, 1))
 
     # save checkpoint
     checkpoint = dict()

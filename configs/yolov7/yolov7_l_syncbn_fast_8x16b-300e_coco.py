@@ -27,8 +27,11 @@ batch_shapes_cfg = dict(
     extra_pad_ratio=0.5)
 
 # different from yolov5
-anchors = [[(12, 16), (19, 36), (40, 28)], [(36, 75), (76, 55), (72, 146)],
-           [(142, 110), (192, 243), (459, 401)]]
+anchors = [
+    [(12, 16), (19, 36), (40, 28)],  # P3/8
+    [(36, 75), (76, 55), (72, 146)],  # P4/16
+    [(142, 110), (192, 243), (459, 401)]  # P5/32
+]
 strides = [8, 16, 32]
 num_det_layers = 3
 
@@ -119,8 +122,7 @@ randchoice_mosaic_pipeline = dict(
     prob=[0.8, 0.2])
 
 train_pipeline = [
-    *pre_transform,
-    randchoice_mosaic_pipeline,
+    *pre_transform, randchoice_mosaic_pipeline,
     dict(
         type='YOLOv5MixUp',
         prob=0.15,
@@ -202,10 +204,7 @@ default_hooks = dict(
         lr_factor=0.01,
         max_epochs=max_epochs),
     checkpoint=dict(
-        type='CheckpointHook',
-        interval=1,
-        save_best='auto',
-        max_keep_ckpts=3))
+        type='CheckpointHook', interval=1, save_best='auto', max_keep_ckpts=3))
 
 val_evaluator = dict(
     type='mmdet.CocoMetric',
