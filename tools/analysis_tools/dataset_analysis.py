@@ -459,7 +459,7 @@ def main():
                 class_bbox[0].append(instance['bbox'])
         progress_bar.update()
     show_class_list(classes, class_num)
-    # # Get the width, height and area of bbox corresponding to each category
+    # Get the width, height and area of bbox corresponding to each category
     print('\nRead bbox information in each class:')
     progress_bar_classes = ProgressBar(len(classes))
     for idx, (classes, classes_idx) in enumerate(zip(classes, classes_idx)):
