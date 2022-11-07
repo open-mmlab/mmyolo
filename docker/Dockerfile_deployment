@@ -28,9 +28,16 @@ RUN wget -q https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRU
     && pip install pycuda
 
 
-# Install OPENMIM MMENGINE MMCV MMDET
+# Install OPENMIM MMENGINE MMDET
 RUN pip install --no-cache-dir openmim \
-    && mim install --no-cache-dir "mmengine>=0.3.0" "mmcv>=2.0.0rc1,<2.1.0" "mmdet>=3.0.0rc2,<3.1.0"
+    && mim install --no-cache-dir "mmengine>=0.3.0" "mmdet>=3.0.0rc2,<3.1.0" \
+    && mim install --no-cache-dir opencv-python==4.5.5.64 opencv-python-headless==4.5.5.64
+
+RUN git clone https://github.com/open-mmlab/mmcv.git -b 2.x mmcv \
+    && cd mmcv \
+    && mim install --no-cache-dir -r requirements/optional.txt \
+    && MMCV_WITH_OPS=1 mim install --no-cache-dir -e . -v \
+    && cd ..
 
 # Install MMYOLO
 RUN git clone https://github.com/open-mmlab/mmyolo.git -b dev mmyolo \
@@ -41,9 +48,7 @@ RUN git clone https://github.com/open-mmlab/mmyolo.git -b dev mmyolo \
 # Install MMDEPLOY
 ENV ONNXRUNTIME_DIR=/openmmlab/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION} \
     TENSORRT_DIR=/usr/lib/x86_64-linux-gnu \
-    CUDNN_DIR=/usr/lib/x86_64-linux-gnu \
-    BACKUP_LD_LIBRARY_PATH=$LD_LIBRARY_PATH \
-    LD_LIBRARY_PATH=$ONNXRUNTIME_DIR/lib:$TENSORRT_DIR/lib:$CUDNN_DIR/lib64:$BACKUP_LD_LIBRARY_PATH
+    CUDNN_DIR=/usr/lib/x86_64-linux-gnu
 
 RUN git clone https://github.com/open-mmlab/mmdeploy -b dev-1.x mmdeploy \
     && cd mmdeploy \
@@ -57,4 +62,4 @@ RUN git clone https://github.com/open-mmlab/mmdeploy -b dev-1.x mmdeploy \
     && mim install --no-cache-dir -e .
 
 # Fix undefined symbol bug
-RUN echo -e "\nldconfig" > /root/.bashrc
+    RUN echo -e "\nexport LD_LIBRARY_PATH=${ONNXRUNTIME_DIR}/lib:${TENSORRT_DIR}/lib:${CUDNN_DIR}/lib64:${LD_LIBRARY_PATH}\nldconfig" >> /root/.bashrc
