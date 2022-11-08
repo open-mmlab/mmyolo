@@ -163,7 +163,7 @@ def main():
 
     is_dir = os.path.isdir(args.img)
     is_url = args.img.startswith(('http:/', 'https:/'))
-    is_file = os.path.splitext(args.img)[-1] in IMG_EXTENSIONS
+    is_file = os.path.splitext(args.img)[-1].lower() in IMG_EXTENSIONS
 
     image_list = []
     if is_dir:
