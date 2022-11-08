@@ -67,7 +67,7 @@ class YOLOv7HeadModule(YOLOv5HeadModule):
             b = mi.bias.data.view(3, -1)
             # obj (8 objects per 640 image)
             b.data[:, 4] += math.log(8 / (640 / s)**2)
-            b.data[:, 5:] += math.log(0.6 / (self.num_classes - 0.999999))
+            b.data[:, 5:] += math.log(0.6 / (self.num_classes - 0.99))
 
             mi.bias.data = b.view(-1)
 
@@ -139,6 +139,7 @@ class YOLOv7Head(YOLOv5Head):
             self,
             cls_scores: Sequence[Tensor],
             bbox_preds: Sequence[Tensor],
+            objectnesses: Sequence[Tensor],
             batch_gt_instances: Sequence[InstanceData],
             batch_img_metas: Sequence[dict],
             batch_gt_instances_ignore: OptInstanceList = None) -> dict:
@@ -164,8 +165,15 @@ class YOLOv7Head(YOLOv5Head):
         Returns:
             dict[str, Tensor]: A dictionary of losses.
         """
-        outs = self(pred_maps)
-        loss = self.loss_fun(*outs, data_samples)
+        preds=[]
+        for bbox, obj, cls in zip(bbox_preds,objectnesses,cls_scores):
+            b,c,h,w=bbox.shape
+            bbox=bbox.reshape(b,3,-1,h,w)
+            obj=obj.reshape(b,3,-1,h,w)
+            cls=cls.reshape(b,3,-1,h,w)
+            pred=torch.cat([bbox, obj, cls],dim=2).permute(0, 1, 3, 4, 2).contiguous()
+            preds.append(pred)
+        loss = self.loss_fun(preds, batch_gt_instances)
         return loss
 
 
@@ -304,20 +312,34 @@ class ComputeLossOTA:
         self.nc = 80
         self.no = 85
 
-        # 暂时调整位置
-        base_sizes = prior_generator.base_sizes[::-1]
-        strides = prior_generator.strides[::-1]
         self.anchors = torch.tensor(
-            base_sizes, device=device).float().view(self.nl, -1, 2)
+            prior_generator.base_sizes, device=device, dtype=torch.float).view(self.nl, -1, 2)
         self.stride = torch.tensor(
-            strides, device=device).float().view(self.nl, -1, 2)
+            prior_generator.strides, device=device, dtype=torch.float).view(self.nl, -1, 2)
         # 除以 stride
         self.anchors /= self.stride  # featmap scale
 
         self.sort_obj_iou = False
         self.batch_img_shape = (640, 640)
 
-    def __call__(self, p, targets, imgs):  # predictions, targets, model
+    def _convert_gt_to_norm_format(self,
+                                   batch_gt_instances: Sequence[InstanceData]) -> Tensor:
+        if isinstance(batch_gt_instances, torch.Tensor):
+            # fast version
+            img_shape = (640, 640)
+            gt_bboxes_xyxy = batch_gt_instances[:, 2:]
+            xy1, xy2 = gt_bboxes_xyxy.split((2, 2), dim=-1)
+            gt_bboxes_xywh = torch.cat([(xy2 + xy1) / 2, (xy2 - xy1)], dim=-1)
+            gt_bboxes_xywh[:, 1::2] /= img_shape[0]
+            gt_bboxes_xywh[:, 0::2] /= img_shape[1]
+            batch_gt_instances[:, 2:] = gt_bboxes_xywh
+        else:
+            pass
+        return batch_gt_instances
+
+    def __call__(self, p, targets):  # predictions, targets, model
+        targets = self._convert_gt_to_norm_format(targets)
+
         device = targets.device
         lcls, lbox, lobj = torch.zeros(
             1, device=device), torch.zeros(

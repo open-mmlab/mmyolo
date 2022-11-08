@@ -12,11 +12,10 @@ max_epochs = 300
 save_epoch_intervals = 10
 train_batch_size_per_gpu = 16
 train_num_workers = 8
-val_batch_size_per_gpu = 1
-val_num_workers = 2
-
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
+val_batch_size_per_gpu = 1
+val_num_workers = 2
 
 # only on Val
 batch_shapes_cfg = dict(
@@ -206,10 +205,10 @@ default_hooks = dict(
     param_scheduler=dict(
         type='YOLOv5ParamSchedulerHook',
         scheduler_type='cosine',
-        lr_factor=0.01,
+        lr_factor=0.1, # note
         max_epochs=max_epochs),
     checkpoint=dict(
-        type='CheckpointHook', interval=1, save_best='auto', max_keep_ckpts=3))
+        type='CheckpointHook', save_param_scheduler=False, interval=1, save_best='auto', max_keep_ckpts=3))
 
 val_evaluator = dict(
     type='mmdet.CocoMetric',
