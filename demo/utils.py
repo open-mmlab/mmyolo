@@ -13,13 +13,13 @@ IMG_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif',
 
 
 def auto_arrange_images(image_list: list, image_column: int = 2) -> np.ndarray:
-    """Auto arrange image to 2 x N.
+    """Auto arrange image to image_column x N row.
 
     Args:
         image_list (list): cv2 image list.
         image_column (int): Arrange to N column.
     Return:
-        (np.ndarray): image_column x N merge image
+        (np.ndarray): image_column x N row merge image
     """
     img_count = len(image_list)
     if img_count <= image_column:
