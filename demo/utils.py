@@ -19,7 +19,7 @@ def auto_arrange_images(image_list: list, image_column: int = 2) -> np.ndarray:
         image_list (list): cv2 image list.
         image_column (int): Arrange to N column.
     Return:
-        (np.ndarray): 2 x N merge image
+        (np.ndarray): image_column x N merge image
     """
     img_count = len(image_list)
     if img_count <= image_column:
