@@ -4,26 +4,22 @@ from unittest import TestCase
 
 import torch
 
-from mmyolo.models.plugins import CBAMLayer
+from mmyolo.models.plugins import CBAM
 from mmyolo.utils import register_all_modules
 
 register_all_modules()
 
 
-class TestCBAMLayer(TestCase):
+class TestCBAM(TestCase):
 
     def test_forward(self):
-        # kernel size must be 3 or 7
-        with self.assertRaisesRegex(AssertionError,
-                                    'kernel size must be 3 or 7'):
-            CBAMLayer(16, kernel_size=5)
 
         images = torch.randn(2, 16, 20, 20)
-        cbam_layer = CBAMLayer(16)
-        out = cbam_layer(images)
+        cbam = CBAM(16)
+        out = cbam(images)
         self.assertEqual(out.shape, (2, 16, 20, 20))
 
         # test other ratio
-        cbam_layer = CBAMLayer(16, ratio=8)
-        out = cbam_layer(images)
+        cbam = CBAM(16, ratio=8)
+        out = cbam(images)
         self.assertEqual(out.shape, (2, 16, 20, 20))

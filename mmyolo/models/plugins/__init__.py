@@ -1,4 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .cbam import CBAMLayer
+from .cbam import CBAM
 
-__all__ = ['CBAMLayer']
+__all__ = ['CBAM']
