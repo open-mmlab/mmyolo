@@ -68,7 +68,6 @@ model = dict(
         nms=dict(type='nms', iou_threshold=0.7),
         max_per_img=300))
 
-# TODO: 要开展验证
 train_pipeline = [
     dict(
         type='LoadImageFromFile',
@@ -133,11 +132,12 @@ val_dataloader = dict(
 
 test_dataloader = val_dataloader
 
+param_scheduler = None
 optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(
         type='SGD', lr=0.001, momentum=0.9, weight_decay=5e-4, nesterov=False),
-    paramwise_cfg=dict(norm_decay_mult=0., bias_decay_mult=0.))
+    paramwise_cfg=dict(norm_decay_mult=0.))
 
 default_hooks = dict(
     param_scheduler=dict(

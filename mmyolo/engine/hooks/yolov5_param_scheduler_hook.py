@@ -20,22 +20,6 @@ def cosine_fn(lr_factor: float, max_epochs: int):
         (1 - math.cos(x * math.pi / max_epochs)) / 2) * (lr_factor - 1) + 1
 
 
-# def linear_fn_iter(warmup_total_iters, start_factor):
-#     def linear_fn_iter_fn(x, warmup_total_iters, start_factor):
-#         alpha = x / warmup_total_iters
-#         factor = start_factor * (1 - alpha) + alpha
-#         return factor
-#     return lambda x: linear_fn_iter_fn(x, warmup_total_iters, start_factor)
-#
-# def consine_fn_iter(warmup_total_iters, total_iters):
-#     def consine_fn_iter_fn(x, warmup_total_iters,
-#     total_iters, min_lr, base_lr):
-#         lr = min_lr + (base_lr - min_lr) * 0.5 * (math.cos(
-#                     (x - warmup_total_iters) * math.pi /
-#                     (total_iters - warmup_total_iters)) + 1.0)
-#         return lr
-
-
 @HOOKS.register_module()
 class YOLOv5ParamSchedulerHook(ParamSchedulerHook):
     """A hook to update learning rate and momentum in optimizer of YOLOv5."""
@@ -150,8 +134,6 @@ class YOLOv5ParamSchedulerHook(ParamSchedulerHook):
 class PPYOLOEParamSchedulerHook(ParamSchedulerHook):
     """A hook to update learning rate and momentum in optimizer of PPYOLOE."""
     priority = 9
-
-    # scheduler_maps = {'linear': linear_fn, 'cosine': cosine_fn}
 
     def __init__(self,
                  warmup_min_iter: int = 1000,
