@@ -487,12 +487,35 @@ class YOLOv5Head(BaseDenseHead):
         # 1. Convert gt to norm format
         batch_targets_normed = self._convert_gt_to_norm_format(
             batch_gt_instances, batch_img_metas)
+        with_ignore = self.train_cfg.get(
+            'with_ignore', False) if self.train_cfg is not None else False
+        if batch_gt_instances_ignore is not None and isinstance(
+                batch_gt_instances_ignore, list):
+            with_ignore &= any(i.bboxes.shape[0]
+                               for i in batch_gt_instances_ignore)
+
+        if with_ignore:
+            # ignore_flag： 0 is ignore / 1 is not ignore
+            not_ignore_flag = batch_targets_normed.new_ones(
+                [*batch_targets_normed.shape[:2], 1])
+            batch_targets_normed = torch.cat(
+                [batch_targets_normed, not_ignore_flag], 2)
+
+            batch_ignore_normed = self._convert_gt_to_norm_format(
+                batch_gt_instances_ignore, batch_img_metas)
+            not_ignore_flag = batch_ignore_normed.new_zeros(
+                [*batch_ignore_normed.shape[:2], 1])
+            batch_ignore_normed = torch.cat(
+                [batch_ignore_normed, not_ignore_flag], 2)
+
+            batch_targets_normed = torch.cat(
+                [batch_targets_normed, batch_ignore_normed], 1)
 
         device = cls_scores[0].device
         loss_cls = torch.zeros(1, device=device)
         loss_box = torch.zeros(1, device=device)
         loss_obj = torch.zeros(1, device=device)
-        scaled_factor = torch.ones(7, device=device)
+        scaled_factor = torch.ones(8 if with_ignore else 7, device=device)
 
         for i in range(self.num_levels):
             batch_size, _, h, w = bbox_preds[i].shape
@@ -551,9 +574,20 @@ class YOLOv5Head(BaseDenseHead):
             # prepare pred results and positive sample indexes to
             # calculate class loss and bbox lo
             _chunk_targets = batch_targets_scaled.chunk(4, 1)
-            img_class_inds, grid_xy, grid_wh, priors_inds = _chunk_targets
-            priors_inds, (img_inds, class_inds) = priors_inds.long().view(
-                -1), img_class_inds.long().T
+            img_class_inds, grid_xy, grid_wh, priors_with_not_ignore \
+                = _chunk_targets
+
+            if with_ignore:
+                priors_inds, not_ignore_flag = priors_with_not_ignore.chunk(
+                    2, 1)
+                priors_inds = priors_inds.long().view(-1)
+                not_ignore_flag = not_ignore_flag.view(-1)
+            else:
+                priors_inds = priors_with_not_ignore
+                priors_inds = priors_inds.long().view(-1)
+                not_ignore_flag = None
+
+            (img_inds, class_inds) = img_class_inds.long().T
 
             grid_xy_long = (grid_xy -
                             retained_offsets * self.near_neighbor_thr).long()
@@ -568,7 +602,9 @@ class YOLOv5Head(BaseDenseHead):
             priors_base_sizes_i = priors_base_sizes_i[priors_inds]
             decoded_bbox_pred = self._decode_bbox_to_xywh(
                 retained_bbox_pred, priors_base_sizes_i)
-            loss_box_i, iou = self.loss_bbox(decoded_bbox_pred, bboxes_targets)
+
+            loss_box_i, iou = self.loss_bbox(
+                decoded_bbox_pred, bboxes_targets, weight=not_ignore_flag)
             loss_box += loss_box_i
 
             # obj loss
@@ -587,7 +623,11 @@ class YOLOv5Head(BaseDenseHead):
                 target_class = torch.full_like(pred_cls_scores, 0.)
                 target_class[range(batch_targets_scaled.shape[0]),
                              class_inds] = 1.
-                loss_cls += self.loss_cls(pred_cls_scores, target_class)
+                loss_cls += self.loss_cls(
+                    pred_cls_scores,
+                    target_class,
+                    weight=not_ignore_flag if not_ignore_flag is None else
+                    not_ignore_flag.unsqueeze(1))
             else:
                 loss_cls += cls_scores[i].sum() * 0
 

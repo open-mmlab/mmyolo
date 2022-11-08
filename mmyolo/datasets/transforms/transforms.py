@@ -352,6 +352,15 @@ class LoadAnnotations(MMDET_LoadAnnotations):
     time being, in order to speed up the pipeline, it can be excluded in
     advance."""
 
+    def __init__(
+        self,
+        *args,
+        with_ignore: bool = False,
+        **kwargs,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.with_ignore = with_ignore
+
     def _load_bboxes(self, results: dict):
         """Private function to load bounding box annotations.
 
@@ -366,9 +375,13 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         gt_bboxes = []
         gt_ignore_flags = []
         for instance in results.get('instances', []):
-            if instance['ignore_flag'] == 0:
+            if self.with_ignore:
                 gt_bboxes.append(instance['bbox'])
                 gt_ignore_flags.append(instance['ignore_flag'])
+            else:
+                if instance['ignore_flag'] != 0:
+                    gt_bboxes.append(instance['bbox'])
+                    gt_ignore_flags.append(instance['ignore_flag'])
         results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=bool)
 
         if self.box_type is None:
@@ -391,8 +404,11 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         """
         gt_bboxes_labels = []
         for instance in results.get('instances', []):
-            if instance['ignore_flag'] == 0:
+            if self.with_ignore:
                 gt_bboxes_labels.append(instance['bbox_label'])
+            else:
+                if instance['ignore_flag'] != 0:
+                    gt_bboxes_labels.append(instance['bbox_label'])
         results['gt_bboxes_labels'] = np.array(
             gt_bboxes_labels, dtype=np.int64)
 
