@@ -4,6 +4,7 @@ import copy
 from abc import ABCMeta, abstractmethod
 from typing import Optional, Sequence, Tuple, Union
 
+import cv2
 import mmcv
 import numpy as np
 from mmcv.transforms import BaseTransform
@@ -530,13 +531,15 @@ class Mosaic9(BaseMixImageTransform):
         for i, results_patch in enumerate([results, *results['mix_results']]):
             img = results_patch['img']
             h, w = img.shape[:2]
-
             # keep_ratio resize
             scale_ratio_i = min(self.img_scale[0] / h, self.img_scale[1] / w)
             img = mmcv.imresize(
                 img, (int(w * scale_ratio_i), int(h * scale_ratio_i)))
             h, w = img.shape[:2]
 
+            # cv2.namedWindow('xx',0)
+            # cv2.imshow('xx',img)
+            # cv2.waitKey(0)
             # place img in img9
             if i == 0:  # center
                 img9 = np.full((s * 3, s * 3, img.shape[2]),
@@ -566,6 +569,10 @@ class Mosaic9(BaseMixImageTransform):
             # Image
             img9[y1:y2, x1:x2] = img[y1 - pady:,
                                      x1 - padx:]  # img9[ymin:ymax, xmin:xmax]
+            # cv2.namedWindow('img9',0)
+            # cv2.imshow('img9',img9)
+            # cv2.waitKey(0)
+
             hp, wp = h, w  # height, width previous
 
             gt_bboxes_i = results_patch['gt_bboxes']
@@ -573,6 +580,7 @@ class Mosaic9(BaseMixImageTransform):
             gt_ignore_flags_i = results_patch['gt_ignore_flags']
             gt_bboxes_i.rescale_([scale_ratio_i, scale_ratio_i])
             gt_bboxes_i.translate_([padx, pady])
+
             mosaic_bboxes.append(gt_bboxes_i)
             mosaic_bboxes_labels.append(gt_bboxes_labels_i)
             mosaic_ignore_flags.append(gt_ignore_flags_i)
@@ -583,7 +591,7 @@ class Mosaic9(BaseMixImageTransform):
         img9 = img9[yc:yc + 2 * s, xc:xc + 2 * s]
 
         mosaic_bboxes = mosaic_bboxes[0].cat(mosaic_bboxes, 0)
-        mosaic_bboxes.translate_([xc, yc])
+        mosaic_bboxes.translate_([-xc, -yc])
         # mosaic_bboxes[:, [1, 3]] -= xc
         # mosaic_bboxes[:, [2, 4]] -= yc
         mosaic_bboxes_labels = np.concatenate(mosaic_bboxes_labels, 0)
