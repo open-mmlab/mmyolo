@@ -1,21 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import os
-import urllib
 from typing import Sequence
 
 import mmcv
-import numpy as np
-import torch
 from mmdet.apis import inference_detector, init_detector
 from mmengine import Config, DictAction
-from mmengine.utils import ProgressBar, scandir
+from mmengine.utils import ProgressBar
 
+from demo.utils import get_file_list, get_image_and_out_file_path, auto_arrange_images
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
-
-IMG_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif',
-                  '.tiff', '.webp')
 
 
 # TODO: Refine
@@ -29,14 +24,14 @@ def parse_args():
         '--out-dir',
         default=None,
         help='Path to output directory, '
-        'if the user not set this flag then will show each image')
+             'if the user not set this flag then will show each image')
     parser.add_argument(
         '--target-layers',
         default=['backbone'],
         nargs='+',
         type=str,
         help='The target layers to get feature map, if not set, the tool will '
-        'specify the backbone')
+             'specify the backbone')
     parser.add_argument(
         '--preview-model',
         default=False,
@@ -61,17 +56,17 @@ def parse_args():
         type=int,
         default=[2, 2],
         help='The arrangement of featmap when channel_reduction is '
-        'not None and topk > 0')
+             'not None and topk > 0')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
         help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
+             'in xxx=yyy format will be merged into config file. If the value to '
+             'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+             'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+             'Note that the quotation marks are necessary and that no white space '
+             'is allowed.')
     args = parser.parse_args()
     return args
 
@@ -100,27 +95,6 @@ class ActivationsWrapper:
             handle.remove()
 
 
-def auto_arrange_imgs(imgs):
-    len_img = len(imgs)
-    col = 2
-    if len_img <= col:
-        imgs = np.concatenate(imgs, axis=1)
-    else:
-        row = round(len_img / col)
-        fill_img_list = [np.ones(imgs[0].shape, dtype=np.uint8) * 255] * (
-            row * col - len_img)
-        imgs.extend(fill_img_list)
-        merge_imgs_col = []
-        for i in range(row):
-            start = col * i
-            end = col * (i + 1)
-            merge_col = np.hstack(imgs[start:end])
-            merge_imgs_col.append(merge_col)
-
-        imgs = np.vstack(merge_imgs_col)
-    return imgs
-
-
 def main():
     args = parse_args()
 
@@ -137,9 +111,6 @@ def main():
     assert len(args.arrangement) == 2
 
     model = init_detector(args.config, args.checkpoint, device=args.device)
-
-    if not os.path.exists(args.out_dir):
-        os.mkdir(args.out_dir)
 
     if args.preview_model:
         print(model)
@@ -161,26 +132,8 @@ def main():
     visualizer = VISUALIZERS.build(model.cfg.visualizer)
     visualizer.dataset_meta = model.dataset_meta
 
-    is_dir = os.path.isdir(args.img)
-    is_url = args.img.startswith(('http:/', 'https:/'))
-    is_file = os.path.splitext(args.img)[-1].lower() in IMG_EXTENSIONS
-
-    image_list = []
-    if is_dir:
-        # when input source is dir
-        for file in scandir(args.img, IMG_EXTENSIONS, recursive=True):
-            image_list.append(os.path.join(args.img, file))
-    elif is_url:
-        # when input source is url
-        filename = os.path.basename(
-            urllib.parse.unquote(args.img).split('?')[0])
-        torch.hub.download_url_to_file(args.img, filename)
-        image_list = [os.path.join(os.getcwd(), filename)]
-    elif is_file:
-        # when input source is single image
-        image_list = [args.img]
-    else:
-        print('Cannot find image file.')
+    # get file list
+    image_list, is_dir, is_url, is_file = get_file_list(args.img)
 
     progress_bar = ProgressBar(len(image_list))
     for image_path in image_list:
@@ -195,10 +148,13 @@ def main():
             else:
                 flatten_featmaps.append(featmap)
 
-        # show the results
-        img = mmcv.imread(image_path)
-        img = mmcv.imconvert(img, 'bgr', 'rgb')
+        # get original image and out save path if it is needed.
+        img, out_file = get_image_and_out_file_path(image_path,
+                                                    args.img,
+                                                    is_dir,
+                                                    args.out_dir)
 
+        # show the results
         shown_imgs = []
         visualizer.add_datasample(
             'result',
@@ -222,21 +178,16 @@ def main():
 
         # Add original image
         shown_imgs.append(img)
-        shown_imgs = auto_arrange_imgs(shown_imgs)
+        shown_imgs = auto_arrange_images(shown_imgs)
 
         progress_bar.update()
-        if args.out_dir is not None:
-            if is_dir:
-                filename = os.path.relpath(image_path,
-                                           args.img).replace('/', '_')
-            else:
-                filename = os.path.basename(image_path)
-            out_file = os.path.join(args.out_dir, filename)
+        if out_file:
             mmcv.imwrite(shown_imgs[..., ::-1], out_file)
         else:
             visualizer.show(shown_imgs)
 
-    print('All done!')
+    print(f'All done!'
+          f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
 
 
 # Please refer to the usage tutorial:
