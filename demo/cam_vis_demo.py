@@ -2,11 +2,12 @@
 import argparse
 import os.path
 from functools import partial
-
+import warnings
 import cv2
 import mmcv
 import mmengine
 from mmengine import Config, DictAction
+import numpy as np
 
 from mmyolo.utils import register_all_modules
 from mmyolo.utils.cam_utils import (CAMDetectorVisualizer, CAMDetectorWrapper,
@@ -20,6 +21,32 @@ except ImportError:
     raise ImportError('Please run `pip install "grad-cam"` to install '
                       'pytorch_grad_cam package.')
 
+
+def sofmax(logits):
+	e_x = np.exp(logits)
+	probs = e_x / np.sum(e_x, axis=-1, keepdims=True)
+	return probs
+
+class MyGradCAM(GradCAM):
+    def __init__(self, model, target_layers, use_cuda=False,
+                 reshape_transform=None):
+        super(
+            MyGradCAM,
+            self).__init__(
+            model,
+            target_layers,
+            use_cuda,
+            reshape_transform)
+
+    def get_cam_weights(self,
+                        input_tensor,
+                        target_layer,
+                        target_category,
+                        activations,
+                        grads):
+        return sofmax(np.mean(grads, axis=(2, 3)))
+
+
 GRAD_FREE_METHOD_MAP = {
     'ablationcam': AblationCAM,
     'eigencam': EigenCAM,
@@ -27,7 +54,7 @@ GRAD_FREE_METHOD_MAP = {
 }
 
 GRAD_BASED_METHOD_MAP = {
-    'gradcam': GradCAM,
+    'gradcam': MyGradCAM,
     'gradcam++': GradCAMPlusPlus,
     'xgradcam': XGradCAM,
     'eigengradcam': EigenGradCAM,
@@ -46,7 +73,7 @@ def parse_args():
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
         '--method',
-        default='eigencam',
+        default='gradcam',
         choices=ALL_SUPPORT_METHODS,
         help='Type of method to use, supports '
         f'{", ".join(ALL_SUPPORT_METHODS)}.')
@@ -70,7 +97,7 @@ def parse_args():
     parser.add_argument(
         '--topk',
         type=int,
-        default=4,
+        default=3,
         help='Select topk predict resutls to show')
     parser.add_argument(
         '--max-shape',
@@ -82,20 +109,8 @@ def parse_args():
         'If set to -1, it means no scaling.')
     parser.add_argument(
         '--no-norm-in-bbox',
-        action='store_true',
+        action='store_false',
         help='Norm in bbox of cam image')
-    # Visualization settings
-    parser.add_argument(
-        '--channel-reduction',
-        default='select_max',
-        help='Reduce multiple channels to a single channel')
-    parser.add_argument(
-        '--arrangement',
-        nargs='+',
-        type=int,
-        default=[2, 2],
-        help='The arrangement of featmap when channel_reduction is '
-        'not None and topk > 0')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
@@ -155,9 +170,7 @@ def init_detector_and_visualizer(args, cfg):
     if args.method in GRAD_BASED_METHOD_MAP:
         method_class = GRAD_BASED_METHOD_MAP[args.method]
         is_need_grad = True
-        # assert args.no_norm_in_bbox is False, 'If not norm in bbox, the ' \
-        #                                       'visualization result ' \
-        #                                       'may not be reasonable.'
+        warnings.warn('If not norm in bbox, the visualization result may not be reasonable')
     else:
         method_class = GRAD_FREE_METHOD_MAP[args.method]
         is_need_grad = False
@@ -193,7 +206,7 @@ def main():
         image = cv2.imread(image_path)
         model_wrapper.set_input_data(image)
 
-        result = model_wrapper()
+        result = model_wrapper()[0]
 
         pred_instances = result.pred_instances
         assert len(pred_instances) > 0, 'empty detect bboxes'
@@ -204,7 +217,7 @@ def main():
 
         if args.method in GRAD_BASED_METHOD_MAP:
             model_wrapper.need_loss(True)
-            model_wrapper.set_input_data(image, bboxes=bboxes, labels=labels)
+            model_wrapper.set_input_data(image, pred_instances)
             cam_detector_visualizer.switch_activations_and_grads(model_wrapper)
 
         grayscale_cam = cam_detector_visualizer(image, targets=targets)

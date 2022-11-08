@@ -68,7 +68,12 @@ class CAMDetectorWrapper(nn.Module):
 
         pipeline_cfg = copy.deepcopy(self.cfg.test_dataloader.dataset.pipeline)
         pipeline_cfg[0].type = 'mmdet.LoadImageFromNDArray'
-        self.test_pipeline = Compose(pipeline_cfg)
+
+        new_test_pipeline = []
+        for pipeline in pipeline_cfg:
+            if not pipeline['type'].endswith('LoadAnnotations'):
+                new_test_pipeline.append(pipeline)
+        self.test_pipeline = Compose(new_test_pipeline)
 
         self.is_need_loss = False
         self.input_data = None
@@ -77,17 +82,17 @@ class CAMDetectorWrapper(nn.Module):
     def need_loss(self, is_need_loss):
         self.is_need_loss = is_need_loss
 
-    def set_input_data(self, image, bboxes=None, labels=None):
+    def set_input_data(self, image, pred_instances=None):
         self.image = image
 
         if self.is_need_loss:
-            assert bboxes is not None
-            assert labels is not None
+            assert pred_instances is not None
+            pred_instances=pred_instances.numpy()
             data = dict(
                 img=self.image,
-                gt_bboxes=bboxes,
-                gt_labels=labels.astype(np.long),
-                bbox_fields=['gt_bboxes'])
+                img_id = 0,
+                gt_bboxes=pred_instances.bboxes,
+                gt_bboxes_labels=pred_instances.labels)
             data = self.test_pipeline(data)
         else:
             data = dict(img=self.image, img_id=0)
@@ -99,13 +104,16 @@ class CAMDetectorWrapper(nn.Module):
     def __call__(self, *args, **kwargs):
         assert self.input_data is not None
         if self.is_need_loss:
-            loss = self.detector.train_step(self.input_data)
+            data_={}
+            data_['inputs'] = [self.input_data['inputs']]
+            data_['data_samples'] = [self.input_data['data_samples']]
+            data = self.detector.data_preprocessor(data_,training=False)
+            loss=self.detector._run_forward(data, mode='loss')
             return [loss]
         else:
             with torch.no_grad():
-                results = self.detector.test_step(self.input_data)[0]
+                results = self.detector.test_step(self.input_data)
                 return results
-
 
 class CAMDetectorVisualizer:
     """cam visualization class.
@@ -291,7 +299,7 @@ class DetBoxScoreTarget:
         if 'loss_cls' in results:
             # grad_base_method
             for loss_key, loss_value in results.items():
-                if 'loss' not in loss_key:
+                if 'loss' not in loss_key or 'loss_obj' in loss_key:
                     continue
                 if isinstance(loss_value, list):
                     output += sum(loss_value)
@@ -299,12 +307,14 @@ class DetBoxScoreTarget:
                     output += loss_value
             return output
         else:
-            # grad_free_method
-            if len(results['bboxes']) == 0:
+            # results is DetDataSample
+            pred_instances=results.pred_instances
+            if len(pred_instances) == 0:
                 return output
 
-            pred_bboxes = torch.from_numpy(results['bboxes']).to(self.device)
-            pred_labels = results['labels']
+            pred_bboxes = pred_instances.bboxes
+            pred_scores = pred_instances.scores
+            pred_labels = pred_instances.labels
 
             for focal_box, focal_label in zip(self.focal_bboxes,
                                               self.focal_labels):
@@ -314,6 +324,6 @@ class DetBoxScoreTarget:
                 if ious[0, index] > self.match_iou_thr and pred_labels[
                         index] == focal_label:
                     # TODO: Adaptive adjustment of weights based on algorithms
-                    score = ious[0, index] + pred_bboxes[..., 4][index]
+                    score = ious[0, index] + pred_scores[index]
                     output = output + score
             return output
