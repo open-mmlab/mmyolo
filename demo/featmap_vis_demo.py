@@ -151,7 +151,8 @@ def main():
 
         # get original image and out save path if it is needed.
         img, out_file = get_image_and_out_file_path(image_path, args.img,
-                                                    source_type['is_dir'], args.out_dir)
+                                                    source_type['is_dir'],
+                                                    args.out_dir)
 
         # show the results
         shown_imgs = []
