@@ -12,35 +12,40 @@ IMG_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif',
                   '.tiff', '.webp')
 
 
-def auto_arrange_images(image_list: list):
+def auto_arrange_images(image_list: list, image_column: int = 2) -> np.ndarray:
     """Auto arrange image to 2 x N.
 
     Args:
         image_list (list): cv2 image list.
+        image_column (int): Arrange to N column.
     Return:
         (np.array): 2 x N merge image
     """
-    len_img = len(image_list)
-    col = 2
-    if len_img <= col:
+    img_count = len(image_list)
+    if img_count <= image_column:
+        # no need to arrange
         image_show = np.concatenate(image_list, axis=1)
     else:
-        row = round(len_img / col)
-        fill_img_list = [np.ones(image_list[0].shape, dtype=np.uint8) * 255] * (
-                row * col - len_img)
+        # arrange image according to image_column
+        image_row = round(img_count / image_column)
+        fill_img_list = [np.ones(image_list[0].shape, dtype=np.uint8) * 255
+                         ] * (
+                             image_row * image_column - img_count)
         image_list.extend(fill_img_list)
         merge_imgs_col = []
-        for i in range(row):
-            start = col * i
-            end = col * (i + 1)
-            merge_col = np.hstack(image_list[start:end])
+        for i in range(image_row):
+            start_col = image_column * i
+            end_col = image_column * (i + 1)
+            merge_col = np.hstack(image_list[start_col:end_col])
             merge_imgs_col.append(merge_col)
 
+        # merge to one image
         image_show = np.vstack(merge_imgs_col)
+
     return image_show
 
 
-def get_file_list(source_root: str):
+def get_file_list(source_root: str) -> [list, bool, bool, bool]:
     """Get file list.
 
     Args:
@@ -76,7 +81,11 @@ def get_file_list(source_root: str):
     return source_file_path_list, is_dir, is_url, is_file
 
 
-def get_image_and_out_file_path(source_path: str, source_root: str, is_dir: bool, out_dir: str, show_flag: bool = False):
+def get_image_and_out_file_path(source_path: str,
+                                source_root: str,
+                                is_dir: bool,
+                                out_dir: str,
+                                show_flag: bool = False) -> [np.ndarray, str]:
     """Get file list.
 
     Args:

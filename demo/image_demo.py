@@ -58,11 +58,8 @@ def main():
         result = inference_detector(model, file)
 
         # get original image and out save path if it is needed.
-        img, out_file = get_image_and_out_file_path(file,
-                                                    args.img,
-                                                    is_dir,
-                                                    args.out_dir,
-                                                    args.show)
+        img, out_file = get_image_and_out_file_path(file, args.img, is_dir,
+                                                    args.out_dir, args.show)
 
         visualizer.add_datasample(
             os.path.basename(out_file),

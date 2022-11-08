@@ -8,7 +8,8 @@ from mmdet.apis import inference_detector, init_detector
 from mmengine import Config, DictAction
 from mmengine.utils import ProgressBar
 
-from demo.utils import get_file_list, get_image_and_out_file_path, auto_arrange_images
+from demo.utils import (auto_arrange_images, get_file_list,
+                        get_image_and_out_file_path)
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
 
@@ -24,14 +25,14 @@ def parse_args():
         '--out-dir',
         default=None,
         help='Path to output directory, '
-             'if the user not set this flag then will show each image')
+        'if the user not set this flag then will show each image')
     parser.add_argument(
         '--target-layers',
         default=['backbone'],
         nargs='+',
         type=str,
         help='The target layers to get feature map, if not set, the tool will '
-             'specify the backbone')
+        'specify the backbone')
     parser.add_argument(
         '--preview-model',
         default=False,
@@ -56,17 +57,17 @@ def parse_args():
         type=int,
         default=[2, 2],
         help='The arrangement of featmap when channel_reduction is '
-             'not None and topk > 0')
+        'not None and topk > 0')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
         help='override some settings in the used config, the key-value pair '
-             'in xxx=yyy format will be merged into config file. If the value to '
-             'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-             'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-             'Note that the quotation marks are necessary and that no white space '
-             'is allowed.')
+        'in xxx=yyy format will be merged into config file. If the value to '
+        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+        'Note that the quotation marks are necessary and that no white space '
+        'is allowed.')
     args = parser.parse_args()
     return args
 
@@ -149,10 +150,8 @@ def main():
                 flatten_featmaps.append(featmap)
 
         # get original image and out save path if it is needed.
-        img, out_file = get_image_and_out_file_path(image_path,
-                                                    args.img,
-                                                    is_dir,
-                                                    args.out_dir)
+        img, out_file = get_image_and_out_file_path(image_path, args.img,
+                                                    is_dir, args.out_dir)
 
         # show the results
         shown_imgs = []
