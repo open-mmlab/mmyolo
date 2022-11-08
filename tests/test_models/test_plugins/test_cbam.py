@@ -4,7 +4,7 @@ from unittest import TestCase
 
 import torch
 
-from mmyolo.models.layers import CBAMLayer
+from mmyolo.models.plugins import CBAMLayer
 from mmyolo.utils import register_all_modules
 
 register_all_modules()
