@@ -23,10 +23,21 @@ strides = [8, 16, 32]
 model = dict(
     type='YOLODetector',
     data_preprocessor=dict(
-        type='YOLOv5DetDataPreprocessor',
+        type='PPYOLOEDetDataPreprocessor',
+        pad_size_divisor=None,
         mean=[0., 0., 0.],
         std=[255., 255., 255.],
-        bgr_to_rgb=True),
+        bgr_to_rgb=True,
+        batch_augments=[
+            dict(
+                type='PPYOLOEBatchSyncRandomResize',
+                random_size_range=(320, 800),
+                interval=1,
+                size_divisor=32,
+                random_interp=True,
+                interp_mode=['nearest', 'bilinear', 'bicubic', 'area'],
+                keep_ratio=False)
+        ]),
     backbone=dict(
         type='PPYOLOECSPResNet',
         deepen_factor=deepen_factor,
@@ -150,6 +161,16 @@ default_hooks = dict(
     checkpoint=dict(
         type='CheckpointHook', interval=save_epoch_intervals,
         max_keep_ckpts=3))
+
+custom_hooks = [
+    dict(
+        type='EMAHook',
+        ema_type='ExpMomentumEMA',
+        momentum=0.0002,
+        update_buffers=True,
+        strict_load=False,
+        priority=49)
+]
 
 val_evaluator = dict(
     type='mmdet.CocoMetric',
