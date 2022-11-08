@@ -134,7 +134,7 @@ def main():
     visualizer.dataset_meta = model.dataset_meta
 
     # get file list
-    image_list, is_dir, is_url, is_file = get_file_list(args.img)
+    image_list, source_type = get_file_list(args.img)
 
     progress_bar = ProgressBar(len(image_list))
     for image_path in image_list:
@@ -151,7 +151,7 @@ def main():
 
         # get original image and out save path if it is needed.
         img, out_file = get_image_and_out_file_path(image_path, args.img,
-                                                    is_dir, args.out_dir)
+                                                    source_type['is_dir'], args.out_dir)
 
         # show the results
         shown_imgs = []

@@ -53,9 +53,7 @@ def get_file_list(source_root: str) -> [list, bool, bool, bool]:
 
     Return:
         source_file_path_list (list): A list for all source file.
-        is_dir (bool): Whether source is dir path.
-        is_url (bool): Whether source is url.
-        is_file (bool): Whether source is file path.
+        source_type (dict): Source type: file or url or dir.
     """
     is_dir = os.path.isdir(source_root)
     is_url = source_root.startswith(('http:/', 'https:/'))
@@ -78,7 +76,9 @@ def get_file_list(source_root: str) -> [list, bool, bool, bool]:
     else:
         print('Cannot find image file.')
 
-    return source_file_path_list, is_dir, is_url, is_file
+    source_type = dict(is_dir=is_dir, is_url=is_url, is_file=is_file)
+
+    return source_file_path_list, source_type
 
 
 def get_image_and_out_file_path(source_path: str,

@@ -50,7 +50,7 @@ def main():
     visualizer.dataset_meta = model.dataset_meta
 
     # get file list
-    files, is_dir, is_url, is_file = get_file_list(args.img)
+    files, source_type = get_file_list(args.img)
 
     # start detector inference
     progress_bar = ProgressBar(len(files))
@@ -58,7 +58,7 @@ def main():
         result = inference_detector(model, file)
 
         # get original image and out save path if it is needed.
-        img, out_file = get_image_and_out_file_path(file, args.img, is_dir,
+        img, out_file = get_image_and_out_file_path(file, args.img, source_type['is_dir'],
                                                     args.out_dir, args.show)
 
         visualizer.add_datasample(
