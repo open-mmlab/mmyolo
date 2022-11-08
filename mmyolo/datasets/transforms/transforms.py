@@ -809,7 +809,10 @@ class PPYOLOERandomExpand(LetterResize):
 
 class PPYOLOERandomCrop(RandomCrop):
     """
-    TODO: 没搞完
+    TODO: 需要重构
+
+    1. numpy 操作改成tensor操作
+    2. 参照randomcrop进行格式化
     """
 
     def __init__(self,
@@ -818,21 +821,22 @@ class PPYOLOERandomCrop(RandomCrop):
                  scaling=[.3, 1.],
                  num_attempts=50,
                  allow_no_crop=True,
-                 cover_all_box=False,
-                 is_mask_crop=False):
+                 cover_all_box=False):
         self.aspect_ratio = aspect_ratio
         self.thresholds = thresholds
         self.scaling = scaling
         self.num_attempts = num_attempts
         self.allow_no_crop = allow_no_crop
         self.cover_all_box = cover_all_box
-        self.is_mask_crop = is_mask_crop
 
     def transform(self, results: dict) -> Union[dict, None]:
+        # TODO: 需要重构
+
         if 'gt_bboxes' in results and len(results['gt_bboxes']) == 0:
             return results
 
-        h, w = results['img'].shape[:2]
+        img_shape = results['img'].shape
+        h, w = img_shape[:2]
         gt_bbox = results['gt_bboxes']
 
         # NOTE Original method attempts to generate one candidate for each
@@ -876,87 +880,121 @@ class PPYOLOERandomCrop(RandomCrop):
                 crop_x = np.random.randint(0, w - crop_w)
                 crop_box = [crop_x, crop_y, crop_x + crop_w, crop_y + crop_h]
                 # TODO: 这里能不能求？
-                iou = self._iou_matrix(
-                    gt_bbox, torch.Tensor([crop_box], dtype=np.float32))
+                iou = self._iou_matrix(gt_bbox,
+                                       np.array([crop_box], dtype=np.float32))
                 if iou.max() < thresh:
                     continue
 
                 if self.cover_all_box and iou.min() < thresh:
                     continue
 
-                cropped_box, valid_ids = self._crop_box_with_center_constraint(
-                    gt_bbox, np.array(crop_box, dtype=np.float32))
+                cropped_gtbox, valid_ids = \
+                    self._crop_box_with_center_constraint(
+                        gt_bbox, np.array(crop_box, dtype=np.float32))
                 if valid_ids.size > 0:
                     found = True
                     break
 
             if found:
-                if self.is_mask_crop and 'gt_masks' in results and len(
-                        results['gt_masks']) > 0:
-                    raise NotImplementedError
-                    # crop_polys = self.crop_segms(
-                    #     sample['gt_poly'],
-                    #     valid_ids,
-                    #     np.array(
-                    #         crop_box, dtype=np.int64),
-                    #     h,
-                    #     w)
-                    # if [] in crop_polys:
-                    #     delete_id = list()
-                    #     valid_polys = list()
-                    #     for id, crop_poly in enumerate(crop_polys):
-                    #         if crop_poly == []:
-                    #             delete_id.append(id)
-                    #         else:
-                    #             valid_polys.append(crop_poly)
-                    #     valid_ids = np.delete(valid_ids, delete_id)
-                    #     if len(valid_polys) == 0:
-                    #         return sample
-                    #     sample['gt_poly'] = valid_polys
-                    # else:
-                    #     sample['gt_poly'] = crop_polys
+                # {'img_path': 'data/coco/train2017/000000246382.jpg',
+                # 'img_id': 246382, 'seg_map_path': None, 'height': 612,
+                # 'width': 612,
+                # 'instances': [{'ignore_flag': 0, 'bbox': [121.5,
+                # 327.62, 480.11, 534.47], 'bbox_label': 46,
+                # 'sample_idx': 52461,
+                # 'img': array([[[135, 146, 130],
+                #         [136, 147, 131],
+                #         [183, 177, 178],
+                #         [178, 173, 174]]], dtype=uint8),
+                # 'img_shape': (640, 640, 3), 'ori_shape': (612, 612),
+                # 'gt_ignore_flags': array([False, False, False, False,
+                # False, False, False, False, False,
+                #        False, False, False, False, False]),
+                # 'gt_bboxes': HorizontalBoxes(
+                # tensor([[  0.0000,  88.0672,  86.1392, 242.4171],
+                #         [  0.0000,  58.3911,  34.4952, 127.3020],
+                #         [  0.0000, 336.3535, 184.5546, 640.0000],
+                #         [325.9082, 327.4556, 557.3472, 607.0447]])),
+                # 'gt_bboxes_labels': array([46, 47, 15,  0,  0,  3,
+                # 56, 56, 56, 56, 60, 60,  0, 10]),
+                # 'dataset': <mmyolo.datasets.yolov5_coco.
+                # YOLOv5CocoDataset object at 0x7f7823c7e700>}
 
-                # if 'gt_segm' in sample:
-                #     sample['gt_segm'] = self._crop_segm(sample['gt_segm'],
-                #                                         crop_box)
-                #     sample['gt_segm'] = np.take(
-                #         sample['gt_segm'], valid_ids, axis=0)
+                # crop the image
+                img = results['img']
+                crop_x1, crop_y1, crop_x2, crop_y2 = crop_box
+                img = img[crop_y1:crop_y2, crop_x1:crop_x2, ...]
+                results['img'] = img
+                results['img_shape'] = img.shape
 
-        #         results['image'] = self._crop_image(results['img'], crop_box)
-        #         results['gt_bbox'] = np.take(cropped_box, valid_ids, axis=0)
-        #         results['gt_class'] = np.take(
-        #             results['gt_class'], valid_ids, axis=0)
-        #         if 'gt_score' in sample:
-        #             sample['gt_score'] = np.take(
-        #                 sample['gt_score'], valid_ids, axis=0)
-        #
-        #         if 'is_crowd' in sample:
-        #             sample['is_crowd'] = np.take(
-        #                 sample['is_crowd'], valid_ids, axis=0)
-        #
-        #         if 'difficult' in sample:
-        #             sample['difficult'] = np.take(
-        #                 sample['difficult'], valid_ids, axis=0)
-        #
-        #         return sample
-        #
-        # return sample
+                # Record the homography matrix for the RandomCrop
+                homography_matrix = np.array(
+                    [[1, 0, -crop_x1], [0, 1, -crop_y1], [0, 0, 1]],
+                    dtype=np.float32)
+                if results.get('homography_matrix', None) is None:
+                    results['homography_matrix'] = homography_matrix
+                else:
+                    results['homography_matrix'] = homography_matrix @ results[
+                        'homography_matrix']
+
+                # crop bboxes accordingly and clip to the image boundary
+                if results.get('gt_bboxes', None) is not None:
+                    bboxes = results['gt_bboxes']
+                    bboxes.translate_([-crop_x1, -crop_y1])
+                    # if self.bbox_clip_border:
+                    bboxes.clip_(img_shape[:2])
+                    # valid_inds = bboxes.is_inside(img_shape[:2]).numpy()
+                    # # If the crop does not contain any gt-bbox area and
+                    # # allow_negative_crop is False, skip this image.
+                    # if not valid_inds.any():
+                    #     return None
+
+                    results['gt_bboxes'] = bboxes[valid_ids]
+
+                    if results.get('gt_ignore_flags', None) is not None:
+                        results['gt_ignore_flags'] = \
+                            results['gt_ignore_flags'][valid_ids]
+
+                    if results.get('gt_bboxes_labels', None) is not None:
+                        results['gt_bboxes_labels'] = \
+                            results['gt_bboxes_labels'][valid_ids]
+
+                    if results.get('gt_masks', None) is not None:
+                        results['gt_masks'] = results['gt_masks'][
+                            valid_ids.nonzero()[0]].crop(
+                                np.asarray(
+                                    [crop_x1, crop_y1, crop_x2, crop_y2]))
+                        if self.recompute_bbox:
+                            results['gt_bboxes'] = results[
+                                'gt_masks'].get_bboxes(
+                                    type(results['gt_bboxes']))
+
+                # crop semantic seg
+                if results.get('gt_seg_map', None) is not None:
+                    results['gt_seg_map'] = results['gt_seg_map'][
+                        crop_y1:crop_y2, crop_x1:crop_x2]
+
+                return results
 
     def _iou_matrix(self, a, b):
-        tl_i = torch.maximum(a[:, np.newaxis, :2], b[:, :2])
-        br_i = torch.minimum(a[:, np.newaxis, 2:], b[:, 2:])
+        # TODO: copy is necessary?
+        a = a.tensor.numpy().copy()
+        tl_i = np.maximum(a[:, np.newaxis, :2], b[:, :2])
+        br_i = np.minimum(a[:, np.newaxis, 2:], b[:, 2:])
 
-        area_i = torch.prod(br_i - tl_i, dim=2) * (tl_i < br_i).all(dim=2)
-        area_a = torch.prod(a[:, 2:] - a[:, :2], dim=1)
-        area_b = torch.prod(b[:, 2:] - b[:, :2], dim=1)
+        area_i = np.prod(br_i - tl_i, axis=2) * (tl_i < br_i).all(axis=2)
+        area_a = np.prod(a[:, 2:] - a[:, :2], axis=1)
+        area_b = np.prod(b[:, 2:] - b[:, :2], axis=1)
         area_o = (area_a[:, np.newaxis] + area_b - area_i)
         return area_i / (area_o + 1e-10)
 
     def _crop_box_with_center_constraint(self, box, crop):
-        cropped_box = box.copy()
+        # TODO: copy is necessary?
+        cropped_box = box.tensor.numpy().copy()
+        box = box.tensor.numpy().copy()
 
-        cropped_box[:, :2] = torch.maximum(box[:, :2], crop[:2])
-        cropped_box[:, 2:] = torch.minimum(box[:, 2:], crop[2:])
+        cropped_box[:, :2] = np.maximum(box[:, :2], crop[:2])
+        cropped_box[:, 2:] = np.minimum(box[:, 2:], crop[2:])
         cropped_box[:, :2] -= crop[:2]
         cropped_box[:, 2:] -= crop[:2]
 

@@ -3,8 +3,15 @@ from unittest import TestCase
 
 import torch
 from mmdet.structures import DetDataSample
+from mmdet.testing import demo_mm_inputs
+from mmengine import MessageHub
 
+from mmyolo.models import (PPYOLOEBatchSyncRandomResize,
+                           PPYOLOEDetDataPreprocessor)
 from mmyolo.models.data_preprocessors import YOLOv5DetDataPreprocessor
+from mmyolo.utils import register_all_modules
+
+register_all_modules()
 
 
 class TestYOLOv5DetDataPreprocessor(TestCase):
@@ -69,3 +76,32 @@ class TestYOLOv5DetDataPreprocessor(TestCase):
         # data_samples must be tensor
         with self.assertRaises(AssertionError):
             processor(data, training=True)
+
+
+class TestPPYOLOEDetDataPreprocessor(TestCase):
+
+    def test_batch_sync_random_resize(self):
+        processor = PPYOLOEDetDataPreprocessor(
+            pad_size_divisor=32,
+            batch_augments=[
+                dict(
+                    type='PPYOLOEBatchSyncRandomResize',
+                    # TODO: confirm it
+                    random_size_range=(320, 800),
+                    interval=1,
+                    size_divisor=32,
+                    random_interp=True,
+                    interp_mode=['nearest', 'bilinear', 'bicubic', 'area'],
+                    keep_ratio=False)
+            ],
+            mean=[0., 0., 0.],
+            std=[255., 255., 255.],
+            bgr_to_rgb=True)
+        self.assertTrue(
+            isinstance(processor.batch_augments[0],
+                       PPYOLOEBatchSyncRandomResize))
+        message_hub = MessageHub.get_instance('test_batch_sync_random_resize')
+        message_hub.update_info('iter', 0)
+        packed_inputs = demo_mm_inputs(
+            2, [[3, 128, 128], [3, 128, 128]], use_box_type=False)
+        processor(packed_inputs, training=True)['inputs']

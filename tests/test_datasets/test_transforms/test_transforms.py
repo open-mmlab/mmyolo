@@ -13,6 +13,7 @@ from mmyolo.datasets.transforms import (LetterResize, LoadAnnotations,
                                         YOLOv5HSVRandomAug,
                                         YOLOv5KeepRatioResize,
                                         YOLOv5RandomAffine)
+from mmyolo.datasets.transforms.transforms import PPYOLOERandomCrop
 
 
 class TestLetterResize(unittest.TestCase):
@@ -310,3 +311,31 @@ class TestYOLOv5RandomAffine(unittest.TestCase):
         self.assertTrue(results['gt_bboxes_labels'].dtype == np.int64)
         self.assertTrue(results['gt_bboxes'].dtype == torch.float32)
         self.assertTrue(results['gt_ignore_flags'].dtype == bool)
+
+
+class TestPPYOLOERandomCrop(unittest.TestCase):
+
+    def setUp(self):
+        """Setup the data info which are used in every test method.
+
+        TestCase calls functions in this order: setUp() -> testMethod() ->
+        tearDown() -> cleanUp()
+        """
+        self.results = {
+            'img':
+            np.random.random((224, 224, 3)),
+            'img_shape': (224, 224),
+            'gt_bboxes_labels':
+            np.array([1, 2, 3], dtype=np.int64),
+            'gt_bboxes':
+            HorizontalBoxes(
+                np.array(
+                    [[10, 10, 20, 20], [20, 20, 40, 40], [40, 40, 80, 80]],
+                    dtype=np.float32)),
+            'gt_ignore_flags':
+            np.array([0, 0, 1], dtype=bool),
+        }
+
+    def test_transform(self):
+        transform = PPYOLOERandomCrop()
+        transform(copy.deepcopy(self.results))

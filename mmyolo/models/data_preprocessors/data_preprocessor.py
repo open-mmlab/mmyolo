@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import random
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import torch
 import torch.nn.functional as F
@@ -61,6 +61,7 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
 
 @MODELS.register_module()
 class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
+    """# 这边还要完善处理机制类型，各种异常情况的判断 有些参数用不到的要在init做判断."""
 
     def forward(self, data: dict, training: bool = False) -> dict:
         # 图片shape在这里之前就已经是统一的了
@@ -68,42 +69,35 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
             return super().forward(data, training)
 
         # 这里图片尺度是不一样的
-
         data = self.cast_data(data)
-        _batch_inputs = data['inputs']
+        inputs, data_samples = data['inputs'], data['data_samples']
         # 进行图像预处理
         # Process data with `pseudo_collate`.
-        if is_list_of(_batch_inputs, torch.Tensor):
+        if is_list_of(inputs, torch.Tensor):
             batch_inputs = []
-            for _batch_input in _batch_inputs:
+            for _batch_input, data_sample in zip(inputs, data_samples):
                 # channel transform
                 if self._channel_conversion:
                     _batch_input = _batch_input[[2, 1, 0], ...]
                 # Convert to float after channel conversion to ensure
                 # efficiency
                 _batch_input = _batch_input.float()
-                # Normalization.
-                if self._enable_normalize:
-                    if self.mean.shape[0] == 3:
-                        assert _batch_input.dim(
-                        ) == 3 and _batch_input.shape[0] == 3, (
-                            'If the mean has 3 values, the input tensor '
-                            'should in shape of (3, H, W), but got the tensor '
-                            f'with shape {_batch_input.shape}')
-                    _batch_input = (_batch_input - self.mean) / self.std
+                data_sample.set_metainfo({'pad_shape': (0, 0)})
+
                 batch_inputs.append(_batch_input)
-        elif isinstance(_batch_inputs, torch.Tensor):
+        elif isinstance(inputs, torch.Tensor):
             raise NotImplementedError
         else:
             raise NotImplementedError
-        data['inputs'] = batch_inputs
-        data.setdefault('data_samples', None)
-
-        inputs, data_samples = data['inputs'], data['data_samples']
+        data_samples = data['data_samples']
 
         if self.batch_augments is not None:
             for batch_aug in self.batch_augments:
-                inputs, data_samples = batch_aug(inputs, data_samples)
+                inputs, data_samples = batch_aug(batch_inputs, data_samples)
+
+        # 这里是先resize，在normalize
+        if self._enable_normalize:
+            inputs = (inputs - self.mean) / self.std
 
         img_metas = [{'batch_input_shape': inputs.shape[2:]}] * len(inputs)
         data_samples = {'bboxes_labels': data_samples, 'img_metas': img_metas}
@@ -119,74 +113,108 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
 
     def __init__(self,
                  random_size_range: Tuple[int, int],
-                 interval: int = 0,
+                 interval: int = 1,
                  size_divisor: int = 32,
-                 interp_list: List[str] = [
-                     'nearest', 'linear', 'area', 'bicubic'
+                 random_interp=True,
+                 interp_mode: Union[List[str], str] = [
+                     'nearest', 'bilinear', 'bicubic', 'area'
                  ],
                  keep_ratio: bool = False) -> None:
         super().__init__(random_size_range, interval, size_divisor)
-        self.interp_list = interp_list
+        self.random_interp = random_interp
         self.keep_ratio = keep_ratio
 
-    def forward(self, inputs, data_samples):
-        # TODO: 区分tensor和list情况
-        assert isinstance(inputs, list)
-        for i in range(len(inputs)):
-            _batch_input = inputs[i]
-            data_sample = data_samples[i]
-            # 确认下这里那个是wh
-            h, w = _batch_input.shape[-2:]
-            if self._input_size is None:
-                self._input_size = (h, w)
-            scale_y = self._input_size[0] / h
-            scale_x = self._input_size[1] / w
-            if scale_x != 1 or scale_y != 1:
-                inputs = F.interpolate(
-                    inputs,
-                    size=self._input_size,
-                    mode='bilinear',
-                    align_corners=False)
-                img_shape = (int(data_sample.img_shape[0] * scale_y),
-                             int(data_sample.img_shape[1] * scale_x))
-                pad_shape = (int(data_sample.pad_shape[0] * scale_y),
-                             int(data_sample.pad_shape[1] * scale_x))
-                data_sample.set_metainfo({
-                    'img_shape': img_shape,
-                    'pad_shape': pad_shape,
-                    'batch_input_shape': self._input_size
-                })
-                data_sample.gt_instances.bboxes[
-                    ...,
-                    0::2] = data_sample.gt_instances.bboxes[...,
-                                                            0::2] * scale_x
-                data_sample.gt_instances.bboxes[
-                    ...,
-                    1::2] = data_sample.gt_instances.bboxes[...,
-                                                            1::2] * scale_y
-                if 'ignored_instances' in data_sample:
-                    data_sample.ignored_instances.bboxes[
-                        ..., 0::2] = data_sample.ignored_instances.bboxes[
-                            ..., 0::2] * scale_x
-                    data_sample.ignored_instances.bboxes[
-                        ..., 1::2] = data_sample.ignored_instances.bboxes[
-                            ..., 1::2] * scale_y
+        if self.random_interp:
+            assert isinstance(interp_mode, list) and len(interp_mode) > 1
+            self.interp_mode_list = interp_mode
+            self.interp_mode = None
+        elif isinstance(interp_mode, str):
+            self.interp_mode_list = None
+            self.interp_mode = interp_mode
+        else:
+            # TODO:
+            raise RuntimeError('xxx')
 
+    def forward(self, inputs, data_samples):
+        assert isinstance(inputs, list)
+        # TODO: random_interp为True的时候
         message_hub = MessageHub.get_current_instance()
         if (message_hub.get_info('iter') + 1) % self._interval == 0:
-            self._input_size = self._get_random_size(device=inputs.device)
-        return inputs, data_samples
+            self._input_size, interp_mode = self._get_random_size_and_interp(
+                device=inputs[0].device)
+            if self.random_interp:
+                self.interp_mode = interp_mode
 
-    def _get_random_size(self, device: torch.device) -> Tuple[int, int]:
-        """Randomly generate a shape in ``_random_size_range`` and broadcast to
-        all ranks."""
-        tensor = torch.LongTensor(2).to(device)
+        # TODO: 区分tensor和list情况
+        # TODO: keep ratio的情况
+        if isinstance(inputs, list):
+            outputs = []
+            for i in range(len(inputs)):
+                _batch_input = inputs[i]
+                data_sample = data_samples[i]
+                h, w = _batch_input.shape[-2:]
+                scale_y = self._input_size[0] / h
+                scale_x = self._input_size[1] / w
+                if scale_x != 1 or scale_y != 1:
+                    if interp_mode in ('nearest', 'area'):
+                        align_corners = None
+                    else:
+                        align_corners = False
+                    _batch_input = F.interpolate(
+                        _batch_input.unsqueeze(0),
+                        size=self._input_size,
+                        mode=self.interp_mode,
+                        align_corners=align_corners)
+                    img_shape = (int(data_sample.img_shape[0] * scale_y),
+                                 int(data_sample.img_shape[1] * scale_x))
+                    pad_shape = (int(data_sample.pad_shape[0] * scale_y),
+                                 int(data_sample.pad_shape[1] * scale_x))
+                    data_sample.set_metainfo({
+                        'img_shape':
+                        img_shape,
+                        'pad_shape':
+                        pad_shape,
+                        'batch_input_shape':
+                        self._input_size
+                    })
+                    data_sample.gt_instances.bboxes[
+                        ...,
+                        0::2] = data_sample.gt_instances.bboxes[...,
+                                                                0::2] * scale_x
+                    data_sample.gt_instances.bboxes[
+                        ...,
+                        1::2] = data_sample.gt_instances.bboxes[...,
+                                                                1::2] * scale_y
+                    if 'ignored_instances' in data_sample:
+                        data_sample.ignored_instances.bboxes[
+                            ..., 0::2] = data_sample.ignored_instances.bboxes[
+                                ..., 0::2] * scale_x
+                        data_sample.ignored_instances.bboxes[
+                            ..., 1::2] = data_sample.ignored_instances.bboxes[
+                                ..., 1::2] * scale_y
+                outputs.append(_batch_input)
+            return torch.cat(outputs, dim=0), data_samples
+        else:
+            raise NotImplementedError
+
+    def _get_random_size_and_interp(self,
+                                    device: torch.device) -> Tuple[int, int]:
+
+        tensor = torch.LongTensor(3).to(device)
         if self.rank == 0:
             size = random.randint(*self._random_size_range)
-            size = self._size_divisor * size
-            tensor[0] = size
-            tensor[1] = size
+            size = (self._size_divisor * size, self._size_divisor * size)
+            tensor[0] = size[0]
+            tensor[1] = size[1]
+
+            if self.random_interp:
+                interp_ind = random.randint(0, len(self.interp_mode_list) - 1)
+                tensor[2] = interp_ind
         barrier()
         broadcast(tensor, 0)
         input_size = (tensor[0].item(), tensor[1].item())
-        return input_size
+        if self.random_interp:
+            interp_mode = self.interp_mode_list[tensor[2].item()]
+        else:
+            interp_mode = None
+        return input_size, interp_mode
