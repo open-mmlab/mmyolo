@@ -224,13 +224,11 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
                  frozen_stages: int = -1,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
-                 act_cfg: ConfigType = dict(type='ReLU', inplace=True),
-                 csp_act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  norm_eval: bool = False,
                  stage_block_cfg: ConfigType = dict(type='ConvWrapper'),
                  init_cfg: OptMultiConfig = None):
         self.hidden_channel_expansion = hidden_channel_expansion
-        self.csp_act_cfg = csp_act_cfg
         super().__init__(
             arch=arch,
             deepen_factor=deepen_factor,
@@ -264,7 +262,7 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
             hidden_channel_expansion=self.hidden_channel_expansion,
             stage_block_cfg=self.stage_block_cfg,
             norm_cfg=self.norm_cfg,
-            act_cfg=self.csp_act_cfg)
+            act_cfg=self.act_cfg)
         stage_block_cfg = self.stage_block_cfg.copy()
         stage_block_cfg.update(
             dict(
@@ -285,6 +283,6 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
                 out_channels=out_channels,
                 kernel_sizes=5,
                 norm_cfg=self.norm_cfg,
-                act_cfg=self.csp_act_cfg)
+                act_cfg=self.act_cfg)
             stage.append(spp)
         return stage

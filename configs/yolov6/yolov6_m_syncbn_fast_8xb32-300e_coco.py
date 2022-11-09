@@ -11,7 +11,7 @@ model = dict(
         widen_factor=widen_factor,
         hidden_channel_expansion=2. / 3,
         stage_block_cfg=dict(type='RepVGGBlock'),
-        csp_act_cfg=dict(type='ReLU', inplace=True)),
+        act_cfg=dict(type='ReLU', inplace=True)),
     neck=dict(
         type='YOLOv6CSPRepPAFPN',
         deepen_factor=deepen_factor,
