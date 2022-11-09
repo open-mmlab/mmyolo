@@ -10,13 +10,13 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         expansion=2. / 3,
-        block_cfg=dict(type='RepVGGBlock'),
+        stage_block_cfg=dict(type='RepVGGBlock'),
         csp_act_cfg=dict(type='ReLU', inplace=True)),
     neck=dict(
         type='YOLOv6CSPRepPAFPN',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        block_cfg=dict(type='RepVGGBlock'),
+        stage_block_cfg=dict(type='RepVGGBlock'),
         expansion=2. / 3,
         csp_act_cfg=dict(type='ReLU', inplace=True)),
     bbox_head=dict(
