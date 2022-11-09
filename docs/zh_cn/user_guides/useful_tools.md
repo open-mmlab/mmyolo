@@ -252,13 +252,14 @@ python tools/dataset_converters/yolo2coco.py /path/to/the/root/dir/of/your_datas
 ```shell
 python tools/misc/download_dataset.py --dataset-name coco2017
 python tools/misc/download_dataset.py --dataset-name voc2007
+python tools/misc/download_dataset.py --dataset-name voc2012
 python tools/misc/download_dataset.py --dataset-name lvis
 python tools/misc/download_dataset.py --dataset-name balloon [--save-dir ${SAVE_DIR}] [--unzip]
 ```
 
 ## 模型转换
 
-文件夹 `tools/analysis_tools/` 下的三个脚本能够帮助用户将对应YOLO官方的预训练模型中的键转换成 `MMYOLO` 格式，并使用 `MMYOLO` 对模型进行微调。
+文件夹 `tools/model_converters/` 下的六个脚本能够帮助用户将对应YOLO官方的预训练模型中的键转换成 `MMYOLO` 格式，并使用 `MMYOLO` 对模型进行微调。
 
 ### YOLOv5
 
