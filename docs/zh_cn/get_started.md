@@ -53,7 +53,7 @@ conda install pytorch torchvision cpuonly -c pytorch
 pip install -U openmim
 mim install "mmengine>=0.3.1"
 mim install "mmcv>=2.0.0rc1,<2.1.0"
-mim install "mmdet>=3.0.0rc1,<3.1.0"
+mim install "mmdet>=3.0.0rc3,<3.1.0"
 ```
 
 **注意：**
