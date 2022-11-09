@@ -77,8 +77,10 @@ def get_file_list(source_root: str) -> [list, dict]:
         # when input source is url
         filename = os.path.basename(
             urllib.parse.unquote(source_root).split('?')[0])
-        torch.hub.download_url_to_file(source_root, filename)
-        source_file_path_list = [os.path.join(os.getcwd(), filename)]
+        file_save_path = os.path.join(os.getcwd(), filename)
+        print(f'Downloading source file to {file_save_path}')
+        torch.hub.download_url_to_file(source_root, file_save_path)
+        source_file_path_list = [file_save_path]
     elif is_file:
         # when input source is single image
         source_file_path_list = [source_root]
