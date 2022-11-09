@@ -9,7 +9,6 @@
 图 1: P5 模型结构图
 </div>
 
-
 <div align=center>
 <img src="https://user-images.githubusercontent.com/27466624/200850066-0c434173-2d40-4c12-8de3-eda473ff172f.jpg" alt="基类 P6">
 图 2: P6 模型结构图
@@ -27,8 +26,9 @@ YOLO 系列算法大部分采用了统一的算法搭建结构，典型的如 Da
 
 ### BaseBackbone
 
-如图 1 所示，对于 P5 而言，BaseBackbone 为包含 1 个 stem 层 + 4 个 stage 层的类似 ResNet 的基础结构。
-如图 2 所示，对于 P6 而言，BaseBackbone 为包含 1 个 stem 层 + 5 个 stage 层结构。
+- 如图 1 所示，对于 P5 而言，BaseBackbone 为包含 1 个 stem 层 + 4 个 stage 层的类似 ResNet 的基础结构。
+- 如图 2 所示，对于 P6 而言，BaseBackbone 为包含 1 个 stem 层 + 5 个 stage 层的结构。
+
 不同算法的主干网络继承 BaseBackbone，用户可以通过实现内部的 `build_xx` 方法，使用自定义的基础模块来构建每一层的内部结构。
 
 ### BaseYOLONeck
