@@ -355,8 +355,10 @@ class BepC3StageBlock(nn.Module):
         in_channels (int): Number of channels in the input image
         out_channels (int): Number of channels produced by the convolution
         num_blocks (int): Number of blocks. Defaults to 1
-        hidden_channel_expansion (float): Hidden channel expansion. Default: 0.5
-        concat_all_layer (bool): Concat all layer when forward calculate. Default: True
+        hidden_channel_expansion (float): Hidden channel expansion.
+            Default: 0.5
+        concat_all_layer (bool): Concat all layer when forward calculate.
+            Default: True
         stage_block_cfg (dict): Config dict for the block used to build each
             layer. Defaults to dict(type='RepVGGBlock').
         norm_cfg (ConfigType): Config dict for normalization layer.
@@ -1127,8 +1129,10 @@ class RepStageBlock(nn.Module):
         in_channels (int): The input channels of this Module.
         out_channels (int): The output channels of this Module.
         num_blocks (int, tuple[int]): Number of blocks.  Defaults to 1.
-        bottle_block (nn.Module): Basic unit of RepStage. Defaults to RepVGGBlock.
-        stage_block_cfg (ConfigType): Config of RepStage. Defaults to 'RepVGGBlock'.
+        bottle_block (nn.Module): Basic unit of RepStage.
+            Defaults to RepVGGBlock.
+        stage_block_cfg (ConfigType): Config of RepStage.
+            Defaults to 'RepVGGBlock'.
     """
 
     def __init__(self,
