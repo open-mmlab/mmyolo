@@ -33,6 +33,7 @@ anchors = [
 ]
 strides = [8, 16, 32]
 num_det_layers = 3
+num_classes = 80
 
 # single-scale training is recommended to
 # be turned on, which can speed up training.
@@ -72,7 +73,28 @@ model = dict(
         prior_generator=dict(
             type='mmdet.YOLOAnchorGenerator',
             base_sizes=anchors,
-            strides=strides)),
+            strides=strides),
+        # scaled based on number of detection layers
+        loss_cls=dict(
+            type='mmdet.CrossEntropyLoss',
+            use_sigmoid=True,
+            reduction='mean',
+            loss_weight=0.3 * (num_classes / 80 * 3 / num_det_layers)),
+        loss_bbox=dict(
+            type='IoULoss',
+            iou_mode='ciou',
+            bbox_format='xywh',
+            reduction='mean',
+            loss_weight=0.05 * (3 / num_det_layers),
+            return_iou=True),
+        loss_obj=dict(
+            type='mmdet.CrossEntropyLoss',
+            use_sigmoid=True,
+            reduction='mean',
+            loss_weight=0.7 * ((img_scale[0] / 640)**2 * 3 / num_det_layers)),
+        prior_match_thr=4.,
+        obj_level_weights=[4., 1., 0.4]
+    ),
     test_cfg=dict(
         multi_label=True,
         nms_pre=30000,
