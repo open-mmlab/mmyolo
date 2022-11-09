@@ -165,13 +165,14 @@ class YOLOv7Head(YOLOv5Head):
         Returns:
             dict[str, Tensor]: A dictionary of losses.
         """
-        preds=[]
-        for bbox, obj, cls in zip(bbox_preds,objectnesses,cls_scores):
-            b,c,h,w=bbox.shape
-            bbox=bbox.reshape(b,3,-1,h,w)
-            obj=obj.reshape(b,3,-1,h,w)
-            cls=cls.reshape(b,3,-1,h,w)
-            pred=torch.cat([bbox, obj, cls],dim=2).permute(0, 1, 3, 4, 2).contiguous()
+        preds = []
+        for bbox, obj, cls in zip(bbox_preds, objectnesses, cls_scores):
+            b, c, h, w = bbox.shape
+            bbox = bbox.reshape(b, 3, -1, h, w)
+            obj = obj.reshape(b, 3, -1, h, w)
+            cls = cls.reshape(b, 3, -1, h, w)
+            pred = torch.cat([bbox, obj, cls], dim=2).permute(0, 1, 3, 4,
+                                                              2).contiguous()
             preds.append(pred)
         loss = self.loss_fun(preds, batch_gt_instances)
         return loss
@@ -313,17 +314,19 @@ class ComputeLossOTA:
         self.no = 85
 
         self.anchors = torch.tensor(
-            prior_generator.base_sizes, device=device, dtype=torch.float).view(self.nl, -1, 2)
+            prior_generator.base_sizes, device=device,
+            dtype=torch.float).view(self.nl, -1, 2)
         self.stride = torch.tensor(
-            prior_generator.strides, device=device, dtype=torch.float).view(self.nl, -1, 2)
+            prior_generator.strides, device=device,
+            dtype=torch.float).view(self.nl, -1, 2)
         # 除以 stride
         self.anchors /= self.stride  # featmap scale
 
         self.sort_obj_iou = False
         self.batch_img_shape = (640, 640)
 
-    def _convert_gt_to_norm_format(self,
-                                   batch_gt_instances: Sequence[InstanceData]) -> Tensor:
+    def _convert_gt_to_norm_format(
+            self, batch_gt_instances: Sequence[InstanceData]) -> Tensor:
         if isinstance(batch_gt_instances, torch.Tensor):
             # fast version
             img_shape = (640, 640)

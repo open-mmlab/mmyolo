@@ -96,7 +96,7 @@ mosiac4_pipeline = [
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
         max_translate_ratio=0.2,  # note
-        scaling_ratio_range=(0.1, 2.0), # note
+        scaling_ratio_range=(0.1, 2.0),  # note
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
         border_val=(114, 114, 114)),
 ]
@@ -111,8 +111,8 @@ mosiac9_pipeline = [
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
-        max_translate_ratio=0.2, # note
-        scaling_ratio_range=(0.1, 2.0), # note
+        max_translate_ratio=0.2,  # note
+        scaling_ratio_range=(0.1, 2.0),  # note
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
         border_val=(114, 114, 114)),
 ]
@@ -127,8 +127,8 @@ train_pipeline = [
     randchoice_mosaic_pipeline,
     dict(
         type='YOLOv5MixUp',
-        alpha=8.0, # note
-        beta=8.0, # note
+        alpha=8.0,  # note
+        beta=8.0,  # note
         prob=0.15,
         pre_transform=[*pre_transform, randchoice_mosaic_pipeline]),
     dict(type='YOLOv5HSVRandomAug'),
@@ -205,10 +205,14 @@ default_hooks = dict(
     param_scheduler=dict(
         type='YOLOv5ParamSchedulerHook',
         scheduler_type='cosine',
-        lr_factor=0.1, # note
+        lr_factor=0.1,  # note
         max_epochs=max_epochs),
     checkpoint=dict(
-        type='CheckpointHook', save_param_scheduler=False, interval=1, save_best='auto', max_keep_ckpts=3))
+        type='CheckpointHook',
+        save_param_scheduler=False,
+        interval=1,
+        save_best='auto',
+        max_keep_ckpts=3))
 
 val_evaluator = dict(
     type='mmdet.CocoMetric',
