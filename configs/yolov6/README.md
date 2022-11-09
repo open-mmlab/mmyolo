@@ -27,8 +27,8 @@ For years, YOLO series have been de facto industry-level standard for efficient 
 **Note**:
 
 1. The performance is unstable and may fluctuate by about 0.3 mAP.
-2. YOLOv6-m,l,x will be supported in later version.
-3. If users need the weight of 300 epoch, they can train according to the configs of 300 epoch provided by us, or convert the official weight according to the [converter script](../../tools/model_converters/).
+2. If users need the weight of 300 epoch for nano, tiny and small model, they can train according to the configs of 300 epoch provided by us, or convert the official weight according to the [converter script](../../tools/model_converters/).
+3. We have observed that the base model has been officially released in v6 recently. Although the accuracy has decreased, it is more efficient. We will also provide the base model configuration in the future.
 
 ## Citation
 
