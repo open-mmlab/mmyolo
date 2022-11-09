@@ -4,7 +4,7 @@
 
 ## 给主干网络增加插件
 
-[更多的插件使用](docs/zh_cn/advanced_guides/plugins.md)
+[更多的插件使用](plugins.md)
 
 ## 应用多个 Neck
 

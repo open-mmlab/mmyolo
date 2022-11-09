@@ -16,8 +16,8 @@ model = dict(
                     num_heads=8,
                     attention_type='0011',
                     kv_stride=2),
-                stages=(False, False, True, True)),
-        ], ))
+                stages=(False, False, True, True))
+        ]))
 ```
 
 `cfg` 参数表示插件的具体配置， `stages` 参数表示是否在 backbone 对应的 stage 后面增加插件，长度需要和 backbone 的 stage 数量相同。
@@ -28,8 +28,8 @@ model = dict(
 <summary><b>支持的插件</b></summary>
 
 - [x] [CBAM](mmyolo/models/plugins)
-- [x] [GeneralizedAttention](https://github.com/open-mmlab/mmcv/blob/b622fb2e29f44d64a704b91a07b659ef7f6a9397/mmcv/cnn/bricks/generalized_attention.py#L14)
-- [x] [NonLocal2d](https://github.com/open-mmlab/mmcv/blob/b622fb2e29f44d64a704b91a07b659ef7f6a9397/mmcv/cnn/bricks/non_local.py#L219)
-- [x] [ContextBlock](https://github.com/open-mmlab/mmcv/blob/b622fb2e29f44d64a704b91a07b659ef7f6a9397/mmcv/cnn/bricks/context_block.py#L19)
+- [x] [GeneralizedAttention](https://github.com/open-mmlab/mmcv/blob/2.x/mmcv/cnn/bricks/generalized_attention.py#L13)
+- [x] [NonLocal2d](https://github.com/open-mmlab/mmcv/blob/2.x/mmcv/cnn/bricks/non_local.py#L250)
+- [x] [ContextBlock](https://github.com/open-mmlab/mmcv/blob/2.x/mmcv/cnn/bricks/context_block.py#L18)
 
 </details>

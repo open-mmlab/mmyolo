@@ -15,49 +15,23 @@ class TestCBAM(TestCase):
 
     def test_init(self):
         with pytest.raises(AssertionError):
-            # act_cfg in ChannelAttention sequence length must equal to 2
-            CBAM(
-                in_channels=16,
-                act_cfg=dict(
-                    ChannelAttention=(dict(type='ReLU'), ),
-                    SpatialAttention=dict(type='Sigmoid')))
-
-        with pytest.raises(AssertionError):
-            # act_cfg in ChannelAttention sequence must be a tuple of dict
-            CBAM(
-                in_channels=16,
-                act_cfg=dict(
-                    ChannelAttention=[dict(type='ReLU'),
-                                      dict(type='Sigmoid')],
-                    SpatialAttention=dict(type='Sigmoid')))
+            # change act_cfg in ChannelAttention
+            CBAM(in_channels=16, act_cfg=dict(type='Sigmoid'))
 
     def test_forward(self):
-        images = torch.randn(2, 16, 20, 20)
+        tensor_shape = (2, 16, 20, 20)
+
+        images = torch.randn(*tensor_shape)
         cbam = CBAM(16)
         out = cbam(images)
-        self.assertEqual(out.shape, (2, 16, 20, 20))
+        self.assertEqual(out.shape, tensor_shape)
 
         # test other ratio
-        cbam = CBAM(16, ratio=8)
+        cbam = CBAM(16, reduce_ratio=8)
         out = cbam(images)
-        self.assertEqual(out.shape, (2, 16, 20, 20))
+        self.assertEqual(out.shape, tensor_shape)
 
         # test other act_cfg in ChannelAttention
-        cbam = CBAM(
-            16,
-            ratio=8,
-            act_cfg=dict(
-                ChannelAttention=(dict(type='ReLU'), dict(type='HSigmoid')),
-                SpatialAttention=dict(type='Sigmoid')))
+        cbam = CBAM(in_channels=16, act_cfg=dict(type='Sigmoid'))
         out = cbam(images)
-        self.assertEqual(out.shape, (2, 16, 20, 20))
-
-        # test other act_cfg in SpatialAttention
-        cbam = CBAM(
-            16,
-            ratio=8,
-            act_cfg=dict(
-                ChannelAttention=(dict(type='ReLU'), dict(type='Sigmoid')),
-                SpatialAttention=dict(type='HSigmoid')))
-        out = cbam(images)
-        self.assertEqual(out.shape, (2, 16, 20, 20))
+        self.assertEqual(out.shape, tensor_shape)
