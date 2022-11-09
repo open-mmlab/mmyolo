@@ -379,7 +379,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                 gt_bboxes.append(instance['bbox'])
                 gt_ignore_flags.append(instance['ignore_flag'])
             else:
-                if instance['ignore_flag'] != 0:
+                if instance['ignore_flag'] == 0:
                     gt_bboxes.append(instance['bbox'])
                     gt_ignore_flags.append(instance['ignore_flag'])
         results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=bool)
@@ -407,7 +407,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
             if self.with_ignore:
                 gt_bboxes_labels.append(instance['bbox_label'])
             else:
-                if instance['ignore_flag'] != 0:
+                if instance['ignore_flag'] == 0:
                     gt_bboxes_labels.append(instance['bbox_label'])
         results['gt_bboxes_labels'] = np.array(
             gt_bboxes_labels, dtype=np.int64)
