@@ -2,7 +2,6 @@
 
 from unittest import TestCase
 
-import pytest
 import torch
 
 from mmyolo.models.plugins import CBAM
@@ -12,11 +11,6 @@ register_all_modules()
 
 
 class TestCBAM(TestCase):
-
-    def test_init(self):
-        with pytest.raises(AssertionError):
-            # change act_cfg in ChannelAttention
-            CBAM(in_channels=16, act_cfg=dict(type='Sigmoid'))
 
     def test_forward(self):
         tensor_shape = (2, 16, 20, 20)
