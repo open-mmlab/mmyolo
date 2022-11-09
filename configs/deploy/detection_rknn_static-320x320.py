@@ -1,7 +1,6 @@
 _base_ = ['./base_static.py']
 onnx_config = dict(
     input_shape=[320, 320], output_names=['feat0', 'feat1', 'feat2'])
-use_efficientnms = False
 codebase_config = dict(model_type='rknn')
 backend_config = dict(
     type='rknn',
