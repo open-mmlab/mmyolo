@@ -152,7 +152,8 @@ def yolov5_head__predict_by_feat(ctx,
     func_name='mmyolo.models.dense_heads.yolov5_head.'
     'YOLOv5Head.predict',
     backend='rknn')
-def yolov5_head__predict__rknn(ctx, self, x: Tuple[Tensor], *args, **kwargs):
+def yolov5_head__predict__rknn(ctx, self, x: Tuple[Tensor], *args,
+                               **kwargs) -> Tuple[Tensor, Tensor, Tensor]:
     """Perform forward propagation of the detection head and predict detection
     results on the features of the upstream network.
 
