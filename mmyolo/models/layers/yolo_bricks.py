@@ -294,7 +294,7 @@ class RepVGGBlock(nn.Module):
         """
         if branch is None:
             return 0, 0
-        if isinstance(branch, nn.Sequential):
+        if isinstance(branch, ConvModule):
             kernel = branch.conv.weight
             running_mean = branch.bn.running_mean
             running_var = branch.bn.running_var
@@ -302,7 +302,7 @@ class RepVGGBlock(nn.Module):
             beta = branch.bn.bias
             eps = branch.bn.eps
         else:
-            assert isinstance(branch, nn.BatchNorm2d)
+            assert isinstance(branch, (nn.SyncBatchNorm, nn.BatchNorm2d))
             if not hasattr(self, 'id_tensor'):
                 input_dim = self.in_channels // self.groups
                 kernel_value = np.zeros((self.in_channels, input_dim, 3, 3),
