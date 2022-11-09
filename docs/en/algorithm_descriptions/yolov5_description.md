@@ -3,7 +3,7 @@
 ## 0 Introduction
 
 <div align=center >
-<img alt="YOLOv5_structure_v3.3" src="https://user-images.githubusercontent.com/27466624/192134657-a8d0286d-640c-445f-89bd-fda751094a4a.jpg"/>
+<img alt="YOLOv5_structure_v3.4" src="https://user-images.githubusercontent.com/27466624/200000324-70ae078f-cea7-4189-8baa-440656797dad.jpg"/>
 </div>
 
 RangeKing@github provides the graph above. Thanks, RangeKing!
@@ -52,7 +52,7 @@ Many data augmentation methods are used in YOLOv5, including:
 - **Mosaic**
 - **RandomAffine**
 - **MixUp**
-- **Image blue and other transformations using Albu**
+- **Image blur and other transformations using Albu**
 - **HSV color space enhancement**
 - **Random horizontal flips**
 
@@ -121,7 +121,7 @@ Note: **In YOLOv5's implementation of MixUP, the other random image must be proc
 
 The rest of the augmentations are:
 
-- **Image blue and other transformations using Albu**
+- **Image blur and other transformations using Albu**
 - **HSV color space enhancement**
 - **Random horizontal flips**
 
