@@ -241,11 +241,15 @@ train_pipeline = [
 
 ### 1.2 网络结构
 
+<div align=center >
+<img alt="YOLOv5_P6_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/200845705-c9f3300f-9847-4933-b79d-0efcf0286e16.jpg"/>
+</div>
+
 本小结由 RangeKing@github 撰写，非常感谢！！！
 
 YOLOv5 网络结构是标准的 `CSPDarknet` + `PAFPN` + `非解耦 Head`。
 
-YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决定。其中 `deepen_factor` 控制网络结构深度，即 `CSPLayer` 中 `DarknetBottleneck` 模块堆叠的数量；`widen_factor` 控制网络结构宽度，即模块输出特征图的通道数。以 YOLOv5-l 为例，其 `deepen_factor = widen_factor = 1.0` ，整体结构图如上所示。
+YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决定。其中 `deepen_factor` 控制网络结构深度，即 `CSPLayer` 中 `DarknetBottleneck` 模块堆叠的数量；`widen_factor` 控制网络结构宽度，即模块输出特征图的通道数。以 YOLOv5-l 为例，其 `deepen_factor = widen_factor = 1.0` 。P5 模型整体结构如本页面第一张图所示，P6 模型整体结构如上图所示。
 
 图的上半部分为模型总览；下半部分为具体网络结构，其中的模块均标有序号，方便用户与 YOLOv5 官方仓库的配置文件对应；中间部分为各子模块的具体构成。
 
@@ -253,13 +257,18 @@ YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决�
 
 #### 1.2.1 Backbone
 
-在 MMYOLO 中 `CSPDarknet` 继承自 `BaseBackbone`，整体结构和 `ResNet` 类似，共 5 层结构，包含 1 个 `Stem Layer` 和 4 个 `Stage Layer`：
+在 MMYOLO 中 `CSPDarknet` 继承自 `BaseBackbone`，整体结构和 `ResNet` 类似。P5 模型共 5 层结构，包含 1 个 `Stem Layer` 和 4 个 `Stage Layer`：
 
 - `Stem Layer` 是 1 个 6x6 kernel 的 `ConvModule`，相较于 v6.1 版本之前的 `Focus` 模块更加高效。
-- 前 3 个 `Stage Layer` 均由 1 个 `ConvModule` 和 1 个 `CSPLayer` 组成。如上图 Details 部分所示。
+- 除了最后一个 `Stage Layer`，其他均由 1 个 `ConvModule` 和 1 个 `CSPLayer` 组成。如上图 Details 部分所示。
   其中 `ConvModule` 为 3x3的 `Conv2d` + `BatchNorm` + `SiLU 激活函数`。`CSPLayer` 即 YOLOv5 官方仓库中的 C3 模块，由 3 个 `ConvModule` + n 个 `DarknetBottleneck`(带残差连接) 组成。
-- 第 4 个 `Stage Layer` 在最后增加了 `SPPF` 模块。`SPPF` 模块是将输入串行通过多个 5x5 大小的 `MaxPool2d` 层，与 `SPP`  模块效果相同，但速度更快。
-- P5 模型结构会在 `Stage Layer` 2-4 之后分别输出一个特征图进入 `Neck` 结构。以 640x640 输入图片为例，其输出特征为 (B,256,80,80)、 (B,512,40,40) 和 (B,1024,20,20)，对应的 stride 分别为 8/16/32。
+- 最后一个 `Stage Layer` 在最后增加了 `SPPF` 模块。`SPPF` 模块是将输入串行通过多个 5x5 大小的 `MaxPool2d` 层，与 `SPP` 模块效果相同，但速度更快。
+- P5 模型会在 `Stage Layer` 2-4 之后分别输出一个特征图进入 `Neck` 结构。以 640x640 输入图片为例，其输出特征为 (B,256,80,80)、(B,512,40,40) 和 (B,1024,20,20)，对应的 stride 分别为 8/16/32。
+- P6 模型会在 `Stage Layer` 2-5 之后分别输出一个特征图进入 `Neck` 结构。以 1280x1280 输入图片为例，其输出特征为 (B,256,160,160)、(B,512,80,80)、(B,768,40,40) 和 (B,1024,20,20)，对应的 stride 分别为 8/16/32/64。
+
+```{note}
+1.2 小结涉及的特征纬度（shape）都为 (B, C, H, W)。
+```
 
 #### 1.2.2 Neck
 
@@ -267,14 +276,17 @@ YOLOv5 官方仓库的配置文件中并没有 Neck 部分，为方便用户与�
 
 基于 `BaseYOLONeck` 结构，YOLOv5 `Neck` 也是遵循同一套构建流程，对于不存在的模块，我们采用 `nn.Identity` 代替。
 
-Neck 模块输出的特征图和 Backbone 完全一致即为 (B,256,80,80)、 (B,512,40,40) 和  (B,1024,20,20)。
+Neck 模块输出的特征图和 Backbone 完全一致。即 P5 模型为 (B,256,80,80)、 (B,512,40,40) 和 (B,1024,20,20)；P6 模型为 (B,256,160,160)、(B,512,80,80)、(B,768,40,40) 和 (B,1024,20,20)。
 
 #### 1.2.3 Head
 
 YOLOv5 Head 结构和 YOLOv3 完全一样，为 `非解耦 Head`。Head 模块只包括 3 个不共享权重的卷积，用于将输入特征图进行变换而已。
 
 前面的 PAFPN 依然是输出 3 个不同尺度的特征图，shape 为 (B,256,80,80)、 (B,512,40,40) 和 (B,1024,20,20)。
-由于 YOLOv5 是非解耦输出，即分类和 bbox 检测等都是在同一个卷积的不同通道中完成。以 COCO 80 类为例，在输入为 640x640 分辨率情况下，其 Head 模块输出的 shape 分别为 (B, 3x(4+1+80),80,80), (B, 3x(4+1+80),40,40) 和 (B, 3x(4+1+80),20,20)。其中 3 表示 3 个 anchor，4 表示 bbox 预测分支，1 表示 obj 预测分支，80 表示 COCO 数据集类别预测分支。
+由于 YOLOv5 是非解耦输出，即分类和 bbox 检测等都是在同一个卷积的不同通道中完成。以 COCO 80 类为例：
+- P5 模型在输入为 640x640 分辨率情况下，其 Head 模块输出的 shape 分别为 (B, 3x(4+1+80),80,80), (B, 3x(4+1+80),40,40) 和 (B, 3x(4+1+80),20,20)。
+- P6 模型在输入为 1280x1280 分辨率情况下，其 Head 模块输出的 shape 分别为 (B, 3x(4+1+80),160,160), (B, 3x(4+1+80),80,80), (B, 3x(4+1+80),40,40) 和 (B, 3x(4+1+80),20,20)。
+其中 3 表示 3 个 anchor，4 表示 bbox 预测分支，1 表示 obj 预测分支，80 表示 COCO 数据集类别预测分支。
 
 ### 1.3 正负样本匹配策略
 
