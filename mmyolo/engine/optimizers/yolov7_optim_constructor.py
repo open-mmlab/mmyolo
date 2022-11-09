@@ -14,6 +14,52 @@ from mmyolo.registry import (OPTIM_WRAPPER_CONSTRUCTORS, OPTIM_WRAPPERS,
 
 @OPTIM_WRAPPER_CONSTRUCTORS.register_module()
 class YOLOv7OptimizerConstructor:
+    """YOLOv7 constructor for optimizers.
+
+    It has the following functions：
+
+        - divides the optimizer parameters into 3 groups:
+        Conv, Bias and BN
+
+        - support `weight_decay` parameter adaption based on
+        `batch_size_per_gpu`
+
+    Args:
+        optim_wrapper_cfg (dict): The config dict of the optimizer wrapper.
+            Positional fields are
+
+                - ``type``: class name of the OptimizerWrapper
+                - ``optimizer``: The configuration of optimizer.
+
+            Optional fields are
+
+                - any arguments of the corresponding optimizer wrapper type,
+                  e.g., accumulative_counts, clip_grad, etc.
+
+            The positional fields of ``optimizer`` are
+
+                - `type`: class name of the optimizer.
+
+            Optional fields are
+
+                - any arguments of the corresponding optimizer type, e.g.,
+                  lr, weight_decay, momentum, etc.
+
+        paramwise_cfg (dict, optional): Parameter-wise options. Must include
+            `base_total_batch_size` if not None. If the total input batch
+            is smaller than `base_total_batch_size`, the `weight_decay`
+            parameter will be kept unchanged, otherwise linear scaling.
+
+    Example:
+        >>> model = torch.nn.modules.Conv1d(1, 1, 1)
+        >>> optim_wrapper_cfg = dict(
+        >>>     dict(type='OptimWrapper', optimizer=dict(type='SGD', lr=0.01,
+        >>>         momentum=0.9, weight_decay=0.0001, batch_size_per_gpu=16))
+        >>> paramwise_cfg = dict(base_total_batch_size=64)
+        >>> optim_wrapper_builder = YOLOv7OptimizerConstructor(
+        >>>     optim_wrapper_cfg, paramwise_cfg)
+        >>> optim_wrapper = optim_wrapper_builder(model)
+    """
 
     def __init__(self,
                  optim_wrapper_cfg: dict,
@@ -52,34 +98,39 @@ class YOLOv7OptimizerConstructor:
                 weight_decay *= scale_factor
                 print_log(f'Scaled weight_decay to {weight_decay}', 'current')
 
-        pg0, pg1, pg2 = [], [], []  # optimizer parameter groups
-        for k, v in model.named_modules():
-            if hasattr(v, 'bias') and isinstance(v.bias, nn.Parameter):
-                pg2.append(v.bias)  # biases
-            if isinstance(v, nn.modules.batchnorm._NormBase):
-                pg0.append(v.weight)  # no decay
-            elif hasattr(v, 'weight') and isinstance(v.weight, nn.Parameter):
-                pg1.append(v.weight)  # apply decay
+        params_groups = [], [], []
+        for v in model.modules():
+            # no decay
             # Caution: Strong coupling with model naming
             if isinstance(v, (ImplicitA, ImplicitM)):
-                pg0.append(v.implicit)
+                params_groups[0].append(v.implicit)
+            elif isinstance(v, nn.modules.batchnorm._NormBase):
+                params_groups[0].append(v.weight)
+            # apply decay
+            elif hasattr(v, 'weight') and isinstance(v.weight, nn.Parameter):
+                params_groups[1].append(v.weight)  # apply decay
+
+            # biases, no decay
+            if hasattr(v, 'bias') and isinstance(v.bias, nn.Parameter):
+                params_groups[2].append(v.bias)
 
         # Note: Make sure bias is in the last parameter group
         optimizer_cfg['params'] = []
         # conv
         optimizer_cfg['params'].append({
-            'params': pg1,
+            'params': params_groups[1],
             'weight_decay': weight_decay
         })
-        # bn
-        optimizer_cfg['params'].append({'params': pg0})
+        # bn ...
+        optimizer_cfg['params'].append({'params': params_groups[0]})
         # bias
-        optimizer_cfg['params'].append({'params': pg2})
+        optimizer_cfg['params'].append({'params': params_groups[2]})
 
         print_log(
             'Optimizer groups: %g .bias, %g conv.weight, %g other' %
-            (len(pg2), len(pg1), len(pg0)), 'current')
-        del pg0, pg1, pg2
+            (len(params_groups[2]), len(params_groups[1]), len(
+                params_groups[0])), 'current')
+        del params_groups
 
         optimizer = OPTIMIZERS.build(optimizer_cfg)
         optim_wrapper = OPTIM_WRAPPERS.build(
