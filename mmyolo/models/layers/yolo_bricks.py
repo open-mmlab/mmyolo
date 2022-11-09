@@ -358,7 +358,7 @@ class BepC3StageBlock(nn.Module):
                  n=1,
                  expansion=0.5,
                  concat=True,
-                 block_cfg=dict(type='RepVGGBlock'),
+                 stage_block_cfg=dict(type='RepVGGBlock'),
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True)
@@ -397,7 +397,7 @@ class BepC3StageBlock(nn.Module):
             in_channels=hidden_channels,
             out_channels=hidden_channels,
             n=n,
-            block_cfg=block_cfg,
+            stage_block_cfg=stage_block_cfg,
             bottle_block=BottleRep)
         self.concat = concat
         if not concat:
@@ -431,11 +431,11 @@ class BottleRep(nn.Module):
     def __init__(self,
                  in_channels,
                  out_channels,
-                 block_cfg: ConfigType = dict(type='RepVGGBlock'),
+                 stage_block_cfg: ConfigType = dict(type='RepVGGBlock'),
                  weight=False):
         super().__init__()
-        conv1_cfg = block_cfg.copy()
-        conv2_cfg = block_cfg.copy()
+        conv1_cfg = stage_block_cfg.copy()
+        conv2_cfg = stage_block_cfg.copy()
 
         conv1_cfg.update(
             dict(in_channels=in_channels, out_channels=out_channels))
@@ -1107,28 +1107,32 @@ class RepStageBlock(nn.Module):
                  out_channels: int,
                  n: int = 1,
                  bottle_block=RepVGGBlock,
-                 block_cfg: ConfigType = dict(type='RepVGGBlock')):
+                 stage_block_cfg: ConfigType = dict(type='RepVGGBlock')):
         super().__init__()
-        block_cfg = block_cfg.copy()
+        stage_block_cfg = stage_block_cfg.copy()
 
-        block_cfg.update(
+        stage_block_cfg.update(
             dict(in_channels=in_channels, out_channels=out_channels))
 
-        self.conv1 = MODELS.build(block_cfg)
+        self.conv1 = MODELS.build(stage_block_cfg)
 
-        block_cfg.update(
+        stage_block_cfg.update(
             dict(in_channels=out_channels, out_channels=out_channels))
-        self.block = nn.Sequential(*(MODELS.build(block_cfg)
+        self.block = nn.Sequential(*(MODELS.build(stage_block_cfg)
                                      for _ in range(n - 1))) if n > 1 else None
 
         if bottle_block == BottleRep:
             self.conv1 = BottleRep(
-                in_channels, out_channels, block_cfg=block_cfg, weight=True)
+                in_channels,
+                out_channels,
+                stage_block_cfg=stage_block_cfg,
+                weight=True)
             n = n // 2
             self.block = nn.Sequential(*(BottleRep(
-                out_channels, out_channels, block_cfg=block_cfg, weight=True)
-                                         for _ in range(n -
-                                                        1))) if n > 1 else None
+                out_channels,
+                out_channels,
+                stage_block_cfg=stage_block_cfg,
+                weight=True) for _ in range(n - 1))) if n > 1 else None
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward process.
