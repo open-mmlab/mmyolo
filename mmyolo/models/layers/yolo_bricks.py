@@ -364,28 +364,28 @@ class BepC3StageBlock(nn.Module):
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True)
                  ):  # ch_in, ch_out, number, shortcut, groups, expansion
         super().__init__()
-        c_ = int(out_channels * expansion)  # hidden channels
+        hidden_channels = int(out_channels * expansion)  # hidden channels
 
-        self.cv1 = ConvModule(
+        self.conv1 = ConvModule(
             in_channels,
-            c_,
+            hidden_channels,
             1,
             1,
             groups=1,
             bias=False,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
-        self.cv2 = ConvModule(
+        self.conv2 = ConvModule(
             in_channels,
-            c_,
+            hidden_channels,
             1,
             1,
             groups=1,
             bias=False,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
-        self.cv3 = ConvModule(
-            2 * c_,
+        self.conv3 = ConvModule(
+            2 * hidden_channels,
             out_channels,
             1,
             1,
@@ -393,16 +393,16 @@ class BepC3StageBlock(nn.Module):
             bias=False,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
-        self.m = RepStageBlock(
-            in_channels=c_,
-            out_channels=c_,
+        self.block = RepStageBlock(
+            in_channels=hidden_channels,
+            out_channels=hidden_channels,
             n=n,
             block_cfg=block_cfg,
             bottle_block=BottleRep)
         self.concat = concat
         if not concat:
-            self.cv3 = ConvModule(
-                c_,
+            self.conv3 = ConvModule(
+                hidden_channels,
                 out_channels,
                 1,
                 1,
@@ -413,10 +413,10 @@ class BepC3StageBlock(nn.Module):
 
     def forward(self, x):
         if self.concat is True:
-            return self.cv3(
-                torch.cat((self.m(self.cv1(x)), self.cv2(x)), dim=1))
+            return self.conv3(
+                torch.cat((self.block(self.conv1(x)), self.conv2(x)), dim=1))
         else:
-            return self.cv3(self.m(self.cv1(x)))
+            return self.conv3(self.block(self.conv1(x)))
 
 
 def autopad(k, p=None):  # kernel, padding
