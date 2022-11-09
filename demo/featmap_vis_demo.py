@@ -8,10 +8,10 @@ from mmdet.apis import inference_detector, init_detector
 from mmengine import Config, DictAction
 from mmengine.utils import ProgressBar
 
-from demo.utils import (auto_arrange_images, get_file_list,
-                        get_image_and_out_file_path)
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
+from mmyolo.utils.misc import (auto_arrange_images, gen_out_file_path,
+                               get_file_list)
 
 
 # TODO: Refine
@@ -149,10 +149,12 @@ def main():
             else:
                 flatten_featmaps.append(featmap)
 
-        # get original image and out save path if it is needed.
-        img, out_file = get_image_and_out_file_path(image_path, args.img,
-                                                    source_type['is_dir'],
-                                                    args.out_dir)
+        img = mmcv.imread(image_path)
+        img = mmcv.imconvert(img, 'bgr', 'rgb')
+
+        # get output path if it is needed.
+        out_file = gen_out_file_path(image_path, args.img,
+                                     source_type['is_dir'], args.out_dir)
 
         # show the results
         shown_imgs = []

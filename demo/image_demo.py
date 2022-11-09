@@ -2,13 +2,14 @@
 import os
 from argparse import ArgumentParser
 
+import mmcv
 from mmdet.apis import inference_detector, init_detector
 from mmengine.logging import print_log
 from mmengine.utils import ProgressBar
 
-from demo.utils import get_file_list, get_image_and_out_file_path
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules, switch_to_deploy
+from mmyolo.utils.misc import gen_out_file_path, get_file_list
 
 
 def parse_args():
@@ -57,10 +58,12 @@ def main():
     for file in files:
         result = inference_detector(model, file)
 
-        # get original image and out save path if it is needed.
-        img, out_file = get_image_and_out_file_path(file, args.img,
-                                                    source_type['is_dir'],
-                                                    args.out_dir, args.show)
+        img = mmcv.imread(file)
+        img = mmcv.imconvert(img, 'bgr', 'rgb')
+
+        # get output path if it is needed.
+        out_file = gen_out_file_path(file, args.img, source_type['is_dir'],
+                                     args.out_dir, args.show)
 
         visualizer.add_datasample(
             os.path.basename(out_file),
