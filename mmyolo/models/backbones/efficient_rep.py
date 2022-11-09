@@ -261,8 +261,8 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
         rep_stage_block = BepC3StageBlock(
             in_channels=out_channels,
             out_channels=out_channels,
-            n=num_blocks,
-            expansion=self.expansion,
+            num_blocks=num_blocks,
+            hidden_channel_expansion=self.expansion,
             stage_block_cfg=self.stage_block_cfg,
             norm_cfg=self.norm_cfg,
             act_cfg=self.csp_act_cfg)
