@@ -9,7 +9,7 @@ model = dict(
         type='YOLOv6CSPBep',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        expansion=2. / 3,
+        hidden_channel_expansion=2. / 3,
         stage_block_cfg=dict(type='RepVGGBlock'),
         csp_act_cfg=dict(type='ReLU', inplace=True)),
     neck=dict(
@@ -17,12 +17,10 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         stage_block_cfg=dict(type='RepVGGBlock'),
-        expansion=2. / 3,
+        hidden_channel_expansion=2. / 3,
         csp_act_cfg=dict(type='ReLU', inplace=True)),
     bbox_head=dict(
-        type='YOLOv6Head',
-        head_module=dict(widen_factor=widen_factor),
-    ))
+        type='YOLOv6Head', head_module=dict(widen_factor=widen_factor)))
 
 mosaic_affine_pipeline = [
     dict(

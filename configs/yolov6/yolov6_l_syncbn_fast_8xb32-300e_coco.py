@@ -7,7 +7,7 @@ model = dict(
     backbone=dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        expansion=1. / 2,
+        hidden_channel_expansion=1. / 2,
         stage_block_cfg=dict(
             type='ConvWrapper',
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001)),
@@ -15,7 +15,7 @@ model = dict(
     neck=dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        expansion=1. / 2,
+        hidden_channel_expansion=1. / 2,
         stage_block_cfg=dict(
             type='ConvWrapper',
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001)),

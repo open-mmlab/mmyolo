@@ -9,7 +9,7 @@ from mmdet.utils import ConfigType, OptMultiConfig
 from mmyolo.models.layers.yolo_bricks import SPPFBottleneck
 from mmyolo.registry import MODELS
 from ..layers import BepC3StageBlock, RepStageBlock
-from ..utils import make_divisible, make_round
+from ..utils import make_round
 from .base_backbone import BaseBackbone
 
 
@@ -99,8 +99,7 @@ class YOLOv6EfficientRep(BaseBackbone):
         stage_block_cfg.update(
             dict(
                 in_channels=self.input_channels,
-                out_channels=make_divisible(self.arch_setting[0][0],
-                                            self.widen_factor),
+                out_channels=int(self.arch_setting[0][0] * self.widen_factor),
                 kernel_size=3,
                 stride=2,
             ))
@@ -115,14 +114,14 @@ class YOLOv6EfficientRep(BaseBackbone):
         """
         in_channels, out_channels, num_blocks, use_spp = setting
 
-        in_channels = make_divisible(in_channels, self.widen_factor)
-        out_channels = make_divisible(out_channels, self.widen_factor)
+        in_channels = int(in_channels * self.widen_factor)
+        out_channels = int(out_channels * self.widen_factor)
         num_blocks = make_round(num_blocks, self.deepen_factor)
 
         rep_stage_block = RepStageBlock(
             in_channels=out_channels,
             out_channels=out_channels,
-            n=num_blocks,
+            num_blocks=num_blocks,
             stage_block_cfg=self.stage_block_cfg,
         )
 
@@ -220,7 +219,7 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  input_channels: int = 3,
-                 expansion: float = 0.5,
+                 hidden_channel_expansion: float = 0.5,
                  out_indices: Tuple[int] = (2, 3, 4),
                  frozen_stages: int = -1,
                  norm_cfg: ConfigType = dict(
@@ -230,7 +229,7 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
                  norm_eval: bool = False,
                  stage_block_cfg: ConfigType = dict(type='ConvWrapper'),
                  init_cfg: OptMultiConfig = None):
-        self.expansion = expansion
+        self.hidden_channel_expansion = hidden_channel_expansion
         self.csp_act_cfg = csp_act_cfg
         super().__init__(
             arch=arch,
@@ -254,15 +253,15 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
             setting (list): The architecture setting of a stage layer.
         """
         in_channels, out_channels, num_blocks, use_spp = setting
-        in_channels = make_divisible(in_channels, self.widen_factor)
-        out_channels = make_divisible(out_channels, self.widen_factor)
+        in_channels = int(in_channels * self.widen_factor)
+        out_channels = int(out_channels * self.widen_factor)
         num_blocks = make_round(num_blocks, self.deepen_factor)
 
         rep_stage_block = BepC3StageBlock(
             in_channels=out_channels,
             out_channels=out_channels,
             num_blocks=num_blocks,
-            hidden_channel_expansion=self.expansion,
+            hidden_channel_expansion=self.hidden_channel_expansion,
             stage_block_cfg=self.stage_block_cfg,
             norm_cfg=self.norm_cfg,
             act_cfg=self.csp_act_cfg)

@@ -115,7 +115,7 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
                 self.widen_factor),
             out_channels=make_divisible(self.out_channels[idx - 1],
                                         self.widen_factor),
-            n=make_round(self.num_csp_blocks, self.deepen_factor),
+            num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
             stage_block_cfg=stage_block_cfg)
 
         if idx == 1:
@@ -166,7 +166,7 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
                                        self.widen_factor),
             out_channels=make_divisible(self.out_channels[idx + 1],
                                         self.widen_factor),
-            n=make_round(self.num_csp_blocks, self.deepen_factor),
+            num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
             stage_block_cfg=stage_block_cfg)
 
     def build_out_layer(self, *args, **kwargs) -> nn.Module:
@@ -212,7 +212,7 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
                  out_channels: int,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
-                 expansion: float = 0.5,
+                 hidden_channel_expansion: float = 0.5,
                  num_csp_blocks: int = 12,
                  freeze_all: bool = False,
                  norm_cfg: ConfigType = dict(
@@ -221,7 +221,7 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
                  csp_act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  stage_block_cfg: ConfigType = dict(type='RepVGGBlock'),
                  init_cfg: OptMultiConfig = None):
-        self.expansion = expansion
+        self.hidden_channel_expansion = hidden_channel_expansion
         self.csp_act_cfg = csp_act_cfg
         super().__init__(
             in_channels=in_channels,
@@ -291,9 +291,9 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
                 self.widen_factor),
             out_channels=make_divisible(self.out_channels[idx - 1],
                                         self.widen_factor),
-            n=make_round(self.num_csp_blocks, self.deepen_factor),
+            num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
             stage_block_cfg=stage_block_cfg,
-            expansion=self.expansion,
+            hidden_channel_expansion=self.hidden_channel_expansion,
             norm_cfg=self.norm_cfg,
             act_cfg=self.csp_act_cfg)
 
@@ -345,9 +345,9 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
                                        self.widen_factor),
             out_channels=make_divisible(self.out_channels[idx + 1],
                                         self.widen_factor),
-            n=make_round(self.num_csp_blocks, self.deepen_factor),
+            num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
             stage_block_cfg=stage_block_cfg,
-            expansion=self.expansion,
+            hidden_channel_expansion=self.hidden_channel_expansion,
             norm_cfg=self.norm_cfg,
             act_cfg=self.csp_act_cfg)
 
