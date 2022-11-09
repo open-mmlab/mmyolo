@@ -144,7 +144,10 @@ class YOLOv6EfficientRep(BaseBackbone):
 
     def init_weights(self):
         if self.init_cfg is None:
-            """Initialize the parameters."""
+            """Initialize the parameters.
+
+            only load init
+            """
             for m in self.modules():
                 if isinstance(m, torch.nn.Conv2d):
                     # In order to be consistent with the source code,
