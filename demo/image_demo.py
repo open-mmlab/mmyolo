@@ -9,7 +9,7 @@ from mmengine.utils import ProgressBar
 
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules, switch_to_deploy
-from mmyolo.utils.misc import gen_out_file_path, get_file_list
+from mmyolo.utils.misc import get_file_list
 
 
 def parse_args():
@@ -46,6 +46,9 @@ def main():
     if args.deploy:
         switch_to_deploy(model)
 
+    if not os.path.exists(args.out_dir):
+        os.mkdir(args.out_dir)
+
     # init visualizer
     visualizer = VISUALIZERS.build(model.cfg.visualizer)
     visualizer.dataset_meta = model.dataset_meta
@@ -61,9 +64,11 @@ def main():
         img = mmcv.imread(file)
         img = mmcv.imconvert(img, 'bgr', 'rgb')
 
-        # get output path if it is needed.
-        out_file = gen_out_file_path(file, args.img, source_type['is_dir'],
-                                     args.out_dir, args.show)
+        if source_type['is_dir']:
+            filename = os.path.relpath(file, args.img).replace('/', '_')
+        else:
+            filename = os.path.basename(file)
+        out_file = None if args.show else os.path.join(args.out_dir, filename)
 
         visualizer.add_datasample(
             os.path.basename(out_file),

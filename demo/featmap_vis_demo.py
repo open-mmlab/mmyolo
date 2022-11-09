@@ -10,8 +10,7 @@ from mmengine.utils import ProgressBar
 
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
-from mmyolo.utils.misc import (auto_arrange_images, gen_out_file_path,
-                               get_file_list)
+from mmyolo.utils.misc import auto_arrange_images, get_file_list
 
 
 # TODO: Refine
@@ -23,7 +22,7 @@ def parse_args():
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
         '--out-dir',
-        default=None,
+        default='',
         help='Path to output directory, '
         'if the user not set this flag then will show each image')
     parser.add_argument(
@@ -113,6 +112,9 @@ def main():
 
     model = init_detector(args.config, args.checkpoint, device=args.device)
 
+    if not os.path.exists(args.out_dir):
+        os.mkdir(args.out_dir)
+
     if args.preview_model:
         print(model)
         print('\n This flag is only show model, if you want to continue, '
@@ -152,9 +154,12 @@ def main():
         img = mmcv.imread(image_path)
         img = mmcv.imconvert(img, 'bgr', 'rgb')
 
-        # get output path if it is needed.
-        out_file = gen_out_file_path(image_path, args.img,
-                                     source_type['is_dir'], args.out_dir)
+        if source_type['is_dir']:
+            filename = os.path.relpath(image_path, args.img).replace('/', '_')
+        else:
+            filename = os.path.basename(image_path)
+        out_file = None if args.out_dir != '' else os.path.join(
+            args.out_dir, filename)
 
         # show the results
         shown_imgs = []

@@ -88,34 +88,3 @@ def get_file_list(source_root: str) -> [list, dict]:
     source_type = dict(is_dir=is_dir, is_url=is_url, is_file=is_file)
 
     return source_file_path_list, source_type
-
-
-def gen_out_file_path(source_path: str,
-                      source_root: str,
-                      is_dir: bool,
-                      out_dir: str,
-                      show_flag: bool = False) -> str:
-    """Gen output file name according to source path and source root.
-
-    Args:
-        source_path (str): Path of source file
-        source_root (str): Path of source root
-        is_dir (bool): Source root is directory or not
-        out_dir (str): Output save path
-        show_flag (bool): Whether show the result or not
-
-    Return:
-        img (np.ndarray): cv2 file data
-        out_file_path (str): Out file save path according of it original path
-    """
-
-    if not os.path.exists(out_dir):
-        os.mkdir(out_dir)
-
-    if is_dir:
-        filename = os.path.relpath(source_path, source_root).replace('/', '_')
-    else:
-        filename = os.path.basename(source_path)
-    out_file_path = None if show_flag else os.path.join(out_dir, filename)
-
-    return out_file_path
