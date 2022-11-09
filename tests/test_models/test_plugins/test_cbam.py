@@ -2,6 +2,7 @@
 
 from unittest import TestCase
 
+import pytest
 import torch
 
 from mmyolo.models.plugins import CBAM
@@ -12,10 +13,8 @@ register_all_modules()
 
 class TestCBAM(TestCase):
 
-    def test_forward(self):
-        with self.assertRaisesRegex(
-                AssertionError,
-                'act_cfg in ChannelAttention sequence length must equal to 2'):
+    def test_init(self):
+        with pytest.raises(AssertionError):
             # act_cfg in ChannelAttention sequence length must equal to 2
             CBAM(
                 in_channels=16,
@@ -23,10 +22,7 @@ class TestCBAM(TestCase):
                     ChannelAttention=(dict(type='ReLU'), ),
                     SpatialAttention=dict(type='Sigmoid')))
 
-        with self.assertRaisesRegex(
-                AssertionError,
-                'act_cfg in ChannelAttention sequence must be a tuple of dict'
-        ):
+        with pytest.raises(AssertionError):
             # act_cfg in ChannelAttention sequence must be a tuple of dict
             CBAM(
                 in_channels=16,
@@ -35,6 +31,7 @@ class TestCBAM(TestCase):
                                       dict(type='Sigmoid')],
                     SpatialAttention=dict(type='Sigmoid')))
 
+    def test_forward(self):
         images = torch.randn(2, 16, 20, 20)
         cbam = CBAM(16)
         out = cbam(images)

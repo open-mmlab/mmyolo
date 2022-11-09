@@ -4,12 +4,14 @@ from typing import Sequence, Union
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule
+from mmdet.utils import OptMultiConfig
+from mmengine.model import BaseModule
 from mmengine.utils import is_tuple_of
 
 from mmyolo.registry import MODELS
 
 
-class ChannelAttention(nn.Module):
+class ChannelAttention(BaseModule):
     """ChannelAttention
     Args:
         channels (int): The input (and output) channels of the
@@ -27,8 +29,9 @@ class ChannelAttention(nn.Module):
     def __init__(self,
                  channels: int,
                  ratio: int = 16,
-                 act_cfg: Union[int, Sequence[int]] = (dict(type='ReLU'),
-                                                       dict(type='Sigmoid'))):
+                 act_cfg: Union[dict,
+                                Sequence[dict]] = (dict(type='ReLU'),
+                                                   dict(type='Sigmoid'))):
         super().__init__()
         if isinstance(act_cfg, dict):
             act_cfg = (act_cfg, act_cfg)
@@ -64,7 +67,7 @@ class ChannelAttention(nn.Module):
         return out
 
 
-class SpatialAttention(nn.Module):
+class SpatialAttention(BaseModule):
     """SpatialAttention
     Args:
          kernel_size (int): The size of the convolution kernel in
@@ -98,7 +101,7 @@ class SpatialAttention(nn.Module):
 
 
 @MODELS.register_module()
-class CBAM(nn.Module):
+class CBAM(BaseModule):
     """Convolutional Block Attention Module.
 
     arxiv link: https://arxiv.org/abs/1807.06521v2
@@ -112,17 +115,21 @@ class CBAM(nn.Module):
             and SpatialAttention. Default: dict(ChannelAttention=
             (dict(type='ReLU'), dict(type='Sigmoid')),SpatialAttention=
             dict(type='Sigmoid'))
+        init_cfg (dict or list[dict], optional): Initialization config dict.
+            Defaults to None.
     """
 
-    def __init__(self,
-                 in_channels: int,
-                 ratio: int = 16,
-                 kernel_size: int = 7,
-                 act_cfg: dict = dict(
-                     ChannelAttention=(dict(type='ReLU'),
-                                       dict(type='Sigmoid')),
-                     SpatialAttention=dict(type='Sigmoid'))):
-        super().__init__()
+    def __init__(
+        self,
+        in_channels: int,
+        ratio: int = 16,
+        kernel_size: int = 7,
+        act_cfg: dict = dict(
+            ChannelAttention=(dict(type='ReLU'), dict(type='Sigmoid')),
+            SpatialAttention=dict(type='Sigmoid')),
+        init_cfg: OptMultiConfig = None,
+    ):
+        super().__init__(init_cfg)
         self.channel_attention = ChannelAttention(
             channels=in_channels,
             ratio=ratio,
