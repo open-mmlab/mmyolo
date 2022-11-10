@@ -62,8 +62,10 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 
   MMYOLO 将框架解耦成不同的模块组件，通过组合不同的模块和训练测试策略，用户可以便捷地构建自定义模型。
 
-<img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="基类"/>
+<img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="基类-P5"/>
   图为 RangeKing@GitHub 提供，非常感谢！
+
+P6 模型图详见 [model_design.md](docs/zh_CN/algorithm_descriptions/model_design.md)。
 
 </details>
 

@@ -2,13 +2,19 @@
 
 ## YOLO series model basic class
 
-The structural graph is provided by RangeKing@GitHub. Thank you RangeKing！
+The structural figure is provided by RangeKing@GitHub. Thank you RangeKing！
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" width=800 alt="BaseModule">
+<img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="BaseModule-P5">
+Figure 1: P5 model structure
 </div>
 
-Most YOLO series algorithms adopt a unified algorithm-building structure, typically as Darknet + PAFPN. In order to let users quickly understand the YOLO series algorithm architecture, we deliberately designed the `BaseBackbone` + `BaseYOLONeck` structure, as shown in the above graph.
+<div align=center>
+<img src="https://user-images.githubusercontent.com/27466624/200850066-0c434173-2d40-4c12-8de3-eda473ff172f.jpg" alt="BaseModule-P6">
+Figure 2: P6 model structure
+</div>
+
+Most YOLO series algorithms adopt a unified algorithm-building structure, typically as Darknet + PAFPN. In order to let users quickly understand the YOLO series algorithm architecture, we deliberately designed the `BaseBackbone` + `BaseYOLONeck` structure, as shown in the above figure.
 
 The benefits of the abstract `BaseBackbone` include:
 
@@ -20,7 +26,9 @@ The benefits of the abstract `BaseBackbone` include:
 
 ### BaseBackbone
 
-We can see in the above graph, as for P5, `BaseBackbone` includes 1 stem layer and 4 stage layers which are similar to the basic structure of ResNet. Different backbone network algorithms inherit the `BaseBackbone`. Users can build each layer of the whole network by implementing customized basic modules through the internal `build_xx` method.
+- As shown in Figure 1, for P5, `BaseBackbone` includes 1 stem layer and 4 stage layers which are similar to the basic structure of ResNet.
+- As shown in Figure 2, for P6, `BaseBackbone` includes 1 stem layer and 5 stage layers.
+  Different backbone network algorithms inherit the `BaseBackbone`. Users can build each layer of the whole network by implementing customized basic modules through the internal `build_xx` method.
 
 ### BaseYOLONeck
 

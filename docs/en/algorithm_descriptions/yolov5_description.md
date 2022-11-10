@@ -3,7 +3,13 @@
 ## 0 Introduction
 
 <div align=center >
-<img alt="YOLOv5_structure_v3.4" src="https://user-images.githubusercontent.com/27466624/200000324-70ae078f-cea7-4189-8baa-440656797dad.jpg"/>
+<img alt="YOLOv5-P5_structure_v3.4" src="https://user-images.githubusercontent.com/27466624/200000324-70ae078f-cea7-4189-8baa-440656797dad.jpg"/>
+Figure 1: YOLOv5-P5 model structure
+</div>
+
+<div align=center >
+<img alt="YOLOv5-P6_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/200845705-c9f3300f-9847-4933-b79d-0efcf0286e16.jpg"/>
+Figure 2: YOLOv5-P6 model structure
 </div>
 
 RangeKing@github provides the graph above. Thanks, RangeKing!
@@ -15,7 +21,11 @@ In short, the main features of YOLOv5 are:
 2. **Fast training speed**: the training time in the case of 300 epochs is similar to most of the one-stage and two-stage algorithms under 12 epochs, such as RetinaNet, ATSS, and Faster R-CNN.
 3. **Abundant optimization for corner cases**: YOLOv5 has implemented many optimizations. The functions and documentation are richer as well.
 
-This article will start with the principle of the YOLOv5 algorithm and then focus on analyzing the implementation in MMYOLO. The follow-up part includes the guide and speed benchmark of YOLOv5.
+Figures 1 and 2 show that the main differences between the P5 and P6 versions of YOLOv5 are the network structure and the image input resolution. Other differences, such as the number of anchors and loss weights, can be found in the [configuration file](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-p6-v62_syncbn_fast_8xb16-300e_coco.py). This article will start with the principle of the YOLOv5 algorithm and then focus on analyzing the implementation in MMYOLO. The follow-up part includes the guide and speed benchmark of YOLOv5.
+
+```{hint}
+Unless specified, the P5 model is described by default in this documentation.
+```
 
 We hope this article becomes your core document to start and master YOLOv5. Since YOLOv5 is still constantly updated, we will also keep updating this document. So please always catch up with the latest version.
 
@@ -245,20 +255,25 @@ This section was written by RangeKing@github. Thanks a lot!
 
 The YOLOv5 network structure is the standard `CSPDarknet` + `PAFPN` + `non-decoupled Head`.
 
-The size of the YOLOv5 network structure is determined by the `deepen_factor` and `widen_factor` parameters. `deepen_factor` controls the depth of the network structure, that is, the number of stacks of `DarknetBottleneck` modules in `CSPLayer`. `widen_factor` controls the width of the network structure, that is, the number of channels of the module output feature map. Take YOLOv5-l as an example. Its `deepen_factor = widen_factor = 1.0` , the overall structure is shown in the graph above.
+The size of the YOLOv5 network structure is determined by the `deepen_factor` and `widen_factor` parameters. `deepen_factor` controls the depth of the network structure, that is, the number of stacks of `DarknetBottleneck` modules in `CSPLayer`. `widen_factor` controls the width of the network structure, that is, the number of channels of the module output feature map. Take YOLOv5-l as an example. Its `deepen_factor = widen_factor = 1.0`. the overall structure is shown in the graph above.
 
 The upper part of the figure is an overview of the model; the lower part is the specific network structure, in which the modules are marked with numbers in serial, which is convenient for users to correspond to the configuration files of the YOLOv5 official repository. The middle part is the detailed composition of each sub-module.
 
-If you want to use **netron** to visualize the details of the network structure, just open the ONNX file format exported by MMDeploy in netron.
+If you want to use **netron** to visualize the details of the network structure, open the ONNX file format exported by MMDeploy in netron.
+
+```{hint}
+The shapes of the feature map in Section 1.2 are (B, C, H, W) by default.
+```
 
 #### 1.2.1 Backbone
 
 `CSPDarknet` in MMYOLO inherits from `BaseBackbone`. The overall structure is similar to `ResNet` with a total of 5 layers of design, including one `Stem Layer` and four `Stage Layer`:
 
 - `Stem Layer` is a `ConvModule` whose kernel size is 6x6. It is more efficient than the `Focus` module used before v6.1.
-- Each of the first three `Stage Layer` consists of one `ConvModule` and one `CSPLayer`, as shown in the Details part in the graph above. `ConvModule` is a 3x3 `Conv2d` + `BatchNorm` + `SiLU activation function` module. `CSPLayer` is the C3 module in the official YOLOv5 repository, consisting of three `ConvModule` + n `DarknetBottleneck` with residual connections.
-- The 4th `Stage Layer` adds an `SPPF` module at the end. The `SPPF` module is to serialize the input through multiple 5x5 `MaxPool2d` layers, which has the same effect as the `SPP` module but is faster.
-- The P5 model passes the corresponding results from the second to the fourth `Stage Layer` to the `Neck` structure and extracts three output feature maps. Take a 640x640 input image as an example. The output features are (B, 256, 80, 80), (B,512,40,40), and (B,1024,20,20), the corresponding stride is 8/16/32.
+- Except for the last `Stage Layer`, each `Stage Layer` consists of one `ConvModule` and one `CSPLayer`, as shown in the Details part in the graph above. `ConvModule` is a 3x3 `Conv2d` + `BatchNorm` + `SiLU activation function` module. `CSPLayer` is the C3 module in the official YOLOv5 repository, consisting of three `ConvModule` + n `DarknetBottleneck` with residual connections.
+- The last `Stage Layer` adds an `SPPF` module at the end. The `SPPF` module is to serialize the input through multiple 5x5 `MaxPool2d` layers, which has the same effect as the `SPP` module but is faster.
+- The P5 model passes the corresponding results from the second to the fourth `Stage Layer` to the `Neck` structure and extracts three output feature maps. Take a 640x640 input image as an example. The output features are (B, 256, 80, 80), (B,512,40,40), and (B,1024,20,20). The corresponding stride is 8/16/32.
+- The P6 model passes the corresponding results from the second to the fifth `Stage Layer` to the `Neck` structure and extracts three output feature maps. Take a 1280x1280 input image as an example. The output features are (B, 256, 160, 160), (B,512,80,80), (B,768,40,40), and (B,1024,20,20). The corresponding stride is 8/16/32/64.
 
 #### 1.2.2 Neck
 
@@ -266,7 +281,7 @@ There is no **Neck** part in the official YOLOv5. However, to facilitate users t
 
 Based on the `BaseYOLONeck` structure, YOLOv5's `Neck` also follows the same build process. However, for non-existed modules, we use `nn.Identity` instead.
 
-The feature maps output by the Neck module are the same as the Backbone, which is (B,256,80,80), (B,512,40,40), and (B,1024,20,20).
+The feature maps output by the Neck module is the same as the Backbone. The P5 model is (B,256,80,80), (B,512,40,40) and (B,1024,20,20); the P6 model is (B,256,160,160), (B,512,80,80), (B,768,40,40) and (B,1024,20,20).
 
 #### 1.2.3 Head
 
@@ -274,7 +289,13 @@ The `Head` structure of YOLOv5 is the same as YOLOv3, which is a `non-decoupled 
 
 The `PAFPN` outputs three feature maps of different scales, whose shapes are (B,256,80,80), (B,512,40,40), and (B,1024,20,20) accordingly.
 
-Since YOLOv5 has a non-decoupled output, that is, classification and bbox detection results are all in different channels of the same convolution module. Taking the COCO dataset as an example, when the input is 640x640 resolution, the output shapes of the Head module are `(B, 3x(4+1+80),80,80)`, `(B, 3x(4+1+80),40,40)` and `(B, 3x(4+1+80),20,20)`. `3` represents three anchors, `4` represents the bbox prediction branch, `1` represents the obj prediction branch, and `80` represents the class prediction branch of the COCO dataset.
+Since YOLOv5 has a non-decoupled output, that is, classification and bbox detection results are all in different channels of the same convolution module. Taking the COCO dataset as an example:
+
+- When the input of P5 model is 640x640 resolution, the output shapes of the Head module are `(B, 3x(4+1+80),80,80)`, `(B, 3x(4+1+80),40,40)` and `(B, 3x(4+1+80),20,20)`.
+
+- When the input of P6 model is 1280x1280 resolution, the output shapes of the Head module are  `(B, 3x(4+1+80),160,160)`, `(B, 3x(4+1+80),80,80)`, `(B, 3x(4+1+80),40,40)` and `(B, 3x(4+1+80),20,20)`.
+
+  `3` represents three anchors, `4` represents the bbox prediction branch, `1` represents the obj prediction branch, and `80` represents the class prediction branch of the COCO dataset.
 
 ### 1.3 Positive and negative sample assignment strategy
 
