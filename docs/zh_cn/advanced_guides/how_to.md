@@ -4,30 +4,12 @@
 
 ## 给主干网络增加插件
 
-MMYOLO 支持在 Backbone 的不同 Stage 后增加如 `none_local`、`dropblock` 等插件，用户可以直接通过修改 config 文件中 `backbone` 的 `plugins` 参数来实现对插件的管理。例如为 `YOLOv5` 增加 `GeneralizedAttention` 插件，其配置文件如下：
-
-```python
-_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
-
-model = dict(
-    backbone=dict(
-        plugins=[
-            dict(
-                cfg=dict(
-                    type='mmdet.GeneralizedAttention',
-                    spatial_range=-1,
-                    num_heads=8,
-                    attention_type='0011',
-                    kv_stride=2),
-                stages=(False, False, True, True)),
-        ], ))
-```
-
-`cfg` 参数表示插件的具体配置， `stages` 参数表示是否在 backbone 对应的 stage 后面增加插件，长度需要和 backbone 的 stage 数量相同。
+[更多的插件使用](plugins.md)
 
 ## 应用多个 Neck
 
-如果你想堆叠多个 Neck，可以直接在配置文件中的 Neck 参数，MMYOLO 支持以 `List` 形式拼接多个 Neck 配置，你需要保证上一个 Neck 的输出通道与下一个 Neck 的输入通道相匹配。如需要调整通道，可以插入 `mmdet.ChannelMapper` 模块用来对齐多个 Neck 之间的通道数量。具体配置如下：
+如果你想堆叠多个 Neck，可以直接在配置文件中的 Neck 参数，MMYOLO 支持以 `List` 形式拼接多个 Neck 配置，你需要保证上一个 Neck 的输出通道与下一个 Neck
+的输入通道相匹配。如需要调整通道，可以插入 `mmdet.ChannelMapper` 模块用来对齐多个 Neck 之间的通道数量。具体配置如下：
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -42,7 +24,8 @@ model = dict(
             deepen_factor=deepen_factor,
             widen_factor=widen_factor,
             in_channels=[256, 512, 1024],
-            out_channels=[256, 512, 1024], # 因为 out_channels 由 widen_factor 控制，YOLOv5PAFPN 的 out_channels = out_channels * widen_factor
+            out_channels=[256, 512, 1024],
+            # 因为 out_channels 由 widen_factor 控制，YOLOv5PAFPN 的 out_channels = out_channels * widen_factor
             num_csp_blocks=3,
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg=dict(type='SiLU', inplace=True)),
@@ -58,14 +41,16 @@ model = dict(
             num_blocks=2,
             # disable zero_init_offset to follow official implementation
             zero_init_offset=False)
-    ]
-    bbox_head=dict(head_module=dict(in_channels=[512,512,512])) # 因为 out_channels 由 widen_factor 控制，YOLOv5HeadModuled 的 in_channels * widen_factor 才会等于最后一个 neck 的 out_channels
+    ],
+    bbox_head=dict(head_module=dict(in_channels=[512, 512, 512]))
+    # 因为 out_channels 由 widen_factor 控制，YOLOv5HeadModuled 的 in_channels * widen_factor 才会等于最后一个 neck 的 out_channels
 )
 ```
 
 ## 跨库使用主干网络
 
-OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation 中的模型注册表都继承自 MMEngine 中的根注册表，允许这些 OpenMMLab 开源库直接使用彼此已经实现的模块。 因此用户可以在 MMYOLO 中使用来自 MMDetection、MMClassification 的主干网络，而无需重新实现。
+OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation 中的模型注册表都继承自 MMEngine 中的根注册表，允许这些 OpenMMLab
+开源库直接使用彼此已经实现的模块。 因此用户可以在 MMYOLO 中使用来自 MMDetection、MMClassification 的主干网络，而无需重新实现。
 
 ```{note}
 1. 使用其他主干网络时，你需要保证主干网络的输出通道与 Neck 的输入通道相匹配。
@@ -235,7 +220,8 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
 
 ### 通过 MMClassification 使用 `timm` 中实现的主干网络
 
-由于 MMClassification 提供了 Py**T**orch **Im**age **M**odels (`timm`) 主干网络的封装，用户也可以通过 MMClassification 直接使用 `timm` 中的主干网络。假设想将 `EfficientNet-B1`作为 `YOLOv5` 的主干网络，则配置文件如下：
+由于 MMClassification 提供了 Py**T**orch **Im**age **M**odels (`timm`) 主干网络的封装，用户也可以通过 MMClassification 直接使用 `timm`
+中的主干网络。假设想将 `EfficientNet-B1`作为 `YOLOv5` 的主干网络，则配置文件如下：
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -251,9 +237,9 @@ channels = [40, 112, 320]
 
 model = dict(
     backbone=dict(
-        _delete_=True, # 将 _base_ 中关于 backbone 的字段删除
-        type='mmcls.TIMMBackbone', # 使用 mmcls 中的 timm 主干网络
-        model_name='efficientnet_b1', # 使用 TIMM 中的 efficientnet_b1
+        _delete_=True,  # 将 _base_ 中关于 backbone 的字段删除
+        type='mmcls.TIMMBackbone',  # 使用 mmcls 中的 timm 主干网络
+        model_name='efficientnet_b1',  # 使用 TIMM 中的 efficientnet_b1
         features_only=True,
         pretrained=True,
         out_indices=(2, 3, 4)),
@@ -261,13 +247,13 @@ model = dict(
         type='YOLOv5PAFPN',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        in_channels=channels, # 注意：EfficientNet-B1 输出的3个通道是 [40, 112, 320]，和原先的 yolov5-s neck 不匹配，需要更改
+        in_channels=channels,  # 注意：EfficientNet-B1 输出的3个通道是 [40, 112, 320]，和原先的 yolov5-s neck 不匹配，需要更改
         out_channels=channels),
     bbox_head=dict(
         type='YOLOv5Head',
         head_module=dict(
             type='YOLOv5HeadModule',
-            in_channels=channels, # head 部分输入通道也要做相应更改
+            in_channels=channels,  # head 部分输入通道也要做相应更改
             widen_factor=widen_factor))
 )
 ```
