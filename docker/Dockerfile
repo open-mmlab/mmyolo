@@ -26,7 +26,7 @@ RUN apt-get update \
 
 # Install MMEngine , MMCV and MMDet
 RUN pip install --no-cache-dir openmim && \
-    mim install --no-cache-dir "mmengine>=0.3.0" "mmcv>=2.0.0rc1,<2.1.0" "mmdet>=3.0.0rc2,<3.1.0"
+    mim install --no-cache-dir "mmengine>=0.3.1" "mmcv>=2.0.0rc1,<2.1.0" "mmdet>=3.0.0rc3,<3.1.0"
 
 # Install MMYOLO
 RUN git clone https://github.com/open-mmlab/mmyolo.git /mmyolo && \
