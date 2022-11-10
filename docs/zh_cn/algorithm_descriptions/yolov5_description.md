@@ -4,6 +4,12 @@
 
 <div align=center >
 <img alt="YOLOv5_structure_v3.4" src="https://user-images.githubusercontent.com/27466624/200000324-70ae078f-cea7-4189-8baa-440656797dad.jpg"/>
+图 1：YOLOv5-P5 模型结构图
+</div>
+
+<div align=center >
+<img alt="YOLOv5_P6_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/200845705-c9f3300f-9847-4933-b79d-0efcf0286e16.jpg"/>
+图 2：YOLOv5-P6 模型结构图
 </div>
 
 以上结构图由 RangeKing@github 绘制。
@@ -14,7 +20,11 @@ YOLOv5 是一个面向实时工业应用而开源的目标检测算法，受到�
 2. **算法训练速度极快**，在 300 epoch 情况下训练时长和大部分 one-stage 算法如 RetinaNet、ATSS 和 two-stage 算法如 Faster R-CNN 在 12 epoch 的训练时间接近
 3. 框架进行了**非常多的 corner case 优化**，功能和文档也比较丰富
 
-本文将从 YOLOv5 算法本身原理讲起，然后重点分析 MMYOLO 中的实现。关于 YOLOv5 的使用指南和速度等对比请阅读本文的后续内容。
+如图 1 和 2 所示，YOLOv5 的 P5 和 P6 版本主要差异在于网络结构和图片输入分辨率。其他区别，如 anchors 个数和 loss 权重可详见[配置文件](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/)。本文将从 YOLOv5 算法本身原理讲起，然后重点分析 MMYOLO 中的实现。关于 YOLOv5 的使用指南和速度等对比请阅读本文的后续内容。
+
+```{hint}
+没有特殊说明情况下，本文默认描述的是 P5 模型。
+```
 
 希望本文能够成为你入门和掌握 YOLOv5 的核心文档。由于 YOLOv5 本身也在不断迭代更新，我们也会不断的更新本文档。请注意阅读最新版本。
 
@@ -241,15 +251,11 @@ train_pipeline = [
 
 ### 1.2 网络结构
 
-<div align=center >
-<img alt="YOLOv5_P6_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/200845705-c9f3300f-9847-4933-b79d-0efcf0286e16.jpg"/>
-</div>
-
 本小结由 RangeKing@github 撰写，非常感谢！！！
 
 YOLOv5 网络结构是标准的 `CSPDarknet` + `PAFPN` + `非解耦 Head`。
 
-YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决定。其中 `deepen_factor` 控制网络结构深度，即 `CSPLayer` 中 `DarknetBottleneck` 模块堆叠的数量；`widen_factor` 控制网络结构宽度，即模块输出特征图的通道数。以 YOLOv5-l 为例，其 `deepen_factor = widen_factor = 1.0` 。P5 模型整体结构如本页面第一张图所示，P6 模型整体结构如上图所示。
+YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决定。其中 `deepen_factor` 控制网络结构深度，即 `CSPLayer` 中 `DarknetBottleneck` 模块堆叠的数量；`widen_factor` 控制网络结构宽度，即模块输出特征图的通道数。以 YOLOv5-l 为例，其 `deepen_factor = widen_factor = 1.0` 。P5 和 P6 的模型整体结构分别如图 1 和图 2 所示。
 
 图的上半部分为模型总览；下半部分为具体网络结构，其中的模块均标有序号，方便用户与 YOLOv5 官方仓库的配置文件对应；中间部分为各子模块的具体构成。
 
