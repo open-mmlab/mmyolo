@@ -53,5 +53,6 @@ MMYOLO 文件结构和 MMDetection 完全一致。为了能够充分复用 MMDet
 
    - [数据流](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/index.html#id1)
    - [How to](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/index.html#how-to)
+   - [插件](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/index.html#id3)
 
 6. [解读文章和资源汇总](article.md)

@@ -21,10 +21,7 @@ def parse_args():
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
-        '--out-dir',
-        default='',
-        help='Path to output directory, '
-        'if the user not set this flag then will show each image')
+        '--out-dir', default='./output', help='Path to output file')
     parser.add_argument(
         '--target-layers',
         default=['backbone'],
@@ -41,6 +38,8 @@ def parse_args():
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
         '--score-thr', type=float, default=0.3, help='Bbox score threshold')
+    parser.add_argument(
+        '--show', action='store_true', help='Show the featmap results')
     parser.add_argument(
         '--channel-reduction',
         default='select_max',
@@ -112,7 +111,7 @@ def main():
 
     model = init_detector(args.config, args.checkpoint, device=args.device)
 
-    if not os.path.exists(args.out_dir):
+    if not os.path.exists(args.out_dir) and not args.show:
         os.mkdir(args.out_dir)
 
     if args.preview_model:
@@ -158,8 +157,7 @@ def main():
             filename = os.path.relpath(image_path, args.img).replace('/', '_')
         else:
             filename = os.path.basename(image_path)
-        out_file = None if args.out_dir != '' else os.path.join(
-            args.out_dir, filename)
+        out_file = None if args.show else os.path.join(args.out_dir, filename)
 
         # show the results
         shown_imgs = []
@@ -183,14 +181,13 @@ def main():
                 arrangement=args.arrangement)
             shown_imgs.append(shown_img)
 
-        # Add original image
-        shown_imgs.append(img)
         shown_imgs = auto_arrange_images(shown_imgs)
 
         progress_bar.update()
         if out_file:
             mmcv.imwrite(shown_imgs[..., ::-1], out_file)
-        else:
+
+        if args.show:
             visualizer.show(shown_imgs)
 
     print(f'All done!'
