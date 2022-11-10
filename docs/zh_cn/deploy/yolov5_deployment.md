@@ -1,10 +1,10 @@
 # YOLOv5 部署全流程说明
 
-请先参考 [`部署必备指南`](./部署必备指南.md) 了解部署配置文件等相关信息。
+请先参考 [`部署必备指南`](./basic_deployment_guide.md) 了解部署配置文件等相关信息。
 
 ## 模型训练和测试
 
-模型训练和测试请参考 [`YOLOv5 从入门到部署全流程`](docs/zh_cn/user_guides/yolov5_tutorial.md) 。
+模型训练和测试请参考 [`YOLOv5 从入门到部署全流程`](../user_guides/yolov5_tutorial.md) 。
 
 ## 准备 MMDeploy 运行环境
 
@@ -22,7 +22,7 @@
 
 当您需要部署静态输入模型时，您应该确保模型的输入尺寸是固定的，比如在测试流程或测试数据集加载时输入尺寸为 `640x640`。
 
-您可以查看 [`yolov5_s-deploy.py`](configs/deploy/model/yolov5_s-deploy.py) 中测试流程或测试数据集加载部分，如下所示：
+您可以查看 [`yolov5_s-static.py`](../../../configs/deploy/model/yolov5_s-static.py) 中测试流程或测试数据集加载部分，如下所示：
 
 ```python
 _base_ = '../../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -55,7 +55,7 @@ test_dataloader = dict(
 
 #### (2) 部署配置文件
 
-当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_static.py`](configs/deploy/detection_onnxruntime_static.py) ，如下所示：
+当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_static.py`](../../../configs/deploy/detection_onnxruntime_static.py)，如下所示：
 
 ```python
 _base_ = ['./base_static.py']
@@ -75,9 +75,9 @@ codebase_config = dict(
 backend_config = dict(type='onnxruntime')
 ```
 
-默认配置中的 `post_processing` 后处理参数是当前模型与 `pytorch` 模型精度对齐的配置，若您需要修改相关参数，可以参考 [`部署必备指南`](./部署必备指南.md) 的详细介绍。
+默认配置中的 `post_processing` 后处理参数是当前模型与 `pytorch` 模型精度对齐的配置，若您需要修改相关参数，可以参考 [`部署必备指南`](./basic_deployment_guide.md) 的详细介绍。
 
-当您部署在 `TensorRT` 时，您可以查看 [`detection_tensorrt_static-640x640.py`](config/deploy/detection_tensorrt_static-640x640.py) ，如下所示：
+当您部署在 `TensorRT` 时，您可以查看 [`detection_tensorrt_static-640x640.py`](../../../configs/deploy/detection_tensorrt_static-640x640.py)，如下所示：
 
 ```python
 _base_ = ['./base_static.py']
@@ -102,7 +102,7 @@ use_efficientnms = False
 
 #### (1) 模型配置文件
 
-当您需要部署动态输入模型时，模型的输入可以为任意尺寸(`TensorRT` 会限制最小和最大输入尺寸)，因此使用默认的 [`yolov5_s-v61_syncbn_8xb16-300e_coco.py`](configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) 模型配置文件即可，其中数据处理和数据集加载器部分如下所示：
+当您需要部署动态输入模型时，模型的输入可以为任意尺寸(`TensorRT` 会限制最小和最大输入尺寸)，因此使用默认的 [`yolov5_s-v61_syncbn_8xb16-300e_coco.py`](../../../configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) 模型配置文件即可，其中数据处理和数据集加载器部分如下所示：
 
 ```python
 batch_shapes_cfg = dict(
@@ -148,7 +148,7 @@ val_dataloader = dict(
 
 #### (2) 部署配置文件
 
-当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_dynamic.py`](configs/deploy/detection_onnxruntime_dynamic.py) ，如下所示：
+当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_dynamic.py`](../../../configs/deploy/detection_onnxruntime_dynamic.py) ，如下所示：
 
 ```python
 _base_ = ['./base_dynamic.py']
