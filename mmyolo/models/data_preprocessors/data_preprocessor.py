@@ -82,14 +82,12 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
                 # Convert to float after channel conversion to ensure
                 # efficiency
                 _batch_input = _batch_input.float()
-                data_sample.set_metainfo({'pad_shape': (0, 0)})
 
                 batch_inputs.append(_batch_input)
         elif isinstance(inputs, torch.Tensor):
             raise NotImplementedError
         else:
             raise NotImplementedError
-        data_samples = data['data_samples']
 
         if self.batch_augments is not None:
             for batch_aug in self.batch_augments:
@@ -107,9 +105,7 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
 
 @MODELS.register_module()
 class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
-    """
-    TODO: doc
-    """
+    """# TODO: doc."""
 
     def __init__(self,
                  random_size_range: Tuple[int, int],
@@ -155,7 +151,7 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
                 h, w = _batch_input.shape[-2:]
                 scale_y = self._input_size[0] / h
                 scale_x = self._input_size[1] / w
-                if scale_x != 1 or scale_y != 1:
+                if scale_x != 1. or scale_y != 1.:
                     if interp_mode in ('nearest', 'area'):
                         align_corners = None
                     else:
@@ -165,35 +161,17 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
                         size=self._input_size,
                         mode=self.interp_mode,
                         align_corners=align_corners)
-                    img_shape = (int(data_sample.img_shape[0] * scale_y),
-                                 int(data_sample.img_shape[1] * scale_x))
-                    pad_shape = (int(data_sample.pad_shape[0] * scale_y),
-                                 int(data_sample.pad_shape[1] * scale_x))
-                    data_sample.set_metainfo({
-                        'img_shape':
-                        img_shape,
-                        'pad_shape':
-                        pad_shape,
-                        'batch_input_shape':
-                        self._input_size
-                    })
-                    data_sample.gt_instances.bboxes[
-                        ...,
-                        0::2] = data_sample.gt_instances.bboxes[...,
-                                                                0::2] * scale_x
-                    data_sample.gt_instances.bboxes[
-                        ...,
-                        1::2] = data_sample.gt_instances.bboxes[...,
-                                                                1::2] * scale_y
-                    if 'ignored_instances' in data_sample:
-                        data_sample.ignored_instances.bboxes[
-                            ..., 0::2] = data_sample.ignored_instances.bboxes[
-                                ..., 0::2] * scale_x
-                        data_sample.ignored_instances.bboxes[
-                            ..., 1::2] = data_sample.ignored_instances.bboxes[
-                                ..., 1::2] * scale_y
+
+                    # rescale bbox
+                    data_sample[:, 2] *= scale_x
+                    data_sample[:, 3] *= scale_y
+                    data_sample[:, 4] *= scale_x
+                    data_sample[:, 5] *= scale_y
+                else:
+                    _batch_input = _batch_input.unsqueeze(0)
+
                 outputs.append(_batch_input)
-            return torch.cat(outputs, dim=0), data_samples
+            return torch.cat(outputs, dim=0), torch.cat(data_samples, dim=0)
         else:
             raise NotImplementedError
 

@@ -4,7 +4,7 @@ from typing import Optional, Sequence, Union
 import torch
 from mmdet.models.task_modules.coders import \
     DistancePointBBoxCoder as MMDET_DistancePointBBoxCoder
-from mmdet.structures.bbox import distance2bbox
+from mmdet.structures.bbox import bbox2distance, distance2bbox
 
 from mmyolo.registry import TASK_UTILS
 
@@ -51,3 +51,11 @@ class DistancePointBBoxCoder(MMDET_DistancePointBBoxCoder):
         pred_bboxes = pred_bboxes * stride[None, :, None]
 
         return distance2bbox(points, pred_bboxes, max_shape)
+
+    def encode(self, points, gt_bboxes, max_dis=None, eps=0.1):
+        """# TODO: doc."""
+
+        assert points.size(-2) == gt_bboxes.size(-2)
+        assert points.size(-1) == 2
+        assert gt_bboxes.size(-1) == 4
+        return bbox2distance(points, gt_bboxes, max_dis, eps)

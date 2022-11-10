@@ -774,7 +774,7 @@ class PPYOLOERandomExpand(LetterResize):
             fill_value = tuple(fill_value)
         self.fill_value = fill_value
 
-    def _resize_img(self, results: dict):
+    def transform(self, results: dict) -> dict:
         if np.random.uniform(0., 1.) < self.prob:
             return results
 
@@ -785,13 +785,11 @@ class PPYOLOERandomExpand(LetterResize):
         w = int(width * ratio)
         if not h > height or not w > width:
             return results
-        y = np.random.randint(0, h - height)
-        x = np.random.randint(0, w - width)
-        # offsets, size = [x, y], [h, w]
-        left_padding = x
-        top_padding = y
-        right_padding = h - height - left_padding
-        bottom_padding = w - width - top_padding
+        top_padding = np.random.randint(0, h - height)
+        left_padding = np.random.randint(0, w - width)
+
+        right_padding = w - width - left_padding
+        bottom_padding = h - height - top_padding
 
         img = mmcv.impad(
             img=img,
@@ -807,6 +805,7 @@ class PPYOLOERandomExpand(LetterResize):
             dtype=np.float32)
 
 
+@TRANSFORMS.register_module()
 class PPYOLOERandomCrop(RandomCrop):
     """
     TODO: 需要重构
@@ -896,30 +895,6 @@ class PPYOLOERandomCrop(RandomCrop):
                     break
 
             if found:
-                # {'img_path': 'data/coco/train2017/000000246382.jpg',
-                # 'img_id': 246382, 'seg_map_path': None, 'height': 612,
-                # 'width': 612,
-                # 'instances': [{'ignore_flag': 0, 'bbox': [121.5,
-                # 327.62, 480.11, 534.47], 'bbox_label': 46,
-                # 'sample_idx': 52461,
-                # 'img': array([[[135, 146, 130],
-                #         [136, 147, 131],
-                #         [183, 177, 178],
-                #         [178, 173, 174]]], dtype=uint8),
-                # 'img_shape': (640, 640, 3), 'ori_shape': (612, 612),
-                # 'gt_ignore_flags': array([False, False, False, False,
-                # False, False, False, False, False,
-                #        False, False, False, False, False]),
-                # 'gt_bboxes': HorizontalBoxes(
-                # tensor([[  0.0000,  88.0672,  86.1392, 242.4171],
-                #         [  0.0000,  58.3911,  34.4952, 127.3020],
-                #         [  0.0000, 336.3535, 184.5546, 640.0000],
-                #         [325.9082, 327.4556, 557.3472, 607.0447]])),
-                # 'gt_bboxes_labels': array([46, 47, 15,  0,  0,  3,
-                # 56, 56, 56, 56, 60, 60,  0, 10]),
-                # 'dataset': <mmyolo.datasets.yolov5_coco.
-                # YOLOv5CocoDataset object at 0x7f7823c7e700>}
-
                 # crop the image
                 img = results['img']
                 crop_x1, crop_y1, crop_x2, crop_y2 = crop_box

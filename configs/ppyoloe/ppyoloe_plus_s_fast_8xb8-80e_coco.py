@@ -9,8 +9,9 @@ img_scale = (640, 640)  # height, width
 deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 80
-save_epoch_intervals = 10
-train_batch_size_per_gpu = 8
+num_classes = 80
+save_epoch_intervals = 2  # fast val
+train_batch_size_per_gpu = 8 * 4  # 2*A100
 train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
@@ -24,20 +25,19 @@ model = dict(
     type='YOLODetector',
     data_preprocessor=dict(
         type='PPYOLOEDetDataPreprocessor',
-        pad_size_divisor=None,
-        mean=[0., 0., 0.],
-        std=[255., 255., 255.],
-        bgr_to_rgb=True,
+        pad_size_divisor=32,
         batch_augments=[
             dict(
                 type='PPYOLOEBatchSyncRandomResize',
-                random_size_range=(320, 800),
+                random_size_range=(320, 768),
                 interval=1,
                 size_divisor=32,
                 random_interp=True,
-                interp_mode=['nearest', 'bilinear', 'bicubic', 'area'],
                 keep_ratio=False)
-        ]),
+        ],
+        mean=[0., 0., 0.],
+        std=[255., 255., 255.],
+        bgr_to_rgb=True),
     backbone=dict(
         type='PPYOLOECSPResNet',
         deepen_factor=deepen_factor,
@@ -67,11 +67,48 @@ model = dict(
         type='PPYOLOEHead',
         head_module=dict(
             type='PPYOLOEHeadModule',
-            num_classes=80,
+            num_classes=num_classes,
             in_channels=[192, 384, 768],
             widen_factor=widen_factor,
             featmap_strides=strides,
-            num_base_priors=1)),
+            reg_max=16,
+            norm_cfg=dict(type='BN', momentum=0.1, eps=1e-5),
+            act_cfg=dict(type='SiLU', inplace=True),
+            num_base_priors=1),
+        prior_generator=dict(
+            type='mmdet.MlvlPointGenerator', offset=0.5, strides=[8, 16, 32]),
+        bbox_coder=dict(type='DistancePointBBoxCoder'),
+        loss_cls=dict(
+            type='mmdet.VarifocalLoss',
+            use_sigmoid=True,
+            alpha=0.75,
+            gamma=2.0,
+            iou_weighted=True,
+            reduction='sum',
+            loss_weight=1.0),
+        loss_bbox=dict(
+            type='IoULoss',
+            iou_mode='giou',
+            bbox_format='xyxy',
+            reduction='mean',
+            loss_weight=2.5,
+            return_iou=False),
+        loss_dfl=dict(type='DfLoss', reduction='mean', loss_weight=0.5)),
+    train_cfg=dict(
+        # paddle里设置的是30，但是paddle epoch是从0开始，mmengine是从1开始
+        initial_epoch=31,
+        initial_assigner=dict(
+            type='BatchATSSAssigner',
+            num_classes=num_classes,
+            topk=9,
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D')),
+        assigner=dict(
+            type='BatchTaskAlignedAssigner',
+            num_classes=num_classes,
+            topk=13,
+            alpha=1,
+            beta=6),
+    ),
     test_cfg=dict(
         multi_label=True,
         nms_pre=1000,
@@ -97,6 +134,7 @@ train_pipeline = [
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
+    collate_fn=dict(type='ppyoloe_collate'),
     persistent_workers=True,
     pin_memory=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -162,16 +200,6 @@ default_hooks = dict(
         type='CheckpointHook', interval=save_epoch_intervals,
         max_keep_ckpts=3))
 
-custom_hooks = [
-    dict(
-        type='EMAHook',
-        ema_type='ExpMomentumEMA',
-        momentum=0.0002,
-        update_buffers=True,
-        strict_load=False,
-        priority=49)
-]
-
 val_evaluator = dict(
     type='mmdet.CocoMetric',
     proposal_nums=(100, 1, 10),
@@ -183,6 +211,7 @@ train_cfg = dict(
     type='EpochBasedTrainLoop',
     max_epochs=max_epochs,
     val_interval=save_epoch_intervals)
-
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
+
+load_from = 'baidumodel/ppyoloe_plus_s_pretrained.pth'

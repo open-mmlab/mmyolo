@@ -31,6 +31,30 @@ def yolov5_collate(data_batch: Sequence) -> dict:
     }
 
 
+@COLLATE_FUNCTIONS.register_module()
+def ppyoloe_collate(data_batch: Sequence) -> dict:
+    """Rewrite collate_fn to get faster training speed."""
+    batch_imgs = []
+    batch_bboxes_labels = []
+    for i in range(len(data_batch)):
+        datasamples = data_batch[i]['data_samples']
+        inputs = data_batch[i]['inputs']
+
+        gt_bboxes = datasamples.gt_instances.bboxes.tensor
+        gt_labels = datasamples.gt_instances.labels
+        batch_idx = gt_labels.new_full((len(gt_labels), 1), i)
+        bboxes_labels = torch.cat((batch_idx, gt_labels[:, None], gt_bboxes),
+                                  dim=1)
+        batch_bboxes_labels.append(bboxes_labels)
+
+        batch_imgs.append(inputs)
+
+    return {
+        'inputs': batch_imgs,  # 由于用了多尺度训练，这里不能stack
+        'data_samples': batch_bboxes_labels
+    }
+
+
 @TASK_UTILS.register_module()
 class BatchShapePolicy:
     """BatchShapePolicy is only used in the testing phase, which can reduce the
