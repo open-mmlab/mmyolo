@@ -1,39 +1,45 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
+import os
 from typing import Sequence
 
 import mmcv
-import numpy as np
 from mmdet.apis import inference_detector, init_detector
 from mmengine import Config, DictAction
+from mmengine.utils import ProgressBar
 
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
+from mmyolo.utils.misc import auto_arrange_images, get_file_list
 
 
 # TODO: Refine
 def parse_args():
-    parser = argparse.ArgumentParser(description='Visualize Featmaps')
-    parser.add_argument('img', help='Image file')
+    parser = argparse.ArgumentParser(description='Visualize feature map')
+    parser.add_argument(
+        'img', help='Image path, include image file, dir and URL.')
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
+    parser.add_argument(
+        '--out-dir', default='./output', help='Path to output file')
     parser.add_argument(
         '--target-layers',
         default=['backbone'],
         nargs='+',
         type=str,
-        help='The target layers to get featmap, if not set, the tool will '
+        help='The target layers to get feature map, if not set, the tool will '
         'specify the backbone')
     parser.add_argument(
         '--preview-model',
         default=False,
         action='store_true',
         help='To preview all the model layers')
-    parser.add_argument('--out-file', default=None, help='Path to output file')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
         '--score-thr', type=float, default=0.3, help='Bbox score threshold')
+    parser.add_argument(
+        '--show', action='store_true', help='Show the featmap results')
     parser.add_argument(
         '--channel-reduction',
         default='select_max',
@@ -88,28 +94,9 @@ class ActivationsWrapper:
             handle.remove()
 
 
-def auto_arrange_imgs(imgs):
-    len_img = len(imgs)
-    col = 2
-    if len_img <= col:
-        imgs = np.concatenate(imgs, axis=1)
-    else:
-        row = len_img // col + 1
-        fill_img_list = [np.ones(imgs[0].shape, dtype=np.uint8) * 255] * (
-            row * col - len_img)
-        imgs.extend(fill_img_list)
-        merge_imgs_col = []
-        for i in range(row):
-            start = col * i
-            end = col * (i + 1)
-            merge_col = np.hstack(imgs[start:end])
-            merge_imgs_col.append(merge_col)
+def main():
+    args = parse_args()
 
-        imgs = np.vstack(merge_imgs_col)
-    return imgs
-
-
-def main(args):
     # register all modules in mmdet into the registries
     register_all_modules()
 
@@ -124,9 +111,13 @@ def main(args):
 
     model = init_detector(args.config, args.checkpoint, device=args.device)
 
+    if not os.path.exists(args.out_dir) and not args.show:
+        os.mkdir(args.out_dir)
+
     if args.preview_model:
         print(model)
-        print('\n Please remove `--preview-model` to get the AM.')
+        print('\n This flag is only show model, if you want to continue, '
+              'please remove `--preview-model` to get the feature map.')
         return
 
     target_layers = []
@@ -143,11 +134,11 @@ def main(args):
     visualizer = VISUALIZERS.build(model.cfg.visualizer)
     visualizer.dataset_meta = model.dataset_meta
 
-    images = args.img
-    if not isinstance(images, list):
-        images = [images]
+    # get file list
+    image_list, source_type = get_file_list(args.img)
 
-    for image_path in images:
+    progress_bar = ProgressBar(len(image_list))
+    for image_path in image_list:
         result, featmaps = activations_wrapper(image_path)
         if not isinstance(featmaps, Sequence):
             featmaps = [featmaps]
@@ -159,10 +150,16 @@ def main(args):
             else:
                 flatten_featmaps.append(featmap)
 
-        # show the results
-        img = mmcv.imread(args.img)
+        img = mmcv.imread(image_path)
         img = mmcv.imconvert(img, 'bgr', 'rgb')
 
+        if source_type['is_dir']:
+            filename = os.path.relpath(image_path, args.img).replace('/', '_')
+        else:
+            filename = os.path.basename(image_path)
+        out_file = None if args.show else os.path.join(args.out_dir, filename)
+
+        # show the results
         shown_imgs = []
         visualizer.add_datasample(
             'result',
@@ -184,16 +181,20 @@ def main(args):
                 arrangement=args.arrangement)
             shown_imgs.append(shown_img)
 
-        shown_imgs = auto_arrange_imgs(shown_imgs)
+        shown_imgs = auto_arrange_images(shown_imgs)
 
-        if args.out_file is not None:
-            mmcv.imwrite(shown_imgs[..., ::-1], args.out_file)
-        else:
+        progress_bar.update()
+        if out_file:
+            mmcv.imwrite(shown_imgs[..., ::-1], out_file)
+
+        if args.show:
             visualizer.show(shown_imgs)
+
+    print(f'All done!'
+          f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
 
 
 # Please refer to the usage tutorial:
 # https://github.com/open-mmlab/mmyolo/blob/main/docs/zh_cn/user_guides/visualization.md # noqa
 if __name__ == '__main__':
-    args = parse_args()
-    main(args)
+    main()

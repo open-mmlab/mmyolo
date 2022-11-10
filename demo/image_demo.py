@@ -1,20 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import logging
 import os
-import urllib
 from argparse import ArgumentParser
 
 import mmcv
-import torch
 from mmdet.apis import inference_detector, init_detector
 from mmengine.logging import print_log
-from mmengine.utils import ProgressBar, scandir
+from mmengine.utils import ProgressBar
 
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules, switch_to_deploy
-
-IMG_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif',
-                  '.tiff', '.webp')
+from mmyolo.utils.misc import get_file_list
 
 
 def parse_args():
@@ -39,7 +34,9 @@ def parse_args():
     return args
 
 
-def main(args):
+def main():
+    args = parse_args()
+
     # register all modules in mmdet into the registries
     register_all_modules()
 
@@ -49,45 +46,32 @@ def main(args):
     if args.deploy:
         switch_to_deploy(model)
 
+    if not os.path.exists(args.out_dir) and not args.show:
+        os.mkdir(args.out_dir)
+
     # init visualizer
     visualizer = VISUALIZERS.build(model.cfg.visualizer)
     visualizer.dataset_meta = model.dataset_meta
 
-    is_dir = os.path.isdir(args.img)
-    is_url = args.img.startswith(('http:/', 'https:/'))
-    is_file = os.path.splitext(args.img)[-1] in (IMG_EXTENSIONS)
-
-    files = []
-    if is_dir:
-        # when input source is dir
-        for file in scandir(args.img, IMG_EXTENSIONS, recursive=True):
-            files.append(os.path.join(args.img, file))
-    elif is_url:
-        # when input source is url
-        filename = os.path.basename(
-            urllib.parse.unquote(args.img).split('?')[0])
-        torch.hub.download_url_to_file(args.img, filename)
-        files = [os.path.join(os.getcwd(), filename)]
-    elif is_file:
-        # when input source is single image
-        files = [args.img]
-    else:
-        print_log(
-            'Cannot find image file.', logger='current', level=logging.WARNING)
+    # get file list
+    files, source_type = get_file_list(args.img)
 
     # start detector inference
     progress_bar = ProgressBar(len(files))
     for file in files:
         result = inference_detector(model, file)
+
         img = mmcv.imread(file)
         img = mmcv.imconvert(img, 'bgr', 'rgb')
-        if is_dir:
+
+        if source_type['is_dir']:
             filename = os.path.relpath(file, args.img).replace('/', '_')
         else:
             filename = os.path.basename(file)
         out_file = None if args.show else os.path.join(args.out_dir, filename)
+
         visualizer.add_datasample(
-            filename,
+            os.path.basename(out_file),
             img,
             data_sample=result,
             draw_gt=False,
@@ -96,11 +80,11 @@ def main(args):
             out_file=out_file,
             pred_score_thr=args.score_thr)
         progress_bar.update()
+
     if not args.show:
         print_log(
             f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
 
 
 if __name__ == '__main__':
-    args = parse_args()
-    main(args)
+    main()

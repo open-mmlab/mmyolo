@@ -62,12 +62,19 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 
   MMYOLO 将框架解耦成不同的模块组件，通过组合不同的模块和训练测试策略，用户可以便捷地构建自定义模型。
 
-<img src="https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg" alt="基类"/>
+<img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="基类-P5"/>
   图为 RangeKing@GitHub 提供，非常感谢！
+
+P6 模型图详见 [model_design.md](docs/zh_CN/algorithm_descriptions/model_design.md)。
 
 </details>
 
 ## 最新进展
+
+💎 **v0.1.3** 版本已经在 2022.11.10 发布：
+
+1. 基于 mmengine 0.3.1 修复保存最好权重时训练失败问题
+2. 基于 mmdet 3.0.0rc3 修复 `add_dump_metric` 报错 (#253)
 
 💎 **v0.1.2** 版本已经在 2022.11.3 发布：
 
@@ -97,9 +104,9 @@ MMYOLO 依赖 PyTorch, MMCV, MMEngine 和 MMDetection，以下是安装的简要
 conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
 conda activate open-mmlab
 pip install openmim
-mim install "mmengine>=0.3.0"
+mim install "mmengine>=0.3.1"
 mim install "mmcv>=2.0.0rc1,<2.1.0"
-mim install "mmdet>=3.0.0rc2,<3.1.0"
+mim install "mmdet>=3.0.0rc3,<3.1.0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
@@ -145,6 +152,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
   - [数据流](docs/zh_cn/advanced_guides/data_flow.md)
   - [How to](docs/zh_cn/advanced_guides/how_to.md)
+  - [插件](docs/zh_cn/advanced_guides/plugins.md)
 
 - [解读文章和资源汇总](docs/zh_cn/article.md)
 
