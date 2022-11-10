@@ -3,13 +3,13 @@
 ## 0 简介
 
 <div align=center >
-<img alt="YOLOv5_structure_v3.4" src="https://user-images.githubusercontent.com/27466624/200000324-70ae078f-cea7-4189-8baa-440656797dad.jpg"/>
-图 1：YOLOv5-P5 模型结构图
+<img alt="YOLOv5-P5_structure_v3.4" src="https://user-images.githubusercontent.com/27466624/200000324-70ae078f-cea7-4189-8baa-440656797dad.jpg"/>
+图 1：YOLOv5-P5 模型结构
 </div>
 
 <div align=center >
-<img alt="YOLOv5_P6_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/200845705-c9f3300f-9847-4933-b79d-0efcf0286e16.jpg"/>
-图 2：YOLOv5-P6 模型结构图
+<img alt="YOLOv5-P6_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/200845705-c9f3300f-9847-4933-b79d-0efcf0286e16.jpg"/>
+图 2：YOLOv5-P6 模型结构
 </div>
 
 以上结构图由 RangeKing@github 绘制。
@@ -261,6 +261,10 @@ YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决�
 
 如果想使用 netron 可视化网络结构图细节，可以直接在 netron 中将 MMDeploy 导出的 ONNX 文件格式文件打开。
 
+```{hint}
+1.2 小节涉及的特征维度（shape）都为 (B, C, H, W)。
+```
+
 #### 1.2.1 Backbone
 
 在 MMYOLO 中 `CSPDarknet` 继承自 `BaseBackbone`，整体结构和 `ResNet` 类似。P5 模型共 5 层结构，包含 1 个 `Stem Layer` 和 4 个 `Stage Layer`：
@@ -271,10 +275,6 @@ YOLOv5 网络结构大小由 `deepen_factor` 和 `widen_factor` 两个参数决�
 - 最后一个 `Stage Layer` 在最后增加了 `SPPF` 模块。`SPPF` 模块是将输入串行通过多个 5x5 大小的 `MaxPool2d` 层，与 `SPP` 模块效果相同，但速度更快。
 - P5 模型会在 `Stage Layer` 2-4 之后分别输出一个特征图进入 `Neck` 结构。以 640x640 输入图片为例，其输出特征为 (B,256,80,80)、(B,512,40,40) 和 (B,1024,20,20)，对应的 stride 分别为 8/16/32。
 - P6 模型会在 `Stage Layer` 2-5 之后分别输出一个特征图进入 `Neck` 结构。以 1280x1280 输入图片为例，其输出特征为 (B,256,160,160)、(B,512,80,80)、(B,768,40,40) 和 (B,1024,20,20)，对应的 stride 分别为 8/16/32/64。
-
-```{note}
-1.2 小结涉及的特征维度（shape）都为 (B, C, H, W)。
-```
 
 #### 1.2.2 Neck
 
@@ -291,8 +291,8 @@ YOLOv5 Head 结构和 YOLOv3 完全一样，为 `非解耦 Head`。Head 模块�
 前面的 PAFPN 依然是输出 3 个不同尺度的特征图，shape 为 (B,256,80,80)、 (B,512,40,40) 和 (B,1024,20,20)。
 由于 YOLOv5 是非解耦输出，即分类和 bbox 检测等都是在同一个卷积的不同通道中完成。以 COCO 80 类为例：
 
-- P5 模型在输入为 640x640 分辨率情况下，其 Head 模块输出的 shape 分别为 (B, 3x(4+1+80),80,80), (B, 3x(4+1+80),40,40) 和 (B, 3x(4+1+80),20,20)。
-- P6 模型在输入为 1280x1280 分辨率情况下，其 Head 模块输出的 shape 分别为 (B, 3x(4+1+80),160,160), (B, 3x(4+1+80),80,80), (B, 3x(4+1+80),40,40) 和 (B, 3x(4+1+80),20,20)。
+- P5 模型在输入为 640x640 分辨率情况下，其 Head 模块输出的 shape 分别为 `(B, 3x(4+1+80),80,80)`, `(B, 3x(4+1+80),40,40)` 和 `(B, 3x(4+1+80),20,20)`。
+- P6 模型在输入为 1280x1280 分辨率情况下，其 Head 模块输出的 shape 分别为 `(B, 3x(4+1+80),160,160)`, `(B, 3x(4+1+80),80,80)`, `(B, 3x(4+1+80),40,40)` 和 `(B, 3x(4+1+80),20,20)`。
   其中 3 表示 3 个 anchor，4 表示 bbox 预测分支，1 表示 obj 预测分支，80 表示 COCO 数据集类别预测分支。
 
 ### 1.3 正负样本匹配策略
