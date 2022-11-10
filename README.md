@@ -64,7 +64,8 @@ The master branch works with **PyTorch 1.6+**.
 
 <img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="BaseModule-P5"/>
   The figure above is contributed by RangeKing@GitHub, thank you very much!
-  And the figure of P6 model is in [model_design.md](docs\en\algorithm_descriptions\model_design.md).
+
+And the figure of P6 model is in [model_design.md](docs\en\algorithm_descriptions\model_design.md).
 
 </details>
 
