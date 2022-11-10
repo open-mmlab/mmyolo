@@ -251,13 +251,14 @@ Instructions:
 ```shell
 python tools/misc/download_dataset.py --dataset-name coco2017
 python tools/misc/download_dataset.py --dataset-name voc2007
+python tools/misc/download_dataset.py --dataset-name voc2012
 python tools/misc/download_dataset.py --dataset-name lvis
 python tools/misc/download_dataset.py --dataset-name balloon [--save-dir ${SAVE_DIR}] [--unzip]
 ```
 
 ## Convert Model
 
-The three scripts under the `tools/` directory can help users convert the keys in the official pre-trained model of YOLO to the format of MMYOLO, and use MMYOLO to fine-tune the model.
+The six scripts under the `tools/model_converters` directory can help users convert the keys in the official pre-trained model of YOLO to the format of MMYOLO, and use MMYOLO to fine-tune the model.
 
 ### YOLOv5
 
