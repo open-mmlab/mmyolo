@@ -20,7 +20,7 @@ YOLOv5 是一个面向实时工业应用而开源的目标检测算法，受到�
 2. **算法训练速度极快**，在 300 epoch 情况下训练时长和大部分 one-stage 算法如 RetinaNet、ATSS 和 two-stage 算法如 Faster R-CNN 在 12 epoch 的训练时间接近
 3. 框架进行了**非常多的 corner case 优化**，功能和文档也比较丰富
 
-如图 1 和 2 所示，YOLOv5 的 P5 和 P6 版本主要差异在于网络结构和图片输入分辨率。其他区别，如 anchors 个数和 loss 权重可详见[配置文件](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/)。本文将从 YOLOv5 算法本身原理讲起，然后重点分析 MMYOLO 中的实现。关于 YOLOv5 的使用指南和速度等对比请阅读本文的后续内容。
+如图 1 和 2 所示，YOLOv5 的 P5 和 P6 版本主要差异在于网络结构和图片输入分辨率。其他区别，如 anchors 个数和 loss 权重可详见[配置文件](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-p6-v62_syncbn_fast_8xb16-300e_coco.py)。本文将从 YOLOv5 算法本身原理讲起，然后重点分析 MMYOLO 中的实现。关于 YOLOv5 的使用指南和速度等对比请阅读本文的后续内容。
 
 ```{hint}
 没有特殊说明情况下，本文默认描述的是 P5 模型。

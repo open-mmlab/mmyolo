@@ -21,7 +21,7 @@ In short, the main features of YOLOv5 are:
 2. **Fast training speed**: the training time in the case of 300 epochs is similar to most of the one-stage and two-stage algorithms under 12 epochs, such as RetinaNet, ATSS, and Faster R-CNN.
 3. **Abundant optimization for corner cases**: YOLOv5 has implemented many optimizations. The functions and documentation are richer as well.
 
-Figures 1 and 2 show that the main differences between the P5 and P6 versions of YOLOv5 are the network structure and the image input resolution. Other differences, such as the number of anchors and loss weights, can be found in [configuration files](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/). This article will start with the principle of the YOLOv5 algorithm and then focus on analyzing the implementation in MMYOLO. The follow-up part includes the guide and speed benchmark of YOLOv5.
+Figures 1 and 2 show that the main differences between the P5 and P6 versions of YOLOv5 are the network structure and the image input resolution. Other differences, such as the number of anchors and loss weights, can be found in the [configuration file](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-p6-v62_syncbn_fast_8xb16-300e_coco.py). This article will start with the principle of the YOLOv5 algorithm and then focus on analyzing the implementation in MMYOLO. The follow-up part includes the guide and speed benchmark of YOLOv5.
 
 ```{hint}
 Unless specified, the P5 model is described by default in this documentation.
