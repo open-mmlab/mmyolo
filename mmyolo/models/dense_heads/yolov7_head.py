@@ -42,6 +42,40 @@ class ImplicitM(nn.Module):
         return self.implicit * x
 
 
+def bbox_overlaps(box1, box2, bbox_format: str = 'xywh'):
+    # nx4, mx4
+    def box_area(box):
+        return (box[2] - box[0]) * (box[3] - box[1])
+
+    def xywh2xyxy(x):
+        y = x.clone()
+        y[:, 0] = x[:, 0] - x[:, 2] / 2  # top left x
+        y[:, 1] = x[:, 1] - x[:, 3] / 2  # top left y
+        y[:, 2] = x[:, 0] + x[:, 2] / 2  # bottom right x
+        y[:, 3] = x[:, 1] + x[:, 3] / 2  # bottom right y
+        return y
+
+    box1 = xywh2xyxy(box1)
+    box2 = xywh2xyxy(box2)
+
+    area1 = box_area(box1.T)
+    area2 = box_area(box2.T)
+
+    # inter(N,M) = (rb(N,M,2) - lt(N,M,2)).clamp(0).prod(2)
+    inter = (torch.min(box1[:, None, 2:], box2[:, 2:]) -
+             torch.max(box1[:, None, :2], box2[:, :2])).clamp(0).prod(2)
+    return inter / (area1[:, None] + area2 - inter)
+
+
+def cat_multi_level_in_place(*multi_level_tensor, place_hold_var):
+    for level_tensor in multi_level_tensor:
+        for i, var in enumerate(level_tensor):
+            if len(var) > 0:
+                level_tensor[i] = torch.cat(var, dim=0)
+            else:
+                level_tensor[i] = place_hold_var
+
+
 @MODELS.register_module()
 class YOLOv7HeadModule(YOLOv5HeadModule):
 
@@ -119,170 +153,181 @@ class YOLOv7Head(YOLOv5Head):
         # objectnesses = x['objectnesses']
         # batch_gt_instances = x['batch_gt_instances']
 
-        # 1. Convert gt to norm format (num_bboxes, 6)
-        batch_targets_normed = self._convert_gt_to_norm_format(
-            batch_gt_instances, batch_img_metas)
+        batch_input_shape = batch_img_metas[0]['batch_input_shape']  # hw
+        # (1,4)
+        batch_input_shape_wh = cls_scores[0].new_tensor(batch_input_shape[::-1]).repeat((1, 2))
 
+        # TODO: refine
+        head_preds = []
+        for bbox_pred, objectness, cls_score in zip(bbox_preds, objectnesses, cls_scores):
+            b, _, h, w = bbox_pred.shape
+            bbox_pred = bbox_pred.reshape(b, 3, -1, h, w)
+            objectness = objectness.reshape(b, 3, -1, h, w)
+            cls_score = cls_score.reshape(b, 3, -1, h, w)
+            head_pred = torch.cat([bbox_pred, objectness, cls_score], dim=2).permute(0, 1, 3, 4, 2).contiguous()
+            head_preds.append(head_pred)
+
+        num_batch = cls_scores[0].shape[0]
         device = cls_scores[0].device
         loss_cls = torch.zeros(1, device=device)
         loss_box = torch.zeros(1, device=device)
         loss_obj = torch.zeros(1, device=device)
 
-        indices, anch = [], []
-        na, nt = self.num_base_priors, batch_targets_normed.shape[0]  # number of anchors, targets
-        gain = torch.ones(7, device=device).long()  # normalized to gridspace gain
-        ai = self.prior_inds.repeat(1, nt)  # same as .repeat_interleave(nt)
-        targets = torch.cat((batch_targets_normed.repeat(na, 1, 1), ai[:, :, None]),
-                            2)  # append anchor indices (3, n, 7)
+        # 1. Convert gt to norm xywh format (num_bboxes, 6)
+        # 6 is mean (batch_idx, cls_id, x_norm, y_norm, w_norm, h_norm)
+        batch_targets_normed = self._convert_gt_to_norm_format(
+            batch_gt_instances, batch_img_metas)
+
+        multi_level_indices, multi_level_proirs = [], []
+
+        num_batch_gt = batch_targets_normed.shape[0]
+        batch_targets_prior_inds = self.prior_inds.repeat(1, num_batch_gt)[..., None]
+        # (num_base_priors, num_batch_gt, 7)
+        # 7 is mean (batch_idx, cls_id, x_norm, y_norm, w_norm, h_norm, prior_idx)
+        batch_targets_normed = torch.cat((batch_targets_normed.repeat(self.num_base_priors, 1, 1),
+                                          batch_targets_prior_inds), 2)
+
+        scaled_factor = torch.ones(7, device=device)
         for i in range(self.num_levels):
-            anchors = self.priors_base_sizes[i]
-            gain[2:6] = torch.tensor(bbox_preds[i].shape)[[3, 2, 3, 2]]  # xyxy gain
+            priors_base_sizes_i = self.priors_base_sizes[i]
+            # (1, 1, feat_shape_w, feat_shape_h, feat_shape_w, feat_shape_h)
+            scaled_factor[2:6] = torch.tensor(bbox_preds[i].shape)[[3, 2, 3, 2]]
 
-            # Match targets to anchors featmap scales
-            t = targets * gain
-            if nt:
-                # Matches
-                r = t[:, :, 4:6] / anchors[:, None]  # wh ratio
-                j = torch.max(
-                    r, 1. / r).max(2)[0] < self.prior_match_thr  # compare
-                # j = wh_iou(anchors, t[:, 4:6]) > model.hyp['iou_t']  # iou(3,n)=wh_iou(anchors(3,2), gwh(n,2))
-                t = t[j]  # filter
+            # Scale batch_targets from range 0-1 to range 0-features_maps size.
+            # (num_base_priors, num_batch_gt, 7)
+            batch_targets_scaled = batch_targets_normed * scaled_factor
 
-                # Offsets
-                gxy = t[:, 2:4]  # grid xy
-                gxi = gain[[2, 3]] - gxy  # inverse
-                j, k = ((gxy % 1. < 0.5) & (gxy > 1.)).T
-                l, m = ((gxi % 1. < 0.5) & (gxi > 1.)).T
-                j = torch.stack((torch.ones_like(j), j, k, l, m))
-                t = t.repeat((5, 1, 1))[j]
-                offsets = (torch.zeros_like(gxy)[None] + self.grid_offset)[j]
+            if num_batch_gt > 0:
+                # Shape match
+                wh_ratio = batch_targets_scaled[..., 4:6] / priors_base_sizes_i[:, None]
+                match_inds = torch.max(
+                    wh_ratio, 1. / wh_ratio).max(2)[0] < self.prior_match_thr
+                batch_targets_scaled = batch_targets_scaled[match_inds]  # (num_matched_target, 7)
+
+                # Positive samples with additional neighbors
+                batch_targets_cxcy = batch_targets_scaled[:, 2:4]
+                grid_xy = scaled_factor[[2, 3]] - batch_targets_cxcy
+                left, up = ((batch_targets_cxcy % 1 < 0.5) &
+                            (batch_targets_cxcy > 1)).T
+                right, bottom = ((grid_xy % 1 < 0.5) & (grid_xy > 1)).T
+                offset_inds = torch.stack(
+                    (torch.ones_like(left), left, up, right, bottom))
+                batch_targets_scaled = batch_targets_scaled.repeat(
+                    (5, 1, 1))[offset_inds]  # ()
+                retained_offsets = self.grid_offset.repeat(1, offset_inds.shape[1],
+                                                           1)[offset_inds]
             else:
-                t = targets[0]
-                offsets = 0
+                # TODO
+                batch_targets_scaled = batch_targets_scaled[0]
+                retained_offsets = 0
 
-            # Define batch_indx,cls_index
-            batch_idx, _ = t[:, :2].long().T  # image, class
-            gxy = t[:, 2:4]  # grid xy
-            gij = (gxy - offsets).long()
-            gi, gj = gij.T  # grid xy indices
+            _chunk_targets = batch_targets_scaled.chunk(4, 1)
+            img_class_inds, grid_xy, grid_wh, priors_inds = _chunk_targets
+            priors_inds, (batch_idx, _) = priors_inds.long().view(
+                -1), img_class_inds.long().T
+            grid_xy_long = (grid_xy - retained_offsets).long()
+            grid_x_inds, grid_y_inds = grid_xy_long.T
 
-            # Append
-            anchor_indx = t[:, 6].long()  # anchor indices m
-            indices.append(
-                (batch_idx, anchor_indx, gj.clamp_(0, gain[3] - 1),
-                 gi.clamp_(0, gain[2] - 1)))  # image, anchor, grid indices
-            anch.append(anchors[anchor_indx])  # anchors
+            multi_level_indices.append(
+                (batch_idx, priors_inds, grid_y_inds.clamp_(0, scaled_factor[3] - 1),
+                 grid_x_inds.clamp_(0, scaled_factor[2] - 1)))
+            multi_level_proirs.append(priors_base_sizes_i[priors_inds])
 
-        matching_bs = [[] for _ in bbox_preds]
-        matching_as = [[] for _ in bbox_preds]
-        matching_gjs = [[] for _ in bbox_preds]
-        matching_gis = [[] for _ in bbox_preds]
-        matching_targets = [[] for _ in bbox_preds]
-        matching_anchs = [[] for _ in bbox_preds]
+        multi_level_positive_info = [[] for _ in range(self.num_levels)]
+        multi_level_proirs_matched = [[] for _ in range(self.num_levels)]
+        multi_level_targets_normed = [[] for _ in range(self.num_levels)]
 
-        preds = []
-        for bbox, obj, cls in zip(bbox_preds, objectnesses, cls_scores):
-            b, c, h, w = bbox.shape
-            bbox = bbox.reshape(b, 3, -1, h, w)
-            obj = obj.reshape(b, 3, -1, h, w)
-            cls = cls.reshape(b, 3, -1, h, w)
-            pred = torch.cat([bbox, obj, cls], dim=2).permute(0, 1, 3, 4,
-                                                              2).contiguous()
-            preds.append(pred)
-
-        # Each batch is calculated separately
-        for batch_idx in range(preds[0].shape[0]):
-
-            b_idx = batch_targets_normed[:, 0] == batch_idx
-            this_target = batch_targets_normed[b_idx]
-            if this_target.shape[0] == 0:
+        for batch_idx in range(num_batch):
+            # (num_batch_gt, 7)
+            # 7 is mean (batch_idx, cls_id, x_norm, y_norm, w_norm, h_norm, prior_idx)
+            targets_normed = batch_targets_normed[0]
+            # (num_gt, 7)
+            targets_normed = targets_normed[targets_normed[:, 0] == batch_idx]
+            num_gt = targets_normed.shape[0]
+            if num_gt == 0:
                 continue
 
-            txywh = this_target[:, 2:6] * 640
-            txyxy = xywh2xyxy(txywh)
+            _multi_level_decoderd_bbox = []
+            _multi_level_obj_cls = []
+            _multi_level_proirs = []
+            _multi_level_positive_info = []
+            _from_which_layer = []
 
-            pxyxys = []
-            p_cls = []
-            p_obj = []
-            from_which_layer = []
-            all_b = []
-            all_a = []
-            all_gj = []
-            all_gi = []
-            all_anch = []
+            for i, head_pred in enumerate(head_preds):
+                level_batch_idx, prior_ind, grid_y, grid_x = multi_level_indices[i]
+                proirs = multi_level_proirs[i]
 
-            for i, pi in enumerate(preds):
-                b, a, gj, gi = indices[i]
-                idx = (b == batch_idx)
-                b, a, gj, gi = b[idx], a[idx], gj[idx], gi[idx]
-                all_b.append(b)
-                all_a.append(a)
-                all_gj.append(gj)
-                all_gi.append(gi)
-                all_anch.append(anch[i][idx])
-                from_which_layer.append(torch.ones(size=(len(b),)) * i)
+                idx = (level_batch_idx == batch_idx)
+                level_batch_idx, prior_ind, grid_y, grid_x = level_batch_idx[idx], prior_ind[idx], grid_y[idx], grid_x[
+                    idx]
+                _multi_level_positive_info.append(
+                    torch.stack([level_batch_idx, prior_ind, grid_y, grid_x], dim=0).reshape(4, -1).T)
+
+                _multi_level_proirs.append(proirs[idx])
+                _from_which_layer.append(torch.ones(size=(len(level_batch_idx),)) * i)
+
                 # (n,85)
-                fg_pred = pi[b, a, gj, gi]
-                p_obj.append(fg_pred[:, 4:5])
-                p_cls.append(fg_pred[:, 5:])
+                pred_positive = head_pred[level_batch_idx, prior_ind, grid_y, grid_x]
+                _multi_level_obj_cls.append(pred_positive[:, 4:])
 
-                grid = torch.stack([gi, gj], dim=1)
-                pxy = (fg_pred[:, :2].sigmoid() * 2. - 0.5 +
-                       grid) * self.featmap_strides[i]  # / 8.  + grid ? yolov5 don't
-                # pxy = (fg_pred[:, :2].sigmoid() * 3. - 1. + grid) * self.stride[i]
-                pwh = (fg_pred[:, 2:4].sigmoid() *
-                       2) ** 2 * anch[i][idx] * self.featmap_strides[i]  # / 8.
-                pxywh = torch.cat([pxy, pwh], dim=-1)
-                pxyxy = xywh2xyxy(pxywh)
-                pxyxys.append(pxyxy)
+                # decoded
+                grid = torch.stack([grid_x, grid_y], dim=1)
+                pred_positive_cxcy = (pred_positive[:, :2].sigmoid() * 2. - 0.5 + grid) * self.featmap_strides[i]
+                pred_positive_wh = (pred_positive[:, 2:4].sigmoid() * 2) ** 2 * multi_level_proirs[i][idx] * \
+                    self.featmap_strides[i]
+                pred_positive_xywh = torch.cat([pred_positive_cxcy, pred_positive_wh], dim=-1)
+                _multi_level_decoderd_bbox.append(pred_positive_xywh)
 
-            pxyxys = torch.cat(pxyxys, dim=0)
-            if pxyxys.shape[0] == 0:
+            # 1 calc pair_wise_iou_loss
+            _multi_level_decoderd_bbox = torch.cat(_multi_level_decoderd_bbox, dim=0)
+            num_pred_positive = _multi_level_decoderd_bbox.shape[0]
+            if num_pred_positive == 0:
                 continue
-            p_obj = torch.cat(p_obj, dim=0)
-            p_cls = torch.cat(p_cls, dim=0)
-            from_which_layer = torch.cat(from_which_layer, dim=0)
-            all_b = torch.cat(all_b, dim=0)
-            all_a = torch.cat(all_a, dim=0)
-            all_gj = torch.cat(all_gj, dim=0)
-            all_gi = torch.cat(all_gi, dim=0)
-            all_anch = torch.cat(all_anch, dim=0)
 
-            pair_wise_iou = box_iou(txyxy, pxyxys)
-
+            # scaled xywh
+            targets_scaled_bbox = targets_normed[:, 2:6] * batch_input_shape_wh
+            pair_wise_iou = bbox_overlaps(targets_scaled_bbox, _multi_level_decoderd_bbox)
             pair_wise_iou_loss = -torch.log(pair_wise_iou + 1e-8)
 
-            top_k, _ = torch.topk(
-                pair_wise_iou, min(10, pair_wise_iou.shape[1]), dim=1)
-            dynamic_ks = torch.clamp(top_k.sum(1).int(), min=1)
+            # 2 calc pair_wise_cls_loss
+            _multi_level_obj_cls = torch.cat(_multi_level_obj_cls, dim=0).float().sigmoid()
+            _multi_level_positive_info = torch.cat(_multi_level_positive_info, dim=0)
+            _from_which_layer = torch.cat(_from_which_layer, dim=0)
+            _multi_level_proirs = torch.cat(_multi_level_proirs, dim=0)
 
             gt_cls_per_image = (
-                F.one_hot(this_target[:, 1].to(torch.int64),
-                          80).float().unsqueeze(1).repeat(
-                    1, pxyxys.shape[0], 1))
-
-            num_gt = this_target.shape[0]
-            cls_preds_ = (
-                    p_cls.float().unsqueeze(0).repeat(num_gt, 1, 1).sigmoid_() *
-                    p_obj.unsqueeze(0).repeat(num_gt, 1, 1).sigmoid_())
-
+                F.one_hot(targets_normed[:, 1].to(torch.int64),
+                          self.num_classes).float().unsqueeze(1).repeat(
+                    1, num_pred_positive, 1))
+            # cls_score * obj
+            cls_preds_ = _multi_level_obj_cls[:, 1:].unsqueeze(0).repeat(num_gt, 1, 1) \
+                         * _multi_level_obj_cls[:, 0:1].unsqueeze(0).repeat(num_gt, 1, 1)
             y = cls_preds_.sqrt_()
             pair_wise_cls_loss = F.binary_cross_entropy_with_logits(
                 torch.log(y / (1 - y)), gt_cls_per_image,
                 reduction='none').sum(-1)
             del cls_preds_
 
+            # calc cost
             cost = (pair_wise_cls_loss + 3.0 * pair_wise_iou_loss)
-            # num_gt,num_match_pred
+
+            # num_gt, num_match_pred
             matching_matrix = torch.zeros_like(cost)
 
+            top_k, _ = torch.topk(
+                pair_wise_iou, min(10, pair_wise_iou.shape[1]), dim=1)
+            dynamic_ks = torch.clamp(top_k.sum(1).int(), min=1)
+
+            # Select only topk matches per gt
             for gt_idx in range(num_gt):
                 _, pos_idx = torch.topk(
                     cost[gt_idx], k=dynamic_ks[gt_idx].item(), largest=False)
                 matching_matrix[gt_idx][pos_idx] = 1.0
-
             del top_k, dynamic_ks
-            anchor_matching_gt = matching_matrix.sum(0) # num_match_pred, 每个预测框匹配的 gt 数目，如果有多个，则只能取代码最小的一个
+
+            # Each prediction box can match at most one gt box,
+            # and if there are more than one, only the least costly one can be taken
+            anchor_matching_gt = matching_matrix.sum(0)
             if (anchor_matching_gt > 1).sum() > 0:
                 _, cost_argmin = torch.min(
                     cost[:, anchor_matching_gt > 1], dim=0)
@@ -290,101 +335,71 @@ class YOLOv7Head(YOLOv5Head):
                 matching_matrix[cost_argmin, anchor_matching_gt > 1] = 1.0
             fg_mask_inboxes = matching_matrix.sum(0) > 0.0
             matched_gt_inds = matching_matrix[:, fg_mask_inboxes].argmax(0)
-            #经过 动态k 后选择的最终的正样本
-            from_which_layer = from_which_layer[fg_mask_inboxes]
-            all_b = all_b[fg_mask_inboxes]
-            all_a = all_a[fg_mask_inboxes]
-            all_gj = all_gj[fg_mask_inboxes]
-            all_gi = all_gi[fg_mask_inboxes]
-            all_anch = all_anch[fg_mask_inboxes]
 
-            this_target = this_target[matched_gt_inds]
+            targets_normed = targets_normed[matched_gt_inds]
 
+            _multi_level_positive_info = _multi_level_positive_info[fg_mask_inboxes]
+            _from_which_layer = _from_which_layer[fg_mask_inboxes]
+            _multi_level_proirs = _multi_level_proirs[fg_mask_inboxes]
+
+            # Rearranged in the order of the prediction layers
+            # to facilitate loss
             for i in range(self.num_levels):
-                layer_idx = from_which_layer == i
-                matching_bs[i].append(all_b[layer_idx])
-                matching_as[i].append(all_a[layer_idx])
-                matching_gjs[i].append(all_gj[layer_idx])
-                matching_gis[i].append(all_gi[layer_idx])
-                matching_targets[i].append(this_target[layer_idx])
-                matching_anchs[i].append(all_anch[layer_idx])
+                layer_idx = _from_which_layer == i
+                multi_level_positive_info[i].append(_multi_level_positive_info[layer_idx])
+                multi_level_targets_normed[i].append(targets_normed[layer_idx])
+                multi_level_proirs_matched[i].append(_multi_level_proirs[layer_idx])
 
-        # 转换为预测层的格式输出，方便后续算loss
-        for i in range(self.num_levels):
-            if matching_targets[i] != []:
-                matching_bs[i] = torch.cat(matching_bs[i], dim=0)
-                matching_as[i] = torch.cat(matching_as[i], dim=0)
-                matching_gjs[i] = torch.cat(matching_gjs[i], dim=0)
-                matching_gis[i] = torch.cat(matching_gis[i], dim=0)
-                matching_targets[i] = torch.cat(matching_targets[i], dim=0)
-                matching_anchs[i] = torch.cat(matching_anchs[i], dim=0)
-            else:
-                matching_bs[i] = torch.tensor([],
-                                              device='cuda:0',
-                                              dtype=torch.int64)
-                matching_as[i] = torch.tensor([],
-                                              device='cuda:0',
-                                              dtype=torch.int64)
-                matching_gjs[i] = torch.tensor([],
-                                               device='cuda:0',
-                                               dtype=torch.int64)
-                matching_gis[i] = torch.tensor([],
-                                               device='cuda:0',
-                                               dtype=torch.int64)
-                matching_targets[i] = torch.tensor([],
-                                                   device='cuda:0',
-                                                   dtype=torch.int64)
-                matching_anchs[i] = torch.tensor([],
-                                                 device='cuda:0',
-                                                 dtype=torch.int64)
-
-        pre_gen_gains = [
-            torch.tensor(pp.shape, device=device)[[3, 2, 3, 2]] for pp in preds
+        place_hold_var = torch.tensor([], device=device, dtype=torch.int64)
+        cat_multi_level_in_place(multi_level_positive_info,
+                                 multi_level_proirs_matched,
+                                 multi_level_targets_normed,
+                                 place_hold_var=place_hold_var)
+        scaled_factors = [
+            torch.tensor(head_pred.shape, device=device)[[3, 2, 3, 2]] for head_pred in head_preds
         ]
 
-        # Losses
-        for i, pi in enumerate(preds):  # layer index, layer predictions
-            b, a, gj, gi = matching_bs[i], matching_as[i], matching_gjs[i], matching_gis[i]  # image, anchor, gridy, gridx
-            anchors = matching_anchs[i]
-            targets = matching_targets[i]
-            tobj = torch.zeros_like(pi[..., 0], device=device)  # target obj
+        # calc losses
+        for i, head_pred in enumerate(head_preds):  # layer index, layer predictions
+            batch_inds, proir_idx, grid_y, grid_x = multi_level_positive_info[i].T
+            proirs = multi_level_proirs_matched[i]
+            targets_normed = multi_level_targets_normed[i]
 
-            n = b.shape[0]  # number of targets
-            if n:
-                ps = pi[b, a, gj, gi]  # prediction subset corresponding to targets
+            target_obj = torch.zeros_like(head_pred[..., 0])
 
-                # Regression
-                grid = torch.stack([gi, gj], dim=1)
-                pxy = ps[:, :2].sigmoid() * 2. - 0.5
-                # pxy = ps[:, :2].sigmoid() * 3. - 1.
-                pwh = (ps[:, 2:4].sigmoid() * 2) ** 2 * anchors
-                pbox = torch.cat((pxy, pwh), 1)  # predicted box
-                selected_tbox = targets[:, 2:6] * pre_gen_gains[i]
-                selected_tbox[:, :2] -= grid
+            num_pred_positive = batch_inds.shape[0]
+            if num_pred_positive > 0:
+                head_pred_positive = head_pred[batch_inds, proir_idx, grid_y, grid_x]
 
-                loss_box_i, iou = self.loss_bbox(pbox, selected_tbox)
+                # decoded
+                pred_bboxes = head_pred_positive[:, :4].sigmoid()
+                pred_bbox_cxy = pred_bboxes[:, :2] * 2. - 0.5
+                pred_bbox_wh = (pred_bboxes[:, 2:4] * 2) ** 2 * proirs
+                decoded_pred_bbox = torch.cat((pred_bbox_cxy, pred_bbox_wh), 1)  # predicted box
+
+                target_bbox_scaled = targets_normed[:, 2:6] * scaled_factors[i]
+                grid = torch.stack([grid_x, grid_y], dim=1)
+                target_bbox_scaled[:, :2] -= grid
+
+                loss_box_i, iou = self.loss_bbox(decoded_pred_bbox, target_bbox_scaled)
                 loss_box += loss_box_i
 
-                # Objectness
-                tobj[b, a, gj, gi] = iou.detach().clamp(0).type(tobj.dtype)  # iou ratio
+                target_obj[batch_inds, proir_idx, grid_y, grid_x] = iou.detach().clamp(0).type(target_obj.dtype)
 
-                # Classification
-                selected_tcls = targets[:, 1].long()
-                if self.num_classes > 1:  # cls loss (only if multiple classes)
-                    t = torch.full_like(
-                        ps[:, 5:], 0., device=device)  # targets
-                    t[range(n), selected_tcls] = 1.
-                    loss_cls += self.loss_cls(ps[:, 5:], t)  # BCE
+                if self.num_classes > 1:
+                    pred_cls_scores = targets_normed[:, 1].long()
+                    # cls loss (only if multiple classes)
+                    target_class = torch.full_like(head_pred_positive[:, 5:], 0., device=device)
+                    target_class[range(num_pred_positive), pred_cls_scores] = 1.
+                    loss_cls += self.loss_cls(head_pred_positive[:, 5:], target_class)
 
-            obji = self.loss_obj(pi[..., 4], tobj)
-            loss_obj += obji * self.obj_level_weights[i]  # obj loss
+            loss_obj += self.loss_obj(head_pred[..., 4], target_obj) * self.obj_level_weights[i]
 
-        bs = preds[0].shape[0]  # batch size
         _, world_size = get_dist_info()
         return dict(
-            loss_cls=loss_cls * bs * world_size,
-            loss_conf=loss_obj * bs * world_size,
-            loss_bbox=loss_box * bs * world_size)
+            loss_cls=loss_cls * num_batch * world_size,
+            loss_conf=loss_obj * num_batch * world_size,
+            loss_bbox=loss_box * num_batch * world_size)
 
     def _convert_gt_to_norm_format(self,
                                    batch_gt_instances: Sequence[InstanceData],
@@ -424,96 +439,3 @@ class YOLOv7Head(YOLOv5Head):
                 batch_target_list, dim=0)
 
         return batch_gt_instances
-
-
-def xywh2xyxy(x):
-    # Convert nx4 boxes from [x, y, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
-    y = x.clone()
-    y[:, 0] = x[:, 0] - x[:, 2] / 2  # top left x
-    y[:, 1] = x[:, 1] - x[:, 3] / 2  # top left y
-    y[:, 2] = x[:, 0] + x[:, 2] / 2  # bottom right x
-    y[:, 3] = x[:, 1] + x[:, 3] / 2  # bottom right y
-    return y
-
-
-def bbox_iou(box1,
-             box2,
-             x1y1x2y2=True,
-             GIoU=False,
-             DIoU=False,
-             CIoU=False,
-             eps=1e-7):
-    # Returns the IoU of box1 to box2. box1 is 4, box2 is nx4
-    box2 = box2.T
-
-    # Get the coordinates of bounding boxes
-    if x1y1x2y2:  # x1, y1, x2, y2 = box1
-        b1_x1, b1_y1, b1_x2, b1_y2 = box1[0], box1[1], box1[2], box1[3]
-        b2_x1, b2_y1, b2_x2, b2_y2 = box2[0], box2[1], box2[2], box2[3]
-    else:  # transform from xywh to xyxy
-        b1_x1, b1_x2 = box1[0] - box1[2] / 2, box1[0] + box1[2] / 2
-        b1_y1, b1_y2 = box1[1] - box1[3] / 2, box1[1] + box1[3] / 2
-        b2_x1, b2_x2 = box2[0] - box2[2] / 2, box2[0] + box2[2] / 2
-        b2_y1, b2_y2 = box2[1] - box2[3] / 2, box2[1] + box2[3] / 2
-
-    # Intersection area
-    inter = (torch.min(b1_x2, b2_x2) - torch.max(b1_x1, b2_x1)).clamp(0) * \
-            (torch.min(b1_y2, b2_y2) - torch.max(b1_y1, b2_y1)).clamp(0)
-
-    # Union Area
-    w1, h1 = b1_x2 - b1_x1, b1_y2 - b1_y1 + eps
-    w2, h2 = b2_x2 - b2_x1, b2_y2 - b2_y1 + eps
-    union = w1 * h1 + w2 * h2 - inter + eps
-
-    iou = inter / union
-
-    if GIoU or DIoU or CIoU:
-        cw = torch.max(b1_x2, b2_x2) - torch.min(
-            b1_x1, b2_x1)  # convex (smallest enclosing box) width
-        ch = torch.max(b1_y2, b2_y2) - torch.min(b1_y1, b2_y1)  # convex height
-        if CIoU or DIoU:  # Distance or Complete IoU https://arxiv.org/abs/1911.08287v1
-            c2 = cw ** 2 + ch ** 2 + eps  # convex diagonal squared
-            rho2 = ((b2_x1 + b2_x2 - b1_x1 - b1_x2) ** 2 +
-                    (b2_y1 + b2_y2 - b1_y1 - b1_y2) **
-                    2) / 4  # center distance squared
-            if DIoU:
-                return iou - rho2 / c2  # DIoU
-            elif CIoU:  # https://github.com/Zzh-tju/DIoU-SSD-pytorch/blob/master/utils/box/box_utils.py#L47
-                v = (4 / math.pi ** 2) * torch.pow(
-                    torch.atan(w2 / (h2 + eps)) - torch.atan(w1 /
-                                                             (h1 + eps)), 2)
-                with torch.no_grad():
-                    alpha = v / (v - iou + (1 + eps))
-                return iou - (rho2 / c2 + v * alpha)  # CIoU
-        else:  # GIoU https://arxiv.org/pdf/1902.09630.pdf
-            c_area = cw * ch + eps  # convex area
-            return iou - (c_area - union) / c_area  # GIoU
-    else:
-        return iou  # IoU
-
-
-def box_iou(box1, box2):
-    # https://github.com/pytorch/vision/blob/master/torchvision/ops/boxes.py
-    """Return intersection-over-union (Jaccard index) of boxes.
-
-    Both sets of boxes are expected to be in (x1, y1, x2, y2) format.
-    Arguments:
-        box1 (Tensor[N, 4])
-        box2 (Tensor[M, 4])
-    Returns:
-        iou (Tensor[N, M]): the NxM matrix containing the pairwise
-            IoU values for every element in boxes1 and boxes2
-    """
-
-    def box_area(box):
-        # box = 4xn
-        return (box[2] - box[0]) * (box[3] - box[1])
-
-    area1 = box_area(box1.T)
-    area2 = box_area(box2.T)
-
-    # inter(N,M) = (rb(N,M,2) - lt(N,M,2)).clamp(0).prod(2)
-    inter = (torch.min(box1[:, None, 2:], box2[:, 2:]) -
-             torch.max(box1[:, None, :2], box2[:, :2])).clamp(0).prod(2)
-    return inter / (area1[:, None] + area2 - inter
-                    )  # iou = inter / (area1 + area2 - inter)
