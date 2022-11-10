@@ -6,12 +6,12 @@
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="基类 P5">
-图 1: P5 模型结构图
+图 1：P5 模型结构图
 </div>
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/27466624/200850066-0c434173-2d40-4c12-8de3-eda473ff172f.jpg" alt="基类 P6">
-图 2: P6 模型结构图
+图 2：P6 模型结构图
 </div>
 
 YOLO 系列算法大部分采用了统一的算法搭建结构，典型的如 Darknet + PAFPN。为了让用户快速理解 YOLO 系列算法架构，我们特意设计了如上图中的 BaseBackbone + BaseYOLONeck 结构。
