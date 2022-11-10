@@ -1,5 +1,30 @@
 # 更新日志
 
+## v0.1.3（10/11/2022)
+
+### 新特性
+
+1. 支持 CBAM 插件并提供插件文档 (#246)
+2. 新增 YOLOv5 P6 模型结构图和相关说明 (#273)
+
+### Bug 修复
+
+1. 基于 mmengine 0.3.1 修复保存最好权重时训练失败问题
+2. 基于 mmdet 3.0.0rc3 修复 `add_dump_metric` 报错 (#253)
+3. 修复 backbone 不支持 `init_cfg` 问题 (#272)
+4. 基于 mmdet 3.0.0rc3 改变 typing 导入方式 (#261)
+
+### 完善
+
+1. `featmap_vis_demo` 支持文件夹和 url 输入 (#248)
+2. 部署 docker 文件完善 (#242)
+
+### 贡献者
+
+总共 10 位开发者参与了本次版本
+
+谢谢 @kitecats, @triple-Mu, @RangeKing, @PeterH0323, @Zheng-LinXiao, @tkhe, @weikai520, @zytx121, @wanghonglie, @hhaAndroid
+
 ## v0.1.2（3/11/2022)
 
 ### 亮点

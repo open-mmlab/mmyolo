@@ -71,6 +71,11 @@ P6 模型图详见 [model_design.md](docs/zh_CN/algorithm_descriptions/model_des
 
 ## 最新进展
 
+💎 **v0.1.3** 版本已经在 2022.11.10 发布：
+
+1. 基于 mmengine 0.3.1 修复保存最好权重时训练失败问题
+2. 基于 mmdet 3.0.0rc3 修复 `add_dump_metric` 报错 (#253)
+
 💎 **v0.1.2** 版本已经在 2022.11.3 发布：
 
 1. 支持 ONNXRuntime 和 TensorRT 的 [YOLOv5/YOLOv6/YOLOX/RTMDet 部署](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy)
@@ -147,6 +152,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
   - [数据流](docs/zh_cn/advanced_guides/data_flow.md)
   - [How to](docs/zh_cn/advanced_guides/how_to.md)
+  - [插件](docs/zh_cn/advanced_guides/plugins.md)
 
 - [解读文章和资源汇总](docs/zh_cn/article.md)
 

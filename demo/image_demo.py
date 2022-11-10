@@ -46,7 +46,7 @@ def main():
     if args.deploy:
         switch_to_deploy(model)
 
-    if not os.path.exists(args.out_dir):
+    if not os.path.exists(args.out_dir) and not args.show:
         os.mkdir(args.out_dir)
 
     # init visualizer

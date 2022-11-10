@@ -71,6 +71,11 @@ And the figure of P6 model is in [model_design.md](docs/en/algorithm_description
 
 ## What's New
 
+💎 **v0.1.3** was released on 10/11/2022:
+
+1. Fix training failure when saving best weights based on mmengine 0.3.1
+2. Fix `add_dump_metric` error based on mmdet 3.0.0rc3
+
 💎 **v0.1.2** was released on 3/11/2022:
 
 1. Support [YOLOv5/YOLOv6/YOLOX/RTMDet deployments](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy) for ONNXRuntime and TensorRT
@@ -137,6 +142,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 
   - [Data flow](docs/en/advanced_guides/data_flow.md)
   - [How to](docs/en/advanced_guides/how_to.md)
+  - [Plugins](docs/en/advanced_guides/plugins.md)
 
 ## Overview of Benchmark and Model Zoo
 

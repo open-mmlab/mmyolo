@@ -10,14 +10,15 @@ from mmyolo.registry import MODELS
 
 
 class ChannelAttention(BaseModule):
-    """ChannelAttention
+    """ChannelAttention.
+
     Args:
         channels (int): The input (and output) channels of the
             ChannelAttention.
         reduce_ratio (int): Squeeze ratio in ChannelAttention, the intermediate
-            channel will be ``int(channels/ratio)``. Default: 16.
+            channel will be ``int(channels/ratio)``. Defaults to 16.
         act_cfg (dict): Config dict for activation layer
-            Default: (dict(type='ReLU'), dict(type='Sigmoid')).
+            Defaults to dict(type='ReLU').
     """
 
     def __init__(self,
@@ -57,7 +58,7 @@ class SpatialAttention(BaseModule):
     """SpatialAttention
     Args:
          kernel_size (int): The size of the convolution kernel in
-            SpatialAttention. Default: 7.
+            SpatialAttention. Defaults to 7.
     """
 
     def __init__(self, kernel_size: int = 7):
@@ -82,29 +83,27 @@ class SpatialAttention(BaseModule):
 
 @MODELS.register_module()
 class CBAM(BaseModule):
-    """Convolutional Block Attention Module.
+    """Convolutional Block Attention Module. arxiv link:
+    https://arxiv.org/abs/1807.06521v2.
 
-    arxiv link: https://arxiv.org/abs/1807.06521v2
     Args:
         in_channels (int): The input (and output) channels of the CBAM.
         reduce_ratio (int): Squeeze ratio in ChannelAttention, the intermediate
-            channel will be ``int(channels/ratio)``. Default: 16.
+            channel will be ``int(channels/ratio)``. Defaults to 16.
         kernel_size (int): The size of the convolution kernel in
-            SpatialAttention. Default: 7.
+            SpatialAttention. Defaults to 7.
         act_cfg (dict): Config dict for activation layer in ChannelAttention
-            Defaults: dict(type='ReLU').
+            Defaults to dict(type='ReLU').
         init_cfg (dict or list[dict], optional): Initialization config dict.
             Defaults to None.
     """
 
-    def __init__(
-            self,
-            in_channels: int,
-            reduce_ratio: int = 16,
-            kernel_size: int = 7,
-            act_cfg: dict = dict(type='ReLU'),
-            init_cfg: OptMultiConfig = None,
-    ):
+    def __init__(self,
+                 in_channels: int,
+                 reduce_ratio: int = 16,
+                 kernel_size: int = 7,
+                 act_cfg: dict = dict(type='ReLU'),
+                 init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg)
         self.channel_attention = ChannelAttention(
             channels=in_channels, reduce_ratio=reduce_ratio, act_cfg=act_cfg)

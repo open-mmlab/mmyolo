@@ -14,3 +14,12 @@ How to
    :maxdepth: 1
 
    how_to.md
+
+
+Plugins
+************************
+
+.. toctree::
+   :maxdepth: 1
+
+   plugins.md
