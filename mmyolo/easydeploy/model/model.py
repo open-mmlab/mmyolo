@@ -7,9 +7,10 @@ import torch.nn as nn
 from mmengine.config import ConfigDict
 from torch import Tensor
 
-from mmyolo.easydeploy.head import yolov5_bbox_decoder
+from mmyolo.easydeploy.bbox_code import (rtmdet_bbox_decoder,
+                                         yolov5_bbox_decoder)
 from mmyolo.easydeploy.nms import batched_nms, efficient_nms, onnx_nms
-from mmyolo.models.dense_heads import YOLOv5Head
+from mmyolo.models.dense_heads import RTMDetHead, YOLOv5Head
 
 
 class DeployModel(nn.Module):
@@ -53,8 +54,12 @@ class DeployModel(nn.Module):
         device = cls_scores[0].device
 
         nms_func = self.select_nms()
-        bbox_decoder = yolov5_bbox_decoder \
-            if detector_type is YOLOv5Head else self.bbox_decoder
+        if detector_type is YOLOv5Head:
+            bbox_decoder = yolov5_bbox_decoder
+        elif detector_type is RTMDetHead:
+            bbox_decoder = rtmdet_bbox_decoder
+        else:
+            bbox_decoder = self.bbox_decoder
 
         num_imgs = cls_scores[0].shape[0]
         featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]

@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Optional
+
 import torch
 from torch import Tensor
 
@@ -20,4 +22,14 @@ def yolov5_bbox_decoder(priors: Tensor, bbox_preds: Tensor,
     decoded_bboxes = torch.stack(
         [x_center_pred, y_center_pred, w_pred, h_pred], dim=-1)
 
+    return decoded_bboxes
+
+
+def rtmdet_bbox_decoder(priors: Tensor, bbox_preds: Tensor,
+                        stride: Optional[Tensor]) -> Tensor:
+    tl_x = (priors[..., 0] - bbox_preds[..., 0])
+    tl_y = (priors[..., 1] - bbox_preds[..., 1])
+    br_x = (priors[..., 0] + bbox_preds[..., 2])
+    br_y = (priors[..., 1] + bbox_preds[..., 3])
+    decoded_bboxes = torch.stack([tl_x, tl_y, br_x, br_y], -1)
     return decoded_bboxes
