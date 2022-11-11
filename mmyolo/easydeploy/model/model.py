@@ -8,7 +8,7 @@ from mmengine.config import ConfigDict
 from torch import Tensor
 
 from mmyolo.easydeploy.head import yolov5_bbox_decoder
-from mmyolo.easydeploy.nms import efficient_nms
+from mmyolo.easydeploy.nms import batched_nms, efficient_nms, onnx_nms
 from mmyolo.models.dense_heads import YOLOv5Head
 
 
@@ -26,11 +26,13 @@ class DeployModel(nn.Module):
             keep_top_k = 100
             iou_threshold = 0.65
             score_threshold = 0.25
+            backend = 1
         else:
             pre_top_k = postprocess_cfg.get('pre_top_k', 1000)
             keep_top_k = postprocess_cfg.get('keep_top_k', 100)
             iou_threshold = postprocess_cfg.get('iou_threshold', 0.65)
             score_threshold = postprocess_cfg.get('score_threshold', 0.25)
+            backend = postprocess_cfg.get('backend', 1)
         self.__dict__.update(locals())
 
     def __init_sub_attributes(self):
@@ -49,10 +51,10 @@ class DeployModel(nn.Module):
         detector_type = type(self.baseHead)
         dtype = cls_scores[0].dtype
         device = cls_scores[0].device
-        nms_func, bbox_decoder = (partial(efficient_nms, box_coding=0),
-                                  yolov5_bbox_decoder) \
-            if detector_type is YOLOv5Head else \
-            (efficient_nms, self.bbox_decoder)
+
+        nms_func = self.select_nms()
+        bbox_decoder = yolov5_bbox_decoder \
+            if detector_type is YOLOv5Head else self.bbox_decoder
 
         num_imgs = cls_scores[0].shape[0]
         featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
@@ -99,6 +101,19 @@ class DeployModel(nn.Module):
 
         return nms_func(bboxes, scores, self.keep_top_k, self.iou_threshold,
                         self.score_threshold, self.pre_top_k, self.keep_top_k)
+
+    def select_nms(self):
+        if self.backend == 1:
+            nms_func = onnx_nms
+        elif self.backend == 2:
+            nms_func = efficient_nms
+        elif self.backend == 3:
+            nms_func = batched_nms
+        else:
+            raise NotImplementedError
+        if type(self.baseHead) is YOLOv5Head:
+            nms_func = partial(nms_func, box_coding=1)
+        return nms_func
 
     def forward(self, inputs: Tensor):
         neck_outputs = self.baseModel(inputs)

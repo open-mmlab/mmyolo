@@ -21,15 +21,18 @@ if __name__ == '__main__':
     register_all_modules()
     baseModel = build_model_from_cfg(config, checkpoint, device)
     inp = torch.randn(1, 3, 640, 640).to(device)
+
+    # out = inference_detector(baseModel, './demo/demo.jpg')
     postprocess_cfg = ConfigDict(
         pre_top_k=1000,
         keep_top_k=100,
         iou_threshold=0.65,
         score_threshold=0.25,
-    )
+        backend=1)
     deploy_model = DeployModel(
         baseModel=baseModel, postprocess_cfg=postprocess_cfg)
     deploy_model.eval()
+
     # dry run
     deploy_model(inp)
     torch.onnx.export(
@@ -38,4 +41,4 @@ if __name__ == '__main__':
         'tmp.onnx',
         input_names=['images'],
         output_names=['num_det', 'det_boxes', 'det_scores', 'det_classes'],
-        opset_version=11)
+        opset_version=13)

@@ -11,7 +11,7 @@ class TRTEfficientNMSop(torch.autograd.Function):
         boxes: Tensor,
         scores: Tensor,
         background_class: int = -1,
-        box_coding: int = 1,
+        box_coding: int = 0,
         iou_threshold: float = 0.45,
         max_output_boxes: int = 100,
         plugin_version: str = '1',
@@ -32,7 +32,7 @@ class TRTEfficientNMSop(torch.autograd.Function):
                  boxes: Tensor,
                  scores: Tensor,
                  background_class: int = -1,
-                 box_coding: int = 1,
+                 box_coding: int = 0,
                  iou_threshold: float = 0.45,
                  max_output_boxes: int = 100,
                  plugin_version: str = '1',
@@ -131,7 +131,7 @@ def _efficient_nms(
     score_threshold: float = 0.05,
     pre_top_k: int = -1,
     keep_top_k: int = 100,
-    box_coding: int = 1,
+    box_coding: int = 0,
 ):
     """Wrapper for `efficient_nms` with TensorRT.
     Args:
@@ -148,8 +148,8 @@ def _efficient_nms(
         keep_top_k (int): Number of top K boxes to keep after nms.
             Defaults to -1.
         box_coding (int): Bounding boxes format for nms.
-            Defaults to 0 means [x, y, w, h].
-            Set to 1 means [x1, y1 ,x2, y2].
+            Defaults to 0 means [x1, y1 ,x2, y2].
+            Set to 1 means [x, y, w, h].
     Returns:
         tuple[Tensor, Tensor, Tensor, Tensor]:
         (num_det, det_boxes, det_scores, det_classes),
@@ -161,18 +161,19 @@ def _efficient_nms(
     num_det, det_boxes, det_scores, det_classes = TRTEfficientNMSop.apply(
         boxes, scores, -1, box_coding, iou_threshold, keep_top_k, '1', 0,
         score_threshold)
-    num_det = num_det.flatten()
-    det_boxes = det_boxes.round().int()
     return num_det, det_boxes, det_scores, det_classes
 
 
-def _batched_nms(boxes: Tensor,
-                 scores: Tensor,
-                 max_output_boxes_per_class: int = 1000,
-                 iou_threshold: float = 0.5,
-                 score_threshold: float = 0.05,
-                 pre_top_k: int = -1,
-                 keep_top_k: int = 100):
+def _batched_nms(
+    boxes: Tensor,
+    scores: Tensor,
+    max_output_boxes_per_class: int = 1000,
+    iou_threshold: float = 0.5,
+    score_threshold: float = 0.05,
+    pre_top_k: int = -1,
+    keep_top_k: int = 100,
+    box_coding: int = 0,
+):
     """Wrapper for `efficient_nms` with TensorRT.
     Args:
         boxes (Tensor): The bounding boxes of shape [N, num_boxes, 4].
@@ -187,6 +188,9 @@ def _batched_nms(boxes: Tensor,
             Defaults to -1.
         keep_top_k (int): Number of top K boxes to keep after nms.
             Defaults to -1.
+        box_coding (int): Bounding boxes format for nms.
+            Defaults to 0 means [x1, y1 ,x2, y2].
+            Set to 1 means [x, y, w, h].
     Returns:
         tuple[Tensor, Tensor, Tensor, Tensor]:
         (num_det, det_boxes, det_scores, det_classes),
@@ -202,8 +206,6 @@ def _batched_nms(boxes: Tensor,
         boxes, scores, '1', 1, -1, int(numClasses), min(pre_top_k, 4096),
         keep_top_k, score_threshold, iou_threshold, 0, 0, 16, 1)
 
-    num_det = num_det.flatten()
-    det_boxes = det_boxes.round().int()
     det_classes = det_classes.int()
     return num_det, det_boxes, det_scores, det_classes
 
