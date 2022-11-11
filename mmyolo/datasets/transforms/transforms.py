@@ -687,13 +687,13 @@ class PPYOLOERandomDistort(BaseTransform):
             assert 0. <= cfg['prob'] <= 1., 'prob must >=0 and <=1'
 
     def transform_hue(self, results):
-        if np.random.uniform(0., 1.) < self.hue_cfg['prob']:
+        if random.uniform(0., 1.) >= self.hue_cfg['prob']:
             return results
 
         img = results['img']
         img = img.astype(np.float32)
 
-        delta = np.random.uniform(self.hue_cfg['min'], self.hue_cfg['max'])
+        delta = random.uniform(self.hue_cfg['min'], self.hue_cfg['max'])
         u = np.cos(delta * np.pi)
         w = np.sin(delta * np.pi)
         bt = np.array([[1.0, 0.0, 0.0], [0.0, u, -w], [0.0, w, u]])
@@ -707,11 +707,11 @@ class PPYOLOERandomDistort(BaseTransform):
         return results
 
     def transform_saturation(self, results):
-        if np.random.uniform(0., 1.) < self.saturation_cfg['prob']:
+        if random.uniform(0., 1.) >= self.saturation_cfg['prob']:
             return results
         img = results['img']
-        delta = np.random.uniform(self.saturation_cfg['min'],
-                                  self.saturation_cfg['max'])
+        delta = random.uniform(self.saturation_cfg['min'],
+                               self.saturation_cfg['max'])
         img = img.astype(np.float32)
 
         gray = img * np.array([[[0.299, 0.587, 0.114]]], dtype=np.float32)
@@ -723,22 +723,22 @@ class PPYOLOERandomDistort(BaseTransform):
         return results
 
     def transform_contrast(self, results):
-        if np.random.uniform(0., 1.) < self.contrast_cfg['prob']:
+        if random.uniform(0., 1.) >= self.contrast_cfg['prob']:
             return results
         img = results['img']
-        delta = np.random.uniform(self.contrast_cfg['min'],
-                                  self.contrast_cfg['max'])
+        delta = random.uniform(self.contrast_cfg['min'],
+                               self.contrast_cfg['max'])
         img = img.astype(np.float32)
         img *= delta
         results['img'] = img
         return results
 
     def transform_brightness(self, results):
-        if np.random.uniform(0., 1.) < self.brightness_cfg['prob']:
+        if random.uniform(0., 1.) >= self.brightness_cfg['prob']:
             return results
         img = results['img']
-        delta = np.random.uniform(self.brightness_cfg['min'],
-                                  self.brightness_cfg['max'])
+        delta = random.uniform(self.brightness_cfg['min'],
+                               self.brightness_cfg['max'])
         img = img.astype(np.float32)
         img += delta
         results['img'] = img
@@ -749,7 +749,7 @@ class PPYOLOERandomDistort(BaseTransform):
             self.transform_brightness, self.transform_contrast,
             self.transform_saturation, self.transform_hue
         ]
-        distortions = np.random.permutation(functions)[:self.transform_num]
+        distortions = random.permutation(functions)[:self.transform_num]
         for func in distortions:
             results = func(results)
         return results
@@ -758,9 +758,12 @@ class PPYOLOERandomDistort(BaseTransform):
 @TRANSFORMS.register_module()
 class PPYOLOERandomExpand(LetterResize):
 
-    def __init__(self, ratio=4., prob=0.5, fill_value=(127.5, 127.5, 127.5)):
-        assert ratio > 1.01, 'expand ratio must be larger than 1.01'
-        self.ratio = ratio
+    def __init__(self,
+                 expand_ratio=4.,
+                 prob=0.5,
+                 fill_value=(127.5, 127.5, 127.5)):
+        assert expand_ratio > 1.01, 'expand ratio must be larger than 1.01'
+        self.expand_ratio = expand_ratio
         self.prob = prob
         assert 0. <= self.prob <= 1.
         assert isinstance(fill_value, (Number, Sequence)), \
@@ -772,18 +775,18 @@ class PPYOLOERandomExpand(LetterResize):
         self.fill_value = fill_value
 
     def transform(self, results: dict) -> dict:
-        if np.random.uniform(0., 1.) < self.prob:
+        if random.uniform(0., 1.) >= self.prob:
             return results
 
         img = results['img']
         height, width = img.shape[:2]
-        ratio = np.random.uniform(1., self.ratio)
-        h = int(height * ratio)
-        w = int(width * ratio)
+        expand_ratio = random.uniform(1., self.expand_ratio)
+        h = int(height * expand_ratio)
+        w = int(width * expand_ratio)
         if not h > height or not w > width:
             return results
-        top_padding = np.random.randint(0, h - height)
-        left_padding = np.random.randint(0, w - width)
+        top_padding = random.randint(0, h - height)
+        left_padding = random.randint(0, w - width)
 
         right_padding = w - width - left_padding
         bottom_padding = h - height - top_padding
@@ -797,6 +800,7 @@ class PPYOLOERandomExpand(LetterResize):
             results['scale_factor'] = np.array([1, 1], dtype=np.float32)
         results['img'] = img
         results['img_shape'] = img.shape
+        # add pad_param key, but is not useful while training
         results['pad_param'] = np.array(
             [top_padding, bottom_padding, left_padding, right_padding],
             dtype=np.float32)
@@ -827,8 +831,6 @@ class PPYOLOERandomCrop(RandomCrop):
 
     @autocast_box_type()
     def transform(self, results: dict) -> Union[dict, None]:
-        # TODO: 需要重构
-
         if 'gt_bboxes' in results and len(results['gt_bboxes']) == 0:
             return results
 
@@ -847,7 +849,7 @@ class PPYOLOERandomCrop(RandomCrop):
         thresholds = list(self.thresholds)
         if self.allow_no_crop:
             thresholds.append('no_crop')
-        np.random.shuffle(thresholds)
+        random.shuffle(thresholds)
 
         for thresh in thresholds:
             if thresh == 'no_crop':
@@ -855,16 +857,16 @@ class PPYOLOERandomCrop(RandomCrop):
 
             found = False
             for i in range(self.num_attempts):
-                scale = np.random.uniform(*self.scaling)
+                scale = random.uniform(*self.scaling)
                 if self.aspect_ratio is not None:
                     min_ar, max_ar = self.aspect_ratio
-                    aspect_ratio = np.random.uniform(
+                    aspect_ratio = random.uniform(
                         max(min_ar, scale**2), min(max_ar, scale**-2))
                     h_scale = scale / np.sqrt(aspect_ratio)
                     w_scale = scale * np.sqrt(aspect_ratio)
                 else:
-                    h_scale = np.random.uniform(*self.scaling)
-                    w_scale = np.random.uniform(*self.scaling)
+                    h_scale = random.uniform(*self.scaling)
+                    w_scale = random.uniform(*self.scaling)
                 crop_h = h * h_scale
                 crop_w = w * w_scale
                 if self.aspect_ratio is None:
@@ -873,10 +875,9 @@ class PPYOLOERandomCrop(RandomCrop):
 
                 crop_h = int(crop_h)
                 crop_w = int(crop_w)
-                crop_y = np.random.randint(0, h - crop_h)
-                crop_x = np.random.randint(0, w - crop_w)
+                crop_y = random.randint(0, h - crop_h)
+                crop_x = random.randint(0, w - crop_w)
                 crop_box = [crop_x, crop_y, crop_x + crop_w, crop_y + crop_h]
-                # TODO: 这里能不能求？
                 iou = self._iou_matrix(gt_bbox,
                                        np.array([crop_box], dtype=np.float32))
                 if iou.max() < thresh:
@@ -951,6 +952,7 @@ class PPYOLOERandomCrop(RandomCrop):
 
     def _iou_matrix(self, a, b):
         # TODO: copy is necessary?
+        # TODO: use bbox_overlaps instead of _iou_matrix
         a = a.tensor.numpy().copy()
         tl_i = np.maximum(a[:, np.newaxis, :2], b[:, :2])
         br_i = np.minimum(a[:, np.newaxis, 2:], b[:, 2:])

@@ -76,7 +76,7 @@ model = dict(
             act_cfg=dict(type='SiLU', inplace=True),
             num_base_priors=1),
         prior_generator=dict(
-            type='mmdet.MlvlPointGenerator', offset=0.5, strides=[8, 16, 32]),
+            type='mmdet.MlvlPointGenerator', offset=0.5, strides=strides),
         bbox_coder=dict(type='DistancePointBBoxCoder'),
         loss_cls=dict(
             type='mmdet.VarifocalLoss',
@@ -95,7 +95,6 @@ model = dict(
             return_iou=False),
         loss_dfl=dict(type='DfLoss', reduction='mean', loss_weight=0.5)),
     train_cfg=dict(
-        # paddle里设置的是30，但是paddle epoch是从0开始，mmengine是从1开始
         initial_epoch=31,
         initial_assigner=dict(
             type='BatchATSSAssigner',
@@ -107,8 +106,7 @@ model = dict(
             num_classes=num_classes,
             topk=13,
             alpha=1,
-            beta=6),
-    ),
+            beta=6)),
     test_cfg=dict(
         multi_label=True,
         nms_pre=1000,
@@ -195,7 +193,7 @@ default_hooks = dict(
         start_factor=0.,
         warmup_epochs=5,
         min_lr_ratio=0.0,
-        total_epochs=96),
+        total_epochs=int(max_epochs * 1.2)),
     checkpoint=dict(
         type='CheckpointHook', interval=save_epoch_intervals,
         max_keep_ckpts=3))
@@ -214,4 +212,5 @@ train_cfg = dict(
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
+# TODO: add object365 pretrained model url.
 load_from = 'baidumodel/ppyoloe_plus_s_pretrained.pth'

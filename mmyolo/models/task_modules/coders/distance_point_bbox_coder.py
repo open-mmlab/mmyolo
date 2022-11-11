@@ -52,8 +52,26 @@ class DistancePointBBoxCoder(MMDET_DistancePointBBoxCoder):
 
         return distance2bbox(points, pred_bboxes, max_shape)
 
-    def encode(self, points, gt_bboxes, max_dis=None, eps=0.1):
-        """# TODO: doc."""
+    def encode(self,
+               points: torch.Tensor,
+               gt_bboxes: torch.Tensor,
+               max_dis: float = 16.,
+               eps: float = 0.01) -> torch.Tensor:
+        """Encode bounding box to distances. The rewrite is to support batch
+        operations.
+
+        Args:
+            points (Tensor): Shape (B, N, 2) or (N, 2), The format is [x, y].
+            gt_bboxes (Tensor or :obj:`BaseBoxes`): Shape (N, 4), The format
+                is "xyxy"
+            max_dis (float): Upper bound of the distance. Default to 16..
+            eps (float): a small value to ensure target < max_dis, instead <=.
+                Default 0.01.
+
+        Returns:
+            Tensor: Box transformation deltas. The shape is (N, 4) or
+             (B, N, 4).
+        """
 
         assert points.size(-2) == gt_bboxes.size(-2)
         assert points.size(-1) == 2

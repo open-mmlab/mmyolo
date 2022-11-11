@@ -149,7 +149,7 @@ class PPYOLOEHead(YOLOv6Head):
     """PPYOLOEHead head used in `PPYOLOE`.
 
     Args:
-        head_module(nn.Module): Base module used for YOLOv5Head
+        head_module (nn.Module): Base module used for PPYOLOEHead
         prior_generator(dict): Points generator feature maps in
             2D points-based detectors.
         bbox_coder (:obj:`ConfigDict` or dict): Config of bbox coder.

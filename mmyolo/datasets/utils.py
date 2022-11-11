@@ -50,7 +50,8 @@ def ppyoloe_collate(data_batch: Sequence) -> dict:
         batch_imgs.append(inputs)
 
     return {
-        'inputs': batch_imgs,  # 由于用了多尺度训练，这里不能stack
+        # type: list
+        'inputs': batch_imgs,
         'data_samples': batch_bboxes_labels
     }
 

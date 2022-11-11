@@ -61,18 +61,27 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
 
 @MODELS.register_module()
 class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
-    """# 这边还要完善处理机制类型，各种异常情况的判断 有些参数用不到的要在init做判断."""
+    """Rewrite collate_fn to get faster training speed.
+
+    Note: It must be used together with `mmyolo.datasets.utils.ppyoloe_collate`
+    """
 
     def forward(self, data: dict, training: bool = False) -> dict:
-        # 图片shape在这里之前就已经是统一的了
         if not training:
             return super().forward(data, training)
 
-        # 这里图片尺度是不一样的
+        assert isinstance(data['inputs'], list) and is_list_of(
+            data['inputs'], torch.Tensor), \
+            '"inputs" should be a list of Tensor, but got ' \
+            f'{type(data["inputs"])}. The possible reason for this ' \
+            'is that you are not using it with ' \
+            '"mmyolo.datasets.utils.ppyoloe_collate". Please refer to ' \
+            '"cconfigs/ppyoloe/ppyoloe_plus_s_fast_8xb8-80e_coco.py".'
+
         data = self.cast_data(data)
         inputs, data_samples = data['inputs'], data['data_samples']
-        # 进行图像预处理
-        # Process data with `pseudo_collate`.
+
+        # Process data.
         if is_list_of(inputs, torch.Tensor):
             batch_inputs = []
             for _batch_input, data_sample in zip(inputs, data_samples):
@@ -84,16 +93,12 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
                 _batch_input = _batch_input.float()
 
                 batch_inputs.append(_batch_input)
-        elif isinstance(inputs, torch.Tensor):
-            raise NotImplementedError
-        else:
-            raise NotImplementedError
 
+        # Batch random resize image.
         if self.batch_augments is not None:
             for batch_aug in self.batch_augments:
                 inputs, data_samples = batch_aug(batch_inputs, data_samples)
 
-        # 这里是先resize，在normalize
         if self._enable_normalize:
             inputs = (inputs - self.mean) / self.std
 
@@ -105,7 +110,29 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
 
 @MODELS.register_module()
 class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
-    """# TODO: doc."""
+    """PPYOLOE batch random resize which synchronizes the random size across
+    ranks.
+
+    Args:
+        random_size_range (tuple): The multi-scale random range during
+            multi-scale training.
+        interval (int): The iter interval of change
+            image size. Defaults to 10.
+        size_divisor (int): Image size divisible factor.
+            Defaults to 32.
+        random_interp (bool): Whether to choose interp_mode randomly.
+            If set to True, the type of `interp_mode` must be list.
+            If set to False, the type of `interp_mode` must be str.
+            Defaults to True.
+        interp_mode (Union[List, str]): The modes available for resizing
+            are ('nearest', 'bilinear', 'bicubic', 'area').
+        keep_ratio (bool): Whether to keep the aspect ratio when resizing
+            the image. Now we only support keep_ratio=False.
+            Defaults to False.
+        broadcast_flag (bool): Whether to use same image size between
+            gpus while resize image.
+            Defaults to True.
+    """
 
     def __init__(self,
                  random_size_range: Tuple[int, int],
@@ -115,34 +142,40 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
                  interp_mode: Union[List[str], str] = [
                      'nearest', 'bilinear', 'bicubic', 'area'
                  ],
-                 keep_ratio: bool = False) -> None:
+                 keep_ratio: bool = False,
+                 broadcast_flag: bool = True) -> None:
         super().__init__(random_size_range, interval, size_divisor)
         self.random_interp = random_interp
         self.keep_ratio = keep_ratio
+        assert not self.keep_ratio, 'We do not yet support keep_ratio=True'
+        self.broadcast_flag = broadcast_flag
 
         if self.random_interp:
-            assert isinstance(interp_mode, list) and len(interp_mode) > 1
+            assert isinstance(interp_mode, list) and len(interp_mode) > 1,\
+                'While random_interp==True, the type of `interp_mode`' \
+                ' must be list and len(interp_mode) must large than 1'
             self.interp_mode_list = interp_mode
             self.interp_mode = None
-        elif isinstance(interp_mode, str):
+        else:
+            assert isinstance(interp_mode, str),\
+                'While random_interp==False, the type of ' \
+                '`interp_mode` must be str'
+            assert interp_mode in ['nearest', 'bilinear', 'bicubic', 'area']
             self.interp_mode_list = None
             self.interp_mode = interp_mode
-        else:
-            # TODO:
-            raise RuntimeError('xxx')
 
     def forward(self, inputs, data_samples):
         assert isinstance(inputs, list)
-        # TODO: random_interp为True的时候
         message_hub = MessageHub.get_current_instance()
         if (message_hub.get_info('iter') + 1) % self._interval == 0:
+            # get current input size
             self._input_size, interp_mode = self._get_random_size_and_interp(
                 device=inputs[0].device)
             if self.random_interp:
                 self.interp_mode = interp_mode
 
-        # TODO: 区分tensor和list情况
-        # TODO: keep ratio的情况
+        # TODO: need to support type(inputs)==Tensor
+        # TODO: need to support keep_ratio==True
         if isinstance(inputs, list):
             outputs = []
             for i in range(len(inputs)):
@@ -152,7 +185,7 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
                 scale_y = self._input_size[0] / h
                 scale_x = self._input_size[1] / w
                 if scale_x != 1. or scale_y != 1.:
-                    if interp_mode in ('nearest', 'area'):
+                    if self.interp_mode in ('nearest', 'area'):
                         align_corners = None
                     else:
                         align_corners = False
@@ -171,15 +204,16 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
                     _batch_input = _batch_input.unsqueeze(0)
 
                 outputs.append(_batch_input)
+
+            # convert to Tensor
             return torch.cat(outputs, dim=0), torch.cat(data_samples, dim=0)
         else:
-            raise NotImplementedError
+            raise NotImplementedError('Not implemented yet!')
 
     def _get_random_size_and_interp(self,
                                     device: torch.device) -> Tuple[int, int]:
-
         tensor = torch.LongTensor(3).to(device)
-        if self.rank == 0:
+        if (self.broadcast_flag and self.rank == 0) or self.broadcast_flag:
             size = random.randint(*self._random_size_range)
             size = (self._size_divisor * size, self._size_divisor * size)
             tensor[0] = size[0]
@@ -188,8 +222,11 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
             if self.random_interp:
                 interp_ind = random.randint(0, len(self.interp_mode_list) - 1)
                 tensor[2] = interp_ind
-        barrier()
-        broadcast(tensor, 0)
+
+        # broadcast to all gpu
+        if self.broadcast_flag:
+            barrier()
+            broadcast(tensor, 0)
         input_size = (tensor[0].item(), tensor[1].item())
         if self.random_interp:
             interp_mode = self.interp_mode_list[tensor[2].item()]
