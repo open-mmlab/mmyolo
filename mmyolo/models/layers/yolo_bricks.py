@@ -1152,9 +1152,9 @@ class RepStageBlock(nn.Module):
 
         block_cfg.update(
             dict(in_channels=out_channels, out_channels=out_channels))
-        self.block = nn.Sequential(
-            *(MODELS.build(block_cfg)
-              for _ in range(num_blocks - 1))) if num_blocks > 1 else None
+        self.block = nn.Sequential(*(
+            MODELS.build(block_cfg)
+            for _ in range(num_blocks - 1))) if num_blocks > 1 else None
 
         if bottle_block == BottleRep:
             self.conv1 = BottleRep(
@@ -1163,13 +1163,13 @@ class RepStageBlock(nn.Module):
                 block_cfg=block_cfg,
                 adaptive_weight=True)
             num_blocks = num_blocks // 2
-            self.block = nn.Sequential(
-                *(BottleRep(
+            self.block = nn.Sequential(*(
+                BottleRep(
                     out_channels,
                     out_channels,
                     block_cfg=block_cfg,
                     adaptive_weight=True)
-                  for _ in range(num_blocks - 1))) if num_blocks > 1 else None
+                for _ in range(num_blocks - 1))) if num_blocks > 1 else None
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward process.
