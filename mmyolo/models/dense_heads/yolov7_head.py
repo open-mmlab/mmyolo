@@ -137,15 +137,17 @@ class YOLOv7Head(YOLOv5Head):
             for head_pred in head_preds
         ]
 
-        # 1. Convert gt to norm xywh format (num_bboxes, 6)
-        # 6 is mean (batch_idx, cls_id, x_norm, y_norm, w_norm, h_norm)
+        # 1. Convert gt to norm xywh format
+        # (num_base_priors, num_batch_gt, 7)
+        # 7 is mean (batch_idx, cls_id, x_norm, y_norm,
+        # w_norm, h_norm, prior_idx)
         batch_targets_normed = self._convert_gt_to_norm_format(
             batch_gt_instances, batch_img_metas)
 
         assigner_results = self.assigner(
             head_preds, batch_targets_normed,
             batch_img_metas[0]['batch_input_shape'], self.priors_base_sizes,
-            self.prior_inds, self.grid_offset)
+            self.grid_offset)
         # mlvl is mean multi_level
         mlvl_positive_infos = assigner_results['mlvl_positive_infos']
         mlvl_priors = assigner_results['mlvl_priors']
@@ -203,43 +205,6 @@ class YOLOv7Head(YOLOv5Head):
             loss_cls=loss_cls * batch_size * world_size,
             loss_conf=loss_obj * batch_size * world_size,
             loss_bbox=loss_box * batch_size * world_size)
-
-    def _convert_gt_to_norm_format(self,
-                                   batch_gt_instances: Sequence[InstanceData],
-                                   batch_img_metas: Sequence[dict]) -> Tensor:
-        if isinstance(batch_gt_instances, torch.Tensor):
-            # fast version
-            img_shape = batch_img_metas[0]['batch_input_shape']
-            gt_bboxes_xyxy = batch_gt_instances[:, 2:]
-            xy1, xy2 = gt_bboxes_xyxy.split((2, 2), dim=-1)
-            gt_bboxes_xywh = torch.cat([(xy2 + xy1) / 2, (xy2 - xy1)], dim=-1)
-            gt_bboxes_xywh[:, 1::2] /= img_shape[0]
-            gt_bboxes_xywh[:, 0::2] /= img_shape[1]
-            batch_gt_instances[:, 2:] = gt_bboxes_xywh  # (num_bboxes, 6)
-        else:
-            batch_target_list = []
-            # Convert xyxy bbox to yolo format.
-            for i, gt_instances in enumerate(batch_gt_instances):
-                img_shape = batch_img_metas[i]['batch_input_shape']
-                bboxes = gt_instances.bboxes
-                labels = gt_instances.labels
-
-                xy1, xy2 = bboxes.split((2, 2), dim=-1)
-                bboxes = torch.cat([(xy2 + xy1) / 2, (xy2 - xy1)], dim=-1)
-                # normalized to 0-1
-                bboxes[:, 1::2] /= img_shape[0]
-                bboxes[:, 0::2] /= img_shape[1]
-
-                index = bboxes.new_full((len(bboxes), 1), i)
-                # (batch_idx, label, normed_bbox)
-                target = torch.cat((index, labels[:, None].float(), bboxes),
-                                   dim=1)
-                batch_target_list.append(target)
-
-            # (num_bboxes, 6)
-            batch_gt_instances = torch.cat(batch_target_list, dim=0)
-
-        return batch_gt_instances
 
     def _merge_predict_results(self, bbox_preds, objectnesses, cls_scores):
         head_preds = []

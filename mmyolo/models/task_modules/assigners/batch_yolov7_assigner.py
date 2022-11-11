@@ -37,9 +37,13 @@ class BatchYOLOv7Assigner(nn.Module):
 
     @torch.no_grad()
     def forward(self, pred_results, batch_targets_normed, batch_input_shape,
-                priors_base_sizes, prior_inds, grid_offset) -> dict:
+                priors_base_sizes, grid_offset) -> dict:
+        # (num_base_priors, num_batch_gt, 7)
+        # 7 is mean (batch_idx, cls_id, x_norm, y_norm,
+        # w_norm, h_norm, prior_idx)
+
         # mlvl is mean multi_level
-        if batch_targets_normed.shape[0] == 0:
+        if batch_targets_normed.shape[1] == 0:
             # empty gt of batch
             num_levels = len(pred_results)
             return dict(
@@ -47,14 +51,6 @@ class BatchYOLOv7Assigner(nn.Module):
                     (0, 4))] * num_levels,
                 mlvl_priors=[] * num_levels,
                 mlvl_targets_normed=[] * num_levels)
-
-        batch_targets_prior_inds = prior_inds.repeat(
-            1, batch_targets_normed.shape[0])[..., None]
-        # (num_base_priors, num_batch_gt, 7)
-        # 7 is mean (batch_idx, cls_id, x_norm, y_norm,
-        # w_norm, h_norm, prior_idx)
-        batch_targets_normed = torch.cat((batch_targets_normed.repeat(
-            self.num_base_priors, 1, 1), batch_targets_prior_inds), 2)
 
         mlvl_positive_infos, mlvl_priors = self.yolov5_assigner(
             pred_results, batch_targets_normed, priors_base_sizes, grid_offset)
