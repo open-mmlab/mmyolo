@@ -93,8 +93,10 @@ model = dict(
             reduction='mean',
             loss_weight=0.7 * ((img_scale[0] / 640)**2 * 3 / num_det_layers)),
         prior_match_thr=4.,
-        obj_level_weights=[4., 1., 0.4]
-    ),
+        obj_level_weights=[4., 1., 0.4],
+        simota_candidate_topk=10,
+        simota_iou_weight=3.0,
+        simota_cls_weight=1.0),
     test_cfg=dict(
         multi_label=True,
         nms_pre=30000,
