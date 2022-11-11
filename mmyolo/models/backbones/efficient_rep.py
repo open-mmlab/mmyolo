@@ -39,7 +39,7 @@ class YOLOv6EfficientRep(BaseBackbone):
         norm_eval (bool): Whether to set norm layers to eval mode, namely,
             freeze running stats (mean and var). Note: Effect on Batch Norm
             and its variants only. Defaults to False.
-        stage_block_cfg (dict): Config dict for the block used to build each
+        block_cfg (dict): Config dict for the block used to build each
             layer. Defaults to dict(type='RepVGGBlock').
         init_cfg (Union[dict, list[dict]], optional): Initialization config
             dict. Defaults to None.
@@ -76,9 +76,9 @@ class YOLOv6EfficientRep(BaseBackbone):
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True),
                  norm_eval: bool = False,
-                 stage_block_cfg: ConfigType = dict(type='RepVGGBlock'),
+                 block_cfg: ConfigType = dict(type='RepVGGBlock'),
                  init_cfg: OptMultiConfig = None):
-        self.stage_block_cfg = stage_block_cfg
+        self.block_cfg = block_cfg
         super().__init__(
             self.arch_settings[arch],
             deepen_factor,
@@ -95,15 +95,15 @@ class YOLOv6EfficientRep(BaseBackbone):
     def build_stem_layer(self) -> nn.Module:
         """Build a stem layer."""
 
-        stage_block_cfg = self.stage_block_cfg.copy()
-        stage_block_cfg.update(
+        block_cfg = self.block_cfg.copy()
+        block_cfg.update(
             dict(
                 in_channels=self.input_channels,
                 out_channels=int(self.arch_setting[0][0] * self.widen_factor),
                 kernel_size=3,
                 stride=2,
             ))
-        return MODELS.build(stage_block_cfg)
+        return MODELS.build(block_cfg)
 
     def build_stage_layer(self, stage_idx: int, setting: list) -> list:
         """Build a stage layer.
@@ -122,11 +122,11 @@ class YOLOv6EfficientRep(BaseBackbone):
             in_channels=out_channels,
             out_channels=out_channels,
             num_blocks=num_blocks,
-            stage_block_cfg=self.stage_block_cfg,
+            block_cfg=self.block_cfg,
         )
 
-        stage_block_cfg = self.stage_block_cfg.copy()
-        stage_block_cfg.update(
+        block_cfg = self.block_cfg.copy()
+        block_cfg.update(
             dict(
                 in_channels=in_channels,
                 out_channels=out_channels,
@@ -134,8 +134,7 @@ class YOLOv6EfficientRep(BaseBackbone):
                 stride=2))
         stage = []
 
-        ef_block = nn.Sequential(
-            MODELS.build(stage_block_cfg), rep_stage_block)
+        ef_block = nn.Sequential(MODELS.build(block_cfg), rep_stage_block)
 
         stage.append(ef_block)
 
@@ -159,6 +158,7 @@ class YOLOv6EfficientRep(BaseBackbone):
                     m.reset_parameters()
         else:
             super().init_weights()
+
 
 @MODELS.register_module()
 class YOLOv6CSPBep(YOLOv6EfficientRep):
@@ -186,9 +186,9 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
         norm_eval (bool): Whether to set norm layers to eval mode, namely,
             freeze running stats (mean and var). Note: Effect on Batch Norm
             and its variants only. Defaults to False.
-        stage_block_cfg (dict): Config dict for the block used to build each
+        block_cfg (dict): Config dict for the block used to build each
             layer. Defaults to dict(type='RepVGGBlock').
-        csp_act_cfg (dict): Config dict for activation layer used in each
+        block_act_cfg (dict): Config dict for activation layer used in each
             stage. Defaults to dict(type='SiLU', inplace=True).
         init_cfg (Union[dict, list[dict]], optional): Initialization config
             dict. Defaults to None.
@@ -219,16 +219,16 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  input_channels: int = 3,
-                 hidden_channel_expansion: float = 0.5,
+                 hidden_ratio: float = 0.5,
                  out_indices: Tuple[int] = (2, 3, 4),
                  frozen_stages: int = -1,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  norm_eval: bool = False,
-                 stage_block_cfg: ConfigType = dict(type='ConvWrapper'),
+                 block_cfg: ConfigType = dict(type='ConvWrapper'),
                  init_cfg: OptMultiConfig = None):
-        self.hidden_channel_expansion = hidden_channel_expansion
+        self.hidden_ratio = hidden_ratio
         super().__init__(
             arch=arch,
             deepen_factor=deepen_factor,
@@ -240,7 +240,7 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg,
             norm_eval=norm_eval,
-            stage_block_cfg=stage_block_cfg,
+            block_cfg=block_cfg,
             init_cfg=init_cfg)
 
     def build_stage_layer(self, stage_idx: int, setting: list) -> list:
@@ -259,12 +259,12 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
             in_channels=out_channels,
             out_channels=out_channels,
             num_blocks=num_blocks,
-            hidden_channel_expansion=self.hidden_channel_expansion,
-            stage_block_cfg=self.stage_block_cfg,
+            hidden_ratio=self.hidden_ratio,
+            block_cfg=self.block_cfg,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
-        stage_block_cfg = self.stage_block_cfg.copy()
-        stage_block_cfg.update(
+        block_cfg = self.block_cfg.copy()
+        block_cfg.update(
             dict(
                 in_channels=in_channels,
                 out_channels=out_channels,
@@ -272,8 +272,7 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
                 stride=2))
         stage = []
 
-        ef_block = nn.Sequential(
-            MODELS.build(stage_block_cfg), rep_stage_block)
+        ef_block = nn.Sequential(MODELS.build(block_cfg), rep_stage_block)
 
         stage.append(ef_block)
 

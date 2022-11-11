@@ -9,16 +9,16 @@ model = dict(
         type='YOLOv6CSPBep',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        hidden_channel_expansion=2. / 3,
-        stage_block_cfg=dict(type='RepVGGBlock'),
+        hidden_ratio=2. / 3,
+        block_cfg=dict(type='RepVGGBlock'),
         act_cfg=dict(type='ReLU', inplace=True)),
     neck=dict(
         type='YOLOv6CSPRepPAFPN',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        stage_block_cfg=dict(type='RepVGGBlock'),
-        hidden_channel_expansion=2. / 3,
-        csp_act_cfg=dict(type='ReLU', inplace=True)),
+        block_cfg=dict(type='RepVGGBlock'),
+        hidden_ratio=2. / 3,
+        block_act_cfg=dict(type='ReLU', inplace=True)),
     bbox_head=dict(
         type='YOLOv6Head', head_module=dict(widen_factor=widen_factor)))
 

@@ -8,7 +8,7 @@ from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
 from ..layers import BepC3StageBlock, RepStageBlock
-from ..utils import make_divisible, make_round
+from ..utils import make_round
 from .base_yolo_neck import BaseYOLONeck
 
 
@@ -29,7 +29,7 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
         act_cfg (dict): Config dict for activation layer.
             Defaults to dict(type='ReLU', inplace=True).
-        stage_block_cfg (dict): Config dict for the block used to build each
+        block_cfg (dict): Config dict for the block used to build each
             layer. Defaults to dict(type='RepVGGBlock').
         init_cfg (dict or list[dict], optional): Initialization config dict.
             Defaults to None.
@@ -45,10 +45,10 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True),
-                 stage_block_cfg: ConfigType = dict(type='RepVGGBlock'),
+                 block_cfg: ConfigType = dict(type='RepVGGBlock'),
                  init_cfg: OptMultiConfig = None):
         self.num_csp_blocks = num_csp_blocks
-        self.stage_block_cfg = stage_block_cfg
+        self.block_cfg = block_cfg
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -69,10 +69,9 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
         """
         if idx == 2:
             layer = ConvModule(
-                in_channels=make_divisible(self.in_channels[idx],
-                                           self.widen_factor),
-                out_channels=make_divisible(self.out_channels[idx - 1],
-                                            self.widen_factor),
+                in_channels=int(self.in_channels[idx] * self.widen_factor),
+                out_channels=int(self.out_channels[idx - 1] *
+                                 self.widen_factor),
                 kernel_size=1,
                 stride=1,
                 norm_cfg=self.norm_cfg,
@@ -91,10 +90,8 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
             nn.Module: The upsample layer.
         """
         return nn.ConvTranspose2d(
-            in_channels=make_divisible(self.out_channels[idx - 1],
-                                       self.widen_factor),
-            out_channels=make_divisible(self.out_channels[idx - 1],
-                                        self.widen_factor),
+            in_channels=int(self.out_channels[idx - 1] * self.widen_factor),
+            out_channels=int(self.out_channels[idx - 1] * self.widen_factor),
             kernel_size=2,
             stride=2,
             bias=True)
@@ -107,25 +104,24 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The top down layer.
         """
-        stage_block_cfg = self.stage_block_cfg.copy()
+        block_cfg = self.block_cfg.copy()
 
         layer0 = RepStageBlock(
-            in_channels=make_divisible(
-                self.out_channels[idx - 1] + self.in_channels[idx - 1],
+            in_channels=int(
+                (self.out_channels[idx - 1] + self.in_channels[idx - 1]) *
                 self.widen_factor),
-            out_channels=make_divisible(self.out_channels[idx - 1],
-                                        self.widen_factor),
+            out_channels=int(self.out_channels[idx - 1] * self.widen_factor),
             num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
-            stage_block_cfg=stage_block_cfg)
+            block_cfg=block_cfg)
 
         if idx == 1:
             return layer0
         elif idx == 2:
             layer1 = ConvModule(
-                in_channels=make_divisible(self.out_channels[idx - 1],
-                                           self.widen_factor),
-                out_channels=make_divisible(self.out_channels[idx - 2],
-                                            self.widen_factor),
+                in_channels=int(self.out_channels[idx - 1] *
+                                self.widen_factor),
+                out_channels=int(self.out_channels[idx - 2] *
+                                 self.widen_factor),
                 kernel_size=1,
                 stride=1,
                 norm_cfg=self.norm_cfg,
@@ -141,10 +137,8 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
             nn.Module: The downsample layer.
         """
         return ConvModule(
-            in_channels=make_divisible(self.out_channels[idx],
-                                       self.widen_factor),
-            out_channels=make_divisible(self.out_channels[idx],
-                                        self.widen_factor),
+            in_channels=int(self.out_channels[idx] * self.widen_factor),
+            out_channels=int(self.out_channels[idx] * self.widen_factor),
             kernel_size=3,
             stride=2,
             padding=3 // 2,
@@ -159,15 +153,13 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The bottom up layer.
         """
-        stage_block_cfg = self.stage_block_cfg.copy()
+        block_cfg = self.block_cfg.copy()
 
         return RepStageBlock(
-            in_channels=make_divisible(self.out_channels[idx] * 2,
-                                       self.widen_factor),
-            out_channels=make_divisible(self.out_channels[idx + 1],
-                                        self.widen_factor),
+            in_channels=int(self.out_channels[idx] * 2 * self.widen_factor),
+            out_channels=int(self.out_channels[idx + 1] * self.widen_factor),
             num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
-            stage_block_cfg=stage_block_cfg)
+            block_cfg=block_cfg)
 
     def build_out_layer(self, *args, **kwargs) -> nn.Module:
         """build out layer."""
@@ -199,9 +191,9 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
         act_cfg (dict): Config dict for activation layer.
             Defaults to dict(type='ReLU', inplace=True).
-        stage_block_cfg (dict): Config dict for the block used to build each
+        block_cfg (dict): Config dict for the block used to build each
             layer. Defaults to dict(type='RepVGGBlock').
-        csp_act_cfg (dict): Config dict for activation layer used in each
+        block_act_cfg (dict): Config dict for activation layer used in each
             stage. Defaults to dict(type='SiLU', inplace=True).
         init_cfg (dict or list[dict], optional): Initialization config dict.
             Defaults to None.
@@ -212,17 +204,17 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
                  out_channels: int,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
-                 hidden_channel_expansion: float = 0.5,
+                 hidden_ratio: float = 0.5,
                  num_csp_blocks: int = 12,
                  freeze_all: bool = False,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True),
-                 csp_act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-                 stage_block_cfg: ConfigType = dict(type='RepVGGBlock'),
+                 block_act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 block_cfg: ConfigType = dict(type='RepVGGBlock'),
                  init_cfg: OptMultiConfig = None):
-        self.hidden_channel_expansion = hidden_channel_expansion
-        self.csp_act_cfg = csp_act_cfg
+        self.hidden_ratio = hidden_ratio
+        self.block_act_cfg = block_act_cfg
         super().__init__(
             in_channels=in_channels,
             out_channels=out_channels,
@@ -232,7 +224,7 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
             freeze_all=freeze_all,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg,
-            stage_block_cfg=stage_block_cfg,
+            block_cfg=block_cfg,
             init_cfg=init_cfg)
 
     def build_reduce_layer(self, idx: int) -> nn.Module:
@@ -245,10 +237,9 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
         """
         if idx == 2:
             layer = ConvModule(
-                in_channels=make_divisible(self.in_channels[idx],
-                                           self.widen_factor),
-                out_channels=make_divisible(self.out_channels[idx - 1],
-                                            self.widen_factor),
+                in_channels=int(self.in_channels[idx] * self.widen_factor),
+                out_channels=int(self.out_channels[idx - 1] *
+                                 self.widen_factor),
                 kernel_size=1,
                 stride=1,
                 norm_cfg=self.norm_cfg,
@@ -267,10 +258,8 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
             nn.Module: The upsample layer.
         """
         return nn.ConvTranspose2d(
-            in_channels=make_divisible(self.out_channels[idx - 1],
-                                       self.widen_factor),
-            out_channels=make_divisible(self.out_channels[idx - 1],
-                                        self.widen_factor),
+            in_channels=int(self.out_channels[idx - 1] * self.widen_factor),
+            out_channels=int(self.out_channels[idx - 1] * self.widen_factor),
             kernel_size=2,
             stride=2,
             bias=True)
@@ -283,28 +272,27 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
         Returns:
             nn.Module: The top down layer.
         """
-        stage_block_cfg = self.stage_block_cfg.copy()
+        block_cfg = self.block_cfg.copy()
 
         layer0 = BepC3StageBlock(
-            in_channels=make_divisible(
-                self.out_channels[idx - 1] + self.in_channels[idx - 1],
+            in_channels=int(
+                (self.out_channels[idx - 1] + self.in_channels[idx - 1]) *
                 self.widen_factor),
-            out_channels=make_divisible(self.out_channels[idx - 1],
-                                        self.widen_factor),
+            out_channels=int(self.out_channels[idx - 1] * self.widen_factor),
             num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
-            stage_block_cfg=stage_block_cfg,
-            hidden_channel_expansion=self.hidden_channel_expansion,
+            block_cfg=block_cfg,
+            hidden_ratio=self.hidden_ratio,
             norm_cfg=self.norm_cfg,
-            act_cfg=self.csp_act_cfg)
+            act_cfg=self.block_act_cfg)
 
         if idx == 1:
             return layer0
         elif idx == 2:
             layer1 = ConvModule(
-                in_channels=make_divisible(self.out_channels[idx - 1],
-                                           self.widen_factor),
-                out_channels=make_divisible(self.out_channels[idx - 2],
-                                            self.widen_factor),
+                in_channels=int(self.out_channels[idx - 1] *
+                                self.widen_factor),
+                out_channels=int(self.out_channels[idx - 2] *
+                                 self.widen_factor),
                 kernel_size=1,
                 stride=1,
                 norm_cfg=self.norm_cfg,
@@ -320,10 +308,8 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
             nn.Module: The downsample layer.
         """
         return ConvModule(
-            in_channels=make_divisible(self.out_channels[idx],
-                                       self.widen_factor),
-            out_channels=make_divisible(self.out_channels[idx],
-                                        self.widen_factor),
+            in_channels=int(self.out_channels[idx] * self.widen_factor),
+            out_channels=int(self.out_channels[idx] * self.widen_factor),
             kernel_size=3,
             stride=2,
             padding=3 // 2,
@@ -338,18 +324,16 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
         Returns:
             nn.Module: The bottom up layer.
         """
-        stage_block_cfg = self.stage_block_cfg.copy()
+        block_cfg = self.block_cfg.copy()
 
         return BepC3StageBlock(
-            in_channels=make_divisible(self.out_channels[idx] * 2,
-                                       self.widen_factor),
-            out_channels=make_divisible(self.out_channels[idx + 1],
-                                        self.widen_factor),
+            in_channels=int(self.out_channels[idx] * 2 * self.widen_factor),
+            out_channels=int(self.out_channels[idx + 1] * self.widen_factor),
             num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
-            stage_block_cfg=stage_block_cfg,
-            hidden_channel_expansion=self.hidden_channel_expansion,
+            block_cfg=block_cfg,
+            hidden_ratio=self.hidden_ratio,
             norm_cfg=self.norm_cfg,
-            act_cfg=self.csp_act_cfg)
+            act_cfg=self.block_act_cfg)
 
     def build_out_layer(self, *args, **kwargs) -> nn.Module:
         """build out layer."""

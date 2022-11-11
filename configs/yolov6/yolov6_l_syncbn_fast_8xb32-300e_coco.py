@@ -7,17 +7,17 @@ model = dict(
     backbone=dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        hidden_channel_expansion=1. / 2,
-        stage_block_cfg=dict(
+        hidden_ratio=1. / 2,
+        block_cfg=dict(
             type='ConvWrapper',
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001)),
         act_cfg=dict(type='SiLU', inplace=True)),
     neck=dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        hidden_channel_expansion=1. / 2,
-        stage_block_cfg=dict(
+        hidden_ratio=1. / 2,
+        block_cfg=dict(
             type='ConvWrapper',
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001)),
-        csp_act_cfg=dict(type='SiLU', inplace=True)),
+        block_act_cfg=dict(type='SiLU', inplace=True)),
     bbox_head=dict(head_module=dict(widen_factor=widen_factor)))

@@ -14,7 +14,6 @@ from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS, TASK_UTILS
-from ..utils import make_divisible
 from .yolov5_head import YOLOv5Head
 
 
@@ -65,12 +64,10 @@ class YOLOv6HeadModule(BaseModule):
         self.act_cfg = act_cfg
 
         if isinstance(in_channels, int):
-            self.in_channels = [make_divisible(in_channels, widen_factor)
+            self.in_channels = [int(in_channels * widen_factor)
                                 ] * self.num_levels
         else:
-            self.in_channels = [
-                make_divisible(i, widen_factor) for i in in_channels
-            ]
+            self.in_channels = [int(i * widen_factor) for i in in_channels]
 
         self._init_layers()
 

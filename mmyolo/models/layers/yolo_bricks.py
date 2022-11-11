@@ -355,11 +355,11 @@ class BepC3StageBlock(nn.Module):
         in_channels (int): Number of channels in the input image
         out_channels (int): Number of channels produced by the convolution
         num_blocks (int): Number of blocks. Defaults to 1
-        hidden_channel_expansion (float): Hidden channel expansion.
+        hidden_ratio (float): Hidden channel expansion.
             Default: 0.5
         concat_all_layer (bool): Concat all layer when forward calculate.
             Default: True
-        stage_block_cfg (dict): Config dict for the block used to build each
+        block_cfg (dict): Config dict for the block used to build each
             layer. Defaults to dict(type='RepVGGBlock').
         norm_cfg (ConfigType): Config dict for normalization layer.
             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
@@ -371,14 +371,14 @@ class BepC3StageBlock(nn.Module):
                  in_channels: int,
                  out_channels: int,
                  num_blocks: int = 1,
-                 hidden_channel_expansion: float = 0.5,
+                 hidden_ratio: float = 0.5,
                  concat_all_layer: bool = True,
-                 stage_block_cfg: ConfigType = dict(type='RepVGGBlock'),
+                 block_cfg: ConfigType = dict(type='RepVGGBlock'),
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True)):
         super().__init__()
-        hidden_channels = int(out_channels * hidden_channel_expansion)
+        hidden_channels = int(out_channels * hidden_ratio)
 
         self.conv1 = ConvModule(
             in_channels,
@@ -411,7 +411,7 @@ class BepC3StageBlock(nn.Module):
             in_channels=hidden_channels,
             out_channels=hidden_channels,
             num_blocks=num_blocks,
-            stage_block_cfg=stage_block_cfg,
+            block_cfg=block_cfg,
             bottle_block=BottleRep)
         self.concat_all_layer = concat_all_layer
         if not concat_all_layer:
@@ -439,19 +439,20 @@ class BottleRep(nn.Module):
     Args:
         in_channels (int): Number of channels in the input image
         out_channels (int): Number of channels produced by the convolution
-        stage_block_cfg (dict): Config dict for the block used to build each
+        block_cfg (dict): Config dict for the block used to build each
             layer. Defaults to dict(type='RepVGGBlock').
-        weight (bool): Add weight when forward calculate. Defaults False.
+        adaptive_weight (bool): Add adaptive_weight when forward calculate.
+            Defaults False.
     """
 
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 stage_block_cfg: ConfigType = dict(type='RepVGGBlock'),
-                 weight: bool = False):
+                 block_cfg: ConfigType = dict(type='RepVGGBlock'),
+                 adaptive_weight: bool = False):
         super().__init__()
-        conv1_cfg = stage_block_cfg.copy()
-        conv2_cfg = stage_block_cfg.copy()
+        conv1_cfg = block_cfg.copy()
+        conv2_cfg = block_cfg.copy()
 
         conv1_cfg.update(
             dict(in_channels=in_channels, out_channels=out_channels))
@@ -465,7 +466,7 @@ class BottleRep(nn.Module):
             self.shortcut = False
         else:
             self.shortcut = True
-        if weight:
+        if adaptive_weight:
             self.alpha = Parameter(torch.ones(1))
         else:
             self.alpha = 1.0
@@ -1131,7 +1132,7 @@ class RepStageBlock(nn.Module):
         num_blocks (int, tuple[int]): Number of blocks.  Defaults to 1.
         bottle_block (nn.Module): Basic unit of RepStage.
             Defaults to RepVGGBlock.
-        stage_block_cfg (ConfigType): Config of RepStage.
+        block_cfg (ConfigType): Config of RepStage.
             Defaults to 'RepVGGBlock'.
     """
 
@@ -1140,34 +1141,35 @@ class RepStageBlock(nn.Module):
                  out_channels: int,
                  num_blocks: int = 1,
                  bottle_block: nn.Module = RepVGGBlock,
-                 stage_block_cfg: ConfigType = dict(type='RepVGGBlock')):
+                 block_cfg: ConfigType = dict(type='RepVGGBlock')):
         super().__init__()
-        stage_block_cfg = stage_block_cfg.copy()
+        block_cfg = block_cfg.copy()
 
-        stage_block_cfg.update(
+        block_cfg.update(
             dict(in_channels=in_channels, out_channels=out_channels))
 
-        self.conv1 = MODELS.build(stage_block_cfg)
+        self.conv1 = MODELS.build(block_cfg)
 
-        stage_block_cfg.update(
+        block_cfg.update(
             dict(in_channels=out_channels, out_channels=out_channels))
         self.block = nn.Sequential(
-            *(MODELS.build(stage_block_cfg)
+            *(MODELS.build(block_cfg)
               for _ in range(num_blocks - 1))) if num_blocks > 1 else None
 
         if bottle_block == BottleRep:
             self.conv1 = BottleRep(
                 in_channels,
                 out_channels,
-                stage_block_cfg=stage_block_cfg,
-                weight=True)
+                block_cfg=block_cfg,
+                adaptive_weight=True)
             num_blocks = num_blocks // 2
-            self.block = nn.Sequential(*(BottleRep(
-                out_channels,
-                out_channels,
-                stage_block_cfg=stage_block_cfg,
-                weight=True) for _ in range(num_blocks -
-                                            1))) if num_blocks > 1 else None
+            self.block = nn.Sequential(
+                *(BottleRep(
+                    out_channels,
+                    out_channels,
+                    block_cfg=block_cfg,
+                    adaptive_weight=True)
+                  for _ in range(num_blocks - 1))) if num_blocks > 1 else None
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward process.
