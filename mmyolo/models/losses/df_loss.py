@@ -31,7 +31,6 @@ class DfLoss(nn.Module):
             reduction='none').view(targets_left.shape) * weight_right
         loss = (loss_left + loss_right) * self.loss_weight
 
-        # TODO: 看看能不能替换成reduce loss
         if self.reduction == 'mean':
             loss = (loss.mean(-1, keepdim=True) * weight).sum()
         elif self.reduction == 'sum':

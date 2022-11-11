@@ -8,12 +8,11 @@ from mmdet.models.utils import multi_apply
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
                          OptMultiConfig, reduce_mean)
 from mmengine import MessageHub
-from mmengine.dist import get_dist_info
 from mmengine.model import BaseModule, bias_init_with_prob
 from mmengine.structures import InstanceData
 from torch import Tensor
 
-from mmyolo.registry import MODELS, TASK_UTILS
+from mmyolo.registry import MODELS
 from ..layers.yolo_bricks import PPYOLOESELayer
 from .yolov6_head import YOLOv6Head
 
@@ -203,23 +202,9 @@ class PPYOLOEHead(YOLOv6Head):
         self.loss_obj = None
 
     def special_init(self):
-        """Since YOLO series algorithms will inherit from YOLOv5Head, but
-        different algorithms have special initialization process.
-
-        The special_init function is designed to deal with this situation.
-        """
+        super().special_init()
         if self.train_cfg:
-            self.initial_epoch = self.train_cfg['initial_epoch']
-            self.initial_assigner = TASK_UTILS.build(
-                self.train_cfg.initial_assigner)
-            self.assigner = TASK_UTILS.build(self.train_cfg.assigner)
-
-            # Add common attributes to reduce calculation
-            self.featmap_sizes = None
-            self.mlvl_priors = None
-            self.num_level_priors = None
-            self.flatten_priors = None
-            self.stride_tensor = None
+            self.featmap_sizes_train = None
 
     # TODO: 命名要改
     def loss_by_feat(
@@ -260,21 +245,21 @@ class PPYOLOEHead(YOLOv6Head):
         if batch_gt_instances_ignore is None:
             batch_gt_instances_ignore = [None] * num_imgs
 
-        current_featmap_sizes = [
+        current_featmap_sizes_train = [
             cls_score.shape[2:] for cls_score in cls_scores
         ]
         # If the shape does not equal, generate new one
-        if current_featmap_sizes != self.featmap_sizes:
-            self.featmap_sizes = current_featmap_sizes
+        if current_featmap_sizes_train != self.featmap_sizes_train:
+            self.featmap_sizes_train = current_featmap_sizes_train
 
-            self.mlvl_priors = self.prior_generator.grid_priors(
-                self.featmap_sizes,
+            self.mlvl_priors_train = self.prior_generator.grid_priors(
+                self.featmap_sizes_train,
                 dtype=cls_scores[0].dtype,
                 device=cls_scores[0].device,
                 with_stride=True)
 
-            self.num_level_priors = [len(n) for n in self.mlvl_priors]
-            self.flatten_priors = torch.cat(self.mlvl_priors, dim=0)
+            self.num_level_priors = [len(n) for n in self.mlvl_priors_train]
+            self.flatten_priors = torch.cat(self.mlvl_priors_train, dim=0)
             self.stride_tensor = self.flatten_priors[..., [2]]
 
         # gt info
@@ -390,10 +375,10 @@ class PPYOLOEHead(YOLOv6Head):
             loss_dfl = flatten_pred_bboxes.sum() * 0
             loss_l1 = (flatten_pred_bboxes.sum() * 0)
 
-        _, world_size = get_dist_info()
+        # _, world_size = get_dist_info()
         return dict(
-            loss_cls=loss_cls * world_size,
-            loss_bbox=loss_bbox * world_size,
-            loss_dfl=loss_dfl * world_size,
-            # 不参与反向传播
+            loss_cls=loss_cls,  # * world_size,
+            loss_bbox=loss_bbox,  # * world_size,
+            loss_dfl=loss_dfl,  # * world_size,
+            # loss_l1 do not participate in backward
             loss_l1=loss_l1.detach())

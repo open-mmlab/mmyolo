@@ -669,30 +669,31 @@ class YOLOv5RandomAffine(BaseTransform):
 class PPYOLOERandomDistort(BaseTransform):
 
     def __init__(self,
-                 hue=[-18, 18, 0.5],
-                 saturation=[0.5, 1.5, 0.5],
-                 contrast=[0.5, 1.5, 0.5],
-                 brightness=[0.5, 1.5, 0.5],
-                 random_apply=True,
-                 count=4,
-                 random_channel=False):
-        self.hue = hue
-        self.saturation = saturation
-        self.contrast = contrast
-        self.brightness = brightness
-        self.random_apply = random_apply
-        self.count = count
-        self.random_channel = random_channel
+                 hue_cfg=dict(min=-18, max=18, prob=0.5),
+                 saturation_cfg=dict(min=0.5, max=1.5, prob=0.5),
+                 contrast_cfg=dict(min=0.5, max=1.5, prob=0.5),
+                 brightness_cfg=dict(min=0.5, max=1.5, prob=0.5),
+                 transform_num=4):
+        self.hue_cfg = hue_cfg
+        self.saturation_cfg = saturation_cfg
+        self.contrast_cfg = contrast_cfg
+        self.brightness_cfg = brightness_cfg
+        self.transform_num = transform_num
+        assert 0 < self.transform_num <= 4, 'transform_num must > 0 and <= 4'
+        for cfg in [
+                self.hue_cfg, self.saturation_cfg, self.contrast_cfg,
+                self.brightness_cfg
+        ]:
+            assert 0. <= cfg['prob'] <= 1., 'prob must >=0 and <=1'
 
     def transform_hue(self, results):
-        low, high, prob = self.hue
-        if np.random.uniform(0., 1.) < prob:
+        if np.random.uniform(0., 1.) < self.hue_cfg['prob']:
             return results
 
         img = results['img']
         img = img.astype(np.float32)
-        # it works, but result differ from HSV version
-        delta = np.random.uniform(low, high)
+
+        delta = np.random.uniform(self.hue_cfg['min'], self.hue_cfg['max'])
         u = np.cos(delta * np.pi)
         w = np.sin(delta * np.pi)
         bt = np.array([[1.0, 0.0, 0.0], [0.0, u, -w], [0.0, w, u]])
@@ -706,14 +707,13 @@ class PPYOLOERandomDistort(BaseTransform):
         return results
 
     def transform_saturation(self, results):
-        low, high, prob = self.saturation
-
-        if np.random.uniform(0., 1.) < prob:
+        if np.random.uniform(0., 1.) < self.saturation_cfg['prob']:
             return results
         img = results['img']
-        delta = np.random.uniform(low, high)
+        delta = np.random.uniform(self.saturation_cfg['min'],
+                                  self.saturation_cfg['max'])
         img = img.astype(np.float32)
-        # it works, but result differ from HSV version
+
         gray = img * np.array([[[0.299, 0.587, 0.114]]], dtype=np.float32)
         gray = gray.sum(axis=2, keepdims=True)
         gray *= (1.0 - delta)
@@ -723,40 +723,36 @@ class PPYOLOERandomDistort(BaseTransform):
         return results
 
     def transform_contrast(self, results):
-        low, high, prob = self.contrast
-
-        if np.random.uniform(0., 1.) < prob:
+        if np.random.uniform(0., 1.) < self.contrast_cfg['prob']:
             return results
         img = results['img']
-        delta = np.random.uniform(low, high)
+        delta = np.random.uniform(self.contrast_cfg['min'],
+                                  self.contrast_cfg['max'])
         img = img.astype(np.float32)
         img *= delta
         results['img'] = img
         return results
 
     def transform_brightness(self, results):
-        low, high, prob = self.brightness
-        if np.random.uniform(0., 1.) < prob:
+        if np.random.uniform(0., 1.) < self.brightness_cfg['prob']:
             return results
         img = results['img']
-        delta = np.random.uniform(low, high)
+        delta = np.random.uniform(self.brightness_cfg['min'],
+                                  self.brightness_cfg['max'])
         img = img.astype(np.float32)
         img += delta
         results['img'] = img
         return results
 
     def transform(self, results: dict) -> dict:
-        # img = results['img']
-        if self.random_apply:
-            functions = [
-                self.transform_brightness, self.transform_contrast,
-                self.transform_saturation, self.transform_hue
-            ]
-            distortions = np.random.permutation(functions)[:self.count]
-            for func in distortions:
-                results = func(results)
-            return results
-        raise NotImplementedError
+        functions = [
+            self.transform_brightness, self.transform_contrast,
+            self.transform_saturation, self.transform_hue
+        ]
+        distortions = np.random.permutation(functions)[:self.transform_num]
+        for func in distortions:
+            results = func(results)
+        return results
 
 
 @TRANSFORMS.register_module()
@@ -766,6 +762,7 @@ class PPYOLOERandomExpand(LetterResize):
         assert ratio > 1.01, 'expand ratio must be larger than 1.01'
         self.ratio = ratio
         self.prob = prob
+        assert 0. <= self.prob <= 1.
         assert isinstance(fill_value, (Number, Sequence)), \
             'fill value must be either float or sequence'
         if isinstance(fill_value, Number):
@@ -828,6 +825,7 @@ class PPYOLOERandomCrop(RandomCrop):
         self.allow_no_crop = allow_no_crop
         self.cover_all_box = cover_all_box
 
+    @autocast_box_type()
     def transform(self, results: dict) -> Union[dict, None]:
         # TODO: 需要重构
 

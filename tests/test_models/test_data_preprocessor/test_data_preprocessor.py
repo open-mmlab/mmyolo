@@ -3,7 +3,6 @@ from unittest import TestCase
 
 import torch
 from mmdet.structures import DetDataSample
-from mmdet.testing import demo_mm_inputs
 from mmengine import MessageHub
 
 from mmyolo.models import (PPYOLOEBatchSyncRandomResize,
@@ -86,12 +85,10 @@ class TestPPYOLOEDetDataPreprocessor(TestCase):
             batch_augments=[
                 dict(
                     type='PPYOLOEBatchSyncRandomResize',
-                    # TODO: confirm it
-                    random_size_range=(320, 800),
+                    random_size_range=(320, 768),
                     interval=1,
                     size_divisor=32,
                     random_interp=True,
-                    interp_mode=['nearest', 'bilinear', 'bicubic', 'area'],
                     keep_ratio=False)
             ],
             mean=[0., 0., 0.],
@@ -102,6 +99,30 @@ class TestPPYOLOEDetDataPreprocessor(TestCase):
                        PPYOLOEBatchSyncRandomResize))
         message_hub = MessageHub.get_instance('test_batch_sync_random_resize')
         message_hub.update_info('iter', 0)
-        packed_inputs = demo_mm_inputs(
-            2, [[3, 128, 128], [3, 128, 128]], use_box_type=False)
-        processor(packed_inputs, training=True)['inputs']
+
+        # test training
+        data = {
+            'inputs': [
+                torch.randint(0, 256, (3, 10, 11)),
+                torch.randint(0, 256, (3, 10, 11))
+            ],
+            'data_samples': [
+                torch.randint(0, 11, (18, 6)).float(),
+                torch.randint(0, 11, (18, 6)).float()
+            ]
+        }
+        out_data = processor(data, training=True)
+        batch_data_samples = out_data['data_samples']
+        self.assertIn('img_metas', batch_data_samples)
+        self.assertIn('bboxes_labels', batch_data_samples)
+        self.assertIsInstance(batch_data_samples['bboxes_labels'],
+                              torch.Tensor)
+        self.assertIsInstance(batch_data_samples['img_metas'], list)
+
+        data = {
+            'inputs': [torch.randint(0, 256, (3, 11, 10))],
+            'data_samples': DetDataSample()
+        }
+        # data_samples must be list
+        with self.assertRaises(TypeError):
+            processor(data, training=True)
