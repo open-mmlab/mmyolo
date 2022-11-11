@@ -16,7 +16,7 @@ For years, YOLO series have been de facto industry-level standard for efficient 
 
 ### COCO
 
-| Backbone | Arch | size | epoch | SyncBN | AMP | Mem (GB) | box AP |                           Config                            |                                                                                                                                                           Download                                                                                                                                                           |
+| Backbone | Arch | Size | Epoch | SyncBN | AMP | Mem (GB) | Box AP |                           Config                            |                                                                                                                                                           Download                                                                                                                                                           |
 | :------: | :--: | :--: | :---: | :----: | :-: | :------: | :----: | :---------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | YOLOv6-n |  P5  | 640  |  400  |  Yes   | Yes |   6.04   |  36.2  | [config](../yolov6/yolov6_n_syncbn_fast_8xb32-400e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_n_syncbn_fast_8xb32-400e_coco/yolov6_n_syncbn_fast_8xb32-400e_coco_20221030_202726-d99b2e82.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_n_syncbn_fast_8xb32-400e_coco/yolov6_n_syncbn_fast_8xb32-400e_coco_20221030_202726.log.json) |
 | YOLOv6-t |  P5  | 640  |  400  |  Yes   | Yes |   8.13   |  41.0  | [config](../yolov6/yolov6_t_syncbn_fast_8xb32-400e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_t_syncbn_fast_8xb32-400e_coco/yolov6_t_syncbn_fast_8xb32-400e_coco_20221030_143755-cf0d278f.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_t_syncbn_fast_8xb32-400e_coco/yolov6_t_syncbn_fast_8xb32-400e_coco_20221030_143755.log.json) |
@@ -26,7 +26,7 @@ For years, YOLO series have been de facto industry-level standard for efficient 
 
 **Note**:
 
-1. The m and l models do not use distillation, which will be implemented in [MMRazor](https://github.com/open-mmlab/mmrazor) in the futureDistillation is not used for m and l models.
+1. The m and l models do not use distillation, which will be implemented in [MMRazor](https://github.com/open-mmlab/mmrazor) in the future.
 2. The performance is unstable and may fluctuate by about 0.3 mAP.
 3. If users need the weight of 300 epoch for nano, tiny and small model, they can train according to the configs of 300 epoch provided by us, or convert the official weight according to the [converter script](../../tools/model_converters/).
 4. We have observed that the [base model](https://github.com/meituan/YOLOv6/tree/main/configs/base) has been officially released in v6 recently. Although the accuracy has decreased, it is more efficient. We will also provide the base model configuration in the future.
