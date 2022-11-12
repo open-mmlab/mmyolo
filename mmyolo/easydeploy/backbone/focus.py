@@ -1,6 +1,8 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
+from torch import Tensor
 
 
 class DeployFocus(nn.Module):
@@ -9,7 +11,7 @@ class DeployFocus(nn.Module):
         super().__init__()
         self.__dict__.update(orin_Focus.__dict__)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         B, C, H, W = x.shape
         x = x.reshape(B, C, -1, 2, W)
         x = x.reshape(B, C, x.shape[2], 2, -1, 2)
@@ -27,7 +29,7 @@ class NcnnFocus(nn.Module):
         super().__init__()
         self.__dict__.update(orin_Focus.__dict__)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         batch_size, c, h, w = x.shape
         assert h % 2 == 0 and w % 2 == 0, f'focus for yolox needs even feature\
             height and width, got {(h, w)}.'
@@ -52,3 +54,26 @@ class NcnnFocus(nn.Module):
         x = x.reshape(_b, c * 4, h // 2, w // 2)
 
         return self.conv(x)
+
+
+class GConvFocus(nn.Module):
+
+    def __init__(self, orin_Focus: nn.Module):
+        super().__init__()
+        device = next(orin_Focus.parameters()).device
+        self.weight1 = torch.tensor([[1., 0], [0, 0]]).expand(3, 1, 2,
+                                                              2).to(device)
+        self.weight2 = torch.tensor([[0, 0], [1., 0]]).expand(3, 1, 2,
+                                                              2).to(device)
+        self.weight3 = torch.tensor([[0, 1.], [0, 0]]).expand(3, 1, 2,
+                                                              2).to(device)
+        self.weight4 = torch.tensor([[0, 0], [0, 1.]]).expand(3, 1, 2,
+                                                              2).to(device)
+        self.__dict__.update(orin_Focus.__dict__)
+
+    def forward(self, x: Tensor) -> Tensor:
+        conv1 = F.conv2d(x, self.weight1, stride=2, groups=3)
+        conv2 = F.conv2d(x, self.weight2, stride=2, groups=3)
+        conv3 = F.conv2d(x, self.weight3, stride=2, groups=3)
+        conv4 = F.conv2d(x, self.weight4, stride=2, groups=3)
+        return self.conv(torch.cat([conv1, conv2, conv3, conv4], dim=1))
