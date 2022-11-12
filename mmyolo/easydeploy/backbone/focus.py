@@ -12,13 +12,13 @@ class DeployFocus(nn.Module):
         self.__dict__.update(orin_Focus.__dict__)
 
     def forward(self, x: Tensor) -> Tensor:
-        B, C, H, W = x.shape
-        x = x.reshape(B, C, -1, 2, W)
-        x = x.reshape(B, C, x.shape[2], 2, -1, 2)
-        half_H = x.shape[2]
-        half_W = x.shape[4]
+        batch_size, channel, height, width = x.shape
+        x = x.reshape(batch_size, channel, -1, 2, width)
+        x = x.reshape(batch_size, channel, x.shape[2], 2, -1, 2)
+        half_h = x.shape[2]
+        half_w = x.shape[4]
         x = x.permute(0, 5, 3, 1, 2, 4)
-        x = x.reshape(B, C * 4, half_H, half_W)
+        x = x.reshape(B, C * 4, half_h, half_w)
 
         return self.conv(x)
 
