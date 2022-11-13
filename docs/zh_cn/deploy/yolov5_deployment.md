@@ -419,10 +419,10 @@ python3 ${MMDEPLOY_DIR}/tools/profiler.py \
 
 ```shell
 python3 ${MMDEPLOY_DIR}/tools/profiler.py \
-  configs/deploy/detection_tensorrt_static-640x640.py \
+  configs/deploy/detection_onnxruntime_static.py \
   configs/deploy/model/yolov5_s-static.py \
   data/coco/val2017 \
-  --model work_dir_trt/end2end.engine \
+  --model work_dir_ort/end2end.onnx \
   --device cpu
 ```
 

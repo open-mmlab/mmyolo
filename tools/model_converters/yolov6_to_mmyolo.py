@@ -28,12 +28,28 @@ def convert(src, dst):
 
         if 'ERBlock_2' in k:
             name = k.replace('ERBlock_2', 'stage1.0')
+            if '.cv' in k:
+                name = name.replace('.cv', '.conv')
+            if '.m.' in k:
+                name = name.replace('.m.', '.block.')
         elif 'ERBlock_3' in k:
             name = k.replace('ERBlock_3', 'stage2.0')
+            if '.cv' in k:
+                name = name.replace('.cv', '.conv')
+            if '.m.' in k:
+                name = name.replace('.m.', '.block.')
         elif 'ERBlock_4' in k:
             name = k.replace('ERBlock_4', 'stage3.0')
+            if '.cv' in k:
+                name = name.replace('.cv', '.conv')
+            if '.m.' in k:
+                name = name.replace('.m.', '.block.')
         elif 'ERBlock_5' in k:
             name = k.replace('ERBlock_5', 'stage4.0')
+            if '.cv' in k:
+                name = name.replace('.cv', '.conv')
+            if '.m.' in k:
+                name = name.replace('.m.', '.block.')
             if 'stage4.0.2' in name:
                 name = name.replace('stage4.0.2', 'stage4.1')
                 name = name.replace('cv', 'conv')
@@ -41,10 +57,22 @@ def convert(src, dst):
             name = k.replace('reduce_layer0', 'reduce_layers.2')
         elif 'Rep_p4' in k:
             name = k.replace('Rep_p4', 'top_down_layers.0.0')
+            if '.cv' in k:
+                name = name.replace('.cv', '.conv')
+            if '.m.' in k:
+                name = name.replace('.m.', '.block.')
         elif 'reduce_layer1' in k:
             name = k.replace('reduce_layer1', 'top_down_layers.0.1')
+            if '.cv' in k:
+                name = name.replace('.cv', '.conv')
+            if '.m.' in k:
+                name = name.replace('.m.', '.block.')
         elif 'Rep_p3' in k:
             name = k.replace('Rep_p3', 'top_down_layers.1')
+            if '.cv' in k:
+                name = name.replace('.cv', '.conv')
+            if '.m.' in k:
+                name = name.replace('.m.', '.block.')
         elif 'upsample0' in k:
             name = k.replace('upsample0.upsample_transpose',
                              'upsample_layers.0')
@@ -53,8 +81,16 @@ def convert(src, dst):
                              'upsample_layers.1')
         elif 'Rep_n3' in k:
             name = k.replace('Rep_n3', 'bottom_up_layers.0')
+            if '.cv' in k:
+                name = name.replace('.cv', '.conv')
+            if '.m.' in k:
+                name = name.replace('.m.', '.block.')
         elif 'Rep_n4' in k:
             name = k.replace('Rep_n4', 'bottom_up_layers.1')
+            if '.cv' in k:
+                name = name.replace('.cv', '.conv')
+            if '.m.' in k:
+                name = name.replace('.m.', '.block.')
         elif 'downsample2' in k:
             name = k.replace('downsample2', 'downsample_layers.0')
         elif 'downsample1' in k:

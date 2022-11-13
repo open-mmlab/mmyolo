@@ -87,7 +87,6 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg)
-
         self.num_stages = len(arch_setting)
         self.arch_setting = arch_setting
 

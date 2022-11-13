@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.1.3（10/11/2022)
+
+### New Features
+
+1. Support CBAM plug-in and provide plug-in documentation (#246)
+2. Add YOLOv5 P6 model structure diagram and related descriptions (#273)
+
+### Bug Fixes
+
+1. Fix training failure when saving best weights based on mmengine 0.3.1
+2. Fix `add_dump_metric` error based on mmdet 3.0.0rc3 (#253)
+3. Fix backbone does not support `init_cfg` issue (#272)
+4. Change typing import method based on mmdet 3.0.0rc3 (#261)
+
+### Improvements
+
+1. `featmap_vis_demo` support for folder and url input (#248)
+2. Deploy docker file refinement (#242)
+
+#### Contributors
+
+A total of 10 developers contributed to this release.
+
+Thank @kitecats, @triple-Mu, @RangeKing, @PeterH0323, @Zheng-LinXiao, @tkhe, @weikai520, @zytx121, @wanghonglie, @hhaAndroid
+
 ## v0.1.2（3/11/2022)
 
 ### Highlights

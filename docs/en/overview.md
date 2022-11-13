@@ -53,3 +53,4 @@ The detailed instruction of MMYOLO is as follows.
 
    - [Data flow](https://mmyolo.readthedocs.io/en/latest/advanced_guides/index.html#data-flow)
    - [How to](https://mmyolo.readthedocs.io/en/latest/advanced_guides/index.html#how-to)
+   - [Plugins](https://mmyolo.readthedocs.io/en/latest/advanced_guides/index.html#plugins)

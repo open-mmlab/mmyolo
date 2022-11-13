@@ -62,12 +62,19 @@ The master branch works with **PyTorch 1.6+**.
 
   MMYOLO decomposes the framework into different components where users can easily customize a model by combining different modules with various training and testing strategies.
 
-<img src="https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg" alt="BaseModule"/>
-  The figure is contributed by RangeKing@GitHub, thank you very much!
+<img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="BaseModule-P5"/>
+  The figure above is contributed by RangeKing@GitHub, thank you very much!
+
+And the figure of P6 model is in [model_design.md](docs/en/algorithm_descriptions/model_design.md).
 
 </details>
 
 ## What's New
+
+💎 **v0.1.3** was released on 10/11/2022:
+
+1. Fix training failure when saving best weights based on mmengine 0.3.1
+2. Fix `add_dump_metric` error based on mmdet 3.0.0rc3
 
 💎 **v0.1.2** was released on 3/11/2022:
 
@@ -88,9 +95,9 @@ MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps
 conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
 conda activate open-mmlab
 pip install openmim
-mim install "mmengine>=0.3.0"
+mim install "mmengine>=0.3.1"
 mim install "mmcv>=2.0.0rc1,<2.1.0"
-mim install "mmdet>=3.0.0rc2,<3.1.0"
+mim install "mmdet>=3.0.0rc3,<3.1.0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
@@ -135,6 +142,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 
   - [Data flow](docs/en/advanced_guides/data_flow.md)
   - [How to](docs/en/advanced_guides/how_to.md)
+  - [Plugins](docs/en/advanced_guides/plugins.md)
 
 ## Overview of Benchmark and Model Zoo
 
