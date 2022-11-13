@@ -49,19 +49,32 @@ def _process_data(args,
         'annotations': []
     }
 
+    area_dict = {
+        'small': [0., 32 * 32],
+        'medium': [32 * 32, 96 * 96],
+        'large': [96 * 96, float('inf')]
+    }
+
     images = json_data['images']
     coco = COCO(ann_path)
 
     # shuffle
-    np.random.shuffle(images)
+    random_idx_all = np.random.randint(0, len(images), size=(len(images), ))
+    random_idx = \
+        random_idx_all[:args.num_img] if args.num_img > 0 else random_idx_all
+    areaRng = \
+        area_dict[args.area_size] if args.area_size else []
+    catIds = \
+        coco.getCatIds(args.classes) if args.classes else []
 
-    progress_bar = mmengine.ProgressBar(args.num_img)
+    progress_bar = mmengine.ProgressBar(len(random_idx))
 
-    for i in range(args.num_img):
+    for i in random_idx:
         file_name = images[i]['file_name']
         image_path = osp.join(args.root, in_dataset_type + year, file_name)
 
-        ann_ids = coco.getAnnIds(imgIds=[images[i]['id']])
+        ann_ids = coco.getAnnIds(
+            imgIds=[images[i]['id']], catIds=catIds, areaRng=areaRng)
         ann_info = coco.loadAnns(ann_ids)
 
         new_json_data['images'].append(images[i])
@@ -88,7 +101,16 @@ def parse_args():
     parser.add_argument(
         'out_dir', type=str, help='directory where subset coco will be saved.')
     parser.add_argument(
-        '--num-img', default=50, type=int, help='num of extract image')
+        '--num-img',
+        default=-1,
+        type=int,
+        help='num of extract image, -1 means all images')
+    parser.add_argument(
+        '--area-size',
+        choices=['small', 'medium', 'large'],
+        help='filter ground-truth info by area size')
+    parser.add_argument(
+        '--classes', nargs='+', help='filter ground-truth by class name')
     parser.add_argument(
         '--use-training-set',
         action='store_true',
