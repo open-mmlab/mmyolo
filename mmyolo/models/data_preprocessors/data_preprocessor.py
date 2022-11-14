@@ -212,6 +212,8 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
 
     def _get_random_size_and_interp(self,
                                     device: torch.device) -> Tuple[int, int]:
+        """Randomly generate a shape in ``_random_size_range`` and a
+        interp_mode in interp_mode_list, and broadcast to all ranks."""
         tensor = torch.LongTensor(3).to(device)
         if (self.broadcast_flag and self.rank == 0) or self.broadcast_flag:
             size = random.randint(*self._random_size_range)

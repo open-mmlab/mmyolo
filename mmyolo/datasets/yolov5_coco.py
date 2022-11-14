@@ -7,6 +7,7 @@ from ..registry import DATASETS, TASK_UTILS
 
 
 class BatchShapePolicyDataset(BaseDetDataset):
+    """BatchShapePolicy used in YOLOv5."""
 
     def __init__(self,
                  *args,
