@@ -67,7 +67,7 @@ YOLOv6 目标检测算法中使用的数据增强与 YOLOv5 基本一致，唯�
 
 #### 1.3.1 Anchor 设置
 
-YOLOv6 采用 Anchor-free 的策略，在训练的过程中会根据 feature size 去自动生成先验框。
+YOLOv6 采用与 YOLOX 一样的 Anchor-free 无锚范式，省略的了聚类和繁琐的Anchor超参设定，泛化能力强，解码逻辑简单。在训练的过程中会根据 feature size 去自动生成先验框。
 
 #### 1.3.2 Bbox 编解码过程
 
