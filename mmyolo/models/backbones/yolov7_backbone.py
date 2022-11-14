@@ -41,14 +41,9 @@ class YOLOv7Backbone(BaseBackbone):
             list[:obj:`ConfigDict`]): Initialization config dict.
     """
     _tiny_stage1_cfg = dict(
-        type='TinyDownsampleConv',
-        mid_ratio=0.5,
-        with_maxpool=False
-    )
+        type='TinyDownSampleBlock', mid_ratio=0.5, with_maxpool=False)
     _tiny_stage2_4_cfg = dict(
-        type='TinyDownsampleConv',
-        with_maxpool=True
-    )
+        type='TinyDownSampleBlock', mid_ratio=1.0, with_maxpool=True)
 
     _l_expand_channel_2x = dict(
         type='ELANBlock',
@@ -79,8 +74,7 @@ class YOLOv7Backbone(BaseBackbone):
     # From left to right:
     # in_channels, out_channels, Block_params
     arch_settings = {
-        'Tiny': [[64, 64, _tiny_stage1_cfg],
-                 [64, 128, _tiny_stage2_4_cfg],
+        'Tiny': [[64, 64, _tiny_stage1_cfg], [64, 128, _tiny_stage2_4_cfg],
                  [128, 256, _tiny_stage2_4_cfg],
                  [256, 512, _tiny_stage2_4_cfg]],
         'L': [[64, 128, _l_expand_channel_2x],
@@ -159,7 +153,7 @@ class YOLOv7Backbone(BaseBackbone):
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg),
                 ConvModule(
-                    int(self.arch_setting[0][0] * self.widen_factor),
+                    int(self.arch_setting[0][0] * self.widen_factor // 2),
                     int(self.arch_setting[0][0] * self.widen_factor),
                     3,
                     padding=1,

@@ -7,16 +7,19 @@ anchors = [
 ]
 
 model = dict(
-    backbone=dict(arch='Tiny',
-                  act_cfg=dict(type='LeakyReLU', negative_slope=0.1)),
+    backbone=dict(
+        arch='Tiny', act_cfg=dict(type='LeakyReLU', negative_slope=0.1)),
     neck=dict(
         is_tiny_version_spp=True,
         in_channels=[128, 256, 512],
-        out_channels=[64, 128, 512],
+        out_channels=[64, 128, 256],
         block_cfg=dict(
-            type='TinyDownsampleConv',
+            _delete_=True,
+            type='TinyDownSampleBlock',
+            mid_ratio=0.25,
             with_maxpool=False),
         act_cfg=dict(type='LeakyReLU', negative_slope=0.1),
         use_repconv_outs=False),
-    bbox_head=dict(head_module=dict(in_channels=[128, 256, 512]),
-                   prior_generator=dict(base_sizes=anchors)))
+    bbox_head=dict(
+        head_module=dict(in_channels=[128, 256, 512]),
+        prior_generator=dict(base_sizes=anchors)))

@@ -92,7 +92,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
                 self.in_channels[idx],
                 self.out_channels[idx],
                 expand_ratio=self.spp_expand_ratio,
-                is_tiny_version = self.is_tiny_version_spp,
+                is_tiny_version=self.is_tiny_version_spp,
                 kernel_sizes=5,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)

@@ -25,7 +25,6 @@ else:
         def forward(self, inputs) -> torch.Tensor:
             return inputs * torch.sigmoid(inputs)
 
-
     MODELS.register_module(module=SiLU, name='SiLU')
 
 
@@ -657,34 +656,33 @@ class MaxPoolAndStrideConvBlock(BaseModule):
 
 
 @MODELS.register_module()
-class TinyDownsampleConv(BaseModule):
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 kernel_sizes: Union[int, Sequence[int]] = 3,
-                 with_maxpool: bool = False,
-                 conv_cfg: OptConfigType = None,
-                 norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
-                 act_cfg: ConfigType = dict(type='LeakyReLU', negative_slope=0.1),
-                 init_cfg: OptMultiConfig = None):
+class TinyDownSampleBlock(BaseModule):
+
+    def __init__(
+            self,
+            in_channels: int,
+            out_channels: int,
+            mid_ratio: float = 1.0,
+            kernel_sizes: Union[int, Sequence[int]] = 3,
+            with_maxpool: bool = False,
+            conv_cfg: OptConfigType = None,
+            norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
+            act_cfg: ConfigType = dict(type='LeakyReLU', negative_slope=0.1),
+            init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg)
 
-        if out_channels == in_channels:
-            mid_channels = int(in_channels * 0.5)
-        else:
-            mid_channels = in_channels
+        mid_channels = int(in_channels * mid_ratio)
 
+        self.maxpool = None
         if with_maxpool:
-            self.short_convs = nn.Sequential(
-                MaxPool2d(2, 2),
-                ConvModule(
-                    in_channels,
-                    mid_channels,
-                    1,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    act_cfg=act_cfg)
-            )
+            self.maxpool = MaxPool2d(2, 2)
+            self.short_convs = ConvModule(
+                in_channels,
+                mid_channels,
+                1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg)
         else:
             self.short_convs = ConvModule(
                 in_channels,
@@ -697,31 +695,37 @@ class TinyDownsampleConv(BaseModule):
         self.main_convs = nn.ModuleList()
         for i in range(3):
             if i == 0:
-                self.main_convs.append(ConvModule(
-                    in_channels,
-                    mid_channels,
-                    1,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    act_cfg=act_cfg))
+                self.main_convs.append(
+                    ConvModule(
+                        in_channels,
+                        mid_channels,
+                        1,
+                        conv_cfg=conv_cfg,
+                        norm_cfg=norm_cfg,
+                        act_cfg=act_cfg))
             else:
-                self.main_convs.append(ConvModule(
-                    mid_channels,
-                    mid_channels,
-                    kernel_sizes,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    act_cfg=act_cfg))
+                self.main_convs.append(
+                    ConvModule(
+                        mid_channels,
+                        mid_channels,
+                        kernel_sizes,
+                        padding=kernel_sizes // 2,
+                        conv_cfg=conv_cfg,
+                        norm_cfg=norm_cfg,
+                        act_cfg=act_cfg))
 
         self.final_convs = ConvModule(
             mid_channels * 4,
-            mid_channels * 2,
+            out_channels,
             1,
             conv_cfg=conv_cfg,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
     def forward(self, x) -> Tensor:
+        if self.maxpool:
+            x = self.maxpool(x)
+
         short_out = self.short_convs(x)
 
         main_outs = []
@@ -730,7 +734,8 @@ class TinyDownsampleConv(BaseModule):
             main_outs.append(mian_outs)
             x = mian_outs
 
-        return self.final_convs(torch.cat([main_outs[::-1], short_out], dim=1))
+        return self.final_convs(
+            torch.cat([*main_outs[::-1], short_out], dim=1))
 
 
 @MODELS.register_module()
@@ -771,12 +776,12 @@ class SPPFCSPBlock(BaseModule):
 
         if is_tiny_version:
             self.main_layers = ConvModule(
-                    in_channels,
-                    mid_channels,
-                    1,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    act_cfg=act_cfg)
+                in_channels,
+                mid_channels,
+                1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg)
         else:
             self.main_layers = nn.Sequential(
                 ConvModule(
@@ -815,12 +820,12 @@ class SPPFCSPBlock(BaseModule):
 
         if is_tiny_version:
             self.fuse_layers = ConvModule(
-                    4 * mid_channels,
-                    mid_channels,
-                    1,
-                    conv_cfg=conv_cfg,
-                    norm_cfg=norm_cfg,
-                    act_cfg=act_cfg)
+                4 * mid_channels,
+                mid_channels,
+                1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg)
         else:
             self.fuse_layers = nn.Sequential(
                 ConvModule(
@@ -983,7 +988,7 @@ class CSPResLayer(nn.Module):
 
         if stride == 2:
             conv1_in_channels = conv2_in_channels = conv3_in_channels = (
-                                                                                in_channels + out_channels) // 2
+                in_channels + out_channels) // 2
             blocks_channels = conv1_in_channels // 2
             self.conv_down = ConvModule(
                 in_channels,
