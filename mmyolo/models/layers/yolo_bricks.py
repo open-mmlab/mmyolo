@@ -493,9 +493,9 @@ class ELANBlock(BaseModule):
 
     def __init__(self,
                  in_channels: int,
+                 out_channels: float,
                  mid_ratio: float,
                  block_ratio: float,
-                 out_ratio: float,
                  num_blocks: int = 2,
                  num_convs_in_block: int = 1,
                  conv_cfg: OptConfigType = None,
@@ -511,7 +511,6 @@ class ELANBlock(BaseModule):
         block_channels = int(in_channels * block_ratio)
         final_conv_in_channels = int(
             num_blocks * block_channels) + 2 * mid_channels
-        final_conv_out_channels = int(in_channels * out_ratio)
 
         self.main_conv = ConvModule(
             in_channels,
@@ -560,7 +559,7 @@ class ELANBlock(BaseModule):
 
         self.final_conv = ConvModule(
             final_conv_in_channels,
-            final_conv_out_channels,
+            out_channels,
             1,
             conv_cfg=conv_cfg,
             norm_cfg=norm_cfg,
@@ -657,126 +656,6 @@ class MaxPoolAndStrideConvBlock(BaseModule):
         return torch.cat([stride_conv_out, maxpool_out], dim=1)
 
 
-class SPPFCSPBlock(BaseModule):
-    """Spatial pyramid pooling - Fast (SPPF) layer with CSP for
-     YOLOv7
-
-     Args:
-         in_channels (int): The input channels of this Module.
-         out_channels (int): The output channels of this Module.
-         expand_ratio (float): Expand ratio of SPPCSPBlock.
-            Defaults to 0.5.
-         kernel_sizes (int, tuple[int]): Sequential or number of kernel
-             sizes of pooling layers. Defaults to 5.
-         conv_cfg (dict): Config dict for convolution layer. Defaults to None.
-             which means using conv2d. Defaults to None.
-         norm_cfg (dict): Config dict for normalization layer.
-             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
-         act_cfg (dict): Config dict for activation layer.
-             Defaults to dict(type='SiLU', inplace=True).
-         init_cfg (dict or list[dict], optional): Initialization config dict.
-             Defaults to None.
-     """
-
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 expand_ratio: float = 0.5,
-                 kernel_sizes: Union[int, Sequence[int]] = 5,
-                 conv_cfg: OptConfigType = None,
-                 norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.03, eps=0.001),
-                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-                 init_cfg: OptMultiConfig = None):
-        super().__init__(init_cfg=init_cfg)
-        mid_channels = int(2 * out_channels * expand_ratio)
-
-        self.main_layers = nn.Sequential(
-            ConvModule(
-                in_channels,
-                mid_channels,
-                1,
-                conv_cfg=conv_cfg,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg),
-            ConvModule(
-                mid_channels,
-                mid_channels,
-                3,
-                padding=1,
-                conv_cfg=conv_cfg,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg),
-            ConvModule(
-                mid_channels,
-                mid_channels,
-                1,
-                conv_cfg=conv_cfg,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg),
-        )
-
-        self.kernel_sizes = kernel_sizes
-        if isinstance(kernel_sizes, int):
-            self.poolings = nn.MaxPool2d(
-                kernel_size=kernel_sizes, stride=1, padding=kernel_sizes // 2)
-        else:
-            self.poolings = nn.ModuleList([
-                nn.MaxPool2d(kernel_size=ks, stride=1, padding=ks // 2)
-                for ks in kernel_sizes
-            ])
-
-        self.fuse_layers = nn.Sequential(
-            ConvModule(
-                4 * mid_channels,
-                mid_channels,
-                1,
-                conv_cfg=conv_cfg,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg),
-            ConvModule(
-                mid_channels,
-                mid_channels,
-                3,
-                padding=1,
-                conv_cfg=conv_cfg,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg))
-
-        self.short_layers = ConvModule(
-            in_channels,
-            mid_channels,
-            1,
-            conv_cfg=conv_cfg,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg)
-
-        self.final_conv = ConvModule(
-            2 * mid_channels,
-            out_channels,
-            1,
-            conv_cfg=conv_cfg,
-            norm_cfg=norm_cfg,
-            act_cfg=act_cfg)
-
-    def forward(self, x) -> Tensor:
-        """Forward process
-        Args:
-            x (Tensor): The input tensor.
-        """
-        x1 = self.main_layers(x)
-        if isinstance(self.kernel_sizes, int):
-            y1 = self.poolings(x1)
-            y2 = self.poolings(y1)
-            x1 = self.fuse_layers(
-                torch.cat([x1] + [y1, y2, self.poolings(y2)], 1))
-        else:
-            x1 = self.fuse_layers(
-                torch.cat([x1] + [m(x1) for m in self.poolings], 1))
-        x2 = self.short_layers(x)
-        return self.final_conv(torch.cat((x1, x2), dim=1))
-
-
 @MODELS.register_module()
 class TinyDownsampleConv(BaseModule):
     def __init__(self,
@@ -852,6 +731,146 @@ class TinyDownsampleConv(BaseModule):
             x = mian_outs
 
         return self.final_convs(torch.cat([main_outs[::-1], short_out], dim=1))
+
+
+@MODELS.register_module()
+class SPPFCSPBlock(BaseModule):
+    """Spatial pyramid pooling - Fast (SPPF) layer with CSP for
+     YOLOv7
+
+     Args:
+         in_channels (int): The input channels of this Module.
+         out_channels (int): The output channels of this Module.
+         expand_ratio (float): Expand ratio of SPPCSPBlock.
+            Defaults to 0.5.
+         kernel_sizes (int, tuple[int]): Sequential or number of kernel
+             sizes of pooling layers. Defaults to 5.
+         conv_cfg (dict): Config dict for convolution layer. Defaults to None.
+             which means using conv2d. Defaults to None.
+         norm_cfg (dict): Config dict for normalization layer.
+             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+         act_cfg (dict): Config dict for activation layer.
+             Defaults to dict(type='SiLU', inplace=True).
+         init_cfg (dict or list[dict], optional): Initialization config dict.
+             Defaults to None.
+     """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 expand_ratio: float = 0.5,
+                 kernel_sizes: Union[int, Sequence[int]] = 5,
+                 is_tiny_version: bool = False,
+                 conv_cfg: OptConfigType = None,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 init_cfg: OptMultiConfig = None):
+        super().__init__(init_cfg=init_cfg)
+        mid_channels = int(2 * out_channels * expand_ratio)
+
+        if is_tiny_version:
+            self.main_layers = ConvModule(
+                    in_channels,
+                    mid_channels,
+                    1,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg)
+        else:
+            self.main_layers = nn.Sequential(
+                ConvModule(
+                    in_channels,
+                    mid_channels,
+                    1,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg),
+                ConvModule(
+                    mid_channels,
+                    mid_channels,
+                    3,
+                    padding=1,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg),
+                ConvModule(
+                    mid_channels,
+                    mid_channels,
+                    1,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg),
+            )
+
+        self.kernel_sizes = kernel_sizes
+        if isinstance(kernel_sizes, int):
+            self.poolings = nn.MaxPool2d(
+                kernel_size=kernel_sizes, stride=1, padding=kernel_sizes // 2)
+        else:
+            self.poolings = nn.ModuleList([
+                nn.MaxPool2d(kernel_size=ks, stride=1, padding=ks // 2)
+                for ks in kernel_sizes
+            ])
+
+        if is_tiny_version:
+            self.fuse_layers = ConvModule(
+                    4 * mid_channels,
+                    mid_channels,
+                    1,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg)
+        else:
+            self.fuse_layers = nn.Sequential(
+                ConvModule(
+                    4 * mid_channels,
+                    mid_channels,
+                    1,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg),
+                ConvModule(
+                    mid_channels,
+                    mid_channels,
+                    3,
+                    padding=1,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg))
+
+        self.short_layers = ConvModule(
+            in_channels,
+            mid_channels,
+            1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+        self.final_conv = ConvModule(
+            2 * mid_channels,
+            out_channels,
+            1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+    def forward(self, x) -> Tensor:
+        """Forward process
+        Args:
+            x (Tensor): The input tensor.
+        """
+        x1 = self.main_layers(x)
+        if isinstance(self.kernel_sizes, int):
+            y1 = self.poolings(x1)
+            y2 = self.poolings(y1)
+            x1 = self.fuse_layers(
+                torch.cat([x1] + [y1, y2, self.poolings(y2)], 1))
+        else:
+            x1 = self.fuse_layers(
+                torch.cat([x1] + [m(x1) for m in self.poolings], 1))
+        x2 = self.short_layers(x)
+        return self.final_conv(torch.cat((x1, x2), dim=1))
 
 
 @MODELS.register_module()

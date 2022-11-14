@@ -42,12 +42,12 @@ class YOLOv7PAFPN(BaseYOLONeck):
                      type='ELANBlock',
                      mid_ratio=0.5,
                      block_ratio=0.25,
-                     out_ratio=0.5,
                      num_blocks=4,
                      num_convs_in_block=1),
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  spp_expand_ratio: float = 0.5,
+                 is_tiny_version_spp: bool = False,
                  use_repconv_outs: bool = True,
                  upsample_feats_cat_first: bool = False,
                  freeze_all: bool = False,
@@ -56,6 +56,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  init_cfg: OptMultiConfig = None):
 
+        self.is_tiny_version_spp = is_tiny_version_spp
         self.spp_expand_ratio = spp_expand_ratio
         self.use_repconv_outs = use_repconv_outs
         self.block_cfg = block_cfg
@@ -91,6 +92,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
                 self.in_channels[idx],
                 self.out_channels[idx],
                 expand_ratio=self.spp_expand_ratio,
+                is_tiny_version = self.is_tiny_version_spp,
                 kernel_sizes=5,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
@@ -126,6 +128,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
         """
         block_cfg = self.block_cfg.copy()
         block_cfg['in_channels'] = self.out_channels[idx - 1] * 2
+        block_cfg['out_channels'] = self.out_channels[idx - 1]
         return MODELS.build(block_cfg)
 
     def build_downsample_layer(self, idx: int) -> nn.Module:
@@ -154,6 +157,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
         """
         block_cfg = self.block_cfg.copy()
         block_cfg['in_channels'] = self.out_channels[idx + 1] * 2
+        block_cfg['out_channels'] = self.out_channels[idx + 1]
         return MODELS.build(block_cfg)
 
     def build_out_layer(self, idx: int) -> nn.Module:

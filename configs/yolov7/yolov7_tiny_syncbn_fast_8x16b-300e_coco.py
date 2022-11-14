@@ -10,16 +10,13 @@ model = dict(
     backbone=dict(arch='Tiny',
                   act_cfg=dict(type='LeakyReLU', negative_slope=0.1)),
     neck=dict(
-        in_channels=[640, 1280, 1280],
-        out_channels=[160, 320, 640],
+        is_tiny_version_spp=True,
+        in_channels=[128, 256, 512],
+        out_channels=[64, 128, 512],
         block_cfg=dict(
-            type='ELANBlock',
-            mid_ratio=0.4,
-            block_ratio=0.4,
-            out_ratio=0.5,
-            num_blocks=3,
-            num_convs_in_block=2),
+            type='TinyDownsampleConv',
+            with_maxpool=False),
         act_cfg=dict(type='LeakyReLU', negative_slope=0.1),
         use_repconv_outs=False),
-    bbox_head=dict(head_module=dict(in_channels=[320, 640, 1280]),
+    bbox_head=dict(head_module=dict(in_channels=[128, 256, 512]),
                    prior_generator=dict(base_sizes=anchors)))

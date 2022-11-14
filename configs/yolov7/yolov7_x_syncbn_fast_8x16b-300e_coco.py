@@ -9,7 +9,6 @@ model = dict(
             type='ELANBlock',
             mid_ratio=0.4,
             block_ratio=0.4,
-            out_ratio=0.5,
             num_blocks=3,
             num_convs_in_block=2),
         use_repconv_outs=False),

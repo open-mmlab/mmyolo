@@ -55,7 +55,6 @@ model = dict(
             type='ELANBlock',
             mid_ratio=0.5,
             block_ratio=0.25,
-            out_ratio=0.5,
             num_blocks=4,
             num_convs_in_block=1),
         upsample_feats_cat_first=False,

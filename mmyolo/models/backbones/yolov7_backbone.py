@@ -42,6 +42,7 @@ class YOLOv7Backbone(BaseBackbone):
     """
     _tiny_stage1_cfg = dict(
         type='TinyDownsampleConv',
+        mid_ratio=0.5,
         with_maxpool=False
     )
     _tiny_stage2_4_cfg = dict(
@@ -53,14 +54,12 @@ class YOLOv7Backbone(BaseBackbone):
         type='ELANBlock',
         mid_ratio=0.5,
         block_ratio=0.5,
-        out_ratio=2.0,
         num_blocks=2,
         num_convs_in_block=2)
     _l_no_change_channel = dict(
         type='ELANBlock',
         mid_ratio=0.25,
         block_ratio=0.25,
-        out_ratio=1.0,
         num_blocks=2,
         num_convs_in_block=2)
 
@@ -68,14 +67,12 @@ class YOLOv7Backbone(BaseBackbone):
         type='ELANBlock',
         mid_ratio=0.4,
         block_ratio=0.4,
-        out_ratio=2.0,
         num_blocks=3,
         num_convs_in_block=2)
     _x_no_change_channel = dict(
         type='ELANBlock',
         mid_ratio=0.2,
         block_ratio=0.2,
-        out_ratio=1.0,
         num_blocks=3,
         num_convs_in_block=2)
 
@@ -186,10 +183,11 @@ class YOLOv7Backbone(BaseBackbone):
         stage_block_cfg.setdefault('norm_cfg', self.norm_cfg)
         stage_block_cfg.setdefault('act_cfg', self.act_cfg)
 
+        stage_block_cfg['in_channels'] = in_channels
+        stage_block_cfg['out_channels'] = out_channels
+
         stage = []
         if self.arch == 'Tiny':
-            stage_block_cfg['in_channels'] = in_channels
-            stage_block_cfg['out_channels'] = out_channels
             stage.append(MODELS.build(stage_block_cfg))
         else:
             if stage_idx == 0:
@@ -202,6 +200,7 @@ class YOLOv7Backbone(BaseBackbone):
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg)
                 stage_block_cfg['in_channels'] = out_channels
+                stage_block_cfg['out_channels'] = out_channels * 2
                 stage.extend([pre_layer, MODELS.build(stage_block_cfg)])
             else:
                 pre_layer = MaxPoolAndStrideConvBlock(
@@ -209,6 +208,5 @@ class YOLOv7Backbone(BaseBackbone):
                     mode='reduce_channel_2x',
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg)
-                stage_block_cfg['in_channels'] = in_channels
                 stage.extend([pre_layer, MODELS.build(stage_block_cfg)])
         return stage
