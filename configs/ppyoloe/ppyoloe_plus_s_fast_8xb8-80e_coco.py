@@ -120,7 +120,7 @@ train_pipeline = [
         file_client_args={{_base_.file_client_args}}),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='PPYOLOERandomDistort'),
-    dict(type='PPYOLOERandomExpand'),
+    dict(type='PPYOLOERandomExpand', fill_value=(123.675, 116.28, 103.53)),
     dict(type='PPYOLOERandomCrop'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(

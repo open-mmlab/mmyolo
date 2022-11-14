@@ -756,7 +756,7 @@ class PPYOLOERandomDistort(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class PPYOLOERandomExpand(LetterResize):
+class PPYOLOERandomExpand(BaseTransform):
 
     def __init__(self,
                  expand_ratio=4.,
@@ -800,10 +800,11 @@ class PPYOLOERandomExpand(LetterResize):
             results['scale_factor'] = np.array([1, 1], dtype=np.float32)
         results['img'] = img
         results['img_shape'] = img.shape
-        # add pad_param key, but is not useful while training
         results['pad_param'] = np.array(
             [top_padding, bottom_padding, left_padding, right_padding],
             dtype=np.float32)
+        results['gt_bboxes'].translate_(
+            (results['pad_param'][2], results['pad_param'][1]))
 
 
 @TRANSFORMS.register_module()
