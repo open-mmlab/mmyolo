@@ -11,7 +11,7 @@ save_epoch_intervals = 10
 train_batch_size_per_gpu = 8
 train_num_workers = 8
 val_batch_size_per_gpu = 1
-val_num_workers = 0
+val_num_workers = 2
 
 max_epochs = 300
 num_last_epochs = 15
@@ -156,7 +156,7 @@ train_pipeline_stage2 = [
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
-    persistent_workers=False,
+    persistent_workers=True,
     pin_memory=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
@@ -186,7 +186,7 @@ test_pipeline = [
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
-    persistent_workers=False,
+    persistent_workers=True,
     pin_memory=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
