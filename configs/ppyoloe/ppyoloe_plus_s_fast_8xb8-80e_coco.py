@@ -11,7 +11,7 @@ widen_factor = 0.5
 max_epochs = 80
 num_classes = 80
 save_epoch_intervals = 2  # fast val
-train_batch_size_per_gpu = 8 * 4  # 2*A100
+train_batch_size_per_gpu = 8 * 4  # 2*A100    # TODO
 train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
@@ -24,6 +24,7 @@ strides = [8, 16, 32]
 model = dict(
     type='YOLODetector',
     data_preprocessor=dict(
+        # use this to support multi_scale training
         type='PPYOLOEDetDataPreprocessor',
         pad_size_divisor=32,
         batch_augments=[
@@ -93,7 +94,12 @@ model = dict(
             reduction='mean',
             loss_weight=2.5,
             return_iou=False),
-        loss_dfl=dict(type='DfLoss', reduction='mean', loss_weight=0.5)),
+        # Since the average is implemented differently in the official
+        # and mmdet, we're going to divide loss_weight by 4.
+        loss_dfl=dict(
+            type='mmdet.DistributionFocalLoss',
+            reduction='mean',
+            loss_weight=0.5 / 4)),
     train_cfg=dict(
         initial_epoch=31,
         initial_assigner=dict(

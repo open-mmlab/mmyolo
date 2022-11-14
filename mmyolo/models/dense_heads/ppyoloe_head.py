@@ -31,7 +31,8 @@ class PPYOLOEHeadModule(BaseModule):
             on the feature grid.
         featmap_strides (Sequence[int]): Downsample factor of each feature map.
              Defaults to (8, 16, 32).
-        reg_max (int): TOOD reg_max param.
+        reg_max (int): Max value of integral set :math: ``{0, ..., reg_max}``
+            in QFL setting. Defaults to 16.
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
         act_cfg (dict): Config dict for activation layer.
@@ -132,16 +133,17 @@ class PPYOLOEHeadModule(BaseModule):
         hw = h * w
         avg_feat = F.adaptive_avg_pool2d(x, (1, 1))
         cls_logit = cls_pred(cls_stem(x, avg_feat) + x)
-        reg_dist = reg_pred(reg_stem(x, avg_feat))
-        reg_dist = reg_dist.reshape([-1, 4, self.reg_max + 1,
-                                     hw]).permute(0, 2, 3, 1)
-        # TODO: 命名要改
-        reg_dist_proj = self.proj_conv(F.softmax(reg_dist, dim=1))
+        bbox_dist_preds = reg_pred(reg_stem(x, avg_feat))
+        bbox_dist_preds = bbox_dist_preds.reshape(
+            [-1, 4, self.reg_max + 1, hw]).permute(0, 2, 3, 1)
 
+        bbox_preds = self.proj_conv(F.softmax(bbox_dist_preds, dim=1))
+
+        # While training, `df_loss` need `bbox_dist_preds`
         if self.training:
-            return cls_logit, reg_dist_proj, reg_dist
+            return cls_logit, bbox_preds, bbox_dist_preds
         else:
-            return cls_logit, reg_dist_proj
+            return cls_logit, bbox_preds
 
 
 @MODELS.register_module()
@@ -155,7 +157,8 @@ class PPYOLOEHead(YOLOv6Head):
         bbox_coder (:obj:`ConfigDict` or dict): Config of bbox coder.
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
         loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
-        loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
+        loss_dfl (:obj:`ConfigDict` or dict): Config of distribution focal
+            loss.
         train_cfg (:obj:`ConfigDict` or dict, optional): Training config of
             anchor head. Defaults to None.
         test_cfg (:obj:`ConfigDict` or dict, optional): Testing config of
@@ -183,7 +186,9 @@ class PPYOLOEHead(YOLOv6Head):
                  loss_bbox: ConfigType = dict(
                      type='mmdet.GIoULoss', reduction='sum', loss_weight=2.5),
                  loss_dfl: ConfigType = dict(
-                     type='DfLoss', reduction='mean', loss_weight=0.5),
+                     type='DistributionFocalLoss',
+                     reduction='mean',
+                     loss_weight=0.5 / 4),
                  train_cfg: OptConfigType = None,
                  test_cfg: OptConfigType = None,
                  init_cfg: OptMultiConfig = None):
@@ -196,22 +201,24 @@ class PPYOLOEHead(YOLOv6Head):
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             init_cfg=init_cfg)
-        loss_dfl['reg_max'] = self.head_module.reg_max
         self.loss_dfl = MODELS.build(loss_dfl)
         # ppyoloe doesn't need loss_obj
         self.loss_obj = None
 
     def special_init(self):
+        # Use yolov6's special init
         super().special_init()
         if self.train_cfg:
+            # Ppyoloe use multi scale training by default.
+            # During training and testing, different variables
+            # are used to store scales
             self.featmap_sizes_train = None
 
-    # TODO: 命名要改
     def loss_by_feat(
             self,
             cls_scores: Sequence[Tensor],
             bbox_preds: Sequence[Tensor],
-            bbox_preds_org: Sequence[Tensor],
+            bbox_dist_preds: Sequence[Tensor],
             batch_gt_instances: Sequence[InstanceData],
             batch_img_metas: Sequence[dict],
             batch_gt_instances_ignore: OptInstanceList = None) -> dict:
@@ -225,6 +232,8 @@ class PPYOLOEHead(YOLOv6Head):
             bbox_preds (Sequence[Tensor]): Box energies / deltas for each scale
                 level, each is a 4D-tensor, the channel number is
                 num_priors * 4.
+            bbox_dist_preds (Sequence[Tensor]): Box distribution logits for
+                each scale level with shape (bs, reg_max + 1, H*W, 4).
             batch_gt_instances (list[:obj:`InstanceData`]): Batch of
                 gt_instance. It usually includes ``bboxes`` and ``labels``
                 attributes.
@@ -280,15 +289,13 @@ class PPYOLOEHead(YOLOv6Head):
             for bbox_pred in bbox_preds
         ]
 
-        # 原尺寸bs, 4, 17, h*w
-        # 目标尺寸 [32, 8400, 68]
-        pred_dists = [
+        flatten_pred_dists = [
             bbox_pred_org.permute(0, 3, 1, 2).reshape(
                 num_imgs, -1, (self.head_module.reg_max + 1) * 4)
-            for bbox_pred_org in bbox_preds_org
+            for bbox_pred_org in bbox_dist_preds
         ]
 
-        dist_preds = torch.cat(pred_dists, dim=1)
+        flatten_dist_preds = torch.cat(flatten_pred_dists, dim=1)
         flatten_cls_preds = torch.cat(flatten_cls_preds, dim=1)
         flatten_pred_bboxes = torch.cat(flatten_pred_bboxes, dim=1)
         flatten_pred_bboxes = self.bbox_coder.decode(
@@ -352,8 +359,10 @@ class PPYOLOEHead(YOLOv6Head):
                     [1, 1, (self.head_module.reg_max + 1) * 4])
 
             # 这里其实需要的是decode之前的
-            pred_dist_pos = torch.masked_select(dist_preds, dist_mask).reshape(
-                [-1, 4, self.head_module.reg_max + 1])  # [n_pos, 4, 17]
+            pred_dist_pos = torch.masked_select(
+                flatten_dist_preds,
+                dist_mask).reshape([-1, 4, self.head_module.reg_max + 1
+                                    ])  # [n_pos, 4, 17]
             # 这里需要的都是除以了stride的变量
             assigned_ltrb = self.bbox_coder.encode(
                 self.flatten_priors[..., :2],
@@ -363,9 +372,11 @@ class PPYOLOEHead(YOLOv6Head):
             assigned_ltrb_pos = torch.masked_select(
                 assigned_ltrb, prior_bbox_mask).reshape([-1, 4])
             loss_dfl = self.loss_dfl(
-                pred_dist_pos,
-                assigned_ltrb_pos,
-                weight=bbox_weight,
+                # (n*4, 17)
+                pred_dist_pos.reshape(-1, self.head_module.reg_max + 1),
+                # (n*4, )
+                assigned_ltrb_pos.reshape(-1),
+                weight=bbox_weight.expand(-1, 4).reshape(-1),
                 avg_factor=assigned_scores_sum)
 
             loss_l1 = F.l1_loss(pred_bboxes_pos, assigned_bboxes_pos)
