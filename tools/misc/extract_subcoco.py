@@ -62,10 +62,8 @@ def _process_data(args,
     random_idx_all = np.random.randint(0, len(images), size=(len(images), ))
     random_idx = \
         random_idx_all[:args.num_img] if args.num_img > 0 else random_idx_all
-    areaRng = \
-        area_dict[args.area_size] if args.area_size else []
-    catIds = \
-        coco.getCatIds(args.classes) if args.classes else []
+    areaRng = area_dict[args.area_size] if args.area_size else []
+    catIds = coco.getCatIds(args.classes) if args.classes else [] 
 
     progress_bar = mmengine.ProgressBar(len(random_idx))
 
