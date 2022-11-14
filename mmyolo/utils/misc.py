@@ -7,7 +7,6 @@ import torch
 from mmdet.models.backbones.csp_darknet import Focus
 from mmengine.utils import scandir
 
-from mmyolo.easydeploy.backbone import DeployFocus
 from mmyolo.models import RepVGGBlock
 
 IMG_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif',
@@ -20,7 +19,13 @@ def switch_to_deploy(model):
         if isinstance(layer, RepVGGBlock):
             layer.switch_to_deploy()
         if isinstance(layer, Focus):
-            model.backbone.stem = DeployFocus(layer)
+            try:
+                from projects.easydeploy.backbone import DeployFocus
+            except Exception as e:
+                print('Do not switch Focus() to DeployFocus()')
+                print(f'Error message is\n{e}')
+            else:
+                model.backbone.stem = DeployFocus(layer)
 
     print('Switch model to deploy modality.')
 

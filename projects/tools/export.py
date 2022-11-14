@@ -8,10 +8,11 @@ import torch
 from mmdet.apis import init_detector
 from mmengine.config import ConfigDict
 
-from mmyolo.easydeploy import DeployModel
 from mmyolo.utils import register_all_modules, switch_to_deploy
+from projects.easydeploy import DeployModel
 
 warnings.filterwarnings(action='ignore', category=torch.jit.TracerWarning)
+warnings.filterwarnings(action='ignore', category=torch.jit.ScriptWarning)
 warnings.filterwarnings(action='ignore', category=UserWarning)
 warnings.filterwarnings(action='ignore', category=FutureWarning)
 

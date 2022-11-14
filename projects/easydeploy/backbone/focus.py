@@ -18,7 +18,7 @@ class DeployFocus(nn.Module):
         half_h = x.shape[2]
         half_w = x.shape[4]
         x = x.permute(0, 5, 3, 1, 2, 4)
-        x = x.reshape(B, C * 4, half_h, half_w)
+        x = x.reshape(batch_size, channel * 4, half_h, half_w)
 
         return self.conv(x)
 

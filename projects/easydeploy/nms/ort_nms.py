@@ -108,7 +108,8 @@ def onnx_nms(
     score_threshold = torch.tensor([score_threshold])
 
     batch_size, _, _ = scores.shape
-    boxes = boxes @ (_XYWH2XYXY.to(boxes.device))
+    if box_coding == 1:
+        boxes = boxes @ (_XYWH2XYXY.to(boxes.device))
     scores = scores.transpose(1, 2).contiguous()
     selected_indices = ONNXNMSop.apply(boxes, scores,
                                        max_output_boxes_per_class,

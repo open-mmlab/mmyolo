@@ -7,10 +7,9 @@ import torch.nn as nn
 from mmengine.config import ConfigDict
 from torch import Tensor
 
-from mmyolo.easydeploy.bbox_code import (rtmdet_bbox_decoder,
-                                         yolov5_bbox_decoder)
-from mmyolo.easydeploy.nms import batched_nms, efficient_nms, onnx_nms
 from mmyolo.models.dense_heads import RTMDetHead, YOLOv5Head
+from ..bbox_code import rtmdet_bbox_decoder, yolov5_bbox_decoder
+from ..nms import batched_nms, efficient_nms, onnx_nms
 
 
 class DeployModel(nn.Module):
