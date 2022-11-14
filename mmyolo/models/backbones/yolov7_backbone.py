@@ -6,7 +6,7 @@ from mmcv.cnn import ConvModule
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
-from ..layers import ELANBlock, MaxPoolAndStrideConvBlock
+from ..layers import MaxPoolAndStrideConvBlock
 from .base_backbone import BaseBackbone
 
 
@@ -40,17 +40,64 @@ class YOLOv7Backbone(BaseBackbone):
         init_cfg (:obj:`ConfigDict` or dict or list[dict] or
             list[:obj:`ConfigDict`]): Initialization config dict.
     """
+    _tiny_stage1_cfg = dict(
+        type='TinyDownsampleConv',
+        with_maxpool=False
+    )
+    _tiny_stage2_4_cfg = dict(
+        type='TinyDownsampleConv',
+        with_maxpool=True
+    )
+
+    _l_expand_channel_2x = dict(
+        type='ELANBlock',
+        mid_ratio=0.5,
+        block_ratio=0.5,
+        out_ratio=2.0,
+        num_blocks=2,
+        num_convs_in_block=2)
+    _l_no_change_channel = dict(
+        type='ELANBlock',
+        mid_ratio=0.25,
+        block_ratio=0.25,
+        out_ratio=1.0,
+        num_blocks=2,
+        num_convs_in_block=2)
+
+    _x_expand_channel_2x = dict(
+        type='ELANBlock',
+        mid_ratio=0.4,
+        block_ratio=0.4,
+        out_ratio=2.0,
+        num_blocks=3,
+        num_convs_in_block=2)
+    _x_no_change_channel = dict(
+        type='ELANBlock',
+        mid_ratio=0.2,
+        block_ratio=0.2,
+        out_ratio=1.0,
+        num_blocks=3,
+        num_convs_in_block=2)
 
     # From left to right:
-    # in_channels, out_channels, ELAN mode
+    # in_channels, out_channels, Block_params
     arch_settings = {
-        'P5': [[64, 128, 'expand_channel_2x'], [256, 512, 'expand_channel_2x'],
-               [512, 1024, 'expand_channel_2x'],
-               [1024, 1024, 'no_change_channel']]
+        'Tiny': [[64, 64, _tiny_stage1_cfg],
+                 [64, 128, _tiny_stage2_4_cfg],
+                 [128, 256, _tiny_stage2_4_cfg],
+                 [256, 512, _tiny_stage2_4_cfg]],
+        'L': [[64, 128, _l_expand_channel_2x],
+              [256, 512, _l_expand_channel_2x],
+              [512, 1024, _l_expand_channel_2x],
+              [1024, 1024, _l_no_change_channel]],
+        'X': [[80, 160, _x_expand_channel_2x],
+              [320, 640, _x_expand_channel_2x],
+              [640, 1280, _x_expand_channel_2x],
+              [1280, 1280, _x_no_change_channel]]
     }
 
     def __init__(self,
-                 arch: str = 'P5',
+                 arch: str = 'L',
                  plugins: Union[dict, List[dict]] = None,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
@@ -62,6 +109,7 @@ class YOLOv7Backbone(BaseBackbone):
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None):
+        self.arch = arch
         super().__init__(
             self.arch_settings[arch],
             deepen_factor,
@@ -77,31 +125,50 @@ class YOLOv7Backbone(BaseBackbone):
 
     def build_stem_layer(self) -> nn.Module:
         """Build a stem layer."""
-        stem = nn.Sequential(
-            ConvModule(
-                3,
-                int(self.arch_setting[0][0] * self.widen_factor // 2),
-                3,
-                padding=1,
-                stride=1,
-                norm_cfg=self.norm_cfg,
-                act_cfg=self.act_cfg),
-            ConvModule(
-                int(self.arch_setting[0][0] * self.widen_factor // 2),
-                int(self.arch_setting[0][0] * self.widen_factor),
-                3,
-                padding=1,
-                stride=2,
-                norm_cfg=self.norm_cfg,
-                act_cfg=self.act_cfg),
-            ConvModule(
-                int(self.arch_setting[0][0] * self.widen_factor),
-                int(self.arch_setting[0][0] * self.widen_factor),
-                3,
-                padding=1,
-                stride=1,
-                norm_cfg=self.norm_cfg,
-                act_cfg=self.act_cfg))
+        if self.arch in ['L', 'X']:
+            stem = nn.Sequential(
+                ConvModule(
+                    3,
+                    int(self.arch_setting[0][0] * self.widen_factor // 2),
+                    3,
+                    padding=1,
+                    stride=1,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg),
+                ConvModule(
+                    int(self.arch_setting[0][0] * self.widen_factor // 2),
+                    int(self.arch_setting[0][0] * self.widen_factor),
+                    3,
+                    padding=1,
+                    stride=2,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg),
+                ConvModule(
+                    int(self.arch_setting[0][0] * self.widen_factor),
+                    int(self.arch_setting[0][0] * self.widen_factor),
+                    3,
+                    padding=1,
+                    stride=1,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg))
+        elif self.arch == 'Tiny':
+            stem = nn.Sequential(
+                ConvModule(
+                    3,
+                    int(self.arch_setting[0][0] * self.widen_factor // 2),
+                    3,
+                    padding=1,
+                    stride=2,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg),
+                ConvModule(
+                    int(self.arch_setting[0][0] * self.widen_factor),
+                    int(self.arch_setting[0][0] * self.widen_factor),
+                    3,
+                    padding=1,
+                    stride=2,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg))
         return stem
 
     def build_stage_layer(self, stage_idx: int, setting: list) -> list:
@@ -111,39 +178,37 @@ class YOLOv7Backbone(BaseBackbone):
             stage_idx (int): The index of a stage layer.
             setting (list): The architecture setting of a stage layer.
         """
-        in_channels, out_channels, elan_mode = setting
-
+        in_channels, out_channels, stage_block_cfg = setting
         in_channels = int(in_channels * self.widen_factor)
         out_channels = int(out_channels * self.widen_factor)
 
+        stage_block_cfg = stage_block_cfg.copy()
+        stage_block_cfg.setdefault('norm_cfg', self.norm_cfg)
+        stage_block_cfg.setdefault('act_cfg', self.act_cfg)
+
         stage = []
-        if stage_idx == 0:
-            pre_layer = ConvModule(
-                in_channels,
-                out_channels,
-                3,
-                stride=2,
-                padding=1,
-                norm_cfg=self.norm_cfg,
-                act_cfg=self.act_cfg)
-            elan_layer = ELANBlock(
-                out_channels,
-                mode=elan_mode,
-                num_blocks=2,
-                norm_cfg=self.norm_cfg,
-                act_cfg=self.act_cfg)
-            stage.extend([pre_layer, elan_layer])
+        if self.arch == 'Tiny':
+            stage_block_cfg['in_channels'] = in_channels
+            stage_block_cfg['out_channels'] = out_channels
+            stage.append(MODELS.build(stage_block_cfg))
         else:
-            pre_layer = MaxPoolAndStrideConvBlock(
-                in_channels,
-                mode='reduce_channel_2x',
-                norm_cfg=self.norm_cfg,
-                act_cfg=self.act_cfg)
-            elan_layer = ELANBlock(
-                in_channels,
-                mode=elan_mode,
-                num_blocks=2,
-                norm_cfg=self.norm_cfg,
-                act_cfg=self.act_cfg)
-            stage.extend([pre_layer, elan_layer])
+            if stage_idx == 0:
+                pre_layer = ConvModule(
+                    in_channels,
+                    out_channels,
+                    3,
+                    stride=2,
+                    padding=1,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg)
+                stage_block_cfg['in_channels'] = out_channels
+                stage.extend([pre_layer, MODELS.build(stage_block_cfg)])
+            else:
+                pre_layer = MaxPoolAndStrideConvBlock(
+                    in_channels,
+                    mode='reduce_channel_2x',
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg)
+                stage_block_cfg['in_channels'] = in_channels
+                stage.extend([pre_layer, MODELS.build(stage_block_cfg)])
         return stage

@@ -25,6 +25,7 @@ else:
         def forward(self, inputs) -> torch.Tensor:
             return inputs * torch.sigmoid(inputs)
 
+
     MODELS.register_module(module=SiLU, name='SiLU')
 
 
@@ -465,6 +466,7 @@ class PPYOLOESELayer(nn.Module):
         return self.conv(feat * weight)
 
 
+@MODELS.register_module()
 class ELANBlock(BaseModule):
     """Efficient layer aggregation networks for YOLOv7.
 
@@ -491,33 +493,25 @@ class ELANBlock(BaseModule):
 
     def __init__(self,
                  in_channels: int,
-                 mode: str = 'expand_channel_2x',
+                 mid_ratio: float,
+                 block_ratio: float,
+                 out_ratio: float,
                  num_blocks: int = 2,
+                 num_convs_in_block: int = 1,
                  conv_cfg: OptConfigType = None,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg=init_cfg)
+        assert num_blocks >= 1
+        assert num_convs_in_block >= 1
 
-        assert mode in ('expand_channel_2x', 'no_change_channel',
-                        'reduce_channel_2x')
-
-        if mode == 'expand_channel_2x':
-            mid_channels = in_channels // 2
-            block_channels = mid_channels
-            final_conv_in_channels = 2 * in_channels
-            final_conv_out_channels = 2 * in_channels
-        elif mode == 'no_change_channel':
-            mid_channels = in_channels // 4
-            block_channels = mid_channels
-            final_conv_in_channels = in_channels
-            final_conv_out_channels = in_channels
-        else:
-            mid_channels = in_channels // 2
-            block_channels = mid_channels // 2
-            final_conv_in_channels = in_channels * 2
-            final_conv_out_channels = in_channels // 2
+        mid_channels = int(in_channels * mid_ratio)
+        block_channels = int(in_channels * block_ratio)
+        final_conv_in_channels = int(
+            num_blocks * block_channels) + 2 * mid_channels
+        final_conv_out_channels = int(in_channels * out_ratio)
 
         self.main_conv = ConvModule(
             in_channels,
@@ -537,7 +531,7 @@ class ELANBlock(BaseModule):
 
         self.blocks = nn.ModuleList()
         for _ in range(num_blocks):
-            if mode == 'reduce_channel_2x':
+            if num_convs_in_block == 1:
                 internal_block = ConvModule(
                     mid_channels,
                     block_channels,
@@ -547,23 +541,20 @@ class ELANBlock(BaseModule):
                     norm_cfg=norm_cfg,
                     act_cfg=act_cfg)
             else:
-                internal_block = nn.Sequential(
-                    ConvModule(
-                        mid_channels,
-                        block_channels,
-                        3,
-                        padding=1,
-                        conv_cfg=conv_cfg,
-                        norm_cfg=norm_cfg,
-                        act_cfg=act_cfg),
-                    ConvModule(
-                        block_channels,
-                        block_channels,
-                        3,
-                        padding=1,
-                        conv_cfg=conv_cfg,
-                        norm_cfg=norm_cfg,
-                        act_cfg=act_cfg))
+                internal_block = []
+                for _ in range(num_convs_in_block):
+                    internal_block.append(
+                        ConvModule(
+                            mid_channels,
+                            block_channels,
+                            3,
+                            padding=1,
+                            conv_cfg=conv_cfg,
+                            norm_cfg=norm_cfg,
+                            act_cfg=act_cfg))
+                    mid_channels = block_channels
+                internal_block = nn.Sequential(*internal_block)
+
             mid_channels = block_channels
             self.blocks.append(internal_block)
 
@@ -787,6 +778,83 @@ class SPPFCSPBlock(BaseModule):
 
 
 @MODELS.register_module()
+class TinyDownsampleConv(BaseModule):
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 kernel_sizes: Union[int, Sequence[int]] = 3,
+                 with_maxpool: bool = False,
+                 conv_cfg: OptConfigType = None,
+                 norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='LeakyReLU', negative_slope=0.1),
+                 init_cfg: OptMultiConfig = None):
+        super().__init__(init_cfg)
+
+        if out_channels == in_channels:
+            mid_channels = int(in_channels * 0.5)
+        else:
+            mid_channels = in_channels
+
+        if with_maxpool:
+            self.short_convs = nn.Sequential(
+                MaxPool2d(2, 2),
+                ConvModule(
+                    in_channels,
+                    mid_channels,
+                    1,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg)
+            )
+        else:
+            self.short_convs = ConvModule(
+                in_channels,
+                mid_channels,
+                1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg)
+
+        self.main_convs = nn.ModuleList()
+        for i in range(3):
+            if i == 0:
+                self.main_convs.append(ConvModule(
+                    in_channels,
+                    mid_channels,
+                    1,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg))
+            else:
+                self.main_convs.append(ConvModule(
+                    mid_channels,
+                    mid_channels,
+                    kernel_sizes,
+                    conv_cfg=conv_cfg,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg))
+
+        self.final_convs = ConvModule(
+            mid_channels * 4,
+            mid_channels * 2,
+            1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+    def forward(self, x) -> Tensor:
+        short_out = self.short_convs(x)
+
+        main_outs = []
+        for main_conv in self.main_convs:
+            mian_outs = main_conv(x)
+            main_outs.append(mian_outs)
+            x = mian_outs
+
+        return self.final_convs(torch.cat([main_outs[::-1], short_out], dim=1))
+
+
+@MODELS.register_module()
 class PPYOLOEBasicBlock(nn.Module):
     """PPYOLOE Backbone BasicBlock.
 
@@ -896,7 +964,7 @@ class CSPResLayer(nn.Module):
 
         if stride == 2:
             conv1_in_channels = conv2_in_channels = conv3_in_channels = (
-                in_channels + out_channels) // 2
+                                                                                in_channels + out_channels) // 2
             blocks_channels = conv1_in_channels // 2
             self.conv_down = ConvModule(
                 in_channels,

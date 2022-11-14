@@ -75,7 +75,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
     """
 
     def __init__(self,
-                 arch_setting: dict,
+                 arch_setting: list,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  input_channels: int = 3,

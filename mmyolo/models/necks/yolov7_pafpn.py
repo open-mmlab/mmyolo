@@ -6,8 +6,7 @@ from mmcv.cnn import ConvModule
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
-from ..layers import (ELANBlock, MaxPoolAndStrideConvBlock, RepVGGBlock,
-                      SPPFCSPBlock)
+from ..layers import MaxPoolAndStrideConvBlock, RepVGGBlock, SPPFCSPBlock
 from .base_yolo_neck import BaseYOLONeck
 
 
@@ -39,9 +38,17 @@ class YOLOv7PAFPN(BaseYOLONeck):
     def __init__(self,
                  in_channels: List[int],
                  out_channels: List[int],
+                 block_cfg=dict(
+                     type='ELANBlock',
+                     mid_ratio=0.5,
+                     block_ratio=0.25,
+                     out_ratio=0.5,
+                     num_blocks=4,
+                     num_convs_in_block=1),
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  spp_expand_ratio: float = 0.5,
+                 use_repconv_outs: bool = True,
                  upsample_feats_cat_first: bool = False,
                  freeze_all: bool = False,
                  norm_cfg: ConfigType = dict(
@@ -50,6 +57,11 @@ class YOLOv7PAFPN(BaseYOLONeck):
                  init_cfg: OptMultiConfig = None):
 
         self.spp_expand_ratio = spp_expand_ratio
+        self.use_repconv_outs = use_repconv_outs
+        self.block_cfg = block_cfg
+        self.block_cfg.setdefault('norm_cfg', norm_cfg)
+        self.block_cfg.setdefault('act_cfg', act_cfg)
+
         super().__init__(
             in_channels=[
                 int(channel * widen_factor) for channel in in_channels
@@ -112,12 +124,9 @@ class YOLOv7PAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The top down layer.
         """
-        return ELANBlock(
-            self.out_channels[idx - 1] * 2,
-            mode='reduce_channel_2x',
-            num_blocks=4,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
+        block_cfg = self.block_cfg.copy()
+        block_cfg['in_channels'] = self.out_channels[idx - 1] * 2
+        return MODELS.build(block_cfg)
 
     def build_downsample_layer(self, idx: int) -> nn.Module:
         """build downsample layer.
@@ -143,12 +152,9 @@ class YOLOv7PAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The bottom up layer.
         """
-        return ELANBlock(
-            self.out_channels[idx + 1] * 2,
-            mode='reduce_channel_2x',
-            num_blocks=4,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
+        block_cfg = self.block_cfg.copy()
+        block_cfg['in_channels'] = self.out_channels[idx + 1] * 2
+        return MODELS.build(block_cfg)
 
     def build_out_layer(self, idx: int) -> nn.Module:
         """build out layer.
@@ -159,9 +165,17 @@ class YOLOv7PAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The out layer.
         """
-        return RepVGGBlock(
-            self.out_channels[idx],
-            self.out_channels[idx] * 2,
-            3,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
+        if self.use_repconv_outs:
+            return RepVGGBlock(
+                self.out_channels[idx],
+                self.out_channels[idx] * 2,
+                3,
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg)
+        else:
+            return ConvModule(
+                self.out_channels[idx],
+                self.out_channels[idx] * 2,
+                3,
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg)

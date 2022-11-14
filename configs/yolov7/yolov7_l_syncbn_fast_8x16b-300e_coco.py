@@ -6,8 +6,6 @@ dataset_type = 'YOLOv5CocoDataset'
 
 # parameters that often need to be modified
 img_scale = (640, 640)  # height, width
-deepen_factor = 1.0
-widen_factor = 1.0
 max_epochs = 300
 save_epoch_intervals = 10
 train_batch_size_per_gpu = 16
@@ -48,14 +46,18 @@ model = dict(
         bgr_to_rgb=True),
     backbone=dict(
         type='YOLOv7Backbone',
-        deepen_factor=deepen_factor,
-        widen_factor=widen_factor,
+        arch='L',
         norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
         act_cfg=dict(type='SiLU', inplace=True)),
     neck=dict(
         type='YOLOv7PAFPN',
-        deepen_factor=deepen_factor,
-        widen_factor=widen_factor,
+        block_cfg=dict(
+            type='ELANBlock',
+            mid_ratio=0.5,
+            block_ratio=0.25,
+            out_ratio=0.5,
+            num_blocks=4,
+            num_convs_in_block=1),
         upsample_feats_cat_first=False,
         in_channels=[512, 1024, 1024],
         out_channels=[128, 256, 512],
@@ -67,7 +69,6 @@ model = dict(
             type='YOLOv7HeadModule',
             num_classes=80,
             in_channels=[256, 512, 1024],
-            widen_factor=widen_factor,
             featmap_strides=strides,
             num_base_priors=3),
         prior_generator=dict(
