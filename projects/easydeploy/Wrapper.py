@@ -240,7 +240,8 @@ class EngineBuilder:
         if fp16 and builder.platform_has_fast_fp16:
             config.set_flag(trt.BuilderFlag.FP16)
         self.weight = self.checkpoint.with_suffix('.engine')
-        config.add_optimization_profile(profile)
+        if dshape:
+            config.add_optimization_profile(profile)
         if with_profiling:
             config.profiling_verbosity = trt.ProfilingVerbosity.DETAILED
         with builder.build_engine(network, config) as engine:
