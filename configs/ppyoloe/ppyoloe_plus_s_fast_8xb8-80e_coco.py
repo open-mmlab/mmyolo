@@ -121,9 +121,7 @@ model = dict(
         max_per_img=300))
 
 train_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='PPYOLOERandomDistort'),
     dict(type='PPYOLOERandomExpand', fill_value=(123.675, 116.28, 103.53)),
@@ -218,5 +216,5 @@ train_cfg = dict(
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
-# TODO: add object365 pretrained model url.
+# TODO: add object365 pretrained model url. (s,m,l,x)
 load_from = 'baidumodel/ppyoloe_plus_s_pretrained.pth'
