@@ -11,7 +11,7 @@ YOLOv6 有一系列适用于各种工业场景的模型，包括N/T/S/M/L，考�
 
 1. 统一设计了更高效的 Backbone 和 Neck：受到硬件感知神经网络设计思想的启发，基于 RepVGG style 设计了可重参数化、更高效的骨干网络 EfficientRep Backbone 和 Rep-PAN Neck。 
 2. 相比于 YOLOX 的 Decoupled Head，进一步优化设计了简洁有效的 Efficient Decoupled Head，在维持精度的同时，降低了一般解耦头带来的额外延时开销。 
-3. 在训练策略上，采用Anchor-free 无锚范式，同时辅以 SimOTA标签分配策略以及 SIoU边界框回归损失来进一步提高检测精度。
+3. 在训练策略上，采用 Anchor-free 的策略，同时辅以 SimOTA 标签分配策略以及 SIoU 边界框回归损失来进一步提高检测精度。
 
 本文将从 YOLOv6 算法本身原理讲起，然后重点分析 MMYOLO 中的实现。关于 YOLOv6 的使用指南和速度等对比请阅读本文的后续内容。
 
@@ -52,8 +52,9 @@ YOLOv6 目标检测算法中使用的数据增强与 YOLOv5 基本一致，唯�
 - **HSV 颜色空间增强**
 - **随机水平翻转**
 
-### 1.2 网络结构
+关于每一个增强的详细解释，可以去看 [YOLOv5 数据增强模块](docs/zh_cn/algorithm_descriptions/yolov5_description.md)
 
+### 1.2 网络结构
 
 #### 1.2.1 Backbone
 
@@ -61,7 +62,12 @@ YOLOv6 目标检测算法中使用的数据增强与 YOLOv5 基本一致，唯�
 
 #### 1.2.3 Head
 
+
 ### 1.3 正负样本匹配策略
+
+#### 1.3.1 Anchor 设置
+
+YOLOv6 采用 Anchor-free 的策略，在训练的过程中会根据 feature size 去自动生成先验框。
 
 #### 1.3.2 Bbox 编解码过程
 
