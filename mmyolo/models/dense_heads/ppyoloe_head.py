@@ -184,9 +184,14 @@ class PPYOLOEHead(YOLOv6Head):
                      reduction='sum',
                      loss_weight=1.0),
                  loss_bbox: ConfigType = dict(
-                     type='mmdet.GIoULoss', reduction='sum', loss_weight=2.5),
+                     type='IoULoss',
+                     iou_mode='giou',
+                     bbox_format='xyxy',
+                     reduction='mean',
+                     loss_weight=2.5,
+                     return_iou=False),
                  loss_dfl: ConfigType = dict(
-                     type='DistributionFocalLoss',
+                     type='mmdet.DistributionFocalLoss',
                      reduction='mean',
                      loss_weight=0.5 / 4),
                  train_cfg: OptConfigType = None,
@@ -246,6 +251,7 @@ class PPYOLOEHead(YOLOv6Head):
         Returns:
             dict[str, Tensor]: A dictionary of losses.
         """
+        # TODO: 精度对齐后，删除注释
         # get epoch information from message hub
         message_hub = MessageHub.get_current_instance()
         current_epoch = message_hub.get_info('epoch')
