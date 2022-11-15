@@ -4,10 +4,6 @@ onnx_config = dict(
 codebase_config = dict(model_type='rknn')
 backend_config = dict(
     type='rknn',
-    common_config=dict(
-        mean_values=None,  # [[0, 0, 0]],
-        std_values=None,  # [[255, 255, 255]],
-        target_platform='rv1126',
-        optimization_level=1),
+    common_config=dict(target_platform='rv1126', optimization_level=1),
     quantization_config=dict(do_quantization=False, dataset=None),
     input_size_list=[[3, 320, 320]])
