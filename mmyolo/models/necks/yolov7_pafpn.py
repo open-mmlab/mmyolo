@@ -154,7 +154,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
             # P5
             return MaxPoolAndStrideConvBlock(
                 self.out_channels[idx],
-                mode='no_change_channel',
+                self.out_channels[idx + 1],
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
 

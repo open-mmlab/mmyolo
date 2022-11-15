@@ -620,7 +620,8 @@ class MaxPoolAndStrideConvBlock(BaseModule):
 
     def __init__(self,
                  in_channels: int,
-                 mode: str = 'reduce_channel_2x',
+                 out_channels: int,
+                 maxpool_kernel_sizes=2,
                  conv_cfg: OptConfigType = None,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
@@ -628,33 +629,28 @@ class MaxPoolAndStrideConvBlock(BaseModule):
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg=init_cfg)
 
-        assert mode in ('no_change_channel', 'reduce_channel_2x')
-
-        if mode == 'reduce_channel_2x':
-            out_channels = in_channels // 2
-        else:
-            out_channels = in_channels
-
         self.maxpool_branches = nn.Sequential(
-            MaxPool2d(2, 2),
+            MaxPool2d(
+                kernel_size=maxpool_kernel_sizes, stride=maxpool_kernel_sizes),
             ConvModule(
                 in_channels,
-                out_channels,
+                out_channels // 2,
                 1,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg))
+
         self.stride_conv_branches = nn.Sequential(
             ConvModule(
                 in_channels,
-                out_channels,
+                in_channels,
                 1,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg),
             ConvModule(
-                out_channels,
-                out_channels,
+                in_channels,
+                out_channels // 2,
                 3,
                 stride=2,
                 padding=1,
@@ -672,48 +668,6 @@ class MaxPoolAndStrideConvBlock(BaseModule):
         return torch.cat([stride_conv_out, maxpool_out], dim=1)
 
 
-class SimpleDownLayer(BaseModule):
-
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 maxpool_kernel_sizes=2,
-                 conv_cfg: OptConfigType = None,
-                 norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.03, eps=0.001),
-                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-                 init_cfg: OptMultiConfig = None):
-        super().__init__(init_cfg)
-        self.branch1 = nn.Sequential(
-            ConvModule(
-                in_channels,
-                in_channels,
-                1,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg),
-            ConvModule(
-                in_channels,
-                out_channels // 2,
-                3,
-                stride=maxpool_kernel_sizes,
-                padding=1,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg))
-
-        self.branch2 = nn.Sequential(
-            nn.MaxPool2d(
-                kernel_size=maxpool_kernel_sizes, stride=maxpool_kernel_sizes),
-            ConvModule(
-                in_channels,
-                out_channels // 2,
-                1,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg))
-
-    def forward(self, x):
-        return torch.cat((self.branch1(x), self.branch2(x)), dim=1)
-
-
 @MODELS.register_module()
 class TinyDownSampleBlock(BaseModule):
 
@@ -723,7 +677,6 @@ class TinyDownSampleBlock(BaseModule):
             out_channels: int,
             mid_ratio: float = 1.0,
             kernel_sizes: Union[int, Sequence[int]] = 3,
-            with_maxpool: bool = False,
             conv_cfg: OptConfigType = None,
             norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg: ConfigType = dict(type='LeakyReLU', negative_slope=0.1),
@@ -732,24 +685,13 @@ class TinyDownSampleBlock(BaseModule):
 
         mid_channels = int(in_channels * mid_ratio)
 
-        self.maxpool = None
-        if with_maxpool:
-            self.maxpool = MaxPool2d(2, 2)
-            self.short_convs = ConvModule(
-                in_channels,
-                mid_channels,
-                1,
-                conv_cfg=conv_cfg,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg)
-        else:
-            self.short_convs = ConvModule(
-                in_channels,
-                mid_channels,
-                1,
-                conv_cfg=conv_cfg,
-                norm_cfg=norm_cfg,
-                act_cfg=act_cfg)
+        self.short_convs = ConvModule(
+            in_channels,
+            mid_channels,
+            1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
 
         self.main_convs = nn.ModuleList()
         for i in range(3):
@@ -782,9 +724,6 @@ class TinyDownSampleBlock(BaseModule):
             act_cfg=act_cfg)
 
     def forward(self, x) -> Tensor:
-        if self.maxpool:
-            x = self.maxpool(x)
-
         short_out = self.short_convs(x)
 
         main_outs = []

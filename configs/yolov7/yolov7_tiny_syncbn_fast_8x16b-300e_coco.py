@@ -14,10 +14,7 @@ model = dict(
         in_channels=[128, 256, 512],
         out_channels=[64, 128, 256],
         block_cfg=dict(
-            _delete_=True,
-            type='TinyDownSampleBlock',
-            mid_ratio=0.25,
-            with_maxpool=False),
+            _delete_=True, type='TinyDownSampleBlock', mid_ratio=0.25),
         act_cfg=dict(type='LeakyReLU', negative_slope=0.1),
         use_repconv_outs=False),
     bbox_head=dict(

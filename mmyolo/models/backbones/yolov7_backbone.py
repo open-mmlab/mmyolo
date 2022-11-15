@@ -7,7 +7,7 @@ from mmdet.models.backbones.csp_darknet import Focus
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
-from ..layers import MaxPoolAndStrideConvBlock, SimpleDownLayer
+from ..layers import MaxPoolAndStrideConvBlock
 from .base_backbone import BaseBackbone
 
 
@@ -41,11 +41,8 @@ class YOLOv7Backbone(BaseBackbone):
         init_cfg (:obj:`ConfigDict` or dict or list[dict] or
             list[:obj:`ConfigDict`]): Initialization config dict.
     """
-    _tiny_stage1_cfg = dict(
-        type='TinyDownSampleBlock', mid_ratio=0.5, with_maxpool=False)
-    _tiny_stage2_4_cfg = dict(
-        type='TinyDownSampleBlock', mid_ratio=1.0, with_maxpool=True)
-
+    _tiny_stage1_cfg = dict(type='TinyDownSampleBlock', mid_ratio=0.5)
+    _tiny_stage2_4_cfg = dict(type='TinyDownSampleBlock', mid_ratio=1.0)
     _l_expand_channel_2x = dict(
         type='ELANBlock',
         mid_ratio=0.5,
@@ -58,7 +55,6 @@ class YOLOv7Backbone(BaseBackbone):
         block_ratio=0.25,
         num_blocks=2,
         num_convs_in_block=2)
-
     _x_expand_channel_2x = dict(
         type='ELANBlock',
         mid_ratio=0.4,
@@ -71,28 +67,24 @@ class YOLOv7Backbone(BaseBackbone):
         block_ratio=0.2,
         num_blocks=3,
         num_convs_in_block=2)
-
     _w_no_change_channel = dict(
         type='ELANBlock',
         mid_ratio=0.5,
         block_ratio=0.5,
         num_blocks=2,
         num_convs_in_block=2)
-
     _e_no_change_channel = dict(
         type='ELANBlock',
         mid_ratio=0.4,
         block_ratio=0.4,
         num_blocks=3,
         num_convs_in_block=2)
-
     _d_no_change_channel = dict(
         type='ELANBlock',
         mid_ratio=1 / 3,
         block_ratio=1 / 3,
         num_blocks=4,
         num_convs_in_block=2)
-
     _e2e_no_change_channel = dict(
         type='EELANBlock',
         num_elan_block=2,
@@ -107,11 +99,11 @@ class YOLOv7Backbone(BaseBackbone):
         'Tiny': [[64, 64, _tiny_stage1_cfg], [64, 128, _tiny_stage2_4_cfg],
                  [128, 256, _tiny_stage2_4_cfg],
                  [256, 512, _tiny_stage2_4_cfg]],
-        'L': [[64, 128, _l_expand_channel_2x],
+        'L': [[64, 256, _l_expand_channel_2x],
               [256, 512, _l_expand_channel_2x],
               [512, 1024, _l_expand_channel_2x],
               [1024, 1024, _l_no_change_channel]],
-        'X': [[80, 160, _x_expand_channel_2x],
+        'X': [[80, 320, _x_expand_channel_2x],
               [320, 640, _x_expand_channel_2x],
               [640, 1280, _x_expand_channel_2x],
               [1280, 1280, _x_no_change_channel]],
@@ -148,6 +140,7 @@ class YOLOv7Backbone(BaseBackbone):
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None):
+        assert arch in self.arch_settings.keys()
         self.arch = arch
         super().__init__(
             self.arch_settings[arch],
@@ -236,10 +229,28 @@ class YOLOv7Backbone(BaseBackbone):
         stage_block_cfg['out_channels'] = out_channels
 
         stage = []
-        if self.arch == 'Tiny':
-            stage.append(MODELS.build(stage_block_cfg))
+        if self.arch in ['W', 'E', 'D', 'E2E']:
+            stage_block_cfg['in_channels'] = out_channels
+        elif self.arch in ['L', 'X']:
+            if stage_idx == 0:
+                stage_block_cfg['in_channels'] = out_channels // 2
+
+        downsample_layer = self._build_downsample_layer(
+            stage_idx, in_channels, out_channels)
+        stage.append(MODELS.build(stage_block_cfg))
+        if downsample_layer is not None:
+            stage.insert(0, downsample_layer)
+        return stage
+
+    def _build_downsample_layer(self, stage_idx, in_channels, out_channels):
+        if self.arch in ['E', 'D', 'E2E']:
+            downsample_layer = MaxPoolAndStrideConvBlock(
+                in_channels,
+                out_channels,
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg)
         elif self.arch == 'W':
-            pre_layer = ConvModule(
+            downsample_layer = ConvModule(
                 in_channels,
                 out_channels,
                 3,
@@ -247,34 +258,25 @@ class YOLOv7Backbone(BaseBackbone):
                 padding=1,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
-            stage_block_cfg['in_channels'] = out_channels
-            stage.extend([pre_layer, MODELS.build(stage_block_cfg)])
-        elif self.arch in ['E', 'D', 'E2E']:
-            pre_layer = SimpleDownLayer(
-                in_channels,
-                out_channels,
-                norm_cfg=self.norm_cfg,
-                act_cfg=self.act_cfg)
-            stage_block_cfg['in_channels'] = out_channels
-            stage.extend([pre_layer, MODELS.build(stage_block_cfg)])
-        else:
+        elif self.arch == 'Tiny':
+            if stage_idx != 0:
+                downsample_layer = nn.MaxPool2d(2, 2)
+            else:
+                downsample_layer = None
+        elif self.arch in ['L', 'X']:
             if stage_idx == 0:
-                pre_layer = ConvModule(
+                downsample_layer = ConvModule(
                     in_channels,
-                    out_channels,
+                    out_channels // 2,
                     3,
                     stride=2,
                     padding=1,
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg)
-                stage_block_cfg['in_channels'] = out_channels
-                stage_block_cfg['out_channels'] = out_channels * 2
-                stage.extend([pre_layer, MODELS.build(stage_block_cfg)])
             else:
-                pre_layer = MaxPoolAndStrideConvBlock(
+                downsample_layer = MaxPoolAndStrideConvBlock(
                     in_channels,
-                    mode='reduce_channel_2x',
+                    in_channels,
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg)
-                stage.extend([pre_layer, MODELS.build(stage_block_cfg)])
-        return stage
+        return downsample_layer
