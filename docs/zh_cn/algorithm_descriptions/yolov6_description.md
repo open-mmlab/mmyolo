@@ -51,7 +51,7 @@ YOLOv6 目标检测算法中使用的数据增强与 YOLOv5 基本一致，唯�
 - **HSV 颜色空间增强**
 - **随机水平翻转**
 
-关于每一个增强的详细解释，详情请看 \[YOLOv5 数据增强模块\](./yolov5_description.md#1.1 数据增强模块)
+关于每一个增强的详细解释，详情请看 [YOLOv5 数据增强模块](./yolov5_description.md#1.1 数据增强模块)
 
 另外，YOLOv6 参考了 YOLOX 的数据增强方式，分为 2 钟增强方法组，一开始和 YOLOv5 一致，但是在最后 15 个 epoch 的时候将 `Mosaic` 使用 `YOLOv5KeepRatioResize` + `LetterResize` 替代了，个人感觉是为了拟合真实情况。
 
@@ -95,16 +95,16 @@ YOLOv6 采用与 YOLOX 一样的 Anchor-free 无锚范式，省略的了聚类�
 
 #### 1.5.1 优化器分组
 
-与 YOLOv5 一致，详情请看 \[YOLOv5 优化器分组\](./yolov5_description.md#1.5.1 优化器分组)
+与 YOLOv5 一致，详情请看 [YOLOv5 优化器分组](./yolov5_description.md#1.5.1 优化器分组)
 
 #### 1.5.2 weight decay 参数自适应
 
-与 YOLOv5 一致，详情请看 \[YOLOv5 weight decay 参数自适应\](./yolov5_description.md#1.5.2 weight decay 参数自适应)
+与 YOLOv5 一致，详情请看 [YOLOv5 weight decay 参数自适应](./yolov5_description.md#1.5.2 weight decay 参数自适应)
 
 ### 1.6 推理和后处理过程
 
 YOLOv6 后处理过程和 YOLOv5 高度类似，实际上 YOLO 系列的后处理逻辑都是类似的。
-详情请看 \[YOLOv5 推理和后处理过程\](./yolov5_description.md#1.6 推理和后处理过程)
+详情请看 [YOLOv5 推理和后处理过程](./yolov5_description.md#1.6 推理和后处理过程)
 
 ## 2 总结
 
