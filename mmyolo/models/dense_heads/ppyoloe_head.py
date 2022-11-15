@@ -283,21 +283,22 @@ class PPYOLOEHead(YOLOv6Head):
         gt_bboxes = gt_info[:, :, 1:]  # xyxy
         pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
 
-        # pred info
+        # pred info torch.Size([32, 1600, 80])
         flatten_cls_preds = [
             cls_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1,
                                                  self.num_classes)
             for cls_pred in cls_scores
         ]
-
+        # bbox_preds[1].permute(0, 2, 3, 1).shape torch.Size([32, 1600, 4, 1])
         flatten_pred_bboxes = [
             bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
             for bbox_pred in bbox_preds
         ]
 
         flatten_pred_dists = [
-            bbox_pred_org.permute(0, 3, 1, 2).reshape(
-                num_imgs, -1, (self.head_module.reg_max + 1) * 4)
+            bbox_pred_org.permute(0, 2, 3, 1).reshape(
+                num_imgs, -1, (self.head_module.reg_max + 1) *
+                4)  # (32, 17, 1600, 4) -> (32, 1600, 4, 17)
             for bbox_pred_org in bbox_dist_preds
         ]
 
@@ -385,12 +386,12 @@ class PPYOLOEHead(YOLOv6Head):
                 weight=bbox_weight.expand(-1, 4).reshape(-1),
                 avg_factor=assigned_scores_sum)
 
-            loss_l1 = F.l1_loss(pred_bboxes_pos, assigned_bboxes_pos)
+            # loss_l1 = F.l1_loss(pred_bboxes_pos, assigned_bboxes_pos)
 
         else:
             loss_bbox = flatten_pred_bboxes.sum() * 0
             loss_dfl = flatten_pred_bboxes.sum() * 0
-            loss_l1 = (flatten_pred_bboxes.sum() * 0)
+            # loss_l1 = (flatten_pred_bboxes.sum() * 0)
 
         # _, world_size = get_dist_info()
         return dict(
@@ -398,4 +399,5 @@ class PPYOLOEHead(YOLOv6Head):
             loss_bbox=loss_bbox,  # * world_size,
             loss_dfl=loss_dfl,  # * world_size,
             # loss_l1 do not participate in backward
-            loss_l1=loss_l1.detach())
+            # loss_l1=loss_l1.detach()
+        )
