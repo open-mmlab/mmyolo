@@ -3,7 +3,6 @@ import os
 from argparse import ArgumentParser
 
 import mmcv
-import numpy as np
 from mmdet.apis import inference_detector, init_detector
 from mmengine.logging import print_log
 from mmengine.utils import ProgressBar
@@ -43,7 +42,7 @@ def parse_args():
     parser.add_argument(
         '--merge_iou_thr',
         type=float,
-        default=0.1,
+        default=0.25,
         help='IoU threshould for merging results')
     parser.add_argument(
         '--batch_size',
@@ -80,8 +79,7 @@ def main():
     progress_bar = ProgressBar(len(files))
     for file in files:
         # read image
-        if not isinstance(args.img, np.ndarray):
-            img = mmcv.imread(args.img)
+        img = mmcv.imread(file)
 
         # arrange slices
         height, width = img.shape[:2]
@@ -117,7 +115,7 @@ def main():
             full_shape=(height, width),
             nms_cfg={
                 'type': 'nms',
-                'iou_thr': 0.25
+                'iou_thr': args.merge_iou_thr
             })
 
         img = mmcv.imconvert(img, 'bgr', 'rgb')
