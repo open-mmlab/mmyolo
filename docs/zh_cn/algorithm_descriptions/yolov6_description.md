@@ -95,16 +95,16 @@ YOLOv6 采用与 YOLOX 一样的 Anchor-free 无锚范式，省略的了聚类�
 
 #### 1.5.1 优化器分组
 
-与 YOLOv5 一致，详情请看 \[YOLOv5 数据增强模块\](docs/zh_cn/algorithm_descriptions/yolov5_description.md#1.5.1 优化器分组)
+与 YOLOv5 一致，详情请看 [YOLOv5 优化器分组](yolov5_description.md#1.5.1 优化器分组)
 
 #### 1.5.2 weight decay 参数自适应
 
-与 YOLOv5 一致，详情请看 \[YOLOv5 数据增强模块\](docs/zh_cn/algorithm_descriptions/yolov5_description.md#1.5.2 weight decay 参数自适应)
+与 YOLOv5 一致，详情请看 [YOLOv5 weight decay 参数自适应](./yolov5_description.md#1.5.2 weight decay 参数自适应)
 
 ### 1.6 推理和后处理过程
 
 YOLOv6 后处理过程和 YOLOv5 高度类似，实际上 YOLO 系列的后处理逻辑都是类似的。
-详情请看 \[YOLOv5 数据增强模块\](docs/zh_cn/algorithm_descriptions/yolov5_description.md#1.6 推理和后处理过程)
+详情请看 [YOLOv5 推理和后处理过程](./yolov5_description.md#1.6 推理和后处理过程)
 
 ## 2 总结
 
