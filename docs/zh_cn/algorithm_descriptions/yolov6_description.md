@@ -96,23 +96,15 @@ YOLOv6 位置预测参数格式为 `xywh`, 表示中心点位置偏移量以及�
 
 #### 1.5.1 优化器分组
 
+与 YOLOv5 一致
+
 #### 1.5.2 weight decay 参数自适应
 
 与 YOLOv5 一致
 
-#### 1.5.3 梯度累加
-
 ### 1.6 推理和后处理过程
 
-#### 1.6.1 核心控制参数
-
-1. **multi_label**
-
-2. **score_thr 和 nms_thr**
-
-3. **nms_pre 和 max_per_img**
-
-#### 1.6.2 batch shape 策略
+YOLOv6 后处理过程和 YOLOv5 高度类似，实际上 YOLO 系列的后处理逻辑都是类似的。详情请看
 
 ## 2 总结
 
