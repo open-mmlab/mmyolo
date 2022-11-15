@@ -54,6 +54,8 @@ YOLOv6 目标检测算法中使用的数据增强与 YOLOv5 基本一致，唯�
 
 关于每一个增强的详细解释，可以去看 [YOLOv5 数据增强模块](docs/zh_cn/algorithm_descriptions/yolov5_description.md)
 
+另外，YOLOv6 参考了 YOLOX 的数据增强方式，分为 2 钟增强方法组，一开始和 YOLOv5 一致，但是在最后 15 个 epoch 的时候将 `Mosaic` 使用 `YOLOv5KeepRatioResize` + `LetterResize` 替代了，个人感觉是为了拟合真实情况。
+
 ### 1.2 网络结构
 
 #### 1.2.1 Backbone
@@ -82,11 +84,21 @@ YOLOv6 位置预测参数格式为 `xywh`, 表示中心点位置偏移量以及�
 
 ### 1.4 Loss 设计
 
+- Classes loss：使用的是 `mmdet.VarifocalLoss`
+- Objectness loss：使用的是 `mmdet.CrossEntropyLoss`
+- BBox loss：l/m/s使用的是 GIoULoss,  t/n 用的是 SIoULoss
+
+另外 YOLOv6 在计算 loss 之前，根据 epoch 的不同，会经过不同的 Assigner：
+- epoch < 4，使用 `BatchATSSAssigner`
+- epoch >= 4，使用 `BatchTaskAlignedAssigner`
+
 ### 1.5 优化策略和训练过程
 
 #### 1.5.1 优化器分组
 
 #### 1.5.2 weight decay 参数自适应
+
+与 YOLOv5 一致
 
 #### 1.5.3 梯度累加
 
