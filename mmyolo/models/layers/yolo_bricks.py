@@ -580,6 +580,23 @@ class ELANBlock(BaseModule):
         return self.final_conv(x_final)
 
 
+@MODELS.register_module()
+class EELANBlock(BaseModule):
+
+    def __init__(self, num_elan_block: int, **kwargs):
+        super().__init__()
+        assert num_elan_block >= 1
+        self.e_elan_blocks = nn.ModuleList()
+        for _ in range(num_elan_block):
+            self.e_elan_blocks.append(ELANBlock(**kwargs))
+
+    def forward(self, x: Tensor) -> Tensor:
+        outs = []
+        for elan_blocks in self.e_elan_blocks:
+            outs.append(elan_blocks(x))
+        return sum(outs)
+
+
 class MaxPoolAndStrideConvBlock(BaseModule):
     """Max pooling and stride conv layer for YOLOv7.
 
@@ -653,6 +670,48 @@ class MaxPoolAndStrideConvBlock(BaseModule):
         maxpool_out = self.maxpool_branches(x)
         stride_conv_out = self.stride_conv_branches(x)
         return torch.cat([stride_conv_out, maxpool_out], dim=1)
+
+
+class SimpleDownLayer(BaseModule):
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 maxpool_kernel_sizes=2,
+                 conv_cfg: OptConfigType = None,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 init_cfg: OptMultiConfig = None):
+        super().__init__(init_cfg)
+        self.branch1 = nn.Sequential(
+            ConvModule(
+                in_channels,
+                in_channels,
+                1,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg),
+            ConvModule(
+                in_channels,
+                out_channels // 2,
+                3,
+                stride=maxpool_kernel_sizes,
+                padding=1,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg))
+
+        self.branch2 = nn.Sequential(
+            nn.MaxPool2d(
+                kernel_size=maxpool_kernel_sizes, stride=maxpool_kernel_sizes),
+            ConvModule(
+                in_channels,
+                out_channels // 2,
+                1,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg))
+
+    def forward(self, x):
+        return torch.cat((self.branch1(x), self.branch2(x)), dim=1)
 
 
 @MODELS.register_module()

@@ -87,7 +87,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The reduce layer.
         """
-        if idx == 2:
+        if idx == len(self.in_channels) - 1:
             layer = SPPFCSPBlock(
                 self.in_channels[idx],
                 self.out_channels[idx],
@@ -140,11 +140,23 @@ class YOLOv7PAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The downsample layer.
         """
-        return MaxPoolAndStrideConvBlock(
-            self.out_channels[idx],
-            mode='no_change_channel',
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
+        if len(self.in_channels) == 4:
+            # P6
+            return ConvModule(
+                self.out_channels[idx],
+                self.out_channels[idx + 1],
+                3,
+                stride=2,
+                padding=1,
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg)
+        else:
+            # P5
+            return MaxPoolAndStrideConvBlock(
+                self.out_channels[idx],
+                mode='no_change_channel',
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg)
 
     def build_bottom_up_layer(self, idx: int) -> nn.Module:
         """build bottom up layer.
@@ -169,17 +181,24 @@ class YOLOv7PAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The out layer.
         """
+        if len(self.in_channels) == 4:
+            # P6
+            out_channels = self.out_channels[idx]
+        else:
+            # P5
+            out_channels = self.out_channels[idx] * 2
+
         if self.use_repconv_outs:
             return RepVGGBlock(
                 self.out_channels[idx],
-                self.out_channels[idx] * 2,
+                out_channels,
                 3,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
         else:
             return ConvModule(
                 self.out_channels[idx],
-                self.out_channels[idx] * 2,
+                out_channels,
                 3,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)

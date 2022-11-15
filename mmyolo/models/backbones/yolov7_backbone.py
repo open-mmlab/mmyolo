@@ -3,10 +3,11 @@ from typing import List, Tuple, Union
 
 import torch.nn as nn
 from mmcv.cnn import ConvModule
+from mmdet.models.backbones.csp_darknet import Focus
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
-from ..layers import MaxPoolAndStrideConvBlock
+from ..layers import MaxPoolAndStrideConvBlock, SimpleDownLayer
 from .base_backbone import BaseBackbone
 
 
@@ -71,6 +72,35 @@ class YOLOv7Backbone(BaseBackbone):
         num_blocks=3,
         num_convs_in_block=2)
 
+    _w_no_change_channel = dict(
+        type='ELANBlock',
+        mid_ratio=0.5,
+        block_ratio=0.5,
+        num_blocks=2,
+        num_convs_in_block=2)
+
+    _e_no_change_channel = dict(
+        type='ELANBlock',
+        mid_ratio=0.4,
+        block_ratio=0.4,
+        num_blocks=3,
+        num_convs_in_block=2)
+
+    _d_no_change_channel = dict(
+        type='ELANBlock',
+        mid_ratio=1 / 3,
+        block_ratio=1 / 3,
+        num_blocks=4,
+        num_convs_in_block=2)
+
+    _e2e_no_change_channel = dict(
+        type='EELANBlock',
+        num_elan_block=2,
+        mid_ratio=0.4,
+        block_ratio=0.4,
+        num_blocks=3,
+        num_convs_in_block=2)
+
     # From left to right:
     # in_channels, out_channels, Block_params
     arch_settings = {
@@ -84,7 +114,25 @@ class YOLOv7Backbone(BaseBackbone):
         'X': [[80, 160, _x_expand_channel_2x],
               [320, 640, _x_expand_channel_2x],
               [640, 1280, _x_expand_channel_2x],
-              [1280, 1280, _x_no_change_channel]]
+              [1280, 1280, _x_no_change_channel]],
+        'W':
+        [[64, 128, _w_no_change_channel], [128, 256, _w_no_change_channel],
+         [256, 512, _w_no_change_channel], [512, 768, _w_no_change_channel],
+         [768, 1024, _w_no_change_channel]],
+        'E':
+        [[80, 160, _e_no_change_channel], [160, 320, _e_no_change_channel],
+         [320, 640, _e_no_change_channel], [640, 960, _e_no_change_channel],
+         [960, 1280, _e_no_change_channel]],
+        'D': [[96, 192,
+               _d_no_change_channel], [192, 384, _d_no_change_channel],
+              [384, 768, _d_no_change_channel],
+              [768, 1152, _d_no_change_channel],
+              [1152, 1536, _d_no_change_channel]],
+        'E2E': [[80, 160, _e2e_no_change_channel],
+                [160, 320, _e2e_no_change_channel],
+                [320, 640, _e2e_no_change_channel],
+                [640, 960, _e2e_no_change_channel],
+                [960, 1280, _e2e_no_change_channel]],
     }
 
     def __init__(self,
@@ -160,6 +208,13 @@ class YOLOv7Backbone(BaseBackbone):
                     stride=2,
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg))
+        elif self.arch in ['W', 'E', 'D', 'E2E']:
+            stem = Focus(
+                3,
+                int(self.arch_setting[0][0] * self.widen_factor),
+                kernel_size=3,
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg)
         return stem
 
     def build_stage_layer(self, stage_idx: int, setting: list) -> list:
@@ -183,6 +238,25 @@ class YOLOv7Backbone(BaseBackbone):
         stage = []
         if self.arch == 'Tiny':
             stage.append(MODELS.build(stage_block_cfg))
+        elif self.arch == 'W':
+            pre_layer = ConvModule(
+                in_channels,
+                out_channels,
+                3,
+                stride=2,
+                padding=1,
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg)
+            stage_block_cfg['in_channels'] = out_channels
+            stage.extend([pre_layer, MODELS.build(stage_block_cfg)])
+        elif self.arch in ['E', 'D', 'E2E']:
+            pre_layer = SimpleDownLayer(
+                in_channels,
+                out_channels,
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg)
+            stage_block_cfg['in_channels'] = out_channels
+            stage.extend([pre_layer, MODELS.build(stage_block_cfg)])
         else:
             if stage_idx == 0:
                 pre_layer = ConvModule(

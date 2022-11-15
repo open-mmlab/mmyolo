@@ -1,10 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
-from typing import Sequence
+from typing import List, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
-from mmdet.utils import OptInstanceList
+from mmcv.cnn import ConvModule
+from mmdet.models.utils import multi_apply
+from mmdet.utils import ConfigType, OptInstanceList
 from mmengine.dist import get_dist_info
 from mmengine.structures import InstanceData
 from torch import Tensor
@@ -46,7 +48,7 @@ class ImplicitM(nn.Module):
 class YOLOv7HeadModule(YOLOv5HeadModule):
 
     def _init_layers(self):
-        """initialize conv layers in YOLOv5 head."""
+        """initialize conv layers in YOLOv7 head."""
         self.convs_pred = nn.ModuleList()
         for i in range(self.num_levels):
             conv_pred = nn.Sequential(
@@ -58,7 +60,7 @@ class YOLOv7HeadModule(YOLOv5HeadModule):
             self.convs_pred.append(conv_pred)
 
     def init_weights(self):
-        """Initialize the bias of YOLOv5 head."""
+        """Initialize the bias of YOLOv7 head."""
         super(YOLOv5HeadModule, self).init_weights()
         for mi, s in zip(self.convs_pred, self.featmap_strides):  # from
             mi = mi[1]  # nn.Conv2d
@@ -69,6 +71,119 @@ class YOLOv7HeadModule(YOLOv5HeadModule):
             b.data[:, 5:] += math.log(0.6 / (self.num_classes - 0.99))
 
             mi.bias.data = b.view(-1)
+
+
+@MODELS.register_module()
+class YOLOv7p6HeadModule(YOLOv5HeadModule):
+
+    def __init__(self,
+                 *args,
+                 main_out_channels=[256, 512, 768, 1024],
+                 aux_out_channels=[320, 640, 960, 1280],
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 **kwargs):
+        self.main_out_channels = main_out_channels
+        self.aux_out_channels = aux_out_channels
+        self.norm_cfg = norm_cfg
+        self.act_cfg = act_cfg
+        super().__init__(*args, **kwargs)
+
+    def _init_layers(self):
+        """initialize conv layers in YOLOv7 head."""
+        self.main_convs_pred = nn.ModuleList()
+        self.aux_convs_pred = nn.ModuleList()
+        for i in range(self.num_levels):
+            conv_pred = nn.Sequential(
+                ConvModule(
+                    self.in_channels[i],
+                    self.main_out_channels[i],
+                    3,
+                    padding=1,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg),
+                ImplicitA(self.main_out_channels[i]),
+                nn.Conv2d(self.main_out_channels[i],
+                          self.num_base_priors * self.num_out_attrib, 1),
+                ImplicitM(self.num_base_priors * self.num_out_attrib),
+            )
+            self.main_convs_pred.append(conv_pred)
+
+            aux_pred = nn.Sequential(
+                ConvModule(
+                    self.in_channels[i],
+                    self.aux_out_channels[i],
+                    3,
+                    padding=1,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg),
+                nn.Conv2d(self.aux_out_channels[i],
+                          self.num_base_priors * self.num_out_attrib, 1))
+            self.aux_convs_pred.append(aux_pred)
+
+    def init_weights(self):
+        """Initialize the bias of YOLOv5 head."""
+        super(YOLOv5HeadModule, self).init_weights()
+        for mi, aux, s in zip(self.main_convs_pred, self.aux_convs_pred,
+                              self.featmap_strides):  # from
+            mi = mi[2]  # nn.Conv2d
+            b = mi.bias.data.view(3, -1)
+            # obj (8 objects per 640 image)
+            b.data[:, 4] += math.log(8 / (640 / s)**2)
+            b.data[:, 5:] += math.log(0.6 / (self.num_classes - 0.99))
+            mi.bias.data = b.view(-1)
+
+            aux = aux[1]  # nn.Conv2d
+            b = aux.bias.data.view(3, -1)
+            # obj (8 objects per 640 image)
+            b.data[:, 4] += math.log(8 / (640 / s)**2)
+            b.data[:, 5:] += math.log(0.6 / (self.num_classes - 0.99))
+            mi.bias.data = b.view(-1)
+
+    def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
+        """Forward features from the upstream network.
+
+        Args:
+            x (Tuple[Tensor]): Features from the upstream network, each is
+                a 4D-tensor.
+        Returns:
+            Tuple[List]: A tuple of multi-level classification scores, bbox
+            predictions, and objectnesses.
+        """
+        assert len(x) == self.num_levels
+        return multi_apply(self.forward_single, x, self.main_convs_pred,
+                           self.aux_convs_pred)
+
+    def forward_single(self, x: Tensor, convs: nn.Module,
+                       aux_convs: nn.Module) \
+            -> Tuple[Union[Tensor, List], Union[Tensor, List],
+                     Union[Tensor, List]]:
+        """Forward feature of a single scale level."""
+
+        pred_map = convs(x)
+        bs, _, ny, nx = pred_map.shape
+        pred_map = pred_map.view(bs, self.num_base_priors, self.num_out_attrib,
+                                 ny, nx)
+
+        cls_score = pred_map[:, :, 5:, ...].reshape(bs, -1, ny, nx)
+        bbox_pred = pred_map[:, :, :4, ...].reshape(bs, -1, ny, nx)
+        objectness = pred_map[:, :, 4:5, ...].reshape(bs, -1, ny, nx)
+
+        if not self.training:
+            return cls_score, bbox_pred, objectness
+        else:
+            aux_pred_map = aux_convs(x)
+            aux_pred_map = aux_pred_map.view(bs, self.num_base_priors,
+                                             self.num_out_attrib, ny, nx)
+            aux_cls_score = aux_pred_map[:, :, 5:, ...].reshape(bs, -1, ny, nx)
+            aux_bbox_pred = aux_pred_map[:, :, :4, ...].reshape(bs, -1, ny, nx)
+            aux_objectness = aux_pred_map[:, :, 4:5,
+                                          ...].reshape(bs, -1, ny, nx)
+
+            return [cls_score,
+                    aux_cls_score], [bbox_pred, aux_bbox_pred
+                                     ], [objectness, aux_objectness]
 
 
 @MODELS.register_module()
