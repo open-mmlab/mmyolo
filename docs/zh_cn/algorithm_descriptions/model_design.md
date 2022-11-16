@@ -5,7 +5,13 @@
 下图为 RangeKing@GitHub 提供，非常感谢！
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/27466624/190986949-01414a91-baae-4228-8828-c59db58dcf36.jpg" alt="基类">
+<img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="基类 P5">
+图 1：P5 模型结构
+</div>
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/27466624/200850066-0c434173-2d40-4c12-8de3-eda473ff172f.jpg" alt="基类 P6">
+图 2：P6 模型结构
 </div>
 
 YOLO 系列算法大部分采用了统一的算法搭建结构，典型的如 Darknet + PAFPN。为了让用户快速理解 YOLO 系列算法架构，我们特意设计了如上图中的 BaseBackbone + BaseYOLONeck 结构。
@@ -20,7 +26,10 @@ YOLO 系列算法大部分采用了统一的算法搭建结构，典型的如 Da
 
 ### BaseBackbone
 
-如上图所示，对于 P5 而言，BaseBackbone 包括 1 个 stem 层 + 4 个 stage 层的类似 ResNet 的基础结构，不同算法的主干网络继承 BaseBackbone，用户可以通过实现内部的 `build_xx` 方法，使用自定义的基础模块来构建每一层的内部结构。
+- 如图 1 所示，对于 P5 而言，BaseBackbone 为包含 1 个 stem 层 + 4 个 stage 层的类似 ResNet 的基础结构。
+- 如图 2 所示，对于 P6 而言，BaseBackbone 为包含 1 个 stem 层 + 5 个 stage 层的结构。
+
+不同算法的主干网络继承 BaseBackbone，用户可以通过实现内部的 `build_xx` 方法，使用自定义的基础模块来构建每一层的内部结构。
 
 ### BaseYOLONeck
 

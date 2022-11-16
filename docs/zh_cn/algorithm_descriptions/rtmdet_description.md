@@ -5,7 +5,7 @@
 高性能，低延时的单阶段目标检测器
 
 <div align=center>
-<img alt="RTMDet_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/192954055-e044fe8a-53e6-4a08-8af2-f29c73e4b54b.jpg"/>
+<img alt="RTMDet_structure_v1.2" src="https://user-images.githubusercontent.com/27466624/200001002-008ac696-e74d-4da1-9c6d-07149e2ad752.jpg"/>
 </div>
 
 以上结构图由 RangeKing@github 绘制。
