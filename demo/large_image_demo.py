@@ -8,14 +8,15 @@ from mmengine.logging import print_log
 from mmengine.utils import ProgressBar
 from sahi.slicing import slice_image
 
-from demo.large_image_demo_utils import merge_results_by_nms
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules, switch_to_deploy
+from mmyolo.utils.large_image import merge_results_by_nms
 from mmyolo.utils.misc import get_file_list
 
 
 def parse_args():
-    parser = ArgumentParser()
+    parser = ArgumentParser(
+        description='Perform MMYOLO inference on large images.')
     parser.add_argument(
         'img', help='Image path, include image file, dir and URL.')
     parser.add_argument('config', help='Config file')
@@ -33,19 +34,19 @@ def parse_args():
     parser.add_argument(
         '--score-thr', type=float, default=0.3, help='Bbox score threshold')
     parser.add_argument(
-        '--patch_size', type=int, default=1024, help='The size of patches')
+        '--patch-size', type=int, default=1024, help='The size of patches')
     parser.add_argument(
-        '--patch_overlap_ratio',
+        '--patch-overlap-ratio',
         type=int,
         default=0.25,
         help='Ratio of overlap between two patches')
     parser.add_argument(
-        '--merge_iou_thr',
+        '--merge-iou-thr',
         type=float,
         default=0.25,
         help='IoU threshould for merging results')
     parser.add_argument(
-        '--batch_size',
+        '--batch-size',
         type=int,
         default=1,
         help='Batch size, must greater than or equal to 1')

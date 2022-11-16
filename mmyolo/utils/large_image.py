@@ -1,9 +1,9 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from typing import Sequence, Tuple
 
 from mmcv.ops import batched_nms
 from mmdet.structures import DetDataSample, SampleList
 from mmengine.structures import InstanceData
-from sahi.slicing import shift_bboxes, shift_masks
 
 
 def merge_results_by_nms(results: SampleList, offsets: Sequence[Tuple[int,
@@ -23,6 +23,8 @@ def merge_results_by_nms(results: SampleList, offsets: Sequence[Tuple[int,
     Retunrns:
         :obj:`DetDataSample`: merged results.
     """
+    from sahi.slicing import shift_bboxes, shift_masks
+
     assert len(results) == len(
         offsets), 'The `results` should has the ' 'same length with `offsets`.'
     pred_instances = []
