@@ -34,7 +34,7 @@ def parse_args():
     parser.add_argument(
         '--score-thr', type=float, default=0.3, help='Bbox score threshold')
     parser.add_argument(
-        '--patch-size', type=int, default=1024, help='The size of patches')
+        '--patch-size', type=int, default=640, help='The size of patches')
     parser.add_argument(
         '--patch-overlap-ratio',
         type=int,
