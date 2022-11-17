@@ -22,7 +22,7 @@
 
 当您需要部署静态输入模型时，您应该确保模型的输入尺寸是固定的，比如在测试流程或测试数据集加载时输入尺寸为 `640x640`。
 
-您可以查看 [`yolov5_s-static.py`](../../../configs/deploy/model/yolov5_s-static.py) 中测试流程或测试数据集加载部分，如下所示：
+您可以查看 [`yolov5_s-static.py`](https://github.com/open-mmlab/mmyolo/tree/main/configs/deploy/model/yolov5_s-static.py) 中测试流程或测试数据集加载部分，如下所示：
 
 ```python
 _base_ = '../../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
