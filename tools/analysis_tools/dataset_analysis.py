@@ -7,8 +7,7 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 from mmengine.config import Config
-from mmengine.dataset.dataset_wrapper import (ClassBalancedDataset,
-                                              ConcatDataset)
+from mmengine.dataset.dataset_wrapper import ConcatDataset
 from mmengine.utils import ProgressBar
 from prettytable import PrettyTable
 
@@ -399,14 +398,12 @@ def main():
             cfg.val_dataloader.dataset.pipeline = None
         dataset = DATASETS.build(cfg.val_dataloader.dataset)
 
-        # Determine whether the dataset is ConcatDataset
     data_list = []
+    # Determine whether the dataset is ConcatDataset
     if isinstance(dataset, ConcatDataset):
         datasets = dataset.datasets
         for idx in range(len(datasets)):
             data_list += datasets[idx]
-    elif isinstance(dataset, ClassBalancedDataset):
-        data_list = dataset
     else:
         data_list = dataset
 
