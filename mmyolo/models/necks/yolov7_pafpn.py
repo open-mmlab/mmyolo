@@ -200,5 +200,6 @@ class YOLOv7PAFPN(BaseYOLONeck):
                 self.out_channels[idx],
                 out_channels,
                 3,
+                padding=1,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)

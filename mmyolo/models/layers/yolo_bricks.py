@@ -492,7 +492,7 @@ class ELANBlock(BaseModule):
 
     def __init__(self,
                  in_channels: int,
-                 out_channels: float,
+                 out_channels: int,
                  mid_ratio: float,
                  block_ratio: float,
                  num_blocks: int = 2,
@@ -643,13 +643,13 @@ class MaxPoolAndStrideConvBlock(BaseModule):
         self.stride_conv_branches = nn.Sequential(
             ConvModule(
                 in_channels,
-                in_channels,
+                out_channels // 2,
                 1,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg),
             ConvModule(
-                in_channels,
+                out_channels // 2,
                 out_channels // 2,
                 3,
                 stride=2,
@@ -710,7 +710,7 @@ class TinyDownSampleBlock(BaseModule):
                         mid_channels,
                         mid_channels,
                         kernel_sizes,
-                        padding=kernel_sizes // 2,
+                        padding=(kernel_sizes - 1) // 2,
                         conv_cfg=conv_cfg,
                         norm_cfg=norm_cfg,
                         act_cfg=act_cfg))

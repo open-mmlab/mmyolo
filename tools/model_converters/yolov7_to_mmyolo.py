@@ -1,10 +1,11 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
+import os.path as osp
 from collections import OrderedDict
 
 import torch
 
-convert_dict = {
+convert_dict_l = {
     # stem
     'model.0': 'backbone.stem.0',
     'model.1': 'backbone.stem.1',
@@ -145,8 +146,167 @@ convert_dict = {
     'model.105.m.2': 'bbox_head.head_module.convs_pred.2.1'
 }
 
+convert_dict_x = {
+    # stem
+    'model.0': 'backbone.stem.0',
+    'model.1': 'backbone.stem.1',
+    'model.2': 'backbone.stem.2',
+
+    # stage1
+    # ConvModule
+    'model.3': 'backbone.stage1.0',
+    # ELANBlock expand_channel_2x
+    'model.4': 'backbone.stage1.1.short_conv',
+    'model.5': 'backbone.stage1.1.main_conv',
+    'model.6': 'backbone.stage1.1.blocks.0.0',
+    'model.7': 'backbone.stage1.1.blocks.0.1',
+    'model.8': 'backbone.stage1.1.blocks.1.0',
+    'model.9': 'backbone.stage1.1.blocks.1.1',
+    'model.10': 'backbone.stage1.1.blocks.2.0',
+    'model.11': 'backbone.stage1.1.blocks.2.1',
+    'model.13': 'backbone.stage1.1.final_conv',
+
+    # stage2
+    # MaxPoolBlock reduce_channel_2x
+    'model.15': 'backbone.stage2.0.maxpool_branches.1',
+    'model.16': 'backbone.stage2.0.stride_conv_branches.0',
+    'model.17': 'backbone.stage2.0.stride_conv_branches.1',
+
+    # ELANBlock expand_channel_2x
+    'model.19': 'backbone.stage2.1.short_conv',
+    'model.20': 'backbone.stage2.1.main_conv',
+    'model.21': 'backbone.stage2.1.blocks.0.0',
+    'model.22': 'backbone.stage2.1.blocks.0.1',
+    'model.23': 'backbone.stage2.1.blocks.1.0',
+    'model.24': 'backbone.stage2.1.blocks.1.1',
+    'model.25': 'backbone.stage2.1.blocks.2.0',
+    'model.26': 'backbone.stage2.1.blocks.2.1',
+    'model.28': 'backbone.stage2.1.final_conv',
+
+    # stage3
+    # MaxPoolBlock reduce_channel_2x
+    'model.30': 'backbone.stage3.0.maxpool_branches.1',
+    'model.31': 'backbone.stage3.0.stride_conv_branches.0',
+    'model.32': 'backbone.stage3.0.stride_conv_branches.1',
+    # ELANBlock expand_channel_2x
+    'model.34': 'backbone.stage3.1.short_conv',
+    'model.35': 'backbone.stage3.1.main_conv',
+    'model.36': 'backbone.stage3.1.blocks.0.0',
+    'model.37': 'backbone.stage3.1.blocks.0.1',
+    'model.38': 'backbone.stage3.1.blocks.1.0',
+    'model.39': 'backbone.stage3.1.blocks.1.1',
+    'model.40': 'backbone.stage3.1.blocks.2.0',
+    'model.41': 'backbone.stage3.1.blocks.2.1',
+    'model.43': 'backbone.stage3.1.final_conv',
+
+    # stage4
+    # MaxPoolBlock reduce_channel_2x
+    'model.45': 'backbone.stage4.0.maxpool_branches.1',
+    'model.46': 'backbone.stage4.0.stride_conv_branches.0',
+    'model.47': 'backbone.stage4.0.stride_conv_branches.1',
+    # ELANBlock no_change_channel
+    'model.49': 'backbone.stage4.1.short_conv',
+    'model.50': 'backbone.stage4.1.main_conv',
+    'model.51': 'backbone.stage4.1.blocks.0.0',
+    'model.52': 'backbone.stage4.1.blocks.0.1',
+    'model.53': 'backbone.stage4.1.blocks.1.0',
+    'model.54': 'backbone.stage4.1.blocks.1.1',
+    'model.55': 'backbone.stage4.1.blocks.2.0',
+    'model.56': 'backbone.stage4.1.blocks.2.1',
+    'model.58': 'backbone.stage4.1.final_conv',
+
+    # neck SPPCSPBlock
+    'model.59.cv1': 'neck.reduce_layers.2.main_layers.0',
+    'model.59.cv3': 'neck.reduce_layers.2.main_layers.1',
+    'model.59.cv4': 'neck.reduce_layers.2.main_layers.2',
+    'model.59.cv5': 'neck.reduce_layers.2.fuse_layers.0',
+    'model.59.cv6': 'neck.reduce_layers.2.fuse_layers.1',
+    'model.59.cv2': 'neck.reduce_layers.2.short_layers',
+    'model.59.cv7': 'neck.reduce_layers.2.final_conv',
+
+    # neck
+    'model.60': 'neck.upsample_layers.0.0',
+    'model.62': 'neck.reduce_layers.1',
+
+    # neck ELANBlock reduce_channel_2x
+    'model.64': 'neck.top_down_layers.0.short_conv',
+    'model.65': 'neck.top_down_layers.0.main_conv',
+    'model.66': 'neck.top_down_layers.0.blocks.0.0',
+    'model.67': 'neck.top_down_layers.0.blocks.0.1',
+    'model.68': 'neck.top_down_layers.0.blocks.1.0',
+    'model.69': 'neck.top_down_layers.0.blocks.1.1',
+    'model.70': 'neck.top_down_layers.0.blocks.2.0',
+    'model.71': 'neck.top_down_layers.0.blocks.2.1',
+    'model.73': 'neck.top_down_layers.0.final_conv',
+    'model.74': 'neck.upsample_layers.1.0',
+    'model.76': 'neck.reduce_layers.0',
+
+    # neck ELANBlock reduce_channel_2x
+    'model.78': 'neck.top_down_layers.1.short_conv',
+    'model.79': 'neck.top_down_layers.1.main_conv',
+    'model.80': 'neck.top_down_layers.1.blocks.0.0',
+    'model.81': 'neck.top_down_layers.1.blocks.0.1',
+    'model.82': 'neck.top_down_layers.1.blocks.1.0',
+    'model.83': 'neck.top_down_layers.1.blocks.1.1',
+    'model.84': 'neck.top_down_layers.1.blocks.2.0',
+    'model.85': 'neck.top_down_layers.1.blocks.2.1',
+    'model.87': 'neck.top_down_layers.1.final_conv',
+
+    # neck MaxPoolBlock no_change_channel
+    'model.89': 'neck.downsample_layers.0.maxpool_branches.1',
+    'model.90': 'neck.downsample_layers.0.stride_conv_branches.0',
+    'model.91': 'neck.downsample_layers.0.stride_conv_branches.1',
+
+    # neck ELANBlock reduce_channel_2x
+    'model.93': 'neck.bottom_up_layers.0.short_conv',
+    'model.94': 'neck.bottom_up_layers.0.main_conv',
+    'model.95': 'neck.bottom_up_layers.0.blocks.0.0',
+    'model.96': 'neck.bottom_up_layers.0.blocks.0.1',
+    'model.97': 'neck.bottom_up_layers.0.blocks.1.0',
+    'model.98': 'neck.bottom_up_layers.0.blocks.1.1',
+    'model.99': 'neck.bottom_up_layers.0.blocks.2.0',
+    'model.100': 'neck.bottom_up_layers.0.blocks.2.1',
+    'model.102': 'neck.bottom_up_layers.0.final_conv',
+
+    # neck MaxPoolBlock no_change_channel
+    'model.104': 'neck.downsample_layers.1.maxpool_branches.1',
+    'model.105': 'neck.downsample_layers.1.stride_conv_branches.0',
+    'model.106': 'neck.downsample_layers.1.stride_conv_branches.1',
+
+    # neck ELANBlock reduce_channel_2x
+    'model.108': 'neck.bottom_up_layers.1.short_conv',
+    'model.109': 'neck.bottom_up_layers.1.main_conv',
+    'model.110': 'neck.bottom_up_layers.1.blocks.0.0',
+    'model.111': 'neck.bottom_up_layers.1.blocks.0.1',
+    'model.112': 'neck.bottom_up_layers.1.blocks.1.0',
+    'model.113': 'neck.bottom_up_layers.1.blocks.1.1',
+    'model.114': 'neck.bottom_up_layers.1.blocks.2.0',
+    'model.115': 'neck.bottom_up_layers.1.blocks.2.1',
+    'model.117': 'neck.bottom_up_layers.1.final_conv',
+
+    # Conv
+    'model.118': 'neck.out_layers.0',
+    'model.119': 'neck.out_layers.1',
+    'model.120': 'neck.out_layers.2',
+
+    # head
+    'model.121.m.0': 'bbox_head.head_module.convs_pred.0.1',
+    'model.121.m.1': 'bbox_head.head_module.convs_pred.1.1',
+    'model.121.m.2': 'bbox_head.head_module.convs_pred.2.1'
+}
+
+convert_dicts = {'yolov7.pt': convert_dict_l, 'yolov7x.pt': convert_dict_x}
+
 
 def convert(src, dst):
+    src_key = osp.basename(src)
+    convert_dict = convert_dicts[osp.basename(src)]
+    if src_key == 'yolov7.pt':
+        indexes = [102, 51]
+        in_channels = [256, 512, 1024]
+    elif src_key == 'yolov7x.pt':
+        indexes = [121, 59]
+        in_channels = [320, 640, 1280]
     """Convert keys in detectron pretrained YOLOv7 models to mmyolo style."""
     try:
         yolov7_model = torch.load(src)['model'].float()
@@ -163,12 +323,12 @@ def convert(src, dst):
             continue
 
         num, module = key.split('.')[1:3]
-        if int(num) < 102 and int(num) != 51:
+        if int(num) < indexes[0] and int(num) != indexes[1]:
             prefix = f'model.{num}'
             new_key = key.replace(prefix, convert_dict[prefix])
             state_dict[new_key] = weight
             print(f'Convert {key} to {new_key}')
-        elif int(num) == 51:
+        elif int(num) == indexes[1]:
             strs_key = key.split('.')[:3]
             new_key = key.replace('.'.join(strs_key),
                                   convert_dict['.'.join(strs_key)])
@@ -183,7 +343,6 @@ def convert(src, dst):
 
     # add ImplicitA and ImplicitM in YOLOv7-L
     num_levels = 3
-    in_channels = [256, 512, 1024]
     for i in range(num_levels):
         implicit_a = f'bbox_head.head_module.convs_pred.{i}.0.implicit'
         state_dict[implicit_a] = torch.zeros((1, in_channels[i], 1, 1))
@@ -200,8 +359,8 @@ def convert(src, dst):
 def main():
     parser = argparse.ArgumentParser(description='Convert model keys')
     parser.add_argument(
-        '--src', default='yolov7.pt', help='src yolov7 model path')
-    parser.add_argument('--dst', default='mm_yolov7l.pt', help='save path')
+        'src', default='yolov7.pt', help='src yolov7 model path')
+    parser.add_argument('dst', default='mm_yolov7l.pt', help='save path')
     args = parser.parse_args()
     convert(args.src, args.dst)
 
