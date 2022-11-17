@@ -170,7 +170,7 @@ backend_config = dict(type='onnxruntime')
 
 与静态输入配置仅有 `_base_ = ['./base_dynamic.py']` 不同，动态输入会额外继承 `dynamic_axes` 属性。其他配置与静态输入配置相同。
 
-当您部署在 `TensorRT` 时，您可以查看 [`detection_tensorrt_dynamic-192x192-960x960.py`](../../../configs/deploy/detection_tensorrt_dynamic-192x192-960x960.py) ，如下所示：
+当您部署在 `TensorRT` 时，您可以查看 [`detection_tensorrt_dynamic-192x192-960x960.py`](https://github.com/open-mmlab/mmyolo/tree/main/configs/deploy/detection_tensorrt_dynamic-192x192-960x960.py) ，如下所示：
 
 ```python
 _base_ = ['./base_dynamic.py']
