@@ -8,7 +8,7 @@ from mmengine.structures import InstanceData
 
 def merge_results_by_nms(results: SampleList, offsets: Sequence[Tuple[int,
                                                                       int]],
-                         full_shape: Tuple[int, int],
+                         src_image_shape: Tuple[int, int],
                          nms_cfg: dict) -> DetDataSample:
     """Merge patch results by nms.
 
@@ -16,7 +16,7 @@ def merge_results_by_nms(results: SampleList, offsets: Sequence[Tuple[int,
         results (List[:obj:`DetDataSample`]): A list of patches results.
         offsets (Sequence[Tuple[int, int]]): Positions of the left top points
             of patches.
-        full_shape (Tuple[int, int]): A (height, width) tuple of the large
+        src_image_shape (Tuple[int, int]): A (height, width) tuple of the large
             image's width and height.
         nms_cfg (dict): it should specify nms type and other parameters
             like `iou_threshold`.
@@ -32,7 +32,8 @@ def merge_results_by_nms(results: SampleList, offsets: Sequence[Tuple[int,
         pred_inst = result.pred_instances
         pred_inst.bboxes = shift_bboxes(pred_inst.bboxes, offset)
         if 'masks' in result:
-            pred_inst.masks = shift_masks(pred_inst.masks, offset, full_shape)
+            pred_inst.masks = shift_masks(pred_inst.masks, offset,
+                                          src_image_shape)
         pred_instances.append(pred_inst)
 
     instances = InstanceData.cat(pred_instances)
@@ -43,7 +44,7 @@ def merge_results_by_nms(results: SampleList, offsets: Sequence[Tuple[int,
         nms_cfg=nms_cfg)
     merged_instances = instances[keeps]
 
-    merged_result = DetDataSample()
+    merged_result = results[0].clone()
     # update items like gt_instances, ignore_instances
     merged_result.update(results[0])
     merged_result.pred_instances = merged_instances

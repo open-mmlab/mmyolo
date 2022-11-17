@@ -58,6 +58,11 @@ def parse_args():
         default=0.25,
         help='IoU threshould for merging results')
     parser.add_argument(
+        '--merge-nms-type',
+        type=str,
+        default='nms',
+        help='NMS type for merging results')
+    parser.add_argument(
         '--batch-size',
         type=int,
         default=1,
@@ -127,7 +132,7 @@ def main():
             sliced_images.starting_pixels,
             full_shape=(height, width),
             nms_cfg={
-                'type': 'nms',
+                'type': args.merge_nms_type,
                 'iou_thr': args.merge_iou_thr
             })
 
