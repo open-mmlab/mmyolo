@@ -10,11 +10,20 @@ from mmdet.structures import DetDataSample
 from PIL import ExifTags, Image, ImageOps
 
 
-class LabelmeFormat:
+class LabelmeFormat(object):
     """Predict results save into labelme file.
 
     Base on https://github.com/wkentaro/labelme/blob/main/labelme/label_file.py
+
+    Args:
+        classes (tuple): Model classes name.
+        score_threshold (float): Predict score threshold.
     """
+
+    def __init__(self, classes: tuple, score_threshold: float):
+        super().__init__()
+        self.classes = classes
+        self.score_threshold = score_threshold
 
     @staticmethod
     def get_image_exif_orientation(image) -> Image.Image:
@@ -117,15 +126,12 @@ class LabelmeFormat:
             image_width = img_arr.shape[1]
         return image_height, image_width
 
-    def __call__(self, results: DetDataSample, output_path: str,
-                 score_threshold: float, classes: tuple):
+    def __call__(self, results: DetDataSample, output_path: str):
         """Get image data field for labelme.
 
         Args:
             results (DetDataSample): Predict info.
             output_path (str): Image file path.
-            score_threshold (float): Predict score threshold.
-            classes (tuple): Model classes name.
 
         Labelme file eg.
             {
@@ -175,12 +181,13 @@ class LabelmeFormat:
         }
 
         res_index = torch.where(
-            torch.tensor(results.pred_instances.scores > score_threshold))[0]
+            torch.tensor(
+                results.pred_instances.scores > self.score_threshold))[0]
 
         for index in res_index:
             pred_bbox = results.pred_instances.bboxes[index].cpu().numpy(
             ).tolist()
-            pred_label = classes[results.pred_instances.labels[index]]
+            pred_label = self.classes[results.pred_instances.labels[index]]
 
             sub_dict = {
                 'label': pred_label,

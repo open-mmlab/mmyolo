@@ -66,7 +66,9 @@ def main():
     files, source_type = get_file_list(args.img)
 
     # ready for labelme format if it is needed
-    to_label_format = LabelmeFormat()
+    to_label_format = LabelmeFormat(
+        classes=model.dataset_meta.get('CLASSES'),
+        score_threshold=args.score_thr)
 
     # start detector inference
     progress_bar = ProgressBar(len(files))
@@ -87,11 +89,7 @@ def main():
             # save result to labelme files
             out_file = out_file.replace(
                 os.path.splitext(out_file)[-1], '.json')
-            to_label_format(
-                result,
-                out_file,
-                score_threshold=args.score_thr,
-                classes=model.dataset_meta.get('CLASSES'))
+            to_label_format(result, out_file)
             continue
 
         visualizer.add_datasample(
