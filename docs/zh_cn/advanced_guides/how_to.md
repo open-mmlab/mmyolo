@@ -283,7 +283,7 @@ _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 # 请先使用命令： mim install "mmselfsup>=1.0.0rc3"，安装 mmselfsup
 # 导入 mmselfsup.models 使得可以调用 mmselfsup 中注册的模块
 custom_imports = dict(imports=['mmselfsup.models'], allow_failed_imports=False)
-checkpoint_file = 'https://download.openmmlab.com/mmselfsup/1.x/mocov3/mocov3_resnet50_8xb512-amp-coslr-800e_in1k/resnet50_linear-8xb128-coslr-90e_in1k/resnet50_linear-8xb128-coslr-90e_in1k_20220927-0e97a483.pth'  # noqa
+checkpoint_file = 'https://download.openmmlab.com/mmselfsup/1.x/mocov3/mocov3_resnet50_8xb512-amp-coslr-800e_in1k/mocov3_resnet50_8xb512-amp-coslr-800e_in1k_20220927-e043f51a.pth'  # noqa
 deepen_factor = _base_.deepen_factor
 widen_factor = 1.0
 channels = [512, 1024, 2048]
