@@ -107,9 +107,8 @@ def main():
             f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
 
     elif args.to_labelme:
-        print_log(
-            f'\nLabelme format label files had all been saved in {args.out_dir}'
-        )
+        print_log('\nLabelme format label files '
+                  f'had all been saved in {args.out_dir}')
 
 
 if __name__ == '__main__':
