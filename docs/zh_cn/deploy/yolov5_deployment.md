@@ -102,7 +102,7 @@ use_efficientnms = False
 
 #### (1) 模型配置文件
 
-当您需要部署动态输入模型时，模型的输入可以为任意尺寸(`TensorRT` 会限制最小和最大输入尺寸)，因此使用默认的 [`yolov5_s-v61_syncbn_8xb16-300e_coco.py`](../../../configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) 模型配置文件即可，其中数据处理和数据集加载器部分如下所示：
+当您需要部署动态输入模型时，模型的输入可以为任意尺寸(`TensorRT` 会限制最小和最大输入尺寸)，因此使用默认的 [`yolov5_s-v61_syncbn_8xb16-300e_coco.py`](https://github.com/open-mmlab/mmyolo/tree/main/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) 模型配置文件即可，其中数据处理和数据集加载器部分如下所示：
 
 ```python
 batch_shapes_cfg = dict(
