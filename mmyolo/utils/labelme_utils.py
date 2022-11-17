@@ -5,11 +5,9 @@ import json
 import os
 
 import numpy as np
-import PIL.ExifTags
-import PIL.Image
-import PIL.ImageOps
 import torch
 from mmdet.structures import DetDataSample
+from PIL import ExifTags, Image, ImageOps
 
 
 class LabelmeFormat:
@@ -19,7 +17,7 @@ class LabelmeFormat:
     """
 
     @staticmethod
-    def get_image_exif_orientation(image) -> PIL.Image.Image:
+    def get_image_exif_orientation(image) -> Image.Image:
         """Get image exif orientation info.
 
         Args:
@@ -33,8 +31,8 @@ class LabelmeFormat:
             return image
 
         image_exif = {
-            PIL.ExifTags.TAGS[k]: v
-            for k, v in exif.items() if k in PIL.ExifTags.TAGS
+            ExifTags.TAGS[k]: v
+            for k, v in exif.items() if k in ExifTags.TAGS
         }
 
         orientation = image_exif.get('Orientation', None)
@@ -44,25 +42,25 @@ class LabelmeFormat:
             return image
         elif orientation == 2:
             # left-to-right mirror
-            return PIL.ImageOps.mirror(image)
+            return ImageOps.mirror(image)
         elif orientation == 3:
             # rotate 180
-            return image.transpose(PIL.Image.ROTATE_180)
+            return image.transpose(Image.ROTATE_180)
         elif orientation == 4:
             # top-to-bottom mirror
-            return PIL.ImageOps.flip(image)
+            return ImageOps.flip(image)
         elif orientation == 5:
             # top-to-left mirror
-            return PIL.ImageOps.mirror(image.transpose(PIL.Image.ROTATE_270))
+            return ImageOps.mirror(image.transpose(Image.ROTATE_270))
         elif orientation == 6:
             # rotate 270
-            return image.transpose(PIL.Image.ROTATE_270)
+            return image.transpose(Image.ROTATE_270)
         elif orientation == 7:
             # top-to-right mirror
-            return PIL.ImageOps.mirror(image.transpose(PIL.Image.ROTATE_90))
+            return ImageOps.mirror(image.transpose(Image.ROTATE_90))
         elif orientation == 8:
             # rotate 90
-            return image.transpose(PIL.Image.ROTATE_90)
+            return image.transpose(Image.ROTATE_90)
         else:
             return image
 
@@ -74,7 +72,7 @@ class LabelmeFormat:
         Return:
             (str): Image file io bytes.
         """
-        image_pil = PIL.Image.open(file_path)
+        image_pil = Image.open(file_path)
 
         # get orientation to image according to exif
         image_pil = self.get_image_exif_orientation(image_pil)
@@ -93,7 +91,7 @@ class LabelmeFormat:
     def img_data_to_pil(img_data):
         f = io.BytesIO()
         f.write(img_data)
-        img_pil = PIL.Image.open(f)
+        img_pil = Image.open(f)
         return img_pil
 
     def img_data_to_arr(self, img_data):
