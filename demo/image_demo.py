@@ -9,6 +9,7 @@ from mmengine.utils import ProgressBar
 
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules, switch_to_deploy
+from mmyolo.utils.labelimg_utils import LabelimgFormat
 from mmyolo.utils.misc import get_file_list
 
 
@@ -30,13 +31,19 @@ def parse_args():
         help='Switch model to deployment mode')
     parser.add_argument(
         '--score-thr', type=float, default=0.3, help='Bbox score threshold')
+    parser.add_argument(
+        '--to-labelimg',
+        action='store_true',
+        help='Output labelimg style label file')
     args = parser.parse_args()
     return args
 
 
 def main():
-    args = parse_args()
-
+    args = parse_args()、
+    if (args.to_labelimg and args.show) or (args.to_labelme and args.show):
+        raise RuntimeError('`--to-labelme`, `--to-labelimg` or `--show` only '
+                           'can choose one at the same time.')
     # register all modules in mmdet into the registries
     register_all_modules()
 
@@ -56,6 +63,9 @@ def main():
     # get file list
     files, source_type = get_file_list(args.img)
 
+    # ready for labelimg format if it is needed
+    pass 
+    
     # start detector inference
     progress_bar = ProgressBar(len(files))
     for file in files:
