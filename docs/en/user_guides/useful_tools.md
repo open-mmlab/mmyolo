@@ -352,6 +352,12 @@ python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
 
 ## Perform inference on large images
 
+First install [`sahi`](https://github.com/obss/sahi) with:
+
+```shell
+pip install -U sahi==0.11.4
+```
+
 Perform MMYOLO inference on large images (as satellite imagery) as:
 
 ```shell
