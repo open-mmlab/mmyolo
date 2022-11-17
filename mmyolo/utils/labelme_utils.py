@@ -117,12 +117,12 @@ class LabelmeFormat:
                                    image_width):
         img_arr = self.img_b64_to_arr(image_data)
         if image_height is not None and img_arr.shape[0] != image_height:
-            print('imageHeight does not match with imageData or imagePath, '
-                  'so getting imageHeight from actual image.')
+            print('image_height does not match with image_data, '
+                  'so getting image_height from actual image.')
             image_height = img_arr.shape[0]
         if image_width is not None and img_arr.shape[1] != image_width:
-            print('imageWidth does not match with imageData or imagePath, '
-                  'so getting imageWidth from actual image.')
+            print('image_width does not match with image_data, '
+                  'so getting image_width from actual image.')
             image_width = img_arr.shape[1]
         return image_height, image_width
 
