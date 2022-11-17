@@ -135,7 +135,7 @@ use_efficientnms = False
 与 `ONNXRuntime` 部署配置不同的是，`TensorRT`  需要指定输入图片尺寸和构建引擎文件需要的参数，包括：
 
 - `onnx_config` 中指定 `input_shape=(640, 640)`
-- `backend_config['common_config']` 中 `fp16_mode=False` 和 `max_workspace_size=1 << 30`, `fp16_mode` 表示是否以 `fp16` 的参数格式构建引擎，`max_workspace_size` 表示当前 `gpu` 设备最大显存, 单位为 `GB`。`fp16` 的详细配置可以参考 [`detection_tensorrt-fp16_static-640x640.py`](configs/deploy/detection_tensorrt-fp16_static-640x640.py)
+- `backend_config['common_config']` 中包括 `fp16_mode=False` 和 `max_workspace_size=1 << 30`, `fp16_mode` 表示是否以 `fp16` 的参数格式构建引擎，`max_workspace_size` 表示当前 `gpu` 设备最大显存, 单位为 `GB`。`fp16` 的详细配置可以参考 [`detection_tensorrt-fp16_static-640x640.py`](configs/deploy/detection_tensorrt-fp16_static-640x640.py)
 - `backend_config['model_inputs']['input_shapes']['input']` 中 `min_shape` /`opt_shape`/`max_shape` 对应的值在静态输入下应该保持相同，即默认均为 `[1, 3, 640, 640]`。
 
 `use_efficientnms` 是 `MMYOLO` 系列新引入的配置，表示在导出 `onnx` 时是否启用`Efficient NMS Plugin`来替换 `MMDeploy` 中的 `TRTBatchedNMS plugin` 。
@@ -148,7 +148,7 @@ use_efficientnms = False
 
 #### (1) 模型配置文件介绍
 
-当您部署静态输入模型时，您无需修改任何模型配置文件，仅需要修改部署配置文件即可。
+当您部署动态输入模型时，您无需修改任何模型配置文件，仅需要修改部署配置文件即可。
 
 #### (2) 部署配置文件介绍
 
@@ -228,8 +228,8 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
 ### 参数描述
 
 - `deploy_cfg` : mmdeploy 针对此模型的部署配置，包含推理框架类型、是否量化、输入 shape 是否动态等。配置文件之间可能有引用关系，`configs/deploy/detection_onnxruntime_static.py` 是一个示例。
-- `model_cfg` : MMYOLO 算法库的模型配置，例如 `configs/deploy/model/yolov5_s-deploy.py`, 与 mmdeploy 的路径无关.
-- `checkpoint` : torch 模型路径。可以 http/https 开头，详见 `mmcv.FileClient` 的实现。.
+- `model_cfg` : MMYOLO 算法库的模型配置，例如 `configs/deploy/model/yolov5_s-deploy.py`, 与 mmdeploy 的路径无关。
+- `checkpoint` : torch 模型路径。可以 http/https 开头，详见 `mmengine.fileio` 的实现。
 - `img` : 模型转换时，用做测试的图像文件路径。
 - `--test-img` : 用于测试模型的图像文件路径。默认设置成`None`。
 - `--work-dir` : 工作目录，用来保存日志和模型文件。
