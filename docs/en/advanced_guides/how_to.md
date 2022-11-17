@@ -287,6 +287,7 @@ channels = [512, 1024, 2048]
 
 model = dict(
     backbone=dict(
+        _delete_=True, # Delete the backbone field in _base_
         type='mmselfsup.ResNet',
         depth=50,
         num_stages=4,

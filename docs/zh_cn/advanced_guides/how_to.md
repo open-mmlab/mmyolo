@@ -290,6 +290,7 @@ channels = [512, 1024, 2048]
 
 model = dict(
     backbone=dict(
+        _delete_=True, # 将 _base_ 中关于 backbone 的字段删除
         type='mmselfsup.ResNet',
         depth=50,
         num_stages=4,
