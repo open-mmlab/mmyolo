@@ -87,7 +87,7 @@ test_dataloader = dict(
 
 #### 2. Deployment Config
 
-Here we still use the `YOLOv5` in MMYOLO as the example. We can use \[detection_onnxruntime_static.py\`\](../../../configs/deploy/detection_onnxruntime_static.py) as the config to deploy \`YOLOv5\` to \`ONNXRuntim\` with static inputs.
+Here we still use the `YOLOv5` in MMYOLO as the example. We can use [`detection_onnxruntime_static.py`](../../../configs/deploy/detection_onnxruntime_static.py) as the config to deploy `YOLOv5` to `ONNXRuntime` with static inputs.
 
 ```python
 _base_ = ['./base_static.py']
