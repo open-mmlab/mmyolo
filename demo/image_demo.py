@@ -30,6 +30,8 @@ def parse_args():
         help='Switch model to deployment mode')
     parser.add_argument(
         '--score-thr', type=float, default=0.3, help='Bbox score threshold')
+    parser.add_argument(
+        '--to-labelme', action='store_true', help='Output labelme style label file')
     args = parser.parse_args()
     return args
 
@@ -79,6 +81,11 @@ def main():
             wait_time=0,
             out_file=out_file,
             pred_score_thr=args.score_thr)
+
+        if args.to_labelme:
+            # save result to labelme files
+            pass
+
         progress_bar.update()
 
     if not args.show:
