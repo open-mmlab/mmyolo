@@ -350,6 +350,19 @@ python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
     --output-dir ${OUTPUT_DIR}
 ```
 
+## Perform inference on large images
+
+Perform MMYOLO inference on large images (as satellite imagery) as:
+
+```shell
+wget -P checkpoint https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth
+
+python demo/large_image_demo.py \
+    demo/demo.jpg \
+    configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py \
+    checkpoint/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth \
+```
+
 ## Extracts a subset of COCO
 
 The training dataset of the COCO2017 dataset includes 118K images, and the validation set includes 5K images, which is a relatively large dataset. Loading JSON in debugging or quick verification scenarios will consume more resources and bring slower startup speed.

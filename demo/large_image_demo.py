@@ -1,4 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+"""Perform MMYOLO inference on large images (as satellite imagery) as:
+
+```shell
+wget -P checkpoint https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth   syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth  # noqa: E501, E261.
+
+python demo/large_image_demo.py \
+    demo/demo.jpg \
+    configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py \
+    checkpoint/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth \
+```
+"""
+
 import os
 from argparse import ArgumentParser
 
