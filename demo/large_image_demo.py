@@ -5,7 +5,7 @@
 wget -P checkpoint https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth   syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth  # noqa: E501, E261.
 
 python demo/large_image_demo.py \
-    demo/demo.jpg \
+    demo/large_image.jpg \
     configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py \
     checkpoint/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth \
 ```
@@ -67,6 +67,10 @@ def parse_args():
         type=int,
         default=1,
         help='Batch size, must greater than or equal to 1')
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Export debug images at each stage for 1 input')
     args = parser.parse_args()
     return args
 
@@ -93,9 +97,13 @@ def main():
     # get file list
     files, source_type = get_file_list(args.img)
 
+    # if debug, only process the first file
+    if args.debug:
+        files = files[:1]
+
     # start detector inference
-    print(f"""Performing inference on {len(files)} images...
-        This may take a while.""")
+    print(f'Performing inference on {len(files)} images... \
+This may take a while.')
     progress_bar = ProgressBar(len(files))
     for file in files:
         # read image
@@ -103,7 +111,7 @@ def main():
 
         # arrange slices
         height, width = img.shape[:2]
-        sliced_images = slice_image(
+        sliced_image_object = slice_image(
             img,
             slice_height=args.patch_size,
             slice_width=args.patch_size,
@@ -113,37 +121,65 @@ def main():
         )
 
         # perform sliced inference
-        results = []
+        slice_results = []
         start = 0
         while True:
             # prepare batch slices
-            end = min(start + args.batch_size, len(sliced_images))
+            end = min(start + args.batch_size, len(sliced_image_object))
             images = []
-            for sliced_image in sliced_images[start:end]:
-                images.append(sliced_image['image'])
+            for sliced_image in sliced_image_object.images[start:end]:
+                images.append(sliced_image)
 
             # forward the model
-            results.extend(inference_detector(model, images))
+            slice_results.extend(inference_detector(model, images))
 
-            if end >= len(sliced_images):
+            if end >= len(sliced_image_object):
                 break
             start += args.batch_size
 
+        if source_type['is_dir']:
+            filename = os.path.relpath(file, args.img).replace('/', '_')
+        else:
+            filename = os.path.basename(file)
+
+        # export debug images
+        if args.debug:
+            # export sliced images
+            for i, image in enumerate(sliced_image_object.images):
+                image = mmcv.imconvert(image, 'bgr', 'rgb')
+                out_file = os.path.join(args.out_dir, 'sliced_images',
+                                        filename + f'_slice_{i}.jpg')
+
+                mmcv.imwrite(image, out_file)
+
+            # export sliced image results
+            for i, slice_result in enumerate(slice_results):
+                out_file = os.path.join(args.out_dir, 'sliced_image_results',
+                                        filename + f'_slice_{i}_result.jpg')
+                image = mmcv.imconvert(sliced_image_object.images[i], 'bgr',
+                                       'rgb')
+
+                visualizer.add_datasample(
+                    os.path.basename(out_file),
+                    image,
+                    data_sample=slice_result,
+                    draw_gt=False,
+                    show=args.show,
+                    wait_time=0,
+                    out_file=out_file,
+                    pred_score_thr=args.score_thr,
+                )
+
         image_result = merge_results_by_nms(
-            results,
-            sliced_images.starting_pixels,
-            full_shape=(height, width),
+            slice_results,
+            sliced_image_object.starting_pixels,
+            src_image_shape=(height, width),
             nms_cfg={
                 'type': args.merge_nms_type,
                 'iou_thr': args.merge_iou_thr
             })
 
         img = mmcv.imconvert(img, 'bgr', 'rgb')
-
-        if source_type['is_dir']:
-            filename = os.path.relpath(file, args.img).replace('/', '_')
-        else:
-            filename = os.path.basename(file)
         out_file = None if args.show else os.path.join(args.out_dir, filename)
 
         visualizer.add_datasample(
