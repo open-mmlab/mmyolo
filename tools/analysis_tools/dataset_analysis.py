@@ -7,7 +7,8 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 from mmengine.config import Config
-from mmengine.dataset.dataset_wrapper import ConcatDataset
+from mmengine.dataset.dataset_wrapper import (ClassBalancedDataset,
+                                              ConcatDataset)
 from mmengine.utils import ProgressBar
 from prettytable import PrettyTable
 
@@ -380,19 +381,34 @@ def main():
 
     # 1.Build Dataset
     if args.val_dataset is False:
+        if cfg.train_dataloader.dataset.type == 'ConcatDataset':
+            for dataset in cfg.train_dataloader.dataset.datasets:
+                dataset.pipeline = None
+        elif cfg.train_dataloader.dataset.type == 'ClassBalancedDataset':
+            cfg.train_dataloader.dataset.dataset.pipeline = None
+        else:
+            cfg.train_dataloader.dataset.pipeline = None
         dataset = DATASETS.build(cfg.train_dataloader.dataset)
     elif args.val_dataset is True:
+        if cfg.val_dataloader.dataset.type == 'ConcatDataset':
+            for dataset in cfg.val_dataloader.dataset.datasets:
+                dataset.pipeline = None
+        elif cfg.val_dataloader.dataset.type == 'ClassBalancedDataset':
+            cfg.val_dataloader.dataset.dataset.pipeline = None
+        else:
+            cfg.val_dataloader.dataset.pipeline = None
         dataset = DATASETS.build(cfg.val_dataloader.dataset)
 
-    # Determine whether the dataset is ConcatDataset
+        # Determine whether the dataset is ConcatDataset
+    data_list = []
     if isinstance(dataset, ConcatDataset):
         datasets = dataset.datasets
-        data_list = []
         for idx in range(len(datasets)):
-            datasets_list = datasets[idx].load_data_list()
-            data_list += datasets_list
+            data_list += datasets[idx]
+    elif isinstance(dataset, ClassBalancedDataset):
+        data_list = dataset
     else:
-        data_list = dataset.load_data_list()
+        data_list = dataset
 
     # 2.Prepare data
     # Drawing settings
