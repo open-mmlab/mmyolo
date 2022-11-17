@@ -77,7 +77,7 @@ backend_config = dict(type='onnxruntime')
 
 默认配置中的 `post_processing` 后处理参数是当前模型与 `pytorch` 模型精度对齐的配置，若您需要修改相关参数，可以参考 [`部署必备指南`](basic_deployment_guide.md) 的详细介绍。
 
-当您部署在 `TensorRT` 时，您可以查看 [`detection_tensorrt_static-640x640.py`](../../../configs/deploy/detection_tensorrt_static-640x640.py) ，如下所示：
+当您部署在 `TensorRT` 时，您可以查看 [`detection_tensorrt_static-640x640.py`](https://github.com/open-mmlab/mmyolo/tree/main/configs/deploy/detection_tensorrt_static-640x640.py) ，如下所示：
 
 ```python
 _base_ = ['./base_static.py']
