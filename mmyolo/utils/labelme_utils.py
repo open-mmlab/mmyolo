@@ -10,7 +10,7 @@ from mmdet.structures import DetDataSample
 from PIL import ExifTags, Image, ImageOps
 
 
-class LabelmeFormat(object):
+class LabelmeFormat:
     """Predict results save into labelme file.
 
     Base on https://github.com/wkentaro/labelme/blob/main/labelme/label_file.py
