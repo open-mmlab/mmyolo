@@ -165,8 +165,8 @@ class LabelmeFormat:
         image_data = base64.b64encode(image_data).decode('utf-8')
         image_height, image_width = self.get_image_height_and_width(
             image_data, pred_res.ori_shape[0], pred_res.ori_shape[1])
-        json_info = dict()
-        json_info.update({
+
+        json_info = {
             'version': '5.0.5',
             'flags': {},
             'imagePath': image_path,
@@ -174,7 +174,7 @@ class LabelmeFormat:
             'imageHeight': image_height,
             'imageWidth': image_width,
             'shapes': []
-        })
+        }
 
         res_index = torch.where(
             torch.tensor(pred_res.pred_instances.scores > pred_score_thr))[0]
