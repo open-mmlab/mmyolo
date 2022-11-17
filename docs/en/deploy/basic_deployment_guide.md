@@ -107,7 +107,7 @@ codebase_config = dict(
 backend_config = dict(type='onnxruntime')
 ```
 
-`backend_config` indicates the deployment backend with `type=‘onnxruntime’`, other information can be referred from the third section.
+`backend_config` indicates the deployment backend with `type='onnxruntime'`, other information can be referred from the third section.
 
 To deploy the `YOLOv5` to `TensorRT`, please use [`detection_tensorrt_static-640x640.py`](../../../configs/deploy/detection_tensorrt_static-640x640.py).
 
