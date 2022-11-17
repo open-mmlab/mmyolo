@@ -320,7 +320,7 @@ python3 ${MMDEPLOY_DIR}/tools/test.py \
 
 `MMYOLO` 提供了一个 [`Dockerfile`](../../../docker/Dockerfile_deployment) 用于构建镜像。请确保您的 `docker` 版本大于等于 `19.03`。
 
-温馨提示；国内用户建议取消掉 [`Dockerfile`](../../../docker/Dockerfile_deployment) 里面 `Optional` 后两行的注释，可以获得火箭一般的下载提速：
+温馨提示；国内用户建议取消掉 [`Dockerfile`](https://github.com/open-mmlab/mmyolo/blob/main/docker/Dockerfile_deployment) 里面 `Optional` 后两行的注释，可以获得火箭一般的下载提速：
 
 ```dockerfile
 # (Optional)
