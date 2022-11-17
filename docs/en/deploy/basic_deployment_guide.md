@@ -55,7 +55,7 @@ codebase_config = dict(
 
 #### 1. Model Config
 
-Taking the `YOLOv5` in MMYOLO as an example, here are the details:
+Taking `YOLOv5` of MMYOLO as an example, here are the details:
 
 ```python
 _base_ = '../../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
