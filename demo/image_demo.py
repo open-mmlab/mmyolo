@@ -42,9 +42,9 @@ def parse_args():
 def main():
     args = parse_args()
 
-    assert (not args.to_labelme and args.show) or \
-           (args.to_labelme and not args.show), \
-        '`--to-labelme` or `--show` only can choose one at the same time'
+    if args.to_labelme and args.show:
+        raise RuntimeError('`--to-labelme` or `--show` only '
+                           'can choose one at the same time.')
 
     # register all modules in mmdet into the registries
     register_all_modules()
