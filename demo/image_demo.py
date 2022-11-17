@@ -90,8 +90,8 @@ def main():
             to_label_format(
                 result,
                 out_file,
-                pred_score_thr=args.score_thr,
-                model_classes=model.dataset_meta.get('CLASSES'))
+                score_threshold=args.score_thr,
+                classes=model.dataset_meta.get('CLASSES'))
             continue
 
         visualizer.add_datasample(
