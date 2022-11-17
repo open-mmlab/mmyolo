@@ -21,7 +21,7 @@ ncnn 和其他后端的支持会在后续支持。
 
 ## MMYOLO 中部署相关配置说明
 
-所有部署配置文件在 [`configs/deploy`](configs/deploy) 目录下。
+所有部署配置文件在 [`configs/deploy`](../../../configs/deploy/) 目录下。
 
 您可以部署静态输入或者动态输入的模型，因此您需要修改模型配置文件中与此相关的数据处理流程。
 

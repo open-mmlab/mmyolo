@@ -1,10 +1,10 @@
 # YOLOv5 部署全流程说明
 
-请先参考 [`部署必备指南`](./部署必备指南.md) 了解部署配置文件等相关信息。
+请先参考 [`部署必备指南`](basic_deployment_guide.md) 了解部署配置文件等相关信息。
 
 ## 模型训练和测试
 
-模型训练和测试请参考 [`YOLOv5 从入门到部署全流程`](docs/zh_cn/user_guides/yolov5_tutorial.md) 。
+模型训练和测试请参考 [YOLOv5 从入门到部署全流程](../../zh_cn/user_guides/yolov5_tutorial.md) 。
 
 ## 准备 MMDeploy 运行环境
 
@@ -22,7 +22,7 @@
 
 当您需要部署静态输入模型时，您应该确保模型的输入尺寸是固定的，比如在测试流程或测试数据集加载时输入尺寸为 `640x640`。
 
-您可以查看 [`yolov5_s-deploy.py`](configs/deploy/model/yolov5_s-deploy.py) 中测试流程或测试数据集加载部分，如下所示：
+您可以查看 [`yolov5_s-static.py`](../../../configs/deploy/model/yolov5_s-static.py) 中测试流程或测试数据集加载部分，如下所示：
 
 ```python
 _base_ = '../../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -55,7 +55,7 @@ test_dataloader = dict(
 
 #### (2) 部署配置文件
 
-当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_static.py`](configs/deploy/detection_onnxruntime_static.py) ，如下所示：
+当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_static.py`](../../../configs/deploy/detection_onnxruntime_static.py) ，如下所示：
 
 ```python
 _base_ = ['./base_static.py']
@@ -75,9 +75,9 @@ codebase_config = dict(
 backend_config = dict(type='onnxruntime')
 ```
 
-默认配置中的 `post_processing` 后处理参数是当前模型与 `pytorch` 模型精度对齐的配置，若您需要修改相关参数，可以参考 [`部署必备指南`](./部署必备指南.md) 的详细介绍。
+默认配置中的 `post_processing` 后处理参数是当前模型与 `pytorch` 模型精度对齐的配置，若您需要修改相关参数，可以参考 [`部署必备指南`](basic_deployment_guide.md) 的详细介绍。
 
-当您部署在 `TensorRT` 时，您可以查看 [`detection_tensorrt_static-640x640.py`](config/deploy/detection_tensorrt_static-640x640.py) ，如下所示：
+当您部署在 `TensorRT` 时，您可以查看 [`detection_tensorrt_static-640x640.py`](../../../configs/deploy/detection_tensorrt_static-640x640.py) ，如下所示：
 
 ```python
 _base_ = ['./base_static.py']
@@ -102,7 +102,7 @@ use_efficientnms = False
 
 #### (1) 模型配置文件
 
-当您需要部署动态输入模型时，模型的输入可以为任意尺寸(`TensorRT` 会限制最小和最大输入尺寸)，因此使用默认的 [`yolov5_s-v61_syncbn_8xb16-300e_coco.py`](configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) 模型配置文件即可，其中数据处理和数据集加载器部分如下所示：
+当您需要部署动态输入模型时，模型的输入可以为任意尺寸(`TensorRT` 会限制最小和最大输入尺寸)，因此使用默认的 [`yolov5_s-v61_syncbn_8xb16-300e_coco.py`](../../../configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) 模型配置文件即可，其中数据处理和数据集加载器部分如下所示：
 
 ```python
 batch_shapes_cfg = dict(
@@ -148,7 +148,7 @@ val_dataloader = dict(
 
 #### (2) 部署配置文件
 
-当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_dynamic.py`](configs/deploy/detection_onnxruntime_dynamic.py) ，如下所示：
+当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_dynamic.py`](../../../configs/deploy/detection_onnxruntime_dynamic.py) ，如下所示：
 
 ```python
 _base_ = ['./base_dynamic.py']
@@ -170,7 +170,7 @@ backend_config = dict(type='onnxruntime')
 
 与静态输入配置仅有 `_base_ = ['./base_dynamic.py']` 不同，动态输入会额外继承 `dynamic_axes` 属性。其他配置与静态输入配置相同。
 
-当您部署在 `TensorRT` 时，您可以查看 [`detection_tensorrt_dynamic-192x192-960x960.py`](config/deploy/detection_tensorrt_dynamic-192x192-960x960.py) ，如下所示：
+当您部署在 `TensorRT` 时，您可以查看 [`detection_tensorrt_dynamic-192x192-960x960.py`](../../../configs/deploy/detection_tensorrt_dynamic-192x192-960x960.py) ，如下所示：
 
 ```python
 _base_ = ['./base_dynamic.py']
@@ -227,7 +227,7 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
 
 #### TensorRT
 
-```bash
+```shell
 python3 ${MMDEPLOY_DIR}/tools/deploy.py \
     configs/deploy/detection_tensorrt_static-640x640.py \
     configs/deploy/model/yolov5_s-static.py \
@@ -318,9 +318,9 @@ python3 ${MMDEPLOY_DIR}/tools/test.py \
 
 # 使用 Docker 部署测试
 
-`MMYOLO` 提供了一个 [`Dockerfile`](docker/Dockerfile_deployment) 用于构建镜像。请确保您的 `docker` 版本大于等于 `19.03`。
+`MMYOLO` 提供了一个 [`Dockerfile`](../../../docker/Dockerfile_deployment) 用于构建镜像。请确保您的 `docker` 版本大于等于 `19.03`。
 
-温馨提示；国内用户建议取消掉 [`Dockerfile`](docker/Dockerfile_deployment) 里面 `Optional` 后两行的注释，可以获得火箭一般的下载提速：
+温馨提示；国内用户建议取消掉 [`Dockerfile`](../../../docker/Dockerfile_deployment) 里面 `Optional` 后两行的注释，可以获得火箭一般的下载提速：
 
 ```dockerfile
 # (Optional)
@@ -330,14 +330,14 @@ RUN sed -i 's/http:\/\/archive.ubuntu.com\/ubuntu\//http:\/\/mirrors.aliyun.com\
 
 构建命令：
 
-```shell
+```bash
 # build an image with PyTorch 1.12, CUDA 11.6, TensorRT 8.2.4 ONNXRuntime 1.8.1
 docker build -f docker/Dockerfile_deployment -t mmyolo:v1 .
 ```
 
 用以下命令运行 Docker 镜像：
 
-```shell
+```bash
 export DATA_DIR=/path/to/your/dataset
 docker run --gpus all --shm-size=8g -it --name mmyolo -v ${DATA_DIR}:/openmmlab/mmyolo/data/coco mmyolo:v1
 ```
@@ -386,7 +386,7 @@ python3 ${MMDEPLOY_DIR}/tools/test.py \
 
 在 `/openmmlab/mmyolo` 下运行：
 
-```shell
+```bash
 sh script.sh
 ```
 
@@ -400,7 +400,7 @@ sh script.sh
 
   ![image](https://user-images.githubusercontent.com/92794867/199657283-95412e84-3ba4-463f-b4b2-4bf52ec4acbd.png)
 
-可以看到，经过 `MMDeploy` 部署的模型与 [MMYOLO-YOLOv5](`https://github.com/open-mmlab/mmyolo/tree/main/configs/yolov5`) 的 mAP-37.7 差距在 1% 以内。
+可以看到，经过 `MMDeploy` 部署的模型与 [MMYOLO-YOLOv5](https://github.com/open-mmlab/mmyolo/tree/main/configs/yolov5#results-and-models) 的 mAP-37.7 差距在 1% 以内。
 
 如果您需要测试您的模型推理速度，可以使用以下命令：
 

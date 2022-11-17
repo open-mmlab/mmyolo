@@ -21,7 +21,7 @@ Note: ncnn and other inference backends support are coming soon.
 
 ## How to Write Config for MMYOLO
 
-All config files related to the deployment are located at [`configs/deploy`](configs/deploy).
+All config files related to the deployment are located at [`configs/deploy`](../../../configs/deploy/).
 
 You only need to change the relative data processing part in the model config file to support either static or dynamic input for your model. Besides, MMDeploy integrates the post-processing parts as customized ops, you can modify the strategy in `post_processing` parameter in `codebase_config`.
 
