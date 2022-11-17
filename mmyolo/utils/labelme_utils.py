@@ -11,7 +11,7 @@ from PIL import ExifTags, Image, ImageOps
 
 
 class LabelmeFormat:
-    """Predict result save into labelme file.
+    """Predict results save into labelme file.
 
     Base on https://github.com/wkentaro/labelme/blob/main/labelme/label_file.py
     """
@@ -117,15 +117,15 @@ class LabelmeFormat:
             image_width = img_arr.shape[1]
         return image_height, image_width
 
-    def __call__(self, pred_res: DetDataSample, output_path: str,
-                 pred_score_thr: float, model_classes: tuple):
+    def __call__(self, results: DetDataSample, output_path: str,
+                 score_threshold: float, classes: tuple):
         """Get image data field for labelme.
 
         Args:
-            pred_res (DetDataSample): Predict info.
+            results (DetDataSample): Predict info.
             output_path (str): Image file path.
-            pred_score_thr (float): Predict score threshold.
-            model_classes (tuple): Model classes name.
+            score_threshold (float): Predict score threshold.
+            classes (tuple): Model classes name.
 
         Labelme file eg.
             {
@@ -157,12 +157,12 @@ class LabelmeFormat:
             }
         """
 
-        image_path = pred_res.metainfo['img_path']
+        image_path = results.metainfo['img_path']
 
         image_data = self.get_image_data(image_path)
         image_data = base64.b64encode(image_data).decode('utf-8')
         image_height, image_width = self.get_image_height_and_width(
-            image_data, pred_res.ori_shape[0], pred_res.ori_shape[1])
+            image_data, results.ori_shape[0], results.ori_shape[1])
 
         json_info = {
             'version': '5.0.5',
@@ -175,12 +175,12 @@ class LabelmeFormat:
         }
 
         res_index = torch.where(
-            torch.tensor(pred_res.pred_instances.scores > pred_score_thr))[0]
+            torch.tensor(results.pred_instances.scores > score_threshold))[0]
 
         for index in res_index:
-            pred_bbox = pred_res.pred_instances.bboxes[index].cpu().numpy(
+            pred_bbox = results.pred_instances.bboxes[index].cpu().numpy(
             ).tolist()
-            pred_label = model_classes[pred_res.pred_instances.labels[index]]
+            pred_label = classes[results.pred_instances.labels[index]]
 
             sub_dict = {
                 'label': pred_label,
