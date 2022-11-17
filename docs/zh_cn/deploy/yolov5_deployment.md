@@ -55,7 +55,7 @@ test_dataloader = dict(
 
 #### (2) 部署配置文件
 
-当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_static.py`](../../../configs/deploy/detection_onnxruntime_static.py) ，如下所示：
+当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_static.py`](https://github.com/open-mmlab/mmyolo/tree/main/configs/deploy/detection_onnxruntime_static.py) ，如下所示：
 
 ```python
 _base_ = ['./base_static.py']
