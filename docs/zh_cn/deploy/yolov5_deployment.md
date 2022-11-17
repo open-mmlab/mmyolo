@@ -4,7 +4,7 @@
 
 ## 模型训练和测试
 
-模型训练和测试请参考 [YOLOv5 从入门到部署全流程](../../zh_cn/user_guides/yolov5_tutorial.md) 。
+模型训练和测试请参考 [YOLOv5 从入门到部署全流程](../user_guides/yolov5_tutorial.md) 。
 
 ## 准备 MMDeploy 运行环境
 
