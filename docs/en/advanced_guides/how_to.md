@@ -2,7 +2,7 @@
 
 This tutorial collects answers to any `How to xxx with MMYOLO`. Feel free to update this doc if you meet new questions about `How to` and find the answers!
 
-## Add plugins to the Backbone network
+## Add plugins to the backbone network
 
 Please see [Plugins](plugins.md).
 
