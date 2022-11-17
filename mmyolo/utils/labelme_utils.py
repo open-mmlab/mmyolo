@@ -64,7 +64,7 @@ class LabelmeFormat:
             # rotate 90
             return image.transpose(PIL.Image.ROTATE_90)
         else:
-            return
+            return image
 
     def get_image_data(self, file_path: str) -> bytes:
         """Get image data field for labelme.
@@ -177,11 +177,11 @@ class LabelmeFormat:
         })
 
         res_index = torch.where(
-            torch.tensor(pred_res.pred_instances.scores > pred_score_thr))
+            torch.tensor(pred_res.pred_instances.scores > pred_score_thr))[0]
 
         for index in res_index:
             pred_bbox = pred_res.pred_instances.bboxes[index].cpu().numpy(
-            ).tolist()[0]
+            ).tolist()
             pred_label = model_classes[pred_res.pred_instances.labels[index]]
 
             sub_dict = {
