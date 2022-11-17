@@ -685,7 +685,7 @@ class TinyDownSampleBlock(BaseModule):
 
         mid_channels = int(in_channels * mid_ratio)
 
-        self.short_convs = ConvModule(
+        self.short_conv = ConvModule(
             in_channels,
             mid_channels,
             1,
@@ -715,7 +715,7 @@ class TinyDownSampleBlock(BaseModule):
                         norm_cfg=norm_cfg,
                         act_cfg=act_cfg))
 
-        self.final_convs = ConvModule(
+        self.final_conv = ConvModule(
             mid_channels * 4,
             out_channels,
             1,
@@ -724,16 +724,15 @@ class TinyDownSampleBlock(BaseModule):
             act_cfg=act_cfg)
 
     def forward(self, x) -> Tensor:
-        short_out = self.short_convs(x)
+        short_out = self.short_conv(x)
 
         main_outs = []
         for main_conv in self.main_convs:
-            mian_outs = main_conv(x)
-            main_outs.append(mian_outs)
-            x = mian_outs
+            main_out = main_conv(x)
+            main_outs.append(main_out)
+            x = main_out
 
-        return self.final_convs(
-            torch.cat([*main_outs[::-1], short_out], dim=1))
+        return self.final_conv(torch.cat([*main_outs[::-1], short_out], dim=1))
 
 
 @MODELS.register_module()
@@ -771,6 +770,7 @@ class SPPFCSPBlock(BaseModule):
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg=init_cfg)
         mid_channels = int(2 * out_channels * expand_ratio)
+        self.is_tiny_version = is_tiny_version
 
         if is_tiny_version:
             self.main_layers = ConvModule(
@@ -867,11 +867,20 @@ class SPPFCSPBlock(BaseModule):
         if isinstance(self.kernel_sizes, int):
             y1 = self.poolings(x1)
             y2 = self.poolings(y1)
-            x1 = self.fuse_layers(
-                torch.cat([x1] + [y1, y2, self.poolings(y2)], 1))
+            if self.is_tiny_version:
+                x1 = self.fuse_layers(
+                    torch.cat([self.poolings(y2), y2, y1] + [x1], 1))
+            else:
+                x1 = self.fuse_layers(
+                    torch.cat([x1] + [y1, y2, self.poolings(y2)], 1))
         else:
-            x1 = self.fuse_layers(
-                torch.cat([x1] + [m(x1) for m in self.poolings], 1))
+            if self.is_tiny_version:
+                x1 = self.fuse_layers(
+                    torch.cat([m(x1) for m in self.poolings][::-1] + [x1], 1))
+            else:
+                x1 = self.fuse_layers(
+                    torch.cat([x1] + [m(x1) for m in self.poolings], 1))
+
         x2 = self.short_layers(x)
         return self.final_conv(torch.cat((x1, x2), dim=1))
 

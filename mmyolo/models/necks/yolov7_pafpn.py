@@ -47,7 +47,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  spp_expand_ratio: float = 0.5,
-                 is_tiny_version_spp: bool = False,
+                 is_tiny_version: bool = False,
                  use_repconv_outs: bool = True,
                  upsample_feats_cat_first: bool = False,
                  freeze_all: bool = False,
@@ -56,7 +56,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  init_cfg: OptMultiConfig = None):
 
-        self.is_tiny_version_spp = is_tiny_version_spp
+        self.is_tiny_version = is_tiny_version
         self.spp_expand_ratio = spp_expand_ratio
         self.use_repconv_outs = use_repconv_outs
         self.block_cfg = block_cfg
@@ -92,7 +92,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
                 self.in_channels[idx],
                 self.out_channels[idx],
                 expand_ratio=self.spp_expand_ratio,
-                is_tiny_version=self.is_tiny_version_spp,
+                is_tiny_version=self.is_tiny_version,
                 kernel_sizes=5,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
@@ -152,11 +152,21 @@ class YOLOv7PAFPN(BaseYOLONeck):
                 act_cfg=self.act_cfg)
         else:
             # P5
-            return MaxPoolAndStrideConvBlock(
-                self.out_channels[idx],
-                self.out_channels[idx + 1],
-                norm_cfg=self.norm_cfg,
-                act_cfg=self.act_cfg)
+            if self.is_tiny_version:
+                return ConvModule(
+                    self.out_channels[idx],
+                    self.out_channels[idx + 1],
+                    3,
+                    stride=2,
+                    padding=1,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg)
+            else:
+                return MaxPoolAndStrideConvBlock(
+                    self.out_channels[idx],
+                    self.out_channels[idx + 1],
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg)
 
     def build_bottom_up_layer(self, idx: int) -> nn.Module:
         """build bottom up layer.

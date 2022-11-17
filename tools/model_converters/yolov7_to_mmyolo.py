@@ -5,6 +5,80 @@ from collections import OrderedDict
 
 import torch
 
+convert_dict_tiny = {
+    # stem
+    'model.0': 'backbone.stem.0',
+    'model.1': 'backbone.stem.1',
+
+    # stage1 TinyDownSampleBlock
+    'model.2': 'backbone.stage1.0.short_conv',
+    'model.3': 'backbone.stage1.0.main_convs.0',
+    'model.4': 'backbone.stage1.0.main_convs.1',
+    'model.5': 'backbone.stage1.0.main_convs.2',
+    'model.7': 'backbone.stage1.0.final_conv',
+
+    # stage2  TinyDownSampleBlock
+    'model.9': 'backbone.stage2.1.short_conv',
+    'model.10': 'backbone.stage2.1.main_convs.0',
+    'model.11': 'backbone.stage2.1.main_convs.1',
+    'model.12': 'backbone.stage2.1.main_convs.2',
+    'model.14': 'backbone.stage2.1.final_conv',
+
+    # stage3 TinyDownSampleBlock
+    'model.16': 'backbone.stage3.1.short_conv',
+    'model.17': 'backbone.stage3.1.main_convs.0',
+    'model.18': 'backbone.stage3.1.main_convs.1',
+    'model.19': 'backbone.stage3.1.main_convs.2',
+    'model.21': 'backbone.stage3.1.final_conv',
+
+    # stage4 TinyDownSampleBlock
+    'model.23': 'backbone.stage4.1.short_conv',
+    'model.24': 'backbone.stage4.1.main_convs.0',
+    'model.25': 'backbone.stage4.1.main_convs.1',
+    'model.26': 'backbone.stage4.1.main_convs.2',
+    'model.28': 'backbone.stage4.1.final_conv',
+
+    # neck SPPCSPBlock
+    'model.29': 'neck.reduce_layers.2.short_layers',
+    'model.30': 'neck.reduce_layers.2.main_layers',
+    'model.35': 'neck.reduce_layers.2.fuse_layers',
+    'model.37': 'neck.reduce_layers.2.final_conv',
+    'model.38': 'neck.upsample_layers.0.0',
+    'model.40': 'neck.reduce_layers.1',
+    'model.42': 'neck.top_down_layers.0.short_conv',
+    'model.43': 'neck.top_down_layers.0.main_convs.0',
+    'model.44': 'neck.top_down_layers.0.main_convs.1',
+    'model.45': 'neck.top_down_layers.0.main_convs.2',
+    'model.47': 'neck.top_down_layers.0.final_conv',
+    'model.48': 'neck.upsample_layers.1.0',
+    'model.50': 'neck.reduce_layers.0',
+    'model.52': 'neck.top_down_layers.1.short_conv',
+    'model.53': 'neck.top_down_layers.1.main_convs.0',
+    'model.54': 'neck.top_down_layers.1.main_convs.1',
+    'model.55': 'neck.top_down_layers.1.main_convs.2',
+    'model.57': 'neck.top_down_layers.1.final_conv',
+    'model.58': 'neck.downsample_layers.0',
+    'model.60': 'neck.bottom_up_layers.0.short_conv',
+    'model.61': 'neck.bottom_up_layers.0.main_convs.0',
+    'model.62': 'neck.bottom_up_layers.0.main_convs.1',
+    'model.63': 'neck.bottom_up_layers.0.main_convs.2',
+    'model.65': 'neck.bottom_up_layers.0.final_conv',
+    'model.66': 'neck.downsample_layers.1',
+    'model.68': 'neck.bottom_up_layers.1.short_conv',
+    'model.69': 'neck.bottom_up_layers.1.main_convs.0',
+    'model.70': 'neck.bottom_up_layers.1.main_convs.1',
+    'model.71': 'neck.bottom_up_layers.1.main_convs.2',
+    'model.73': 'neck.bottom_up_layers.1.final_conv',
+    'model.74': 'neck.out_layers.0',
+    'model.75': 'neck.out_layers.1',
+    'model.76': 'neck.out_layers.2',
+
+    # head
+    'model.77.m.0': 'bbox_head.head_module.convs_pred.0.1',
+    'model.77.m.1': 'bbox_head.head_module.convs_pred.1.1',
+    'model.77.m.2': 'bbox_head.head_module.convs_pred.2.1'
+}
+
 convert_dict_l = {
     # stem
     'model.0': 'backbone.stem.0',
@@ -307,6 +381,9 @@ def convert(src, dst):
     elif src_key == 'yolov7x.pt':
         indexes = [121, 59]
         in_channels = [320, 640, 1280]
+    elif src_key == 'yolov7-tiny.pt':
+        indexes = [77, 1000]
+        in_channels = [128, 256, 512]
     """Convert keys in detectron pretrained YOLOv7 models to mmyolo style."""
     try:
         yolov7_model = torch.load(src)['model'].float()
