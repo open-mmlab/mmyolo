@@ -94,6 +94,8 @@ def main():
     files, source_type = get_file_list(args.img)
 
     # start detector inference
+    print(f"""Performing inference on {len(files)} images...
+        This may take a while.""")
     progress_bar = ProgressBar(len(files))
     for file in files:
         # read image
