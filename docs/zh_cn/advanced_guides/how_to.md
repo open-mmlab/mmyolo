@@ -2,18 +2,6 @@
 
 本教程收集了任何如何使用 MMYOLO 进行 xxx 的答案。 如果您遇到有关`如何做`的问题及答案，请随时更新此文档！
 
-[目录](#how-to-xxx)
-
-- [给主干网络增加插件](#给主干网络增加插件)
-- [应用多个 Neck](#应用多个-neck)
-- [更换主干网络](#更换主干网络)
-  - [使用 MMYOLO 中注册的主干网络](#---mmyolo---------)
-  - [跨库使用主干网络](#跨库使用主干网络)
-    - [使用在 MMDetection 中实现的主干网络](#使用在-mmdetection-中实现的主干网络)
-    - [使用在 MMClassification 中实现的主干网络](#使用在-mmclassification-中实现的主干网络)
-    - [通过 MMClassification 使用 `timm` 中实现的主干网络](#通过-mmclassification-使用-timm-中实现的主干网络)
-    - [使用在 MMSelfsup 中实现的主干网络](#使用在-mmselfsup-中实现的主干网络)
-
 ## 给主干网络增加插件
 
 [更多的插件使用](plugins.md)
