@@ -4,7 +4,7 @@
 
 MMDeploy is an open-source deep learning model deployment toolset. It is a part of the [OpenMMLab](https://openmmlab.com/) project, and provides **a unified experience of exporting different models** to various platforms and devices of the OpenMMLab series libraries. Using MMDeploy, developers can easily export the specific compiled SDK they need from the training result, which saves a lot of effort.
 
-More detailed introduction and guides can be found [here](https://mmdeploy.readthedocs.io/en/dev-1.x/get_started.html)
+More detailed introduction and guides can be found [here](https://github.com/open-mmlab/mmdeploy/blob/dev-1.x/docs/zh_cn/get_started.md)
 
 ## Supported Algorithms
 
@@ -87,7 +87,7 @@ test_dataloader = dict(
 
 #### 2. Deployment Config
 
-Here we still use the `YOLOv5` in MMYOLO as the example. We can use \[\`detection_onnxruntime_static.py\`\](../../../configs/deploy/detection_onnxruntime_static.py) as the config to deploy \`YOLOv5\` to \`ONNXRuntim\` with static inputs.
+Here we still use the `YOLOv5` in MMYOLO as the example. We can use [`detection_onnxruntime_static.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_onnxruntime_static.py) as the config to deploy \`YOLOv5\` to \`ONNXRuntim\` with static inputs.
 
 ```python
 _base_ = ['./base_static.py']
@@ -109,7 +109,7 @@ backend_config = dict(type='onnxruntime')
 
 `backend_config` indicates the deployment backend with `type='onnxruntime'`, other information can be referred from the third section.
 
-To deploy the `YOLOv5` to `TensorRT`, please refer to the \[\`detection_tensorrt_static-640x640.py\`\](../../../configs/deploy/detection_tensorrt_static-640x640.py) as follows.
+To deploy the `YOLOv5` to `TensorRT`, please refer to the [`detection_tensorrt_static-640x640.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_tensorrt_static-640x640.py) as follows.
 
 ```python
 _base_ = ['./base_static.py']
@@ -133,7 +133,7 @@ use_efficientnms = False
 Different from `ONNXRuntime` deployment configuration, `TensorRT` needs to specify the input image size and the parameters required to build the engine file, including:
 
 - `onnx_config` specifies the input shape as `input_shape=(640, 640)`
-- `fp16_mode=False` and `max_workspace_size=1 << 30` in `backend_config['common_config']` indicates whether to build the engine in the parameter format of `fp16`, and the maximum video memory for the current `gpu` device, respectively. The unit is in `GB`. For detailed configuration of `fp16`, please refer to the \[\`detection_tensorrt-fp16_static-640x640.py\`\](../../../configs/deploy/detection_tensorrt_static-640x640.py)
+- `fp16_mode=False` and `max_workspace_size=1 << 30` in `backend_config['common_config']` indicates whether to build the engine in the parameter format of `fp16`, and the maximum video memory for the current `gpu` device, respectively. The unit is in `GB`. For detailed configuration of `fp16`, please refer to the [`detection_tensorrt-fp16_static-640x640.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_tensorrt-fp16_static-640x640.py)
 - The `min_shape`/`opt_shape`/`max_shape` in `backend_config['model_inputs']['input_shapes']['input']` should remain the same under static input, the default is `[1, 3, 640, 640]`.
 
 `use_efficientnms` is a new configuration introduced by the `MMYOLO` series, indicating whether to enable `Efficient NMS Plugin` to replace `TRTBatchedNMS plugin` in `MMDeploy` when exporting `onnx`.
@@ -150,7 +150,7 @@ When you deploy a dynamic input model, you don't need to modify any model config
 
 #### 2. Deployment Config
 
-To deploy the `YOLOv5` in MMYOLO to `ONNXRuntime`, please refer to the \[\`detection_onnxruntime_dynamic.py\`\](../../../configs/deploy/detection_onnxruntime_dynamic.py).
+To deploy the `YOLOv5` in MMYOLO to `ONNXRuntime`, please refer to the [`detection_onnxruntime_dynamic.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_onnxruntime_dynamic.py).
 
 ```python
 _base_ = ['./base_dynamic.py']
@@ -172,7 +172,7 @@ backend_config = dict(type='onnxruntime')
 
 `backend_config` indicates the backend with `type='onnxruntime'`. Other parameters stay the same as the static input section.
 
-To deploy the `YOLOv5` to `TensorRT`, please refer to the \[\`detection_tensorrt_dynamic-192x192-960x960.py\`\](../../../configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py).
+To deploy the `YOLOv5` to `TensorRT`, please refer to the [`detection_tensorrt_dynamic-192x192-960x960.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_tensorrt_dynamic-192x192-960x960.py).
 
 ```python
 _base_ = ['./base_dynamic.py']

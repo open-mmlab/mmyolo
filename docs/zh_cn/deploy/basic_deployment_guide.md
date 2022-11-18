@@ -89,7 +89,7 @@ test_dataloader = dict(
 
 以 `MMYOLO` 中的 `YOLOv5` 部署配置为例，下面是对配置文件参数说明介绍。
 
-`ONNXRuntime` 部署 `YOLOv5` 可以使用 [`detection_onnxruntime_static.py`](configs/deploy/detection_onnxruntime_static.py) 配置。
+`ONNXRuntime` 部署 `YOLOv5` 可以使用 [`detection_onnxruntime_static.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_onnxruntime_static.py) 配置。
 
 ```python
 _base_ = ['./base_static.py']
@@ -111,7 +111,7 @@ backend_config = dict(type='onnxruntime')
 
 `backend_config` 中指定了部署后端 `type=‘onnxruntime’`，其他信息可参考第三小节。
 
-`TensorRT` 部署 `YOLOv5` 可以使用 [`detection_tensorrt_static-640x640.py`](config/deploy/detection_tensorrt_static-640x640.py) 配置。
+`TensorRT` 部署 `YOLOv5` 可以使用 [`detection_tensorrt_static-640x640.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_tensorrt_static-640x640.py) 配置。
 
 ```python
 _base_ = ['./base_static.py']
@@ -135,7 +135,7 @@ use_efficientnms = False
 与 `ONNXRuntime` 部署配置不同的是，`TensorRT`  需要指定输入图片尺寸和构建引擎文件需要的参数，包括：
 
 - `onnx_config` 中指定 `input_shape=(640, 640)`
-- `backend_config['common_config']` 中包括 `fp16_mode=False` 和 `max_workspace_size=1 << 30`, `fp16_mode` 表示是否以 `fp16` 的参数格式构建引擎，`max_workspace_size` 表示当前 `gpu` 设备最大显存, 单位为 `GB`。`fp16` 的详细配置可以参考 [`detection_tensorrt-fp16_static-640x640.py`](configs/deploy/detection_tensorrt-fp16_static-640x640.py)
+- `backend_config['common_config']` 中包括 `fp16_mode=False` 和 `max_workspace_size=1 << 30`, `fp16_mode` 表示是否以 `fp16` 的参数格式构建引擎，`max_workspace_size` 表示当前 `gpu` 设备最大显存, 单位为 `GB`。`fp16` 的详细配置可以参考 [`detection_tensorrt-fp16_static-640x640.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_tensorrt-fp16_static-640x640.py)
 - `backend_config['model_inputs']['input_shapes']['input']` 中 `min_shape` /`opt_shape`/`max_shape` 对应的值在静态输入下应该保持相同，即默认均为 `[1, 3, 640, 640]`。
 
 `use_efficientnms` 是 `MMYOLO` 系列新引入的配置，表示在导出 `onnx` 时是否启用`Efficient NMS Plugin`来替换 `MMDeploy` 中的 `TRTBatchedNMS plugin` 。
@@ -152,7 +152,7 @@ use_efficientnms = False
 
 #### (2) 部署配置文件介绍
 
-`ONNXRuntime` 部署 `YOLOv5` 可以使用  [`detection_onnxruntime_dynamic.py`](configs/deploy/detection_onnxruntime_dynamic.py)  配置。
+`ONNXRuntime` 部署 `YOLOv5` 可以使用  [`detection_onnxruntime_dynamic.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_onnxruntime_dynamic.py)  配置。
 
 ```python
 _base_ = ['./base_dynamic.py']
@@ -174,7 +174,7 @@ backend_config = dict(type='onnxruntime')
 
 `backend_config` 中指定了后端 `type='onnxruntime'`，其他配置与上一节在 ONNXRuntime 部署静态输入模型相同。
 
-`TensorRT` 部署 `YOLOv5` 可以使用  [`detection_tensorrt_dynamic-192x192-960x960.py`](config/deploy/detection_tensorrt_dynamic-192x192-960x960.py) 配置。
+`TensorRT` 部署 `YOLOv5` 可以使用  [`detection_tensorrt_dynamic-192x192-960x960.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_tensorrt_dynamic-192x192-960x960.py) 配置。
 
 ```python
 _base_ = ['./base_dynamic.py']

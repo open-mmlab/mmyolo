@@ -148,7 +148,7 @@ val_dataloader = dict(
 
 #### (2) 部署配置文件
 
-当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_dynamic.py`](../../../configs/deploy/detection_onnxruntime_dynamic.py) ，如下所示：
+当您部署在 `ONNXRuntime` 时，您可以查看 [`detection_onnxruntime_dynamic.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_onnxruntime_dynamic.py) ，如下所示：
 
 ```python
 _base_ = ['./base_dynamic.py']
