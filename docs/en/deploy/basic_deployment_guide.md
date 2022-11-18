@@ -55,7 +55,7 @@ codebase_config = dict(
 
 #### 1. Model Config
 
-Taking the `YOLOv5` in MMYOLO as an example, here are the details:
+Taking `YOLOv5` of MMYOLO as an example, here are the details:
 
 ```python
 _base_ = '../../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -107,7 +107,7 @@ codebase_config = dict(
 backend_config = dict(type='onnxruntime')
 ```
 
-`backend_config` indicates the deployment backend with `type=‘onnxruntime’`, other information can be referred from the third section.
+`backend_config` indicates the deployment backend with `type='onnxruntime'`, other information can be referred from the third section.
 
 To deploy the `YOLOv5` to `TensorRT`, please refer to the \[\`detection_tensorrt_static-640x640.py\`\](../../../configs/deploy/detection_tensorrt_static-640x640.py) as follows.
 
