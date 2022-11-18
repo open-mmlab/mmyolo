@@ -4,7 +4,7 @@ Please check the [basic_deployment_guide](basic_deployment_guide.md) to get fami
 
 ## Model Training and Validation
 
-The details of training and validation can be found at [yolov5_tutorial](../../en/user_guides/yolov5_tutorial.md).
+The details of training and validation can be found at [yolov5_tutorial](../user_guides/yolov5_tutorial.md).
 
 ## MMDeploy Environment Setup
 
@@ -22,7 +22,7 @@ This deployment guide uses the `YOLOv5` model trained on `COCO` dataset in MMYOL
 
 To deploy the model with static inputs, you need to ensure that the model inputs are in fixed size, e.g. the input size is set to `640x640` while uploading data in the test pipeline and test dataloader.
 
-Here is a example in [yolov5_s-static.py](../../../configs/deploy/model/yolov5_s-static.py)
+Here is a example in \[\`yolov5_s-static.py\`\](../../../configs/deploy/model/yolov5_s-static.py)
 
 ```python
 _base_ = '../../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -55,7 +55,7 @@ Compared with the original configuration file, this configuration has been modif
 
 #### 2. Deployment Cofnig
 
-To deploy the model to `ONNXRuntime`, please refer to the [detection_onnxruntime_static.py](../../../configs/deploy/detection_onnxruntime_static.py) as follows:
+To deploy the model to `ONNXRuntime`, please refer to the \[\`detection_onnxruntime_static.py\`\](../../../configs/deploy/detection_onnxruntime_static.py) as follows:
 
 ```python
 _base_ = ['./base_static.py']
@@ -77,7 +77,7 @@ backend_config = dict(type='onnxruntime')
 
 The `post_processing` in the default configuration aligns the accuracy of the current model with the trained `pytorch` model. If you need to modify the relevant parameters, you can refer to the detailed introduction of [dasic_deployment_guide](basic_deployment_guide.md).
 
-To deploy the model to `TensorRT`, please refer to the [detection_tensorrt_static-640x640.py](../../../configs/deploy/detection_tensorrt_static-640x640.py).
+To deploy the model to `TensorRT`, please refer to the \[\`detection_tensorrt_static-640x640.py\`\](../../../configs/deploy/detection_tensorrt_static-640x640.py).
 
 ```python
 _base_ = ['./base_static.py']
@@ -148,7 +148,7 @@ We use `allow_scale_up=False` to control when the input small images will be ups
 
 #### 2. Deployment Cofnig
 
-To deploy the model to `ONNXRuntime`, please check the [detection_onnxruntime_dynamic.py](../../../configs/deploy/detection_onnxruntime_dynamic.py) for more details.
+To deploy the model to `ONNXRuntime`, please refer to the \[\`detection_onnxruntime_dynamic.py\`\](../../../configs/deploy/detection_onnxruntime_dynamic.py) for more details.
 
 ```python
 _base_ = ['./base_dynamic.py']
@@ -170,7 +170,7 @@ backend_config = dict(type='onnxruntime')
 
 Differs from the static input config we introduced in previous section, dynamic input config additionally inherits the `dynamic_axes`. The rest of the configuration stays the same as the static inputs.
 
-To deploy the model to `TensorRT`, please check the [detection_tensorrt_dynamic-192x192-960x960.py](../../../configs/deploy/detection_tensorrt_dynamic-192x192-960x960.py) for more details.
+To deploy the model to `TensorRT`, please refer to the \[\`detection_tensorrt_dynamic-192x192-960x960.py\`\](../../../configs/deploy/detection_tensorrt_dynamic-192x192-960x960.py) for more details.
 
 ```python
 _base_ = ['./base_dynamic.py']
@@ -319,7 +319,7 @@ More useful evaluation tools will be released in the future.
 
 # Deploy using Docker
 
-`MMYOLO` provides a deployment [Dockerfile](../../../docker/Dockerfile_deployment) for deployment purpose. Please make sure your local docker version is greater than `19.03`.
+`MMYOLO` provides a deployment \[\`Dockerfile\`\](../../../docker/Dockerfile_deployment) for deployment purpose. Please make sure your local docker version is greater than `19.03`.
 
 Note: users in mainland China can comment out the `Optional` part in the dockerfile for better experience.
 
