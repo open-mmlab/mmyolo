@@ -153,7 +153,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
             ... ]
             >>> model = YOLOv5CSPDarknet()
             >>> stage_plugins = model.make_stage_plugins(plugins, 0, setting)
-            >>> assert len(stage_plugins) == 3
+            >>> assert len(stage_plugins) == 1
 
         Suppose ``stage_idx=0``, the structure of blocks in the stage would be:
 
@@ -161,7 +161,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
 
             conv1 -> conv2 -> conv3 -> yyy
 
-        Suppose 'stage_idx=1', the structure of blocks in the stage would be:
+        Suppose ``stage_idx=1``, the structure of blocks in the stage would be:
 
         .. code-block:: none
 
