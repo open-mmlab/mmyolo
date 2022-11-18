@@ -540,7 +540,7 @@ pre_transform = _base_.pre_transform # 变量 pre_transform 等于 _base_ 中定
 我们遵循以下样式来命名配置文件。建议贡献者遵循相同的风格。
 
 ```
-{algorithm name}_{model component names [component1]_[component2]_[...]}-[version id]_[norm setting]_[data preprocessor type]_{training settings}_{training dataset information}_{testing dataset information}.py
+{algorithm name}_{model component names [component1]_[component2]_[...]}-[version id]_[norm setting]_[data preprocessor type]_{training settings}_{training dataset information}_[testing dataset information].py
 ```
 
 文件名分为 8 个部分，其中 4 个必填部分、4 个可选部分。 每个部分用 `_` 连接，每个部分内的单词应该用 `-` 连接。`{}` 表示必填部分，`[]` 表示选填部分。

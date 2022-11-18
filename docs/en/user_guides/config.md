@@ -545,7 +545,7 @@ When submitting jobs using `tools/train.py` or `tools/test.py`, you may specify 
 We follow the below style to name config files. Contributors are advised to follow the same style.
 
 ```
-{algorithm name}_{model component names [component1]_[component2]_[...]}-[version id]_[norm setting]_[data preprocessor type]_{training settings}_{training dataset information}_{testing dataset information}.py
+{algorithm name}_{model component names [component1]_[component2]_[...]}-[version id]_[norm setting]_[data preprocessor type]_{training settings}_{training dataset information}_[testing dataset information].py
 ```
 
 The file name is divided into 8 name fields, which have 4 required parts and 4 optional parts. All parts and components are connected with `_` and words of each part or component should be connected with `-`. `{}` indicates the required name field, and `[]` indicates the optional name field.
