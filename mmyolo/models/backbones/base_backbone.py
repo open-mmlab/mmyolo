@@ -134,7 +134,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
         """
         pass
 
-    def make_stage_plugins(self, plugins, idx, setting):
+    def make_stage_plugins(self, plugins, stage_idx, setting):
         """Make plugins for backbone ``stage_idx`` th stage.
 
         Currently we support to insert ``context_block``,
@@ -153,7 +153,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
             ... ]
             >>> model = YOLOv5CSPDarknet()
             >>> stage_plugins = model.make_stage_plugins(plugins, 0, setting)
-            >>> assert len(stage_plugins) == 3
+            >>> assert len(stage_plugins) == 1
 
         Suppose ``stage_idx=0``, the structure of blocks in the stage would be:
 
@@ -161,7 +161,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
 
             conv1 -> conv2 -> conv3 -> yyy
 
-        Suppose 'stage_idx=1', the structure of blocks in the stage would be:
+        Suppose ``stage_idx=1``, the structure of blocks in the stage would be:
 
         .. code-block:: none
 
@@ -187,7 +187,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
             plugin = plugin.copy()
             stages = plugin.pop('stages', None)
             assert stages is None or len(stages) == self.num_stages
-            if stages is None or stages[idx]:
+            if stages is None or stages[stage_idx]:
                 name, layer = build_plugin_layer(
                     plugin['cfg'], in_channels=in_channels)
                 plugin_layers.append(layer)
