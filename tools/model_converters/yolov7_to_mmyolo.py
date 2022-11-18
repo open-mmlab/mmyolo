@@ -39,7 +39,7 @@ convert_dict_tiny = {
     'model.28': 'backbone.stage4.1.final_conv',
 
     # neck SPPCSPBlock
-    'model.29': 'neck.reduce_layers.2.short_layers',
+    'model.29': 'neck.reduce_layers.2.short_layer',
     'model.30': 'neck.reduce_layers.2.main_layers',
     'model.35': 'neck.reduce_layers.2.fuse_layers',
     'model.37': 'neck.reduce_layers.2.final_conv',
@@ -145,7 +145,7 @@ convert_dict_l = {
     'model.51.cv4': 'neck.reduce_layers.2.main_layers.2',
     'model.51.cv5': 'neck.reduce_layers.2.fuse_layers.0',
     'model.51.cv6': 'neck.reduce_layers.2.fuse_layers.1',
-    'model.51.cv2': 'neck.reduce_layers.2.short_layers',
+    'model.51.cv2': 'neck.reduce_layers.2.short_layer',
     'model.51.cv7': 'neck.reduce_layers.2.final_conv',
 
     # neck
@@ -295,7 +295,7 @@ convert_dict_x = {
     'model.59.cv4': 'neck.reduce_layers.2.main_layers.2',
     'model.59.cv5': 'neck.reduce_layers.2.fuse_layers.0',
     'model.59.cv6': 'neck.reduce_layers.2.fuse_layers.1',
-    'model.59.cv2': 'neck.reduce_layers.2.short_layers',
+    'model.59.cv2': 'neck.reduce_layers.2.short_layer',
     'model.59.cv7': 'neck.reduce_layers.2.final_conv',
 
     # neck
@@ -435,7 +435,7 @@ convert_dict_w = {
     'model.47.cv4': 'neck.reduce_layers.3.main_layers.2',
     'model.47.cv5': 'neck.reduce_layers.3.fuse_layers.0',
     'model.47.cv6': 'neck.reduce_layers.3.fuse_layers.1',
-    'model.47.cv2': 'neck.reduce_layers.3.short_layers',
+    'model.47.cv2': 'neck.reduce_layers.3.short_layer',
     'model.47.cv7': 'neck.reduce_layers.3.final_conv',
 
     # neck
@@ -602,7 +602,7 @@ convert_dict_e = {
     'model.57.cv4': 'neck.reduce_layers.3.main_layers.2',
     'model.57.cv5': 'neck.reduce_layers.3.fuse_layers.0',
     'model.57.cv6': 'neck.reduce_layers.3.fuse_layers.1',
-    'model.57.cv2': 'neck.reduce_layers.3.short_layers',
+    'model.57.cv2': 'neck.reduce_layers.3.short_layer',
     'model.57.cv7': 'neck.reduce_layers.3.final_conv',
 
     # neck

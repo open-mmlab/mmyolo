@@ -4,10 +4,10 @@ model = dict(
     backbone=dict(arch='D'),
     neck=dict(
         use_maxpool_in_downsample=True,
-        use_in_channels_of_downsample=True,
+        use_in_channels_in_downsample=True,
         block_cfg=dict(
             type='ELANBlock',
-            mid_ratio=0.4,
+            middle_ratio=0.4,
             block_ratio=0.2,
             num_blocks=6,
             num_convs_in_block=1),

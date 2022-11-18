@@ -493,7 +493,7 @@ class ELANBlock(BaseModule):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 mid_ratio: float,
+                 middle_ratio: float,
                  block_ratio: float,
                  num_blocks: int = 2,
                  num_convs_in_block: int = 1,
@@ -506,14 +506,14 @@ class ELANBlock(BaseModule):
         assert num_blocks >= 1
         assert num_convs_in_block >= 1
 
-        mid_channels = int(in_channels * mid_ratio)
+        middle_channels = int(in_channels * middle_ratio)
         block_channels = int(in_channels * block_ratio)
         final_conv_in_channels = int(
-            num_blocks * block_channels) + 2 * mid_channels
+            num_blocks * block_channels) + 2 * middle_channels
 
         self.main_conv = ConvModule(
             in_channels,
-            mid_channels,
+            middle_channels,
             1,
             conv_cfg=conv_cfg,
             norm_cfg=norm_cfg,
@@ -521,7 +521,7 @@ class ELANBlock(BaseModule):
 
         self.short_conv = ConvModule(
             in_channels,
-            mid_channels,
+            middle_channels,
             1,
             conv_cfg=conv_cfg,
             norm_cfg=norm_cfg,
@@ -531,7 +531,7 @@ class ELANBlock(BaseModule):
         for _ in range(num_blocks):
             if num_convs_in_block == 1:
                 internal_block = ConvModule(
-                    mid_channels,
+                    middle_channels,
                     block_channels,
                     3,
                     padding=1,
@@ -543,17 +543,17 @@ class ELANBlock(BaseModule):
                 for _ in range(num_convs_in_block):
                     internal_block.append(
                         ConvModule(
-                            mid_channels,
+                            middle_channels,
                             block_channels,
                             3,
                             padding=1,
                             conv_cfg=conv_cfg,
                             norm_cfg=norm_cfg,
                             act_cfg=act_cfg))
-                    mid_channels = block_channels
+                    middle_channels = block_channels
                 internal_block = nn.Sequential(*internal_block)
 
-            mid_channels = block_channels
+            middle_channels = block_channels
             self.blocks.append(internal_block)
 
         self.final_conv = ConvModule(
@@ -679,7 +679,7 @@ class TinyDownSampleBlock(BaseModule):
             self,
             in_channels: int,
             out_channels: int,
-            mid_ratio: float = 1.0,
+            middle_ratio: float = 1.0,
             kernel_sizes: Union[int, Sequence[int]] = 3,
             conv_cfg: OptConfigType = None,
             norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
@@ -687,11 +687,11 @@ class TinyDownSampleBlock(BaseModule):
             init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg)
 
-        mid_channels = int(in_channels * mid_ratio)
+        middle_channels = int(in_channels * middle_ratio)
 
         self.short_conv = ConvModule(
             in_channels,
-            mid_channels,
+            middle_channels,
             1,
             conv_cfg=conv_cfg,
             norm_cfg=norm_cfg,
@@ -703,7 +703,7 @@ class TinyDownSampleBlock(BaseModule):
                 self.main_convs.append(
                     ConvModule(
                         in_channels,
-                        mid_channels,
+                        middle_channels,
                         1,
                         conv_cfg=conv_cfg,
                         norm_cfg=norm_cfg,
@@ -711,8 +711,8 @@ class TinyDownSampleBlock(BaseModule):
             else:
                 self.main_convs.append(
                     ConvModule(
-                        mid_channels,
-                        mid_channels,
+                        middle_channels,
+                        middle_channels,
                         kernel_sizes,
                         padding=(kernel_sizes - 1) // 2,
                         conv_cfg=conv_cfg,
@@ -720,7 +720,7 @@ class TinyDownSampleBlock(BaseModule):
                         act_cfg=act_cfg))
 
         self.final_conv = ConvModule(
-            mid_channels * 4,
+            middle_channels * 4,
             out_channels,
             1,
             conv_cfg=conv_cfg,
@@ -773,8 +773,9 @@ class SPPFCSPBlock(BaseModule):
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg=init_cfg)
-        mid_channels = int(2 * out_channels * expand_ratio)
         self.is_tiny_version = is_tiny_version
+
+        mid_channels = int(2 * out_channels * expand_ratio)
 
         if is_tiny_version:
             self.main_layers = ConvModule(
@@ -846,7 +847,7 @@ class SPPFCSPBlock(BaseModule):
                     norm_cfg=norm_cfg,
                     act_cfg=act_cfg))
 
-        self.short_layers = ConvModule(
+        self.short_layer = ConvModule(
             in_channels,
             mid_channels,
             1,
@@ -871,21 +872,19 @@ class SPPFCSPBlock(BaseModule):
         if isinstance(self.kernel_sizes, int):
             y1 = self.poolings(x1)
             y2 = self.poolings(y1)
+            concat_list = [x1] + [y1, y2, self.poolings(y2)]
             if self.is_tiny_version:
-                x1 = self.fuse_layers(
-                    torch.cat([self.poolings(y2), y2, y1] + [x1], 1))
+                x1 = self.fuse_layers(torch.cat(concat_list[::-1], 1))
             else:
-                x1 = self.fuse_layers(
-                    torch.cat([x1] + [y1, y2, self.poolings(y2)], 1))
+                x1 = self.fuse_layers(torch.cat(concat_list, 1))
         else:
+            concat_list = [x1] + [m(x1) for m in self.poolings]
             if self.is_tiny_version:
-                x1 = self.fuse_layers(
-                    torch.cat([m(x1) for m in self.poolings][::-1] + [x1], 1))
+                x1 = self.fuse_layers(torch.cat(concat_list[::-1], 1))
             else:
-                x1 = self.fuse_layers(
-                    torch.cat([x1] + [m(x1) for m in self.poolings], 1))
+                x1 = self.fuse_layers(torch.cat(concat_list, 1))
 
-        x2 = self.short_layers(x)
+        x2 = self.short_layer(x)
         return self.final_conv(torch.cat((x1, x2), dim=1))
 
 

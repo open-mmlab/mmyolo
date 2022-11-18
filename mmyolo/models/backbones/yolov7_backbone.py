@@ -41,54 +41,54 @@ class YOLOv7Backbone(BaseBackbone):
         init_cfg (:obj:`ConfigDict` or dict or list[dict] or
             list[:obj:`ConfigDict`]): Initialization config dict.
     """
-    _tiny_stage1_cfg = dict(type='TinyDownSampleBlock', mid_ratio=0.5)
-    _tiny_stage2_4_cfg = dict(type='TinyDownSampleBlock', mid_ratio=1.0)
+    _tiny_stage1_cfg = dict(type='TinyDownSampleBlock', middle_ratio=0.5)
+    _tiny_stage2_4_cfg = dict(type='TinyDownSampleBlock', middle_ratio=1.0)
     _l_expand_channel_2x = dict(
         type='ELANBlock',
-        mid_ratio=0.5,
+        middle_ratio=0.5,
         block_ratio=0.5,
         num_blocks=2,
         num_convs_in_block=2)
     _l_no_change_channel = dict(
         type='ELANBlock',
-        mid_ratio=0.25,
+        middle_ratio=0.25,
         block_ratio=0.25,
         num_blocks=2,
         num_convs_in_block=2)
     _x_expand_channel_2x = dict(
         type='ELANBlock',
-        mid_ratio=0.4,
+        middle_ratio=0.4,
         block_ratio=0.4,
         num_blocks=3,
         num_convs_in_block=2)
     _x_no_change_channel = dict(
         type='ELANBlock',
-        mid_ratio=0.2,
+        middle_ratio=0.2,
         block_ratio=0.2,
         num_blocks=3,
         num_convs_in_block=2)
     _w_no_change_channel = dict(
         type='ELANBlock',
-        mid_ratio=0.5,
+        middle_ratio=0.5,
         block_ratio=0.5,
         num_blocks=2,
         num_convs_in_block=2)
     _e_no_change_channel = dict(
         type='ELANBlock',
-        mid_ratio=0.4,
+        middle_ratio=0.4,
         block_ratio=0.4,
         num_blocks=3,
         num_convs_in_block=2)
     _d_no_change_channel = dict(
         type='ELANBlock',
-        mid_ratio=1 / 3,
+        middle_ratio=1 / 3,
         block_ratio=1 / 3,
         num_blocks=4,
         num_convs_in_block=2)
     _e2e_no_change_channel = dict(
         type='EELANBlock',
         num_elan_block=2,
-        mid_ratio=0.4,
+        middle_ratio=0.4,
         block_ratio=0.4,
         num_blocks=3,
         num_convs_in_block=2)

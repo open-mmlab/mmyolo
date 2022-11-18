@@ -40,7 +40,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
                  out_channels: List[int],
                  block_cfg=dict(
                      type='ELANBlock',
-                     mid_ratio=0.5,
+                     middl_ratio=0.5,
                      block_ratio=0.25,
                      num_blocks=4,
                      num_convs_in_block=1),
@@ -49,7 +49,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
                  spp_expand_ratio: float = 0.5,
                  is_tiny_version: bool = False,
                  use_maxpool_in_downsample: bool = True,
-                 use_in_channels_of_downsample=False,
+                 use_in_channels_in_downsample=False,
                  use_repconv_outs: bool = True,
                  upsample_feats_cat_first: bool = False,
                  freeze_all: bool = False,
@@ -60,7 +60,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
 
         self.is_tiny_version = is_tiny_version
         self.use_maxpool_in_downsample = use_maxpool_in_downsample
-        self.use_in_channels_of_downsample = use_in_channels_of_downsample
+        self.use_in_channels_in_downsample = use_in_channels_in_downsample
         self.spp_expand_ratio = spp_expand_ratio
         self.use_repconv_outs = use_repconv_outs
         self.block_cfg = block_cfg
@@ -148,7 +148,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
             return MaxPoolAndStrideConvBlock(
                 self.out_channels[idx],
                 self.out_channels[idx + 1],
-                use_in_channels_of_middle=self.use_in_channels_of_downsample,
+                use_in_channels_of_middle=self.use_in_channels_in_downsample,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
         else:
