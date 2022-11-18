@@ -247,6 +247,7 @@ class YOLOv7Backbone(BaseBackbone):
             downsample_layer = MaxPoolAndStrideConvBlock(
                 in_channels,
                 out_channels,
+                use_in_channels_of_middle=True,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
         elif self.arch == 'W':
@@ -277,6 +278,7 @@ class YOLOv7Backbone(BaseBackbone):
                 downsample_layer = MaxPoolAndStrideConvBlock(
                     in_channels,
                     in_channels,
+                    use_in_channels_of_middle=False,
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg)
         return downsample_layer

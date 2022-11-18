@@ -19,6 +19,7 @@ model = dict(
     neck=dict(
         in_channels=[256, 512, 768, 1024],
         out_channels=[128, 256, 384, 512],
+        use_maxpool_in_downsample=False,
         use_repconv_outs=False),
     bbox_head=dict(
         head_module=dict(

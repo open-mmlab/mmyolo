@@ -622,12 +622,16 @@ class MaxPoolAndStrideConvBlock(BaseModule):
                  in_channels: int,
                  out_channels: int,
                  maxpool_kernel_sizes=2,
+                 use_in_channels_of_middle=False,
                  conv_cfg: OptConfigType = None,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg=init_cfg)
+
+        middle_channels = in_channels if use_in_channels_of_middle \
+            else out_channels // 2
 
         self.maxpool_branches = nn.Sequential(
             MaxPool2d(
@@ -643,13 +647,13 @@ class MaxPoolAndStrideConvBlock(BaseModule):
         self.stride_conv_branches = nn.Sequential(
             ConvModule(
                 in_channels,
-                out_channels // 2,
+                middle_channels,
                 1,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg),
             ConvModule(
-                out_channels // 2,
+                middle_channels,
                 out_channels // 2,
                 3,
                 stride=2,

@@ -48,6 +48,8 @@ class YOLOv7PAFPN(BaseYOLONeck):
                  widen_factor: float = 1.0,
                  spp_expand_ratio: float = 0.5,
                  is_tiny_version: bool = False,
+                 use_maxpool_in_downsample: bool = True,
+                 use_in_channels_of_downsample=False,
                  use_repconv_outs: bool = True,
                  upsample_feats_cat_first: bool = False,
                  freeze_all: bool = False,
@@ -57,6 +59,8 @@ class YOLOv7PAFPN(BaseYOLONeck):
                  init_cfg: OptMultiConfig = None):
 
         self.is_tiny_version = is_tiny_version
+        self.use_maxpool_in_downsample = use_maxpool_in_downsample
+        self.use_in_channels_of_downsample = use_in_channels_of_downsample
         self.spp_expand_ratio = spp_expand_ratio
         self.use_repconv_outs = use_repconv_outs
         self.block_cfg = block_cfg
@@ -140,8 +144,14 @@ class YOLOv7PAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The downsample layer.
         """
-        if len(self.in_channels) == 4:
-            # P6
+        if self.use_maxpool_in_downsample and not self.is_tiny_version:
+            return MaxPoolAndStrideConvBlock(
+                self.out_channels[idx],
+                self.out_channels[idx + 1],
+                use_in_channels_of_middle=self.use_in_channels_of_downsample,
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg)
+        else:
             return ConvModule(
                 self.out_channels[idx],
                 self.out_channels[idx + 1],
@@ -150,23 +160,6 @@ class YOLOv7PAFPN(BaseYOLONeck):
                 padding=1,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
-        else:
-            # P5
-            if self.is_tiny_version:
-                return ConvModule(
-                    self.out_channels[idx],
-                    self.out_channels[idx + 1],
-                    3,
-                    stride=2,
-                    padding=1,
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg)
-            else:
-                return MaxPoolAndStrideConvBlock(
-                    self.out_channels[idx],
-                    self.out_channels[idx + 1],
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg)
 
     def build_bottom_up_layer(self, idx: int) -> nn.Module:
         """build bottom up layer.
@@ -193,10 +186,9 @@ class YOLOv7PAFPN(BaseYOLONeck):
         """
         if len(self.in_channels) == 4:
             # P6
-            out_channels = self.out_channels[idx]
-        else:
-            # P5
-            out_channels = self.out_channels[idx] * 2
+            return nn.Identity()
+
+        out_channels = self.out_channels[idx] * 2
 
         if self.use_repconv_outs:
             return RepVGGBlock(

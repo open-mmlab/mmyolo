@@ -3,6 +3,8 @@ _base_ = './yolov7_w-p6_syncbn_fast_8x16b-300e_coco.py'
 model = dict(
     backbone=dict(arch='D'),
     neck=dict(
+        use_maxpool_in_downsample=True,
+        use_in_channels_of_downsample=True,
         block_cfg=dict(
             type='ELANBlock',
             mid_ratio=0.4,
