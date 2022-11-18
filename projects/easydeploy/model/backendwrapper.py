@@ -11,7 +11,6 @@ import torch
 from numpy import ndarray
 from torch import Tensor
 
-warnings.filterwarnings(action='ignore', category=UserWarning)
 warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 

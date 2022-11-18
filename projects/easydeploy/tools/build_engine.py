@@ -1,6 +1,6 @@
 import argparse
 
-from projects.easydeploy import EngineBuilder
+from ..model import EngineBuilder
 
 
 def parse_args():
