@@ -1,27 +1,10 @@
+# How to xxx
+
 This tutorial collects answers to any `How to xxx with MMYOLO`. Feel free to update this doc if you meet new questions about `How to` and find the answers!
 
-# Add plugins to the Backbone network
+## Add plugins to the backbone network
 
-MMYOLO supports adding plugins such as none_local and dropout after different stages of Backbone. Users can directly manage plugins by modifying the plugins parameter of backbone in config. For example, add GeneralizedAttention plugins for `YOLOv5`. The configuration files are as follows:
-
-```python
-_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
-
-model = dict(
-    backbone=dict(
-        plugins=[
-            dict(
-                cfg=dict(
-                    type='mmdet.GeneralizedAttention',
-                    spatial_range=-1,
-                    num_heads=8,
-                    attention_type='0011',
-                    kv_stride=2),
-                stages=(False, False, True, True)),
-        ], ))
-```
-
-`cfg` parameter indicates the specific configuration of the plug-in. The `stages` parameter indicates whether to add plug-ins after the corresponding stage of the backbone. The length of list `stages` must be the same as the number of backbone stages.
+Please see [Plugins](plugins.md).
 
 ## Apply multiple Necks
 
@@ -61,16 +44,33 @@ model = dict(
 )
 ```
 
-## Use backbone network implemented in other OpenMMLab repositories
-
-The model registry in MMYOLO, MMDetection, MMClassification, and MMSegmentation all inherit from the root registry in MMEngine in the OpenMMLab 2.0 system, allowing these repositories to directly use modules already implemented by each other. Therefore, in MMYOLO, users can use backbone networks from MMDetection and MMClassification without reimplementation.
+## Replace the backbone network
 
 ```{note}
 1. When using other backbone networks, you need to ensure that the output channels of the backbone network match the input channels of the neck network.
 2. The configuration files given below only ensure that the training will work correctly, and their training performance may not be optimal. Because some backbones require specific learning rates, optimizers, and other hyperparameters. Related contents will be added in the "Training Tips" section later.
 ```
 
-### Use backbone network implemented in MMDetection
+### Use backbone network implemented in MMYOLO
+
+Suppose you want to use `YOLOv6EfficientRep` as the backbone network of `YOLOv5`, the example config is as the following:
+
+```python
+_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+
+model = dict(
+    backbone=dict(
+        type='YOLOv6EfficientRep',
+        norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+        act_cfg=dict(type='ReLU', inplace=True))
+)
+```
+
+### Use backbone network implemented in other OpenMMLab repositories
+
+The model registry in MMYOLO, MMDetection, MMClassification, and MMSegmentation all inherit from the root registry in MMEngine in the OpenMMLab 2.0 system, allowing these repositories to directly use modules already implemented by each other. Therefore, in MMYOLO, users can use backbone networks from MMDetection and MMClassification without reimplementation.
+
+#### Use backbone network implemented in MMDetection
 
 1. Suppose you want to use `ResNet-50` as the backbone network of `YOLOv5`, the example config is as the following:
 
@@ -151,7 +151,7 @@ The model registry in MMYOLO, MMDetection, MMClassification, and MMSegmentation 
    )
    ```
 
-### Use backbone network implemented in MMClassification
+#### Use backbone network implemented in MMClassification
 
 1. Suppose you want to use `ConvNeXt-Tiny` as the backbone network of `YOLOv5`, the example config is as the following:
 
@@ -231,7 +231,7 @@ The model registry in MMYOLO, MMDetection, MMClassification, and MMSegmentation 
    )
    ```
 
-### Use backbone network in `timm` through MMClassification
+#### Use backbone network in `timm` through MMClassification
 
 MMClassification also provides a wrapper for the Py**T**orch **Im**age **M**odels (`timm`) backbone network, users can directly use the backbone network in `timm` through MMClassification. Suppose you want to use `EfficientNet-B1` as the backbone network of `YOLOv5`, the example config is as the following:
 
@@ -260,6 +260,48 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         in_channels=channels, # Note: The 3 channels of EfficientNet-B1 output are [40, 112, 320], which do not match the original yolov5-s neck and need to be changed.
+        out_channels=channels),
+    bbox_head=dict(
+        type='YOLOv5Head',
+        head_module=dict(
+            type='YOLOv5HeadModule',
+            in_channels=channels, # input channels of head need to be changed accordingly
+            widen_factor=widen_factor))
+)
+```
+
+#### Use backbone network implemented in MMSelfSup
+
+Suppose you want to use `ResNet-50` which is self-supervised trained by `MoCo v3` in MMSelfSup as the backbone network of `YOLOv5`, the example config is as the following:
+
+```python
+_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+
+# please run the command, mim install "mmselfsup>=1.0.0rc3", to install mmselfsup
+# import mmselfsup.models to trigger register_module in mmselfsup
+custom_imports = dict(imports=['mmselfsup.models'], allow_failed_imports=False)
+checkpoint_file = 'https://download.openmmlab.com/mmselfsup/1.x/mocov3/mocov3_resnet50_8xb512-amp-coslr-800e_in1k/mocov3_resnet50_8xb512-amp-coslr-800e_in1k_20220927-e043f51a.pth'  # noqa
+deepen_factor = _base_.deepen_factor
+widen_factor = 1.0
+channels = [512, 1024, 2048]
+
+model = dict(
+    backbone=dict(
+        _delete_=True, # Delete the backbone field in _base_
+        type='mmselfsup.ResNet',
+        depth=50,
+        num_stages=4,
+        out_indices=(2, 3, 4), # Note: out_indices of ResNet in MMSelfSup are 1 larger than those in MMdet and MMCls
+        frozen_stages=1,
+        norm_cfg=dict(type='BN', requires_grad=True),
+        norm_eval=True,
+        style='pytorch',
+        init_cfg=dict(type='Pretrained', checkpoint=checkpoint_file)),
+    neck=dict(
+        type='YOLOv5PAFPN',
+        deepen_factor=deepen_factor,
+        widen_factor=widen_factor,
+        in_channels=channels, # Note: The 3 channels of ResNet-50 output are [512, 1024, 2048], which do not match the original yolov5-s neck and need to be changed.
         out_channels=channels),
     bbox_head=dict(
         type='YOLOv5Head',
