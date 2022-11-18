@@ -388,7 +388,7 @@ def main():
         else:
             cfg.train_dataloader.dataset.pipeline = None
         dataset = DATASETS.build(cfg.train_dataloader.dataset)
-    elif args.val_dataset is True:
+    else:
         if cfg.val_dataloader.dataset.type == 'ConcatDataset':
             for dataset in cfg.val_dataloader.dataset.datasets:
                 dataset.pipeline = None
