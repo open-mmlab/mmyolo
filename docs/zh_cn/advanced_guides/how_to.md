@@ -47,17 +47,33 @@ model = dict(
 )
 ```
 
-## 跨库使用主干网络
-
-OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation 中的模型注册表都继承自 MMEngine 中的根注册表，允许这些 OpenMMLab
-开源库直接使用彼此已经实现的模块。 因此用户可以在 MMYOLO 中使用来自 MMDetection、MMClassification 的主干网络，而无需重新实现。
+## 更换主干网络
 
 ```{note}
 1. 使用其他主干网络时，你需要保证主干网络的输出通道与 Neck 的输入通道相匹配。
 2. 下面给出的配置文件，仅能确保训练可以正确运行，直接训练性能可能不是最优的。因为某些 backbone 需要配套特定的学习率、优化器等超参数。后续会在“训练技巧章节”补充训练调优相关内容。
 ```
 
-### 使用在 MMDetection 中实现的主干网络
+### 使用 MMYOLO 中注册的主干网络
+
+假设想将 `YOLOv6EfficientRep`  作为 `YOLOv5` 的主干网络，则配置文件如下：
+
+```python
+_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+
+model = dict(
+    backbone=dict(
+        type='YOLOv6EfficientRep',
+        norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+        act_cfg=dict(type='ReLU', inplace=True))
+)
+```
+
+### 跨库使用主干网络
+
+OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSelfsup 中的模型注册表都继承自 MMEngine 中的根注册表，允许这些 OpenMMLab 开源库直接使用彼此已经实现的模块。 因此用户可以在 MMYOLO 中使用来自 MMDetection、MMClassification、MMSelfsup 的主干网络，而无需重新实现。
+
+#### 使用在 MMDetection 中实现的主干网络
 
 1. 假设想将 `ResNet-50` 作为 `YOLOv5` 的主干网络，则配置文件如下：
 
@@ -138,7 +154,7 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
    )
    ```
 
-### 使用在 MMClassification 中实现的主干网络
+#### 使用在 MMClassification 中实现的主干网络
 
 1. 假设想将 `ConvNeXt-Tiny` 作为 `YOLOv5` 的主干网络，则配置文件如下：
 
@@ -218,10 +234,9 @@ OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification、MMSegmentation
    )
    ```
 
-### 通过 MMClassification 使用 `timm` 中实现的主干网络
+#### 通过 MMClassification 使用 `timm` 中实现的主干网络
 
-由于 MMClassification 提供了 Py**T**orch **Im**age **M**odels (`timm`) 主干网络的封装，用户也可以通过 MMClassification 直接使用 `timm`
-中的主干网络。假设想将 `EfficientNet-B1`作为 `YOLOv5` 的主干网络，则配置文件如下：
+由于 MMClassification 提供了 Py**T**orch **Im**age **M**odels (`timm`) 主干网络的封装，用户也可以通过 MMClassification 直接使用 `timm` 中的主干网络。假设想将 `EfficientNet-B1`作为 `YOLOv5` 的主干网络，则配置文件如下：
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -254,6 +269,48 @@ model = dict(
         head_module=dict(
             type='YOLOv5HeadModule',
             in_channels=channels,  # head 部分输入通道也要做相应更改
+            widen_factor=widen_factor))
+)
+```
+
+#### 使用在 MMSelfSup 中实现的主干网络
+
+假设想将 MMSelfSup 中 `MoCo v3`  自监督训练的 `ResNet-50` 作为 `YOLOv5` 的主干网络，则配置文件如下：
+
+```python
+_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+
+# 请先使用命令： mim install "mmselfsup>=1.0.0rc3"，安装 mmselfsup
+# 导入 mmselfsup.models 使得可以调用 mmselfsup 中注册的模块
+custom_imports = dict(imports=['mmselfsup.models'], allow_failed_imports=False)
+checkpoint_file = 'https://download.openmmlab.com/mmselfsup/1.x/mocov3/mocov3_resnet50_8xb512-amp-coslr-800e_in1k/mocov3_resnet50_8xb512-amp-coslr-800e_in1k_20220927-e043f51a.pth'  # noqa
+deepen_factor = _base_.deepen_factor
+widen_factor = 1.0
+channels = [512, 1024, 2048]
+
+model = dict(
+    backbone=dict(
+        _delete_=True, # 将 _base_ 中关于 backbone 的字段删除
+        type='mmselfsup.ResNet',
+        depth=50,
+        num_stages=4,
+        out_indices=(2, 3, 4), # 注意：MMSelfSup 中 ResNet 的 out_indices 比 MMdet 和 MMCls 的要大 1
+        frozen_stages=1,
+        norm_cfg=dict(type='BN', requires_grad=True),
+        norm_eval=True,
+        style='pytorch',
+        init_cfg=dict(type='Pretrained', checkpoint=checkpoint_file)),
+    neck=dict(
+        type='YOLOv5PAFPN',
+        deepen_factor=deepen_factor,
+        widen_factor=widen_factor,
+        in_channels=channels, # 注意：ResNet-50 输出的3个通道是 [512, 1024, 2048]，和原先的 yolov5-s neck 不匹配，需要更改
+        out_channels=channels),
+    bbox_head=dict(
+        type='YOLOv5Head',
+        head_module=dict(
+            type='YOLOv5HeadModule',
+            in_channels=channels, # head 部分输入通道也要做相应更改
             widen_factor=widen_factor))
 )
 ```
