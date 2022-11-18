@@ -4,7 +4,6 @@ import urllib
 
 import numpy as np
 import torch
-from mmdet.models.backbones.csp_darknet import Focus
 from mmengine.utils import scandir
 
 from mmyolo.models import RepVGGBlock
@@ -18,14 +17,6 @@ def switch_to_deploy(model):
     for layer in model.modules():
         if isinstance(layer, RepVGGBlock):
             layer.switch_to_deploy()
-        if isinstance(layer, Focus):
-            try:
-                from projects.easydeploy.backbone import DeployFocus
-            except Exception as e:
-                print('Do not switch Focus() to DeployFocus()')
-                print(f'Error message is\n{e}')
-            else:
-                model.backbone.stem = DeployFocus(layer)
 
     print('Switch model to deploy modality.')
 
