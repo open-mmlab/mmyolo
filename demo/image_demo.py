@@ -3,6 +3,7 @@ import os
 from argparse import ArgumentParser
 
 import mmcv
+import torch
 from mmdet.apis import inference_detector, init_detector
 from mmengine.logging import print_log
 from mmengine.utils import ProgressBar
@@ -66,9 +67,7 @@ def main():
     files, source_type = get_file_list(args.img)
 
     # ready for labelme format if it is needed
-    to_label_format = LabelmeFormat(
-        classes=model.dataset_meta.get('CLASSES'),
-        score_threshold=args.score_thr)
+    to_label_format = LabelmeFormat(classes=model.dataset_meta.get('CLASSES'))
 
     # start detector inference
     progress_bar = ProgressBar(len(files))
@@ -85,11 +84,16 @@ def main():
         out_file = None if args.show else os.path.join(args.out_dir, filename)
 
         progress_bar.update()
+
+        # Get candidate predict info index with score threshold
+        candidate_index = torch.where(
+            torch.tensor(result.pred_instances.scores > args.score_thr))[0]
+
         if args.to_labelme:
             # save result to labelme files
             out_file = out_file.replace(
                 os.path.splitext(out_file)[-1], '.json')
-            to_label_format(result, out_file)
+            to_label_format(result, out_file, candidate_index)
             continue
 
         visualizer.add_datasample(

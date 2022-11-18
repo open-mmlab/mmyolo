@@ -1,7 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import json
 
-import torch
 from mmdet.structures import DetDataSample
 
 
@@ -15,17 +14,18 @@ class LabelmeFormat:
         score_threshold (float): Predict score threshold.
     """
 
-    def __init__(self, classes: tuple, score_threshold: float):
+    def __init__(self, classes: tuple):
         super().__init__()
         self.classes = classes
-        self.score_threshold = score_threshold
 
-    def __call__(self, results: DetDataSample, output_path: str):
+    def __call__(self, results: DetDataSample, output_path: str,
+                 candidate_index: list):
         """Get image data field for labelme.
 
         Args:
             results (DetDataSample): Predict info.
             output_path (str): Image file path.
+            candidate_index (list): Candidate index for pred info.
 
         Labelme file eg.
             {
@@ -69,11 +69,7 @@ class LabelmeFormat:
             'shapes': []
         }
 
-        res_index = torch.where(
-            torch.tensor(
-                results.pred_instances.scores > self.score_threshold))[0]
-
-        for index in res_index:
+        for index in candidate_index:
             pred_bbox = results.pred_instances.bboxes[index].cpu().numpy(
             ).tolist()
             pred_label = self.classes[results.pred_instances.labels[index]]
