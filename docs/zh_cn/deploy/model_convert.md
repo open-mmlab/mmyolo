@@ -4,13 +4,13 @@
 
 - [onnx](https://github.com/onnx/onnx)
 
-  ``` shell
+  ```shell
   pip install onnx
   ```
 
   [onnx-simplifier](https://github.com/daquexian/onnx-simplifier) (可选，用于简化模型)
 
-  ``` shell
+  ```shell
   pip install onnx-simplifier
   ```
 
@@ -34,9 +34,9 @@
 - `--iou-threshold`: 非极大值抑制中过滤重复候选框的 `iou` 阈值，默认为 `0.65`。
 - `--score-threshold`: 非极大值抑制中过滤候选框得分的阈值，默认为 `0.25`。
 
-例子: 
+例子:
 
-``` shell
+```shell
 python ./projects/easydeploy/tools/export.py \
 	configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
 	yolov5s.pth \
@@ -52,7 +52,5 @@ python ./projects/easydeploy/tools/export.py \
 	--iou-threshold 0.65 \
 	--score-threshold 0.25
 ```
-
-
 
 然后利用后端支持的工具如 `TensorRT` 读取 `onnx` 再次转换为后端支持的模型格式如 `.engine/.plan` 等

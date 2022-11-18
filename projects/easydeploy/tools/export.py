@@ -9,7 +9,7 @@ from mmdet.apis import init_detector
 from mmengine.config import ConfigDict
 
 from mmyolo.utils import register_all_modules
-from ..model import DeployModel
+from projects.easydeploy.model import DeployModel
 
 warnings.filterwarnings(action='ignore', category=torch.jit.TracerWarning)
 warnings.filterwarnings(action='ignore', category=torch.jit.ScriptWarning)
@@ -65,7 +65,7 @@ def parse_args():
     return args
 
 
-def build_model_from_cfg(config_path, checkpoint_path, device, switch=False):
+def build_model_from_cfg(config_path, checkpoint_path, device):
     model = init_detector(config_path, checkpoint_path, device=device)
     model.eval()
     return model
@@ -85,8 +85,7 @@ def main():
         score_threshold=args.score_threshold,
         backend=args.backend)
 
-    baseModel = build_model_from_cfg(args.config, args.checkpoint, args.device,
-                                     args.deploy)
+    baseModel = build_model_from_cfg(args.config, args.checkpoint, args.device)
 
     deploy_model = DeployModel(
         baseModel=baseModel, postprocess_cfg=postprocess_cfg)
