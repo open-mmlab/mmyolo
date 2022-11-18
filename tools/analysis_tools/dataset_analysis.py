@@ -378,24 +378,26 @@ def main():
     # register all modules in mmdet into the registries
     register_all_modules()
 
+    def replace_pipeline_to_none(dataloader_cfg):
+        if dataloader_cfg.get('dataset', None) is None and dataloader_cfg.get(
+                'datasets', None) is None:
+            return
+        dataset = dataloader_cfg.dataset if dataloader_cfg.get(
+            'dataset', None) else dataloader_cfg.datasets
+        if isinstance(dataset, list):
+            for item in dataset:
+                item.pipeline = None
+        elif dataset.get('pipeline', None):
+            dataset.pipeline = None
+        else:
+            replace_pipeline_to_none(dataset)
+
     # 1.Build Dataset
     if args.val_dataset is False:
-        if cfg.train_dataloader.dataset.type == 'ConcatDataset':
-            for dataset in cfg.train_dataloader.dataset.datasets:
-                dataset.pipeline = None
-        elif cfg.train_dataloader.dataset.type == 'ClassBalancedDataset':
-            cfg.train_dataloader.dataset.dataset.pipeline = None
-        else:
-            cfg.train_dataloader.dataset.pipeline = None
+        replace_pipeline_to_none(cfg.train_dataloader)
         dataset = DATASETS.build(cfg.train_dataloader.dataset)
     else:
-        if cfg.val_dataloader.dataset.type == 'ConcatDataset':
-            for dataset in cfg.val_dataloader.dataset.datasets:
-                dataset.pipeline = None
-        elif cfg.val_dataloader.dataset.type == 'ClassBalancedDataset':
-            cfg.val_dataloader.dataset.dataset.pipeline = None
-        else:
-            cfg.val_dataloader.dataset.pipeline = None
+        replace_pipeline_to_none(cfg.val_dataloader)
         dataset = DATASETS.build(cfg.val_dataloader.dataset)
 
     data_list = []
