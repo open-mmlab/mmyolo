@@ -4,10 +4,13 @@ from typing import List, Optional
 
 import torch
 import torch.nn as nn
+from mmdet.models.backbones.csp_darknet import Focus
 from mmengine.config import ConfigDict
 from torch import Tensor
 
+from mmyolo.models import RepVGGBlock
 from mmyolo.models.dense_heads import RTMDetHead, YOLOv5Head
+from ..backbone import DeployFocus, GConvFocus, NcnnFocus
 from ..bbox_code import rtmdet_bbox_decoder, yolov5_bbox_decoder
 from ..nms import batched_nms, efficient_nms, onnx_nms
 
@@ -21,6 +24,7 @@ class DeployModel(nn.Module):
         self.baseModel = baseModel
         self.baseHead = baseModel.bbox_head
         self.__init_sub_attributes()
+        detector_type = type(self.baseHead)
         if postprocess_cfg is None:
             pre_top_k = 1000
             keep_top_k = 100
@@ -33,6 +37,7 @@ class DeployModel(nn.Module):
             iou_threshold = postprocess_cfg.get('iou_threshold', 0.65)
             score_threshold = postprocess_cfg.get('score_threshold', 0.25)
             backend = postprocess_cfg.get('backend', 1)
+        self.__switch_deploy()
         self.__dict__.update(locals())
 
     def __init_sub_attributes(self):
@@ -42,20 +47,34 @@ class DeployModel(nn.Module):
         self.featmap_strides = self.baseHead.featmap_strides
         self.num_classes = self.baseHead.num_classes
 
+    def __switch_deploy(self):
+        for layer in self.baseModel.modules():
+            if isinstance(layer, RepVGGBlock):
+                layer.switch_to_deploy()
+            if isinstance(layer, Focus):
+                # onnxruntime tensorrt8 tensorrt7
+                if self.backend in (1, 2, 3):
+                    self.baseModel.backbone.stem = DeployFocus(layer)
+                # ncnn
+                elif self.backend == 4:
+                    self.baseModel.backbone.stem = NcnnFocus(layer)
+                # switch focus to group conv
+                else:
+                    self.baseModel.backbone.stem = GConvFocus(layer)
+
     def pred_by_feat(self,
                      cls_scores: List[Tensor],
                      bbox_preds: List[Tensor],
                      objectnesses: Optional[List[Tensor]] = None,
                      **kwargs):
         assert len(cls_scores) == len(bbox_preds)
-        detector_type = type(self.baseHead)
         dtype = cls_scores[0].dtype
         device = cls_scores[0].device
 
         nms_func = self.select_nms()
-        if detector_type is YOLOv5Head:
+        if self.detector_type is YOLOv5Head:
             bbox_decoder = yolov5_bbox_decoder
-        elif detector_type is RTMDetHead:
+        elif self.detector_type is RTMDetHead:
             bbox_decoder = rtmdet_bbox_decoder
         else:
             bbox_decoder = self.bbox_decoder
