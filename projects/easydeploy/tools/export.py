@@ -8,7 +8,7 @@ import torch
 from mmdet.apis import init_detector
 from mmengine.config import ConfigDict
 
-from mmyolo.utils import register_all_modules, switch_to_deploy
+from mmyolo.utils import register_all_modules
 from ..model import DeployModel
 
 warnings.filterwarnings(action='ignore', category=torch.jit.TracerWarning)
@@ -32,10 +32,6 @@ def parse_args():
     parser.add_argument('--batch-size', type=int, default=1, help='Batch size')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
-    parser.add_argument(
-        '--deploy',
-        action='store_true',
-        help='Switch model to deployment mode')
     parser.add_argument(
         '--simplify',
         action='store_true',
@@ -71,8 +67,6 @@ def parse_args():
 
 def build_model_from_cfg(config_path, checkpoint_path, device, switch=False):
     model = init_detector(config_path, checkpoint_path, device=device)
-    if switch:
-        switch_to_deploy(model)
     model.eval()
     return model
 
