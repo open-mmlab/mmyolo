@@ -18,7 +18,12 @@ import mmcv
 from mmdet.apis import inference_detector, init_detector
 from mmengine.logging import print_log
 from mmengine.utils import ProgressBar
-from sahi.slicing import slice_image
+
+try:
+    from sahi.slicing import slice_image
+except ImportError:
+    raise ImportError('Please run "pip install -U sahi" '
+                      'to install sahi first for large image inference.')
 
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules, switch_to_deploy

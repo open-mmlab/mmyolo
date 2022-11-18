@@ -20,7 +20,11 @@ def shift_predictions(det_data_samples: SampleList,
     Returns:
         (List[:obj:`DetDataSample`]): shifted results.
     """
-    from sahi.slicing import shift_bboxes, shift_masks
+    try:
+        from sahi.slicing import shift_bboxes, shift_masks
+    except ImportError:
+        raise ImportError('Please run "pip install -U sahi" '
+                          'to install sahi first for large image inference.')
 
     assert len(det_data_samples) == len(
         offsets), 'The `results` should has the ' 'same length with `offsets`.'
@@ -68,7 +72,5 @@ def merge_results_by_nms(results: SampleList, offsets: Sequence[Tuple[int,
     merged_instances = shifted_instances[keeps]
 
     merged_result = results[0].clone()
-    # update items like gt_instances, ignore_instances
-    merged_result.update(results[0])
     merged_result.pred_instances = merged_instances
     return merged_result
