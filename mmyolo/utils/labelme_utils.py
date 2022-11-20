@@ -2,6 +2,7 @@
 import json
 
 from mmdet.structures import DetDataSample
+from mmengine.structures import InstanceData
 
 
 class LabelmeFormat:
@@ -19,13 +20,13 @@ class LabelmeFormat:
         self.classes = classes
 
     def __call__(self, results: DetDataSample, output_path: str,
-                 candidate_index: list):
+                 pred_instances: InstanceData):
         """Get image data field for labelme.
 
         Args:
             results (DetDataSample): Predict info.
             output_path (str): Image file path.
-            candidate_index (list): Candidate index for pred info.
+            pred_instances (InstanceData): Candidate prediction info.
 
         Labelme file eg.
             {
@@ -69,10 +70,9 @@ class LabelmeFormat:
             'shapes': []
         }
 
-        for index in candidate_index:
-            pred_bbox = results.pred_instances.bboxes[index].cpu().numpy(
-            ).tolist()
-            pred_label = self.classes[results.pred_instances.labels[index]]
+        for pred_info in pred_instances:
+            pred_bbox = pred_info.bboxes.cpu().numpy().tolist()[0]
+            pred_label = self.classes[pred_info.labels]
 
             sub_dict = {
                 'label': pred_label,

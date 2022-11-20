@@ -85,15 +85,15 @@ def main():
 
         progress_bar.update()
 
-        # Get candidate predict info index with score threshold
-        candidate_index = torch.where(
-            torch.tensor(result.pred_instances.scores > args.score_thr))[0]
+        # Get candidate predict info with score threshold
+        pred_instances = result.pred_instances[
+            result.pred_instances.scores > args.score_thr]
 
         if args.to_labelme:
             # save result to labelme files
             out_file = out_file.replace(
                 os.path.splitext(out_file)[-1], '.json')
-            to_label_format(result, out_file, candidate_index)
+            to_label_format(result, out_file, pred_instances)
             continue
 
         visualizer.add_datasample(
