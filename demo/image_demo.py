@@ -3,7 +3,6 @@ import os
 from argparse import ArgumentParser
 
 import mmcv
-import torch
 from mmdet.apis import inference_detector, init_detector
 from mmengine.logging import print_log
 from mmengine.utils import ProgressBar
