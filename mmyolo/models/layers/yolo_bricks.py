@@ -1339,13 +1339,13 @@ class RepStageBlock(nn.Module):
                 block_cfg=block_cfg,
                 adaptive_weight=True)
             num_blocks = num_blocks // 2
-            self.block = nn.Sequential(
-                *(BottleRep(
+            self.block = None
+            if num_blocks > 1:
+                self.block = nn.Sequential(*(BottleRep(
                     out_channels,
                     out_channels,
                     block_cfg=block_cfg,
-                    adaptive_weight=True)
-                  for _ in range(num_blocks - 1))) if num_blocks > 1 else None
+                    adaptive_weight=True) for _ in range(num_blocks - 1)))
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward process.
