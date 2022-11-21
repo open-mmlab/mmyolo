@@ -118,6 +118,7 @@ class SPPFBottleneck(BaseModule):
         return x
 
 
+@MODELS.register_module()
 class RepVGGBlock(nn.Module):
     """RepVGGBlock is a basic rep-style block, including training and deploy
     status This code is based on

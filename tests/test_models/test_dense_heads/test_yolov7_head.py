@@ -130,6 +130,8 @@ class TestYOLOv7Head(TestCase):
             bboxes=torch.Tensor([[23.6667, 23.8757, 238.6326, 151.8874]]),
             labels=torch.LongTensor([0]))
 
+        cls_scores, bbox_preds, objectnesses = head.forward(feat)
+
         one_gt_losses = head.loss_by_feat(cls_scores, bbox_preds, objectnesses,
                                           [gt_instances], img_metas)
         onegt_cls_loss = one_gt_losses['loss_cls'].sum()
