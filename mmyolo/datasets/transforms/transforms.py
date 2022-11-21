@@ -210,8 +210,10 @@ class LetterResize(MMDET_Resize):
         scale_factor = (ratio[0], ratio[1])
 
         if 'scale_factor' in results:
-            results['scale_factor'] = (results['scale_factor'][0] * scale_factor[0],
-                                       results['scale_factor'][1] * scale_factor[1])
+            results['scale_factor'] = (results['scale_factor'][0] *
+                                       scale_factor[0],
+                                       results['scale_factor'][1] *
+                                       scale_factor[1])
         else:
             results['scale_factor'] = scale_factor
 
