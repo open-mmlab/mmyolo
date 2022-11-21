@@ -109,6 +109,8 @@ labelme /data/cat/images --output /data/cat/labels --autosave --nodata
 
 输入命令之后 labelme 就会启动，然后进行标签检查即可。
 
+**注意：打标签的时候务必使用 `rectangle`**
+
 ## 1.2 人工打标签
 
 步骤和 【1.1.2 人工打标签】 相同，只是这里是直接打标签，没有预先生成的标签。
