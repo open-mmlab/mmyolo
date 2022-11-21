@@ -7,18 +7,20 @@ from mmengine.logging import print_log
 from mmengine.model import is_model_wrapper
 from mmengine.optim import OptimWrapper
 
+from mmyolo.models.dense_heads.yolov7_head import ImplicitA, ImplicitM
 from mmyolo.registry import (OPTIM_WRAPPER_CONSTRUCTORS, OPTIM_WRAPPERS,
                              OPTIMIZERS)
 
 
+# TODO: Consider merging into YOLOv5OptimizerConstructor
 @OPTIM_WRAPPER_CONSTRUCTORS.register_module()
-class YOLOv5OptimizerConstructor:
-    """YOLOv5 constructor for optimizers.
+class YOLOv7OptimWrapperConstructor:
+    """YOLOv7 constructor for optimizer wrappers.
 
     It has the following functions：
 
         - divides the optimizer parameters into 3 groups:
-        Conv, Bias and BN
+        Conv, Bias and BN/ImplicitA/ImplicitM
 
         - support `weight_decay` parameter adaption based on
         `batch_size_per_gpu`
@@ -55,7 +57,7 @@ class YOLOv5OptimizerConstructor:
         >>>     dict(type='OptimWrapper', optimizer=dict(type='SGD', lr=0.01,
         >>>         momentum=0.9, weight_decay=0.0001, batch_size_per_gpu=16))
         >>> paramwise_cfg = dict(base_total_batch_size=64)
-        >>> optim_wrapper_builder = YOLOv5OptimizerConstructor(
+        >>> optim_wrapper_builder = YOLOv7OptimWrapperConstructor(
         >>>     optim_wrapper_cfg, paramwise_cfg)
         >>> optim_wrapper = optim_wrapper_builder(model)
     """
@@ -98,32 +100,37 @@ class YOLOv5OptimizerConstructor:
                 print_log(f'Scaled weight_decay to {weight_decay}', 'current')
 
         params_groups = [], [], []
-
         for v in model.modules():
+            # no decay
+            # Caution: Coupling with model
+            if isinstance(v, (ImplicitA, ImplicitM)):
+                params_groups[0].append(v.implicit)
+            elif isinstance(v, nn.modules.batchnorm._NormBase):
+                params_groups[0].append(v.weight)
+            # apply decay
+            elif hasattr(v, 'weight') and isinstance(v.weight, nn.Parameter):
+                params_groups[1].append(v.weight)  # apply decay
+
+            # biases, no decay
             if hasattr(v, 'bias') and isinstance(v.bias, nn.Parameter):
                 params_groups[2].append(v.bias)
-            # Includes SyncBatchNorm
-            if isinstance(v, nn.modules.batchnorm._NormBase):
-                params_groups[1].append(v.weight)
-            elif hasattr(v, 'weight') and isinstance(v.weight, nn.Parameter):
-                params_groups[0].append(v.weight)
 
         # Note: Make sure bias is in the last parameter group
         optimizer_cfg['params'] = []
         # conv
         optimizer_cfg['params'].append({
-            'params': params_groups[0],
+            'params': params_groups[1],
             'weight_decay': weight_decay
         })
-        # bn
-        optimizer_cfg['params'].append({'params': params_groups[1]})
+        # bn ...
+        optimizer_cfg['params'].append({'params': params_groups[0]})
         # bias
         optimizer_cfg['params'].append({'params': params_groups[2]})
 
         print_log(
             'Optimizer groups: %g .bias, %g conv.weight, %g other' %
-            (len(params_groups[2]), len(params_groups[0]), len(
-                params_groups[1])), 'current')
+            (len(params_groups[2]), len(params_groups[1]), len(
+                params_groups[0])), 'current')
         del params_groups
 
         optimizer = OPTIMIZERS.build(optimizer_cfg)
