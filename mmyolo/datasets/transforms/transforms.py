@@ -207,7 +207,7 @@ class LetterResize(MMDET_Resize):
                 image, (no_pad_shape[1], no_pad_shape[0]),
                 interpolation=self.interpolation,
                 backend=self.backend)
-
+#
         scale_factor = np.array([ratio[0], ratio[1]], dtype=np.float32)
 
         if 'scale_factor' in results:
