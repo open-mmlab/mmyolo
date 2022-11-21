@@ -2,7 +2,7 @@
 from typing import List
 
 import torch.nn as nn
-from mmcv.cnn import ConvModule
+from mmcv.cnn import ConvModule, DepthwiseSeparableConvModule
 from mmdet.models.backbones.csp_darknet import CSPLayer
 from mmdet.utils import ConfigType, OptMultiConfig
 
@@ -22,6 +22,8 @@ class YOLOXPAFPN(BaseYOLONeck):
         widen_factor (float): Width multiplier, multiply number of
             channels in each layer by this amount. Defaults to 1.0.
         num_csp_blocks (int): Number of bottlenecks in CSPLayer. Defaults to 1.
+        use_depthwise (bool): Whether to use depthwise separable convolution.
+            Defaults to False.
         freeze_all(bool): Whether to freeze the model. Defaults to False.
         norm_cfg (dict): Config dict for normalization layer.
             Defaults to dict(type='BN', momentum=0.03, eps=0.001).
@@ -37,12 +39,14 @@ class YOLOXPAFPN(BaseYOLONeck):
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  num_csp_blocks: int = 3,
+                 use_depthwise: bool = False,
                  freeze_all: bool = False,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  init_cfg: OptMultiConfig = None):
         self.num_csp_blocks = round(num_csp_blocks * deepen_factor)
+        self.use_depthwise = use_depthwise
 
         super().__init__(
             in_channels=[
@@ -123,7 +127,9 @@ class YOLOXPAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The downsample layer.
         """
-        return ConvModule(
+        conv = DepthwiseSeparableConvModule \
+            if self.use_depthwise else ConvModule
+        return conv(
             self.in_channels[idx],
             self.in_channels[idx],
             kernel_size=3,
