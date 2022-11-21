@@ -207,7 +207,7 @@ class LetterResize(MMDET_Resize):
                 interpolation=self.interpolation,
                 backend=self.backend)
 
-        scale_factor = (ratio[0], ratio[1])
+        scale_factor = (ratio[1], ratio[0])  # mmcv scale factor is (w, h)
 
         if 'scale_factor' in results:
             results['scale_factor'] = (results['scale_factor'][0] *
