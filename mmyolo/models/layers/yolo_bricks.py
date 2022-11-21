@@ -520,31 +520,60 @@ class ConvWrapper(nn.Module):
         return self.block(x)
 
 
+@MODELS.register_module()
 class RepStageBlock(nn.Module):
     """RepStageBlock is a stage block with rep-style basic block.
 
     Args:
         in_channels (int): The input channels of this Module.
         out_channels (int): The output channels of this Module.
-        n (int, tuple[int]): Number of blocks.  Defaults to 1.
-        block (nn.Module): Basic unit of RepStage. Defaults to RepVGGBlock.
+        num_blocks (int, tuple[int]): Number of blocks.  Defaults to 1.
+        bottle_block (nn.Module): Basic unit of RepStage.
+            Defaults to RepVGGBlock.
+        block_cfg (ConfigType): Config of RepStage.
+            Defaults to 'RepVGGBlock'.
     """
 
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 n: int = 1,
-                 block: nn.Module = RepVGGBlock):
+                 num_blocks: int = 1,
+                 bottle_block: nn.Module = RepVGGBlock,
+                 block_cfg: ConfigType = dict(type='RepVGGBlock')):
         super().__init__()
-        self.conv1 = block(in_channels, out_channels)
-        self.block = nn.Sequential(*(block(out_channels, out_channels)
-                                     for _ in range(n - 1))) if n > 1 else None
+        block_cfg = block_cfg.copy()
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        block_cfg.update(
+            dict(in_channels=in_channels, out_channels=out_channels))
+
+        self.conv1 = MODELS.build(block_cfg)
+
+        block_cfg.update(
+            dict(in_channels=out_channels, out_channels=out_channels))
+        self.block = nn.Sequential(
+            *(MODELS.build(block_cfg)
+              for _ in range(num_blocks - 1))) if num_blocks > 1 else None
+
+        if bottle_block == BottleRep:
+            self.conv1 = BottleRep(
+                in_channels,
+                out_channels,
+                block_cfg=block_cfg,
+                adaptive_weight=True)
+            num_blocks = num_blocks // 2
+            self.block = nn.Sequential(
+                *(BottleRep(
+                    out_channels,
+                    out_channels,
+                    block_cfg=block_cfg,
+                    adaptive_weight=True)
+                  for _ in range(num_blocks - 1))) if num_blocks > 1 else None
+
+    def forward(self, x: Tensor) -> Tensor:
         """Forward process.
+
         Args:
             inputs (Tensor): The input tensor.
-
         Returns:
             Tensor: The output tensor.
         """
