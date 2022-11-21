@@ -48,7 +48,7 @@ class TestLetterResize(unittest.TestCase):
         self.assertTrue((results['batch_shape'] == np.array([460, 672])).all())
         self.assertTrue(
             (results['pad_param'] == np.array([80., 80., 136., 136.])).all())
-        self.assertTrue((results['scale_factor'] <= 1.).all())
+        self.assertTrue((np.array(results['scale_factor'], dtype=np.float32) <= 1.).all())
 
         # Test pad_val
         transform = LetterResize(scale=(640, 640), pad_val=dict(img=144))
@@ -59,7 +59,7 @@ class TestLetterResize(unittest.TestCase):
         self.assertTrue((results['batch_shape'] == np.array([460, 672])).all())
         self.assertTrue((results['pad_param'] == np.array([0., 0., 29.,
                                                            30.])).all())
-        self.assertTrue((results['scale_factor'] > 1.).all())
+        self.assertTrue((np.array(results['scale_factor'], dtype=np.float32) > 1.).all())
 
         # Test use_mini_pad
         transform = LetterResize(scale=(640, 640), use_mini_pad=True)
@@ -70,7 +70,7 @@ class TestLetterResize(unittest.TestCase):
         self.assertTrue((results['batch_shape'] == np.array([460, 672])).all())
         self.assertTrue((results['pad_param'] == np.array([0., 0., 13.,
                                                            14.])).all())
-        self.assertTrue((results['scale_factor'] > 1.).all())
+        self.assertTrue((np.array(results['scale_factor'], dtype=np.float32) > 1.).all())
 
         # Test stretch_only
         transform = LetterResize(scale=(640, 640), stretch_only=True)
@@ -150,13 +150,13 @@ class TestYOLOv5KeepRatioResize(unittest.TestCase):
         self.assertEqual(results['img_shape'], (480, 640))
         self.assertTrue(
             (results['gt_bboxes'] == np.array([[0., 0., 240., 240.]])).all())
-        self.assertTrue((results['scale_factor'] == 1.6).all())
+        self.assertTrue((np.array(results['scale_factor'], dtype=np.float32) == 1.6).all())
 
         # Test only img
         transform = YOLOv5KeepRatioResize(scale=(640, 640))
         results = transform(copy.deepcopy(self.data_info2))
         self.assertEqual(results['img_shape'], (480, 640))
-        self.assertTrue((results['scale_factor'] == 1.6).all())
+        self.assertTrue((np.array(results['scale_factor'], dtype=np.float32) == 1.6).all())
 
 
 class TestYOLOv5HSVRandomAug(unittest.TestCase):

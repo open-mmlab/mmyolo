@@ -104,8 +104,7 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
             resized_h, resized_w = image.shape[:2]
             scale_ratio = resized_h / original_h
 
-            scale_factor = np.array([scale_ratio, scale_ratio],
-                                    dtype=np.float32)
+            scale_factor = (scale_ratio, scale_ratio)
 
             results['img'] = image
             results['img_shape'] = image.shape[:2]
@@ -207,11 +206,12 @@ class LetterResize(MMDET_Resize):
                 image, (no_pad_shape[1], no_pad_shape[0]),
                 interpolation=self.interpolation,
                 backend=self.backend)
-#
-        scale_factor = np.array([ratio[0], ratio[1]], dtype=np.float32)
+
+        scale_factor = (ratio[0], ratio[1])
 
         if 'scale_factor' in results:
-            results['scale_factor'] = results['scale_factor'] * scale_factor
+            results['scale_factor'] = (results['scale_factor'][0] * scale_factor[0],
+                                       results['scale_factor'][1] * scale_factor[1])
         else:
             results['scale_factor'] = scale_factor
 
