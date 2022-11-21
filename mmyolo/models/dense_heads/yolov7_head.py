@@ -12,40 +12,14 @@ from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS
+from ..layers import ImplicitA, ImplicitM
 from ..task_modules.assigners.batch_yolov7_assigner import BatchYOLOv7Assigner
 from .yolov5_head import YOLOv5Head, YOLOv5HeadModule
 
 
-class ImplicitA(nn.Module):
-
-    def __init__(self, channel, mean=0., std=.02):
-        super().__init__()
-        self.channel = channel
-        self.mean = mean
-        self.std = std
-        self.implicit = nn.Parameter(torch.zeros(1, channel, 1, 1))
-        nn.init.normal_(self.implicit, mean=self.mean, std=self.std)
-
-    def forward(self, x):
-        return self.implicit + x
-
-
-class ImplicitM(nn.Module):
-
-    def __init__(self, channel, mean=1., std=.02):
-        super().__init__()
-        self.channel = channel
-        self.mean = mean
-        self.std = std
-        self.implicit = nn.Parameter(torch.ones(1, channel, 1, 1))
-        nn.init.normal_(self.implicit, mean=self.mean, std=self.std)
-
-    def forward(self, x):
-        return self.implicit * x
-
-
 @MODELS.register_module()
 class YOLOv7HeadModule(YOLOv5HeadModule):
+    """YOLOv7Head head module used in YOLOv7."""
 
     def _init_layers(self):
         """initialize conv layers in YOLOv7 head."""
@@ -75,11 +49,12 @@ class YOLOv7HeadModule(YOLOv5HeadModule):
 
 @MODELS.register_module()
 class YOLOv7p6HeadModule(YOLOv5HeadModule):
+    """YOLOv7Head head module used in YOLOv7."""
 
     def __init__(self,
                  *args,
-                 main_out_channels=[256, 512, 768, 1024],
-                 aux_out_channels=[320, 640, 960, 1280],
+                 main_out_channels: Sequence[int, ...] = [256, 512, 768, 1024],
+                 aux_out_channels: Sequence[int, ...] = [320, 640, 960, 1280],
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
@@ -188,7 +163,17 @@ class YOLOv7p6HeadModule(YOLOv5HeadModule):
 
 @MODELS.register_module()
 class YOLOv7Head(YOLOv5Head):
-    """YOLOv7Head head used in `YOLOv7 <https://arxiv.org/abs/2207.02696>`_."""
+    """YOLOv7Head head used in `YOLOv7 <https://arxiv.org/abs/2207.02696>`_.
+
+    Args:
+        simota_candidate_topk (int): The candidate top-k which used to
+            get top-k ious to calculate dynamic-k in BatchYOLOv7Assigner.
+            Defaults to 10.
+        simota_iou_weight (float): The scale factor for regression
+            iou cost in BatchYOLOv7Assigner. Defaults to 3.0.
+        simota_cls_weight (float): The scale factor for classification
+            cost in BatchYOLOv7Assigner. Defaults to 1.0.
+    """
 
     def __init__(self,
                  *args,
@@ -271,12 +256,8 @@ class YOLOv7Head(YOLOv5Head):
         # calc losses
         for i, head_pred in enumerate(head_preds):
             batch_inds, proir_idx, grid_x, grid_y = mlvl_positive_infos[i].T
-            priors = mlvl_priors[i]
-            targets_normed = mlvl_targets_normed[i]
             num_pred_positive = batch_inds.shape[0]
-
             target_obj = torch.zeros_like(head_pred[..., 0])
-
             # empty positive sampler
             if num_pred_positive == 0:
                 loss_box += head_pred[..., :4].sum() * 0
@@ -284,6 +265,9 @@ class YOLOv7Head(YOLOv5Head):
                 loss_obj += self.loss_obj(
                     head_pred[..., 4], target_obj) * self.obj_level_weights[i]
                 continue
+
+            priors = mlvl_priors[i]
+            targets_normed = mlvl_targets_normed[i]
 
             head_pred_positive = head_pred[batch_inds, proir_idx, grid_y,
                                            grid_x]
@@ -318,10 +302,28 @@ class YOLOv7Head(YOLOv5Head):
         _, world_size = get_dist_info()
         return dict(
             loss_cls=loss_cls * batch_size * world_size,
-            loss_conf=loss_obj * batch_size * world_size,
+            loss_obj=loss_obj * batch_size * world_size,
             loss_bbox=loss_box * batch_size * world_size)
 
-    def _merge_predict_results(self, bbox_preds, objectnesses, cls_scores):
+    def _merge_predict_results(self, bbox_preds: Sequence[Tensor],
+                               objectnesses: Sequence[Tensor],
+                               cls_scores: Sequence[Tensor]) -> List[Tensor]:
+        """Merge predict output from 3 heads.
+
+        Args:
+            cls_scores (Sequence[Tensor]): Box scores for each scale level,
+                each is a 4D-tensor, the channel number is
+                num_priors * num_classes.
+            bbox_preds (Sequence[Tensor]): Box energies / deltas for each scale
+                level, each is a 4D-tensor, the channel number is
+                num_priors * 4.
+            objectnesses (Sequence[Tensor]): Score factor for
+                all scale level, each is a 4D-tensor, has shape
+                (batch_size, 1, H, W).
+
+        Returns:
+              List[Tensor]: Merged output.
+        """
         head_preds = []
         for bbox_pred, objectness, cls_score in zip(bbox_preds, objectnesses,
                                                     cls_scores):

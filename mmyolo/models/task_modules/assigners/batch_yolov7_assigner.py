@@ -15,6 +15,16 @@ def _cat_multi_level_tensor_in_place(*multi_level_tensor, place_hold_var):
 
 
 class BatchYOLOv7Assigner(nn.Module):
+    """Batch YOLOv7 Assigner.
+
+    It consists of two assigning steps:
+
+        1. YOLOv5 cross-grid sample assigning
+        2. SimOTA assigning
+
+    This code referenced to
+    https://github.com/WongKinYiu/yolov7/blob/main/utils/loss.py.
+    """
 
     def __init__(self,
                  num_classes: int,

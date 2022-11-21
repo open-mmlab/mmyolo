@@ -7,7 +7,7 @@ import torch
 import torch.nn as nn
 from mmengine.optim import build_optim_wrapper
 
-from mmyolo.engine import YOLOv7OptimizerConstructor
+from mmyolo.engine import YOLOv7OptimWrapperConstructor
 from mmyolo.utils import register_all_modules
 
 register_all_modules()
@@ -23,7 +23,7 @@ class ExampleModel(nn.Module):
         self.bn = nn.BatchNorm2d(2)
 
 
-class TestYOLOv7OptimizerConstructor(TestCase):
+class TestYOLOv7OptimWrapperConstructor(TestCase):
 
     def setUp(self):
         self.model = ExampleModel()
@@ -39,18 +39,18 @@ class TestYOLOv7OptimizerConstructor(TestCase):
                 batch_size_per_gpu=16))
 
     def test_init(self):
-        YOLOv7OptimizerConstructor(copy.deepcopy(self.optim_wrapper_cfg))
-        YOLOv7OptimizerConstructor(
+        YOLOv7OptimWrapperConstructor(copy.deepcopy(self.optim_wrapper_cfg))
+        YOLOv7OptimWrapperConstructor(
             copy.deepcopy(self.optim_wrapper_cfg),
             paramwise_cfg={'base_total_batch_size': 64})
 
         # `paramwise_cfg` must include `base_total_batch_size` if not None.
         with self.assertRaises(AssertionError):
-            YOLOv7OptimizerConstructor(
+            YOLOv7OptimWrapperConstructor(
                 copy.deepcopy(self.optim_wrapper_cfg), paramwise_cfg={'a': 64})
 
     def test_build(self):
-        optim_wrapper = YOLOv7OptimizerConstructor(
+        optim_wrapper = YOLOv7OptimWrapperConstructor(
             copy.deepcopy(self.optim_wrapper_cfg))(
                 self.model)
         # test param_groups
@@ -66,7 +66,7 @@ class TestYOLOv7OptimizerConstructor(TestCase):
         # test weight_decay linear scaling
         optim_wrapper_cfg = copy.deepcopy(self.optim_wrapper_cfg)
         optim_wrapper_cfg['optimizer']['batch_size_per_gpu'] = 128
-        optim_wrapper = YOLOv7OptimizerConstructor(optim_wrapper_cfg)(
+        optim_wrapper = YOLOv7OptimWrapperConstructor(optim_wrapper_cfg)(
             self.model)
         assert optim_wrapper.optimizer.param_groups[0][
             'weight_decay'] == self.weight_decay * 2
@@ -75,7 +75,7 @@ class TestYOLOv7OptimizerConstructor(TestCase):
         optim_wrapper_cfg = copy.deepcopy(self.optim_wrapper_cfg)
         optim_wrapper_cfg['optimizer'].pop('batch_size_per_gpu')
         optim_wrapper = dict(
-            optim_wrapper_cfg, constructor='YOLOv7OptimizerConstructor')
+            optim_wrapper_cfg, constructor='YOLOv7OptimWrapperConstructor')
         optim_wrapper = build_optim_wrapper(self.model, optim_wrapper)
         assert optim_wrapper.optimizer.param_groups[0][
             'weight_decay'] == self.weight_decay

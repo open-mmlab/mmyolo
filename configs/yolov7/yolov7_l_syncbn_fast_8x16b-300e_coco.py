@@ -59,6 +59,7 @@ model = dict(
             num_convs_in_block=1),
         upsample_feats_cat_first=False,
         in_channels=[512, 1024, 1024],
+        # The real output channel will be multiplied by 2
         out_channels=[128, 256, 512],
         norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
         act_cfg=dict(type='SiLU', inplace=True)),
@@ -92,8 +93,9 @@ model = dict(
             use_sigmoid=True,
             reduction='mean',
             loss_weight=0.7 * ((img_scale[0] / 640)**2 * 3 / num_det_layers)),
-        prior_match_thr=4.,
         obj_level_weights=[4., 1., 0.4],
+        # BatchYOLOv7Assigner params
+        prior_match_thr=4.,
         simota_candidate_topk=10,
         simota_iou_weight=3.0,
         simota_cls_weight=1.0),
@@ -223,7 +225,7 @@ optim_wrapper = dict(
         weight_decay=0.0005,
         nesterov=True,
         batch_size_per_gpu=train_batch_size_per_gpu),
-    constructor='YOLOv7OptimizerConstructor')
+    constructor='YOLOv7OptimWrapperConstructor')
 
 default_hooks = dict(
     param_scheduler=dict(

@@ -12,14 +12,15 @@ from mmyolo.registry import (OPTIM_WRAPPER_CONSTRUCTORS, OPTIM_WRAPPERS,
                              OPTIMIZERS)
 
 
+# TODO: Consider merging into YOLOv5OptimizerConstructor
 @OPTIM_WRAPPER_CONSTRUCTORS.register_module()
-class YOLOv7OptimizerConstructor:
-    """YOLOv7 constructor for optimizers.
+class YOLOv7OptimWrapperConstructor:
+    """YOLOv7 constructor for optimizer wrappers.
 
     It has the following functions：
 
         - divides the optimizer parameters into 3 groups:
-        Conv, Bias and BN
+        Conv, Bias and BN/ImplicitA/ImplicitM
 
         - support `weight_decay` parameter adaption based on
         `batch_size_per_gpu`
@@ -56,7 +57,7 @@ class YOLOv7OptimizerConstructor:
         >>>     dict(type='OptimWrapper', optimizer=dict(type='SGD', lr=0.01,
         >>>         momentum=0.9, weight_decay=0.0001, batch_size_per_gpu=16))
         >>> paramwise_cfg = dict(base_total_batch_size=64)
-        >>> optim_wrapper_builder = YOLOv7OptimizerConstructor(
+        >>> optim_wrapper_builder = YOLOv7OptimWrapperConstructor(
         >>>     optim_wrapper_cfg, paramwise_cfg)
         >>> optim_wrapper = optim_wrapper_builder(model)
     """
@@ -101,7 +102,7 @@ class YOLOv7OptimizerConstructor:
         params_groups = [], [], []
         for v in model.modules():
             # no decay
-            # Caution: Strong coupling with model naming
+            # Caution: Coupling with model
             if isinstance(v, (ImplicitA, ImplicitM)):
                 params_groups[0].append(v.implicit)
             elif isinstance(v, nn.modules.batchnorm._NormBase):

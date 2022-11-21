@@ -17,12 +17,21 @@ class YOLOv7PAFPN(BaseYOLONeck):
     Args:
         in_channels (List[int]): Number of input channels per scale.
         out_channels (int): Number of output channels (used at each scale).
+        block_cfg (dict): Config dict for block.
         deepen_factor (float): Depth multiplier, multiply number of
             blocks in CSP layer by this amount. Defaults to 1.0.
         widen_factor (float): Width multiplier, multiply number of
             channels in each layer by this amount. Defaults to 1.0.
         spp_expand_ratio (float): Expand ratio of SPPCSPBlock.
             Defaults to 0.5.
+        is_tiny_version (bool): Is tiny version of neck. If True,
+            it means it is a yolov7 tiny model. Defaults to False.
+        use_maxpool_in_downsample (bool): Whether maxpooling is
+            used in downsample layers. Defaults to True.
+        use_in_channels_in_downsample (bool): MaxPoolAndStrideConvBlock
+            module input parameters. Defaults to False.
+        use_repconv_outs (bool): Whether to use `repconv` in the output
+            layer. Defaults to True.
         upsample_feats_cat_first (bool): Whether the output features are
             concat first after upsampling in the topdown module.
             Defaults to True. Currently only YOLOv7 is false.
@@ -38,9 +47,9 @@ class YOLOv7PAFPN(BaseYOLONeck):
     def __init__(self,
                  in_channels: List[int],
                  out_channels: List[int],
-                 block_cfg=dict(
+                 block_cfg: dict = dict(
                      type='ELANBlock',
-                     middl_ratio=0.5,
+                     middle_ratio=0.5,
                      block_ratio=0.25,
                      num_blocks=4,
                      num_convs_in_block=1),
@@ -49,7 +58,7 @@ class YOLOv7PAFPN(BaseYOLONeck):
                  spp_expand_ratio: float = 0.5,
                  is_tiny_version: bool = False,
                  use_maxpool_in_downsample: bool = True,
-                 use_in_channels_in_downsample=False,
+                 use_in_channels_in_downsample: bool = False,
                  use_repconv_outs: bool = True,
                  upsample_feats_cat_first: bool = False,
                  freeze_all: bool = False,

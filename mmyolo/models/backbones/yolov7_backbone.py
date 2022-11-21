@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import torch.nn as nn
 from mmcv.cnn import ConvModule
@@ -16,8 +16,7 @@ class YOLOv7Backbone(BaseBackbone):
     """Backbone used in YOLOv7.
 
     Args:
-        arch (str): Architecture of YOLOv7, from {P5, P6}.
-            Defaults to P5.
+        arch (str): Architecture of YOLOv7Defaults to L.
         deepen_factor (float): Depth multiplier, multiply number of
             blocks in CSP layer by this amount. Defaults to 1.0.
         widen_factor (float): Width multiplier, multiply number of
@@ -129,12 +128,12 @@ class YOLOv7Backbone(BaseBackbone):
 
     def __init__(self,
                  arch: str = 'L',
-                 plugins: Union[dict, List[dict]] = None,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  input_channels: int = 3,
-                 out_indices: Tuple[int] = (2, 3, 4),
+                 out_indices: Tuple[int, ...] = (2, 3, 4),
                  frozen_stages: int = -1,
+                 plugins: Union[dict, List[dict]] = None,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
@@ -242,7 +241,9 @@ class YOLOv7Backbone(BaseBackbone):
             stage.insert(0, downsample_layer)
         return stage
 
-    def _build_downsample_layer(self, stage_idx, in_channels, out_channels):
+    def _build_downsample_layer(self, stage_idx: int, in_channels: int,
+                                out_channels: int) -> Optional[nn.Module]:
+        """Build a downsample layer pre stage."""
         if self.arch in ['E', 'D', 'E2E']:
             downsample_layer = MaxPoolAndStrideConvBlock(
                 in_channels,

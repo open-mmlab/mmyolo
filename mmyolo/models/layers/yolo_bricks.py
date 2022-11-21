@@ -469,17 +469,17 @@ class PPYOLOESELayer(nn.Module):
 class ELANBlock(BaseModule):
     """Efficient layer aggregation networks for YOLOv7.
 
-    - if mode is `reduce_channel_2x`, the output channel will be
-      reduced by a factor of 2
-    - if mode is `no_change_channel`, the output channel does not change.
-    - if mode is `expand_channel_2x`, the output channel will be
-      expanded by a factor of 2
-
     Args:
         in_channels (int): The input channels of this Module.
-        mode (str): Output channel mode. Defaults to `expand_channel_2x`.
+        out_channels (int): The out channels of this Module.
+        middle_ratio (float): The scaling ratio of the middle layer
+            based on the in_channels.
+        block_ratio (float): The scaling ratio of the block layer
+            based on the in_channels.
         num_blocks (int): The number of blocks in the main branch.
             Defaults to 2.
+        num_convs_in_block (int): The number of convs pre block.
+            Defaults to 1.
         conv_cfg (dict): Config dict for convolution layer. Defaults to None.
             which means using conv2d. Defaults to None.
         norm_cfg (dict): Config dict for normalization layer.
@@ -582,6 +582,11 @@ class ELANBlock(BaseModule):
 
 @MODELS.register_module()
 class EELANBlock(BaseModule):
+    """Expand efficient layer aggregation networks for YOLOv7.
+
+    Args:
+        num_elan_block (int): The number of ELANBlock.
+    """
 
     def __init__(self, num_elan_block: int, **kwargs):
         super().__init__()
@@ -600,14 +605,13 @@ class EELANBlock(BaseModule):
 class MaxPoolAndStrideConvBlock(BaseModule):
     """Max pooling and stride conv layer for YOLOv7.
 
-    - if mode is `reduce_channel_2x`, the output channel will
-    be reduced by a factor of 2
-    - if mode is `no_change_channel`, the output channel does not change.
-
     Args:
         in_channels (int): The input channels of this Module.
-        mode (str): Output channel mode. `reduce_channel_2x` or
-            `no_change_channel`. Defaults to `reduce_channel_2x`
+        out_channels (int): The out channels of this Module.
+        maxpool_kernel_sizes (int): kernel sizes of pooling layers.
+            Defaults to 2.
+        use_in_channels_of_middle (bool): Whether to calculate middle channels
+            based on in_channels. Defaults to False.
         conv_cfg (dict): Config dict for convolution layer. Defaults to None.
             which means using conv2d. Defaults to None.
         norm_cfg (dict): Config dict for normalization layer.
@@ -621,8 +625,8 @@ class MaxPoolAndStrideConvBlock(BaseModule):
     def __init__(self,
                  in_channels: int,
                  out_channels: int,
-                 maxpool_kernel_sizes=2,
-                 use_in_channels_of_middle=False,
+                 maxpool_kernel_sizes: int = 2,
+                 use_in_channels_of_middle: bool = False,
                  conv_cfg: OptConfigType = None,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
@@ -674,6 +678,24 @@ class MaxPoolAndStrideConvBlock(BaseModule):
 
 @MODELS.register_module()
 class TinyDownSampleBlock(BaseModule):
+    """Down sample layer for YOLOv7-tiny.
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        out_channels (int): The out channels of this Module.
+        middle_ratio (float): The scaling ratio of the middle layer
+            based on the in_channels. Defaults to 1.0.
+        kernel_sizes (int, tuple[int]): Sequential or number of kernel
+             sizes of pooling layers. Defaults to 3.
+        conv_cfg (dict): Config dict for convolution layer. Defaults to None.
+            which means using conv2d. Defaults to None.
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='LeakyReLU', negative_slope=0.1).
+        init_cfg (dict or list[dict], optional): Initialization config dict.
+            Defaults to None.
+    """
 
     def __init__(
             self,
@@ -751,6 +773,8 @@ class SPPFCSPBlock(BaseModule):
             Defaults to 0.5.
          kernel_sizes (int, tuple[int]): Sequential or number of kernel
              sizes of pooling layers. Defaults to 5.
+         is_tiny_version (bool): Is tiny version of SPPFCSPBlock. If True,
+            it means it is a yolov7 tiny model. Defaults to False.
          conv_cfg (dict): Config dict for convolution layer. Defaults to None.
              which means using conv2d. Defaults to None.
          norm_cfg (dict): Config dict for normalization layer.
@@ -886,6 +910,50 @@ class SPPFCSPBlock(BaseModule):
 
         x2 = self.short_layer(x)
         return self.final_conv(torch.cat((x1, x2), dim=1))
+
+
+class ImplicitA(nn.Module):
+    """Implicit add layer in YOLOv7.
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        mean (float): Mean value of implicit module. Defaults to 0.
+        std (float): Std value of implicit module. Defaults to 0.02
+    """
+
+    def __init__(self, in_channels: int, mean: float = 0., std: float = .02):
+        super().__init__()
+        self.implicit = nn.Parameter(torch.zeros(1, in_channels, 1, 1))
+        nn.init.normal_(self.implicit, mean=mean, std=std)
+
+    def forward(self, x):
+        """Forward process
+        Args:
+            x (Tensor): The input tensor.
+        """
+        return self.implicit + x
+
+
+class ImplicitM(nn.Module):
+    """Implicit multiplier layer in YOLOv7.
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        mean (float): Mean value of implicit module. Defaults to 1.
+        std (float): Std value of implicit module. Defaults to 0.02.
+    """
+
+    def __init__(self, in_channels: int, mean: float = 1., std: float = .02):
+        super().__init__()
+        self.implicit = nn.Parameter(torch.ones(1, in_channels, 1, 1))
+        nn.init.normal_(self.implicit, mean=mean, std=std)
+
+    def forward(self, x):
+        """Forward process
+        Args:
+            x (Tensor): The input tensor.
+        """
+        return self.implicit * x
 
 
 @MODELS.register_module()

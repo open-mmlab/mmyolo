@@ -48,7 +48,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
      In P6 model, n=5
 
     Args:
-        arch_setting (dict): Architecture of BaseBackbone.
+        arch_setting (list): Architecture of BaseBackbone.
         plugins (list[dict]): List of plugins for stages, each dict contains:
 
             - cfg (dict, required): Cfg dict to build plugin.

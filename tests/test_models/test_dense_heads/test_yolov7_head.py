@@ -5,17 +5,18 @@ import torch
 from mmengine.config import Config
 from mmengine.structures import InstanceData
 
-from mmyolo.models.dense_heads import YOLOv5Head
+from mmyolo.models.dense_heads import YOLOv7Head
 from mmyolo.utils import register_all_modules
 
 register_all_modules()
 
 
-class TestYOLOv5Head(TestCase):
+# TODO: Test YOLOv7p6HeadModule
+class TestYOLOv7Head(TestCase):
 
     def setUp(self):
         self.head_module = dict(
-            type='YOLOv5HeadModule',
+            type='YOLOv7HeadModule',
             num_classes=2,
             in_channels=[32, 64, 128],
             featmap_strides=[8, 16, 32],
@@ -35,7 +36,7 @@ class TestYOLOv5Head(TestCase):
                 score_thr=0.01,
                 nms=dict(type='nms', iou_threshold=0.65)))
 
-        head = YOLOv5Head(head_module=self.head_module, test_cfg=test_cfg)
+        head = YOLOv7Head(head_module=self.head_module, test_cfg=test_cfg)
 
         feat = []
         for i in range(len(self.head_module['in_channels'])):
@@ -70,7 +71,7 @@ class TestYOLOv5Head(TestCase):
             'scale_factor': 1,
         }]
 
-        head = YOLOv5Head(head_module=self.head_module)
+        head = YOLOv7Head(head_module=self.head_module)
 
         feat = []
         for i in range(len(self.head_module['in_channels'])):
@@ -105,7 +106,7 @@ class TestYOLOv5Head(TestCase):
 
         # When truth is non-empty then both cls and box loss should be nonzero
         # for random inputs
-        head = YOLOv5Head(head_module=self.head_module)
+        head = YOLOv7Head(head_module=self.head_module)
         gt_instances = InstanceData(
             bboxes=torch.Tensor([[23.6667, 23.8757, 238.6326, 151.8874]]),
             labels=torch.LongTensor([1]))
@@ -124,7 +125,7 @@ class TestYOLOv5Head(TestCase):
 
         # test num_class = 1
         self.head_module['num_classes'] = 1
-        head = YOLOv5Head(head_module=self.head_module)
+        head = YOLOv7Head(head_module=self.head_module)
         gt_instances = InstanceData(
             bboxes=torch.Tensor([[23.6667, 23.8757, 238.6326, 151.8874]]),
             labels=torch.LongTensor([0]))

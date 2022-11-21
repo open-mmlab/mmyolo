@@ -65,8 +65,8 @@ train_pipeline = [
     randchoice_mosaic_pipeline,
     dict(
         type='YOLOv5MixUp',
-        alpha=8.0,  # note
-        beta=8.0,  # note
+        alpha=8.0,
+        beta=8.0,
         prob=0.05,  # change
         pre_transform=[*pre_transform, randchoice_mosaic_pipeline]),
     dict(type='YOLOv5HSVRandomAug'),
