@@ -521,69 +521,6 @@ class ConvWrapper(nn.Module):
 
 
 @MODELS.register_module()
-class RepStageBlock(nn.Module):
-    """RepStageBlock is a stage block with rep-style basic block.
-
-    Args:
-        in_channels (int): The input channels of this Module.
-        out_channels (int): The output channels of this Module.
-        num_blocks (int, tuple[int]): Number of blocks.  Defaults to 1.
-        bottle_block (nn.Module): Basic unit of RepStage.
-            Defaults to RepVGGBlock.
-        block_cfg (ConfigType): Config of RepStage.
-            Defaults to 'RepVGGBlock'.
-    """
-
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 num_blocks: int = 1,
-                 bottle_block: nn.Module = RepVGGBlock,
-                 block_cfg: ConfigType = dict(type='RepVGGBlock')):
-        super().__init__()
-        block_cfg = block_cfg.copy()
-
-        block_cfg.update(
-            dict(in_channels=in_channels, out_channels=out_channels))
-
-        self.conv1 = MODELS.build(block_cfg)
-
-        block_cfg.update(
-            dict(in_channels=out_channels, out_channels=out_channels))
-        self.block = nn.Sequential(
-            *(MODELS.build(block_cfg)
-              for _ in range(num_blocks - 1))) if num_blocks > 1 else None
-
-        if bottle_block == BottleRep:
-            self.conv1 = BottleRep(
-                in_channels,
-                out_channels,
-                block_cfg=block_cfg,
-                adaptive_weight=True)
-            num_blocks = num_blocks // 2
-            self.block = nn.Sequential(
-                *(BottleRep(
-                    out_channels,
-                    out_channels,
-                    block_cfg=block_cfg,
-                    adaptive_weight=True)
-                  for _ in range(num_blocks - 1))) if num_blocks > 1 else None
-
-    def forward(self, x: Tensor) -> Tensor:
-        """Forward process.
-
-        Args:
-            inputs (Tensor): The input tensor.
-        Returns:
-            Tensor: The output tensor.
-        """
-        x = self.conv1(x)
-        if self.block is not None:
-            x = self.block(x)
-        return x
-
-
-@MODELS.register_module()
 class EffectiveSELayer(nn.Module):
     """Effective Squeeze-Excitation.
 
@@ -1357,3 +1294,66 @@ class CSPResLayer(nn.Module):
             y = self.attn(y)
         y = self.conv3(y)
         return y
+
+
+@MODELS.register_module()
+class RepStageBlock(nn.Module):
+    """RepStageBlock is a stage block with rep-style basic block.
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        out_channels (int): The output channels of this Module.
+        num_blocks (int, tuple[int]): Number of blocks.  Defaults to 1.
+        bottle_block (nn.Module): Basic unit of RepStage.
+            Defaults to RepVGGBlock.
+        block_cfg (ConfigType): Config of RepStage.
+            Defaults to 'RepVGGBlock'.
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 num_blocks: int = 1,
+                 bottle_block: nn.Module = RepVGGBlock,
+                 block_cfg: ConfigType = dict(type='RepVGGBlock')):
+        super().__init__()
+        block_cfg = block_cfg.copy()
+
+        block_cfg.update(
+            dict(in_channels=in_channels, out_channels=out_channels))
+
+        self.conv1 = MODELS.build(block_cfg)
+
+        block_cfg.update(
+            dict(in_channels=out_channels, out_channels=out_channels))
+        self.block = nn.Sequential(
+            *(MODELS.build(block_cfg)
+              for _ in range(num_blocks - 1))) if num_blocks > 1 else None
+
+        if bottle_block == BottleRep:
+            self.conv1 = BottleRep(
+                in_channels,
+                out_channels,
+                block_cfg=block_cfg,
+                adaptive_weight=True)
+            num_blocks = num_blocks // 2
+            self.block = nn.Sequential(
+                *(BottleRep(
+                    out_channels,
+                    out_channels,
+                    block_cfg=block_cfg,
+                    adaptive_weight=True)
+                  for _ in range(num_blocks - 1))) if num_blocks > 1 else None
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward process.
+
+        Args:
+            inputs (Tensor): The input tensor.
+        Returns:
+            Tensor: The output tensor.
+        """
+        x = self.conv1(x)
+        if self.block is not None:
+            x = self.block(x)
+        return x
