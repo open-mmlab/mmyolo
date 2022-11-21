@@ -47,6 +47,7 @@ class YOLOv7HeadModule(YOLOv5HeadModule):
             mi.bias.data = b.view(-1)
 
 
+# TODO: to check
 @MODELS.register_module()
 class YOLOv7p6HeadModule(YOLOv5HeadModule):
     """YOLOv7Head head module used in YOLOv7."""

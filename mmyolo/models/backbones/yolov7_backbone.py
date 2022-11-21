@@ -131,7 +131,7 @@ class YOLOv7Backbone(BaseBackbone):
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  input_channels: int = 3,
-                 out_indices: Tuple[int, ...] = (2, 3, 4),
+                 out_indices: Tuple[int] = (2, 3, 4),
                  frozen_stages: int = -1,
                  plugins: Union[dict, List[dict]] = None,
                  norm_cfg: ConfigType = dict(
