@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import json
 from pathlib import Path
@@ -186,7 +187,7 @@ def gen_coco_json(image_dir, labels_root):
                                                annotations_id,
                                                category_to_id[class_name]))
 
-    print(f'*' * 20)
+    print('*' * 20)
     print(f'Total image = {image_id}')
     print(f'Total annotations = {annotations_id}')
     print(f'Number of categories = {len(categories_labels)}, '
