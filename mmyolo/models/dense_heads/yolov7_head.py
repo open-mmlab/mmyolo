@@ -53,8 +53,8 @@ class YOLOv7p6HeadModule(YOLOv5HeadModule):
 
     def __init__(self,
                  *args,
-                 main_out_channels: Sequence[int, ...] = [256, 512, 768, 1024],
-                 aux_out_channels: Sequence[int, ...] = [320, 640, 960, 1280],
+                 main_out_channels: Sequence[int] = [256, 512, 768, 1024],
+                 aux_out_channels: Sequence[int] = [320, 640, 960, 1280],
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
