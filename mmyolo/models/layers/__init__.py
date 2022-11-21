@@ -1,13 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .ema import ExpMomentumEMA
-from .yolo_bricks import (EELANBlock, EffectiveSELayer, ELANBlock, ImplicitA,
-                          ImplicitM, MaxPoolAndStrideConvBlock,
-                          PPYOLOEBasicBlock, RepStageBlock, RepVGGBlock,
-                          SPPFBottleneck, SPPFCSPBlock, TinyDownSampleBlock)
+from .yolo_bricks import (BepC3StageBlock, EELANBlock, EffectiveSELayer,
+                          ELANBlock, ImplicitA, ImplicitM,
+                          MaxPoolAndStrideConvBlock, PPYOLOEBasicBlock,
+                          RepStageBlock, RepVGGBlock, SPPFBottleneck,
+                          SPPFCSPBlock, TinyDownSampleBlock)
 
 __all__ = [
     'SPPFBottleneck', 'RepVGGBlock', 'RepStageBlock', 'ExpMomentumEMA',
     'ELANBlock', 'MaxPoolAndStrideConvBlock', 'SPPFCSPBlock',
     'PPYOLOEBasicBlock', 'EffectiveSELayer', 'TinyDownSampleBlock',
-    'EELANBlock', 'ImplicitA', 'ImplicitM'
+    'EELANBlock', 'ImplicitA', 'ImplicitM', 'BepC3StageBlock'
 ]

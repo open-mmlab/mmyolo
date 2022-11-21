@@ -22,7 +22,7 @@ else:
         def __init__(self, inplace=True):
             super().__init__()
 
-        def forward(self, inputs) -> torch.Tensor:
+        def forward(self, inputs) -> Tensor:
             return inputs * torch.sigmoid(inputs)
 
     MODELS.register_module(module=SiLU, name='SiLU')
@@ -100,7 +100,7 @@ class SPPFBottleneck(BaseModule):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         """Forward process
         Args:
             x (Tensor): The input tensor.
@@ -227,7 +227,7 @@ class RepVGGBlock(nn.Module):
                 norm_cfg=norm_cfg,
                 act_cfg=None)
 
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+    def forward(self, inputs: Tensor) -> Tensor:
         """Forward process.
         Args:
             inputs (Tensor): The input tensor.
@@ -281,8 +281,7 @@ class RepVGGBlock(nn.Module):
         else:
             return torch.nn.functional.pad(kernel1x1, [1, 1, 1, 1])
 
-    def _fuse_bn_tensor(self,
-                        branch: nn.Module) -> Tuple[np.ndarray, torch.Tensor]:
+    def _fuse_bn_tensor(self, branch: nn.Module) -> Tuple[np.ndarray, Tensor]:
         """Derives the equivalent kernel and bias of a specific branch layer.
 
         Args:
@@ -346,6 +345,179 @@ class RepVGGBlock(nn.Module):
         if hasattr(self, 'id_tensor'):
             self.__delattr__('id_tensor')
         self.deploy = True
+
+
+@MODELS.register_module()
+class BepC3StageBlock(nn.Module):
+    """Beer-mug RepC3 Block.
+
+    Args:
+        in_channels (int): Number of channels in the input image
+        out_channels (int): Number of channels produced by the convolution
+        num_blocks (int): Number of blocks. Defaults to 1
+        hidden_ratio (float): Hidden channel expansion.
+            Default: 0.5
+        concat_all_layer (bool): Concat all layer when forward calculate.
+            Default: True
+        block_cfg (dict): Config dict for the block used to build each
+            layer. Defaults to dict(type='RepVGGBlock').
+        norm_cfg (ConfigType): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+        act_cfg (ConfigType): Config dict for activation layer.
+            Defaults to dict(type='ReLU', inplace=True).
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 num_blocks: int = 1,
+                 hidden_ratio: float = 0.5,
+                 concat_all_layer: bool = True,
+                 block_cfg: ConfigType = dict(type='RepVGGBlock'),
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='ReLU', inplace=True)):
+        super().__init__()
+        hidden_channels = int(out_channels * hidden_ratio)
+
+        self.conv1 = ConvModule(
+            in_channels,
+            hidden_channels,
+            kernel_size=1,
+            stride=1,
+            groups=1,
+            bias=False,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+        self.conv2 = ConvModule(
+            in_channels,
+            hidden_channels,
+            kernel_size=1,
+            stride=1,
+            groups=1,
+            bias=False,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+        self.conv3 = ConvModule(
+            2 * hidden_channels,
+            out_channels,
+            kernel_size=1,
+            stride=1,
+            groups=1,
+            bias=False,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+        self.block = RepStageBlock(
+            in_channels=hidden_channels,
+            out_channels=hidden_channels,
+            num_blocks=num_blocks,
+            block_cfg=block_cfg,
+            bottle_block=BottleRep)
+        self.concat_all_layer = concat_all_layer
+        if not concat_all_layer:
+            self.conv3 = ConvModule(
+                hidden_channels,
+                out_channels,
+                kernel_size=1,
+                stride=1,
+                groups=1,
+                bias=False,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg)
+
+    def forward(self, x):
+        if self.concat_all_layer is True:
+            return self.conv3(
+                torch.cat((self.block(self.conv1(x)), self.conv2(x)), dim=1))
+        else:
+            return self.conv3(self.block(self.conv1(x)))
+
+
+class BottleRep(nn.Module):
+    """Bottle Rep Block.
+
+    Args:
+        in_channels (int): Number of channels in the input image
+        out_channels (int): Number of channels produced by the convolution
+        block_cfg (dict): Config dict for the block used to build each
+            layer. Defaults to dict(type='RepVGGBlock').
+        adaptive_weight (bool): Add adaptive_weight when forward calculate.
+            Defaults False.
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 block_cfg: ConfigType = dict(type='RepVGGBlock'),
+                 adaptive_weight: bool = False):
+        super().__init__()
+        conv1_cfg = block_cfg.copy()
+        conv2_cfg = block_cfg.copy()
+
+        conv1_cfg.update(
+            dict(in_channels=in_channels, out_channels=out_channels))
+        conv2_cfg.update(
+            dict(in_channels=out_channels, out_channels=out_channels))
+
+        self.conv1 = MODELS.build(conv1_cfg)
+        self.conv2 = MODELS.build(conv2_cfg)
+
+        if in_channels != out_channels:
+            self.shortcut = False
+        else:
+            self.shortcut = True
+        if adaptive_weight:
+            self.alpha = nn.Parameter(torch.ones(1))
+        else:
+            self.alpha = 1.0
+
+    def forward(self, x: Tensor) -> Tensor:
+        outputs = self.conv1(x)
+        outputs = self.conv2(outputs)
+        return outputs + self.alpha * x if self.shortcut else outputs
+
+
+@MODELS.register_module()
+class ConvWrapper(nn.Module):
+    """Wrapper for normal Conv with SiLU activation.
+
+    Args:
+        in_channels (int): Number of channels in the input image
+        out_channels (int): Number of channels produced by the convolution
+        kernel_size (int or tuple): Size of the convolving kernel
+        stride (int or tuple): Stride of the convolution. Default: 1
+        groups (int, optional): Number of blocked connections from input
+            channels to output channels. Default: 1
+        bias (bool, optional): Conv bias. Default: True.
+        norm_cfg (ConfigType): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+        act_cfg (ConfigType): Config dict for activation layer.
+            Defaults to dict(type='ReLU', inplace=True).
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 kernel_size: int = 3,
+                 stride: int = 1,
+                 groups: int = 1,
+                 bias: bool = True,
+                 norm_cfg: ConfigType = None,
+                 act_cfg: ConfigType = dict(type='SiLU')):
+        super().__init__()
+        self.block = ConvModule(
+            in_channels,
+            out_channels,
+            kernel_size,
+            stride,
+            padding=kernel_size // 2,
+            groups=groups,
+            bias=bias,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+    def forward(self, x: Tensor) -> Tensor:
+        return self.block(x)
 
 
 class RepStageBlock(nn.Module):
