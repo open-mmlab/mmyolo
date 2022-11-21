@@ -19,7 +19,8 @@ def parse_args():
     return args
 
 
-def gen_coco_annotations_rectangle(points: list, image_id: int, annotations_id: int,
+def gen_coco_annotations_rectangle(points: list, image_id: int,
+                                   annotations_id: int,
                                    category_id: int) -> dict:
     """Gen COCO annotations format label from labelme format label.
 
@@ -41,7 +42,7 @@ def gen_coco_annotations_rectangle(points: list, image_id: int, annotations_id: 
     # bbox is [x1, y1, w, h]
     annotation_info['bbox'] = [
         points[0][0], points[0][1], points[1][0] - points[0][0],
-                                    points[1][1] - points[0][1]
+        points[1][1] - points[0][1]
     ]
 
     annotation_info['area'] = annotation_info['bbox'][2] * annotation_info[
@@ -63,6 +64,56 @@ def gen_coco_json(image_dir, labels_root):
 
     Return:
         coco_json (dict): COCO json data.
+
+
+    COCO json example:
+
+    {
+        "images": [
+            {
+                "height": 3000,
+                "width": 4000,
+                "id": 1,
+                "file_name": "IMG_20210627_225110.jpg"
+            },
+            ...
+        ],
+        "categories": [
+            {
+                "id": 1,
+                "name": "cat"
+            },
+            ...
+        ],
+        "annotations": [
+            {
+                "iscrowd": 0,
+                "category_id": 1,
+                "id": 1,
+                "image_id": 1,
+                "bbox": [
+                    1183.7313232421875,
+                    1230.0509033203125,
+                    1270.9998779296875,
+                    927.0848388671875
+                ],
+                "area": 1178324.7170306593,
+                "segmentation": [
+                    [
+                        1183.7313232421875,
+                        1230.0509033203125,
+                        1183.7313232421875,
+                        2157.1357421875,
+                        2454.731201171875,
+                        2157.1357421875,
+                        2454.731201171875,
+                        1230.0509033203125
+                    ]
+                ]
+            },
+            ...
+        ]
+    }
     """
 
     # init coco json field
@@ -95,13 +146,13 @@ def gen_coco_json(image_dir, labels_root):
         # update coco 'images' field
         coco_json['images'].append({
             'height':
-                labelme_data['imageHeight'],
+            labelme_data['imageHeight'],
             'width':
-                labelme_data['imageWidth'],
+            labelme_data['imageWidth'],
             'id':
-                image_id,
+            image_id,
             'file_name':
-                Path(labelme_data['imagePath']).name
+            Path(labelme_data['imagePath']).name
         })
 
         for label_shapes in labelme_data['shapes']:
@@ -112,7 +163,7 @@ def gen_coco_json(image_dir, labels_root):
                 # only update when not been added before
                 coco_json['categories'].append({
                     'id':
-                        len(categories_labels) + 1,  # categories id start with 1
+                    len(categories_labels) + 1,  # categories id start with 1
                     'name': class_name
                 })
                 categories_labels.append(class_name)
