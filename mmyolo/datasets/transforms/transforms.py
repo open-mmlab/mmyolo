@@ -358,8 +358,8 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         with_ignore: bool = False,
         **kwargs,
     ) -> None:
-        super().__init__(*args, **kwargs)
         self.with_ignore = with_ignore
+        super().__init__(*args, **kwargs)
 
     def _load_bboxes(self, results: dict):
         """Private function to load bounding box annotations.
