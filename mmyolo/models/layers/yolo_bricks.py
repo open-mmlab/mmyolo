@@ -1326,9 +1326,11 @@ class RepStageBlock(nn.Module):
 
         block_cfg.update(
             dict(in_channels=out_channels, out_channels=out_channels))
-        self.block = nn.Sequential(
-            *(MODELS.build(block_cfg)
-              for _ in range(num_blocks - 1))) if num_blocks > 1 else None
+
+        self.block = None
+        if num_blocks > 1:
+            self.block = nn.Sequential(*(MODELS.build(block_cfg)
+                                         for _ in range(num_blocks - 1)))
 
         if bottle_block == BottleRep:
             self.conv1 = BottleRep(
@@ -1350,6 +1352,7 @@ class RepStageBlock(nn.Module):
 
         Args:
             inputs (Tensor): The input tensor.
+
         Returns:
             Tensor: The output tensor.
         """

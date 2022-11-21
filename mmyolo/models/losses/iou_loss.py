@@ -23,6 +23,7 @@ def bbox_overlaps(pred: torch.Tensor,
 
     In the CIoU implementation of YOLOv5 and MMDetection, there is a slight
     difference in the way the alpha parameter is computed.
+
     mmdet version:
         alpha = (ious > 0.5).float() * v / (1 - ious + v)
     YOLOv5 version:
@@ -32,7 +33,7 @@ def bbox_overlaps(pred: torch.Tensor,
         pred (Tensor): Predicted bboxes of format (x1, y1, x2, y2)
             or (x, y, w, h),shape (n, 4).
         target (Tensor): Corresponding gt bboxes, shape (n, 4).
-        iou_mode (str): Options are "ciou".
+        iou_mode (str): Options are ('iou', 'ciou', 'giou', 'siou').
             Defaults to "ciou".
         bbox_format (str): Options are "xywh" and "xyxy".
             Defaults to "xywh".
