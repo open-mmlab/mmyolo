@@ -807,7 +807,7 @@ class YOLOv5MixUp(BaseMixImageTransform):
             when the cache is full. If set to False, use FIFO popping method.
             Defaults to True.
         max_refetch (int): The maximum number of iterations. If the number of
-            iterations is greater than `max_iters`, but gt_bbox is still
+            iterations is greater than `max_refetch`, but gt_bbox is still
             empty, then the iteration is terminated. Defaults to 15.
     """
 
@@ -955,7 +955,7 @@ class YOLOXMixUp(BaseMixImageTransform):
             when the cache is full. If set to False, use FIFO popping method.
             Defaults to True.
         max_refetch (int): The maximum number of iterations. If the number of
-            iterations is greater than `max_iters`, but gt_bbox is still
+            iterations is greater than `max_refetch`, but gt_bbox is still
             empty, then the iteration is terminated. Defaults to 15.
     """
 
@@ -1116,6 +1116,6 @@ class YOLOXMixUp(BaseMixImageTransform):
         repr_str += f'ratio_range={self.ratio_range}, '
         repr_str += f'flip_ratio={self.flip_ratio}, '
         repr_str += f'pad_val={self.pad_val}, '
-        repr_str += f'max_iters={self.max_iters}, '
+        repr_str += f'max_refetch={self.max_refetch}, '
         repr_str += f'bbox_clip_border={self.bbox_clip_border})'
         return repr_str
