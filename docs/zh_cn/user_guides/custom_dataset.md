@@ -122,18 +122,17 @@ labelme /data/cat/images --output /data/cat/labels --autosave --nodata
 MMYOLO 提供脚本将 labelme 的标签转换为 COCO 标签
 
 ```shell
-python tools/dataset_converters/labelme2coco.py ${图片文件夹} \
+python tools/dataset_converters/labelme2coco.py ${图片文件夹路径} \
                                                 --label-dir ${标签文件夹位置} \
                                                 --output ${输出COCO数据集json路径}
 ```
 
 ### 2.2 检查转换的 COCO 标签
 
+使用下面的命令可以将 COCO 的标签在图片上进行显示，这一步可以验证刚刚转换是否有问题：
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
-                                                --disp-all
+python tools/analysis_tools/browse_coco_json.py --img_dir ${图片文件夹路径} \
+                                                --ann_file ${输出COCO数据集json路径}
 ```
 
 关于 `tools/analysis_tools/browse_coco_json.py` 的更多用法请参考 [可视化 COCO 标签](useful_tools.md)。
