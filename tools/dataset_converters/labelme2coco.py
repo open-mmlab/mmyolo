@@ -1,4 +1,27 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+"""This script helps to convert labelme-style dataset to the coco format.
+
+Usage:
+    $ python labelme2coco.py \
+                --img-dir /path/to/images \
+                --labels-dir /path/to/labels \
+                --out /path/to/coco_instances.json
+
+Note:
+    Labels dir file structure:
+    .
+    └── PATH_TO_LABELS
+         ├── image1.json
+         ├── image2.json
+         └── ...
+
+    Images dir file structure:
+    .
+    └── PATH_TO_IMAGES
+         ├── image1.jpg
+         ├── image2.png
+         └── ...
+"""
 import argparse
 import json
 from pathlib import Path
