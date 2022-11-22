@@ -184,7 +184,7 @@ class YOLOv7Head(YOLOv5Head):
 
     def __init__(self,
                  *args,
-                 simota_candidate_topk: int = 10,
+                 simota_candidate_topk: int = 20,
                  simota_iou_weight: float = 3.0,
                  simota_cls_weight: float = 1.0,
                  aux_loss_weights: float = 0.25,
@@ -270,17 +270,19 @@ class YOLOv7Head(YOLOv5Head):
 
         loss_cls, loss_obj, loss_box = self._calc_loss(
             head_preds=head_preds,
+            head_preds_aux=None,
             batch_targets_normed=batch_targets_normed,
-            near_neighbor_thr=0.5,
+            near_neighbor_thr=self.near_neighbor_thr,
             scaled_factors=scaled_factors,
             batch_img_metas=batch_img_metas,
             device=device)
 
         if with_aux:
             loss_cls_aux, loss_obj_aux, loss_box_aux = self._calc_loss(
-                head_preds=head_preds_aux,
+                head_preds=head_preds,
+                head_preds_aux=head_preds_aux,
                 batch_targets_normed=batch_targets_normed,
-                near_neighbor_thr=1.0,
+                near_neighbor_thr=self.near_neighbor_thr * 2,
                 scaled_factors=scaled_factors,
                 batch_img_metas=batch_img_metas,
                 device=device)
@@ -294,8 +296,8 @@ class YOLOv7Head(YOLOv5Head):
             loss_obj=loss_obj * batch_size * world_size,
             loss_bbox=loss_box * batch_size * world_size)
 
-    def _calc_loss(self, head_preds, batch_targets_normed, near_neighbor_thr,
-                   scaled_factors, batch_img_metas, device):
+    def _calc_loss(self, head_preds, head_preds_aux, batch_targets_normed,
+                   near_neighbor_thr, scaled_factors, batch_img_metas, device):
         loss_cls = torch.zeros(1, device=device)
         loss_box = torch.zeros(1, device=device)
         loss_obj = torch.zeros(1, device=device)
@@ -312,7 +314,10 @@ class YOLOv7Head(YOLOv5Head):
         mlvl_priors = assigner_results['mlvl_priors']
         mlvl_targets_normed = assigner_results['mlvl_targets_normed']
 
-        # calc losses
+        if head_preds_aux is not None:
+            # This is mean calc aux branch loss
+            head_preds = head_preds_aux
+
         for i, head_pred in enumerate(head_preds):
             batch_inds, proir_idx, grid_x, grid_y = mlvl_positive_infos[i].T
             num_pred_positive = batch_inds.shape[0]

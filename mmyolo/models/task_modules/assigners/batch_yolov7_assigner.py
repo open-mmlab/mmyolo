@@ -153,6 +153,7 @@ class BatchYOLOv7Assigner(nn.Module):
             # mlvl_positive_info: (num_matched_target, 4)
             # 4 is mean (batch_idx, prior_idx, x_scaled, y_scaled)
             mlvl_positive_info = batch_targets_scaled[:, [0, 6, 2, 3]]
+            retained_offsets = retained_offsets * near_neighbor_thr
             mlvl_positive_info[:,
                                2:] = mlvl_positive_info[:,
                                                         2:] - retained_offsets

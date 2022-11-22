@@ -29,6 +29,7 @@ model = dict(
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg=dict(type='SiLU', inplace=True)),
         prior_generator=dict(base_sizes=anchors, strides=strides),
+        simota_candidate_topk=20,  # note
         # scaled based on number of detection layers
         loss_cls=dict(loss_weight=0.3 *
                       (num_classes / 80 * 3 / num_det_layers)),
