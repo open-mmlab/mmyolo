@@ -10,19 +10,16 @@ from mmyolo.utils.misc import IMG_EXTENSIONS
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--images-dir', type=str, help='Dataset image directory')
+    parser.add_argument('--img-dir', type=str, help='Dataset image directory')
     parser.add_argument(
         '--labels-dir', type=str, help='Dataset labels directory')
-    parser.add_argument(
-        '--out-path', type=str, help='COCO label json output path')
+    parser.add_argument('--out', type=str, help='COCO label json output path')
     args = parser.parse_args()
     return args
 
 
-def gen_coco_annotations_rectangle(points: list, image_id: int,
-                                   annotations_id: int,
-                                   category_id: int) -> dict:
+def format_coco_annotations(points: list, image_id: int, annotations_id: int,
+                            category_id: int) -> dict:
     """Gen COCO annotations format label from labelme format label.
 
     Args:
@@ -56,7 +53,7 @@ def gen_coco_annotations_rectangle(points: list, image_id: int,
     return annotation_info
 
 
-def gen_coco_json(image_dir, labels_root):
+def parse_labelme_to_coco(image_dir: str, labels_root: str) -> dict:
     """Gen COCO json format label from labelme format label.
 
     Args:
@@ -182,10 +179,9 @@ def gen_coco_json(image_dir, labels_root):
             x1, x2 = sorted([x1, x2])  # xmin, xmax
             y1, y2 = sorted([y1, y2])  # ymin, ymax
             points = [[x1, y1], [x2, y2], [x1, y2], [x2, y1]]
-            coco_json['annotations'].append(
-                gen_coco_annotations_rectangle(points, image_id,
-                                               annotations_id,
-                                               category_to_id[class_name]))
+            coco_annotations = format_coco_annotations(
+                points, image_id, annotations_id, category_to_id[class_name])
+            coco_json['annotations'].append(coco_annotations)
 
     print('*' * 20)
     print(f'Total image = {image_id}')
@@ -207,7 +203,7 @@ def convert_labelme_to_coco(image_dir: str, labels_dir: str, out_path: str):
     assert Path(out_path).suffix == '.json'
 
     # convert to coco json
-    coco_json_data = gen_coco_json(image_dir, labels_dir)
+    coco_json_data = parse_labelme_to_coco(image_dir, labels_dir)
 
     # save json result
     Path(out_path).parent.mkdir(exist_ok=True, parents=True)
@@ -217,7 +213,7 @@ def convert_labelme_to_coco(image_dir: str, labels_dir: str, out_path: str):
 
 def main():
     args = parse_args()
-    convert_labelme_to_coco(args.images_dir, args.labels_dir, args.out_path)
+    convert_labelme_to_coco(args.img_dir, args.labels_dir, args.out)
     print('All done!')
 
 
