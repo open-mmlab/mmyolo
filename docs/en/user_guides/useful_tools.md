@@ -17,7 +17,8 @@ mim run mmdet print_config [CONFIG]
 `tools/analysis_tools/browse_coco_json.py` is a script that can visualization to display the COCO label in the picture.
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py [--img-dir ${IMG_DIR}] \
+python tools/analysis_tools/browse_coco_json.py [--data-root ${DATA_ROOT}] \
+                                                [--img-dir ${IMG_DIR}] \
                                                 [--ann-file ${ANN_FILE}] \
                                                 [--wait-time ${WAIT_TIME}] \
                                                 [--disp-all] [--category-names CATEGORY_NAMES [CATEGORY_NAMES ...]] \
