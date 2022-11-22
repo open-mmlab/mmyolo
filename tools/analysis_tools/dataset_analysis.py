@@ -7,7 +7,6 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 from mmengine.config import Config
-from mmengine.dataset.dataset_wrapper import ConcatDataset
 from mmengine.utils import ProgressBar
 from prettytable import PrettyTable
 
@@ -378,12 +377,18 @@ def main():
     # register all modules in mmdet into the registries
     register_all_modules()
 
-    def replace_pipeline_to_none(dataloader_cfg):
-        if dataloader_cfg.get('dataset', None) is None and dataloader_cfg.get(
-                'datasets', None) is None:
+    def replace_pipeline_to_none(cfg):
+        """Recursively iterate over all dataset(or datasets) and set their
+        pipelines to none.Datasets are mean ConcatDataset.
+
+        Recursively terminates only when all dataset(or datasets) have been
+        traversed
+        """
+
+        if cfg.get('dataset', None) is None and cfg.get('datasets',
+                                                        None) is None:
             return
-        dataset = dataloader_cfg.dataset if dataloader_cfg.get(
-            'dataset', None) else dataloader_cfg.datasets
+        dataset = cfg.dataset if cfg.get('dataset', None) else cfg.datasets
         if isinstance(dataset, list):
             for item in dataset:
                 item.pipeline = None
@@ -400,14 +405,8 @@ def main():
         replace_pipeline_to_none(cfg.val_dataloader)
         dataset = DATASETS.build(cfg.val_dataloader.dataset)
 
-    data_list = []
-    # Determine whether the dataset is ConcatDataset
-    if isinstance(dataset, ConcatDataset):
-        datasets = dataset.datasets
-        for idx in range(len(datasets)):
-            data_list += datasets[idx]
-    else:
-        data_list = dataset
+    # Build  lists to store data for all raw data
+    data_list = dataset
 
     # 2.Prepare data
     # Drawing settings
