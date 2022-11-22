@@ -198,7 +198,7 @@ val_dataloader = dict(
 test_dataloader = val_dataloader
 ```
 
-[Evaluators](https://mmengine.readthedocs.io/en/latest/design/metric_and_evaluator.html) are used to compute the metrics of the trained model on the validation and testing datasets. The config of evaluators consists of one or a list of metric configs:
+[Evaluators](https://mmengine.readthedocs.io/en/latest/design/evaluation.html) are used to compute the metrics of the trained model on the validation and testing datasets. The config of evaluators consists of one or a list of metric configs:
 
 ```python
 val_evaluator = dict(  # Validation evaluator config
@@ -270,7 +270,7 @@ test_cfg = dict(type='TestLoop')  # The testing loop type
 
 ### Optimization config
 
-`optim_wrapper` is the field to configure optimization-related settings. The optimizer wrapper not only provides the functions of the optimizer but also supports functions such as gradient clipping, mixed precision training, etc. Find out more in the [optimizer wrapper tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/optimizer.html).
+`optim_wrapper` is the field to configure optimization-related settings. The optimizer wrapper not only provides the functions of the optimizer but also supports functions such as gradient clipping, mixed precision training, etc. Find out more in the [optimizer wrapper tutorial](https://mmengine.readthedocs.io/en/latest/tutorials/optim_wrapper.html).
 
 ```python
 optim_wrapper = dict(  # Optimizer wrapper config
@@ -282,7 +282,7 @@ optim_wrapper = dict(  # Optimizer wrapper config
         weight_decay=0.0005, # Weight decay of SGD
         nesterov=True, # Enable Nesterov momentum, Refer to http://www.cs.toronto.edu/~hinton/absps/momentum.pdf
         batch_size_pre_gpu=train_batch_size_pre_gpu),  # Enable automatic learning rate scaling
-    clip_grad=None,  # Gradient clip option. Set None to disable gradient clip. Find usage in https://mmengine.readthedocs.io/en/latest/tutorials/optimizer.html
+    clip_grad=None,  # Gradient clip option. Set None to disable gradient clip. Find usage in https://mmengine.readthedocs.io/en/latest/tutorials/optim_wrapper.html
     constructor='YOLOv5OptimizerConstructor') # The constructor for YOLOv5 optimizer
 ```
 
@@ -545,7 +545,7 @@ When submitting jobs using `tools/train.py` or `tools/test.py`, you may specify 
 We follow the below style to name config files. Contributors are advised to follow the same style.
 
 ```
-{algorithm name}_{model component names [component1]_[component2]_[...]}-[version id]_[norm setting]_[data preprocessor type]_{training settings}_{training dataset information}_{testing dataset information}.py
+{algorithm name}_{model component names [component1]_[component2]_[...]}-[version id]_[norm setting]_[data preprocessor type]_{training settings}_{training dataset information}_[testing dataset information].py
 ```
 
 The file name is divided into 8 name fields, which have 4 required parts and 4 optional parts. All parts and components are connected with `_` and words of each part or component should be connected with `-`. `{}` indicates the required name field, and `[]` indicates the optional name field.

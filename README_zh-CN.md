@@ -139,6 +139,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
     - [模型设计相关说明](docs/zh_cn/algorithm_descriptions/model_design.md)
   - [算法原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#算法原理和实现全解析)
     - [YOLOv5 原理和实现全解析](docs/zh_cn/algorithm_descriptions/yolov5_description.md)
+    - [YOLOv6 原理和实现全解析](docs/zh_cn/algorithm_descriptions/yolov6_description.md)
     - [RTMDet 原理和实现全解析](docs/zh_cn/algorithm_descriptions/rtmdet_description.md)
 
 - 算法部署
