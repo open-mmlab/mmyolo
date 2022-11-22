@@ -17,9 +17,8 @@ mim run mmdet print_config [CONFIG]
 脚本 `tools/analysis_tools/browse_coco_json.py` 能够使用可视化显示 COCO 标签在图片的情况。
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py ${DATA_ROOT} \
-                                                [--ann_file ${ANN_FILE}] \
-                                                [--img_dir ${IMG_DIR}] \
+python tools/analysis_tools/browse_coco_json.py [--img-dir ${IMG_DIR}] \
+                                                [--ann-file ${ANN_FILE}] \
                                                 [--wait-time ${WAIT_TIME}] \
                                                 [--disp-all] [--category-names CATEGORY_NAMES [CATEGORY_NAMES ...]] \
                                                 [--shuffle]
@@ -30,36 +29,32 @@ python tools/analysis_tools/browse_coco_json.py ${DATA_ROOT} \
 1. 查看 `COCO` 全部类别，同时展示 `bbox`、`mask` 等所有类型的标注：
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --img-dir './data/coco/train2017' \
+                                                --ann-file './data/coco/annotations/instances_train2017.json' \
                                                 --disp-all
 ```
 
 2. 查看 `COCO` 全部类别，同时仅展示 `bbox` 类型的标注，并打乱显示：
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --img-dir './data/coco/train2017' \
+                                                --ann-file './data/coco/annotations/instances_train2017.json' \
                                                 --shuffle
 ```
 
 3. 只查看 `bicycle` 和 `person` 类别，同时仅展示 `bbox` 类型的标注：
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --img-dir './data/coco/train2017' \
+                                                --ann-file './data/coco/annotations/instances_train2017.json' \
                                                 --category-names 'bicycle' 'person'
 ```
 
 4. 查看 `COCO` 全部类别，同时展示 `bbox`、`mask` 等所有类型的标注，并打乱显示：
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --img-dir './data/coco/train2017' \
+                                                --ann-file './data/coco/annotations/instances_train2017.json' \
                                                 --disp-all \
                                                 --shuffle
 ```

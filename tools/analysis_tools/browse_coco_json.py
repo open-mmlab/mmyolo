@@ -10,7 +10,7 @@ from pycocotools.coco import COCO
 
 
 def show_coco_json(args):
-    coco = COCO(osp.join(args.data_root, args.ann_file))
+    coco = COCO(args.ann_file)
     print(f'Total number of images：{len(coco.getImgIds())}')
     categories = coco.loadCats(coco.getCatIds())
     category_names = [category['name'] for category in categories]
@@ -30,8 +30,7 @@ def show_coco_json(args):
 
     for i in range(len(image_ids)):
         image_data = coco.loadImgs(image_ids[i])[0]
-        image_path = osp.join(args.data_root, args.img_dir,
-                              image_data['file_name'])
+        image_path = osp.join(args.img_dir, image_data['file_name'])
 
         annotation_ids = coco.getAnnIds(
             imgIds=image_data['id'], catIds=category_ids, iscrowd=0)
@@ -104,13 +103,11 @@ def show_bbox_only(coco, anns, show_label_bbox=True, is_filling=True):
 def parse_args():
     parser = argparse.ArgumentParser(description='Show coco json file')
     parser.add_argument(
-        'data_root', default='data/coco/', help='data root path')
+        '--img-dir', default='data/coco/train2017', help='image folder path')
     parser.add_argument(
-        '--ann_file',
-        default='annotations/instances_train2017.json',
+        '--ann-file',
+        default='data/coco/annotations/instances_train2017.json',
         help='ann file path')
-    parser.add_argument(
-        '--img_dir', default='train2017', help='image folder path')
     parser.add_argument(
         '--wait-time', type=float, default=2, help='the interval of show (s)')
     parser.add_argument(
@@ -133,6 +130,10 @@ def parse_args():
     return args
 
 
-if __name__ == '__main__':
+def main():
     args = parse_args()
     show_coco_json(args)
+
+
+if __name__ == '__main__':
+    main()
