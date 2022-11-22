@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
-from typing import List, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -47,7 +47,6 @@ class YOLOv7HeadModule(YOLOv5HeadModule):
             mi.bias.data = b.view(-1)
 
 
-# TODO: to check
 @MODELS.register_module()
 class YOLOv7p6HeadModule(YOLOv5HeadModule):
     """YOLOv7Head head module used in YOLOv7."""
@@ -56,12 +55,14 @@ class YOLOv7p6HeadModule(YOLOv5HeadModule):
                  *args,
                  main_out_channels: Sequence[int] = [256, 512, 768, 1024],
                  aux_out_channels: Sequence[int] = [320, 640, 960, 1280],
+                 use_aux: bool = True,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  **kwargs):
         self.main_out_channels = main_out_channels
         self.aux_out_channels = aux_out_channels
+        self.use_aux = use_aux
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
         super().__init__(*args, **kwargs)
@@ -69,7 +70,6 @@ class YOLOv7p6HeadModule(YOLOv5HeadModule):
     def _init_layers(self):
         """initialize conv layers in YOLOv7 head."""
         self.main_convs_pred = nn.ModuleList()
-        self.aux_convs_pred = nn.ModuleList()
         for i in range(self.num_levels):
             conv_pred = nn.Sequential(
                 ConvModule(
@@ -86,17 +86,22 @@ class YOLOv7p6HeadModule(YOLOv5HeadModule):
             )
             self.main_convs_pred.append(conv_pred)
 
-            aux_pred = nn.Sequential(
-                ConvModule(
-                    self.in_channels[i],
-                    self.aux_out_channels[i],
-                    3,
-                    padding=1,
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg),
-                nn.Conv2d(self.aux_out_channels[i],
-                          self.num_base_priors * self.num_out_attrib, 1))
-            self.aux_convs_pred.append(aux_pred)
+        if self.use_aux:
+            self.aux_convs_pred = nn.ModuleList()
+            for i in range(self.num_levels):
+                aux_pred = nn.Sequential(
+                    ConvModule(
+                        self.in_channels[i],
+                        self.aux_out_channels[i],
+                        3,
+                        padding=1,
+                        norm_cfg=self.norm_cfg,
+                        act_cfg=self.act_cfg),
+                    nn.Conv2d(self.aux_out_channels[i],
+                              self.num_base_priors * self.num_out_attrib, 1))
+                self.aux_convs_pred.append(aux_pred)
+        else:
+            self.aux_convs_pred = [None] * len(self.main_convs_pred)
 
     def init_weights(self):
         """Initialize the bias of YOLOv5 head."""
@@ -110,12 +115,13 @@ class YOLOv7p6HeadModule(YOLOv5HeadModule):
             b.data[:, 5:] += math.log(0.6 / (self.num_classes - 0.99))
             mi.bias.data = b.view(-1)
 
-            aux = aux[1]  # nn.Conv2d
-            b = aux.bias.data.view(3, -1)
-            # obj (8 objects per 640 image)
-            b.data[:, 4] += math.log(8 / (640 / s)**2)
-            b.data[:, 5:] += math.log(0.6 / (self.num_classes - 0.99))
-            mi.bias.data = b.view(-1)
+            if self.use_aux:
+                aux = aux[1]  # nn.Conv2d
+                b = aux.bias.data.view(3, -1)
+                # obj (8 objects per 640 image)
+                b.data[:, 4] += math.log(8 / (640 / s)**2)
+                b.data[:, 5:] += math.log(0.6 / (self.num_classes - 0.99))
+                mi.bias.data = b.view(-1)
 
     def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         """Forward features from the upstream network.
@@ -132,7 +138,7 @@ class YOLOv7p6HeadModule(YOLOv5HeadModule):
                            self.aux_convs_pred)
 
     def forward_single(self, x: Tensor, convs: nn.Module,
-                       aux_convs: nn.Module) \
+                       aux_convs: Optional[nn.Module]) \
             -> Tuple[Union[Tensor, List], Union[Tensor, List],
                      Union[Tensor, List]]:
         """Forward feature of a single scale level."""
@@ -146,7 +152,7 @@ class YOLOv7p6HeadModule(YOLOv5HeadModule):
         bbox_pred = pred_map[:, :, :4, ...].reshape(bs, -1, ny, nx)
         objectness = pred_map[:, :, 4:5, ...].reshape(bs, -1, ny, nx)
 
-        if not self.training:
+        if not self.training or not self.use_aux:
             return cls_score, bbox_pred, objectness
         else:
             aux_pred_map = aux_convs(x)
@@ -181,8 +187,10 @@ class YOLOv7Head(YOLOv5Head):
                  simota_candidate_topk: int = 10,
                  simota_iou_weight: float = 3.0,
                  simota_cls_weight: float = 1.0,
+                 aux_loss_weights: float = 0.25,
                  **kwargs):
         super().__init__(*args, **kwargs)
+        self.aux_loss_weights = aux_loss_weights
         self.assigner = BatchYOLOv7Assigner(
             num_classes=self.num_classes,
             num_base_priors=self.num_base_priors,
@@ -194,9 +202,9 @@ class YOLOv7Head(YOLOv5Head):
 
     def loss_by_feat(
             self,
-            cls_scores: Sequence[Tensor],
-            bbox_preds: Sequence[Tensor],
-            objectnesses: Sequence[Tensor],
+            cls_scores: Sequence[Union[Tensor, List]],
+            bbox_preds: Sequence[Union[Tensor, List]],
+            objectnesses: Sequence[Union[Tensor, List]],
             batch_gt_instances: Sequence[InstanceData],
             batch_img_metas: Sequence[dict],
             batch_gt_instances_ignore: OptInstanceList = None) -> dict:
@@ -225,30 +233,80 @@ class YOLOv7Head(YOLOv5Head):
         Returns:
             dict[str, Tensor]: A dictionary of losses.
         """
-        batch_size = cls_scores[0].shape[0]
-        device = cls_scores[0].device
-        loss_cls = torch.zeros(1, device=device)
-        loss_box = torch.zeros(1, device=device)
-        loss_obj = torch.zeros(1, device=device)
 
-        head_preds = self._merge_predict_results(bbox_preds, objectnesses,
-                                                 cls_scores)
-        scaled_factors = [
-            torch.tensor(head_pred.shape, device=device)[[3, 2, 3, 2]]
-            for head_pred in head_preds
-        ]
+        if isinstance(cls_scores[0], Sequence):
+            with_aux = True
+            batch_size = cls_scores[0][0].shape[0]
+            device = cls_scores[0][0].device
 
-        # 1. Convert gt to norm xywh format
+            bbox_preds_main, bbox_preds_aux = zip(*bbox_preds)
+            objectnesses_main, objectnesses_aux = zip(*objectnesses)
+            cls_scores_main, cls_scores_aux = zip(*cls_scores)
+
+            head_preds = self._merge_predict_results(bbox_preds_main,
+                                                     objectnesses_main,
+                                                     cls_scores_main)
+            head_preds_aux = self._merge_predict_results(
+                bbox_preds_aux, objectnesses_aux, cls_scores_aux)
+        else:
+            with_aux = False
+            batch_size = cls_scores[0].shape[0]
+            device = cls_scores[0].device
+
+            head_preds = self._merge_predict_results(bbox_preds, objectnesses,
+                                                     cls_scores)
+
+        # Convert gt to norm xywh format
         # (num_base_priors, num_batch_gt, 7)
         # 7 is mean (batch_idx, cls_id, x_norm, y_norm,
         # w_norm, h_norm, prior_idx)
         batch_targets_normed = self._convert_gt_to_norm_format(
             batch_gt_instances, batch_img_metas)
 
+        scaled_factors = [
+            torch.tensor(head_pred.shape, device=device)[[3, 2, 3, 2]]
+            for head_pred in head_preds
+        ]
+
+        loss_cls, loss_obj, loss_box = self._calc_loss(
+            head_preds=head_preds,
+            batch_targets_normed=batch_targets_normed,
+            near_neighbor_thr=0.5,
+            scaled_factors=scaled_factors,
+            batch_img_metas=batch_img_metas,
+            device=device)
+
+        if with_aux:
+            loss_cls_aux, loss_obj_aux, loss_box_aux = self._calc_loss(
+                head_preds=head_preds_aux,
+                batch_targets_normed=batch_targets_normed,
+                near_neighbor_thr=1.0,
+                scaled_factors=scaled_factors,
+                batch_img_metas=batch_img_metas,
+                device=device)
+            loss_cls += self.aux_loss_weights * loss_cls_aux
+            loss_obj += self.aux_loss_weights * loss_obj_aux
+            loss_box += self.aux_loss_weights * loss_box_aux
+
+        _, world_size = get_dist_info()
+        return dict(
+            loss_cls=loss_cls * batch_size * world_size,
+            loss_obj=loss_obj * batch_size * world_size,
+            loss_bbox=loss_box * batch_size * world_size)
+
+    def _calc_loss(self, head_preds, batch_targets_normed, near_neighbor_thr,
+                   scaled_factors, batch_img_metas, device):
+        loss_cls = torch.zeros(1, device=device)
+        loss_box = torch.zeros(1, device=device)
+        loss_obj = torch.zeros(1, device=device)
+
         assigner_results = self.assigner(
-            head_preds, batch_targets_normed,
-            batch_img_metas[0]['batch_input_shape'], self.priors_base_sizes,
-            self.grid_offset)
+            head_preds,
+            batch_targets_normed,
+            batch_img_metas[0]['batch_input_shape'],
+            self.priors_base_sizes,
+            self.grid_offset,
+            near_neighbor_thr=near_neighbor_thr)
         # mlvl is mean multi_level
         mlvl_positive_infos = assigner_results['mlvl_positive_infos']
         mlvl_priors = assigner_results['mlvl_priors']
@@ -299,12 +357,7 @@ class YOLOv7Head(YOLOv5Head):
                                           target_class)
             else:
                 loss_cls += head_pred_positive[:, 5:].sum() * 0
-
-        _, world_size = get_dist_info()
-        return dict(
-            loss_cls=loss_cls * batch_size * world_size,
-            loss_obj=loss_obj * batch_size * world_size,
-            loss_bbox=loss_box * batch_size * world_size)
+        return loss_cls, loss_obj, loss_box
 
     def _merge_predict_results(self, bbox_preds: Sequence[Tensor],
                                objectnesses: Sequence[Tensor],

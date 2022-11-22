@@ -29,7 +29,70 @@ model = dict(
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg=dict(type='SiLU', inplace=True)),
         prior_generator=dict(base_sizes=anchors, strides=strides),
+        # scaled based on number of detection layers
+        loss_cls=dict(loss_weight=0.3 *
+                      (num_classes / 80 * 3 / num_det_layers)),
+        loss_bbox=dict(loss_weight=0.05 * (3 / num_det_layers)),
+        loss_obj=dict(loss_weight=0.7 *
+                      ((img_scale[0] / 640)**2 * 3 / num_det_layers)),
         obj_level_weights=[4.0, 1.0, 0.25, 0.06]))
+
+pre_transform = _base_.pre_transform
+
+mosiac4_pipeline = [
+    dict(
+        type='Mosaic',
+        img_scale=img_scale,
+        pad_val=114.0,
+        pre_transform=pre_transform),
+    dict(
+        type='YOLOv5RandomAffine',
+        max_rotate_degree=0.0,
+        max_shear_degree=0.0,
+        max_translate_ratio=0.2,  # note
+        scaling_ratio_range=(0.1, 2.0),  # note
+        border=(-img_scale[0] // 2, -img_scale[1] // 2),
+        border_val=(114, 114, 114)),
+]
+
+mosiac9_pipeline = [
+    dict(
+        type='Mosaic9',
+        img_scale=img_scale,
+        pad_val=114.0,
+        pre_transform=pre_transform),
+    dict(
+        type='YOLOv5RandomAffine',
+        max_rotate_degree=0.0,
+        max_shear_degree=0.0,
+        max_translate_ratio=0.2,  # note
+        scaling_ratio_range=(0.1, 2.0),  # note
+        border=(-img_scale[0] // 2, -img_scale[1] // 2),
+        border_val=(114, 114, 114)),
+]
+
+randchoice_mosaic_pipeline = dict(
+    type='RandomChoice',
+    transforms=[mosiac4_pipeline, mosiac9_pipeline],
+    prob=[0.8, 0.2])
+
+train_pipeline = [
+    *pre_transform,
+    randchoice_mosaic_pipeline,
+    dict(
+        type='YOLOv5MixUp',
+        alpha=8.0,  # note
+        beta=8.0,  # note
+        prob=0.15,
+        pre_transform=[*pre_transform, randchoice_mosaic_pipeline]),
+    dict(type='YOLOv5HSVRandomAug'),
+    dict(type='mmdet.RandomFlip', prob=0.5),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
+                   'flip_direction'))
+]
+train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
 
 test_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
@@ -45,8 +108,10 @@ test_pipeline = [
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                    'scale_factor', 'pad_param'))
 ]
-
 val_dataloader = dict(
     dataset=dict(pipeline=test_pipeline, batch_shapes_cfg=batch_shapes_cfg))
-
 test_dataloader = val_dataloader
+
+# The only difference between P6 and P5 in terms of
+# hyperparameters is lr_factor
+default_hooks = dict(param_scheduler=dict(lr_factor=0.2))
