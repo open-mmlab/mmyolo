@@ -31,6 +31,7 @@ If the image and label files are not in the same folder, you do not need to spec
 E.g:
 
 1. Visualize all categories of `COCO` and display all types of annotations such as `bbox` and `mask`:
+
 ```shell
 python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
                                                 --img-dir 'train2017' \
