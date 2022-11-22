@@ -24,6 +24,9 @@ python tools/analysis_tools/browse_coco_json.py [--img-dir ${IMG_DIR}] \
                                                 [--shuffle]
 ```
 
+If images and labels are in the same folder, you can specify `--data-root` to the folder, and then `--img-dir` and `--ann-file` to specify the relative path of the folder. The code will be automatically spliced.
+If the image and label files are not in the same folder, you do not need to specify `--data-root`, but directly specify `--img-dir` and `--ann-file` of the absolute path.
+
 E.g:
 
 1. Visualize all categories of `COCO` and display all types of annotations such as `bbox` and `mask`:
@@ -31,6 +34,14 @@ E.g:
 ```shell
 python tools/analysis_tools/browse_coco_json.py --img-dir './data/coco/train2017' \
                                                 --ann-file './data/coco/annotations/instances_train2017.json' \
+                                                --disp-all
+```
+
+If images and labels are in the same folder, you can use a relative path:
+```shell
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
                                                 --disp-all
 ```
 

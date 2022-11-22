@@ -10,7 +10,10 @@ from pycocotools.coco import COCO
 
 
 def show_coco_json(args):
-    coco = COCO(args.ann_file)
+    if args.data_root is not None:
+        coco = COCO(osp.join(args.data_root, args.ann_file))
+    else:
+        coco = COCO(args.ann_file)
     print(f'Total number of images：{len(coco.getImgIds())}')
     categories = coco.loadCats(coco.getCatIds())
     category_names = [category['name'] for category in categories]
@@ -30,7 +33,11 @@ def show_coco_json(args):
 
     for i in range(len(image_ids)):
         image_data = coco.loadImgs(image_ids[i])[0]
-        image_path = osp.join(args.img_dir, image_data['file_name'])
+        if args.data_root is not None:
+            image_path = osp.join(args.data_root, args.img_dir,
+                                  image_data['file_name'])
+        else:
+            image_path = osp.join(args.img_dir, image_data['file_name'])
 
         annotation_ids = coco.getAnnIds(
             imgIds=image_data['id'], catIds=category_ids, iscrowd=0)
@@ -102,6 +109,8 @@ def show_bbox_only(coco, anns, show_label_bbox=True, is_filling=True):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Show coco json file')
+    parser.add_argument(
+        '--data-root', default=None, help='dataset root')
     parser.add_argument(
         '--img-dir', default='data/coco/train2017', help='image folder path')
     parser.add_argument(

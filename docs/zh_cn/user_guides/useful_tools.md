@@ -17,12 +17,17 @@ mim run mmdet print_config [CONFIG]
 脚本 `tools/analysis_tools/browse_coco_json.py` 能够使用可视化显示 COCO 标签在图片的情况。
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py [--img-dir ${IMG_DIR}] \
+python tools/analysis_tools/browse_coco_json.py [--data-root ${DATA_ROOT}] \
+                                                [--img-dir ${IMG_DIR}] \
                                                 [--ann-file ${ANN_FILE}] \
                                                 [--wait-time ${WAIT_TIME}] \
                                                 [--disp-all] [--category-names CATEGORY_NAMES [CATEGORY_NAMES ...]] \
                                                 [--shuffle]
 ```
+
+其中，如果图片、标签都在同一个文件夹下的话，可以指定 `--data-root` 到该文件夹，然后 `--img-dir` 和 `--ann-file` 指定该文件夹的相对路径，代码会自动拼接。
+如果图片、标签文件不在同一个文件夹下的话，则无需指定 `--data-root` ，直接指定绝对路径的 `--img-dir` 和 `--ann-file` 即可。
+
 
 例子：
 
@@ -31,6 +36,14 @@ python tools/analysis_tools/browse_coco_json.py [--img-dir ${IMG_DIR}] \
 ```shell
 python tools/analysis_tools/browse_coco_json.py --img-dir './data/coco/train2017' \
                                                 --ann-file './data/coco/annotations/instances_train2017.json' \
+                                                --disp-all
+```
+
+如果图片、标签都在同一个文件夹下的话，可以使用相对路径：
+```shell
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
                                                 --disp-all
 ```
 
