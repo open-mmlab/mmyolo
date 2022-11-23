@@ -255,6 +255,67 @@ class PPYOLOEHead(YOLOv6Head):
         # get epoch information from message hub
         message_hub = MessageHub.get_current_instance()
         current_epoch = message_hub.get_info('epoch')
+        # # 临时用于精度对齐
+        # heads_out = torch.load(
+        #     '/data/computervision/gulingrui/code/yolobenchmark/yolobenchmark/duiqi_head_outs.pth')
+        # loss_dict = torch.load(
+        # '/data/computervision/gulingrui/code/yolobenchmark/yolobenchmark/duiqi_loss.pth')
+        # targets = torch.load(
+        # '/data/computervision/gulingrui/code/yolobenchmark/yolobenchmark/duiqi_targets.pth')
+        #
+        # pred_scores, pred_distri, anchors, \
+        # anchor_points, num_anchors_list, stride_tensor = heads_out
+        #
+        # # yolobenchmark里是从20*20-80*80
+        # # mmyolo里是从80-20
+        # base_size = 23
+        #
+        # # 这边把yolobenchmark转成mmyolo
+        # bench_cls_scores = [
+        #     pred_scores[:, base_size * base_size*5:].view(
+        #     32, base_size*4, base_size*4, 80).permute((0, 3, 1, 2)),
+        #     pred_scores[:,
+        #     base_size * base_size:base_size * base_size*5].view(
+        #     32, base_size*2, base_size*2, 80).permute((0, 3, 1, 2)),
+        #     pred_scores[:, :base_size * base_size].view(
+        #     32, base_size, base_size, 80).permute((0, 3, 1, 2)),
+        # ]
+        #
+        # # mmyolo bbox_dist_preds[1].shape torch.Size([32, 17, 1444, 4])
+        # # benchmark pred_distri.shape     torch.Size([32, 12096, 68])
+        #
+        # bench_dist = [
+        #     pred_distri[:,
+        #     base_size * base_size+base_size*base_size*4:].view(
+        #     32, -1, 4, 17).permute((0, 3, 1, 2)),     # (32, 17, 6400, 4)
+        #     pred_distri[:,
+        #     base_size * base_size:base_size * base_size*5].view(
+        #     32, -1, 4, 17).permute((0, 3, 1, 2)),
+        #     pred_distri[:, :base_size * base_size].view(
+        #     32, -1, 4, 17).permute((0, 3, 1, 2)),
+        # ]
+        # # bench_bbox_preds[0].shape   torch.Size([32, 1, 6400, 4])
+        # bench_bbox_preds = [self.head_module.proj_conv(
+        # F.softmax(i, dim=1)) for i in bench_dist]
+        #
+        # bench_target = []
+        # for i in range(32):
+        #     temp_target = targets[i]
+        #     valid_indx = temp_target.sum(-1) > 0
+        #     num = valid_indx.sum().long()
+        #     batch_idx = targets.new_full((num, 1), i)
+        #     gt_labels = temp_target[valid_indx]
+        #     bench_target.append(torch.cat(
+        #         (batch_idx, gt_labels), dim=1
+        #     ))
+        # bench_target = torch.cat(bench_target, 0)
+        #
+        # cls_scores = bench_cls_scores
+        # bbox_dist_preds = bench_dist
+        # bbox_preds = bench_bbox_preds
+        # batch_gt_instances = bench_target
+
+        # cls_scores[0].shape (32, 80, 48, 48)
 
         num_imgs = len(batch_img_metas)
         if batch_gt_instances_ignore is None:
@@ -307,10 +368,11 @@ class PPYOLOEHead(YOLOv6Head):
         flatten_pred_bboxes = torch.cat(flatten_pred_bboxes, dim=1)
         flatten_pred_bboxes = self.bbox_coder.decode(
             self.flatten_priors[..., :2], flatten_pred_bboxes,
-            self.flatten_priors[..., 2])
+            self.flatten_priors[..., 2])  # 这里已经乘上stride了
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if current_epoch < self.initial_epoch:
+            # if False:
             assigned_result = self.initial_assigner(
                 flatten_pred_bboxes.detach(), self.flatten_priors,
                 self.num_level_priors, gt_labels, gt_bboxes, pad_bbox_flag)

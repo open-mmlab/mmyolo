@@ -806,6 +806,8 @@ class PPYOLOERandomExpand(BaseTransform):
         results['gt_bboxes'].translate_(
             (results['pad_param'][2], results['pad_param'][1]))
 
+        return results
+
 
 @TRANSFORMS.register_module()
 class PPYOLOERandomCrop(RandomCrop):
@@ -950,6 +952,7 @@ class PPYOLOERandomCrop(RandomCrop):
                         crop_y1:crop_y2, crop_x1:crop_x2]
 
                 return results
+        return results
 
     def _iou_matrix(self, a, b):
         # TODO: copy is necessary?
