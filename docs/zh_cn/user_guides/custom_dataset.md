@@ -235,6 +235,11 @@ val_evaluator = dict(
 test_evaluator = val_evaluator
 
 optim_wrapper = dict(optimizer=dict(lr=base_lr))
+
+# 设置间隔多少个 epoch 保存模型，以及保存模型最多几个，`save_best` 是另外保存最佳模型（推荐）
+default_hooks = dict(
+    checkpoint=dict(
+        type='CheckpointHook', interval=1, max_keep_ckpts=5, save_best='auto'))
 ```
 
 ## 5. 训练
