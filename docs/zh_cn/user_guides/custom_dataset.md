@@ -186,7 +186,7 @@ checkpoint = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncb
 
 train_batch_size_per_gpu = 8 # 根据自己的GPU情况，修改 batch size
 train_num_workers = 4 # 推荐使用 train_num_workers = nGPU x 4
-val_batch_size_per_gpu = 2  # val 时候的 bs ，根据实际调整即可
+val_batch_size_per_gpu = 2  # val 时候的 batch size ，根据实际调整即可
 val_num_workers = 2
 
 base_lr = _base_.base_lr / 4  # 根据自己的GPU情况，修改 base_lr，修改的比例是 base_lr_default * (your_bs / default_bs)
