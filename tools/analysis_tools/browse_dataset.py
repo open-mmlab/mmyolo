@@ -17,7 +17,7 @@ from mmyolo.registry import DATASETS, VISUALIZERS
 from mmyolo.utils import register_all_modules
 
 
-# TODO Support for printing the change in key of results after the pipeline transformation.
+# TODO Support for printing the change in key of results
 def parse_args():
     parser = argparse.ArgumentParser(description='Browse a dataset')
     parser.add_argument('config', help='train config file path')
@@ -81,8 +81,8 @@ def _get_adaptive_scale(img_shape: Tuple[int, int],
     """Get adaptive scale according to image shape.
 
     The target scale depends on the the short edge length of the image. If the
-       short edge length equals 224, the output is 1.0. And output linear scales
-       according the short edge length.
+       short edge length equals 224, the output is 1.0. And output linear
+       scales according the short edge length.
        You can also specify the minimum scale and the maximum scale to limit
     the
        linear scale.
