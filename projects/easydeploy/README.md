@@ -8,4 +8,4 @@ Currently we support converting to `ONNX` and `TensorRT` formats, other inferenc
 
 ## Supported Backends
 
-- [To onnx](docs/model_convert.md)
+- [Model Convert](docs/model_convert.md)
