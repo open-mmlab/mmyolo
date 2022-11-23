@@ -179,7 +179,9 @@ python tools/analysis_tools/browse_coco_json.py --json ${COCO标签json路径} \
 ```python
 _base_ = './yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
+max_epochs = 200 # 训练的最大 epoch
 data_root = '/path/to/data_root' # 数据集目录的绝对路径
+work_dir = './work_dirs/my_yolov5_s_config-xxx' # 结果保存的路径
 
 # checkpoint 可以指定本地路径或者 URL，这里设置了 URL
 checkpoint = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
@@ -196,6 +198,8 @@ metainfo = dict( # 根据类别信息，设置 metainfo
     CLASSES=('cat'),
     PALETTE=[(220, 20, 60)] # 画图时候的颜色，随便设置即可
 )
+
+train_cfg = dict(max_epochs=max_epochs)
 
 model = dict(
     backbone=dict(init_cfg=dict(type='Pretrained', checkpoint=checkpoint)),
@@ -247,7 +251,7 @@ default_hooks = dict(
 使用 YOLOv5s 作为例子：
 
 ```shell
-python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py
+python tools/train.py configs/my_yolov5_s_config.py
 ```
 
 ## 6. 推理查看
