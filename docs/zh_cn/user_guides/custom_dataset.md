@@ -248,7 +248,7 @@ default_hooks = dict(
 
 ## 5. 训练
 
-使用 YOLOv5s 作为例子：
+使用下面命令进行启动训练：
 
 ```shell
 python tools/train.py configs/my_yolov5_s_config.py
@@ -257,10 +257,10 @@ python tools/train.py configs/my_yolov5_s_config.py
 ## 6. 推理查看
 
 ```shell
-python demo/image_demo.py /data/cat_split/test \
-                          configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
-                          work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/last.pth \
-                          --out-dir /data/cat_split/test_output
+python demo/image_demo.py /path/to/test/images \
+                          configs/my_yolov5_s_config.py \
+                          ./work_dirs/my_yolov5_s_config-xxx/last.pth \
+                          --out-dir /path/to/test/images_output
 ```
 
 ## 7. 部署
