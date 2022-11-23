@@ -2,50 +2,23 @@
 import argparse
 import os.path
 from functools import partial
-import warnings
 import cv2
 import mmcv
-import mmengine
+import warnings
 from mmengine import Config, DictAction
-import numpy as np
+from mmengine.utils import ProgressBar
 
 from mmyolo.utils import register_all_modules
 from mmyolo.utils.cam_utils import (CAMDetectorVisualizer, CAMDetectorWrapper,
                                     DetAblationLayer, DetBoxScoreTarget,
-                                    reshape_transform)
+                                    reshape_transform, GradCAM,GradCAMPlusPlus)
+from mmyolo.utils.misc import get_file_list
 
 try:
-    from pytorch_grad_cam import (AblationCAM, EigenCAM, EigenGradCAM, GradCAM,
-                                  GradCAMPlusPlus, LayerCAM, XGradCAM)
+    from pytorch_grad_cam import (AblationCAM, EigenCAM)
 except ImportError:
     raise ImportError('Please run `pip install "grad-cam"` to install '
                       'pytorch_grad_cam package.')
-
-
-def sofmax(logits):
-	e_x = np.exp(logits)
-	probs = e_x / np.sum(e_x, axis=-1, keepdims=True)
-	return probs
-
-class MyGradCAM(GradCAM):
-    def __init__(self, model, target_layers, use_cuda=False,
-                 reshape_transform=None):
-        super(
-            MyGradCAM,
-            self).__init__(
-            model,
-            target_layers,
-            use_cuda,
-            reshape_transform)
-
-    def get_cam_weights(self,
-                        input_tensor,
-                        target_layer,
-                        target_category,
-                        activations,
-                        grads):
-        return sofmax(np.mean(grads, axis=(2, 3)))
-
 
 GRAD_FREE_METHOD_MAP = {
     'ablationcam': AblationCAM,
@@ -54,11 +27,8 @@ GRAD_FREE_METHOD_MAP = {
 }
 
 GRAD_BASED_METHOD_MAP = {
-    'gradcam': MyGradCAM,
-    'gradcam++': GradCAMPlusPlus,
-    'xgradcam': XGradCAM,
-    'eigengradcam': EigenGradCAM,
-    'layercam': LayerCAM
+    'gradcam': GradCAM,
+    'gradcam++': GradCAMPlusPlus
 }
 
 ALL_SUPPORT_METHODS = list(GRAD_FREE_METHOD_MAP.keys()
@@ -73,23 +43,21 @@ def parse_args():
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
         '--method',
-        default='gradcam',
+        default='eigengradcam',
         choices=ALL_SUPPORT_METHODS,
         help='Type of method to use, supports '
-        f'{", ".join(ALL_SUPPORT_METHODS)}.')
+             f'{", ".join(ALL_SUPPORT_METHODS)}.')
     parser.add_argument(
         '--target-layers',
-        default=['backbone.stage4'],
+        default=['neck.downsample_layers[1]'],
         nargs='+',
         type=str,
         help='The target layers to get CAM, if not set, the tool will '
-        'specify the backbone.stage4')
-    parser.add_argument('--out-dir', default=None, help='Path to output file')
+             'specify the backbone.stage4')
     parser.add_argument(
-        '--preview-model',
-        default=False,
-        action='store_true',
-        help='To preview all the model layers')
+        '--out-dir', default='./output', help='Path to output file')
+    parser.add_argument(
+        '--show', action='store_true', help='Show the CAM results')
     parser.add_argument(
         '--device', default='cuda:0', help='Device used for inference')
     parser.add_argument(
@@ -97,30 +65,35 @@ def parse_args():
     parser.add_argument(
         '--topk',
         type=int,
-        default=3,
-        help='Select topk predict resutls to show')
+        default=-1,
+        help='Select topk predict resutls to show. -1 are mean all.')
     parser.add_argument(
         '--max-shape',
         nargs='+',
         type=int,
         default=-1,
         help='max shapes. Its purpose is to save GPU memory. '
-        'The activation map is scaled and then evaluated. '
-        'If set to -1, it means no scaling.')
+             'The activation map is scaled and then evaluated. '
+             'If set to -1, it means no scaling.')
     parser.add_argument(
-        '--no-norm-in-bbox',
-        action='store_false',
+        '--preview-model',
+        default=False,
+        action='store_true',
+        help='To preview all the model layers')
+    parser.add_argument(
+        '--norm-in-bbox',
+        action='store_true',
         help='Norm in bbox of cam image')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
         help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
+             'in xxx=yyy format will be merged into config file. If the value to '
+             'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+             'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+             'Note that the quotation marks are necessary and that no white space '
+             'is allowed.')
     # Only used by AblationCAM
     parser.add_argument(
         '--batch-size',
@@ -132,7 +105,7 @@ def parse_args():
         type=int,
         default=0.5,
         help='Making it much faster of AblationCAM. '
-        'The parameter controls how many channels should be ablated')
+             'The parameter controls how many channels should be ablated')
 
     args = parser.parse_args()
     return args
@@ -170,7 +143,6 @@ def init_detector_and_visualizer(args, cfg):
     if args.method in GRAD_BASED_METHOD_MAP:
         method_class = GRAD_BASED_METHOD_MAP[args.method]
         is_need_grad = True
-        warnings.warn('If not norm in bbox, the visualization result may not be reasonable')
     else:
         method_class = GRAD_FREE_METHOD_MAP[args.method]
         is_need_grad = False
@@ -180,7 +152,9 @@ def init_detector_and_visualizer(args, cfg):
         model_wrapper,
         target_layers,
         reshape_transform=partial(
-            reshape_transform, max_shape=max_shape, is_need_grad=is_need_grad),
+            reshape_transform,
+            max_shape=max_shape,
+            is_need_grad=is_need_grad),
         is_need_grad=is_need_grad,
         extra_params=ablationcam_extra_params)
     return model_wrapper, cam_detector_visualizer
@@ -195,21 +169,33 @@ def main():
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
 
+    if not os.path.exists(args.out_dir) and not args.show:
+        os.mkdir(args.out_dir)
+
     model_wrapper, cam_detector_visualizer = init_detector_and_visualizer(
         args, cfg)
 
-    images = args.img
-    if not isinstance(images, list):
-        images = [images]
+    # get file list
+    image_list, source_type = get_file_list(args.img)
 
-    for image_path in images:
+    progress_bar = ProgressBar(len(image_list))
+
+    for image_path in image_list:
         image = cv2.imread(image_path)
         model_wrapper.set_input_data(image)
 
+        # forward detection results
         result = model_wrapper()[0]
 
         pred_instances = result.pred_instances
-        assert len(pred_instances) > 0, 'empty detect bboxes'
+        # Get candidate predict info with score threshold
+        pred_instances = pred_instances[
+            pred_instances.scores > args.score_thr]
+
+        if len(pred_instances) == 0:
+            warnings.warn('empty detection results! skip this')
+            continue
+
         if args.topk > 0:
             pred_instances = pred_instances[:args.topk]
 
@@ -220,25 +206,38 @@ def main():
             model_wrapper.set_input_data(image, pred_instances)
             cam_detector_visualizer.switch_activations_and_grads(model_wrapper)
 
+        # get cam image
         grayscale_cam = cam_detector_visualizer(image, targets=targets)
 
+        # draw cam on image
         pred_instances = pred_instances.numpy()
         image_with_bounding_boxes = cam_detector_visualizer.show_cam(
             image, pred_instances.bboxes, pred_instances.labels, grayscale_cam,
-            not args.no_norm_in_bbox)
+            with_norm_in_bboxes=args.norm_in_bbox)
 
-        if args.out_dir:
-            mmengine.mkdir_or_exist(args.out_dir)
-            out_file = os.path.join(args.out_dir, os.path.basename(image_path))
+        if source_type['is_dir']:
+            filename = os.path.relpath(image_path, args.img).replace('/', '_')
+        else:
+            filename = os.path.basename(image_path)
+        out_file = None if args.show else os.path.join(args.out_dir, filename)
+
+        if out_file:
             mmcv.imwrite(image_with_bounding_boxes, out_file)
         else:
-            cv2.namedWindow(os.path.basename(image_path), 0)
-            cv2.imshow(os.path.basename(image_path), image_with_bounding_boxes)
+            cv2.namedWindow(filename, 0)
+            cv2.imshow(filename, image_with_bounding_boxes)
             cv2.waitKey(0)
 
+        # switch
         if args.method in GRAD_BASED_METHOD_MAP:
             model_wrapper.need_loss(False)
             cam_detector_visualizer.switch_activations_and_grads(model_wrapper)
+
+        progress_bar.update()
+
+    if not args.show:
+        print(f'All done!'
+              f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
 
 
 if __name__ == '__main__':

@@ -13,7 +13,6 @@ from mmyolo.utils import register_all_modules
 from mmyolo.utils.misc import auto_arrange_images, get_file_list
 
 
-# TODO: Refine
 def parse_args():
     parser = argparse.ArgumentParser(description='Visualize feature map')
     parser.add_argument(
@@ -189,9 +188,10 @@ def main():
 
         if args.show:
             visualizer.show(shown_imgs)
-
-    print(f'All done!'
-          f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
+            
+    if not args.show:
+        print(f'All done!'
+              f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
 
 
 # Please refer to the usage tutorial:

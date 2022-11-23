@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import bisect
 import copy
+from typing import List
 
 import cv2
 import numpy as np
@@ -16,6 +17,8 @@ try:
     from pytorch_grad_cam.base_cam import BaseCAM
     from pytorch_grad_cam.utils.image import scale_cam_image, show_cam_on_image
     from pytorch_grad_cam.utils.svd_on_activations import get_2d_projection
+    from pytorch_grad_cam import GradCAM as Base_GradCAM
+    from pytorch_grad_cam import GradCAMPlusPlus as Base_GradCAMPlusPlus
 except ImportError:
     pass
 
@@ -87,10 +90,10 @@ class CAMDetectorWrapper(nn.Module):
 
         if self.is_need_loss:
             assert pred_instances is not None
-            pred_instances=pred_instances.numpy()
+            pred_instances = pred_instances.numpy()
             data = dict(
                 img=self.image,
-                img_id = 0,
+                img_id=0,
                 gt_bboxes=pred_instances.bboxes,
                 gt_bboxes_labels=pred_instances.labels)
             data = self.test_pipeline(data)
@@ -104,16 +107,17 @@ class CAMDetectorWrapper(nn.Module):
     def __call__(self, *args, **kwargs):
         assert self.input_data is not None
         if self.is_need_loss:
-            data_={}
+            data_ = {}
             data_['inputs'] = [self.input_data['inputs']]
             data_['data_samples'] = [self.input_data['data_samples']]
-            data = self.detector.data_preprocessor(data_,training=False)
-            loss=self.detector._run_forward(data, mode='loss')
+            data = self.detector.data_preprocessor(data_, training=False)
+            loss = self.detector._run_forward(data, mode='loss')
             return [loss]
         else:
             with torch.no_grad():
                 results = self.detector.test_step(self.input_data)
                 return results
+
 
 class CAMDetectorVisualizer:
     """cam visualization class.
@@ -244,7 +248,7 @@ class DetAblationLayer(AblationLayer):
         self.activations = []
         for activation in activations:
             activation = activation[
-                input_batch_index, :, :, :].clone().unsqueeze(0)
+                         input_batch_index, :, :, :].clone().unsqueeze(0)
             self.activations.append(
                 activation.repeat(num_channels_to_ablate, 1, 1, 1))
 
@@ -308,7 +312,7 @@ class DetBoxScoreTarget:
             return output
         else:
             # results is DetDataSample
-            pred_instances=results.pred_instances
+            pred_instances = results.pred_instances
             if len(pred_instances) == 0:
                 return output
 
@@ -322,8 +326,63 @@ class DetBoxScoreTarget:
                                                pred_bboxes[..., :4])
                 index = ious.argmax()
                 if ious[0, index] > self.match_iou_thr and pred_labels[
-                        index] == focal_label:
+                    index] == focal_label:
                     # TODO: Adaptive adjustment of weights based on algorithms
                     score = ious[0, index] + pred_scores[index]
                     output = output + score
             return output
+
+
+class SptialBaseCAM(BaseCAM):
+
+    def get_cam_image(self,
+                      input_tensor: torch.Tensor,
+                      target_layer: torch.nn.Module,
+                      targets: List[torch.nn.Module],
+                      activations: torch.Tensor,
+                      grads: torch.Tensor,
+                      eigen_smooth: bool = False) -> np.ndarray:
+
+        weights = self.get_cam_weights(input_tensor,
+                                       target_layer,
+                                       targets,
+                                       activations,
+                                       grads)
+        weighted_activations = weights * activations
+        if eigen_smooth:
+            cam = get_2d_projection(weighted_activations)
+        else:
+            cam = weighted_activations.sum(axis=1)
+        return cam
+
+
+class GradCAM(SptialBaseCAM, Base_GradCAM):
+    def get_cam_weights(self,
+                        input_tensor,
+                        target_layer,
+                        target_category,
+                        activations,
+                        grads):
+        return grads
+
+
+class GradCAMPlusPlus(SptialBaseCAM, Base_GradCAMPlusPlus):
+    def get_cam_weights(self,
+                        input_tensor,
+                        target_layers,
+                        target_category,
+                        activations,
+                        grads):
+        grads_power_2 = grads**2
+        grads_power_3 = grads_power_2 * grads
+        # Equation 19 in https://arxiv.org/abs/1710.11063
+        sum_activations = np.sum(activations, axis=(2, 3))
+        eps = 0.000001
+        aij = grads_power_2 / (2 * grads_power_2 +
+                               sum_activations[:, :, None, None] * grads_power_3 + eps)
+        # Now bring back the ReLU from eq.7 in the paper,
+        # And zero out aijs where the activations are 0
+        aij = np.where(grads != 0, aij, 0)
+
+        weights = np.maximum(grads, 0) * aij
+        return weights
