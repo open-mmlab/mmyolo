@@ -27,6 +27,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+from mmengine import track_iter_progress
 
 from mmyolo.utils.misc import IMG_EXTENSIONS
 
@@ -76,7 +77,7 @@ def format_coco_annotations(points: list, image_id: int, annotations_id: int,
     return annotation_info
 
 
-def parse_labelme_to_coco(image_dir: str, labels_root: str) -> dict:
+def parse_labelme_to_coco(image_dir: str, labels_root: str) -> (dict, dict):
     """Gen COCO json format label from labelme format label.
 
     Args:
@@ -145,10 +146,13 @@ def parse_labelme_to_coco(image_dir: str, labels_root: str) -> dict:
     category_to_id = dict()
     categories_labels = []
 
-    for img_file in Path(image_dir).iterdir():
-        # filter incorrect image file
-        if img_file.suffix.lower() not in IMG_EXTENSIONS:
-            continue
+    # filter incorrect image file
+    img_file_list = [
+        img_file for img_file in Path(image_dir).iterdir()
+        if img_file.suffix.lower() in IMG_EXTENSIONS
+    ]
+
+    for img_file in track_iter_progress(img_file_list):
 
         # get label file according to the image file name
         label_path = Path(labels_root).joinpath(
@@ -159,7 +163,6 @@ def parse_labelme_to_coco(image_dir: str, labels_root: str) -> dict:
 
         # load labelme label
         with open(label_path, encoding='utf-8') as f:
-            print(f'Convert labelme to COCO from: {label_path}')
             labelme_data = json.load(f)
 
         image_id = image_id + 1  # coco id begin from 1
@@ -206,13 +209,12 @@ def parse_labelme_to_coco(image_dir: str, labels_root: str) -> dict:
                 points, image_id, annotations_id, category_to_id[class_name])
             coco_json['annotations'].append(coco_annotations)
 
-    print('*' * 20)
     print(f'Total image = {image_id}')
     print(f'Total annotations = {annotations_id}')
     print(f'Number of categories = {len(categories_labels)}, '
           f'which is {categories_labels}')
 
-    return coco_json
+    return coco_json, category_to_id
 
 
 def convert_labelme_to_coco(image_dir: str, labels_dir: str, out_path: str):
@@ -226,12 +228,17 @@ def convert_labelme_to_coco(image_dir: str, labels_dir: str, out_path: str):
     assert Path(out_path).suffix == '.json'
 
     # convert to coco json
-    coco_json_data = parse_labelme_to_coco(image_dir, labels_dir)
+    coco_json_data, category_to_id = parse_labelme_to_coco(
+        image_dir, labels_dir)
 
     # save json result
     Path(out_path).parent.mkdir(exist_ok=True, parents=True)
     print(f'Saving json to {out_path}')
     json.dump(coco_json_data, open(out_path, 'w'), indent=4)
+
+    category_to_id_path = Path(out_path).with_stem('class_with_id')
+    print(f'Saving class id json to {category_to_id_path}')
+    json.dump(category_to_id, open(category_to_id_path, 'w'), indent=4)
 
 
 def main():
