@@ -5,7 +5,7 @@
 
 1. 打标签
 2. 使用脚本转换成 COCO 数据集格式
-3. 数据集切分
+3. 数据集划分
 4. 根据数据集内容新建 config 文件
 5. 训练
 6. 测试
@@ -122,22 +122,39 @@ labelme /data/cat/images --output /data/cat/labels --autosave --nodata
 MMYOLO 提供脚本将 labelme 的标签转换为 COCO 标签
 
 ```shell
-python tools/dataset_converters/labelme2coco.py ${图片文件夹路径} \
+python tools/dataset_converters/labelme2coco.py --img-dir ${图片文件夹路径} \
                                                 --label-dir ${标签文件夹位置} \
-                                                --output ${输出COCO数据集json路径}
+                                                --out ${输出COC标签json路径}
 ```
 
 ### 2.2 检查转换的 COCO 标签
 
 使用下面的命令可以将 COCO 的标签在图片上进行显示，这一步可以验证刚刚转换是否有问题：
+
 ```shell
 python tools/analysis_tools/browse_coco_json.py --img-dir ${图片文件夹路径} \
-                                                --ann-file ${输出COCO数据集json路径}
+                                                --ann-file ${COCO标签json路径}
 ```
 
 关于 `tools/analysis_tools/browse_coco_json.py` 的更多用法请参考 [可视化 COCO 标签](useful_tools.md)。
 
-## 3. 数据集切分
+## 3. 数据集划分
+
+```shell
+python tools/analysis_tools/browse_coco_json.py --json ${COCO标签json路径} \
+                                                --out-dir ${划分标签json保存路径} \
+                                                --ratio ${划分比例} \
+                                                [--shuffle] \
+                                                [--seed ${划分的随机种子}]
+```
+
+其中：
+
+- `--ratio`：划分的比例，如果只设置了2个，则划分为 `trainval + test`，如果设置为 3 个，则划分为 `train + val + test`。支持两种格式：整数和小数：
+  - 小数：划分为比例，但是**全部比例加起来必须等于 `1`**。例子： `--ratio 0.8 0.1 0.1` or `--ratio 0.8 0.2`
+  - 整数：按比分进行划分，代码中会进行归一化之后划分数据集。例子： `--ratio 2 1 1`（代码里面会转换成 `0.5 0.25 0.25`） or `--ratio 3 1`（代码里面会转换成 `0.75 0.25`）
+- `--shuffle`: 是否打乱数据集再进行划分；
+- `--seed`：可以设定划分的随机种子，不设置的话自动生成随机种子。
 
 ## 4. 根据数据集内容新建 config 文件
 
