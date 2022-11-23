@@ -158,12 +158,82 @@ python tools/analysis_tools/browse_coco_json.py --json ${COCO标签json路径} \
 
 ## 4. 根据数据集内容新建 config 文件
 
-- 修改 config data_root
-- data_prefix
-- 根据 classes.txt 配置 metainfo=metainfo,num_classes
-- 根据自己的GPU情况，修改 train_batch_size_per_gpu， base_lr
-- 推荐使用 nGPU x 4 的 train_num_workers
-- 设置 pretrain 的文件路径 or URL
+确保数据集目录是这样的：
+
+```shell
+.
+└── $DATA_ROOT
+    ├── annotations
+    │    ├── train.json # or trainval.json
+    │    ├── val.json # optional
+    │    └── test.json
+    ├── images
+    │    ├── a.jpg
+    │    ├── b.png
+    │    └── ...
+    └── ...
+```
+
+因为是我们自定义的数据集，所以我们需要自己重写 config 中的部分信息，概览如下：
+
+```python
+_base_ = './yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+
+data_root = '/path/to/data_root' # 数据集目录的绝对路径
+checkpoint = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
+
+train_batch_size_per_gpu = 8 # 根据自己的GPU情况，修改 batch size
+train_num_workers = 4 # 推荐使用 train_num_workers = nGPU x 4
+val_batch_size_per_gpu = 2  # val 时候的 bs ，根据实际调整即可
+val_num_workers = 2
+
+base_lr = _base_.base_lr / 4  # 根据自己的GPU情况，修改 base_lr，修改的比例是 base_lr_default * (your_bs / default_bs)
+
+num_classes=1
+metainfo = dict( # 根据类别信息，设置 metainfo
+    CLASSES=('cat'),
+    PALETTE=[(220, 20, 60)] # 画图时候的颜色，随便设置即可
+)
+
+model = dict(
+    backbone=dict(init_cfg=dict(type='Pretrained', checkpoint=checkpoint)),
+    bbox_head=dict(head_module=dict(num_classes=num_classes)))
+
+train_dataloader = dict(
+    batch_size=train_batch_size_per_gpu,
+    num_workers=train_num_workers,
+    dataset=dict(
+        metainfo=metainfo,
+        data_root=data_root,
+        ann_file='annotations/trainval.json',
+        data_prefix=dict(img='images/')))
+
+val_dataloader = dict(
+    batch_size=val_batch_size_per_gpu,
+    num_workers=val_num_workers,
+    dataset=dict(
+        metainfo=metainfo,
+        data_root=data_root,
+        ann_file='annotations/trainval.json',
+        data_prefix=dict(img='images/')))
+
+test_dataloader = dict(
+    batch_size=val_batch_size_per_gpu,
+    num_workers=val_num_workers,
+    dataset=dict(
+        metainfo=metainfo,
+        data_root=data_root,
+        ann_file='annotations/test.json',
+        data_prefix=dict(img='images/')))
+
+val_evaluator = dict(
+    type='mmdet.CocoMetric',
+    ann_file=data_root + '/annotations/test.json')
+
+test_evaluator = val_evaluator
+
+optim_wrapper = dict(optimizer=dict(type='AdamW', lr=base_lr, weight_decay=0.05))
+```
 
 ## 5. 训练
 
