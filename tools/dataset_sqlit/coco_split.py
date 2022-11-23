@@ -11,20 +11,16 @@ from pycocotools.coco import COCO
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--json',
-        type=str,
-        required=True,
-        help='COCO json label path')
+        '--json', type=str, required=True, help='COCO json label path')
     parser.add_argument(
         '--out-dir', type=str, required=True, help='output path')
     parser.add_argument(
-        '--percent',
+        '--ratio',
         nargs='+',
         type=float,
-        help='percent for sub dataset, total must be 1, '
-        'if set 2 number then will generate trainval + test '
-        '(eg. 0.8 0.1 0.1), if set 3 number then will generate '
-        'train + val + test (eg. 0.85 0.15)')
+        help='ratio for sub dataset, if set 2 number then will generate '
+        'trainval + test (eg. "0.8 0.1 0.1" or "2 1 1"), if set 3 number '
+        'then will generate train + val + test (eg. "0.85 0.15" or "2 1")')
     parser.add_argument(
         '--shuffle',
         action='store_true',
@@ -34,7 +30,7 @@ def parse_args():
     return args
 
 
-def split_coco_dataset(coco_json_path: str, save_dir: str, percents: list,
+def split_coco_dataset(coco_json_path: str, save_dir: str, ratios: list,
                        shuffle: bool, seed: int):
     if not Path(coco_json_path).exists():
         raise FileNotFoundError(f'Can not not found {coco_json_path}')
@@ -42,30 +38,35 @@ def split_coco_dataset(coco_json_path: str, save_dir: str, percents: list,
     if not Path(save_dir).exists():
         Path(save_dir).mkdir(parents=True)
 
-    if len(percents) == 2:
-        percent_train, percent_test = percents
-        percent_val = 0
+    # check ratio total
+    check_ratios_total = 0
+    for ratio in ratios:
+        check_ratios_total += ratio
+
+    if check_ratios_total > 1:
+        # need to normalize
+        for idx, ratio in enumerate(ratios):
+            ratios[idx] = ratio / check_ratios_total
+    elif not abs(check_ratios_total - 1.0) < 1e-9:
+        raise ValueError('each ratios is less than 1 so total must be 1 !')
+
+    if len(ratios) == 2:
+        ratio_train, ratio_test = ratios
+        ratio_val = 0
         train_type = 'trainval'
-    elif len(percents) == 3:
-        percent_train, percent_val, percent_test = percents
+    elif len(ratios) == 3:
+        ratio_train, ratio_val, ratio_test = ratios
         train_type = 'train'
     else:
-        raise ValueError('percents must set 2 or 3 group!')
-
-    # check percent total
-    check_percents_total = 0
-    for i in percents:
-        check_percents_total += i
-    if not abs(check_percents_total - 1.0) < 1e-9:
-        raise ValueError('percents total must be 1 !')
+        raise ValueError('ratios must set 2 or 3 group!')
 
     # Read coco info
     coco = COCO(coco_json_path)
     coco_image_ids = coco.getImgIds()
 
     # gen image number of each dataset
-    val_image_num = int(len(coco_image_ids) * percent_val)
-    test_image_num = int(len(coco_image_ids) * percent_test)
+    val_image_num = int(len(coco_image_ids) * ratio_val)
+    test_image_num = int(len(coco_image_ids) * ratio_test)
     train_image_num = len(coco_image_ids) - val_image_num - test_image_num
     print('Split info: ====== \n'
           f'Train number = {train_image_num}\n'
@@ -122,8 +123,8 @@ def split_coco_dataset(coco_json_path: str, save_dir: str, percents: list,
 
 def main():
     args = parse_args()
-    split_coco_dataset(args.json, args.out_dir, args.percent,
-                       args.shuffle, args.seed)
+    split_coco_dataset(args.json, args.out_dir, args.ratio, args.shuffle,
+                       args.seed)
 
 
 if __name__ == '__main__':
