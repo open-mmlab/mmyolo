@@ -2,27 +2,31 @@
 import argparse
 import os.path as osp
 import sys
+from typing import Tuple
+
 import cv2
 import numpy as np
-from typing import Tuple
-from mmengine.dataset import Compose
-from mmengine.visualization import Visualizer
 from mmdet.models.utils import mask2ndarray
 from mmdet.structures.bbox import BaseBoxes
 from mmengine.config import Config, DictAction
+from mmengine.dataset import Compose
 from mmengine.utils import ProgressBar
+from mmengine.visualization import Visualizer
+
 from mmyolo.registry import DATASETS, VISUALIZERS
 from mmyolo.utils import register_all_modules
+
+
 # TODO Support for printing the change in key of results after the pipeline transformation.
 def parse_args():
     parser = argparse.ArgumentParser(description='Browse a dataset')
-    parser.add_argument('config',help='train config file path')
+    parser.add_argument('config', help='train config file path')
     parser.add_argument(
         '--output-dir',
         default=None,
         type=str,
         help='If there is no display interface, you can save it.')
-    parser.add_argument('--not-show',default=False, action='store_true')
+    parser.add_argument('--not-show', default=False, action='store_true')
     parser.add_argument(
         '--phase',
         '-p',
@@ -70,22 +74,24 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 def _get_adaptive_scale(img_shape: Tuple[int, int],
                         min_scale: float = 0.3,
                         max_scale: float = 3.0) -> float:
     """Get adaptive scale according to image shape.
+
     The target scale depends on the the short edge length of the image. If the
-    short edge length equals 224, the output is 1.0. And output linear scales
-    according the short edge length.
-    You can also specify the minimum scale and the maximum scale to limit
- the
-    linear scale.
-    Args:
-        img_shape (Tuple[int, int]): The shape of the canvas image.
-        min_size (int): The minimum scale. Defaults to 0.3.
-        max_size (int): The maximum scale. Defaults to 3.0.
-    Returns:
-        int: The adaptive scale.
+       short edge length equals 224, the output is 1.0. And output linear scales
+       according the short edge length.
+       You can also specify the minimum scale and the maximum scale to limit
+    the
+       linear scale.
+       Args:
+           img_shape (Tuple[int, int]): The shape of the canvas image.
+           min_size (int): The minimum scale. Defaults to 0.3.
+           max_size (int): The maximum scale. Defaults to 3.0.
+       Returns:
+           int: The adaptive scale.
     """
     short_edge_length = min(img_shape)
     scale = short_edge_length / 224.
@@ -136,6 +142,7 @@ def make_grid(imgs, names):
 
 class InspectCompose(Compose):
     """Compose multiple transforms sequentially.
+
     And record "img" field of all results in one list.
     """
 
@@ -161,6 +168,7 @@ class InspectCompose(Compose):
                 })
         return data
 
+
 def main():
     args = parse_args()
     cfg = Config.fromfile(args.config)
@@ -176,12 +184,13 @@ def main():
 
     visualizer.dataset_meta = dataset.metainfo
 
-    if args.key == "print":
+    if args.key == 'print':
         for i in dataset.pipeline.transforms:
             print(i)
 
     intermediate_imgs = []
-    dataset.pipeline = InspectCompose(dataset.pipeline.transforms,intermediate_imgs)
+    dataset.pipeline = InspectCompose(dataset.pipeline.transforms,
+                                      intermediate_imgs)
 
     # init visualization image number
     display_number = min(args.show_number, len(dataset))
@@ -199,9 +208,10 @@ def main():
             image = make_grid([ori_image, trans_image],
                               ['original', 'transformed'])
         else:
-            image = make_grid([result['img'] for result in intermediate_imgs],
-                              [result['name'] for result in intermediate_imgs],
-                              )
+            image = make_grid(
+                [result['img'] for result in intermediate_imgs],
+                [result['name'] for result in intermediate_imgs],
+            )
 
         intermediate_imgs.clear()
         data_samples = item['data_samples'].numpy()
@@ -216,7 +226,6 @@ def main():
 
         out_file = osp.join(args.output_dir,
                             filename) if args.output_dir is not None else None
-
 
         image = image[..., [2, 1, 0]]  # bgr to rgb
         gt_bboxes = gt_instances.get('bboxes', None)
@@ -233,7 +242,7 @@ def main():
             image,
             data_samples,
             draw_pred=False,
-            draw_gt=(args.mode=="transformed"),
+            draw_gt=(args.mode == 'transformed'),
             show=not args.not_show,
             wait_time=args.show_interval,
             out_file=out_file)
