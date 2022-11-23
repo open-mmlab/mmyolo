@@ -11,7 +11,7 @@ from pycocotools.coco import COCO
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--coco-json-path',
+        '--json',
         type=str,
         required=True,
         help='COCO json label path')
@@ -35,7 +35,7 @@ def parse_args():
 
 
 def split_coco_dataset(coco_json_path: str, save_dir: str, percents: list,
-                       need_shuffle: bool, seed: int):
+                       shuffle: bool, seed: int):
     if not Path(coco_json_path).exists():
         raise FileNotFoundError(f'Can not not found {coco_json_path}')
 
@@ -77,7 +77,7 @@ def split_coco_dataset(coco_json_path: str, save_dir: str, percents: list,
         print(f'Set the global seed: {seed}')
         np.random.seed(seed)
 
-    if need_shuffle:
+    if shuffle:
         print('shuffle dataset.')
         random.shuffle(coco_image_ids)
 
@@ -122,7 +122,7 @@ def split_coco_dataset(coco_json_path: str, save_dir: str, percents: list,
 
 def main():
     args = parse_args()
-    split_coco_dataset(args.coco_json_path, args.out_dir, args.percent,
+    split_coco_dataset(args.json, args.out_dir, args.percent,
                        args.shuffle, args.seed)
 
 
