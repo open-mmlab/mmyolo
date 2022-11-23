@@ -8,7 +8,7 @@
 3. 数据集划分
 4. 根据数据集内容新建 config 文件
 5. 训练
-6. 测试
+6. 推理
 7. 部署
 
 下面详细介绍每一步。
@@ -254,7 +254,7 @@ default_hooks = dict(
 python tools/train.py configs/my_yolov5_s_config.py
 ```
 
-## 6. 推理查看
+## 6. 推理
 
 ```shell
 python demo/image_demo.py /path/to/test/images \
