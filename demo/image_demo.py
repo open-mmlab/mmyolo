@@ -32,6 +32,11 @@ def parse_args():
     parser.add_argument(
         '--score-thr', type=float, default=0.3, help='Bbox score threshold')
     parser.add_argument(
+        '--class-name',
+        nargs='+',
+        type=str,
+        help='Only Save those classes if set')
+    parser.add_argument(
         '--to-labelme',
         action='store_true',
         help='Output labelme style label file')
@@ -92,7 +97,7 @@ def main():
             # save result to labelme files
             out_file = out_file.replace(
                 os.path.splitext(out_file)[-1], '.json')
-            to_label_format(result, out_file, pred_instances)
+            to_label_format(result, out_file, pred_instances, args.class_name)
             continue
 
         visualizer.add_datasample(

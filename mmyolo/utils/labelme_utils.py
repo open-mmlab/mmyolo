@@ -20,13 +20,14 @@ class LabelmeFormat:
         self.classes = classes
 
     def __call__(self, results: DetDataSample, output_path: str,
-                 pred_instances: InstanceData):
+                 pred_instances: InstanceData, class_name: list):
         """Get image data field for labelme.
 
         Args:
             results (DetDataSample): Predict info.
             output_path (str): Image file path.
             pred_instances (InstanceData): Candidate prediction info.
+            class_name (list): Filter class name.
 
         Labelme file eg.
             {
@@ -73,6 +74,11 @@ class LabelmeFormat:
         for pred_info in pred_instances:
             pred_bbox = pred_info.bboxes.cpu().numpy().tolist()[0]
             pred_label = self.classes[pred_info.labels]
+
+            if class_name is not None and \
+                    pred_label not in class_name:
+                # filter class name
+                continue
 
             sub_dict = {
                 'label': pred_label,
