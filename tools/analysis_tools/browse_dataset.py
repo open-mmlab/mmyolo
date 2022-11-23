@@ -13,7 +13,7 @@ from mmengine.config import Config, DictAction
 from mmengine.utils import ProgressBar
 from mmyolo.registry import DATASETS, VISUALIZERS
 from mmyolo.utils import register_all_modules
-
+# TODO Support for printing the change in key of results after the pipeline transformation.
 def parse_args():
     parser = argparse.ArgumentParser(description='Browse a dataset')
     parser.add_argument('config',help='train config file path')
@@ -22,7 +22,7 @@ def parse_args():
         default=None,
         type=str,
         help='If there is no display interface, you can save it.')
-    parser.add_argument('--not-show', default=False, action='store_true')
+    parser.add_argument('--not-show',default=False, action='store_true')
     parser.add_argument(
         '--phase',
         '-p',
@@ -67,12 +67,6 @@ def parse_args():
         'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
         'Note that the quotation marks are necessary and that no white space '
         'is allowed.')
-    parser.add_argument(
-        '--key',
-        '-k',
-        default="None",
-        choices=['None','print'],
-        help='The key order for the printing the detail of change in key after transformer.')
     args = parser.parse_args()
     return args
 
@@ -167,14 +161,13 @@ class InspectCompose(Compose):
                 })
         return data
 
-
 def main():
     args = parse_args()
     cfg = Config.fromfile(args.config)
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
 
-    # register all modules in mmcls into the registries
+    # register all modules in mmyolo into the registries
     register_all_modules()
 
     dataset_cfg = cfg.get(args.phase + '_dataloader').get('dataset')
