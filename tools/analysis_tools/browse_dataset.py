@@ -184,10 +184,6 @@ def main():
 
     visualizer.dataset_meta = dataset.metainfo
 
-    if args.key == 'print':
-        for i in dataset.pipeline.transforms:
-            print(i)
-
     intermediate_imgs = []
     dataset.pipeline = InspectCompose(dataset.pipeline.transforms,
                                       intermediate_imgs)
