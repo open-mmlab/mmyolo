@@ -174,14 +174,14 @@ python tools/analysis_tools/browse_coco_json.py --json ${COCO 标签 json 路径
     └── ...
 ```
 
-因为是我们自定义的数据集，所以我们需要自己重写 config 中的部分信息，我们在 configs 目录下新建 `my_yolov5_s_config.py`，添加以下内容：
+因为是我们自定义的数据集，所以我们需要自己重写 config 中的部分信息，我们在 configs 目录下新建一个子集的 config 文件，这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`，数据集中的类是猫，`bs=8`，`200epoch`，可以命令为 `yolov5_s-v61_syncbn_fast_1xb8-200e_cat.py`，添加以下内容：
 
 ```python
 _base_ = './yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
 max_epochs = 200 # 训练的最大 epoch
 data_root = '/path/to/data_root' # 数据集目录的绝对路径
-work_dir = './work_dirs/my_yolov5_s_config-xxx' # 结果保存的路径
+work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat' # 结果保存的路径
 
 # checkpoint 可以指定本地路径或者 URL，这里设置了 URL
 checkpoint = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
@@ -251,7 +251,7 @@ default_hooks = dict(
 使用下面命令进行启动训练：
 
 ```shell
-python tools/train.py configs/my_yolov5_s_config.py
+python tools/train.py configs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat.py
 ```
 
 ## 6. 推理
@@ -259,7 +259,7 @@ python tools/train.py configs/my_yolov5_s_config.py
 ```shell
 python demo/image_demo.py /path/to/test/images \
                           configs/my_yolov5_s_config.py \
-                          ./work_dirs/my_yolov5_s_config-xxx/last.pth \
+                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat/last.pth \
                           --out-dir /path/to/test/images_output
 ```
 
