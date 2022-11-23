@@ -30,59 +30,62 @@ class TestLetterResize(unittest.TestCase):
         self.data_info1 = dict(
             img=np.random.random((300, 400, 3)),
             gt_bboxes=np.array([[0, 0, 150, 150]], dtype=np.float32),
-            batch_shape=np.array([460, 672], dtype=np.int64),
+            batch_shape=np.array([192, 672], dtype=np.int64),
             gt_masks=BitmapMasks(rng.rand(1, 300, 400), height=300, width=400))
         self.data_info2 = dict(
             img=np.random.random((300, 400, 3)),
             gt_bboxes=np.array([[0, 0, 150, 150]], dtype=np.float32))
         self.data_info3 = dict(
             img=np.random.random((300, 400, 3)),
-            batch_shape=np.array([460, 672], dtype=np.int64))
+            batch_shape=np.array([192, 672], dtype=np.int64))
         self.data_info4 = dict(img=np.random.random((300, 400, 3)))
 
     def test_letter_resize(self):
         # Test allow_scale_up
         transform = LetterResize(scale=(640, 640), allow_scale_up=False)
         results = transform(copy.deepcopy(self.data_info1))
-        self.assertEqual(results['img_shape'], (460, 672, 3))
+        self.assertEqual(results['img_shape'], (192, 672, 3))
         self.assertTrue(
-            (results['gt_bboxes'] == np.array([[136., 80., 286.,
-                                                230.]])).all())
-        self.assertTrue((results['batch_shape'] == np.array([460, 672])).all())
+            (results['gt_bboxes'] == np.array([[208., 0., 304., 96.]])).all())
+        self.assertTrue((results['batch_shape'] == np.array([192, 672])).all())
+        self.assertTrue((results['pad_param'] == np.array([0., 0., 208.,
+                                                           208.])).all())
         self.assertTrue(
-            (results['pad_param'] == np.array([80., 80., 136., 136.])).all())
-        self.assertTrue((results['scale_factor'] <= 1.).all())
+            (np.array(results['scale_factor'], dtype=np.float32) <= 1.).all())
 
         # Test pad_val
         transform = LetterResize(scale=(640, 640), pad_val=dict(img=144))
         results = transform(copy.deepcopy(self.data_info1))
-        self.assertEqual(results['img_shape'], (460, 672, 3))
+        self.assertEqual(results['img_shape'], (192, 672, 3))
         self.assertTrue(
-            (results['gt_bboxes'] == np.array([[29., 0., 259., 230.]])).all())
-        self.assertTrue((results['batch_shape'] == np.array([460, 672])).all())
-        self.assertTrue((results['pad_param'] == np.array([0., 0., 29.,
-                                                           30.])).all())
-        self.assertTrue((results['scale_factor'] > 1.).all())
+            (results['gt_bboxes'] == np.array([[208., 0., 304., 96.]])).all())
+        self.assertTrue((results['batch_shape'] == np.array([192, 672])).all())
+        self.assertTrue((results['pad_param'] == np.array([0., 0., 208.,
+                                                           208.])).all())
+        self.assertTrue(
+            (np.array(results['scale_factor'], dtype=np.float32) <= 1.).all())
 
         # Test use_mini_pad
         transform = LetterResize(scale=(640, 640), use_mini_pad=True)
         results = transform(copy.deepcopy(self.data_info1))
-        self.assertEqual(results['img_shape'], (460, 640, 3))
+        self.assertEqual(results['img_shape'], (192, 256, 3))
+        self.assertTrue((results['gt_bboxes'] == np.array([[0., 0., 96.,
+                                                            96.]])).all())
+        self.assertTrue((results['batch_shape'] == np.array([192, 672])).all())
+        self.assertTrue((results['pad_param'] == np.array([0., 0., 0.,
+                                                           0.])).all())
         self.assertTrue(
-            (results['gt_bboxes'] == np.array([[13., 0., 243., 230.]])).all())
-        self.assertTrue((results['batch_shape'] == np.array([460, 672])).all())
-        self.assertTrue((results['pad_param'] == np.array([0., 0., 13.,
-                                                           14.])).all())
-        self.assertTrue((results['scale_factor'] > 1.).all())
+            (np.array(results['scale_factor'], dtype=np.float32) <= 1.).all())
 
         # Test stretch_only
         transform = LetterResize(scale=(640, 640), stretch_only=True)
         results = transform(copy.deepcopy(self.data_info1))
-        self.assertEqual(results['img_shape'], (460, 672, 3))
+        self.assertEqual(results['img_shape'], (192, 672, 3))
         self.assertTrue((results['gt_bboxes'] == np.array(
-            [[0., 0., 230., 251.99998474121094]])).all())
-        self.assertTrue((results['batch_shape'] == np.array([460, 672])).all())
-        self.assertTrue((results['pad_param'] == np.array([0, 0, 0, 0])).all())
+            [[0., 0., 251.99998474121094, 96.]])).all())
+        self.assertTrue((results['batch_shape'] == np.array([192, 672])).all())
+        self.assertTrue((results['pad_param'] == np.array([0., 0., 0.,
+                                                           0.])).all())
 
         # Test
         transform = LetterResize(scale=(640, 640), pad_val=dict(img=144))
@@ -153,13 +156,15 @@ class TestYOLOv5KeepRatioResize(unittest.TestCase):
         self.assertEqual(results['img_shape'], (480, 640))
         self.assertTrue(
             (results['gt_bboxes'] == np.array([[0., 0., 240., 240.]])).all())
-        self.assertTrue((results['scale_factor'] == 1.6).all())
+        self.assertTrue((np.array(results['scale_factor'],
+                                  dtype=np.float32) == 1.6).all())
 
         # Test only img
         transform = YOLOv5KeepRatioResize(scale=(640, 640))
         results = transform(copy.deepcopy(self.data_info2))
         self.assertEqual(results['img_shape'], (480, 640))
-        self.assertTrue((results['scale_factor'] == 1.6).all())
+        self.assertTrue((np.array(results['scale_factor'],
+                                  dtype=np.float32) == 1.6).all())
 
 
 class TestYOLOv5HSVRandomAug(unittest.TestCase):

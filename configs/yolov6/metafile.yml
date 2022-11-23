@@ -57,3 +57,27 @@ Models:
         Metrics:
           box AP: 41.0
     Weights: https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_t_syncbn_fast_8xb32-400e_coco/yolov6_t_syncbn_fast_8xb32-400e_coco_20221030_143755-cf0d278f.pth
+  - Name: yolov6_m_syncbn_fast_8xb32-300e_coco
+    In Collection: YOLOv6
+    Config: configs/yolov6/yolov6_m_syncbn_fast_8xb32-300e_coco.py
+    Metadata:
+      Training Memory (GB): 16.69
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 48.4
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_m_syncbn_fast_8xb32-300e_coco/yolov6_m_syncbn_fast_8xb32-300e_coco_20221109_182658-85bda3f4.pth
+  - Name: yolov6_l_syncbn_fast_8xb32-300e_coco
+    In Collection: YOLOv6
+    Config: configs/yolov6/yolov6_l_syncbn_fast_8xb32-300e_coco.py
+    Metadata:
+      Training Memory (GB): 20.86
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 51.0
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_l_syncbn_fast_8xb32-300e_coco/yolov6_l_syncbn_fast_8xb32-300e_coco_20221109_183156-91e3c447.pth
