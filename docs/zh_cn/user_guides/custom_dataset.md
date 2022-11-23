@@ -234,7 +234,7 @@ val_evaluator = dict(
 
 test_evaluator = val_evaluator
 
-optim_wrapper = dict(optimizer=dict(type='AdamW', lr=base_lr, weight_decay=0.05))
+optim_wrapper = dict(optimizer=dict(lr=base_lr))
 ```
 
 ## 5. 训练
