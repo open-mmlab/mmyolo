@@ -188,7 +188,7 @@ def main():
 
         if args.show:
             visualizer.show(shown_imgs)
-            
+
     if not args.show:
         print(f'All done!'
               f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
