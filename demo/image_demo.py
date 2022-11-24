@@ -11,6 +11,7 @@ from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules, switch_to_deploy
 from mmyolo.utils.labelme_utils import LabelmeFormat
 from mmyolo.utils.misc import get_file_list
+from tools.analysis_tools.dataset_analysis import show_data_classes
 
 
 def parse_args():
@@ -70,8 +71,21 @@ def main():
     # get file list
     files, source_type = get_file_list(args.img)
 
+    # get model class name
+    dataset_classes = model.dataset_meta.get('CLASSES')
+
     # ready for labelme format if it is needed
-    to_label_format = LabelmeFormat(classes=model.dataset_meta.get('CLASSES'))
+    to_label_format = LabelmeFormat(classes=dataset_classes)
+
+    # check class name
+    if args.class_name is not None:
+        for class_name in args.class_name:
+            if class_name in dataset_classes:
+                continue
+            show_data_classes(dataset_classes)
+            raise RuntimeError(
+                'Expected args.class_name to be one of the list, '
+                f'but got "{class_name}"')
 
     # start detector inference
     progress_bar = ProgressBar(len(files))
