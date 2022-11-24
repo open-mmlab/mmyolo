@@ -228,7 +228,7 @@ test_pipeline = [
 ]
 ```
 
-(1) 使用 gradcam 方法可视化 neck 模块的最后一个输出层的 am 图
+(1) 使用 GradCAM 方法可视化 neck 模块的最后一个输出层的 am 图
 
 ```shell
 python demo/boxam_vis_demo.py \
@@ -248,9 +248,9 @@ python demo/boxam_vis_demo.py \
 <img src="https://user-images.githubusercontent.com/17425982/203774801-1555bcfb-a8f9-4688-8ed6-982d6ad38e1d.jpg" width="800" alt="image"/>
 </div>
 
-可以看出 gradcam 效果可以突出 box 级别的 am 信息。
+可以看出 GradCAM 效果可以突出 box 级别的 am 信息。
 
-你可以通过 --topk 参数选择仅仅可视化预测分值最好的前几个预测框
+你可以通过 --topk 参数选择仅仅可视化预测分值最高的前几个预测框
 
 ```shell
 python demo/boxam_vis_demo.py \
@@ -264,7 +264,7 @@ python demo/boxam_vis_demo.py \
 <img src="https://user-images.githubusercontent.com/17425982/203778700-3165aa72-ecaf-40cc-b470-6911646e6046.jpg" width="800" alt="image"/>
 </div>
 
-(2) 使用 ablationcam 方法可视化 neck 模块的最后一个输出层的 am 图
+(2) 使用 AblationCAM 方法可视化 neck 模块的最后一个输出层的 am 图
 
 ```shell
 python demo/boxam_vis_demo.py \
@@ -278,7 +278,7 @@ python demo/boxam_vis_demo.py \
 <img src="https://user-images.githubusercontent.com/17425982/203776978-b5a9b383-93b4-4b35-9e6a-7cac684b372c.jpg" width="800" alt="image"/>
 </div>
 
-由于 ablationcam 是通过每个通道对分值的贡献程度来加权，因此无法实现类似 gradcam 的仅仅可视化 box 级别的 am 信息。 但是你引入可以使用 --norm-in-bbox 来仅仅显示 bbox 内部 am
+由于 AblationCAM 是通过每个通道对分值的贡献程度来加权，因此无法实现类似 GradCAM 的仅仅可视化 box 级别的 am 信息。 但是你可以使用 --norm-in-bbox 来仅仅显示 bbox 内部 am
 
 ```shell
 python demo/boxam_vis_demo.py \

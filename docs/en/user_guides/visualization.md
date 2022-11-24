@@ -228,7 +228,7 @@ test_pipeline = [
 ]
 ```
 
-(1) Use the gradcam method to visualize the am graph of the last output layer of the neck module
+(1) Use the `GradCAM` method to visualize the am graph of the last output layer of the neck module
 
 ```shell
 python demo/boxam_vis_demo.py \
@@ -248,9 +248,9 @@ The corresponding feature map am is as follows:
 <img src="https://user-images.githubusercontent.com/17425982/203774801-1555bcfb-a8f9-4688-8ed6-982d6ad38e1d.jpg" width="800" alt="image"/>
 </div>
 
-It can be seen that the `gradcam` effect can highlight the am information at the box level.
+It can be seen that the `GradCAM` effect can highlight the am information at the box level.
 
-You can choose to visualize only the top prediction boxes with the best prediction scores via the `--topk` parameter
+You can choose to visualize only the top prediction boxes with the highest prediction scores via the `--topk` parameter
 
 ```shell
 python demo/boxam_vis_demo.py \
@@ -264,7 +264,7 @@ python demo/boxam_vis_demo.py \
 <img src="https://user-images.githubusercontent.com/17425982/203778700-3165aa72-ecaf-40cc-b470-6911646e6046.jpg" width="800" alt="image"/>
 </div>
 
-(2) Use the ablationcam method to visualize the am map of the last output layer of the neck module
+(2) Use the AblationCAM method to visualize the am map of the last output layer of the neck module
 
 ```shell
 python demo/boxam_vis_demo.py \
@@ -278,7 +278,7 @@ python demo/boxam_vis_demo.py \
 <img src="https://user-images.githubusercontent.com/17425982/203776978-b5a9b383-93b4-4b35-9e6a-7cac684b372c.jpg" width="800" alt="image"/>
 </div>
 
-Since ablationcam is weighted by the contribution of each channel to the score, it is impossible to visualize only the am information at the box level like gradcam. But you can use --norm-in-bbox to only show bbox inside am
+Since AblationCAM is weighted by the contribution of each channel to the score, it is impossible to visualize only the am information at the box level like gradcam. But you can use --norm-in-bbox to only show bbox inside am
 
 ```shell
 python demo/boxam_vis_demo.py \
