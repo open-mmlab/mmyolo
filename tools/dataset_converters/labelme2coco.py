@@ -5,7 +5,8 @@ Usage:
     $ python labelme2coco.py \
                 --img-dir /path/to/images \
                 --labels-dir /path/to/labels \
-                --out /path/to/coco_instances.json
+                --out /path/to/coco_instances.json \
+                [--class-id-json /path/to/class_with_id.json]
 
 Note:
     Labels dir file structure:
@@ -21,6 +22,18 @@ Note:
          ├── image1.jpg
          ├── image2.png
          └── ...
+
+    If user set `--class-id-json` then will use it in `categories` field,
+    if not set, then will generate auto base on the all labelme label
+    files to `class_with_id.json`.
+
+    class_with_id.json example
+    {
+        "cat": 1,
+        "dog": 2,
+        "bicycle": 3,
+        "motorcycle": 4
+    }
 """
 import argparse
 import json
@@ -38,6 +51,11 @@ def parse_args():
     parser.add_argument(
         '--labels-dir', type=str, help='Dataset labels directory')
     parser.add_argument('--out', type=str, help='COCO label json output path')
+    parser.add_argument(
+        '--class-id-json',
+        default=None,
+        type=str,
+        help='All class id json path')
     args = parser.parse_args()
     return args
 
@@ -77,16 +95,18 @@ def format_coco_annotations(points: list, image_id: int, annotations_id: int,
     return annotation_info
 
 
-def parse_labelme_to_coco(image_dir: str, labels_root: str) -> (dict, dict):
+def parse_labelme_to_coco(image_dir: str, labels_root: str,
+                          all_classes_id: dict) -> (dict, dict):
     """Gen COCO json format label from labelme format label.
 
     Args:
         image_dir (str): Image dir path.
         labels_root (str): Image label root path.
+        all_classes_id (str): All class with id.
 
     Return:
         coco_json (dict): COCO json data.
-
+        category_to_id (dict): category id and name.
 
     COCO json example:
 
@@ -143,8 +163,12 @@ def parse_labelme_to_coco(image_dir: str, labels_root: str) -> (dict, dict):
 
     image_id = 0
     annotations_id = 0
-    category_to_id = dict()
-    categories_labels = []
+    if all_classes_id is None:
+        category_to_id = dict()
+        categories_labels = []
+    else:
+        category_to_id = all_classes_id
+        categories_labels = all_classes_id.keys()
 
     # filter incorrect image file
     img_file_list = [
@@ -183,7 +207,9 @@ def parse_labelme_to_coco(image_dir: str, labels_root: str) -> (dict, dict):
 
             # Update coco 'categories' field
             class_name = label_shapes['label']
-            if class_name not in categories_labels:
+
+            if (all_classes_id is None) and (class_name
+                                             not in categories_labels):
                 # only update when not been added before
                 coco_json['categories'].append({
                     'id':
@@ -192,6 +218,12 @@ def parse_labelme_to_coco(image_dir: str, labels_root: str) -> (dict, dict):
                 })
                 categories_labels.append(class_name)
                 category_to_id[class_name] = len(categories_labels)
+
+            elif (all_classes_id is not None) and (class_name
+                                                   not in all_classes_id):
+                # check class name
+                raise ValueError(f'Got unexpected class name {class_name}, '
+                                 'which is not in your `--class-id-json`.')
 
             # get shape type and convert it to coco format
             shape_type = label_shapes['shape_type']
@@ -217,33 +249,46 @@ def parse_labelme_to_coco(image_dir: str, labels_root: str) -> (dict, dict):
     return coco_json, category_to_id
 
 
-def convert_labelme_to_coco(image_dir: str, labels_dir: str, out_path: str):
+def convert_labelme_to_coco(image_dir: str, labels_dir: str, out_path: str,
+                            class_id_json: str):
     """Convert labelme format label to COCO json format label.
 
     Args:
         image_dir (str): Image dir path.
         labels_dir (str): Image label path.
         out_path (str): COCO json file save path.
+        class_id_json (str): All class id json file path.
     """
     assert Path(out_path).suffix == '.json'
 
+    if class_id_json is not None:
+        with open(class_id_json, encoding='utf-8') as f:
+            all_classes_id = json.load(f)
+    else:
+        all_classes_id = None
+
     # convert to coco json
     coco_json_data, category_to_id = parse_labelme_to_coco(
-        image_dir, labels_dir)
+        image_dir, labels_dir, all_classes_id)
 
     # save json result
     Path(out_path).parent.mkdir(exist_ok=True, parents=True)
     print(f'Saving json to {out_path}')
-    json.dump(coco_json_data, open(out_path, 'w'), indent=4)
+    json.dump(coco_json_data, open(out_path, 'w'), indent=2)
 
-    category_to_id_path = Path(out_path).with_stem('class_with_id')
-    print(f'Saving class id json to {category_to_id_path}')
-    json.dump(category_to_id, open(category_to_id_path, 'w'), indent=4)
+    if class_id_json is None:
+        category_to_id_path = Path(out_path).with_stem('class_with_id')
+        print(f'Saving class id json to {category_to_id_path}')
+        json.dump(category_to_id, open(category_to_id_path, 'w'), indent=2)
+    else:
+        print('Not Saving new class id json, user should using '
+              f'{class_id_json} for training config')
 
 
 def main():
     args = parse_args()
-    convert_labelme_to_coco(args.img_dir, args.labels_dir, args.out)
+    convert_labelme_to_coco(args.img_dir, args.labels_dir, args.out,
+                            args.class_id_json)
     print('All done!')
 
 
