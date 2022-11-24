@@ -97,7 +97,8 @@ def main():
             # save result to labelme files
             out_file = out_file.replace(
                 os.path.splitext(out_file)[-1], '.json')
-            to_label_format(result, out_file, pred_instances, args.class_name)
+            to_label_format(pred_instances, result.metainfo, out_file,
+                            args.class_name)
             continue
 
         visualizer.add_datasample(

@@ -1,7 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import json
 
-from mmdet.structures import DetDataSample
 from mmengine.structures import InstanceData
 
 
@@ -12,22 +11,21 @@ class LabelmeFormat:
 
     Args:
         classes (tuple): Model classes name.
-        score_threshold (float): Predict score threshold.
     """
 
     def __init__(self, classes: tuple):
         super().__init__()
         self.classes = classes
 
-    def __call__(self, results: DetDataSample, output_path: str,
-                 pred_instances: InstanceData, class_name: list):
+    def __call__(self, pred_instances: InstanceData, metainfo: dict,
+                 output_path: str, selected_classes: list):
         """Get image data field for labelme.
 
         Args:
-            results (DetDataSample): Predict info.
-            output_path (str): Image file path.
             pred_instances (InstanceData): Candidate prediction info.
-            class_name (list): Filter class name.
+            metainfo (dict): Meta info of prediction.
+            output_path (str): Image file path.
+            selected_classes (list): Selected class name.
 
         Labelme file eg.
             {
@@ -59,24 +57,24 @@ class LabelmeFormat:
             }
         """
 
-        image_path = results.metainfo['img_path']
+        image_path = metainfo['img_path']
 
         json_info = {
             'version': '5.0.5',
             'flags': {},
             'imagePath': image_path,
             'imageData': None,
-            'imageHeight': results.ori_shape[0],
-            'imageWidth': results.ori_shape[1],
+            'imageHeight': metainfo['ori_shape'][0],
+            'imageWidth': metainfo['ori_shape'][1],
             'shapes': []
         }
 
-        for pred_info in pred_instances:
-            pred_bbox = pred_info.bboxes.cpu().numpy().tolist()[0]
-            pred_label = self.classes[pred_info.labels]
+        for pred_instance in pred_instances:
+            pred_bbox = pred_instance.bboxes.cpu().numpy().tolist()[0]
+            pred_label = self.classes[pred_instance.labels]
 
-            if class_name is not None and \
-                    pred_label not in class_name:
+            if selected_classes is not None and \
+                    pred_label not in selected_classes:
                 # filter class name
                 continue
 
