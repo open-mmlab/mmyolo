@@ -1,4 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+"""This script is in the experimental verification stage and cannot be
+guaranteed to be completely correct. Currently Grad-based CAM and Grad-free CAM
+are supported.
+
+The target detection task is different from the classification task. It not
+only includes the AM map of the category, but also includes information such as
+bbox and mask, so this script is named bboxam.
+"""
+
 import argparse
 import os.path
 import warnings

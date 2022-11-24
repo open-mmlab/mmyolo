@@ -1,5 +1,7 @@
 # 可视化
 
+本文包括特征图可视化和 Grad-Based 和 Grad-free CAM 可视化
+
 ## 特征图可视化
 
 <div align=center>
@@ -12,7 +14,7 @@ MMYOLO 中，将使用 MMEngine 提供的 `Visualizer` 可视化器进行特征�
 - 支持基础绘图接口以及特征图可视化。
 - 支持选择模型中的不同层来得到特征图，包含 `squeeze_mean` ， `select_max` ， `topk` 三种显示方式，用户还可以使用 `arrangement` 自定义特征图显示的布局方式。
 
-## 特征图绘制
+### 特征图绘制
 
 你可以调用 `demo/featmap_vis_demo.py` 来简单快捷地得到可视化结果，为了方便理解，将其主要参数的功能梳理如下：
 
@@ -50,7 +52,7 @@ MMYOLO 中，将使用 MMEngine 提供的 `Visualizer` 可视化器进行特征�
 
 **注意：当图片和特征图尺度不一样时候，`draw_featmap` 函数会自动进行上采样对齐。如果你的图片在推理过程中前处理存在类似 Pad 的操作此时得到的特征图也是 Pad 过的，那么直接上采样就可能会出现不对齐问题。**
 
-## 用法示例
+### 用法示例
 
 以预训练好的 YOLOv5-s 模型为例:
 
@@ -167,7 +169,7 @@ python demo/featmap_vis_demo.py demo/dog.jpg \
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/17425982/198522489-8adee6ae-9915-4e9d-bf50-167b8a12c275.png" width="1200" alt="image"/>
+<img src="https://user-images.githubusercontent.com/17425982/198522489-8adee6ae-9915-4e9d-bf50-167b8a12c275.png" width="800" alt="image"/>
 </div>
 
 (5) 存储绘制后的图片，在绘制完成后，可以选择本地窗口显示，也可以存储到本地，只需要加入参数 `--out-file xxx.jpg`：
@@ -180,3 +182,113 @@ python demo/featmap_vis_demo.py demo/dog.jpg \
                                 --channel-reduction select_max \
                                 --out-file featmap_backbone.jpg
 ```
+
+## Grad-Based 和 Grad-free CAM 可视化
+
+目标检测 CAM 可视化相比于分类 CAM 复杂很多且差异很大。本文只是简要说明用法，后续会单独开文档详细描述实现原理和注意事项。
+
+你可以调用 `demo/boxmap_vis_demo.py` 来简单快捷地得到 Box 级别的 AM 可视化结果，目前已经支持 YOLOv5/YOLOv6/YOLOX/RTMDet。
+
+以 YOLOv5 为例，和特征图可视化绘制一样，你需要先修改 test_pipeline，否则会出现特征图和原图不对齐问题。
+
+旧的 `test_pipeline` 为：
+
+```python
+test_pipeline = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args={{_base_.file_client_args}}),
+    dict(type='YOLOv5KeepRatioResize', scale=img_scale),
+    dict(
+        type='LetterResize',
+        scale=img_scale,
+        allow_scale_up=False,
+        pad_val=dict(img=114)),
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor', 'pad_param'))
+]
+```
+
+修改为如下配置：
+
+```python
+test_pipeline = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args=_base_.file_client_args),
+    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # 这里将 LetterResize 修改成 mmdet.Resize
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor'))
+]
+```
+
+(1) 使用 gradcam 方法可视化 neck 模块的最后一个输出层的 am 图
+
+```shell
+python demo/boxam_vis_demo.py \
+        demo/dog.jpg \
+        configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+        yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
+
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/203775584-c4aebf11-4ff8-4530-85fe-7dda897e95a8.jpg" width="800" alt="image"/>
+</div>
+
+相对应的特征图 am 图如下：
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/203774801-1555bcfb-a8f9-4688-8ed6-982d6ad38e1d.jpg" width="800" alt="image"/>
+</div>
+
+可以看出 gradcam 效果可以突出 box 级别的 am 信息。
+
+你可以通过 --topk 参数选择仅仅可视化预测分值最好的前几个预测框
+
+```shell
+python demo/boxam_vis_demo.py \
+        demo/dog.jpg \
+        configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+        yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+        --topk 2
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/203778700-3165aa72-ecaf-40cc-b470-6911646e6046.jpg" width="800" alt="image"/>
+</div>
+
+(2) 使用 ablationcam 方法可视化 neck 模块的最后一个输出层的 am 图
+
+```shell
+python demo/boxam_vis_demo.py \
+        demo/dog.jpg \
+        configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+        yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+        --method ablationcam
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/203776978-b5a9b383-93b4-4b35-9e6a-7cac684b372c.jpg" width="800" alt="image"/>
+</div>
+
+由于 ablationcam 是通过每个通道对分值的贡献程度来加权，因此无法实现类似 gradcam 的仅仅可视化 box 级别的 am 信息。 但是你引入可以使用 --norm-in-bbox 来仅仅显示 bbox 内部 am
+
+```shell
+python demo/boxam_vis_demo.py \
+        demo/dog.jpg \
+        configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+        yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+        --method ablationcam \
+        --norm-in-bbox
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/203777566-7c74e82f-b477-488e-958f-91e1d10833b9.jpg" width="800" alt="image"/>
+</div>

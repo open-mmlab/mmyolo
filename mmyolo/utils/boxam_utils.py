@@ -319,7 +319,8 @@ class BoxAMDetectorVisualizer:
                           (int(box[2]), int(box[3])), color, 2)
             if scores is not None:
                 score = scores[i]
-                text = str(self.classes[label]) + ': ' + str(round(score, 2))
+                text = str(self.classes[label]) + ': ' + str(
+                    round(score * 100, 1))
             else:
                 text = self.classes[label]
 
