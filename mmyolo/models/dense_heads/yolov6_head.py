@@ -14,7 +14,6 @@ from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS, TASK_UTILS
-from ..utils import make_divisible
 from .yolov5_head import YOLOv5Head
 
 
@@ -31,7 +30,7 @@ class YOLOv6HeadModule(BaseModule):
             feature map.
         widen_factor (float): Width multiplier, multiply number of
             channels in each layer by this amount. Default: 1.0.
-        num_base_priors:int: The number of priors (points) at a point
+        num_base_priors: (int): The number of priors (points) at a point
             on the feature grid.
         featmap_strides (Sequence[int]): Downsample factor of each feature map.
              Defaults to [8, 16, 32].
@@ -65,12 +64,10 @@ class YOLOv6HeadModule(BaseModule):
         self.act_cfg = act_cfg
 
         if isinstance(in_channels, int):
-            self.in_channels = [make_divisible(in_channels, widen_factor)
+            self.in_channels = [int(in_channels * widen_factor)
                                 ] * self.num_levels
         else:
-            self.in_channels = [
-                make_divisible(i, widen_factor) for i in in_channels
-            ]
+            self.in_channels = [int(i * widen_factor) for i in in_channels]
 
         self._init_layers()
 

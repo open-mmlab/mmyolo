@@ -56,12 +56,15 @@ class YOLOv5PAFPN(BaseYOLONeck):
             init_cfg=init_cfg)
 
     def init_weights(self):
-        """Initialize the parameters."""
-        for m in self.modules():
-            if isinstance(m, torch.nn.Conv2d):
-                # In order to be consistent with the source code,
-                # reset the Conv2d initialization parameters
-                m.reset_parameters()
+        if self.init_cfg is None:
+            """Initialize the parameters."""
+            for m in self.modules():
+                if isinstance(m, torch.nn.Conv2d):
+                    # In order to be consistent with the source code,
+                    # reset the Conv2d initialization parameters
+                    m.reset_parameters()
+        else:
+            super().init_weights()
 
     def build_reduce_layer(self, idx: int) -> nn.Module:
         """build reduce layer.

@@ -17,49 +17,60 @@ mim run mmdet print_config [CONFIG]
 `tools/analysis_tools/browse_coco_json.py` is a script that can visualization to display the COCO label in the picture.
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py ${DATA_ROOT} \
-                                                [--ann_file ${ANN_FILE}] \
-                                                [--img_dir ${IMG_DIR}] \
+python tools/analysis_tools/browse_coco_json.py [--data-root ${DATA_ROOT}] \
+                                                [--img-dir ${IMG_DIR}] \
+                                                [--ann-file ${ANN_FILE}] \
                                                 [--wait-time ${WAIT_TIME}] \
                                                 [--disp-all] [--category-names CATEGORY_NAMES [CATEGORY_NAMES ...]] \
                                                 [--shuffle]
 ```
+
+If images and labels are in the same folder, you can specify `--data-root` to the folder, and then `--img-dir` and `--ann-file` to specify the relative path of the folder. The code will be automatically spliced.
+If the image and label files are not in the same folder, you do not need to specify `--data-root`, but directly specify `--img-dir` and `--ann-file` of the absolute path.
 
 E.g:
 
 1. Visualize all categories of `COCO` and display all types of annotations such as `bbox` and `mask`:
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
+                                                --disp-all
+```
+
+If images and labels are not in the same folder, you can use a absolutely path:
+
+```shell
+python tools/analysis_tools/browse_coco_json.py --img-dir '/dataset/image/coco/train2017' \
+                                                --ann-file '/label/instances_train2017.json' \
                                                 --disp-all
 ```
 
 2. Visualize all categories of `COCO`, and display only the `bbox` type labels, and shuffle the image to show:
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
                                                 --shuffle
 ```
 
 3. Only visualize the `bicycle` and `person` categories of `COCO` and only the `bbox` type labels are displayed:
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
                                                 --category-names 'bicycle' 'person'
 ```
 
 4. Visualize all categories of `COCO`, and display all types of label such as `bbox`, `mask`, and shuffle the image to show:
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
                                                 --disp-all \
                                                 --shuffle
 ```
@@ -348,6 +359,59 @@ python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
     --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
     --prior_match_thr ${PRIOR_MATCH_THR} \
     --output-dir ${OUTPUT_DIR}
+```
+
+## Perform inference on large images
+
+First install [`sahi`](https://github.com/obss/sahi) with:
+
+```shell
+pip install -U sahi>=0.11.4
+```
+
+Perform MMYOLO inference on large images (as satellite imagery) as:
+
+```shell
+wget -P checkpoint https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth
+
+python demo/large_image_demo.py \
+    demo/large_image.jpg \
+    configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py \
+    checkpoint/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth \
+```
+
+Arrange slicing parameters as:
+
+```shell
+python demo/large_image_demo.py \
+    demo/large_image.jpg \
+    configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py \
+    checkpoint/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth \
+    --patch-size 512
+    --patch-overlap-ratio 0.25
+```
+
+Export debug visuals while performing inference on large images as:
+
+```shell
+python demo/large_image_demo.py \
+    demo/large_image.jpg \
+    configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py \
+    checkpoint/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth \
+    --debug
+```
+
+[`sahi`](https://github.com/obss/sahi) citation:
+
+```
+@article{akyon2022sahi,
+  title={Slicing Aided Hyper Inference and Fine-tuning for Small Object Detection},
+  author={Akyon, Fatih Cagatay and Altinuc, Sinan Onur and Temizel, Alptekin},
+  journal={2022 IEEE International Conference on Image Processing (ICIP)},
+  doi={10.1109/ICIP46576.2022.9897990},
+  pages={966-970},
+  year={2022}
+}
 ```
 
 ## Extracts a subset of COCO
