@@ -3,7 +3,7 @@ import bisect
 import copy
 import warnings
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -165,12 +165,14 @@ class BoxAMDetectorWrapper(nn.Module):
         self.input_data = None
         self.image = None
 
-    def need_loss(self, is_need_loss):
+    def need_loss(self, is_need_loss: bool):
+        """Grad-based methods require loss."""
         self.is_need_loss = is_need_loss
 
     def set_input_data(self,
                        image: np.ndarray,
                        pred_instances: Optional[InstanceData] = None):
+        """Set the input data to be used in the next step."""
         self.image = image
 
         if self.is_need_loss:
@@ -216,25 +218,15 @@ class BoxAMDetectorWrapper(nn.Module):
 
 
 class BoxAMDetectorVisualizer:
-    """Box am visualization class.
-
-    Args:
-        method:  CAM method. Currently supports
-           `ablationcam`,`eigencam` and `featmapam`.
-        model (nn.Module): MMDet model.
-        target_layers (list[torch.nn.Module]): The target layers
-            you want to visualize.
-        reshape_transform (Callable, optional): Function of Reshape
-            and aggregate feature maps. Defaults to None.
-    """
+    """Box AM visualization class."""
 
     def __init__(self,
                  method_class,
-                 model,
-                 target_layers,
-                 reshape_transform=None,
-                 is_need_grad=False,
-                 extra_params=None):
+                 model: nn.Module,
+                 target_layers: List,
+                 reshape_transform: Optional[Callable] = None,
+                 is_need_grad: bool = False,
+                 extra_params: Optional[dict] = None):
         self.target_layers = target_layers
         self.reshape_transform = reshape_transform
         self.is_need_grad = is_need_grad
@@ -264,7 +256,9 @@ class BoxAMDetectorVisualizer:
         self.classes = model.detector.dataset_meta['CLASSES']
         self.COLORS = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
-    def switch_activations_and_grads(self, model):
+    def switch_activations_and_grads(self, model) -> None:
+        """In the grad-based method, we need to switch
+        ``ActivationsAndGradients`` layer, otherwise an error will occur."""
         self.cam.model = model
 
         if self.is_need_grad is True:
@@ -280,10 +274,10 @@ class BoxAMDetectorVisualizer:
         return self.cam(img, targets, aug_smooth, eigen_smooth)[0, :]
 
     def show_am(self,
-                image,
-                pred_instance,
-                grayscale_am,
-                with_norm_in_bboxes=False):
+                image: np.ndarray,
+                pred_instance: InstanceData,
+                grayscale_am: np.ndarray,
+                with_norm_in_bboxes: bool = False):
         """Normalize the AM to be in the range [0, 1] inside every bounding
         boxes, and zero outside of the bounding boxes."""
 
@@ -312,7 +306,12 @@ class BoxAMDetectorVisualizer:
             boxes, labels, am_image_renormalized, pred_instance.get('scores'))
         return image_with_bounding_boxes
 
-    def _draw_boxes(self, boxes, labels, image, scores=None):
+    def _draw_boxes(self,
+                    boxes: List,
+                    labels: List,
+                    image: np.ndarray,
+                    scores: Optional[List] = None):
+        """draw boxes on image."""
         for i, box in enumerate(boxes):
             label = labels[i]
             color = self.COLORS[label]
@@ -336,6 +335,7 @@ class BoxAMDetectorVisualizer:
 
 
 class DetAblationLayer(AblationLayer):
+    """Det AblationLayer."""
 
     def __init__(self):
         super().__init__()
@@ -358,11 +358,7 @@ class DetAblationLayer(AblationLayer):
 
     def __call__(self, x):
         """Go over the activation indices to be ablated, stored in
-        self.indices.
-
-        Map between every activation index to the tensor in the Ordered Dict
-        from the FPN layer.
-        """
+        self.indices."""
         result = self.activations
 
         if isinstance(result, torch.Tensor):
@@ -383,24 +379,28 @@ class DetAblationLayer(AblationLayer):
 
 
 class DetBoxScoreTarget:
-    """For every original detected bounding box specified in "bboxes", assign a
-    score on how the current bounding boxes match it,
+    """Det Score calculation class.
+
+    In the case of the grad-free method, the calculation method is that
+    for every original detected bounding box specified in "bboxes",
+    assign a score on how the current bounding boxes match it,
 
         1. In Bbox IoU
         2. In the classification score.
         3. In Mask IoU if ``segms`` exist.
 
     If there is not a large enough overlap, or the category changed,
-    assign a score of 0.
+    assign a score of 0. The total score is the sum of all the box scores.
 
-    The total score is the sum of all the box scores.
+    In the case of the grad-based method, the calculation method is
+    the sum of losses after excluding a specific key.
     """
 
     def __init__(self,
-                 pred_instance,
-                 match_iou_thr=0.5,
-                 device='cuda:0',
-                 ignore_loss_params=None):
+                 pred_instance: InstanceData,
+                 match_iou_thr: float = 0.5,
+                 device: str = 'cuda:0',
+                 ignore_loss_params: Optional[List] = None):
         self.focal_bboxes = pred_instance.bboxes
         self.focal_labels = pred_instance.labels
         self.match_iou_thr = match_iou_thr
@@ -413,7 +413,8 @@ class DetBoxScoreTarget:
         output = torch.tensor([0.], device=self.device)
 
         if 'loss_cls' in results:
-            # grad_base_method
+            # grad-based method
+            # results is dict
             for loss_key, loss_value in results.items():
                 if 'loss' not in loss_key or \
                         loss_key in self.ignore_loss_params:
@@ -424,6 +425,7 @@ class DetBoxScoreTarget:
                     output += loss_value
             return output
         else:
+            # grad-free method
             # results is DetDataSample
             pred_instances = results.pred_instances
             if len(pred_instances) == 0:
@@ -473,6 +475,7 @@ class SpatialBaseCAM(BaseCAM):
 
 
 class GradCAM(SpatialBaseCAM, Base_GradCAM):
+    """Gradients are no longer averaged over the spatial dimension."""
 
     def get_cam_weights(self, input_tensor, target_layer, target_category,
                         activations, grads):
@@ -480,6 +483,7 @@ class GradCAM(SpatialBaseCAM, Base_GradCAM):
 
 
 class GradCAMPlusPlus(SpatialBaseCAM, Base_GradCAMPlusPlus):
+    """Gradients are no longer averaged over the spatial dimension."""
 
     def get_cam_weights(self, input_tensor, target_layers, target_category,
                         activations, grads):
