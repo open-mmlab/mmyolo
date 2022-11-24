@@ -6,7 +6,7 @@ Usage:
                 --img-dir /path/to/images \
                 --labels-dir /path/to/labels \
                 --out /path/to/coco_instances.json \
-                [--class-id-json /path/to/class_with_id.json]
+                [--class-id-txt /path/to/class_with_id.txt]
 
 Note:
     Labels dir file structure:
@@ -23,17 +23,18 @@ Note:
          ├── image2.png
          └── ...
 
-    If user set `--class-id-json` then will use it in `categories` field,
+    If user set `--class-id-txt` then will use it in `categories` field,
     if not set, then will generate auto base on the all labelme label
     files to `class_with_id.json`.
 
-    class_with_id.json example
-    {
-        "cat": 1,
-        "dog": 2,
-        "bicycle": 3,
-        "motorcycle": 4
-    }
+    class_with_id.txt example, each line is "id class_name":
+    ```txt
+    1 cat
+    2 dog
+    3 bicycle
+    4 motorcycle
+
+    ```
 """
 import argparse
 import json
@@ -52,10 +53,7 @@ def parse_args():
         '--labels-dir', type=str, help='Dataset labels directory')
     parser.add_argument('--out', type=str, help='COCO label json output path')
     parser.add_argument(
-        '--class-id-json',
-        default=None,
-        type=str,
-        help='All class id json path')
+        '--class-id-txt', default=None, type=str, help='All class id txt path')
     args = parser.parse_args()
     return args
 
@@ -168,7 +166,7 @@ def parse_labelme_to_coco(image_dir: str, labels_root: str,
         categories_labels = []
     else:
         category_to_id = all_classes_id
-        categories_labels = all_classes_id.keys()
+        categories_labels = list(all_classes_id.keys())
 
     # filter incorrect image file
     img_file_list = [
@@ -220,10 +218,10 @@ def parse_labelme_to_coco(image_dir: str, labels_root: str,
                 category_to_id[class_name] = len(categories_labels)
 
             elif (all_classes_id is not None) and (class_name
-                                                   not in all_classes_id):
+                                                   not in categories_labels):
                 # check class name
                 raise ValueError(f'Got unexpected class name {class_name}, '
-                                 'which is not in your `--class-id-json`.')
+                                 'which is not in your `--class-id-txt`.')
 
             # get shape type and convert it to coco format
             shape_type = label_shapes['shape_type']
@@ -250,20 +248,28 @@ def parse_labelme_to_coco(image_dir: str, labels_root: str,
 
 
 def convert_labelme_to_coco(image_dir: str, labels_dir: str, out_path: str,
-                            class_id_json: str):
+                            class_id_txt: str):
     """Convert labelme format label to COCO json format label.
 
     Args:
         image_dir (str): Image dir path.
         labels_dir (str): Image label path.
         out_path (str): COCO json file save path.
-        class_id_json (str): All class id json file path.
+        class_id_txt (str): All class id txt file path.
     """
     assert Path(out_path).suffix == '.json'
 
-    if class_id_json is not None:
-        with open(class_id_json, encoding='utf-8') as f:
-            all_classes_id = json.load(f)
+    if class_id_txt is not None:
+        assert Path(class_id_txt).suffix == '.txt'
+
+        all_classes_id = dict()
+        with open(class_id_txt, encoding='utf-8') as f:
+            txt_lines = f.read().splitlines()
+        assert len(txt_lines) > 0
+
+        for txt_line in txt_lines:
+            v, k = txt_line.split(' ')
+            all_classes_id.update({k: v})
     else:
         all_classes_id = None
 
@@ -276,19 +282,21 @@ def convert_labelme_to_coco(image_dir: str, labels_dir: str, out_path: str,
     print(f'Saving json to {out_path}')
     json.dump(coco_json_data, open(out_path, 'w'), indent=2)
 
-    if class_id_json is None:
-        category_to_id_path = Path(out_path).with_stem('class_with_id')
-        print(f'Saving class id json to {category_to_id_path}')
-        json.dump(category_to_id, open(category_to_id_path, 'w'), indent=2)
+    if class_id_txt is None:
+        category_to_id_path = Path(out_path).with_name('class_with_id.txt')
+        print(f'Saving class id txt to {category_to_id_path}')
+        with open(category_to_id_path, 'w', encoding='utf-8') as f:
+            for k, v in category_to_id.items():
+                f.write(f'{v} {k}\n')
     else:
-        print('Not Saving new class id json, user should using '
-              f'{class_id_json} for training config')
+        print('Not Saving new class id txt, user should using '
+              f'{class_id_txt} for training config')
 
 
 def main():
     args = parse_args()
     convert_labelme_to_coco(args.img_dir, args.labels_dir, args.out,
-                            args.class_id_json)
+                            args.class_id_txt)
     print('All done!')
 
 
