@@ -1,29 +1,108 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import bisect
 import copy
-from typing import List
+import warnings
+from pathlib import Path
+from typing import List, Optional, Tuple, Union
 
 import cv2
 import numpy as np
 import torch
 import torch.nn as nn
 import torchvision
-from mmdet.apis.inference import init_detector
-from mmengine.dataset import Compose
+from mmcv.transforms import Compose
+from mmdet.evaluation import get_classes
+from mmdet.models import build_detector
+from mmdet.utils import ConfigType
+from mmengine.config import Config
+from mmengine.runner import load_checkpoint
+from mmengine.structures import InstanceData
+from torch import Tensor
 
 try:
     from pytorch_grad_cam import (AblationCAM, AblationLayer,
-                                  ActivationsAndGradients, EigenCAM)
+                                  ActivationsAndGradients)
+    from pytorch_grad_cam import GradCAM as Base_GradCAM
+    from pytorch_grad_cam import GradCAMPlusPlus as Base_GradCAMPlusPlus
     from pytorch_grad_cam.base_cam import BaseCAM
     from pytorch_grad_cam.utils.image import scale_cam_image, show_cam_on_image
     from pytorch_grad_cam.utils.svd_on_activations import get_2d_projection
-    from pytorch_grad_cam import GradCAM as Base_GradCAM
-    from pytorch_grad_cam import GradCAMPlusPlus as Base_GradCAMPlusPlus
 except ImportError:
     pass
 
 
-def reshape_transform(feats, max_shape=(20, 20), is_need_grad=False):
+def init_detector(
+    config: Union[str, Path, Config],
+    checkpoint: Optional[str] = None,
+    palette: str = 'coco',
+    device: str = 'cuda:0',
+    cfg_options: Optional[dict] = None,
+) -> nn.Module:
+    """Initialize a detector from config file.
+
+    Args:
+        config (str, :obj:`Path`, or :obj:`mmengine.Config`): Config file path,
+            :obj:`Path`, or the config object.
+        checkpoint (str, optional): Checkpoint path. If left as None, the model
+            will not load any weights.
+        palette (str): Color palette used for visualization. If palette
+            is stored in checkpoint, use checkpoint's palette first, otherwise
+            use externally passed palette. Currently, supports 'coco', 'voc',
+            'citys' and 'random'. Defaults to coco.
+        device (str): The device where the anchors will be put on.
+            Defaults to cuda:0.
+        cfg_options (dict, optional): Options to override some settings in
+            the used config.
+
+    Returns:
+        nn.Module: The constructed detector.
+    """
+    if isinstance(config, (str, Path)):
+        config = Config.fromfile(config)
+    elif not isinstance(config, Config):
+        raise TypeError('config must be a filename or Config object, '
+                        f'but got {type(config)}')
+    if cfg_options is not None:
+        config.merge_from_dict(cfg_options)
+    elif 'init_cfg' in config.model.backbone:
+        config.model.backbone.init_cfg = None
+
+    # only change this
+    # grad based method requires train_cfg
+    # config.model.train_cfg = None
+
+    model = build_detector(config.model)
+    if checkpoint is not None:
+        checkpoint = load_checkpoint(model, checkpoint, map_location='cpu')
+        # Weights converted from elsewhere may not have meta fields.
+        checkpoint_meta = checkpoint.get('meta', {})
+        # save the dataset_meta in the model for convenience
+        if 'dataset_meta' in checkpoint_meta:
+            # mmdet 3.x
+            model.dataset_meta = checkpoint_meta['dataset_meta']
+        elif 'CLASSES' in checkpoint_meta:
+            # < mmdet 3.x
+            classes = checkpoint_meta['CLASSES']
+            model.dataset_meta = {'CLASSES': classes, 'PALETTE': palette}
+        else:
+            warnings.simplefilter('once')
+            warnings.warn(
+                'dataset_meta or class names are not saved in the '
+                'checkpoint\'s meta data, use COCO classes by default.')
+            model.dataset_meta = {
+                'CLASSES': get_classes('coco'),
+                'PALETTE': palette
+            }
+
+    model.cfg = config  # save the config in the model for convenience
+    model.to(device)
+    model.eval()
+    return model
+
+
+def reshape_transform(feats: Union[Tensor, List[Tensor]],
+                      max_shape: Tuple[int, int] = (20, 20),
+                      is_need_grad: bool = False):
     """Reshape and aggregate feature maps when the input is a multi-layer
     feature map.
 
@@ -57,11 +136,15 @@ def reshape_transform(feats, max_shape=(20, 20), is_need_grad=False):
     return activations
 
 
-class CAMDetectorWrapper(nn.Module):
+class BoxAMDetectorWrapper(nn.Module):
     """Wrap the mmdet model class to facilitate handling of non-tensor
     situations during inference."""
 
-    def __init__(self, cfg, checkpoint, score_thr, device='cuda:0'):
+    def __init__(self,
+                 cfg: ConfigType,
+                 checkpoint: str,
+                 score_thr: float,
+                 device: str = 'cuda:0'):
         super().__init__()
         self.cfg = cfg
         self.device = device
@@ -85,7 +168,9 @@ class CAMDetectorWrapper(nn.Module):
     def need_loss(self, is_need_loss):
         self.is_need_loss = is_need_loss
 
-    def set_input_data(self, image, pred_instances=None):
+    def set_input_data(self,
+                       image: np.ndarray,
+                       pred_instances: Optional[InstanceData] = None):
         self.image = image
 
         if self.is_need_loss:
@@ -107,11 +192,22 @@ class CAMDetectorWrapper(nn.Module):
     def __call__(self, *args, **kwargs):
         assert self.input_data is not None
         if self.is_need_loss:
+            # Maybe this is a direction that can be optimized
+            # self.detector.init_weights()
+
+            if hasattr(self.detector.bbox_head, 'featmap_sizes'):
+                # Prevent the model algorithm error when calculating loss
+                self.detector.bbox_head.featmap_sizes = None
+
             data_ = {}
             data_['inputs'] = [self.input_data['inputs']]
             data_['data_samples'] = [self.input_data['data_samples']]
             data = self.detector.data_preprocessor(data_, training=False)
             loss = self.detector._run_forward(data, mode='loss')
+
+            if hasattr(self.detector.bbox_head, 'featmap_sizes'):
+                self.detector.bbox_head.featmap_sizes = None
+
             return [loss]
         else:
             with torch.no_grad():
@@ -119,8 +215,8 @@ class CAMDetectorWrapper(nn.Module):
                 return results
 
 
-class CAMDetectorVisualizer:
-    """cam visualization class.
+class BoxAMDetectorVisualizer:
+    """Box am visualization class.
 
     Args:
         method:  CAM method. Currently supports
@@ -183,46 +279,54 @@ class CAMDetectorVisualizer:
         img = torch.from_numpy(img)[None].permute(0, 3, 1, 2)
         return self.cam(img, targets, aug_smooth, eigen_smooth)[0, :]
 
-    def show_cam(self,
-                 image,
-                 boxes,
-                 labels,
-                 grayscale_cam,
-                 with_norm_in_bboxes=False):
-        """Normalize the CAM to be in the range [0, 1] inside every bounding
+    def show_am(self,
+                image,
+                pred_instance,
+                grayscale_am,
+                with_norm_in_bboxes=False):
+        """Normalize the AM to be in the range [0, 1] inside every bounding
         boxes, and zero outside of the bounding boxes."""
+
+        boxes = pred_instance.bboxes
+        labels = pred_instance.labels
+
         if with_norm_in_bboxes is True:
             boxes = boxes.astype(np.int32)
-            renormalized_cam = np.zeros(grayscale_cam.shape, dtype=np.float32)
+            renormalized_am = np.zeros(grayscale_am.shape, dtype=np.float32)
             images = []
             for x1, y1, x2, y2 in boxes:
-                img = renormalized_cam * 0
-                img[y1:y2,
-                    x1:x2] = scale_cam_image(grayscale_cam[y1:y2,
-                                                           x1:x2].copy())
+                img = renormalized_am * 0
+                img[y1:y2, x1:x2] = scale_cam_image(
+                    [grayscale_am[y1:y2, x1:x2].copy()])[0]
                 images.append(img)
 
-            renormalized_cam = np.max(np.float32(images), axis=0)
-            renormalized_cam = scale_cam_image(renormalized_cam)
+            renormalized_am = np.max(np.float32(images), axis=0)
+            renormalized_am = scale_cam_image([renormalized_am])[0]
         else:
-            renormalized_cam = grayscale_cam
+            renormalized_am = grayscale_am
 
-        cam_image_renormalized = show_cam_on_image(
-            image / 255, renormalized_cam, use_rgb=False)
+        am_image_renormalized = show_cam_on_image(
+            image / 255, renormalized_am, use_rgb=False)
 
-        image_with_bounding_boxes = self._draw_boxes(boxes, labels,
-                                                     cam_image_renormalized)
+        image_with_bounding_boxes = self._draw_boxes(
+            boxes, labels, am_image_renormalized, pred_instance.get('scores'))
         return image_with_bounding_boxes
 
-    def _draw_boxes(self, boxes, labels, image):
+    def _draw_boxes(self, boxes, labels, image, scores=None):
         for i, box in enumerate(boxes):
             label = labels[i]
             color = self.COLORS[label]
             cv2.rectangle(image, (int(box[0]), int(box[1])),
                           (int(box[2]), int(box[3])), color, 2)
+            if scores is not None:
+                score = scores[i]
+                text = str(self.classes[label]) + ': ' + str(round(score, 2))
+            else:
+                text = self.classes[label]
+
             cv2.putText(
                 image,
-                self.classes[label], (int(box[0]), int(box[1] - 5)),
+                text, (int(box[0]), int(box[1] - 5)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.5,
                 color,
@@ -248,7 +352,7 @@ class DetAblationLayer(AblationLayer):
         self.activations = []
         for activation in activations:
             activation = activation[
-                         input_batch_index, :, :, :].clone().unsqueeze(0)
+                input_batch_index, :, :, :].clone().unsqueeze(0)
             self.activations.append(
                 activation.repeat(num_channels_to_ablate, 1, 1, 1))
 
@@ -279,8 +383,9 @@ class DetAblationLayer(AblationLayer):
 
 
 class DetBoxScoreTarget:
-    """For every original detected bounding box specified in "bboxes",
-    assign a score on how the current bounding boxes match it,
+    """For every original detected bounding box specified in "bboxes", assign a
+    score on how the current bounding boxes match it,
+
         1. In Bbox IoU
         2. In the classification score.
         3. In Mask IoU if ``segms`` exist.
@@ -291,11 +396,18 @@ class DetBoxScoreTarget:
     The total score is the sum of all the box scores.
     """
 
-    def __init__(self, pred_instance, match_iou_thr=0.5, device='cuda:0'):
+    def __init__(self,
+                 pred_instance,
+                 match_iou_thr=0.5,
+                 device='cuda:0',
+                 ignore_loss_params=None):
         self.focal_bboxes = pred_instance.bboxes
         self.focal_labels = pred_instance.labels
         self.match_iou_thr = match_iou_thr
         self.device = device
+        self.ignore_loss_params = ignore_loss_params
+        if ignore_loss_params is not None:
+            assert isinstance(self.ignore_loss_params, list)
 
     def __call__(self, results):
         output = torch.tensor([0.], device=self.device)
@@ -303,7 +415,8 @@ class DetBoxScoreTarget:
         if 'loss_cls' in results:
             # grad_base_method
             for loss_key, loss_value in results.items():
-                if 'loss' not in loss_key or 'loss_obj' in loss_key:
+                if 'loss' not in loss_key or \
+                        loss_key in self.ignore_loss_params:
                     continue
                 if isinstance(loss_value, list):
                     output += sum(loss_value)
@@ -326,14 +439,20 @@ class DetBoxScoreTarget:
                                                pred_bboxes[..., :4])
                 index = ious.argmax()
                 if ious[0, index] > self.match_iou_thr and pred_labels[
-                    index] == focal_label:
+                        index] == focal_label:
                     # TODO: Adaptive adjustment of weights based on algorithms
                     score = ious[0, index] + pred_scores[index]
                     output = output + score
             return output
 
 
-class SptialBaseCAM(BaseCAM):
+class SpatialBaseCAM(BaseCAM):
+    """CAM that maintains spatial information.
+
+    Gradients are often averaged over the spatial dimension in CAM
+    visualization for classification, but this is unreasonable in detection
+    tasks. There is no need to average the gradients in the detection task.
+    """
 
     def get_cam_image(self,
                       input_tensor: torch.Tensor,
@@ -343,11 +462,8 @@ class SptialBaseCAM(BaseCAM):
                       grads: torch.Tensor,
                       eigen_smooth: bool = False) -> np.ndarray:
 
-        weights = self.get_cam_weights(input_tensor,
-                                       target_layer,
-                                       targets,
-                                       activations,
-                                       grads)
+        weights = self.get_cam_weights(input_tensor, target_layer, targets,
+                                       activations, grads)
         weighted_activations = weights * activations
         if eigen_smooth:
             cam = get_2d_projection(weighted_activations)
@@ -356,30 +472,25 @@ class SptialBaseCAM(BaseCAM):
         return cam
 
 
-class GradCAM(SptialBaseCAM, Base_GradCAM):
-    def get_cam_weights(self,
-                        input_tensor,
-                        target_layer,
-                        target_category,
-                        activations,
-                        grads):
+class GradCAM(SpatialBaseCAM, Base_GradCAM):
+
+    def get_cam_weights(self, input_tensor, target_layer, target_category,
+                        activations, grads):
         return grads
 
 
-class GradCAMPlusPlus(SptialBaseCAM, Base_GradCAMPlusPlus):
-    def get_cam_weights(self,
-                        input_tensor,
-                        target_layers,
-                        target_category,
-                        activations,
-                        grads):
+class GradCAMPlusPlus(SpatialBaseCAM, Base_GradCAMPlusPlus):
+
+    def get_cam_weights(self, input_tensor, target_layers, target_category,
+                        activations, grads):
         grads_power_2 = grads**2
         grads_power_3 = grads_power_2 * grads
         # Equation 19 in https://arxiv.org/abs/1710.11063
         sum_activations = np.sum(activations, axis=(2, 3))
         eps = 0.000001
-        aij = grads_power_2 / (2 * grads_power_2 +
-                               sum_activations[:, :, None, None] * grads_power_3 + eps)
+        aij = grads_power_2 / (
+            2 * grads_power_2 +
+            sum_activations[:, :, None, None] * grads_power_3 + eps)
         # Now bring back the ReLU from eq.7 in the paper,
         # And zero out aijs where the activations are 0
         aij = np.where(grads != 0, aij, 0)
