@@ -8,10 +8,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from mmengine.config import Config
 from mmengine.utils import ProgressBar
-from prettytable import PrettyTable
 
 from mmyolo.registry import DATASETS
 from mmyolo.utils import register_all_modules
+from mmyolo.utils.misc import (show_class_list, show_data_classes,
+                               show_data_list)
 
 
 def parse_args():
@@ -295,79 +296,6 @@ def show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num):
         pad_inches=0.1)  # Save Image
     plt.close()
     print(f'End and save in {out_dir}/{out_name}_bbox_area.jpg')
-
-
-def show_class_list(classes, class_num):
-    """Print the data of the class obtained by the current run."""
-    print('\n\nThe information obtained is as follows:')
-    class_info = PrettyTable()
-    class_info.title = 'Information of dataset class'
-    # List Print Settings
-    # If the quantity is too large, 25 rows will be displayed in each column
-    if len(classes) < 25:
-        class_info.add_column('Class name', classes)
-        class_info.add_column('Bbox num', class_num)
-    elif len(classes) % 25 != 0 and len(classes) > 25:
-        col_num = int(len(classes) / 25) + 1
-        class_nums = class_num.tolist()
-        class_name_list = list(classes)
-        for i in range(0, (col_num * 25) - len(classes)):
-            class_name_list.append('')
-            class_nums.append('')
-        for i in range(0, len(class_name_list), 25):
-            class_info.add_column('Class name', class_name_list[i:i + 25])
-            class_info.add_column('Bbox num', class_nums[i:i + 25])
-
-    # Align display data to the left
-    class_info.align['Class name'] = 'l'
-    class_info.align['Bbox num'] = 'l'
-    print(class_info)
-
-
-def show_data_list(args, area_rule):
-    """Print run setup information."""
-    print('\n\nPrint current running information:')
-    data_info = PrettyTable()
-    data_info.title = 'Dataset information'
-    # Print the corresponding information according to the settings
-    if args.val_dataset is False:
-        data_info.add_column('Dataset type', ['train_dataset'])
-    elif args.val_dataset is True:
-        data_info.add_column('Dataset type', ['val_dataset'])
-    if args.class_name is None:
-        data_info.add_column('Class name', ['All classes'])
-    else:
-        data_info.add_column('Class name', [args.class_name])
-    if args.func is None:
-        data_info.add_column('Function', ['All function'])
-    else:
-        data_info.add_column('Function', [args.func])
-    data_info.add_column('Area rule', [area_rule])
-
-    print(data_info)
-
-
-def show_data_classes(data_classes):
-    """When printing an error, all class names of the dataset."""
-    print('\n\nThe name of the class contained in the dataset:')
-    data_classes_info = PrettyTable()
-    data_classes_info.title = 'Information of dataset class'
-    # List Print Settings
-    # If the quantity is too large, 25 rows will be displayed in each column
-    if len(data_classes) < 25:
-        data_classes_info.add_column('Class name', data_classes)
-    elif len(data_classes) % 25 != 0 and len(data_classes) > 25:
-        col_num = int(len(data_classes) / 25) + 1
-        data_name_list = list(data_classes)
-        for i in range(0, (col_num * 25) - len(data_classes)):
-            data_name_list.append('')
-        for i in range(0, len(data_name_list), 25):
-            data_classes_info.add_column('Class name',
-                                         data_name_list[i:i + 25])
-
-    # Align display data to the left
-    data_classes_info.align['Class name'] = 'l'
-    print(data_classes_info)
 
 
 def main():
