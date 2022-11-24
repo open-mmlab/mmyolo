@@ -101,7 +101,7 @@ class TestBatchATSSAssigner(TestCase):
                          torch.Size([batch_size, 84, num_classes]))
         self.assertEqual(fg_mask_pre_prior.shape, torch.Size([batch_size, 84]))
 
-    def test_batch_atss_assigner_with_empty_boxs(self):
+    def test_batch_atss_assigner_with_empty_boxes(self):
         """Test corner case where a network might predict no boxes."""
         num_classes = 2
         batch_size = 2
