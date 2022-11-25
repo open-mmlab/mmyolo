@@ -12,6 +12,7 @@ from prettytable import PrettyTable
 
 from mmyolo.registry import DATASETS
 from mmyolo.utils import register_all_modules
+from mmyolo.utils.misc import show_data_classes
 
 
 def parse_args():
@@ -345,29 +346,6 @@ def show_data_list(args, area_rule):
     data_info.add_column('Area rule', [area_rule])
 
     print(data_info)
-
-
-def show_data_classes(data_classes):
-    """When printing an error, all class names of the dataset."""
-    print('\n\nThe name of the class contained in the dataset:')
-    data_classes_info = PrettyTable()
-    data_classes_info.title = 'Information of dataset class'
-    # List Print Settings
-    # If the quantity is too large, 25 rows will be displayed in each column
-    if len(data_classes) < 25:
-        data_classes_info.add_column('Class name', data_classes)
-    elif len(data_classes) % 25 != 0 and len(data_classes) > 25:
-        col_num = int(len(data_classes) / 25) + 1
-        data_name_list = list(data_classes)
-        for i in range(0, (col_num * 25) - len(data_classes)):
-            data_name_list.append('')
-        for i in range(0, len(data_name_list), 25):
-            data_classes_info.add_column('Class name',
-                                         data_name_list[i:i + 25])
-
-    # Align display data to the left
-    data_classes_info.align['Class name'] = 'l'
-    print(data_classes_info)
 
 
 def main():
