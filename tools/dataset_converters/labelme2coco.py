@@ -39,6 +39,7 @@ Note:
 import argparse
 import json
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 from mmengine import track_iter_progress
@@ -93,14 +94,16 @@ def format_coco_annotations(points: list, image_id: int, annotations_id: int,
     return annotation_info
 
 
-def parse_labelme_to_coco(image_dir: str, labels_root: str,
-                          all_classes_id: dict) -> (dict, dict):
+def parse_labelme_to_coco(
+        image_dir: str,
+        labels_root: str,
+        all_classes_id: Optional[dict] = None) -> (dict, dict):
     """Gen COCO json format label from labelme format label.
 
     Args:
         image_dir (str): Image dir path.
         labels_root (str): Image label root path.
-        all_classes_id (str): All class with id.
+        all_classes_id (Optional[dict]): All class with id. Default None.
 
     Return:
         coco_json (dict): COCO json data.
@@ -247,15 +250,18 @@ def parse_labelme_to_coco(image_dir: str, labels_root: str,
     return coco_json, category_to_id
 
 
-def convert_labelme_to_coco(image_dir: str, labels_dir: str, out_path: str,
-                            class_id_txt: str):
+def convert_labelme_to_coco(image_dir: str,
+                            labels_dir: str,
+                            out_path: str,
+                            class_id_txt: Optional[str] = None):
     """Convert labelme format label to COCO json format label.
 
     Args:
         image_dir (str): Image dir path.
         labels_dir (str): Image label path.
         out_path (str): COCO json file save path.
-        class_id_txt (str): All class id txt file path.
+        class_id_txt (Optional[str]): All class id txt file path.
+            Default None.
     """
     assert Path(out_path).suffix == '.json'
 
