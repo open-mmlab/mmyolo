@@ -15,7 +15,7 @@ def parse_args():
     parser.add_argument(
         '--out-dir', type=str, required=True, help='output path')
     parser.add_argument(
-        '--ratio',
+        '--ratios',
         nargs='+',
         type=float,
         help='ratio for sub dataset, if set 2 number then will generate '
@@ -38,17 +38,8 @@ def split_coco_dataset(coco_json_path: str, save_dir: str, ratios: list,
     if not Path(save_dir).exists():
         Path(save_dir).mkdir(parents=True)
 
-    # calculate ratio total then normalize it if necessary
-    ratios_total = 0
-    for ratio in ratios:
-        ratios_total += ratio
-
-    if ratios_total > 1:
-        # need to normalize
-        for idx, ratio in enumerate(ratios):
-            ratios[idx] = ratio / ratios_total
-    elif not abs(ratios_total - 1.0) < 1e-9:
-        raise ValueError('each ratios is less than 1 so total must be 1 !')
+    # ratio normalize
+    ratios = np.array(ratios) / np.array(ratios).sum()
 
     if len(ratios) == 2:
         ratio_train, ratio_test = ratios
@@ -123,7 +114,7 @@ def split_coco_dataset(coco_json_path: str, save_dir: str, ratios: list,
 
 def main():
     args = parse_args()
-    split_coco_dataset(args.json, args.out_dir, args.ratio, args.shuffle,
+    split_coco_dataset(args.json, args.out_dir, args.ratios, args.shuffle,
                        args.seed)
 
 
