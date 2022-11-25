@@ -98,7 +98,7 @@ def main():
     if args.deploy:
         cfg.custom_hooks.append(dict(type='SwitchToDeployHook'))
 
-    # add `DumpResults` dummy metric
+    # add `format_only` and `outfile_prefix` into cfg
     if args.json_prefix is not None:
         cfg_json = {
             'test_evaluator.format_only': True,
