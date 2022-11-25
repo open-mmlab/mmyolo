@@ -133,7 +133,7 @@ def make_grid(imgs, names):
     vis.draw_texts(
         texts,
         positions=np.array(text_positions),
-        font_sizes=img_scale * 13,
+        font_sizes=img_scale * 7,
         colors='black',
         horizontal_alignments='center',
         font_families='monospace')
