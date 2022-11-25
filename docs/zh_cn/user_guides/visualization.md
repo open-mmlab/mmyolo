@@ -1,6 +1,6 @@
 # 可视化
 
-本文包括特征图可视化和 Grad-Based 和 Grad-free CAM 可视化
+本文包括特征图可视化和 Grad-Based 和 Grad-Free CAM 可视化
 
 ## 特征图可视化
 
@@ -183,13 +183,13 @@ python demo/featmap_vis_demo.py demo/dog.jpg \
                                 --out-file featmap_backbone.jpg
 ```
 
-## Grad-Based 和 Grad-free CAM 可视化
+## Grad-Based 和 Grad-Free CAM 可视化
 
 目标检测 CAM 可视化相比于分类 CAM 复杂很多且差异很大。本文只是简要说明用法，后续会单独开文档详细描述实现原理和注意事项。
 
-你可以调用 `demo/boxmap_vis_demo.py` 来简单快捷地得到 Box 级别的 AM 可视化结果，目前已经支持 YOLOv5/YOLOv6/YOLOX/RTMDet。
+你可以调用 `demo/boxmap_vis_demo.py` 来简单快捷地得到 Box 级别的 AM 可视化结果，目前已经支持 `YOLOv5/YOLOv6/YOLOX/RTMDet`。
 
-以 YOLOv5 为例，和特征图可视化绘制一样，你需要先修改 test_pipeline，否则会出现特征图和原图不对齐问题。
+以 YOLOv5 为例，和特征图可视化绘制一样，你需要先修改 `test_pipeline`，否则会出现特征图和原图不对齐问题。
 
 旧的 `test_pipeline` 为：
 
@@ -197,7 +197,7 @@ python demo/featmap_vis_demo.py demo/dog.jpg \
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+        file_client_args=_base_.file_client_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
@@ -228,7 +228,7 @@ test_pipeline = [
 ]
 ```
 
-(1) 使用 GradCAM 方法可视化 neck 模块的最后一个输出层的 am 图
+(1) 使用 `GradCAM` 方法可视化 neck 模块的最后一个输出层的 AM 图
 
 ```shell
 python demo/boxam_vis_demo.py \
@@ -242,15 +242,15 @@ python demo/boxam_vis_demo.py \
 <img src="https://user-images.githubusercontent.com/17425982/203775584-c4aebf11-4ff8-4530-85fe-7dda897e95a8.jpg" width="800" alt="image"/>
 </div>
 
-相对应的特征图 am 图如下：
+相对应的特征图 AM 图如下：
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/17425982/203774801-1555bcfb-a8f9-4688-8ed6-982d6ad38e1d.jpg" width="800" alt="image"/>
 </div>
 
-可以看出 GradCAM 效果可以突出 box 级别的 am 信息。
+可以看出 `GradCAM` 效果可以突出 box 级别的 AM 信息。
 
-你可以通过 --topk 参数选择仅仅可视化预测分值最高的前几个预测框
+你可以通过 `--topk` 参数选择仅仅可视化预测分值最高的前几个预测框
 
 ```shell
 python demo/boxam_vis_demo.py \
@@ -264,7 +264,7 @@ python demo/boxam_vis_demo.py \
 <img src="https://user-images.githubusercontent.com/17425982/203778700-3165aa72-ecaf-40cc-b470-6911646e6046.jpg" width="800" alt="image"/>
 </div>
 
-(2) 使用 AblationCAM 方法可视化 neck 模块的最后一个输出层的 am 图
+(2) 使用 `AblationCAM` 方法可视化 neck 模块的最后一个输出层的 AM 图
 
 ```shell
 python demo/boxam_vis_demo.py \
@@ -278,7 +278,7 @@ python demo/boxam_vis_demo.py \
 <img src="https://user-images.githubusercontent.com/17425982/203776978-b5a9b383-93b4-4b35-9e6a-7cac684b372c.jpg" width="800" alt="image"/>
 </div>
 
-由于 AblationCAM 是通过每个通道对分值的贡献程度来加权，因此无法实现类似 GradCAM 的仅仅可视化 box 级别的 am 信息。 但是你可以使用 --norm-in-bbox 来仅仅显示 bbox 内部 am
+由于 `AblationCAM` 是通过每个通道对分值的贡献程度来加权，因此无法实现类似 `GradCAM` 的仅仅可视化 box 级别的 AM 信息, 但是你可以使用 `--norm-in-bbox` 来仅仅显示 bbox 内部 AM
 
 ```shell
 python demo/boxam_vis_demo.py \

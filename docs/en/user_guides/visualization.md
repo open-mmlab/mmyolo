@@ -1,6 +1,6 @@
 # Visualization
 
-This article includes feature map visualization and Grad-Based and Grad-free CAM visualization
+This article includes feature map visualization and Grad-Based and Grad-Free CAM visualization
 
 ## Feature map visualization
 
@@ -90,7 +90,7 @@ The original `test_pipeline` is:
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+        file_client_args=_base_.file_client_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
@@ -182,12 +182,12 @@ python demo/featmap_vis_demo.py demo/dog.jpg \
                                 --out-file featmap_backbone.jpg
 ```
 
-## Grad-Based and Grad-free CAM Visualization
+## Grad-Based and Grad-Free CAM Visualization
 
 Object detection CAM visualization is much more complex and different than classification CAM.
 This article only briefly explains the usage, and a separate document will be opened to describe the implementation principles and precautions in detail later.
 
-You can call `demo/boxmap_vis_demo.py` to get the AM visualization results at the Box level easily and quickly. Currently, YOLOv5/YOLOv6/YOLOX/RTMDet is supported.
+You can call `demo/boxmap_vis_demo.py` to get the AM visualization results at the Box level easily and quickly. Currently, `YOLOv5/YOLOv6/YOLOX/RTMDet` is supported.
 
 Taking YOLOv5 as an example, as with the feature map visualization, you need to modify the `test_pipeline` first, otherwise there will be a problem of misalignment between the feature map and the original image.
 
@@ -197,7 +197,7 @@ The original `test_pipeline` is:
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+        file_client_args=_base_.file_client_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
@@ -228,27 +228,26 @@ test_pipeline = [
 ]
 ```
 
-(1) Use the `GradCAM` method to visualize the am graph of the last output layer of the neck module
+(1) Use the `GradCAM` method to visualize the AM of the last output layer of the neck module
 
 ```shell
 python demo/boxam_vis_demo.py \
         demo/dog.jpg \
         configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
         yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
-
 ```
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/17425982/203775584-c4aebf11-4ff8-4530-85fe-7dda897e95a8.jpg" width="800" alt="image"/>
 </div>
 
-The corresponding feature map am is as follows:
+The corresponding feature AM is as follows:
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/17425982/203774801-1555bcfb-a8f9-4688-8ed6-982d6ad38e1d.jpg" width="800" alt="image"/>
 </div>
 
-It can be seen that the `GradCAM` effect can highlight the am information at the box level.
+It can be seen that the `GradCAM` effect can highlight the AM information at the box level.
 
 You can choose to visualize only the top prediction boxes with the highest prediction scores via the `--topk` parameter
 
@@ -264,7 +263,7 @@ python demo/boxam_vis_demo.py \
 <img src="https://user-images.githubusercontent.com/17425982/203778700-3165aa72-ecaf-40cc-b470-6911646e6046.jpg" width="800" alt="image"/>
 </div>
 
-(2) Use the AblationCAM method to visualize the am map of the last output layer of the neck module
+(2) Use the AblationCAM method to visualize the AM of the last output layer of the neck module
 
 ```shell
 python demo/boxam_vis_demo.py \
@@ -278,7 +277,7 @@ python demo/boxam_vis_demo.py \
 <img src="https://user-images.githubusercontent.com/17425982/203776978-b5a9b383-93b4-4b35-9e6a-7cac684b372c.jpg" width="800" alt="image"/>
 </div>
 
-Since AblationCAM is weighted by the contribution of each channel to the score, it is impossible to visualize only the am information at the box level like gradcam. But you can use --norm-in-bbox to only show bbox inside am
+Since `AblationCAM` is weighted by the contribution of each channel to the score, it is impossible to visualize only the AM information at the box level like `GradCAN`. But you can use `--norm-in-bbox` to only show bbox inside AM
 
 ```shell
 python demo/boxam_vis_demo.py \
