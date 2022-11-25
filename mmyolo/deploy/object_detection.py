@@ -18,13 +18,14 @@ class MMYOLO(MMCodebase):
 
     @classmethod
     def register_deploy_modules(cls):
-        """register all rewriters for mmcls."""
+        """register all rewriters for mmdet."""
         import mmdeploy.codebase.mmdet.models  # noqa: F401
         import mmdeploy.codebase.mmdet.ops  # noqa: F401
         import mmdeploy.codebase.mmdet.structures  # noqa: F401
 
     @classmethod
     def register_all_modules(cls):
+        """register all modules."""
         from mmdet.utils.setup_env import \
             register_all_modules as register_all_modules_mmdet
 

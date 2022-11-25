@@ -146,8 +146,8 @@ class YOLOv5CSPDarknet(BaseBackbone):
         return stage
 
     def init_weights(self):
+        """Initialize the parameters."""
         if self.init_cfg is None:
-            """Initialize the parameters."""
             for m in self.modules():
                 if isinstance(m, torch.nn.Conv2d):
                     # In order to be consistent with the source code,
