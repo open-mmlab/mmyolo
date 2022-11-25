@@ -10,8 +10,7 @@ from mmengine.utils import ProgressBar
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules, switch_to_deploy
 from mmyolo.utils.labelme_utils import LabelmeFormat
-from mmyolo.utils.misc import get_file_list
-from tools.analysis_tools.dataset_analysis import show_data_classes
+from mmyolo.utils.misc import get_file_list, show_data_classes
 
 
 def parse_args():
