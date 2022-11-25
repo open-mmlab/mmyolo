@@ -12,7 +12,7 @@ from mmyolo.registry import RUNNERS
 from mmyolo.utils import register_all_modules
 
 
-# TODO: support fuse_conv_bn and format_only
+# TODO: support fuse_conv_bn
 def parse_args():
     parser = argparse.ArgumentParser(
         description='MMYOLO test (and eval) a model')
@@ -24,7 +24,13 @@ def parse_args():
     parser.add_argument(
         '--out',
         type=str,
-        help='dump predictions to a pickle file for offline evaluation')
+        help='output result file (must be a .pkl file) in pickle format')
+    parser.add_argument(
+        '--json-prefix',
+        type=str,
+        help='the prefix of the output json file without perform evaluation, '
+        'which is useful when you want to format the result to a specific '
+        'format and submit it to the test server')
     parser.add_argument(
         '--show', action='store_true', help='show prediction results')
     parser.add_argument(
@@ -91,6 +97,14 @@ def main():
 
     if args.deploy:
         cfg.custom_hooks.append(dict(type='SwitchToDeployHook'))
+
+    # add `DumpResults` dummy metric
+    if args.json_prefix is not None:
+        cfg_json = {
+            'test_evaluator.format_only': True,
+            'test_evaluator.outfile_prefix': args.json_prefix
+        }
+        cfg.merge_from_dict(cfg_json)
 
     # build the runner from config
     if 'runner_type' not in cfg:
