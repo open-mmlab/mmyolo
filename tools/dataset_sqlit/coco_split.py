@@ -38,16 +38,16 @@ def split_coco_dataset(coco_json_path: str, save_dir: str, ratios: list,
     if not Path(save_dir).exists():
         Path(save_dir).mkdir(parents=True)
 
-    # check ratio total
-    check_ratios_total = 0
+    # calculate ratio total then normalize it if necessary
+    ratios_total = 0
     for ratio in ratios:
-        check_ratios_total += ratio
+        ratios_total += ratio
 
-    if check_ratios_total > 1:
+    if ratios_total > 1:
         # need to normalize
         for idx, ratio in enumerate(ratios):
-            ratios[idx] = ratio / check_ratios_total
-    elif not abs(check_ratios_total - 1.0) < 1e-9:
+            ratios[idx] = ratio / ratios_total
+    elif not abs(ratios_total - 1.0) < 1e-9:
         raise ValueError('each ratios is less than 1 so total must be 1 !')
 
     if len(ratios) == 2:
@@ -69,9 +69,9 @@ def split_coco_dataset(coco_json_path: str, save_dir: str, ratios: list,
     test_image_num = int(len(coco_image_ids) * ratio_test)
     train_image_num = len(coco_image_ids) - val_image_num - test_image_num
     print('Split info: ====== \n'
-          f'Train number = {train_image_num}\n'
-          f'Val num = {val_image_num}\n'
-          f'Test num = {test_image_num}')
+          f'Train ratio = {ratio_train}, number = {train_image_num}\n'
+          f'Val ratio = {ratio_val}, number ={val_image_num}\n'
+          f'Test ratio = {ratio_test}, number = {test_image_num}')
 
     seed = int(seed)
     if seed != -1:
