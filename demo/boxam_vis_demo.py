@@ -188,7 +188,6 @@ def main():
             print(f'The algorithm currently used is {param_keys}')
             ignore_loss_params = IGNORE_LOSS_PARAMS[param_keys]
             break
-    assert ignore_loss_params is not None
 
     cfg = Config.fromfile(args.config)
     if args.cfg_options is not None:
