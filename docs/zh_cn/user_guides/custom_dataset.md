@@ -249,7 +249,7 @@ val_num_workers = 2
 save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
 
 # 根据自己的 GPU 情况，修改 base_lr，修改的比例是 base_lr_default * (your_bs / default_bs)
-base_lr = _base_.base_lr / 4  
+base_lr = _base_.base_lr / 4
 
 num_classes = 1
 metainfo = dict(  # 根据 class_with_id.txt 类别信息，设置 metainfo
@@ -301,7 +301,7 @@ optim_wrapper = dict(optimizer=dict(lr=base_lr))
 
 default_hooks = dict(
     # 设置间隔多少个 epoch 保存模型，以及保存模型最多几个，`save_best` 是另外保存最佳模型（推荐）
-    checkpoint=dict(type='CheckpointHook', interval=save_epoch_intervals, 
+    checkpoint=dict(type='CheckpointHook', interval=save_epoch_intervals,
                     max_keep_ckpts=5, save_best='auto'),
     # logger 输出的间隔
     logger=dict(type='LoggerHook', interval=5)
