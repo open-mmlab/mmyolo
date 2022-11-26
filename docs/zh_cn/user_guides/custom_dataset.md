@@ -240,6 +240,8 @@ work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat'
 # checkpoint 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
 checkpoint = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 
+resume = False # 继续训练的时候使用
+
 train_batch_size_per_gpu = 8 # 根据自己的GPU情况，修改 batch size
 train_num_workers = 4 # 推荐使用 train_num_workers = nGPU x 4
 val_batch_size_per_gpu = 2  # val 时候的 batch size ，根据实际调整即可
@@ -316,5 +318,13 @@ python demo/image_demo.py /path/to/test/images \
                           ./work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat/yolov5_s-v61_syncbn_fast_1xb8-200e_cat/last.pth \
                           --out-dir /path/to/test/images_output
 ```
+
+**Tips**：如果推理结果不理想，这里举例 2 中情况：
+
+1. 欠拟合：
+   需要先判断是不是训练 epoch 不够导致的欠拟合，如果是训练不够，则修改 config 文件里面的 `resume = ./work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat/yolov5_s-v61_syncbn_fast_1xb8-200e_cat/last.pth` 来最后的模型继续训练。
+
+2. 数据集优化：
+   如果 epoch 加上去了还是不行，可以对数据集进行增加，同时加上不断修改标注来优化，然后重新进行训练。
 
 ## 7. 部署
