@@ -64,6 +64,7 @@ image_demo.py img \
 例子：
 
 这里使用 YOLOv5-s 作为例子来进行辅助标注，先下载 YOLOv5-s 的权重:
+
 ```shell
 mkdir work_dirs && cd work_dirs
 wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
@@ -111,6 +112,7 @@ labelme ${图片文件夹路径（即上一步的图片文件夹）} \
 ```
 
 其中：
+
 - `--output`：labelme 标注文件保存路径，如果该路径下已经存在部分图片的标注文件，则会进行加载；
 - `--autosave`：标注文件自动保存，会略去一些繁琐的保存步骤；
 - `--nodata`：每张图片的标注文件中不保存图片的 base64 编码，设置了这个 flag 会大大减少标注文件的大小。
@@ -124,6 +126,7 @@ labelme /data/cat/images --output /data/cat/labels --autosave --nodata
 输入命令之后 labelme 就会启动，然后进行标签检查即可。
 
 **注意：标注的时候务必使用 `rectangle` （如下图）**
+
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/204076212-86dab4fa-13dd-42cd-93d8-46b04b864449.png" alt="rectangle"/>
 </div>
