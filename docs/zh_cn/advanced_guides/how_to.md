@@ -332,7 +332,7 @@ pkl 保存内容比 json 文件更多，还会保存预测图片的文件名和�
 python tools/test.py {path_to_config} {path_to_checkpoint} --json-prefix {json_prefix}
 ```
 
-举一个具体例子：
+`--json-prefix` 后的参数输入为文件名前缀（无需输入 `.json` 后缀），也可以包含路径。举一个具体例子：
 
 ```shell
 python tools/test.py configs\yolov5\yolov5_s-v61_syncbn_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --json-prefix work_dirs/demo/json_demo
@@ -342,13 +342,13 @@ python tools/test.py configs\yolov5\yolov5_s-v61_syncbn_8xb16-300e_coco.py yolov
 
 ### 输出为 pkl 文件
 
-如果想将预测结果输出为 out 文件，则命令如下：
+如果想将预测结果输出为 pkl 文件，则命令如下：
 
 ```shell
 python tools/test.py {path_to_config} {path_to_checkpoint} --out {path_to_output_file}
 ```
 
-举一个具体例子：
+`--out` 后的参数输入为完整文件名（**必须输入** `.pkl` 或 `.pickle` 后缀），也可以包含路径。举一个具体例子：
 
 ```shell
 python tools/test.py configs\yolov5\yolov5_s-v61_syncbn_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --out work_dirs/demo/pkl_demo.pkl
