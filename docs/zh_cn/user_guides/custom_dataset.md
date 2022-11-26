@@ -33,18 +33,18 @@
 
 ### 1.1.1 软件或者算法辅助
 
-MMYOLO 提供模型推理生成 labelme 格式标签文件的脚本 `demo/image_demo.py`，具体用法如下：
+MMYOLO 提供的模型推理脚本 `demo/image_demo.py` 设置 `--to-labelme` 可以生成 labelme 格式标签文件，具体用法如下：
 
 ```shell
 python demo/image_demo.py img \
                           config \
                           checkpoint
-                          [-h] \
                           [--out-dir OUT_DIR] \
                           [--device DEVICE] \
                           [--show] \
                           [--deploy] \
                           [--score-thr SCORE_THR] \
+                          [--class-name CLASS_NAME]
                           [--to-labelme]
 ```
 
@@ -70,13 +70,28 @@ wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8x
 cd ../
 ```
 
-执行辅助标注：
+执行辅助标注有 2 种情况：
+1. 标注文件保存所有推理出来的类
+2. 标注文件只保存 cat、dog 两类
+
+- 标注文件保存所有推理出来的类：
 
 ```shell
 python demo/image_demo.py /data/cat/images \
                           configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
                           work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
                           --out-dir /data/cat/labels \
+                          --to-labelme
+```
+
+- 标注文件只保存 `cat`、`dog` 两类：
+
+```shell
+python demo/image_demo.py /data/cat/images \
+                          configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+                          work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+                          --out-dir /data/cat/labels \
+                          --class-name cat dog \
                           --to-labelme
 ```
 
@@ -141,8 +156,24 @@ MMYOLO 提供脚本将 labelme 的标签转换为 COCO 标签
 
 ```shell
 python tools/dataset_converters/labelme2coco.py --img-dir ${图片文件夹路径} \
-                                                --label-dir ${标签文件夹位置} \
+                                                --labels-dir ${标签文件夹位置} \
                                                 --out ${输出 COCO 标签json路径}
+                                                [--class-id-txt]
+```
+
+其中：
+`--class-id-txt`：是数据集 [id class_name] 的 `.txt` 文件：
+- 如果不指定，则脚本会自动生成，生成在 `--out` 同级的目录中，保存文件名为 `class_with_id.txt`；
+- 如果指定，脚本仅会进行读取但不会新增或者覆盖，同时，脚本里面还会判断是否存在 `.txt` 中其他的类，如果出现了会报错提示，届时，请用户检查 `.txt` 文件并加入新的类及其 `id`。
+
+`.txt` 文件的例子如下（ `id` 可以和 COCO 一样，从 `1` 开始）：
+
+```text
+1 cat
+2 dog
+3 bicycle
+4 motorcycle
+
 ```
 
 ### 2.2 检查转换的 COCO 标签
@@ -160,7 +191,7 @@ python tools/analysis_tools/browse_coco_json.py --img-dir ${图片文件夹路�
 
 ```shell
 python tools/misc/coco_split.py --json ${COCO 标签 json 路径} \
-                                --out-dir ${划分标签 json 保存路径} \
+                                --out-dir ${划分标签 json 保存根路径} \
                                 --ratios ${划分比例} \
                                 [--shuffle] \
                                 [--seed ${划分的随机种子}]
@@ -168,11 +199,11 @@ python tools/misc/coco_split.py --json ${COCO 标签 json 路径} \
 
 其中：
 
-- `--ratios`：划分的比例，如果只设置了2个，则划分为 `trainval + test`，如果设置为 3 个，则划分为 `train + val + test`。支持两种格式：整数和小数：
-  - 小数：划分为比例。**如果加起来不为 1 ，则脚本对自动进行归一化修正**。例子： `--ratio 0.8 0.1 0.1` or `--ratio 0.8 0.2`
+- `--ratios`：划分的比例，如果只设置了 2 个，则划分为 `trainval + test`，如果设置为 3 个，则划分为 `train + val + test`。支持两种格式 —— 整数、小数：
   - 整数：按比分进行划分，代码中会进行归一化之后划分数据集。例子： `--ratio 2 1 1`（代码里面会转换成 `0.5 0.25 0.25`） or `--ratio 3 1`（代码里面会转换成 `0.75 0.25`）
+  - 小数：划分为比例。**如果加起来不为 1 ，则脚本会进行自动归一化修正**。例子： `--ratio 0.8 0.1 0.1` or `--ratio 0.8 0.2`
 - `--shuffle`: 是否打乱数据集再进行划分；
-- `--seed`：可以设定划分的随机种子，不设置的话自动生成随机种子。
+- `--seed`：设定划分的随机种子，不设置的话自动生成随机种子。
 
 ## 4. 根据数据集内容新建 config 文件
 
@@ -192,16 +223,19 @@ python tools/misc/coco_split.py --json ${COCO 标签 json 路径} \
     └── ...
 ```
 
-因为是我们自定义的数据集，所以我们需要自己重写 config 中的部分信息，我们在 configs 目录下新建一个子集的 config 文件，这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`，数据集中的类是猫，`bs=8`，`200epoch`，可以命令为 `yolov5_s-v61_syncbn_fast_1xb8-200e_cat.py`，添加以下内容：
+因为是我们自定义的数据集，所以我们需要自己重写 config 中的部分信息，我们在 configs 目录下新建一个子集的 config 文件。
+这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`，假设数据集中的类是猫，`batch size = 8`，`200 epoch`，可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb8-200e_cat.py`，并在其里面添加以下内容：
 
 ```python
 _base_ = './yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
 max_epochs = 200 # 训练的最大 epoch
 data_root = '/path/to/data_root' # 数据集目录的绝对路径
-work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat' # 结果保存的路径
 
-# checkpoint 可以指定本地路径或者 URL，这里设置了 URL
+# 结果保存的路径，如果同个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
+work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat'
+
+# checkpoint 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
 checkpoint = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 
 train_batch_size_per_gpu = 8 # 根据自己的GPU情况，修改 batch size
@@ -277,7 +311,7 @@ python tools/train.py configs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat.py
 ```shell
 python demo/image_demo.py /path/to/test/images \
                           configs/my_yolov5_s_config.py \
-                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat/last.pth \
+                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat/yolov5_s-v61_syncbn_fast_1xb8-200e_cat/last.pth \
                           --out-dir /path/to/test/images_output
 ```
 
