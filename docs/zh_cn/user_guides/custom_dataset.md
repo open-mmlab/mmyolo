@@ -2,17 +2,17 @@
 
 本章节会介绍从 用户自定义图片数据集标注 到 最终进行训练和部署 的整体流程。流程步骤概览如下：
 
-1. 数据集标注：`demo/image_demo.py` + [labelme](https://github.com/wkentaro/labelme)
+1. 使用 [labelme](https://github.com/wkentaro/labelme) 进行数据集标注：`demo/image_demo.py` + labelme
 2. 使用脚本转换成 COCO 数据集格式：`tools/dataset_converters/labelme2coco.py`
 3. 数据集划分：`tools/misc/coco_split.py`
 4. 根据数据集内容新建 config 文件
 5. 训练：`tools/train.py`
 6. 推理：`demo/image_demo.py`
-7. 部署：
+7. 部署
 
 下面详细介绍每一步。
 
-## 1. 数据集标注
+## 1. 使用 labelme 进行数据集标注
 
 通常，标注有 2 种方法：
 
