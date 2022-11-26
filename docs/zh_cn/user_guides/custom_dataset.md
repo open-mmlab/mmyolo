@@ -91,7 +91,7 @@ python demo/image_demo.py /data/cat/images \
                           configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
                           work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
                           --out-dir /data/cat/labels \
-                          --class-name cat \
+                          --class-name cat dog \
                           --to-labelme
 ```
 
