@@ -65,9 +65,8 @@ python demo/image_demo.py img \
 这里使用 YOLOv5-s 作为例子来进行辅助标注，先下载 YOLOv5-s 的权重:
 
 ```shell
-mkdir work_dirs && cd work_dirs
-wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
-cd ../
+mkdir work_dirs
+wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth -P ./work_dirs
 ```
 
 执行辅助标注有 2 种情况：
@@ -92,7 +91,7 @@ python demo/image_demo.py /data/cat/images \
                           configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
                           work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
                           --out-dir /data/cat/labels \
-                          --class-name cat dog \
+                          --class-name cat \
                           --to-labelme
 ```
 
