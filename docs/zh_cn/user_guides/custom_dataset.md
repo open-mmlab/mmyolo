@@ -71,6 +71,7 @@ cd ../
 ```
 
 执行辅助标注有 2 种情况：
+
 1. 标注文件保存所有推理出来的类
 2. 标注文件只保存 cat、dog 两类
 
@@ -162,7 +163,8 @@ python tools/dataset_converters/labelme2coco.py --img-dir ${图片文件夹路�
 ```
 
 其中：
-`--class-id-txt`：是数据集 [id class_name] 的 `.txt` 文件：
+`--class-id-txt`：是数据集 `id class_name` 的 `.txt` 文件：
+
 - 如果不指定，则脚本会自动生成，生成在 `--out` 同级的目录中，保存文件名为 `class_with_id.txt`；
 - 如果指定，脚本仅会进行读取但不会新增或者覆盖，同时，脚本里面还会判断是否存在 `.txt` 中其他的类，如果出现了会报错提示，届时，请用户检查 `.txt` 文件并加入新的类及其 `id`。
 
