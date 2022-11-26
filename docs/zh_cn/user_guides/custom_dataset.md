@@ -1,15 +1,14 @@
 # 自定义数据集 标注+训练+测试+部署 全流程
 
-本章节会介绍从 用户自定义图片数据集标注 到 最终进行训练和部署 的整体流程。标注使用的软件是 [labelme](https://github.com/wkentaro/labelme)
-流程步骤概览如下：
+本章节会介绍从 用户自定义图片数据集标注 到 最终进行训练和部署 的整体流程。流程步骤概览如下：
 
-1. 数据集标注
-2. 使用脚本转换成 COCO 数据集格式
-3. 数据集划分
+1. 数据集标注：`demo/image_demo.py` + [labelme](https://github.com/wkentaro/labelme)
+2. 使用脚本转换成 COCO 数据集格式：`tools/dataset_converters/labelme2coco.py`
+3. 数据集划分：`tools/misc/coco_split.py`
 4. 根据数据集内容新建 config 文件
-5. 训练
-6. 推理
-7. 部署
+5. 训练：`tools/train.py`
+6. 推理：`demo/image_demo.py`
+7. 部署：
 
 下面详细介绍每一步。
 
@@ -37,16 +36,16 @@
 MMYOLO 提供模型推理生成 labelme 格式标签文件的脚本 `demo/image_demo.py`，具体用法如下：
 
 ```shell
-image_demo.py img \
-              config \
-              checkpoint
-              [-h] \
-              [--out-dir OUT_DIR] \
-              [--device DEVICE] \
-              [--show] \
-              [--deploy] \
-              [--score-thr SCORE_THR] \
-              [--to-labelme]
+python demo/image_demo.py img \
+                          config \
+                          checkpoint
+                          [-h] \
+                          [--out-dir OUT_DIR] \
+                          [--device DEVICE] \
+                          [--show] \
+                          [--deploy] \
+                          [--score-thr SCORE_THR] \
+                          [--to-labelme]
 ```
 
 其中：
@@ -74,12 +73,11 @@ cd ../
 执行辅助标注：
 
 ```shell
-python demo/image_demo.py \
-    /data/cat/images \
-    configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
-    work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
-    --out-dir /data/cat/labels \
-    --to-labelme
+python demo/image_demo.py /data/cat/images \
+                          configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+                          work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+                          --out-dir /data/cat/labels \
+                          --to-labelme
 ```
 
 生成的标签文件会在 `--out-dir` 中:
@@ -161,16 +159,16 @@ python tools/analysis_tools/browse_coco_json.py --img-dir ${图片文件夹路�
 ## 3. 数据集划分
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py --json ${COCO 标签 json 路径} \
-                                                --out-dir ${划分标签 json 保存路径} \
-                                                --ratio ${划分比例} \
-                                                [--shuffle] \
-                                                [--seed ${划分的随机种子}]
+python tools/misc/coco_split.py --json ${COCO 标签 json 路径} \
+                                --out-dir ${划分标签 json 保存路径} \
+                                --ratios ${划分比例} \
+                                [--shuffle] \
+                                [--seed ${划分的随机种子}]
 ```
 
 其中：
 
-- `--ratio`：划分的比例，如果只设置了2个，则划分为 `trainval + test`，如果设置为 3 个，则划分为 `train + val + test`。支持两种格式：整数和小数：
+- `--ratios`：划分的比例，如果只设置了2个，则划分为 `trainval + test`，如果设置为 3 个，则划分为 `train + val + test`。支持两种格式：整数和小数：
   - 小数：划分为比例。**如果加起来不为 1 ，则脚本对自动进行归一化修正**。例子： `--ratio 0.8 0.1 0.1` or `--ratio 0.8 0.2`
   - 整数：按比分进行划分，代码中会进行归一化之后划分数据集。例子： `--ratio 2 1 1`（代码里面会转换成 `0.5 0.25 0.25`） or `--ratio 3 1`（代码里面会转换成 `0.75 0.25`）
 - `--shuffle`: 是否打乱数据集再进行划分；
