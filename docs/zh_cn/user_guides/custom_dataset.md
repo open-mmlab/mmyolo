@@ -109,7 +109,10 @@ labelme /data/cat/images --output /data/cat/labels --autosave --nodata
 
 输入命令之后 labelme 就会启动，然后进行标签检查即可。
 
-**注意：标注的时候务必使用 `rectangle`**
+**注意：标注的时候务必使用 `rectangle` （如下图）**
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/204076212-86dab4fa-13dd-42cd-93d8-46b04b864449.png" alt="rectangle"/>
+</div>
 
 ## 1.2 仅人工打标签
 
