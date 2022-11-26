@@ -55,28 +55,41 @@ def _process_data(args,
         'large': [96 * 96, float('inf')]
     }
 
-    images = json_data['images']
     coco = COCO(ann_path)
 
-    # shuffle
-    random_idx_all = np.random.randint(0, len(images), size=(len(images), ))
-    random_idx = \
-        random_idx_all[:args.num_img] if args.num_img > 0 else random_idx_all
+    # filter annotations by category ids and area range
     areaRng = area_dict[args.area_size] if args.area_size else []
     catIds = coco.getCatIds(args.classes) if args.classes else []
+    ann_ids = coco.getAnnIds(catIds=catIds, areaRng=areaRng)
+    ann_info = coco.loadAnns(ann_ids)
 
-    progress_bar = mmengine.ProgressBar(len(random_idx))
+    # get image ids by anns set
+    filter_img_ids = {ann['image_id'] for ann in ann_info}
+    filter_img = coco.loadImgs(filter_img_ids)
 
-    for i in random_idx:
-        file_name = images[i]['file_name']
+    # shuffle
+    np.random.shuffle(filter_img)
+
+    num_img = args.num_img if args.num_img > 0 else len(filter_img)
+    if num_img > len(filter_img):
+        print(
+            f'num_img is too big, will be set to {len(filter_img)}, '
+            'because of not enough image after filter by classes and area_size'
+        )
+        num_img = len(filter_img)
+
+    progress_bar = mmengine.ProgressBar(num_img)
+
+    for i in range(num_img):
+        file_name = filter_img[i]['file_name']
         image_path = osp.join(args.root, in_dataset_type + year, file_name)
 
         ann_ids = coco.getAnnIds(
-            imgIds=[images[i]['id']], catIds=catIds, areaRng=areaRng)
-        ann_info = coco.loadAnns(ann_ids)
+            imgIds=[filter_img[i]['id']], catIds=catIds, areaRng=areaRng)
+        img_ann_info = coco.loadAnns(ann_ids)
 
-        new_json_data['images'].append(images[i])
-        new_json_data['annotations'].extend(ann_info)
+        new_json_data['images'].append(filter_img[i])
+        new_json_data['annotations'].extend(img_ann_info)
 
         shutil.copy(image_path, osp.join(args.out_dir,
                                          out_dataset_type + year))
