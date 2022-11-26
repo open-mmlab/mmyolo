@@ -28,7 +28,7 @@ Note:
     files to `class_with_id.json`.
 
     class_with_id.txt example, each line is "id class_name":
-    ```txt
+    ```text
     1 cat
     2 dog
     3 bicycle

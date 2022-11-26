@@ -136,9 +136,9 @@ labelme ${图片文件夹路径（即上一步的图片文件夹）} \
 labelme /data/cat/images --output /data/cat/labels --autosave --nodata
 ```
 
-输入命令之后 labelme 就会启动，然后进行标签检查即可。
+输入命令之后 labelme 就会启动，然后进行标签检查即可。如果 labelme 启动失败，命令行输入 `export QT_DEBUG_PLUGINS=1` 查看具体缺少什么库，安装一下即可。
 
-**注意：标注的时候务必使用 `rectangle` （如下图）**
+**注意：标注的时候务必使用 `rectangle`，快捷键 `Ctrl + R`（如下图）**
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/204076212-86dab4fa-13dd-42cd-93d8-46b04b864449.png" alt="rectangle"/>
@@ -224,14 +224,14 @@ python tools/misc/coco_split.py --json ${COCO 标签 json 路径} \
     └── ...
 ```
 
-因为是我们自定义的数据集，所以我们需要自己重写 config 中的部分信息，我们在 configs 目录下新建一个子集的 config 文件。
+因为是我们自定义的数据集，所以我们需要自己重写 config 中的部分信息，我们在 configs 目录下新建一个新的目录 `custom_dataset`，同时新建 config 文件。
 这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`，假设数据集中的类是猫，`batch size = 8`，`200 epoch`，可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb8-200e_cat.py`，并在其里面添加以下内容：
 
 ```python
-_base_ = './yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+_base_ = '../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
-max_epochs = 200 # 训练的最大 epoch
-data_root = '/path/to/data_root' # 数据集目录的绝对路径
+max_epochs = 200  # 训练的最大 epoch
+data_root = '/path/to/data_root/'  # 数据集目录的绝对路径
 
 # 结果保存的路径，如果同个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
 work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat'
@@ -239,22 +239,29 @@ work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat'
 # checkpoint 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
 checkpoint = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 
-resume = False # 继续训练的时候使用
+resume = False  # 继续训练的时候使用
 
-train_batch_size_per_gpu = 8 # 根据自己的GPU情况，修改 batch size
-train_num_workers = 4 # 推荐使用 train_num_workers = nGPU x 4
+train_batch_size_per_gpu = 32  # 根据自己的 GPU 情况修改 batch size，YOLOv5-s 默认为 16 * 8
+train_num_workers = 4  # 推荐使用 train_num_workers = nGPU x 4
 val_batch_size_per_gpu = 2  # val 时候的 batch size ，根据实际调整即可
 val_num_workers = 2
 
-base_lr = _base_.base_lr / 4  # 根据自己的GPU情况，修改 base_lr，修改的比例是 base_lr_default * (your_bs / default_bs)
+save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
 
-num_classes=1
-metainfo = dict( # 根据类别信息，设置 metainfo
+# 根据自己的 GPU 情况，修改 base_lr，修改的比例是 base_lr_default * (your_bs / default_bs)
+base_lr = _base_.base_lr / 4  
+
+num_classes = 1
+metainfo = dict(  # 根据 class_with_id.txt 类别信息，设置 metainfo
     CLASSES=('cat'),
-    PALETTE=[(220, 20, 60)] # 画图时候的颜色，随便设置即可
+    PALETTE=[(220, 20, 60)]  # 画图时候的颜色，随便设置即可
 )
 
-train_cfg = dict(max_epochs=max_epochs)
+train_cfg = dict(
+    max_epochs=max_epochs,
+    val_begin=1,  # 第几个epoch后验证
+    val_interval=save_epoch_intervals  # 每 val_interval 轮迭代进行一次测试评估
+)
 
 model = dict(
     backbone=dict(init_cfg=dict(type='Pretrained', checkpoint=checkpoint)),
@@ -287,18 +294,18 @@ test_dataloader = dict(
         ann_file='annotations/test.json',
         data_prefix=dict(img='images/')))
 
-val_evaluator = dict(
-    type='mmdet.CocoMetric',
-    ann_file=data_root + '/annotations/test.json')
-
+val_evaluator = dict(ann_file=data_root + 'annotations/trainval.json')
 test_evaluator = val_evaluator
 
 optim_wrapper = dict(optimizer=dict(lr=base_lr))
 
-# 设置间隔多少个 epoch 保存模型，以及保存模型最多几个，`save_best` 是另外保存最佳模型（推荐）
 default_hooks = dict(
-    checkpoint=dict(
-        type='CheckpointHook', interval=1, max_keep_ckpts=5, save_best='auto'))
+    # 设置间隔多少个 epoch 保存模型，以及保存模型最多几个，`save_best` 是另外保存最佳模型（推荐）
+    checkpoint=dict(type='CheckpointHook', interval=save_epoch_intervals, 
+                    max_keep_ckpts=5, save_best='auto'),
+    # logger 输出的间隔
+    logger=dict(type='LoggerHook', interval=5)
+)
 ```
 
 ## 5. 训练
@@ -306,7 +313,7 @@ default_hooks = dict(
 使用下面命令进行启动训练：
 
 ```shell
-python tools/train.py configs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat.py
+python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb8-200e_cat.py
 ```
 
 ## 6. 推理
