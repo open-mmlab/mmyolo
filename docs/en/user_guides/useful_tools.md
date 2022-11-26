@@ -417,6 +417,7 @@ python demo/large_image_demo.py \
 ## Extracts a subset of COCO
 
 The training dataset of the COCO2017 dataset includes 118K images, and the validation set includes 5K images, which is a relatively large dataset. Loading JSON in debugging or quick verification scenarios will consume more resources and bring slower startup speed.
+
 The `extract_subcoco.py` script provides the ability to extract a specified number/classes/area-size of images. The user can use the `--num-img`, `--classes`, `--area-size` parameter to get a COCO subset of the specified condition of images.
 
 For example, extract images use scripts as follows:

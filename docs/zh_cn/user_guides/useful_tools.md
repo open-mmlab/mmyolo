@@ -362,6 +362,7 @@ python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
 ## 提取 COCO 子集
 
 COCO2017 数据集训练数据集包括 118K 张图片，验证集包括 5K 张图片，数据集比较大。在调试或者快速验证程序是否正确的场景下加载 json 会需要消耗较多资源和带来较慢的启动速度，这会导致程序体验不好。
+
 `extract_subcoco.py` 脚本提供了按指定图片数量、类别、锚框尺寸来切分图片的功能，用户可以通过 `--num-img`, `--classes`, `--area-size` 参数来得到指定条件的 COCO 子集，从而满足上述需求。
 
 例如通过以下脚本切分图片：

@@ -113,7 +113,7 @@ def parse_args():
         'out_dir', type=str, help='directory where subset coco will be saved.')
     parser.add_argument(
         '--num-img',
-        default=-1,
+        default=50,
         type=int,
         help='num of extract image, -1 means all images')
     parser.add_argument(
