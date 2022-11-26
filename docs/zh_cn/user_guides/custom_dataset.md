@@ -225,16 +225,16 @@ python tools/misc/coco_split.py --json ${COCO 标签 json 路径} \
 ```
 
 因为是我们自定义的数据集，所以我们需要自己重写 config 中的部分信息，我们在 configs 目录下新建一个新的目录 `custom_dataset`，同时新建 config 文件。
-这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`，假设数据集中的类是猫，`batch size = 8`，`200 epoch`，可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb8-200e_cat.py`，并在其里面添加以下内容：
+这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`，假设数据集中的类是 `cat`，我的显卡训练 YOLOv5 最大可以 `batch size = 32`，训练 `50 epoch`，可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-50e_cat.py`，并在其里面添加以下内容：
 
 ```python
 _base_ = '../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
-max_epochs = 200  # 训练的最大 epoch
+max_epochs = 50  # 训练的最大 epoch
 data_root = '/path/to/data_root/'  # 数据集目录的绝对路径
 
 # 结果保存的路径，如果同个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
-work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat'
+work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-50e_cat'
 
 # checkpoint 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
 checkpoint = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
@@ -259,7 +259,7 @@ metainfo = dict(  # 根据 class_with_id.txt 类别信息，设置 metainfo
 
 train_cfg = dict(
     max_epochs=max_epochs,
-    val_begin=1,  # 第几个epoch后验证
+    val_begin=10,  # 第几个epoch后验证
     val_interval=save_epoch_intervals  # 每 val_interval 轮迭代进行一次测试评估
 )
 
@@ -313,7 +313,13 @@ default_hooks = dict(
 使用下面命令进行启动训练：
 
 ```shell
-python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb8-200e_cat.py
+python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-50e_cat.py
+```
+
+下面是 `1 x 3080Ti`， `batch size = 32`，训练 `50 epoch`，得出来的精度：
+
+```shell
+
 ```
 
 ## 6. 推理
