@@ -1,7 +1,6 @@
 # 更多的插件使用
 
-MMYOLO 支持在 Backbone 的不同 Stage 后增加如 `none_local`、`dropblock` 等插件，用户可以直接通过修改 config 文件中 `backbone` 的 `plugins`
-参数来实现对插件的管理。例如为 `YOLOv5` 增加 `GeneralizedAttention` 插件，其配置文件如下：
+MMYOLO 支持在 Backbone 的不同 Stage 后增加如 `none_local`、`dropblock` 等插件，用户可以直接通过修改 config 文件中 `backbone` 的 `plugins`参数来实现对插件的管理。例如为 `YOLOv5` 增加`GeneralizedAttention` 插件，其配置文件如下：
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -27,9 +26,9 @@ model = dict(
 <details open>
 <summary><b>支持的插件</b></summary>
 
-- [x] [CBAM](https://github.com/open-mmlab/mmyolo/blob/dev/mmyolo/models/plugins/cbam.py#L84)
-- [x] [GeneralizedAttention](https://github.com/open-mmlab/mmcv/blob/2.x/mmcv/cnn/bricks/generalized_attention.py#L13)
-- [x] [NonLocal2d](https://github.com/open-mmlab/mmcv/blob/2.x/mmcv/cnn/bricks/non_local.py#L250)
-- [x] [ContextBlock](https://github.com/open-mmlab/mmcv/blob/2.x/mmcv/cnn/bricks/context_block.py#L18)
+1. [CBAM](https://github.com/open-mmlab/mmyolo/blob/dev/mmyolo/models/plugins/cbam.py#L84)
+2. [GeneralizedAttention](https://github.com/open-mmlab/mmcv/blob/2.x/mmcv/cnn/bricks/generalized_attention.py#L13)
+3. [NonLocal2d](https://github.com/open-mmlab/mmcv/blob/2.x/mmcv/cnn/bricks/non_local.py#L250)
+4. [ContextBlock](https://github.com/open-mmlab/mmcv/blob/2.x/mmcv/cnn/bricks/context_block.py#L18)
 
 </details>
