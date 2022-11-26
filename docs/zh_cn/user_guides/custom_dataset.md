@@ -196,7 +196,7 @@ data_root = '/path/to/data_root' # 数据集目录的绝对路径
 work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat' # 结果保存的路径
 
 # checkpoint 可以指定本地路径或者 URL，这里设置了 URL
-checkpoint = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
+checkpoint = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 
 train_batch_size_per_gpu = 8 # 根据自己的GPU情况，修改 batch size
 train_num_workers = 4 # 推荐使用 train_num_workers = nGPU x 4
