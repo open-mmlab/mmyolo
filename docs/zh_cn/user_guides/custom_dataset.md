@@ -110,7 +110,12 @@ labelme ${图片文件夹路径（即上一步的图片文件夹）} \
         --nodata
 ```
 
-eg.
+其中：
+- `--output`：labelme 标注文件保存路径，如果该路径下已经存在部分图片的标注文件，则会进行加载；
+- `--autosave`：标注文件自动保存，会略去一些繁琐的保存步骤；
+- `--nodata`：每张图片的标注文件中不保存图片的 base64 编码，设置了这个 flag 会大大减少标注文件的大小。
+
+例子：
 
 ```shell
 labelme /data/cat/images --output /data/cat/labels --autosave --nodata
