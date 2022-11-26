@@ -61,7 +61,16 @@ image_demo.py img \
 - `--score-thr`：置信度阈值，默认为 `0.3`；
 - `--to-labelme`：是否导出 `labelme` 格式的标签文件，不可以与 `--show` 参数同时存在
 
-eg.
+例子：
+
+这里使用 YOLOv5-s 作为例子来进行辅助标注，先下载 YOLOv5-s 的权重:
+```shell
+mkdir work_dirs && cd work_dirs
+wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
+cd ../
+```
+
+执行辅助标注：
 
 ```shell
 python demo/image_demo.py \
