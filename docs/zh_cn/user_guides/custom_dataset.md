@@ -225,23 +225,23 @@ python tools/misc/coco_split.py --json ${COCO 标签 json 路径} \
 ```
 
 因为是我们自定义的数据集，所以我们需要自己重写 config 中的部分信息，我们在 configs 目录下新建一个新的目录 `custom_dataset`，同时新建 config 文件。
-这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`，假设数据集中的类是 `cat`，我的显卡训练 YOLOv5 最大可以 `batch size = 32`，训练 `50 epoch`，可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-50e_cat.py`，并在其里面添加以下内容：
+这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`，假设数据集中的类是 `cat`，我的显卡训练 YOLOv5 最大可以 `batch size = 32`，训练 `300 epoch`，可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-300e_cat.py`，并在其里面添加以下内容：
 
 ```python
 _base_ = '../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
-max_epochs = 50  # 训练的最大 epoch
+max_epochs = 300  # 训练的最大 epoch
 data_root = '/path/to/data_root/'  # 数据集目录的绝对路径
 
 # 结果保存的路径，如果同个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
-work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-50e_cat'
+work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-300e_cat'
 
 # checkpoint 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
 checkpoint = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 
 resume = False  # 继续训练的时候使用
 
-train_batch_size_per_gpu = 32  # 根据自己的 GPU 情况修改 batch size，YOLOv5-s 默认为 16 * 8
+train_batch_size_per_gpu = 32  # 根据自己的GPU情况，修改 batch size，YOLOv5-s 默认为 16 * 8
 train_num_workers = 4  # 推荐使用 train_num_workers = nGPU x 4
 val_batch_size_per_gpu = 2  # val 时候的 batch size ，根据实际调整即可
 val_num_workers = 2
@@ -271,10 +271,18 @@ train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
     dataset=dict(
-        metainfo=metainfo,
-        data_root=data_root,
-        ann_file='annotations/trainval.json',
-        data_prefix=dict(img='images/')))
+        _delete_=True,
+        type='RepeatDataset',
+        times=10,  # 数据量太少的话，可以使用 RepeatDataset 来增量数据，这里设置 10 是 10 倍
+        dataset=dict(
+            type=_base_.dataset_type,
+            data_root=data_root,
+            metainfo=metainfo,
+            ann_file='annotations/trainval.json',
+            data_prefix=dict(img='images/'),
+            filter_cfg=dict(filter_empty_gt=False, min_size=32),
+            pipeline=_base_.train_pipeline)
+    ))
 
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
@@ -313,7 +321,7 @@ default_hooks = dict(
 使用下面命令进行启动训练：
 
 ```shell
-python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-50e_cat.py
+python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-300e_cat.py
 ```
 
 下面是 `1 x 3080Ti`， `batch size = 32`，训练 `300 epoch`，得出来的精度：
@@ -336,7 +344,8 @@ bbox_mAP_copypaste: 0.959 0.999 0.999 -1.000 -1.000 0.959
 Epoch(val) [300][65/65]  coco/bbox_mAP: 0.9590  coco/bbox_mAP_50: 0.9990  coco/bbox_mAP_75: 0.9990  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9590
 ```
 
-最佳精度 `bbox_mAP_epoch_266.pth`： 
+最佳精度 `bbox_mAP_epoch_266.pth`：
+
 ```shell
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.965
  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.999
@@ -350,7 +359,7 @@ Epoch(val) [300][65/65]  coco/bbox_mAP: 0.9590  coco/bbox_mAP_50: 0.9990  coco/b
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.975
- 
+
 bbox_mAP_copypaste: 0.965 0.999 0.999 -1.000 -1.000 0.965
 Epoch(val) [268][65/65]  coco/bbox_mAP: 0.9650  coco/bbox_mAP_50: 0.9990  coco/bbox_mAP_75: 0.9990  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9650
 ```
@@ -360,14 +369,14 @@ Epoch(val) [268][65/65]  coco/bbox_mAP: 0.9650  coco/bbox_mAP_50: 0.9990  coco/b
 ```shell
 python demo/image_demo.py /path/to/test/images \
                           configs/my_yolov5_s_config.py \
-                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat/yolov5_s-v61_syncbn_fast_1xb8-200e_cat/last.pth \
+                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-300e_cat/best_coco/bbox_mAP_epoch_268.pth \
                           --out-dir /path/to/test/images_output
 ```
 
 **Tips**：如果推理结果不理想，这里举例 2 中情况：
 
 1. 欠拟合：
-   需要先判断是不是训练 epoch 不够导致的欠拟合，如果是训练不够，则修改 config 文件里面的 `resume = ./work_dirs/yolov5_s-v61_syncbn_fast_1xb8-200e_cat/yolov5_s-v61_syncbn_fast_1xb8-200e_cat/last.pth` 来最后的模型继续训练。
+   需要先判断是不是训练 epoch 不够导致的欠拟合，如果是训练不够，则修改 config 文件里面的 `max_epochs`，同时，设置 `resume = ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-300e_cat/last_checkpoint` 来最后的模型继续训练。
 
 2. 数据集优化：
    如果 epoch 加上去了还是不行，可以对数据集进行增加，同时加上不断修改标注来优化，然后重新进行训练。
