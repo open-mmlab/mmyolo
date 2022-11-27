@@ -316,10 +316,43 @@ default_hooks = dict(
 python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-50e_cat.py
 ```
 
-下面是 `1 x 3080Ti`， `batch size = 32`，训练 `50 epoch`，得出来的精度：
+下面是 `1 x 3080Ti`， `batch size = 32`，训练 `300 epoch`，得出来的精度：
 
 ```shell
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.959
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.999
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.999
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.959
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.875
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.972
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.972
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.972
 
+bbox_mAP_copypaste: 0.959 0.999 0.999 -1.000 -1.000 0.959
+Epoch(val) [300][65/65]  coco/bbox_mAP: 0.9590  coco/bbox_mAP_50: 0.9990  coco/bbox_mAP_75: 0.9990  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9590
+```
+
+最佳精度 `bbox_mAP_epoch_266.pth`： 
+```shell
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.965
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.999
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.999
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.965
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.876
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.975
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.975
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.975
+ 
+bbox_mAP_copypaste: 0.965 0.999 0.999 -1.000 -1.000 0.965
+Epoch(val) [268][65/65]  coco/bbox_mAP: 0.9650  coco/bbox_mAP_50: 0.9990  coco/bbox_mAP_75: 0.9990  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9650
 ```
 
 ## 6. 推理
