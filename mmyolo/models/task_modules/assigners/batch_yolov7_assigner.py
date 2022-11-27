@@ -1,4 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Sequence
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -6,6 +8,7 @@ from mmdet.structures.bbox import bbox_cxcywh_to_xyxy, bbox_overlaps
 
 
 def _cat_multi_level_tensor_in_place(*multi_level_tensor, place_hold_var):
+    """concat multi-level tensor in place."""
     for level_tensor in multi_level_tensor:
         for i, var in enumerate(level_tensor):
             if len(var) > 0:
@@ -28,8 +31,8 @@ class BatchYOLOv7Assigner(nn.Module):
 
     def __init__(self,
                  num_classes: int,
-                 num_base_priors,
-                 featmap_strides,
+                 num_base_priors: int,
+                 featmap_strides: Sequence[int],
                  prior_match_thr: float = 4.0,
                  candidate_topk: int = 10,
                  iou_weight: float = 3.0,
