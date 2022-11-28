@@ -329,7 +329,7 @@ pkl 保存内容比 json 文件更多，还会保存预测图片的文件名和�
 如果想将预测结果输出为 json 文件，则命令如下：
 
 ```shell
-python tools/test.py {path_to_config} {path_to_checkpoint} --json-prefix {json_prefix}
+python tools/test.py ${CONFIG} ${CHECKPOINT} --json-prefix ${JSON_PREFIX}
 ```
 
 `--json-prefix` 后的参数输入为文件名前缀（无需输入 `.json` 后缀），也可以包含路径。举一个具体例子：
@@ -345,7 +345,7 @@ python tools/test.py configs\yolov5\yolov5_s-v61_syncbn_8xb16-300e_coco.py yolov
 如果想将预测结果输出为 pkl 文件，则命令如下：
 
 ```shell
-python tools/test.py {path_to_config} {path_to_checkpoint} --out {path_to_output_file}
+python tools/test.py ${CONFIG} ${CHECKPOINT} --out ${OUTPUT_FILE} [--cfg-options ${OPTIONS [OPTIONS...]}]
 ```
 
 `--out` 后的参数输入为完整文件名（**必须输入** `.pkl` 或 `.pickle` 后缀），也可以包含路径。举一个具体例子：
@@ -355,3 +355,71 @@ python tools/test.py configs\yolov5\yolov5_s-v61_syncbn_8xb16-300e_coco.py yolov
 ```
 
 运行以上命令会在 `work_dirs/demo` 文件夹下，输出 `pkl_demo.pkl` 文件。
+
+## 使用 mim 跨库调用其他 OpenMMLab 仓库的脚本
+
+```{note}
+目前暂不支持跨库调用所有脚本，正在修复中。等修复完成，本文档会添加更多的例子。
+```
+
+### 日志分析
+
+MMDetection 中的 `tools/analysis_tools/analyze_logs.py` 可利用指定的训练 log 文件绘制 loss/mAP 曲线图， 第一次运行前请先运行 `pip install seaborn` 安装必要依赖。
+
+```shell
+mim run mmdet analyze_logs plot_curve [--keys ${KEYS}] [--eval-interval ${EVALUATION_INTERVAL}] [--title ${TITLE}] [--legend ${LEGEND}] [--backend ${BACKEND}] [--style ${STYLE}] [--out ${OUT_FILE}]
+```
+
+<img src="https://raw.githubusercontent.com/open-mmlab/mmdetection/3.x/resources/loss_curve.png" alt="loss curve image"/>
+
+样例：
+
+- 绘制分类损失曲线图
+
+  ```shell
+  python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls --legend loss_cls
+  ```
+
+- 绘制分类损失、回归损失曲线图（如上图所示），保存图片为对应的 pdf 文件
+
+  ```shell
+  python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls loss_bbox --out losses.pdf
+  ```
+
+- 在相同图像中比较两次运行结果的 bbox mAP
+
+  ```shell
+  python tools/analysis_tools/analyze_logs.py plot_curve log1.json log2.json --keys bbox_mAP --legend run1 run2
+  ```
+
+- 计算平均训练速度
+
+  ```shell
+  python tools/analysis_tools/analyze_logs.py cal_train_time log.json [--include-outliers]
+  ```
+
+  输出以如下形式展示
+
+  ```text
+  -----Analyze train time of work_dirs/some_exp/20190611_192040.log.json-----
+  slowest epoch 11, average time is 1.2024
+  fastest epoch 1, average time is 1.1909
+  time std over epochs is 0.0028
+  average iter time: 1.1959 s/iter
+  ```
+
+### 打印完整配置文件
+
+MMDetection 中的 `tools/misc/print_config.py` 脚本可将所有配置继承关系展开，打印相应的完整配置文件。调用命令如下：
+
+```shell
+mim run mmdet print_config ${CONFIG} [--save-path] [--cfg-options ${OPTIONS [OPTIONS...]}]
+```
+
+样例：
+
+```shell
+mim run mmdet print_config configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py --save-path ./work_dirs
+```
+
+运行以上命令，会将 `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` 继承关系展开后的配置文件保存到 `./work_dirs` 文件夹内。
