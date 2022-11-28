@@ -1,0 +1,95 @@
+Collections:
+  - Name: YOLOv7
+    Metadata:
+      Training Data: COCO
+      Training Techniques:
+        - SGD with Nesterov
+        - Weight Decay
+        - AMP
+        - Synchronize BN
+      Training Resources: 8x A100 GPUs
+      Architecture:
+        - EELAN
+        - PAFPN
+        - RepVGG
+    Paper:
+      URL: https://arxiv.org/abs/2207.02696
+      Title: 'YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors'
+    README: configs/yolov7/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmyolo/blob/v0.0.1/mmyolo/models/detectors/yolo_detector.py#L12
+      Version: v0.0.1
+
+Models:
+  - Name: yolov7_tiny_syncbn_fast_8x16b-300e_coco
+    In Collection: YOLOv7
+    Config: configs/yolov7/yolov7_tiny_syncbn_fast_8x16b-300e_coco.py
+    Metadata:
+      Training Memory (GB): xx
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: xxx
+    Weights: xxx
+  - Name: yolov7_l_syncbn_fast_8x16b-300e_coco
+    In Collection: YOLOv7
+    Config: configs/yolov7/yolov7_l_syncbn_fast_8x16b-300e_coco.py
+    Metadata:
+      Training Memory (GB): xxx
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: xxx
+    Weights: xxx
+  - Name: yolov7_x_syncbn_fast_8x16b-300e_coco
+    In Collection: YOLOv7
+    Config: configs/yolov7/yolov7_x_syncbn_fast_8x16b-300e_coco.py
+    Metadata:
+      Training Memory (GB): xxx
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: xxx
+    Weights: xxx
+  - Name: yolov7_w-p6_syncbn_fast_8x16b-300e_coco
+    In Collection: YOLOv7
+    Config: configs/yolov7/yolov7_w-p6_syncbn_fast_8x16b-300e_coco.py
+    Metadata:
+      Training Memory (GB): xxx
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: xxx
+    Weights: xx
+  - Name: yolov7_d-p6_syncbn_fast_8x16b-300e_coco
+    In Collection: YOLOv7
+    Config: configs/yolov7/yolov7_d-p6_syncbn_fast_8x16b-300e_coco.py
+    Metadata:
+      Training Memory (GB): xxx
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: xx
+    Weights: xx
+  - Name: yolov7_e-p6_syncbn_fast_8x16b-300e_coco
+    In Collection: YOLOv7
+    Config: configs/yolov7/yolov7_e-p6_syncbn_fast_8x16b-300e_coco.py
+    Metadata:
+      Training Memory (GB): xxx
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: xx
+    Weights: xx
