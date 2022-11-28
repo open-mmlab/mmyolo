@@ -382,3 +382,5 @@ python demo/image_demo.py /path/to/test/images \
    如果 epoch 加上去了还是不行，可以对数据集进行增加，同时加上不断修改标注来优化，然后重新进行训练。
 
 ## 7. 部署
+
+详见[部署文档](../../../projects/easydeploy/README_zh-CN.md)
