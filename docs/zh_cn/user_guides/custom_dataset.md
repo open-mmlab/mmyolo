@@ -2,24 +2,65 @@
 
 本章节会介绍从 用户自定义图片数据集标注 到 最终进行训练和部署 的整体流程。流程步骤概览如下：
 
-1. 使用 [labelme](https://github.com/wkentaro/labelme) 进行数据集标注：`demo/image_demo.py` + labelme
-2. 使用脚本转换成 COCO 数据集格式：`tools/dataset_converters/labelme2coco.py`
-3. 数据集划分：`tools/misc/coco_split.py`
-4. 根据数据集内容新建 config 文件
-5. 训练：`tools/train.py`
-6. 推理：`demo/image_demo.py`
-7. 部署
+1. 数据集准备
+2. 使用 [labelme](https://github.com/wkentaro/labelme) 进行数据集标注：`demo/image_demo.py` + labelme
+3. 使用脚本转换成 COCO 数据集格式：`tools/dataset_converters/labelme2coco.py`
+4. 数据集划分：`tools/misc/coco_split.py`
+5. 根据数据集内容新建 config 文件
+6. 训练：`tools/train.py`
+7. 推理：`demo/image_demo.py`
+8. 部署
 
 下面详细介绍每一步。
 
-## 1. 使用 labelme 进行数据集标注
+## 1. 数据集准备
+
+- 如果自己没有数据集，可以使用本教程提供的一个 Cat 数据集，下载命令：
+```shell
+mkdir data
+wget https://download.openmmlab.com/xxx.tar -P ./data
+cd data
+tar -xvf xxx.tar
+```
+
+该文件的目录结构是：
+
+```shell
+.
+└── $DATA_ROOT
+    ├── images
+    │    ├── image1.jpg
+    │    ├── image2.png
+    │    └── ...
+    ├── labels
+    │    ├── image1.json
+    │    ├── image2.json
+    │    └── ...
+    ├── annotations
+    │    ├── trainval.json
+    │    └── test.json
+    └── ...
+```
+
+- 如有已经有数据，可以将其组成下面的结构
+
+```shell
+.
+└── cat
+    └── images
+         ├── image1.jpg
+         ├── image2.png
+         └── ...
+```
+
+## 2. 使用 labelme 进行数据集标注
 
 通常，标注有 2 种方法：
 
 - 软件或者算法辅助 + 人工修正标签
 - 仅人工打标签
 
-## 1.1 软件或者算法辅助 + 人工修正标签
+## 2.1 软件或者算法辅助 + 人工修正标签
 
 辅助标注的原理是用已有模型进行推理，将得出的推理信息保存为标注软件的标签文件格式。
 
@@ -31,7 +72,7 @@
 
 下面会分别介绍其过程：
 
-### 1.1.1 软件或者算法辅助
+### 2.1.1 软件或者算法辅助
 
 MMYOLO 提供的模型推理脚本 `demo/image_demo.py` 设置 `--to-labelme` 可以生成 labelme 格式标签文件，具体用法如下：
 
@@ -105,7 +146,7 @@ python demo/image_demo.py /data/cat/images \
     └── ...
 ```
 
-### 1.1.2 人工标注
+### 2.1.2 人工标注
 
 本教程使用的标注软件是 [labelme](https://github.com/wkentaro/labelme)
 
@@ -144,13 +185,13 @@ labelme /data/cat/images --output /data/cat/labels --autosave --nodata
 <img src="https://user-images.githubusercontent.com/25873202/204076212-86dab4fa-13dd-42cd-93d8-46b04b864449.png" alt="rectangle"/>
 </div>
 
-## 1.2 仅人工打标签
+## 2.2 仅人工打标签
 
 步骤和 【1.1.2 人工标注】 相同，只是这里是直接标注，没有预先生成的标签。
 
-## 2. 使用脚本转换成 COCO 数据集格式
+## 3. 使用脚本转换成 COCO 数据集格式
 
-### 2.1 使用脚本转换
+### 3.1 使用脚本转换
 
 MMYOLO 提供脚本将 labelme 的标签转换为 COCO 标签
 
@@ -177,7 +218,7 @@ python tools/dataset_converters/labelme2coco.py --img-dir ${图片文件夹路�
 
 ```
 
-### 2.2 检查转换的 COCO 标签
+### 3.2 检查转换的 COCO 标签
 
 使用下面的命令可以将 COCO 的标签在图片上进行显示，这一步可以验证刚刚转换是否有问题：
 
@@ -188,7 +229,7 @@ python tools/analysis_tools/browse_coco_json.py --img-dir ${图片文件夹路�
 
 关于 `tools/analysis_tools/browse_coco_json.py` 的更多用法请参考 [可视化 COCO 标签](useful_tools.md)。
 
-## 3. 数据集划分
+## 4. 数据集划分
 
 ```shell
 python tools/misc/coco_split.py --json ${COCO 标签 json 路径} \
@@ -206,7 +247,7 @@ python tools/misc/coco_split.py --json ${COCO 标签 json 路径} \
 - `--shuffle`: 是否打乱数据集再进行划分；
 - `--seed`：设定划分的随机种子，不设置的话自动生成随机种子。
 
-## 4. 根据数据集内容新建 config 文件
+## 5. 根据数据集内容新建 config 文件
 
 确保数据集目录是这样的：
 
@@ -218,23 +259,23 @@ python tools/misc/coco_split.py --json ${COCO 标签 json 路径} \
     │    ├── val.json # optional
     │    └── test.json
     ├── images
-    │    ├── a.jpg
-    │    ├── b.png
+    │    ├── image1.jpg
+    │    ├── image1.png
     │    └── ...
     └── ...
 ```
 
 因为是我们自定义的数据集，所以我们需要自己重写 config 中的部分信息，我们在 configs 目录下新建一个新的目录 `custom_dataset`，同时新建 config 文件。
-这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`，假设数据集中的类是 `cat`，我的显卡训练 YOLOv5 最大可以 `batch size = 32`，训练 `300 epoch`，可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-300e_cat.py`，并在其里面添加以下内容：
+这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`，以本教程提供的数据集中的类 `cat`为例（如果是自己的数据集，可以自定义类型的总称），我的显卡训练 YOLOv5-s 最大可以 `batch size = 32`，训练 `200 epoch`，可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py`，并在其里面添加以下内容：
 
 ```python
 _base_ = '../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
-max_epochs = 300  # 训练的最大 epoch
+max_epochs = 200  # 训练的最大 epoch
 data_root = '/path/to/data_root/'  # 数据集目录的绝对路径
 
 # 结果保存的路径，如果同个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
-work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-300e_cat'
+work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat'
 
 # checkpoint 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
 checkpoint = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
@@ -316,12 +357,12 @@ default_hooks = dict(
 )
 ```
 
-## 5. 训练
+## 6. 训练
 
 使用下面命令进行启动训练：
 
 ```shell
-python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-300e_cat.py
+python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py
 ```
 
 下面是 `1 x 3080Ti`， `batch size = 32`，训练 `300 epoch`，得出来的精度：
@@ -364,23 +405,25 @@ bbox_mAP_copypaste: 0.965 0.999 0.999 -1.000 -1.000 0.965
 Epoch(val) [268][65/65]  coco/bbox_mAP: 0.9650  coco/bbox_mAP_50: 0.9990  coco/bbox_mAP_75: 0.9990  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9650
 ```
 
-## 6. 推理
+## 7. 推理
+
+使用最佳的模型进行推理，下面命令中的最佳模型路劲是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_268.pth`，请用户自行修改为自己训练的最佳模型路径。
 
 ```shell
 python demo/image_demo.py /path/to/test/images \
-                          configs/my_yolov5_s_config.py \
-                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-300e_cat/best_coco/bbox_mAP_epoch_268.pth \
+                          ./configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py \
+                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_268.pth \
                           --out-dir /path/to/test/images_output
 ```
 
 **Tips**：如果推理结果不理想，这里举例 2 中情况：
 
 1. 欠拟合：
-   需要先判断是不是训练 epoch 不够导致的欠拟合，如果是训练不够，则修改 config 文件里面的 `max_epochs`，同时，设置 `resume = ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-300e_cat/last_checkpoint` 来最后的模型继续训练。
+   需要先判断是不是训练 epoch 不够导致的欠拟合，如果是训练不够，则修改 config 文件里面的 `max_epochs`，同时，设置 `resume = ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/last_checkpoint` 来最后的模型继续训练。
 
 2. 数据集优化：
    如果 epoch 加上去了还是不行，可以对数据集进行增加，同时加上不断修改标注来优化，然后重新进行训练。
 
-## 7. 部署
+## 8. 部署
 
 详见[部署文档](../../../projects/easydeploy/README_zh-CN.md)
