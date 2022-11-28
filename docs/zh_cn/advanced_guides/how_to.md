@@ -377,25 +377,25 @@ mim run mmdet analyze_logs plot_curve [--keys ${KEYS}] [--eval-interval ${EVALUA
 - 绘制分类损失曲线图
 
   ```shell
-  python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls --legend loss_cls
+  mim run mmdet analyze_logs plot_curve log.json --keys loss_cls --legend loss_cls
   ```
 
 - 绘制分类损失、回归损失曲线图（如上图所示），保存图片为对应的 pdf 文件
 
   ```shell
-  python tools/analysis_tools/analyze_logs.py plot_curve log.json --keys loss_cls loss_bbox --out losses.pdf
+  mim run mmdet analyze_logs plot_curve log.json --keys loss_cls loss_bbox --out losses.pdf
   ```
 
 - 在相同图像中比较两次运行结果的 bbox mAP
 
   ```shell
-  python tools/analysis_tools/analyze_logs.py plot_curve log1.json log2.json --keys bbox_mAP --legend run1 run2
+  mim run mmdet analyze_logs plot_curve log1.json log2.json --keys bbox_mAP --legend run1 run2
   ```
 
 - 计算平均训练速度
 
   ```shell
-  python tools/analysis_tools/analyze_logs.py cal_train_time log.json [--include-outliers]
+  mim run mmdet analyze_logs cal_train_time log.json [--include-outliers]
   ```
 
   输出以如下形式展示
