@@ -7,6 +7,9 @@ from ..registry import DATASETS, TASK_UTILS
 
 
 class BatchShapePolicyDataset(BaseDetDataset):
+    """Dataset with the batch shape policy that makes paddings with least
+    pixels during batch inference process, which does not require the image
+    scales of all batches to be the same throughout validation."""
 
     def __init__(self,
                  *args,
@@ -17,7 +20,7 @@ class BatchShapePolicyDataset(BaseDetDataset):
 
     def full_init(self):
         """rewrite full_init() to be compatible with serialize_data in
-        BatchShapesPolicy."""
+        BatchShapePolicy."""
         if self._fully_initialized:
             return
         # load data information
