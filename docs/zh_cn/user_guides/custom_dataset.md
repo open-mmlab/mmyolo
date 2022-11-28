@@ -16,6 +16,7 @@
 ## 1. 数据集准备
 
 - 如果自己没有数据集，可以使用本教程提供的一个 Cat 数据集，下载命令：
+
 ```shell
 python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data --unzip --delete
 ```
