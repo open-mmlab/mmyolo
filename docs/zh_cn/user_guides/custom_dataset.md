@@ -40,7 +40,7 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data --unz
     └── ...
 ```
 
-- 如有已经有数据，可以将其组成下面的结构
+- 如你已经有数据，可以将其组成下面的结构
 
 ```shell
 .
@@ -101,40 +101,28 @@ python demo/image_demo.py img \
 
 例子：
 
-这里使用 YOLOv5-s 作为例子来进行辅助标注，先下载 YOLOv5-s 的权重:
+这里使用 YOLOv5-s 作为例子来进行辅助标注刚刚下载的 `cat` 数据集，先下载 YOLOv5-s 的权重:
 
 ```shell
 mkdir work_dirs
 wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth -P ./work_dirs
 ```
 
-执行辅助标注有 2 种情况：
-
-1. 标注文件保存所有推理出来的类
-2. 标注文件只保存 cat、dog 两类
-
-- 标注文件保存所有推理出来的类：
+由于 COCO 80 类数据集中已经包括了 `cat` 这一类，因此我们可以直接加载 COCO 预训练权重进行辅助标注。
 
 ```shell
 python demo/image_demo.py /data/cat/images \
                           configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
                           work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
                           --out-dir /data/cat/labels \
+                          --class-name cat \
                           --to-labelme
 ```
 
-- 标注文件只保存 `cat` 一类：
+**Tips**：
 
-```shell
-python demo/image_demo.py /data/cat/images \
-                          configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
-                          work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
-                          --out-dir /data/cat/labels \
-                          --class-name cat\
-                          --to-labelme
-```
-
-**Tips**：如果你的数据集有多类，可以 `--class-name class1 class2` 这样子输入。
+- 如果你的数据集需要标注多类，可以采用类似 `--class-name class1 class2` 格式输入；
+- 如果全部输出，则删掉 `--class-name` 这个 flag 即可全部类都输出。
 
 生成的标签文件会在 `--out-dir` 中:
 
@@ -266,7 +254,15 @@ python tools/misc/coco_split.py --json ${COCO 标签 json 路径} \
 ```
 
 因为是我们自定义的数据集，所以我们需要自己重写 config 中的部分信息，我们在 configs 目录下新建一个新的目录 `custom_dataset`，同时新建 config 文件。
-这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`，以本教程提供的数据集中的类 `cat` 为例（如果是自己的数据集，可以自定义类型的总称），我的显卡训练 YOLOv5-s 最大可以 `batch size = 32`，训练 `200 epoch`，可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py`，并在其里面添加以下内容：
+
+关于新的 config 的命名：
+
+- 这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`；
+- 训练的类以本教程提供的数据集中的类 `cat` 为例（如果是自己的数据集，可以自定义类型的总称）；
+- 本教程测试的显卡型号是 1 x 3080Ti 12G 显存，电脑内存 32G，可以训练 YOLOv5-s 最大批次是 `batch size = 32`（详细机器资料可见附录）；
+- 训练轮次是 `200 epoch`。
+
+综上所述：可以将其命名为 `yolov5_s-v61_syncbn_1xb32-200e_cat.py`，并在其里面添加以下内容：
 
 ```python
 _base_ = '../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -275,7 +271,7 @@ max_epochs = 200  # 训练的最大 epoch
 data_root = '/path/to/data_root/'  # 数据集目录的绝对路径
 
 # 结果保存的路径，如果同个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
-work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat'
+work_dir = './work_dirs/yolov5_s-v61_syncbn_1xb32-200e_cat'
 
 # checkpoint 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
 checkpoint = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
@@ -362,7 +358,7 @@ default_hooks = dict(
 使用下面命令进行启动训练：
 
 ```shell
-python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py
+python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_1xb32-200e_cat.py
 ```
 
 下面是 `1 x 3080Ti`， `batch size = 32`，训练 `200 epoch`，得出来的精度：
@@ -407,23 +403,70 @@ Epoch(val) [198][58/58]  coco/bbox_mAP: 0.9420  coco/bbox_mAP_50: 1.0000  coco/b
 
 ## 7. 推理
 
-使用最佳的模型进行推理，下面命令中的最佳模型路劲是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_198.pth`，请用户自行修改为自己训练的最佳模型路径。
+使用最佳的模型进行推理，下面命令中的最佳模型路劲是 `./work_dirs/yolov5_s-v61_syncbn_1xb32-200e_cat/best_coco/bbox_mAP_epoch_198.pth`，请用户自行修改为自己训练的最佳模型路径。
 
 ```shell
 python demo/image_demo.py /path/to/test/images \
-                          ./configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py \
-                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_198.pth \
+                          ./configs/custom_dataset/yolov5_s-v61_syncbn_1xb32-200e_cat.py \
+                          ./work_dirs/yolov5_s-v61_syncbn_1xb32-200e_cat/best_coco/bbox_mAP_epoch_198.pth \
                           --out-dir /path/to/test/images_output
 ```
 
-**Tips**：如果推理结果不理想，这里举例 2 中情况：
+**Tips**：如果推理结果不理想，这里举例 2 种情况：
 
 1. 欠拟合：
-   需要先判断是不是训练 epoch 不够导致的欠拟合，如果是训练不够，则修改 config 文件里面的 `max_epochs`，同时，设置 `resume = ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/last_checkpoint` 来最后的模型继续训练。
+   需要先判断是不是训练 epoch 不够导致的欠拟合，如果是训练不够，则修改 config 文件里面的 `max_epochs`，重新进行训练。
 
 2. 数据集优化：
-   如果 epoch 加上去了还是不行，可以对数据集进行增加，同时加上不断修改标注来优化，然后重新进行训练。
+   如果 epoch 加上去了还是不行，可以增加数据集数量，同时可以重新检查并优化数据集的标注，然后重新进行训练。
 
 ## 8. 部署
 
 详见[部署文档](../../../projects/easydeploy/README_zh-CN.md)
+
+## 附录
+
+### 1. 本教程训练机器的详细环境的资料如下：
+
+```shell
+sys.platform: linux
+Python: 3.9.13 | packaged by conda-forge | (main, May 27 2022, 16:58:50) [GCC 10.3.0]
+CUDA available: True
+numpy_random_seed: 2147483648
+GPU 0: NVIDIA GeForce RTX 3080 Ti
+CUDA_HOME: /usr/local/cuda
+NVCC: Cuda compilation tools, release 11.5, V11.5.119
+GCC: gcc (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0
+PyTorch: 1.10.0
+PyTorch compiling details: PyTorch built with:
+  - GCC 7.3
+  - C++ Version: 201402
+  - Intel(R) oneAPI Math Kernel Library Version 2021.4-Product Build 20210904 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.2.3 (Git Hash 7336ca9f055cf1bfa13efb658fe15dc9b41f0740)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX2
+  - CUDA Runtime 11.3
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;arch=compute_60,code=sm_60;
+                             -gencode;arch=compute_61,code=sm_61;-gencode;arch=compute_70,code=sm_70;-gencode;arch=compute_75,code=sm_75;-gencode;
+                             arch=compute_80,code=sm_80;-gencode;arch=compute_86,code=sm_86;-gencode;arch=compute_37,code=compute_37
+  - CuDNN 8.2
+  - Magma 2.5.2
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.3, CUDNN_VERSION=8.2.0, CXX_COMPILER=/opt/rh/devtoolset-7/root/usr/bin/c++,
+                    CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_KINETO -DUSE_FBGEMM -DUSE_QNNPACK
+                    -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -DEDGE_PROFILER_USE_KINETO -O2 -fPIC -Wno-narrowing -Wall -Wextra
+                    -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas -Wno-sign-compare -Wno-unused-parameter
+                    -Wno-unused-variable -Wno-unused-function -Wno-unused-result -Wno-unused-local-typedefs -Wno-strict-overflow -Wno-strict-aliasing
+                    -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic -Wno-error=redundant-decls -Wno-error=old-style-cast
+                    -fdiagnostics-color=always -faligned-new -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format
+                    -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1, TORCH_VERSION=1.10.0, USE_CUDA=ON, USE_CUDNN=ON,
+                    USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON, USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON,
+
+TorchVision: 0.11.0
+OpenCV: 4.6.0
+MMEngine: 0.3.1
+MMCV: 2.0.0rc3
+MMDetection: 3.0.0rc3
+MMYOLO: 0.1.3+3815671
+```
