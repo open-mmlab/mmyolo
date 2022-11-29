@@ -18,14 +18,14 @@
 - 如果自己没有数据集，可以使用本教程提供的一个 `cat` 数据集，下载命令：
 
 ```shell
-python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data --unzip --delete
+python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat --unzip --delete
 ```
 
 会自动下载到 `./data/cat` 文件夹中，该文件的目录结构是：
 
 ```shell
 .
-└── $DATA_ROOT
+└── ./data/cat
     ├── images # 图片文件
     │    ├── image1.jpg
     │    ├── image2.png
@@ -47,7 +47,7 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data --unz
 
 ```shell
 .
-└── cat
+└── $DATA_ROOT
     └── images
          ├── image1.jpg
          ├── image2.png
@@ -114,10 +114,10 @@ wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8x
 由于 COCO 80 类数据集中已经包括了 `cat` 这一类，因此我们可以直接加载 COCO 预训练权重进行辅助标注。
 
 ```shell
-python demo/image_demo.py /data/cat/images \
+python demo/image_demo.py ./data/cat/images \
                           configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
                           work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
-                          --out-dir /data/cat/labels \
+                          --out-dir ./data/cat/labels \
                           --class-name cat \
                           --to-labelme
 ```
@@ -165,7 +165,7 @@ labelme ${图片文件夹路径（即上一步的图片文件夹）} \
 例子：
 
 ```shell
-labelme /data/cat/images --output /data/cat/labels --autosave --nodata
+labelme ./data/cat/images --output ./data/cat/labels --autosave --nodata
 ```
 
 输入命令之后 labelme 就会启动，然后进行 label 检查即可。如果 labelme 启动失败，命令行输入 `export QT_DEBUG_PLUGINS=1` 查看具体缺少什么库，安装一下即可。
@@ -271,7 +271,7 @@ python tools/misc/coco_split.py --json ${COCO label json 路径} \
 _base_ = '../yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 
 max_epochs = 200  # 训练的最大 epoch
-data_root = '/path/to/data_root/'  # 数据集目录的绝对路径
+data_root = './data/cat/'  # 数据集目录的绝对路径
 
 # 结果保存的路径，如果同个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
 work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat'
@@ -409,10 +409,10 @@ Epoch(val) [198][58/58]  coco/bbox_mAP: 0.9420  coco/bbox_mAP_50: 1.0000  coco/b
 使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_198.pth`，请用户自行修改为自己训练的最佳模型路径。
 
 ```shell
-python demo/image_demo.py /path/to/test/images \
+python demo/image_demo.py ./data/cat/images \
                           ./configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py \
                           ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_198.pth \
-                          --out-dir /path/to/test/images_output
+                          --out-dir ./data/cat/pred_images
 ```
 
 **Tips**：如果推理结果不理想，这里举例 2 种情况：
