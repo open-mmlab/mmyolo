@@ -1,10 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
+import os
 import os.path as osp
 import sys
 from typing import Tuple
 
 import cv2
+import mmcv
 import numpy as np
 from mmdet.models.utils import mask2ndarray
 from mmdet.structures.bbox import BaseBoxes
@@ -23,10 +25,9 @@ def parse_args():
     parser.add_argument('config', help='train config file path')
     parser.add_argument(
         '--output-dir',
-        default=None,
+        default='./output',
         type=str,
         help='If there is no display interface, you can save it.')
-    parser.add_argument('--not-show', default=False, action='store_true')
     parser.add_argument(
         '--phase',
         '-p',
@@ -35,6 +36,7 @@ def parse_args():
         choices=['train', 'test', 'val'],
         help='phase of dataset to visualize, accept "train" "test" and "val".'
         ' Defaults to "train".')
+    parser.add_argument('--show', help='show the pipeline image')
     parser.add_argument(
         '--show-number',
         '-n',
@@ -54,11 +56,10 @@ def parse_args():
         '-m',
         default='transformed',
         type=str,
-        choices=['original', 'transformed', 'concat', 'pipeline'],
+        choices=['original', 'transformed', 'pipeline'],
         help='display mode; display original pictures or transformed pictures'
         ' or comparison pictures. "original" means show images load from disk'
-        '; "transformed" means to show images after transformed; "concat" '
-        'means show images stitched by "original" and "output" images. '
+        '; "transformed" means to show images after transformed;'
         '"pipeline" means show all the intermediate images. '
         'Defaults to "transformed".')
     parser.add_argument(
@@ -156,15 +157,21 @@ class InspectCompose(Compose):
                 'name': 'original',
                 'img': data['img'].copy()
             })
-
-        for t in self.transforms:
+        self.ptransforms = [
+            self.transforms[i] for i in range(len(self.transforms) - 1)
+        ]
+        for t in self.ptransforms:
             data = t(data)
+            self.transforms[-1].meta_keys = [key for key in data]
+            data_sample = self.transforms[-1](data)
             if data is None:
                 return None
             if 'img' in data:
                 self.intermediate_imgs.append({
-                    'name': t.__class__.__name__,
-                    'img': data['img'].copy()
+                    'name':
+                    t.__class__.__name__,
+                    'dataset_sample':
+                    data_sample['data_samples']
                 })
         return data
 
@@ -181,9 +188,7 @@ def main():
     dataset_cfg = cfg.get(args.phase + '_dataloader').get('dataset')
     dataset = DATASETS.build(dataset_cfg)
     visualizer = VISUALIZERS.build(cfg.visualizer)
-
     visualizer.dataset_meta = dataset.metainfo
-
     intermediate_imgs = []
     dataset.pipeline = InspectCompose(dataset.pipeline.transforms,
                                       intermediate_imgs)
@@ -191,58 +196,58 @@ def main():
     # init visualization image number
     display_number = min(args.show_number, len(dataset))
     progress_bar = ProgressBar(display_number)
-
     for i, item in zip(range(display_number), dataset):
+        image_l = []
+        for k, img in enumerate(
+            [result['dataset_sample'] for result in intermediate_imgs]):
+            image = img.img
+            data_samples = img
+            gt_instances = data_samples.gt_instances
+            image = image[..., [2, 1, 0]]  # bgr to rgb
+            gt_bboxes = gt_instances.get('bboxes', None)
+            if gt_bboxes is not None and isinstance(gt_bboxes, BaseBoxes):
+                gt_instances.bboxes = gt_bboxes.tensor
+            gt_masks = gt_instances.get('masks', None)
+            if gt_masks is not None:
+                masks = mask2ndarray(gt_masks)
+                gt_instances.masks = masks.astype(np.bool)
+                data_samples.gt_instances = gt_instances
+            # get filename from dataset or just use index as filename
+            visualizer.add_datasample(
+                'result',
+                image,
+                data_samples,
+                draw_pred=False,
+                draw_gt=True,
+                show=False,
+                wait_time=0)
+            image_show = visualizer.get_image()
+            image_l.append(image_show)
         if args.mode == 'original':
-            image = intermediate_imgs[0]['img']
+            image = image_l[0]
         elif args.mode == 'transformed':
-            image = intermediate_imgs[-1]['img']
-
-        elif args.mode == 'concat':
-            ori_image = intermediate_imgs[0]['img']
-            trans_image = intermediate_imgs[-1]['img']
-            image = make_grid([ori_image, trans_image],
-                              ['original', 'transformed'])
+            image = image_l[-1]
         else:
-            image = make_grid(
-                [result['img'] for result in intermediate_imgs],
-                [result['name'] for result in intermediate_imgs],
-            )
-
-        intermediate_imgs.clear()
-        data_samples = item['data_samples'].numpy()
-        gt_instances = data_samples.gt_instances
-
-        # get filename from dataset or just use index as filename
-        if hasattr(item['data_samples'], 'img_path'):
-            filename = osp.basename(item['data_samples'].img_path)
+            image = make_grid([result for result in image_l],
+                              [result['name'] for result in intermediate_imgs])
+        if hasattr(data_samples, 'img_path'):
+            filename = osp.basename(data_samples.img_path)
         else:
             # some dataset have not image path
             filename = f'{i}.jpg'
-
         out_file = osp.join(args.output_dir,
                             filename) if args.output_dir is not None else None
-
-        image = image[..., [2, 1, 0]]  # bgr to rgb
-        gt_bboxes = gt_instances.get('bboxes', None)
-        if gt_bboxes is not None and isinstance(gt_bboxes, BaseBoxes):
-            gt_instances.bboxes = gt_bboxes.tensor
-        gt_masks = gt_instances.get('masks', None)
-        if gt_masks is not None:
-            masks = mask2ndarray(gt_masks)
-            gt_instances.masks = masks.astype(np.bool)
-        data_samples.gt_instances = gt_instances
-
-        visualizer.add_datasample(
-            filename,
-            image,
-            data_samples,
-            draw_pred=False,
-            draw_gt=(args.mode == 'transformed'),
-            show=not args.not_show,
-            wait_time=args.show_interval,
-            out_file=out_file)
+        intermediate_imgs.clear()
         progress_bar.update()
+        if out_file:
+            print('save')
+            mmcv.imwrite(image[..., ::-1], out_file)
+
+        visualizer.set_image(image)
+        visualizer.show()
+
+    print(f'All done!'
+          f'\nResults have been saved at {os.path.abspath(args.out_dir)}')
 
 
 if __name__ == '__main__':
