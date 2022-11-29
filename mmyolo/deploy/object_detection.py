@@ -89,6 +89,7 @@ class YOLOObjectDetection(ObjectDetection):
                             cfg_options: Optional[Dict] = None,
                             **kwargs) -> torch.nn.Module:
         """Initialize torch model.
+
         Args:
             model_checkpoint (str): The checkpoint file of torch model,
                 defaults to `None`.
