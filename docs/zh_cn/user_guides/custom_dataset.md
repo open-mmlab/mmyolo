@@ -123,16 +123,18 @@ python demo/image_demo.py /data/cat/images \
                           --to-labelme
 ```
 
-- 标注文件只保存 `cat`、`dog` 两类：
+- 标注文件只保存 `cat` 一类：
 
 ```shell
 python demo/image_demo.py /data/cat/images \
                           configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
                           work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
                           --out-dir /data/cat/labels \
-                          --class-name cat dog \
+                          --class-name cat\
                           --to-labelme
 ```
+
+**Tips**：如果你的数据集有多类，可以 `--class-name class1 class2` 这样子输入。
 
 生成的标签文件会在 `--out-dir` 中:
 
@@ -264,7 +266,7 @@ python tools/misc/coco_split.py --json ${COCO 标签 json 路径} \
 ```
 
 因为是我们自定义的数据集，所以我们需要自己重写 config 中的部分信息，我们在 configs 目录下新建一个新的目录 `custom_dataset`，同时新建 config 文件。
-这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`，以本教程提供的数据集中的类 `cat`为例（如果是自己的数据集，可以自定义类型的总称），我的显卡训练 YOLOv5-s 最大可以 `batch size = 32`，训练 `200 epoch`，可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py`，并在其里面添加以下内容：
+这个 config 继承的是 `yolov5_s-v61_syncbn_8xb16-300e_coco.py`，以本教程提供的数据集中的类 `cat` 为例（如果是自己的数据集，可以自定义类型的总称），我的显卡训练 YOLOv5-s 最大可以 `batch size = 32`，训练 `200 epoch`，可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py`，并在其里面添加以下内容：
 
 ```python
 _base_ = '../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
