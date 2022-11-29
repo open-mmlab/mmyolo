@@ -1,5 +1,50 @@
 # Changelog
 
+## v0.2.0（1/12/2022)
+
+### Highlights
+
+1. Support [YOLOv7](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov7) P5 and P6 model
+2. Support [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov6/README.md) ML model
+3. Support [Grad-Based CAM and Grad-Free CAM](https://github.com/open-mmlab/mmyolo/blob/dev/demo/boxam_vis_demo.py)
+4. Support [large image inference](https://github.com/open-mmlab/mmyolo/blob/dev/demo/large_image_demo.py) based on sahi
+5. Add [easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README.md) project under the projects folder
+
+### New Features
+
+1. Add flag to output labelme label file in `image_demo.py` (#288, #314)
+2. Add `labelme2coco` script (#308, #313)
+3. Add split COCO dataset script (#311)
+4. Add two examples of backbone replacement in `how-to.md` and update `plugin.md` (#291)
+5. Add `contributing.md` and `code_style.md` (#322)
+
+### Bug Fixes
+
+1. Fix MixUp padding error (#319)
+2. Fix scale factor order error of `LetterResize` and `YOLOv5KeepRatioResize` (#305)
+3. Fix training errors of `YOLOX Nano` model (#285)
+4. Fix `RTMDet` deploy error (#287)
+5. Fix int8 deploy config (#315)
+6. Fix `make_stage_plugins` doc in `basebackbone` (#296)
+
+### Improvements
+
+1. Add option of json output in `test.py` (#316)
+2. Add area condition in `extract_subcoco.py` script (#286)
+3. Update `RTMDet` model graph (#317)
+4. Deployment doc translation (#289)
+5. Add YOLOv6 description overview doc (#252)
+6. Improve `config.md` (#297, #303)
+7. Add mosaic9 graph in docstring  (#307)
+8. Improve `browse_coco_json.py` script args (#309)
+9. Refactor some functions in `dataset_analysis.py` to be more general (#294)
+
+#### Contributors
+
+A total of 12 developers contributed to this release.
+
+Thank  @fcakyon, @MambaWong, @imAzhou, @triple-Mu, @RangeKing, @PeterH0323, @xin-li-67, @kitecats, @hanrui1sensetime,  @Zheng-LinXiao, @hhaAndroid, @wanghonglie
+
 ## v0.1.3（10/11/2022)
 
 ### New Features
