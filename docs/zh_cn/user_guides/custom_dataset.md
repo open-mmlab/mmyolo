@@ -35,8 +35,9 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data --unz
     │    ├── image2.json
     │    └── ...
     ├── annotations # 数据集划分的 COCO 文件
-    │    ├── trainval.json
-    │    └── test.json
+    │    ├── annotations_all.json # 全量数据的 COCO label 文件
+    │    ├── trainval.json # 划分比例 80% 的数据
+    │    └── test.json # 划分比例 20% 的数据
     └── class_with_id.txt # id + class_name 文件
 ```
 
