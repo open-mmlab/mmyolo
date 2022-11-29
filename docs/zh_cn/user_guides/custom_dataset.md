@@ -186,7 +186,7 @@ MMYOLO 提供脚本将 labelme 的 label 转换为 COCO label
 ```shell
 python tools/dataset_converters/labelme2coco.py --img-dir ${图片文件夹路径} \
                                                 --labels-dir ${label 文件夹位置} \
-                                                --out ${输出 COCO label json路径}
+                                                --out ${输出 COCO label json 路径}
                                                 [--class-id-txt]
 ```
 
@@ -212,7 +212,7 @@ python tools/dataset_converters/labelme2coco.py --img-dir ${图片文件夹路�
 
 ```shell
 python tools/analysis_tools/browse_coco_json.py --img-dir ${图片文件夹路径} \
-                                                --ann-file ${COCO label json路径}
+                                                --ann-file ${COCO label json 路径}
 ```
 
 关于 `tools/analysis_tools/browse_coco_json.py` 的更多用法请参考 [可视化 COCO label](useful_tools.md)。
@@ -403,7 +403,7 @@ Epoch(val) [198][58/58]  coco/bbox_mAP: 0.9420  coco/bbox_mAP_50: 1.0000  coco/b
 
 ## 7. 推理
 
-使用最佳的模型进行推理，下面命令中的最佳模型路劲是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_198.pth`，请用户自行修改为自己训练的最佳模型路径。
+使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_198.pth`，请用户自行修改为自己训练的最佳模型路径。
 
 ```shell
 python demo/image_demo.py /path/to/test/images \
