@@ -15,7 +15,7 @@
 
 ## 1. 数据集准备
 
-- 如果自己没有数据集，可以使用本教程提供的一个 Cat 数据集，下载命令：
+- 如果自己没有数据集，可以使用本教程提供的一个 `cat` 数据集，下载命令：
 
 ```shell
 python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data --unzip --delete
@@ -55,16 +55,16 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data --unz
 
 通常，标注有 2 种方法：
 
-- 软件或者算法辅助 + 人工修正标签
-- 仅人工打标签
+- 软件或者算法辅助 + 人工修正 label
+- 仅人工标注
 
-## 2.1 软件或者算法辅助 + 人工修正标签
+## 2.1 软件或者算法辅助 + 人工修正 label
 
-辅助标注的原理是用已有模型进行推理，将得出的推理信息保存为标注软件的标签文件格式。
+辅助标注的原理是用已有模型进行推理，将得出的推理信息保存为标注软件 label 文件格式。
 
-**Tips**：如果已有模型典型的如 COCO 预训练模型没有你自定义新数据集的类别，建议先人工打 100 张左右的图片标签，训练个初始模型，然后再进行辅助打标签。
+**Tips**：如果已有模型典型的如 COCO 预训练模型没有你自定义新数据集的类别，建议先人工打 100 张左右的图片 label，训练个初始模型，然后再进行辅助标注。
 
-人工操作标注软件加载生成好的标签文件，只需要检查每张图片的目标是否标准，以及是否有漏掉的目标。
+人工操作标注软件加载生成好的 label 文件，只需要检查每张图片的目标是否标准，以及是否有漏掉的目标。
 
 【辅助 + 人工标注】这种方式可以节省很多时间和精力，达到降本提速的目的。
 
@@ -72,7 +72,7 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data --unz
 
 ### 2.1.1 软件或者算法辅助
 
-MMYOLO 提供的模型推理脚本 `demo/image_demo.py` 设置 `--to-labelme` 可以生成 labelme 格式标签文件，具体用法如下：
+MMYOLO 提供的模型推理脚本 `demo/image_demo.py` 设置 `--to-labelme` 可以生成 labelme 格式 label 文件，具体用法如下：
 
 ```shell
 python demo/image_demo.py img \
@@ -97,7 +97,7 @@ python demo/image_demo.py img \
 - `--show`：使用该参数表示在屏幕上显示检测结果，默认为 `False`；
 - `--deploy`：是否切换成 deploy 模式；
 - `--score-thr`：置信度阈值，默认为 `0.3`；
-- `--to-labelme`：是否导出 `labelme` 格式的标签文件，不可以与 `--show` 参数同时存在
+- `--to-labelme`：是否导出 `labelme` 格式的 label 文件，不可以与 `--show` 参数同时存在
 
 例子：
 
@@ -124,7 +124,7 @@ python demo/image_demo.py /data/cat/images \
 - 如果你的数据集需要标注多类，可以采用类似 `--class-name class1 class2` 格式输入；
 - 如果全部输出，则删掉 `--class-name` 这个 flag 即可全部类都输出。
 
-生成的标签文件会在 `--out-dir` 中:
+生成的 label 文件会在 `--out-dir` 中:
 
 ```shell
 .
@@ -165,7 +165,7 @@ labelme ${图片文件夹路径（即上一步的图片文件夹）} \
 labelme /data/cat/images --output /data/cat/labels --autosave --nodata
 ```
 
-输入命令之后 labelme 就会启动，然后进行标签检查即可。如果 labelme 启动失败，命令行输入 `export QT_DEBUG_PLUGINS=1` 查看具体缺少什么库，安装一下即可。
+输入命令之后 labelme 就会启动，然后进行 label 检查即可。如果 labelme 启动失败，命令行输入 `export QT_DEBUG_PLUGINS=1` 查看具体缺少什么库，安装一下即可。
 
 **注意：标注的时候务必使用 `rectangle`，快捷键 `Ctrl + R`（如下图）**
 
@@ -173,20 +173,20 @@ labelme /data/cat/images --output /data/cat/labels --autosave --nodata
 <img src="https://user-images.githubusercontent.com/25873202/204076212-86dab4fa-13dd-42cd-93d8-46b04b864449.png" alt="rectangle"/>
 </div>
 
-## 2.2 仅人工打标签
+## 2.2 仅人工标注
 
-步骤和 【1.1.2 人工标注】 相同，只是这里是直接标注，没有预先生成的标签。
+步骤和 【1.1.2 人工标注】 相同，只是这里是直接标注，没有预先生成的 label 。
 
 ## 3. 使用脚本转换成 COCO 数据集格式
 
 ### 3.1 使用脚本转换
 
-MMYOLO 提供脚本将 labelme 的标签转换为 COCO 标签
+MMYOLO 提供脚本将 labelme 的 label 转换为 COCO label
 
 ```shell
 python tools/dataset_converters/labelme2coco.py --img-dir ${图片文件夹路径} \
-                                                --labels-dir ${标签文件夹位置} \
-                                                --out ${输出 COCO 标签json路径}
+                                                --labels-dir ${label 文件夹位置} \
+                                                --out ${输出 COCO label json路径}
                                                 [--class-id-txt]
 ```
 
@@ -206,22 +206,22 @@ python tools/dataset_converters/labelme2coco.py --img-dir ${图片文件夹路�
 
 ```
 
-### 3.2 检查转换的 COCO 标签
+### 3.2 检查转换的 COCO label
 
-使用下面的命令可以将 COCO 的标签在图片上进行显示，这一步可以验证刚刚转换是否有问题：
+使用下面的命令可以将 COCO 的 label 在图片上进行显示，这一步可以验证刚刚转换是否有问题：
 
 ```shell
 python tools/analysis_tools/browse_coco_json.py --img-dir ${图片文件夹路径} \
-                                                --ann-file ${COCO 标签json路径}
+                                                --ann-file ${COCO label json路径}
 ```
 
-关于 `tools/analysis_tools/browse_coco_json.py` 的更多用法请参考 [可视化 COCO 标签](useful_tools.md)。
+关于 `tools/analysis_tools/browse_coco_json.py` 的更多用法请参考 [可视化 COCO label](useful_tools.md)。
 
 ## 4. 数据集划分
 
 ```shell
-python tools/misc/coco_split.py --json ${COCO 标签 json 路径} \
-                                --out-dir ${划分标签 json 保存根路径} \
+python tools/misc/coco_split.py --json ${COCO label json 路径} \
+                                --out-dir ${划分 label json 保存根路径} \
                                 --ratios ${划分比例} \
                                 [--shuffle] \
                                 [--seed ${划分的随机种子}]
@@ -433,7 +433,7 @@ MMYOLO 提供两种部署方式：
 
 ### 8.2 使用 `projects/easydeploy` 进行部署
 
-Coming soon...
+详见[部署文档](https://github.com/PeterH0323/mmyolo/blob/6866dba7aaf70da2402b29f547b1d7388ecb90e1/projects/easydeploy/README_zh-CN.md)
 
 ## 附录
 
