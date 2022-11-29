@@ -422,7 +422,18 @@ python demo/image_demo.py /path/to/test/images \
 
 ## 8. 部署
 
-详见[部署文档](../../../projects/easydeploy/README_zh-CN.md)
+MMYOLO 提供两种部署方式：
+
+1. [MMDeploy](https://github.com/open-mmlab/mmdeploy) 框架进行部署
+2. 使用 `projects/easydeploy` 进行部署
+
+### 8.1 MMDeploy 框架进行部署
+
+详见[YOLOv5 部署全流程说明](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/yolov5_deployment.html)
+
+### 8.2 使用 `projects/easydeploy` 进行部署
+
+Coming soon...
 
 ## 附录
 
