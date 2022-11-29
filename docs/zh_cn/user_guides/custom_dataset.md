@@ -381,7 +381,7 @@ bbox_mAP_copypaste: 0.938 1.000 1.000 -1.000 -1.000 0.938
 Epoch(val) [200][58/58]  coco/bbox_mAP: 0.9380  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9380
 ```
 
-最佳精度 `bbox_mAP_epoch_266.pth`：
+最佳精度 `bbox_mAP_epoch_198.pth`：
 
 ```shell
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.942
