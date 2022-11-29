@@ -2,7 +2,7 @@
 
 本章节会介绍从 用户自定义图片数据集标注 到 最终进行训练和部署 的整体流程。流程步骤概览如下：
 
-1. 数据集准备
+1. 数据集准备：`tools/misc/download_dataset.py`
 2. 使用 [labelme](https://github.com/wkentaro/labelme) 进行数据集标注：`demo/image_demo.py` + labelme
 3. 使用脚本转换成 COCO 数据集格式：`tools/dataset_converters/labelme2coco.py`
 4. 数据集划分：`tools/misc/coco_split.py`
@@ -115,8 +115,8 @@ wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8x
 
 ```shell
 python demo/image_demo.py ./data/cat/images \
-                          configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
-                          work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+                          ./configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+                          ./work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
                           --out-dir ./data/cat/labels \
                           --class-name cat \
                           --to-labelme
