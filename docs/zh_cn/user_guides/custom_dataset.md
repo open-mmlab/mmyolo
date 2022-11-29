@@ -26,19 +26,21 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data --unz
 ```shell
 .
 └── $DATA_ROOT
-    ├── images
+    ├── images # 图片文件
     │    ├── image1.jpg
     │    ├── image2.png
     │    └── ...
-    ├── labels
+    ├── labels # labelme 标注文件
     │    ├── image1.json
     │    ├── image2.json
     │    └── ...
-    ├── annotations
+    ├── annotations # 数据集划分的 COCO 文件
     │    ├── trainval.json
     │    └── test.json
-    └── ...
+    └── class_with_id.txt # id + class_name 文件
 ```
+
+**Tips**：这个数据集可以直接训练，如果您想体验整个流程的话，可以将 `images` 文件夹**以外的**其余文件都删除。
 
 - 如你已经有数据，可以将其组成下面的结构
 
