@@ -415,7 +415,7 @@ python demo/image_demo.py /path/to/test/images \
 **Tips**：如果推理结果不理想，这里举例 2 种情况：
 
 1. 欠拟合：
-   需要先判断是不是训练 epoch 不够导致的欠拟合，如果是训练不够，则修改 config 文件里面的 `max_epochs`，重新进行训练。
+   需要先判断是不是训练 epoch 不够导致的欠拟合，如果是训练不够，则修改 config 文件里面的 `max_epochs` 和 `work_dir` 参数，或者根据上面的命名方式新建一个 config 文件，重新进行训练。
 
 2. 数据集优化：
    如果 epoch 加上去了还是不行，可以增加数据集数量，同时可以重新检查并优化数据集的标注，然后重新进行训练。
