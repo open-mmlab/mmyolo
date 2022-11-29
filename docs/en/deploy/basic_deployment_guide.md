@@ -2,10 +2,7 @@
 
 ## MMDeploy Introduce
 
-MMDeploy is [OpenMMLab](https://openmmlab.com/) model deployment toolkit,
-**providing a unified deployment experience for each algorithm library**.
-Based on MMDeploy, developers can easily generate SDKs for specified hardware from training repo,
-saving a lot of adaptation time.
+MMDeploy is [OpenMMLab](https://openmmlab.com/) model deployment toolkit, **providing a unified deployment experience for each algorithm library**. Based on MMDeploy, developers can easily generate SDKs for specified hardware from training repo, saving a lot of adaptation time.
 
 More information and instructions see https://github.com/open-mmlab/mmdeploy/blob/dev-1.x/docs/zh_cn/get_started.md
 
@@ -26,12 +23,9 @@ ncnn and other backend support will be supported later.
 
 All deployment configuration files are in directory [`configs/deploy`](configs/deploy).
 
-You can deploy static input or dynamic input models,
-so you need to modify the data processing flow related to this in the model configuration file.
+You can deploy static input or dynamic input models, so you need to modify the data processing flow related to this in the model configuration file.
 
-MMDeploy integrates post-processing into user-defined operators,
-so you can modify parameter `post_processing` in `codebase_config` to adjust post-processing strategies.
-The parameters are described as follows:
+MMDeploy integrates post-processing into user-defined operators, so you can modify parameter `post_processing` in `codebase_config` to adjust post-processing strategies. The parameters are described as follows:
 
 ```python
 codebase_config = dict(
@@ -61,8 +55,7 @@ codebase_config = dict(
 
 #### (1) Introduction to Model Configuration Files
 
-Taking the `YOLOv5` model configuration in MMYOLO as an example,
-the following is an introduction to the parameters of the model configuration file used for deployment.
+Taking the `YOLOv5` model configuration in MMYOLO as an example, the following is an introduction to the parameters of the model configuration file used for deployment.
 
 ```python
 _base_ = '../../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
