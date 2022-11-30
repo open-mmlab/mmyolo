@@ -20,7 +20,7 @@
 5. Add two examples of backbone replacement in `how-to.md` and update `plugin.md` (#291)
 6. Add `contributing.md` and `code_style.md` (#322)
 7. Add docs about how to use mim to run scripts across libraries (#321)
-8. Support YOLOv5 deployment at RV1126 device (#262)
+8. Support `YOLOv5` deployment at RV1126 device (#262)
 
 ### Bug Fixes
 
@@ -31,18 +31,18 @@
 5. Fix int8 deploy config (#315)
 6. Fix `make_stage_plugins` doc in `basebackbone` (#296)
 7. Enable switch to deploy when create pytorch model in deployment (#324)
+8. Fix some errors in `RTMDet` model graph (#317)
 
 ### Improvements
 
 1. Add option of json output in `test.py` (#316)
 2. Add area condition in `extract_subcoco.py` script (#286)
-3. Update `RTMDet` model graph (#317)
-4. Deployment doc translation (#289)
-5. Add YOLOv6 description overview doc (#252)
-6. Improve `config.md` (#297, #303)
-7. Add mosaic9 graph in docstring  (#307)
-8. Improve `browse_coco_json.py` script args (#309)
-9. Refactor some functions in `dataset_analysis.py` to be more general (#294)
+3. Deployment doc translation (#289)
+4. Add YOLOv6 description overview doc (#252)
+5. Improve `config.md` (#297, #303)
+   6Add mosaic9 graph in docstring  (#307)
+6. Improve `browse_coco_json.py` script args (#309)
+7. Refactor some functions in `dataset_analysis.py` to be more general (#294)
 
 #### Contributors
 

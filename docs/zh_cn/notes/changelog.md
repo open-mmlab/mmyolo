@@ -15,12 +15,12 @@
 
 1. `browse_dataset.py` 脚本支持可视化原图、数据增强后和中间结果功能 (#304)
 2. `image_demo.py` 新增预测结果保存为 labelme 格式功能 (#288, #314)
-3. 新增 labelme 格式转 COCO 格式脚本`labelme2coco` (#308, #313)
+3. 新增 labelme 格式转 COCO 格式脚本 `labelme2coco` (#308, #313)
 4. 新增 COCO 数据集切分脚本 `coco_split.py` (#311)
 5. `how-to.md` 文档中新增两个 backbone 替换案例以及更新 `plugin.md` (#291)
 6. 新增贡献者文档 `contributing.md` and 代码规范文档 `code_style.md` (#322)
 7. 新增如何通过 mim 跨库调用脚本文档 (#321)
-8. YOLOv5 支持 RV1126 设备部署 (#262)
+8. `YOLOv5` 支持 RV1126 设备部署 (#262)
 
 ### Bug 修复
 
@@ -31,22 +31,22 @@
 5. 修复 int8 部署配置错误 (#315)
 6. 修复 `basebackbone` 中 `make_stage_plugins` 注释 (#296)
 7. 部署模块支持切换为 deploy 模式功能 (#324)
+8. 修正 `RTMDet` 模型结构图中的错误 (#317)
 
 ### 完善
 
 1. `test.py` 中新增 json 格式导出选项 (#316)
-2. `extract_subcoco.py` 脚本中新增基于面积阈值过滤规则  (#286)
-3. 更新 `RTMDet` 模型结构图 (#317)
-4. 部署相关中文文档翻译为英文 (#289)
-5. 新增 `YOLOv6` 算法描述大纲文档  (#252)
-6. 完善 `config.md` (#297, #303)
-7. 完善 `mosiac9` 的 docstring (#307)
-8. 完善 `browse_coco_json.py` 脚本输入参数  (#309)
-9. 重构 `dataset_analysis.py` 中部分函数使其更加通用  (#294)
+2. `extract_subcoco.py` 脚本中新增基于面积阈值过滤规则 (#286)
+3. 部署相关中文文档翻译为英文 (#289)
+4. 新增 `YOLOv6` 算法描述大纲文档 (#252)
+5. 完善 `config.md` (#297, #303)
+6. 完善 `mosiac9` 的 docstring (#307)
+7. 完善 `browse_coco_json.py` 脚本输入参数 (#309)
+8. 重构 `dataset_analysis.py` 中部分函数使其更加通用 (#294)
 
 ### 视频
 
-1. 发布了[工程文件结构简析](https://www.bilibili.com/video/BV1LP4y117jS)
+1. 发布了 [工程文件结构简析](https://www.bilibili.com/video/BV1LP4y117jS)
 2. 发布了 [10分钟换遍主干网络文档](https://www.bilibili.com/video/BV1JG4y1d7GC)
 
 ### 贡献者
