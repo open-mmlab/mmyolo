@@ -7,7 +7,7 @@
 1. 支持 [YOLOv7](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov7) P5 和 P6 模型
 2. 支持 [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov6/README.md) 中的 ML 大模型
 3. 支持 [Grad-Based CAM 和 Grad-Free CAM](https://github.com/open-mmlab/mmyolo/blob/dev/demo/boxam_vis_demo.py)
-4. 基于 sahi 支持[大图推理](https://github.com/open-mmlab/mmyolo/blob/dev/demo/large_image_demo.py)
+4. 基于 sahi 支持 [大图推理](https://github.com/open-mmlab/mmyolo/blob/dev/demo/large_image_demo.py)
 5. projects 文件夹下新增 [easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README.md) 项目
 6. 新增 [自定义数据集教程](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/user_guides/custom_dataset.md)
 
