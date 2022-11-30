@@ -61,7 +61,7 @@ def split_coco_dataset(coco_json_path: str, save_dir: str, ratios: list,
     train_image_num = len(coco_image_ids) - val_image_num - test_image_num
     print('Split info: ====== \n'
           f'Train ratio = {ratio_train}, number = {train_image_num}\n'
-          f'Val ratio = {ratio_val}, number ={val_image_num}\n'
+          f'Val ratio = {ratio_val}, number = {val_image_num}\n'
           f'Test ratio = {ratio_test}, number = {test_image_num}')
 
     seed = int(seed)
