@@ -263,19 +263,19 @@ python tools/misc/coco_split.py --json ${COCO label json 路径} \
 - 这个 config 继承的是 `yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py`；
 - 训练的类以本教程提供的数据集中的类 `cat` 为例（如果是自己的数据集，可以自定义类型的总称）；
 - 本教程测试的显卡型号是 1 x 3080Ti 12G 显存，电脑内存 32G，可以训练 YOLOv5-s 最大批次是 `batch size = 32`（详细机器资料可见附录）；
-- 训练轮次是 `200 epoch`。
+- 训练轮次是 `100 epoch`。
 
-综上所述：可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py`，并在其里面添加以下内容：
+综上所述：可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`，并在其里面添加以下内容：
 
 ```python
 _base_ = '../yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 
-max_epochs = 200  # 训练的最大 epoch
+max_epochs = 100  # 训练的最大 epoch
 data_root = './data/cat/'  # 数据集目录的绝对路径
 
 # 结果保存的路径，可以省略，省略保存的文件名位于 work_dirs 下 config 同名的文件夹中
 # 如果同个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
-work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat'
+work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat'
 
 # checkpoint 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
 load_from = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
@@ -357,10 +357,10 @@ default_hooks = dict(
 使用下面命令进行启动训练（大约训练 8 个小时）：
 
 ```shell
-python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py
+python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py
 ```
 
-下面是 `1 x 3080Ti`、`batch size = 32`，训练 `200 epoch` 最佳精度权重 `work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_190.pth` 得出来的精度（详细机器资料可见附录）：
+下面是 `1 x 3080Ti`、`batch size = 32`，训练 `100 epoch` 最佳精度权重 `work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_190.pth` 得出来的精度（详细机器资料可见附录）：
 
 ```shell
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.936
@@ -382,12 +382,12 @@ Epoch(val) [190][58/58]  coco/bbox_mAP: 0.9360  coco/bbox_mAP_50: 1.0000  coco/b
 
 ## 7. 推理
 
-使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_190.pth`，请用户自行修改为自己训练的最佳模型路径。
+使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_190.pth`，请用户自行修改为自己训练的最佳模型路径。
 
 ```shell
 python demo/image_demo.py ./data/cat/images \
-                          ./configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py \
-                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_190.pth \
+                          ./configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_190.pth \
                           --out-dir ./data/cat/pred_images
 ```
 
