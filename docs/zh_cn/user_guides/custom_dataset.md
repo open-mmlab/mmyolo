@@ -355,39 +355,39 @@ default_hooks = dict(
 python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py
 ```
 
-下面是 `1 x 3080Ti`、`batch size = 32`，训练 `100 epoch` 最佳精度权重 `work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_190.pth` 得出来的精度（详细机器资料可见附录）：
+下面是 `1 x 3080Ti`、`batch size = 32`，训练 `100 epoch` 最佳精度权重 `work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_100.pth` 得出来的精度（详细机器资料可见附录）：
 
 ```shell
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.936
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.950
  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 1.000
  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.936
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.859
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.952
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.952
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.950
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.869
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.964
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.964
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.952
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.964
 
-bbox_mAP_copypaste: 0.936 1.000 1.000 -1.000 -1.000 0.936
-Epoch(val) [190][58/58]  coco/bbox_mAP: 0.9360  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9360
+bbox_mAP_copypaste: 0.950 1.000 1.000 -1.000 -1.000 0.950
+Epoch(val) [100][116/116]  coco/bbox_mAP: 0.9500  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9500
 ```
 
 ## 7. 推理
 
-使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_190.pth`，请用户自行修改为自己训练的最佳模型路径。
+使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_100.pth`，请用户自行修改为自己训练的最佳模型路径。
 
 ```shell
 python demo/image_demo.py ./data/cat/images \
                           ./configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
-                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_190.pth \
+                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_100.pth \
                           --out-dir ./data/cat/pred_images
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/25873202/204729439-10033567-e532-4b1b-a096-0968f18de84f.jpg" alt="推理图片"/>
+<img src="https://user-images.githubusercontent.com/25873202/204773727-5d3cbbad-1265-45a0-822a-887713555049.jpg" alt="推理图片"/>
 </div>
 
 **Tips**：如果推理结果不理想，这里举例 2 种情况：
