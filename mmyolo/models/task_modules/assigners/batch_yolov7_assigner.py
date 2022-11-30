@@ -49,8 +49,13 @@ class BatchYOLOv7Assigner(nn.Module):
         self.cls_weight = cls_weight
 
     @torch.no_grad()
-    def forward(self, pred_results, batch_targets_normed, batch_input_shape,
-                priors_base_sizes, grid_offset) -> dict:
+    def forward(self,
+                pred_results,
+                batch_targets_normed,
+                batch_input_shape,
+                priors_base_sizes,
+                grid_offset,
+                near_neighbor_thr=0.5) -> dict:
         # (num_base_priors, num_batch_gt, 7)
         # 7 is mean (batch_idx, cls_id, x_norm, y_norm,
         # w_norm, h_norm, prior_idx)
@@ -65,8 +70,16 @@ class BatchYOLOv7Assigner(nn.Module):
                 mlvl_priors=[] * num_levels,
                 mlvl_targets_normed=[] * num_levels)
 
+        # if near_neighbor_thr = 0.5 are mean the nearest
+        # 3 neighbors are also considered positive samples.
+        # if near_neighbor_thr = 1.0 are mean the nearest
+        # 5 neighbors are also considered positive samples.
         mlvl_positive_infos, mlvl_priors = self.yolov5_assigner(
-            pred_results, batch_targets_normed, priors_base_sizes, grid_offset)
+            pred_results,
+            batch_targets_normed,
+            priors_base_sizes,
+            grid_offset,
+            near_neighbor_thr=near_neighbor_thr)
 
         mlvl_positive_infos, mlvl_priors, \
             mlvl_targets_normed = self.simota_assigner(
@@ -85,8 +98,12 @@ class BatchYOLOv7Assigner(nn.Module):
             mlvl_priors=mlvl_priors,
             mlvl_targets_normed=mlvl_targets_normed)
 
-    def yolov5_assigner(self, pred_results, batch_targets_normed,
-                        priors_base_sizes, grid_offset):
+    def yolov5_assigner(self,
+                        pred_results,
+                        batch_targets_normed,
+                        priors_base_sizes,
+                        grid_offset,
+                        near_neighbor_thr=0.5):
         num_batch_gts = batch_targets_normed.shape[1]
         assert num_batch_gts > 0
 
@@ -121,9 +138,10 @@ class BatchYOLOv7Assigner(nn.Module):
             # Positive samples with additional neighbors
             batch_targets_cxcy = batch_targets_scaled[:, 2:4]
             grid_xy = scaled_factor[[2, 3]] - batch_targets_cxcy
-            left, up = ((batch_targets_cxcy % 1 < 0.5) &
+            left, up = ((batch_targets_cxcy % 1 < near_neighbor_thr) &
                         (batch_targets_cxcy > 1)).T
-            right, bottom = ((grid_xy % 1 < 0.5) & (grid_xy > 1)).T
+            right, bottom = ((grid_xy % 1 < near_neighbor_thr) &
+                             (grid_xy > 1)).T
             offset_inds = torch.stack(
                 (torch.ones_like(left), left, up, right, bottom))
             batch_targets_scaled = batch_targets_scaled.repeat(
@@ -138,6 +156,7 @@ class BatchYOLOv7Assigner(nn.Module):
             # mlvl_positive_info: (num_matched_target, 4)
             # 4 is mean (batch_idx, prior_idx, x_scaled, y_scaled)
             mlvl_positive_info = batch_targets_scaled[:, [0, 6, 2, 3]]
+            retained_offsets = retained_offsets * near_neighbor_thr
             mlvl_positive_info[:,
                                2:] = mlvl_positive_info[:,
                                                         2:] - retained_offsets
