@@ -303,6 +303,8 @@ train_cfg = dict(
 model = dict(
     bbox_head=dict(
         head_module=dict(num_classes=num_classes),
+
+        # loss_cls 会根据 class 的数量动态调整，但是单个 class 的时候，loss_cls 恒为 0
         loss_cls=dict(loss_weight=0.5 * (num_classes / 80 * 3 / _base_.num_det_layers))
     )
 )
