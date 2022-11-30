@@ -349,7 +349,7 @@ default_hooks = dict(
 
 ## 6. 训练
 
-使用下面命令进行启动训练（大约训练 8 个小时）：
+使用下面命令进行启动训练（训练大约需要 5 个小时）：
 
 ```shell
 python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py
