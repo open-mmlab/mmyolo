@@ -371,7 +371,7 @@ MMDetection 中的 `tools/analysis_tools/analyze_logs.py` 可利用指定的训�
 
 ```shell
 mim run mmdet analyze_logs plot_curve \
-    ${LOG} \                                     # 配置文件路径
+    ${LOG} \                                     # 日志文件路径
     [--keys ${KEYS}] \                           # 需要绘制的指标，默认为 'bbox_mAP'
     [--start-epoch ${START_EPOCH}]               # 起始的 epoch，默认为 1
     [--eval-interval ${EVALUATION_INTERVAL}] \   # 评估间隔，默认为 1
@@ -425,7 +425,7 @@ mim run mmdet analyze_logs plot_curve \
 
 ```shell
 mim run mmdet analyze_logs cal_train_time \
-    ${LOG} \                                # 配置文件路径
+    ${LOG} \                                # 日志文件路径
     [--include-outliers]                    # 计算时包含每个 epoch 的第一个数据
 ```
 
@@ -453,7 +453,7 @@ MMDetection 中的 `tools/misc/print_config.py` 脚本可将所有配置继承�
 ```shell
 mim run mmdet print_config \
     ${CONFIG} \                              # 需要打印的配置文件路径
-    [--save-path] \                          # 保存文件路径
+    [--save-path] \                          # 保存文件路径，必须以 .py, .json 或者 .yml 结尾
     [--cfg-options ${OPTIONS [OPTIONS...]}]  # 通过命令行参数修改配置文件
 ```
 
@@ -462,7 +462,7 @@ mim run mmdet print_config \
 ```shell
 mim run mmdet print_config \
     configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
-    --save-path ./work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py
+    --save-path ./work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon_whole.py
 ```
 
-运行以上命令，会将 `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` 继承关系展开后的配置文件保存到 `./work_dirs` 文件夹内的 `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` 文件中。
+运行以上命令，会将 `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` 继承关系展开后的配置文件保存到 `./work_dirs` 文件夹内的 `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon_whole.py` 文件中。
