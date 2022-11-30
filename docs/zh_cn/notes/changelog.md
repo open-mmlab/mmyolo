@@ -9,14 +9,18 @@
 3. 支持 [Grad-Based CAM 和 Grad-Free CAM](https://github.com/open-mmlab/mmyolo/blob/dev/demo/boxam_vis_demo.py)
 4. 基于 sahi 支持[大图推理](https://github.com/open-mmlab/mmyolo/blob/dev/demo/large_image_demo.py)
 5. projects 文件夹下新增 [easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README.md) 项目
+6. 新增[自定义数据集教程](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/user_guides/custom_dataset.md)
 
 ### 新特性
 
-1. `image_demo.py` 新增预测结果保存为 labelme 格式功能 (#288, #314)
-2. 新增 labelme 格式转 COCO 格式脚本`labelme2coco` (#308, #313)
-3. 新增 COCO 数据集切分脚本 `coco_split.py` (#311)
-4. `how-to.md` 文档中新增两个 backbone 替换案例以及更新 `plugin.md` (#291)
-5. 新增贡献者文档 `contributing.md` and 代码规范文档 `code_style.md` (#322)
+1. `browse_dataset.py` 脚本支持可视化原图、数据增强后和中间结果功能 (#304)
+2. `image_demo.py` 新增预测结果保存为 labelme 格式功能 (#288, #314)
+3. 新增 labelme 格式转 COCO 格式脚本`labelme2coco` (#308, #313)
+4. 新增 COCO 数据集切分脚本 `coco_split.py` (#311)
+5. `how-to.md` 文档中新增两个 backbone 替换案例以及更新 `plugin.md` (#291)
+6. 新增贡献者文档 `contributing.md` and 代码规范文档 `code_style.md` (#322)
+7. 新增如何通过 mim 跨库调用脚本文档 (#321)
+8. YOLOv5 支持 RV1126 设备部署 (#262)
 
 ### Bug 修复
 
@@ -26,6 +30,7 @@
 4. 修复 `RTMDet` 部署没有导包的错误 (#287)
 5. 修复 int8 部署配置错误 (#315)
 6. 修复 `basebackbone` 中 `make_stage_plugins` 注释 (#296)
+7. 部署模块支持切换为 deploy 模式功能 (#324)
 
 ### 完善
 
@@ -46,9 +51,9 @@
 
 ### 贡献者
 
-总共 12 位开发者参与了本次版本
+总共 14 位开发者参与了本次版本
 
-谢谢 @fcakyon, @MambaWong, @imAzhou, @triple-Mu, @RangeKing, @PeterH0323, @xin-li-67, @kitecats, @hanrui1sensetime,  @Zheng-LinXiao, @hhaAndroid, @wanghonglie
+谢谢 @fcakyon, @matrixgame2018, @MambaWong, @imAzhou, @triple-Mu, @RangeKing, @PeterH0323, @xin-li-67, @kitecats, @hanrui1sensetime, @AllentDan, @Zheng-LinXiao, @hhaAndroid, @wanghonglie
 
 ## v0.1.3（10/11/2022)
 

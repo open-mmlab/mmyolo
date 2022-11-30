@@ -9,14 +9,18 @@
 3. Support [Grad-Based CAM and Grad-Free CAM](https://github.com/open-mmlab/mmyolo/blob/dev/demo/boxam_vis_demo.py)
 4. Support [large image inference](https://github.com/open-mmlab/mmyolo/blob/dev/demo/large_image_demo.py) based on sahi
 5. Add [easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README.md) project under the projects folder
+6. Add [custom dataset guide](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/user_guides/custom_dataset.md)
 
 ### New Features
 
-1. Add flag to output labelme label file in `image_demo.py` (#288, #314)
-2. Add `labelme2coco` script (#308, #313)
-3. Add split COCO dataset script (#311)
-4. Add two examples of backbone replacement in `how-to.md` and update `plugin.md` (#291)
-5. Add `contributing.md` and `code_style.md` (#322)
+1. `browse_dataset.py` script supports visualization of original image, data augmentation and intermediate results (#304)
+2. Add flag to output labelme label file in `image_demo.py` (#288, #314)
+3. Add `labelme2coco` script (#308, #313)
+4. Add split COCO dataset script (#311)
+5. Add two examples of backbone replacement in `how-to.md` and update `plugin.md` (#291)
+6. Add `contributing.md` and `code_style.md` (#322)
+7. Add docs about how to use mim to run scripts across libraries (#321)
+8. Support YOLOv5 deployment at RV1126 device (#262)
 
 ### Bug Fixes
 
@@ -26,6 +30,7 @@
 4. Fix `RTMDet` deploy error (#287)
 5. Fix int8 deploy config (#315)
 6. Fix `make_stage_plugins` doc in `basebackbone` (#296)
+7. Enable switch to deploy when create pytorch model in deployment (#324)
 
 ### Improvements
 
@@ -41,9 +46,9 @@
 
 #### Contributors
 
-A total of 12 developers contributed to this release.
+A total of 14 developers contributed to this release.
 
-Thank  @fcakyon, @MambaWong, @imAzhou, @triple-Mu, @RangeKing, @PeterH0323, @xin-li-67, @kitecats, @hanrui1sensetime,  @Zheng-LinXiao, @hhaAndroid, @wanghonglie
+Thank  @fcakyon, @matrixgame2018, @MambaWong, @imAzhou, @triple-Mu, @RangeKing, @PeterH0323, @xin-li-67, @kitecats, @hanrui1sensetime, @AllentDan, @Zheng-LinXiao, @hhaAndroid, @wanghonglie
 
 ## v0.1.3（10/11/2022)
 

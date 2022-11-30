@@ -71,13 +71,14 @@ P6 模型图详见 [model_design.md](docs/zh_CN/algorithm_descriptions/model_des
 
 ## 最新进展
 
-💎 **v0.2.0** 版本已经在 2022.11.1 发布：
+💎 **v0.2.0** 版本已经在 2022.12.1 发布：
 
 1. 支持 [YOLOv7](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov7) P5 和 P6 模型
 2. 支持 [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov6/README.md) 中的 ML 大模型
 3. 支持 [Grad-Based CAM 和 Grad-Free CAM](https://github.com/open-mmlab/mmyolo/blob/dev/demo/boxam_vis_demo.py)
 4. 基于 sahi 支持[大图推理](https://github.com/open-mmlab/mmyolo/blob/dev/demo/large_image_demo.py)
 5. projects 文件夹下新增 [easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README.md) 项目
+6. 新增[自定义数据集教程](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/user_guides/custom_dataset.md)
 
 同时我们也推出了解读视频：
 
@@ -128,6 +129,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
   - [实用工具](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#实用工具)
     - [可视化教程](docs/zh_cn/user_guides/visualization.md)
     - [实用工具](docs/zh_cn/user_guides/useful_tools.md)
+    - [自定义数据集](docs/zh_cn/user_guides/custom_dataset.md)
 
 - 算法描述
 
@@ -164,8 +166,8 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [x] [YOLOX](configs/yolox)
 - [x] [RTMDet](configs/rtmdet)
 - [x] [YOLOv6](configs/yolov6)
+- [x] [YOLOv7](configs/yolov7)
 - [ ] [PPYOLOE](configs/ppyoloe)(仅推理)
-- [ ] [YOLOv7](configs/yolov7)(仅推理)
 
 </details>
 

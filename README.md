@@ -78,6 +78,7 @@ And the figure of P6 model is in [model_design.md](docs/en/algorithm_description
 3. Support [Grad-Based CAM and Grad-Free CAM](https://github.com/open-mmlab/mmyolo/blob/dev/demo/boxam_vis_demo.py)
 4. Support [large image inference](https://github.com/open-mmlab/mmyolo/blob/dev/demo/large_image_demo.py) based on sahi
 5. Add [easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README.md) project under the projects folder
+6. Add [custom dataset guide](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/user_guides/custom_dataset.md)
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
@@ -117,6 +118,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
   - [Useful Tools](https://mmdetection.readthedocs.io/en/latest/user_guides/index.html#useful-tools)
     - [Visualization](docs/en/user_guides/visualization.md)
     - [Useful Tools](docs/en/user_guides/useful_tools.md)
+    - [Custom Dataset](docs/en/user_guides/custom_dataset.md)
 
 - Algorithm description
 
@@ -149,8 +151,8 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 - [x] [YOLOX](configs/yolox)
 - [x] [RTMDet](configs/rtmdet)
 - [x] [YOLOv6](configs/yolov6)
+- [x] [YOLOv7](configs/yolov7)
 - [ ] [PPYOLOE](configs/ppyoloe)(Inference only)
-- [ ] [YOLOv7](configs/yolov7)(Inference only)
 
 </details>
 
