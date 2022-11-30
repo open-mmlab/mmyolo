@@ -273,17 +273,16 @@ _base_ = '../yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 max_epochs = 200  # 训练的最大 epoch
 data_root = './data/cat/'  # 数据集目录的绝对路径
 
-# 结果保存的路径，如果同个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
+# 结果保存的路径，可以省略，省略保存的文件名位于 work_dirs 下 config 同名的文件夹中
+# 如果同个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
 work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat'
 
 # checkpoint 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
-checkpoint = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
+load_from = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 
-resume = False  # 继续训练的时候使用
-
-train_batch_size_per_gpu = 32  # 根据自己的GPU情况，修改 batch size，YOLOv5-s 默认为 16 * 8
+train_batch_size_per_gpu = 32  # 根据自己的GPU情况，修改 batch size，YOLOv5-s 默认为 8卡 * 16bs
 train_num_workers = 4  # 推荐使用 train_num_workers = nGPU x 4
-val_batch_size_per_gpu = 2  # val 时候的 batch size ，根据实际调整即可
+val_batch_size_per_gpu = 1  # val 时候的 batch size ，根据实际调整即可
 val_num_workers = 2
 
 save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
@@ -293,19 +292,22 @@ base_lr = _base_.base_lr / 4
 
 num_classes = 1
 metainfo = dict(  # 根据 class_with_id.txt 类别信息，设置 metainfo
-    CLASSES=('cat'),
+    CLASSES=('cat',),
     PALETTE=[(220, 20, 60)]  # 画图时候的颜色，随便设置即可
 )
 
 train_cfg = dict(
     max_epochs=max_epochs,
-    val_begin=10,  # 第几个epoch后验证
+    val_begin=10,  # 第几个epoch后验证，这里设置 10 是因为前 10 个 epoch 精度不高，测试意义不大，故跳过
     val_interval=save_epoch_intervals  # 每 val_interval 轮迭代进行一次测试评估
 )
 
 model = dict(
-    backbone=dict(init_cfg=dict(type='Pretrained', checkpoint=checkpoint)),
-    bbox_head=dict(head_module=dict(num_classes=num_classes)))
+    bbox_head=dict(
+        head_module=dict(num_classes=num_classes),
+        loss_cls=dict(loss_weight=0.5 * (num_classes / 80 * 3 / _base_.num_det_layers))
+    )
+)
 
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
@@ -352,39 +354,19 @@ default_hooks = dict(
     checkpoint=dict(type='CheckpointHook', interval=save_epoch_intervals,
                     max_keep_ckpts=5, save_best='auto'),
     # logger 输出的间隔
-    logger=dict(type='LoggerHook', interval=5)
+    logger=dict(type='LoggerHook', interval=10)
 )
 ```
 
 ## 6. 训练
 
-使用下面命令进行启动训练：
+使用下面命令进行启动训练（大约训练 8 个小时）：
 
 ```shell
 python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py
 ```
 
-下面是 `1 x 3080Ti`、`batch size = 32`，训练 `200 epoch` 得出来的精度（详细机器资料可见附录）：
-
-```shell
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.936
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 1.000
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 1.000
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.936
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.856
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.953
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.953
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.953
-
-bbox_mAP_copypaste: 0.936 1.000 1.000 -1.000 -1.000 0.936
-Epoch(val) [200][58/58]  coco/bbox_mAP: 0.9360  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9360
-```
-
-最佳精度 `bbox_mAP_epoch_190.pth`：
+下面是 `1 x 3080Ti`、`batch size = 32`，训练 `200 epoch` 最佳精度权重 `work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_190.pth` 得出来的精度（详细机器资料可见附录）：
 
 ```shell
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.936
@@ -406,14 +388,18 @@ Epoch(val) [190][58/58]  coco/bbox_mAP: 0.9360  coco/bbox_mAP_50: 1.0000  coco/b
 
 ## 7. 推理
 
-使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_198.pth`，请用户自行修改为自己训练的最佳模型路径。
+使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_190.pth`，请用户自行修改为自己训练的最佳模型路径。
 
 ```shell
 python demo/image_demo.py ./data/cat/images \
                           ./configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-200e_cat.py \
-                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_198.pth \
+                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-200e_cat/best_coco/bbox_mAP_epoch_190.pth \
                           --out-dir ./data/cat/pred_images
 ```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/204729439-10033567-e532-4b1b-a096-0968f18de84f.jpg" alt="推理图片"/>
+</div>
 
 **Tips**：如果推理结果不理想，这里举例 2 种情况：
 
@@ -436,7 +422,9 @@ MMYOLO 提供两种部署方式：
 
 ### 8.2 使用 `projects/easydeploy` 进行部署
 
-详见[部署文档](https://github.com/PeterH0323/mmyolo/blob/6866dba7aaf70da2402b29f547b1d7388ecb90e1/projects/easydeploy/README_zh-CN.md)
+详见[部署文档](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README_zh-CN.md)
+
+TODO: 下个版本会完善这个部分...
 
 ## 附录
 
