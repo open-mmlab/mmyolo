@@ -256,7 +256,7 @@ python tools/misc/coco_split.py --json ${COCO label json 路径} \
     └── ...
 ```
 
-因为是我们自定义的数据集，所以我们需要自己重写 config 中的部分信息，我们在 configs 目录下新建一个新的目录 `custom_dataset`，同时新建 config 文件。
+因为是我们自定义的数据集，所以我们需要自己新建一个 config 并加入需要修改的部分信息，在 configs 目录下新建一个新的目录 `custom_dataset`，同时新建 config 文件。
 
 关于新的 config 的命名：
 
@@ -274,10 +274,10 @@ max_epochs = 100  # 训练的最大 epoch
 data_root = './data/cat/'  # 数据集目录的绝对路径
 
 # 结果保存的路径，可以省略，省略保存的文件名位于 work_dirs 下 config 同名的文件夹中
-# 如果同个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
+# 如果某个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
 work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat'
 
-# checkpoint 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
+# load_from 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
 load_from = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 
 train_batch_size_per_gpu = 32  # 根据自己的GPU情况，修改 batch size，YOLOv5-s 默认为 8卡 * 16bs
