@@ -256,7 +256,7 @@ python tools/misc/coco_split.py --json ${COCO label json 路径} \
     └── ...
 ```
 
-因为是我们自定义的数据集，所以我们需要自己新建一个 config 并加入需要修改的部分信息，在 configs 目录下新建一个新的目录 `custom_dataset`，同时新建 config 文件。
+因为是我们自定义的数据集，所以我们需要自己新建一个 config 并加入需要修改的部分信息。
 
 关于新的 config 的命名：
 
@@ -265,7 +265,9 @@ python tools/misc/coco_split.py --json ${COCO label json 路径} \
 - 本教程测试的显卡型号是 1 x 3080Ti 12G 显存，电脑内存 32G，可以训练 YOLOv5-s 最大批次是 `batch size = 32`（详细机器资料可见附录）；
 - 训练轮次是 `100 epoch`。
 
-综上所述：可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`，并在其里面添加以下内容：
+综上所述：可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`。
+
+我们可以在 configs 目录下新建一个新的目录 `custom_dataset`，同时在里面新建该 config 文件，并添加以下内容：
 
 ```python
 _base_ = '../yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
@@ -304,7 +306,7 @@ model = dict(
     bbox_head=dict(
         head_module=dict(num_classes=num_classes),
 
-        # loss_cls 会根据 class 的数量动态调整，但是单个 class 的时候，loss_cls 恒为 0
+        # loss_cls 会根据 num_classes 动态调整，但是 num_classes = 1 的时候，loss_cls 恒为 0
         loss_cls=dict(loss_weight=0.5 * (num_classes / 80 * 3 / _base_.num_det_layers))
     )
 )
