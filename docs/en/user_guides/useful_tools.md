@@ -5,10 +5,8 @@ We provide lots of useful tools under the `tools/` directory. In addition, you c
 Take MMDetection as an example. If you want to use [print_config.py](https://github.com/open-mmlab/mmdetection/blob/3.x/tools/misc/print_config.py), you can directly use the following commands without copying the source code to the MMYOLO library.
 
 ```shell
-mim run mmdet print_config [CONFIG]
+mim run mmdet print_config ${CONFIG}
 ```
-
-**Note**: The MMDetection library must be installed through the MIM before the above command can succeed.
 
 ## Visualization
 

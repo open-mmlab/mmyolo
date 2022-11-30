@@ -5,10 +5,8 @@
 以 MMDetection 为例，如果想利用 [print_config.py](https://github.com/open-mmlab/mmdetection/blob/3.x/tools/misc/print_config.py)，你可以直接采用如下命令，而无需复制源码到 MMYOLO 库中。
 
 ```shell
-mim run mmdet print_config [CONFIG]
+mim run mmdet print_config ${CONFIG}
 ```
-
-**注意**：上述命令能够成功的前提是 MMDetection 库必须通过 MIM 来安装。
 
 ## 可视化
 
