@@ -212,8 +212,8 @@ def main():
     progress_bar = ProgressBar(display_number)
     for i, item in zip(range(display_number), dataset):
         image_i = []
-        for k, datasample in enumerate(
-                [result['dataset_sample'] for result in intermediate_imgs]):
+        result_i = [result['dataset_sample'] for result in intermediate_imgs]
+        for k, datasample in enumerate(result_i):
             image = datasample.img
             gt_instances = datasample.gt_instances
             image = image[..., [2, 1, 0]]  # bgr to rgb
