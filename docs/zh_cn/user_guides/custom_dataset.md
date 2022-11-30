@@ -313,7 +313,7 @@ train_dataloader = dict(
     dataset=dict(
         _delete_=True,
         type='RepeatDataset',
-        times=10,  # 数据量太少的话，可以使用 RepeatDataset 来增量数据，这里设置 10 是 10 倍
+        times=5,  # 数据量太少的话，可以使用 RepeatDataset 来增量数据，这里设置 5 是 5 倍
         dataset=dict(
             type=_base_.dataset_type,
             data_root=data_root,
@@ -349,7 +349,7 @@ default_hooks = dict(
 
 ## 6. 训练
 
-使用下面命令进行启动训练（训练大约需要 5 个小时）：
+使用下面命令进行启动训练（训练大约需要 2.5 个小时）：
 
 ```shell
 python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py
