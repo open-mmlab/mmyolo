@@ -282,8 +282,6 @@ load_from = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_08470
 
 train_batch_size_per_gpu = 32  # 根据自己的GPU情况，修改 batch size，YOLOv5-s 默认为 8卡 * 16bs
 train_num_workers = 4  # 推荐使用 train_num_workers = nGPU x 4
-val_batch_size_per_gpu = 1  # val 时候的 batch size ，根据实际调整即可
-val_num_workers = 2
 
 save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
 
@@ -327,8 +325,6 @@ train_dataloader = dict(
     ))
 
 val_dataloader = dict(
-    batch_size=val_batch_size_per_gpu,
-    num_workers=val_num_workers,
     dataset=dict(
         metainfo=metainfo,
         data_root=data_root,
@@ -336,8 +332,6 @@ val_dataloader = dict(
         data_prefix=dict(img='images/')))
 
 test_dataloader = dict(
-    batch_size=val_batch_size_per_gpu,
-    num_workers=val_num_workers,
     dataset=dict(
         metainfo=metainfo,
         data_root=data_root,
