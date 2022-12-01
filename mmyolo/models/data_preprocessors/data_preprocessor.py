@@ -231,8 +231,11 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
             barrier()
             broadcast(tensor, 0)
         input_size = (tensor[0].item(), tensor[1].item())
-        if self.random_interp:
+        if self.random_interp and self.broadcast_flag:
             interp_mode = self.interp_mode_list[tensor[2].item()]
+        elif self.random_interp:
+            interp_ind = random.randint(0, len(self.interp_mode_list) - 1)
+            interp_mode = self.interp_mode_list[interp_ind]
         else:
             interp_mode = None
         return input_size, interp_mode
