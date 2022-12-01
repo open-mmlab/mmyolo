@@ -10,7 +10,7 @@ from mmengine.utils import ProgressBar
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules, switch_to_deploy
 from mmyolo.utils.labelme_utils import LabelmeFormat
-from mmyolo.utils.misc import get_file_list
+from mmyolo.utils.misc import get_file_list, show_data_classes
 
 
 def parse_args():
@@ -31,6 +31,11 @@ def parse_args():
         help='Switch model to deployment mode')
     parser.add_argument(
         '--score-thr', type=float, default=0.3, help='Bbox score threshold')
+    parser.add_argument(
+        '--class-name',
+        nargs='+',
+        type=str,
+        help='Only Save those classes if set')
     parser.add_argument(
         '--to-labelme',
         action='store_true',
@@ -65,8 +70,21 @@ def main():
     # get file list
     files, source_type = get_file_list(args.img)
 
+    # get model class name
+    dataset_classes = model.dataset_meta.get('CLASSES')
+
     # ready for labelme format if it is needed
-    to_label_format = LabelmeFormat(classes=model.dataset_meta.get('CLASSES'))
+    to_label_format = LabelmeFormat(classes=dataset_classes)
+
+    # check class name
+    if args.class_name is not None:
+        for class_name in args.class_name:
+            if class_name in dataset_classes:
+                continue
+            show_data_classes(dataset_classes)
+            raise RuntimeError(
+                'Expected args.class_name to be one of the list, '
+                f'but got "{class_name}"')
 
     # start detector inference
     progress_bar = ProgressBar(len(files))
@@ -92,7 +110,8 @@ def main():
             # save result to labelme files
             out_file = out_file.replace(
                 os.path.splitext(out_file)[-1], '.json')
-            to_label_format(result, out_file, pred_instances)
+            to_label_format(pred_instances, result.metainfo, out_file,
+                            args.class_name)
             continue
 
         visualizer.add_datasample(

@@ -311,3 +311,155 @@ model = dict(
             widen_factor=widen_factor))
 )
 ```
+
+## Output prediction results
+
+If you want to save the prediction results as a specific file for offline evaluation, MMYOLO currently supports both json and pkl formats.
+
+```{note}
+The json file only save `image_id`, `bbox`, `score` and `category_id`. The json file can be read using the json library.
+The pkl file holds more content than the json file, and also holds information such as the file name and size of the predicted image; the pkl file can be read using the pickle library. The pkl file can be read using the pickle library.
+```
+
+### Output into json file
+
+If you want to output the prediction results as a json file, the command is as follows.
+
+```shell
+python tools/test.py {path_to_config} {path_to_checkpoint} --json-prefix {json_prefix}
+```
+
+The argument after `--json-prefix` should be a filename prefix (no need to enter the `.json` suffix) and can also contain a path. For a concrete example:
+
+```shell
+python tools/test.py configs\yolov5\yolov5_s-v61_syncbn_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --json-prefix work_dirs/demo/json_demo
+```
+
+Running the above command will output the `json_demo.bbox.json` file in the `work_dirs/demo` folder.
+
+### Output into pkl file
+
+If you want to output the prediction results as a pkl file, the command is as follows.
+
+```shell
+python tools/test.py {path_to_config} {path_to_checkpoint} --out {path_to_output_file}
+```
+
+The argument after `--out` should be a full filename (**must be** with a `.pkl` or `.pickle` suffix) and can also contain a path. For a concrete example:
+
+```shell
+python tools/test.py configs\yolov5\yolov5_s-v61_syncbn_8xb16-300e_coco.py yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth --out work_dirs/demo/pkl_demo.pkl
+```
+
+Running the above command will output the `pkl_demo.pkl` file in the `work_dirs/demo` folder.
+
+## Use mim to run scripts from other OpenMMLab repositories
+
+```{note}
+1. All script calls across libraries are currently not supported and are being fixed. More examples will be added to this document when the fix is complete. 2.
+2. mAP plotting and average training speed calculation are fixed in the MMDetection dev-3.x branch, which currently needs to be installed via the source code to be run successfully.
+```
+
+## Log Analysis
+
+#### Curve plotting
+
+`tools/analysis_tools/analyze_logs.py` plots loss/mAP curves given a training log file. Run `pip install seaborn` first to install the dependency.
+
+```shell
+mim run mmdet analyze_logs plot_curve \
+    ${LOG} \                                     # path of train log in json format
+    [--keys ${KEYS}] \                           # the metric that you want to plot, default to 'bbox_mAP'
+    [--start-epoch ${START_EPOCH}]               # the epoch that you want to start, default to 1
+    [--eval-interval ${EVALUATION_INTERVAL}] \   # the evaluation interval when training, default to 1
+    [--title ${TITLE}] \                         # title of figure
+    [--legend ${LEGEND}] \                       # legend of each plot, default to None
+    [--backend ${BACKEND}] \                     # backend of plt, default to None
+    [--style ${STYLE}] \                         # style of plt, default to 'dark'
+    [--out ${OUT_FILE}]                          # the path of output file
+# [] stands for optional parameters, when actually entering the command line, you do not need to enter []
+```
+
+Examples:
+
+- Plot the classification loss of some run.
+
+  ```shell
+  mim run mmdet analyze_logs plot_curve \
+      yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700.log.json \
+      --keys loss_cls \
+      --legend loss_cls
+  ```
+
+  <img src="https://user-images.githubusercontent.com/27466624/204747359-754555df-1f97-4d5c-87ca-9ad3a0badcce.png" width="600"/>
+
+- Plot the classification and regression loss of some run, and save the figure to a pdf.
+
+  ```shell
+  mim run mmdet analyze_logs plot_curve \
+      yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700.log.json \
+      --keys loss_cls loss_bbox \
+      --legend loss_cls loss_bbox \
+      --out losses_yolov5_s.pdf
+  ```
+
+  <img src="https://user-images.githubusercontent.com/27466624/204748560-2d17ce4b-fb5f-4732-a962-329109e73aad.png" width="600"/>
+
+- Compare the bbox mAP of two runs in the same figure.
+
+  ```shell
+  mim run mmdet analyze_logs plot_curve \
+      yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700.log.json \
+      yolov5_n-v61_syncbn_fast_8xb16-300e_coco_20220919_090739.log.json \
+      --keys bbox_mAP \
+      --legend yolov5_s yolov5_n \
+      --eval-interval 10 # Note that the evaluation interval must be the same as during training. Otherwise, it will raise an error.
+  ```
+
+<img src="https://user-images.githubusercontent.com/27466624/204748704-21db9f9e-386e-449c-91c7-2ce3f8b51f24.png" width="600"/>
+
+#### Compute the average training speed
+
+```shell
+mim run mmdet analyze_logs cal_train_time \
+    ${LOG} \                                # path of train log in json format
+    [--include-outliers]                    # include the first value of every epoch when computing the average time
+```
+
+Examples:
+
+```shell
+mim run mmdet analyze_logs cal_train_time \
+    yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700.log.json
+```
+
+The output is expected to be like the following.
+
+```text
+-----Analyze train time of yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700.log.json-----
+slowest epoch 278, average time is 0.1705 s/iter
+fastest epoch 300, average time is 0.1510 s/iter
+time std over epochs is 0.0026
+average iter time: 0.1556 s/iter
+```
+
+### Print the whole config
+
+`print_config.py` in MMDetection prints the whole config verbatim, expanding all its imports. The command is as following.
+
+```shell
+mim run mmdet print_config \
+    ${CONFIG} \                              # path of the config file
+    [--save-path] \                          # save path of whole config, suffixed with .py, .json or .yml
+    [--cfg-options ${OPTIONS [OPTIONS...]}]  # override some settings in the used config
+```
+
+Examples:
+
+```shell
+mim run mmdet print_config \
+    configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
+    --save-path ./work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py
+```
+
+Running the above command will save the `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` config file with the inheritance relationship expanded to \`\`yolov5_s-v61_syncbn_fast_1xb4-300e_balloon_whole.py`in the`./work_dirs\` folder.

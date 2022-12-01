@@ -146,3 +146,34 @@ def yolov5_head__predict_by_feat(ctx,
 
     return nms_func(bboxes, scores, max_output_boxes_per_class, iou_threshold,
                     score_threshold, pre_top_k, keep_top_k)
+
+
+@FUNCTION_REWRITER.register_rewriter(
+    func_name='mmyolo.models.dense_heads.yolov5_head.'
+    'YOLOv5Head.predict',
+    backend='rknn')
+def yolov5_head__predict__rknn(ctx, self, x: Tuple[Tensor], *args,
+                               **kwargs) -> Tuple[Tensor, Tensor, Tensor]:
+    """Perform forward propagation of the detection head and predict detection
+    results on the features of the upstream network.
+
+    Args:
+        x (tuple[Tensor]): Multi-level features from the
+            upstream network, each is a 4D-tensor.
+    """
+    outs = self(x)
+    return outs
+
+
+@FUNCTION_REWRITER.register_rewriter(
+    func_name='mmyolo.models.dense_heads.yolov5_head.'
+    'YOLOv5HeadModule.forward',
+    backend='rknn')
+def yolov5_head_module__forward__rknn(
+        ctx, self, x: Tensor, *args,
+        **kwargs) -> Tuple[Tensor, Tensor, Tensor]:
+    """Forward feature of a single scale level."""
+    out = []
+    for i, feat in enumerate(x):
+        out.append(self.convs_pred[i](feat))
+    return out
