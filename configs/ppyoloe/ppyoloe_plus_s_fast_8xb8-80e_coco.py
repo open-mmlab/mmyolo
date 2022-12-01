@@ -207,6 +207,16 @@ default_hooks = dict(
         type='CheckpointHook', interval=save_epoch_intervals,
         max_keep_ckpts=3))
 
+custom_hooks = [
+    dict(
+        type='EMAHook',
+        ema_type='ExpMomentumEMA',
+        momentum=1-0.9998,
+        update_buffers=True,
+        strict_load=False,
+        priority=49)
+]
+
 val_evaluator = dict(
     type='mmdet.CocoMetric',
     proposal_nums=(100, 1, 10),
