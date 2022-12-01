@@ -12,6 +12,7 @@ from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
+from mmdet.structures.mask import BitmapMasks, PolygonMasks
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
@@ -248,7 +249,6 @@ class LetterResize(MMDET_Resize):
         """Resize masks with ``results['scale']``"""
         if results.get('gt_masks', None) is None:
             return
-
         # resize the gt_masks
         gt_mask_height = results['gt_masks'].height * \
             results['scale_factor'][0]
@@ -257,24 +257,25 @@ class LetterResize(MMDET_Resize):
         gt_masks = results['gt_masks'].resize(
             (int(round(gt_mask_height)), int(round(gt_mask_width))))
 
-        # padding the gt_masks
-        if len(gt_masks) == 0:
-            padded_masks = np.empty((0, *results['img_shape'][:2]),
-                                    dtype=np.uint8)
+        pad_val = self.pad_val.get('masks', 0)
+        if isinstance(gt_masks, PolygonMasks):
+            polys = gt_masks.masks
+
+            padded_polys=[]
+            pad_param_x, pad_param_y=results['pad_param'][2],results['pad_param'][0]
+            new_height, new_width=results['img_shape'][:2]
+            for poly in polys:
+                padded_ploy_per_obj = []
+                for p in poly:
+                    p = p.copy()
+                    p[0::2] = p[0::2]+pad_param_x
+                    p[1::2] = p[1::2]+pad_param_y
+                    padded_ploy_per_obj.append(p)
+                padded_polys.append(padded_ploy_per_obj)
+            results['gt_masks'] = type(results['gt_masks'])(
+                padded_polys, *results['img_shape'][:2])
         else:
-            # TODO: The function is incorrect. Because the mask may not
-            #  be able to pad.
-            padded_masks = np.stack([
-                mmcv.impad(
-                    mask,
-                    padding=(int(results['pad_param'][2]),
-                             int(results['pad_param'][0]),
-                             int(results['pad_param'][3]),
-                             int(results['pad_param'][1])),
-                    pad_val=self.pad_val.get('masks', 0)) for mask in gt_masks
-            ])
-        results['gt_masks'] = type(results['gt_masks'])(
-            padded_masks, *results['img_shape'][:2])
+            raise NotImplementedError()
 
     def _resize_bboxes(self, results: dict):
         """Resize bounding boxes with ``results['scale_factor']``."""
@@ -285,7 +286,7 @@ class LetterResize(MMDET_Resize):
         if len(results['pad_param']) != 4:
             return
         results['gt_bboxes'].translate_(
-            (results['pad_param'][2], results['pad_param'][1]))
+            (results['pad_param'][2], results['pad_param'][0]))
 
         if self.clip_object_border:
             results['gt_bboxes'].clip_(results['img_shape'])
