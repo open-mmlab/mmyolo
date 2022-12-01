@@ -18,15 +18,10 @@ from mmyolo.registry import DATASETS, VISUALIZERS
 from mmyolo.utils import register_all_modules
 
 
-# TODO Support for printing the change in key of results
+# TODO: Support for printing the change in key of results
 def parse_args():
     parser = argparse.ArgumentParser(description='Browse a dataset')
     parser.add_argument('config', help='train config file path')
-    parser.add_argument(
-        '--output-dir',
-        default='./output',
-        type=str,
-        help='If there is no display interface, you can save it.')
     parser.add_argument(
         '--phase',
         '-p',
@@ -35,23 +30,6 @@ def parse_args():
         choices=['train', 'test', 'val'],
         help='phase of dataset to visualize, accept "train" "test" and "val".'
         ' Defaults to "train".')
-    parser.add_argument('--show', help='show the pipeline image')
-    parser.add_argument(
-        '--show-number',
-        '-n',
-        type=int,
-        default=sys.maxsize,
-        help='number of images selected to visualize, '
-        'must bigger than 0. if '
-        'the number is '
-        'bigger than length of dataset, show all the images in '
-        'dataset; default "sys.maxsize", show all images in dataset')
-    parser.add_argument(
-        '--show-interval',
-        '-i',
-        type=float,
-        default=3,
-        help='the interval of show (s)')
     parser.add_argument(
         '--mode',
         '-m',
@@ -59,26 +37,40 @@ def parse_args():
         type=str,
         choices=['original', 'transformed', 'pipeline'],
         help='display mode; display original pictures or '
-        'transformed pictures'
-        ' or comparison pictures. '
-        '"original" means show images load from disk'
-        '; "transformed" means to show images after transformed;'
-        '"pipeline" means show all the intermediate images. '
-        'Defaults to "transformed".')
+        'transformed pictures or comparison pictures. "original" '
+        'means show images load from disk; "transformed" means '
+        'to show images after transformed; "pipeline" means show all '
+        'the intermediate images. Defaults to "transformed".')
+    parser.add_argument(
+        '--output-dir',
+        default=None,
+        type=str,
+        help='If there is no display interface, you can save it.')
+    parser.add_argument('--not-show', default=False, action='store_true')
+    parser.add_argument(
+        '--show-number',
+        '-n',
+        type=int,
+        default=sys.maxsize,
+        help='number of images selected to visualize, '
+        'must bigger than 0. if the number is bigger than length '
+        'of dataset, show all the images in dataset; '
+        'default "sys.maxsize", show all images in dataset')
+    parser.add_argument(
+        '--show-interval',
+        '-i',
+        type=float,
+        default=3,
+        help='the interval of show (s)')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
-        help='override some settings in the used config, '
-        'the key-value pair '
-        'in xxx=yyy format will '
-        'be merged into config file. If the value to '
-        'be overwritten is a list, it should be '
-        'like key="[a,b]" or key=a,b '
-        'It also allows '
-        'nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and t'
-        'hat no white space '
+        help='override some settings in the used config, the key-value pair '
+        'in xxx=yyy format will be merged into config file. If the value to '
+        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+        'Note that the quotation marks are necessary and that no white space '
         'is allowed.')
     args = parser.parse_args()
     return args
@@ -90,17 +82,16 @@ def _get_adaptive_scale(img_shape: Tuple[int, int],
     """Get adaptive scale according to image shape.
 
     The target scale depends on the the short edge length of the image. If the
-       short edge length equals 224, the output is 1.0. And output linear
-       scales according the short edge length.
-       You can also specify the minimum scale and the maximum scale to limit
-    the
-       linear scale.
-       Args:
-           img_shape (Tuple[int, int]): The shape of the canvas image.
-           min_size (int): The minimum scale. Defaults to 0.3.
-           max_size (int): The maximum scale. Defaults to 3.0.
-       Returns:
-           int: The adaptive scale.
+    short edge length equals 224, the output is 1.0. And output linear
+    scales according the short edge length. You can also specify the minimum
+    scale and the maximum scale to limit the linear scale.
+
+    Args:
+        img_shape (Tuple[int, int]): The shape of the canvas image.
+        min_scale (int): The minimum scale. Defaults to 0.3.
+        max_scale (int): The maximum scale. Defaults to 3.0.
+    Returns:
+        int: The adaptive scale.
     """
     short_edge_length = min(img_shape)
     scale = short_edge_length / 224.
@@ -170,8 +161,7 @@ class InspectCompose(Compose):
         ]
         for t in self.ptransforms:
             data = t(data)
-            """Keep the same meta_keys in the PackDetInputs
-            """
+            # Keep the same meta_keys in the PackDetInputs
             self.transforms[-1].meta_keys = [key for key in data]
             data_sample = self.transforms[-1](data)
             if data is None:
@@ -198,10 +188,10 @@ def main():
     dataset_cfg = cfg.get(args.phase + '_dataloader').get('dataset')
     dataset = DATASETS.build(dataset_cfg)
     visualizer = VISUALIZERS.build(cfg.visualizer)
-    visualizer.get_current_instance()
     visualizer.dataset_meta = dataset.metainfo
-    # Todo The dataset wrapper occasion is not considered here
+
     intermediate_imgs = []
+    # TODO: The dataset wrapper occasion is not considered here
     dataset.pipeline = InspectCompose(dataset.pipeline.transforms,
                                       intermediate_imgs)
 
@@ -232,10 +222,10 @@ def main():
                 datasample,
                 draw_pred=False,
                 draw_gt=True,
-                show=False,
-                wait_time=0)
+                show=False)
             image_show = visualizer.get_image()
             image_i.append(image_show)
+
         if args.mode == 'original':
             image = image_i[0]
         elif args.mode == 'transformed':
@@ -243,6 +233,7 @@ def main():
         else:
             image = make_grid([result for result in image_i],
                               [result['name'] for result in intermediate_imgs])
+
         if hasattr(datasample, 'img_path'):
             filename = osp.basename(datasample.img_path)
         else:
@@ -250,12 +241,16 @@ def main():
             filename = f'{i}.jpg'
         out_file = osp.join(args.output_dir,
                             filename) if args.output_dir is not None else None
+
+        if out_file is not None:
+            mmcv.imwrite(image[..., ::-1], out_file)
+
+        if not args.not_show:
+            visualizer.show(
+                image, win_name=filename, wait_time=args.show_interval)
+
         intermediate_imgs.clear()
         progress_bar.update()
-        mmcv.imwrite(image[..., ::-1], out_file)
-
-        visualizer.set_image(image)
-        visualizer.show()
 
 
 if __name__ == '__main__':
