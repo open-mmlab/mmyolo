@@ -7,9 +7,107 @@ from typing import List, Optional
 from mmengine.config import ConfigDict
 from mmengine.structures import InstanceData
 from torch import Tensor
-
+from mmdet.models.utils import filter_scores_and_topk, multi_apply
 from mmyolo.registry import MODELS
-from .yolov5_head import YOLOv5Head
+from .yolov5_head import YOLOv5Head, YOLOv5HeadModule
+from mmengine.model import BaseModule
+from ..utils import make_divisible
+from typing import List, Optional, Sequence, Tuple, Union
+from mmcv.cnn import ConvModule
+import torch.nn as nn
+from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
+                         OptMultiConfig)
+from mmengine.model import BaseModule
+
+from torch import Tensor
+
+
+class Proto(BaseModule):
+    def __init__(self,
+                 in_channels,
+                 proto_channels=256,
+                 num_protos=32,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 init_cfg=None):
+        super().__init__(init_cfg)
+        self.cv1 = ConvModule(in_channels, proto_channels, kernel_size=3, norm_cfg=norm_cfg, act_cfg=act_cfg)
+        self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
+        self.cv2 = ConvModule(proto_channels, proto_channels, kernel_size=3, norm_cfg=norm_cfg, act_cfg=act_cfg)
+        self.cv3 = ConvModule(proto_channels, num_protos, kernel_size=1, norm_cfg=norm_cfg, act_cfg=act_cfg)
+
+    def forward(self, x):
+        return self.cv3(self.cv2(self.upsample(self.cv1(x))))
+
+
+@MODELS.register_module()
+class YOLOv5YOLACTHeadModule(YOLOv5HeadModule):
+    def __init__(self,
+                 num_classes,
+                 *args,
+                 num_protos=32,
+                 proto_channels=256,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 widen_factor = 1.0,
+                 **kwargs):
+        self.num_protos = num_protos
+        self.num_out_attrib_with_proto = 5 + num_classes + num_protos
+        self.proto_channels = make_divisible(proto_channels, widen_factor)
+        self.norm_cfg = norm_cfg
+        self.act_cfg = act_cfg
+        super().__init__(*args, **kwargs,
+                         num_classes=num_classes,
+                         widen_factor=widen_factor)
+
+    def _init_layers(self):
+        """initialize conv layers in YOLOv5 head."""
+        self.convs_pred = nn.ModuleList()
+        for i in range(self.num_levels):
+            conv_pred = nn.Conv2d(self.in_channels[i],
+                                  self.num_base_priors * self.num_out_attrib_with_proto,
+                                  1)
+
+            self.convs_pred.append(conv_pred)
+
+        self.proto = Proto(self.in_channels[0],
+                           self.proto_channels,
+                           self.num_protos,
+                           norm_cfg=self.norm_cfg,
+                           act_cfg=self.act_cfg)
+
+    def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
+        """Forward features from the upstream network.
+
+        Args:
+            x (Tuple[Tensor]): Features from the upstream network, each is
+                a 4D-tensor.
+        Returns:
+            Tuple[List]: A tuple of multi-level classification scores, bbox
+            predictions, and objectnesses.
+        """
+        assert len(x) == self.num_levels
+        cls_scores, bbox_preds, objectnesses, coeff_preds = multi_apply(self.forward_single, x, self.convs_pred)
+        segm_preds = self.proto(x[0])
+        return cls_scores, bbox_preds, objectnesses, coeff_preds, segm_preds
+
+    def forward_single(self, x: Tensor,
+                       convs: nn.Module) -> Tuple[Tensor, Tensor, Tensor, Tensor]:
+        """Forward feature of a single scale level."""
+
+        pred_map = convs(x)
+        bs, _, ny, nx = pred_map.shape
+        pred_map = pred_map.view(bs, self.num_base_priors, self.num_out_attrib_with_proto,
+                                 ny, nx)
+
+        cls_score = pred_map[:, :, 5:self.num_classes, ...].reshape(bs, -1, ny, nx)
+        bbox_pred = pred_map[:, :, :4, ...].reshape(bs, -1, ny, nx)
+        objectness = pred_map[:, :, 4:5, ...].reshape(bs, -1, ny, nx)
+        coeff_pred = pred_map[:, :, self.num_classes:, ...].reshape(bs, -1, ny, nx)
+
+        return cls_score, bbox_pred, objectness, coeff_pred
 
 
 @MODELS.register_module()
@@ -21,6 +119,7 @@ class YOLOv5YOLACTHead(YOLOv5Head):
                         cls_scores: List[Tensor],
                         bbox_preds: List[Tensor],
                         objectnesses: Optional[List[Tensor]] = None,
+                        coeff_preds: Optional[List[Tensor]] = None,
                         segm_preds: Optional[Tensor] = None,
                         batch_img_metas: Optional[List[dict]] = None,
                         cfg: Optional[ConfigDict] = None,
@@ -155,9 +254,3 @@ class YOLOv5YOLACTHead(YOLOv5Head):
 
             results_list.append(results)
         return results_list
-
-
-
-
-
-

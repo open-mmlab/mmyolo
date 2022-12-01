@@ -56,6 +56,30 @@ convert_dict_p6 = {
     'model.33.m': 'bbox_head.head_module.convs_pred',
 }
 
+convert_instance_dict_p5 = {
+    'model.0': 'backbone.stem',
+    'model.1': 'backbone.stage1.0',
+    'model.2': 'backbone.stage1.1',
+    'model.3': 'backbone.stage2.0',
+    'model.4': 'backbone.stage2.1',
+    'model.5': 'backbone.stage3.0',
+    'model.6': 'backbone.stage3.1',
+    'model.7': 'backbone.stage4.0',
+    'model.8': 'backbone.stage4.1',
+    'model.9.cv1': 'backbone.stage4.2.conv1',
+    'model.9.cv2': 'backbone.stage4.2.conv2',
+    'model.10': 'neck.reduce_layers.2',
+    'model.13': 'neck.top_down_layers.0.0',
+    'model.14': 'neck.top_down_layers.0.1',
+    'model.17': 'neck.top_down_layers.1',
+    'model.18': 'neck.downsample_layers.0',
+    'model.20': 'neck.bottom_up_layers.0',
+    'model.21': 'neck.downsample_layers.1',
+    'model.23': 'neck.bottom_up_layers.1',
+    'model.24.m': 'bbox_head.head_module.convs_pred',
+    'model.24.proto': 'bbox_head.head_module.proto',
+}
+
 
 def convert(src, dst):
     """Convert keys in pretrained YOLOv5 models to mmyolo style."""
@@ -64,7 +88,10 @@ def convert(src, dst):
         is_p6_model = True
         print('Converting P6 model')
     else:
-        convert_dict = convert_dict_p5
+        if src.endswith('seg.pt'):
+            convert_dict = convert_instance_dict_p5
+        else:
+            convert_dict = convert_dict_p5
         is_p6_model = False
         print('Converting P5 model')
     try:
@@ -91,13 +118,14 @@ def convert(src, dst):
 
         new_key = key.replace(prefix, convert_dict[prefix])
 
-        if '.m.' in new_key:
-            new_key = new_key.replace('.m.', '.blocks.')
-            new_key = new_key.replace('.cv', '.conv')
-        else:
-            new_key = new_key.replace('.cv1', '.main_conv')
-            new_key = new_key.replace('.cv2', '.short_conv')
-            new_key = new_key.replace('.cv3', '.final_conv')
+        if 'proto' not in key:
+            if '.m.' in new_key:
+                new_key = new_key.replace('.m.', '.blocks.')
+                new_key = new_key.replace('.cv', '.conv')
+            else:
+                new_key = new_key.replace('.cv1', '.main_conv')
+                new_key = new_key.replace('.cv2', '.short_conv')
+                new_key = new_key.replace('.cv3', '.final_conv')
 
         state_dict[new_key] = weight
         print(f'Convert {key} to {new_key}')

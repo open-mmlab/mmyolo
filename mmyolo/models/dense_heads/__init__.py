@@ -5,12 +5,11 @@ from .yolov5_head import YOLOv5Head, YOLOv5HeadModule
 from .yolov6_head import YOLOv6Head, YOLOv6HeadModule
 from .yolov7_head import YOLOv7Head, YOLOv7HeadModule, YOLOv7p6HeadModule
 from .yolox_head import YOLOXHead, YOLOXHeadModule
-from .yolact_head_module import YOLACTHeadModule
-from .yolov5_instance_seg_head import YOLOv5YOLACTHead
+from .yolov5_yolact_head import YOLOv5YOLACTHead, YOLOv5YOLACTHeadModule
 
 __all__ = [
     'YOLOv5Head', 'YOLOv6Head', 'YOLOXHead', 'YOLOv5HeadModule',
     'YOLOv6HeadModule', 'YOLOXHeadModule', 'RTMDetHead',
     'RTMDetSepBNHeadModule', 'YOLOv7Head', 'PPYOLOEHead', 'PPYOLOEHeadModule',
-    'YOLOv7HeadModule', 'YOLOv7p6HeadModule', 'YOLACTHeadModule', 'YOLOv5YOLACTHead'
+    'YOLOv7HeadModule', 'YOLOv7p6HeadModule', 'YOLOv5YOLACTHead', 'YOLOv5YOLACTHeadModule'
 ]
