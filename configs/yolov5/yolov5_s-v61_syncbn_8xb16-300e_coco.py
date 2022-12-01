@@ -19,6 +19,9 @@ val_num_workers = 2
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
 
+# Base learning rate for optim_wrapper
+base_lr = 0.01
+
 # only on Val
 batch_shapes_cfg = dict(
     type='BatchShapePolicy',
@@ -199,7 +202,7 @@ optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(
         type='SGD',
-        lr=0.01,
+        lr=base_lr,
         momentum=0.937,
         weight_decay=0.0005,
         nesterov=True,
