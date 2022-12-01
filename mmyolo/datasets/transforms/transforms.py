@@ -792,14 +792,13 @@ class PPYOLOERandomExpand(BaseTransform):
 
         right_padding = w - width - left_padding
         bottom_padding = h - height - top_padding
-
+        img = img.astype(np.float32)
         img = mmcv.impad(
             img=img,
             padding=(left_padding, top_padding, right_padding, bottom_padding),
             pad_val=self.fill_value,
             padding_mode='constant')
-        if 'scale_factor' not in results:
-            results['scale_factor'] = np.array([1, 1], dtype=np.float32)
+
         results['img'] = img
         results['img_shape'] = img.shape
         results['pad_param'] = np.array(

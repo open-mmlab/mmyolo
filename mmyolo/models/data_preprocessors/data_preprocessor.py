@@ -143,11 +143,12 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
                      'nearest', 'bilinear', 'bicubic', 'area'
                  ],
                  keep_ratio: bool = False,
-                 broadcast_flag: bool = True) -> None:
+                 broadcast_flag: bool = False) -> None:
         super().__init__(random_size_range, interval, size_divisor)
         self.random_interp = random_interp
         self.keep_ratio = keep_ratio
         assert not self.keep_ratio, 'We do not yet support keep_ratio=True'
+        # TODO: 删除这个
         self.broadcast_flag = broadcast_flag
 
         if self.random_interp:
