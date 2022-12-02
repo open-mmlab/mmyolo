@@ -189,8 +189,8 @@ MMYOLO 提供脚本将 labelme 的 label 转换为 COCO label
 ```shell
 python tools/dataset_converters/labelme2coco.py --img-dir ${图片文件夹路径} \
                                                 --labels-dir ${label 文件夹位置} \
-                                                --out ${输出 COCO label json 路径}
-                                                [--class-id-txt]
+                                                --out ${输出 COCO label json 路径} \
+                                                [--class-id-txt ${class_with_id.txt 路径}]
 ```
 
 其中：
@@ -209,6 +209,14 @@ python tools/dataset_converters/labelme2coco.py --img-dir ${图片文件夹路�
 
 ```
 
+例子：
+
+```shell
+python tools/dataset_converters/labelme2coco.py --img-dir ./data/cat/image \
+                                                --labels-dir ./data/cat/labels \
+                                                --out ./data/cat/annotations/annotations_all.json
+```
+
 ### 3.2 检查转换的 COCO label
 
 使用下面的命令可以将 COCO 的 label 在图片上进行显示，这一步可以验证刚刚转换是否有问题：
@@ -216,6 +224,13 @@ python tools/dataset_converters/labelme2coco.py --img-dir ${图片文件夹路�
 ```shell
 python tools/analysis_tools/browse_coco_json.py --img-dir ${图片文件夹路径} \
                                                 --ann-file ${COCO label json 路径}
+```
+
+例子：
+
+```shell
+python tools/dataset_converters/labelme2coco.py --img-dir ./data/cat/image \
+                                                --ann-file ./data/cat/annotations/annotations_all.json
 ```
 
 关于 `tools/analysis_tools/browse_coco_json.py` 的更多用法请参考 [可视化 COCO label](useful_tools.md)。
@@ -237,6 +252,16 @@ python tools/misc/coco_split.py --json ${COCO label json 路径} \
   - 小数：划分为比例。**如果加起来不为 1 ，则脚本会进行自动归一化修正**。例子： `--ratio 0.8 0.1 0.1` or `--ratio 0.8 0.2`
 - `--shuffle`: 是否打乱数据集再进行划分；
 - `--seed`：设定划分的随机种子，不设置的话自动生成随机种子。
+
+例子：
+
+```shell
+python tools/misc/coco_split.py --json ./data/cat/annotations/annotations_all.json \
+                                --out-dir ./data/cat/annotations \
+                                --ratios 0.8 0.2 \
+                                --shuffle \
+                                --seed 666
+```
 
 ## 5. 根据数据集内容新建 config 文件
 
