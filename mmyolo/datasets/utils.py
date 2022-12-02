@@ -361,7 +361,7 @@ pipeline_list = [
 
 
 @COLLATE_FUNCTIONS.register_module()
-def ppyoloe_collate_temp(data_batch: Sequence) -> dict:
+def ppyoloe_collate_temp(batch: Sequence) -> dict:
     for pipe in pipeline_list:
         batch = pipe(batch)
 
