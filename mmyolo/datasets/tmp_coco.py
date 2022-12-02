@@ -1,5 +1,6 @@
 import copy
 import uuid
+from numbers import Number, Integral
 from typing import List, Sequence
 
 import cv2
