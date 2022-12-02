@@ -167,6 +167,7 @@ val_dataloader = dict(
         data_root=data_root,
         test_mode=True,
         data_prefix=dict(img='val2017/'),
+        serialize_data=False,
         filter_cfg=dict(filter_empty_gt=True, min_size=0),
         ann_file='annotations/instances_val2017.json',
         pipeline=test_pipeline))
