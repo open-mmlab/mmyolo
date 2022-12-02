@@ -99,14 +99,14 @@ model = dict(
             type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
             reduction='mean',
-            loss_weight=1.0 * ((img_scale[0] / 640) ** 2 * 3 / num_det_layers)),
+            loss_weight=1.0 * ((img_scale[0] / 640)**2 * 3 / num_det_layers)),
         prior_match_thr=4.,
         obj_level_weights=[4., 1., 0.4]),
     test_cfg=dict(
         multi_label=True,
         nms_pre=30000,
         score_thr=0.001,
-        nms=dict(type='nms', iou_threshold=0.65),
+        nms=dict(type='nms', iou_threshold=0.6),
         max_per_img=300))
 
 albu_train_transforms = [
@@ -176,11 +176,12 @@ test_pipeline = [
         scale=img_scale,
         allow_scale_up=False,
         pad_val=dict(img=114)),
-    dict(type='LoadAnnotations',
-         with_bbox=True,
-         with_mask=True,
-         poly2mask=False,
-         _scope_='mmdet'),
+    dict(
+        type='LoadAnnotations',
+        with_bbox=True,
+        with_mask=True,
+        poly2mask=False,
+        _scope_='mmdet'),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
@@ -243,7 +244,7 @@ val_evaluator = dict(
     type='mmdet.CocoMetric',
     proposal_nums=(100, 1, 10),
     ann_file=data_root + 'annotations/instances_val2017.json',
-    metric='bbox')
+    metric=['bbox', 'segm'])
 test_evaluator = val_evaluator
 
 train_cfg = dict(
