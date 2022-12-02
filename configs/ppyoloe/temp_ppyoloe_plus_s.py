@@ -25,20 +25,10 @@ model = dict(
     type='YOLODetector',
     data_preprocessor=dict(
         # use this to support multi_scale training
-        type='PPYOLOEDetDataPreprocessor',
-        pad_size_divisor=32,
-        batch_augments=[
-            dict(
-                type='PPYOLOEBatchSyncRandomResize',
-                random_size_range=(320, 768),
-                interval=1,
-                size_divisor=32,
-                random_interp=True,
-                keep_ratio=False)
-        ],
-        mean=[0., 0., 0.],
-        std=[255., 255., 255.],
-        bgr_to_rgb=False),
+        type='YOLOv5DetDataPreprocessor',
+        mean=None,
+        std=None,
+        ),
     backbone=dict(
         type='PPYOLOECSPResNet',
         deepen_factor=deepen_factor,
@@ -121,20 +111,20 @@ model = dict(
         nms=dict(type='nms', iou_threshold=0.7),
         max_per_img=300))
 
-train_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='LoadAnnotations', with_bbox=True),
-    # 精度对齐时候，这里先转成RGB,preprocess里不转
-    dict(type='PPYOLOECvt'),
-    dict(type='PPYOLOERandomDistort'),
-    dict(type='PPYOLOERandomExpand', fill_value=(123.675, 116.28, 103.53)),
-    dict(type='PPYOLOERandomCrop'),
-    dict(type='mmdet.RandomFlip', prob=0.5),
-    dict(
-        type='mmdet.PackDetInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
-                   'flip_direction'))
-]
+# train_pipeline = [
+#     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+#     dict(type='LoadAnnotations', with_bbox=True),
+#     # 精度对齐时候，这里先转成RGB,preprocess里不转
+#     dict(type='PPYOLOECvt'),
+#     dict(type='PPYOLOERandomDistort'),
+#     dict(type='PPYOLOERandomExpand', fill_value=(123.675, 116.28, 103.53)),
+#     dict(type='PPYOLOERandomCrop'),
+#     dict(type='mmdet.RandomFlip', prob=0.5),
+#     dict(
+#         type='mmdet.PackDetInputs',
+#         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
+#                    'flip_direction'))
+# ]
 
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
@@ -148,27 +138,21 @@ train_dataloader = dict(
         data_root=data_root,
         ann_file='annotations/instances_train2017.json',
         data_prefix=dict(img='train2017/'),
+        serialize_data=False,  # TODO
         filter_cfg=dict(filter_empty_gt=True, min_size=0),
         # pipeline=train_pipeline
     ))
 
 test_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
-    # 精度对齐时候，这里先转成RGB,preprocess里不转
-    dict(type='PPYOLOECvt'),
-    dict(
-        type='mmdet.FixShapeResize',
-        width=img_scale[1],
-        height=img_scale[0],
-        keep_ratio=False,
-        interpolation='bicubic'),
-    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    # # dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='PPYOLOEResize', target_size=img_scale, keep_ratio=False, interp=2),
+    # ppyoloe中resize方式不维持ratio，所以单独用一个类做预处理，并且在这里转了RGB
+    dict(type='PPYOLOENormalizeImage', mean=[0., 0., 0.], std=[1., 1., 1.], is_scale=True),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor'))
+                   'scale_factor', 'pad_param'))
 ]
 
 val_dataloader = dict(

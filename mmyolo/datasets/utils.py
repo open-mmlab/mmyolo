@@ -355,7 +355,7 @@ class Permute(BaseOperator):
 pipeline_list = [
             BatchRandomResize(target_size=[320, 352, 384, 416, 448, 480, 512, 544, 576, 608, 640, 672, 704, 736, 768],
                               random_size=True, random_interp=True, keep_ratio=False),
-            NormalizeImage(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225], is_scale=True),
+            NormalizeImage(mean=[0., 0., 0.], std=[1., 1., 1.], is_scale=True),
             Permute()
         ]
 
@@ -372,19 +372,23 @@ def ppyoloe_collate_temp(batch: Sequence) -> dict:
         img = i['img']
         img = np.ascontiguousarray(img)
 
-        pad_gt_class = torch.from_numpy(np.zeros((num_boxes, 1), dtype=np.float32))
-        pad_gt_bbox = torch.from_numpy(np.zeros((num_boxes, 4), dtype=np.float32))
+        pad_gt_class = np.zeros((num_boxes, 1), dtype=np.float32)
+        pad_gt_bbox = np.zeros((num_boxes, 4), dtype=np.float32)
         batch_idx = torch.from_numpy(np.ones((num_boxes, 1), dtype=np.float32) * ind)
-        bboxes_labels = torch.cat((batch_idx, pad_gt_class, pad_gt_bbox), dim=1)
+        # bboxes_labels = torch.cat((batch_idx, pad_gt_class, pad_gt_bbox), dim=1)
         # num_gt = len(i['gt_bbox'])
         if num_boxes > 0:
             pad_gt_class[:num_boxes] = i['gt_class'][:, None]
             pad_gt_bbox[:num_boxes] = i['gt_bbox']
-        labels = np.concatenate((pad_gt_class, pad_gt_bbox), axis=1)
+        pad_gt_class = torch.from_numpy(pad_gt_class)
+        pad_gt_bbox = torch.from_numpy(pad_gt_bbox)
+        # labels = np.concatenate((pad_gt_class, pad_gt_bbox), axis=1)
         imgs.append(torch.from_numpy(img.astype(np.float32)))
-        labels_list.append(labels)
+        bboxes_labels = torch.cat((batch_idx, pad_gt_class, pad_gt_bbox), dim=1)
+        labels_list.append(bboxes_labels)
+        # labels_list.append(labels)
         # labels_list.append(torch.from_numpy(labels))
-    return {'inputs': torch.stack(imgs, 0), 'data_sample': torch.cat(labels_list, 0)}
+    return {'inputs': torch.stack(imgs, 0), 'data_samples': torch.cat(labels_list, 0)}
 
 
 
