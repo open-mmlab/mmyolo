@@ -139,7 +139,7 @@ train_pipeline = [
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
-    collate_fn=dict(type='ppyoloe_collate'),
+    collate_fn=dict(type='ppyoloe_collate_temp'),
     persistent_workers=True,
     pin_memory=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
