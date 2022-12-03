@@ -384,6 +384,8 @@ default_hooks = dict(
 )
 ```
 
+**Tips**：我们在 `projects/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 放了一份相同的 config 文件，用户可以选择复制到 `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 路径直接开始训练。
+
 ## 6. 数据集分析
 
 脚本 `tools/analysis_tools/dataset_analysis.py` 能够帮助用户得到数据集的分析图，
@@ -441,7 +443,7 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
 
 脚本 `tools/analysis_tools/optimize_anchors.py` 支持 YOLO 系列中三种锚框生成方式，分别是 `k-means`、`differential_evolution`、`v5-k-means`.
 
-本示例使用的是 YOLOv5 进行训练，使用的是 640x640 的输入大小，故下面介绍 `v5-k-means` 的命令：
+本示例使用的是 YOLOv5 进行训练，使用的是 `640 x 640` 的输入大小，故下面介绍 `v5-k-means` 的命令：
  
 ```shell
 python tools/analysis_tools/optimize_anchors.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
