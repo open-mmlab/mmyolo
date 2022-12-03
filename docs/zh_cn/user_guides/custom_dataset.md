@@ -444,14 +444,14 @@ python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
 
 以本教程的数据集 cat config 为例：
 
-查看训练集情况
+查看训练集数据分布情况：
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
                                                 --output-dir work_dirs/dataset_analysis_cat/train_dataset
 ```
 
-查看验证集情况
+查看验证集数据分布情况：
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
