@@ -314,9 +314,10 @@ work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat'
 
 # load_from 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
 # 因为我们是微调数据集，故这里需要 load MMYOLO 已经训练好的预训练模型，这样可以加快收敛速度的同时保证精度
-load_from = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
+load_from = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa
 
-train_batch_size_per_gpu = 32  # 根据自己的GPU情况，修改 batch size，YOLOv5-s 默认为 8卡 * 16bs
+# 根据自己的 GPU 情况，修改 batch size，YOLOv5-s 默认为 8卡 x 16bs
+train_batch_size_per_gpu = 32
 train_num_workers = 4  # 推荐使用 train_num_workers = nGPU x 4
 
 save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
@@ -325,12 +326,12 @@ save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
 base_lr = _base_.base_lr / 4
 
 anchors = [
-    [(10, 13), (16, 30), (33, 23)],  # P3/8
-    [(30, 61), (62, 45), (59, 119)],  # P4/16
-    [(116, 90), (156, 198), (373, 326)]  # P5/32
+    [(68, 69), (154, 91), (143, 162)],  # P3/8
+    [(242, 160), (189, 287), (391, 207)],  # P4/16
+    [(353, 337), (539, 341), (443, 432)]  # P5/32
 ]
 
-class_name = ('cat',)  # 根据 class_with_id.txt 类别信息，设置 class_name
+class_name = ('cat', )  # 根据 class_with_id.txt 类别信息，设置 class_name
 num_classes = len(class_name)
 metainfo = dict(
     CLASSES=class_name,
@@ -347,9 +348,8 @@ model = dict(
     bbox_head=dict(
         head_module=dict(num_classes=num_classes),
         prior_generator=dict(base_sizes=anchors),
-        loss_cls=dict(loss_weight=0.5 * (num_classes / 80 * 3 / _base_.num_det_layers))
-    )
-)
+        loss_cls=dict(loss_weight=0.5 *
+                      (num_classes / 80 * 3 / _base_.num_det_layers))))
 
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
@@ -365,8 +365,7 @@ train_dataloader = dict(
             ann_file='annotations/trainval.json',
             data_prefix=dict(img='images/'),
             filter_cfg=dict(filter_empty_gt=False, min_size=32),
-            pipeline=_base_.train_pipeline)
-    ))
+            pipeline=_base_.train_pipeline)))
 
 val_dataloader = dict(
     dataset=dict(
@@ -384,11 +383,13 @@ optim_wrapper = dict(optimizer=dict(lr=base_lr))
 
 default_hooks = dict(
     # 设置间隔多少个 epoch 保存模型，以及保存模型最多几个，`save_best` 是另外保存最佳模型（推荐）
-    checkpoint=dict(type='CheckpointHook', interval=save_epoch_intervals,
-                    max_keep_ckpts=5, save_best='auto'),
+    checkpoint=dict(
+        type='CheckpointHook',
+        interval=save_epoch_intervals,
+        max_keep_ckpts=5,
+        save_best='auto'),
     # logger 输出的间隔
-    logger=dict(type='LoggerHook', interval=10)
-)
+    logger=dict(type='LoggerHook', interval=10))
 ```
 
 **Tips**：我们在 `projects/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 放了一份相同的 config 文件，用户可以选择复制到 `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 路径直接开始训练。
