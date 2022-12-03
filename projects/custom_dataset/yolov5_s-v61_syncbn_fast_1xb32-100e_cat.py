@@ -6,7 +6,8 @@ data_root = './data/cat/'  # 数据集目录的绝对路径
 # 结果保存的路径，如果同个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
 work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat'
 
-# checkpoint 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
+# load_from 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
+# 因为我们是微调数据集，故这里需要 load MMYOLO 已经训练好的预训练模型，这样可以加快收敛速度的同时保证精度
 load_from = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 
 train_batch_size_per_gpu = 32  # 根据自己的GPU情况，修改 batch size，YOLOv5-s 默认为 8卡 * 16bs
