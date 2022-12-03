@@ -19,7 +19,7 @@
 
 ## 1. 数据集准备
 
-- 如果现在自己暂时没有数据集，亦或者想试下一个小的数据集来跑通我们的 demo，可以使用本教程提供的一个 144 张图片的 `cat` 数据集（本 `cat` 数据集由 @RangeKing 提供原始图片，由 @PeterH0323 进行数据清洗）
+- 如果现在暂时没有自己的数据集，亦或者想尝试用一个小型数据集来跑通我们的 demo，可以使用本教程提供的一个 144 张图片的 `cat` 数据集（本 `cat` 数据集由 @RangeKing 提供原始图片，由 @PeterH0323 进行数据清洗）
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/205423220-c4b8f2fd-22ba-4937-8e47-1b3f6a8facd8.png" alt="cat dataset"/>
@@ -337,7 +337,7 @@ data_root = './data/cat/'  # 数据集目录的绝对路径
 work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat'
 
 # load_from 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
-# 因为我们是微调数据集，故这里需要 load MMYOLO 已经训练好的预训练模型，这样可以加快收敛速度的同时保证精度
+# 因为本教程是在 cat 数据集上微调，故这里需要使用 `load_from` 来加载 MMYOLO 中的预训练模型，这样可以在加快收敛速度的同时保证精度
 load_from = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa
 
 # 根据自己的 GPU 情况，修改 batch size，YOLOv5-s 默认为 8卡 x 16bs
