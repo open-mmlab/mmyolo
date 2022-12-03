@@ -302,11 +302,10 @@ _base_ = '../yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 max_epochs = 100  # 训练的最大 epoch
 data_root = './data/cat/'  # 数据集目录的绝对路径
 
-# 结果保存的路径，可以省略，省略保存的文件名位于 work_dirs 下 config 同名的文件夹中
-# 如果某个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
+# 结果保存的路径，如果同个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
 work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat'
 
-# load_from 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
+# checkpoint 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
 load_from = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 
 train_batch_size_per_gpu = 32  # 根据自己的GPU情况，修改 batch size，YOLOv5-s 默认为 8卡 * 16bs
@@ -317,9 +316,16 @@ save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
 # 根据自己的 GPU 情况，修改 base_lr，修改的比例是 base_lr_default * (your_bs / default_bs)
 base_lr = _base_.base_lr / 4
 
-num_classes = 1
-metainfo = dict(  # 根据 class_with_id.txt 类别信息，设置 metainfo
-    CLASSES=('cat',),
+anchors = [
+    [(10, 13), (16, 30), (33, 23)],  # P3/8
+    [(30, 61), (62, 45), (59, 119)],  # P4/16
+    [(116, 90), (156, 198), (373, 326)]  # P5/32
+]
+
+class_name = ('cat',)  # 根据 class_with_id.txt 类别信息，设置 class_name
+num_classes = len(class_name)
+metainfo = dict(
+    CLASSES=class_name,
     PALETTE=[(220, 20, 60)]  # 画图时候的颜色，随便设置即可
 )
 
@@ -332,8 +338,7 @@ train_cfg = dict(
 model = dict(
     bbox_head=dict(
         head_module=dict(num_classes=num_classes),
-
-        # loss_cls 会根据 num_classes 动态调整，但是 num_classes = 1 的时候，loss_cls 恒为 0
+        prior_generator=dict(base_sizes=anchors),
         loss_cls=dict(loss_weight=0.5 * (num_classes / 80 * 3 / _base_.num_det_layers))
     )
 )
@@ -380,7 +385,15 @@ default_hooks = dict(
 
 ## 6. 数据集分析
 
-脚本 `tools/analysis_tools/dataset_analysis.py` 能够帮助用户得到数据集的分析图，脚本如下
+脚本 `tools/analysis_tools/dataset_analysis.py` 能够帮助用户得到数据集的分析图，
+
+可以生成四种分析图：
+- 显示类别和 bbox 实例个数的分布图：`show_bbox_num`
+- 显示类别和 bbox 实例宽、高的分布图：`show_bbox_wh`
+- 显示类别和 bbox 实例宽/高比例的分布图：`show_bbox_wh_ratio`
+- 基于面积规则下，显示类别和 bbox 实例面积的分布图：`show_bbox_area`
+
+脚本使用方式如下：
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
@@ -425,8 +438,30 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
 
 ## 7. 优化 Anchor 尺寸
 
+脚本 `tools/analysis_tools/optimize_anchors.py` 支持 YOLO 系列中三种锚框生成方式，分别是 `k-means`、`differential_evolution`、`v5-k-means`.
+
+本示例使用的是 YOLOv5 进行训练，使用的是 640x640 的输入大小，故下面介绍 `v5-k-means` 的命令：
+ 
 ```shell
-python tools/analysis_tools/optimize_anchors.py
+python tools/analysis_tools/optimize_anchors.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+                                                --algorithm v5-k-means \
+                                                --input-shape 640 640 \
+                                                --prior-match-thr 4.0 \
+                                                --out-dir work_dirs/dataset_analysis_cat
+```
+
+经过计算的 Anchor 如下：
+
+<img alt="Anchor" src="https://user-images.githubusercontent.com/25873202/205422434-1a68cded-b055-42e9-b01c-3e51f8f5ef81.png">
+
+修改 config 文件里面的 `anchors` 变量：
+
+```python
+anchors = [
+    [(68, 69), (154, 91), (143, 162)],  # P3/8
+    [(242, 160), (189, 287), (391, 207)],  # P4/16
+    [(353, 337), (539, 341), (443, 432)]  # P5/32
+]
 ```
 
 关于 `tools/analysis_tools/optimize_anchors.py` 的更多用法请参考 [优化锚框尺寸](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id8)。
