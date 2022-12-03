@@ -5,9 +5,9 @@ from statistics import median
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
-from mmengine.dataset.dataset_wrapper import RepeatDataset
 import numpy as np
 from mmengine.config import Config
+from mmengine.dataset.dataset_wrapper import RepeatDataset
 from mmengine.utils import ProgressBar
 from prettytable import PrettyTable
 
@@ -483,17 +483,21 @@ def main():
     # 3.draw Dataset Information
     if args.func is None:
         show_bbox_num(cfg, args.out_dir, fig_set, class_name, class_num)
-        show_bbox_wh(args.out_dir, fig_set, class_bbox_w, class_bbox_h, class_name)
+        show_bbox_wh(args.out_dir, fig_set, class_bbox_w, class_bbox_h,
+                     class_name)
         show_bbox_wh_ratio(args.out_dir, fig_set, class_name, class_bbox_ratio)
-        show_bbox_area(args.out_dir, fig_set, area_rule, class_name, bbox_area_num)
+        show_bbox_area(args.out_dir, fig_set, area_rule, class_name,
+                       bbox_area_num)
     elif args.func == 'show_bbox_num':
         show_bbox_num(cfg, args.out_dir, fig_set, class_name, class_num)
     elif args.func == 'show_bbox_wh':
-        show_bbox_wh(args.out_dir, fig_set, class_bbox_w, class_bbox_h, class_name)
+        show_bbox_wh(args.out_dir, fig_set, class_bbox_w, class_bbox_h,
+                     class_name)
     elif args.func == 'show_bbox_wh_ratio':
         show_bbox_wh_ratio(args.out_dir, fig_set, class_name, class_bbox_ratio)
     elif args.func == 'show_bbox_area':
-        show_bbox_area(args.out_dir, fig_set, area_rule, class_name, bbox_area_num)
+        show_bbox_area(args.out_dir, fig_set, area_rule, class_name,
+                       bbox_area_num)
     else:
         raise RuntimeError(
             'Please enter the correct func name, e.g., show_bbox_num')
