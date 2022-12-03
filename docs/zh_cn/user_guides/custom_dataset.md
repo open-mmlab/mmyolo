@@ -17,7 +17,7 @@
 
 ## 1. 数据集准备
 
-- 如果自己没有数据集，可以使用本教程提供的一个 `cat` 数据集
+- 如果自己没有数据集，可以使用本教程提供的一个 `cat` 数据集（本 `cat` 数据集由 @RangeKing 提供原始图片，由 @PeterH0323 进行数据清洗）
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/205423220-c4b8f2fd-22ba-4937-8e47-1b3f6a8facd8.png" alt="cat dataset"/>
