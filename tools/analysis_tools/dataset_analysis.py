@@ -51,8 +51,8 @@ def parse_args():
         '--out-dir',
         default='./dataset_analysis',
         type=str,
-        help='Save address of dataset analysis visualization results,'
-        'Save in "./dataset_analysis/" by default')
+        help='Output directory of dataset analysis visualization results,'
+        ' Save in "./dataset_analysis/" by default')
     args = parser.parse_args()
     return args
 
