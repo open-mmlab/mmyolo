@@ -17,13 +17,19 @@
 
 ## 1. 数据集准备
 
-- 如果自己没有数据集，可以使用本教程提供的一个 `cat` 数据集，下载命令：
+- 如果自己没有数据集，可以使用本教程提供的一个 `cat` 数据集
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205423220-c4b8f2fd-22ba-4937-8e47-1b3f6a8facd8.png" alt="cat dataset"/>
+</div>
+ 
+下载命令：
 
 ```shell
 python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat --unzip --delete
 ```
 
-会自动下载到 `./data/cat` 文件夹中，该文件的目录结构是：
+该命令会自动下载数据集到 `./data/cat` 文件夹中，该文件的目录结构是：
 
 ```shell
 .
