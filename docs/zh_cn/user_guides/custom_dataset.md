@@ -179,6 +179,10 @@ labelme ./data/cat/images --output ./data/cat/labels --autosave --nodata
 
 输入命令之后 labelme 就会启动，然后进行 label 检查即可。如果 labelme 启动失败，命令行输入 `export QT_DEBUG_PLUGINS=1` 查看具体缺少什么库，安装一下即可。
 
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205432185-54407d83-3cee-473f-8743-656da157cf80.png" alt="label UI"/>
+</div>
+
 **注意：标注的时候务必使用 `rectangle`，快捷键 `Ctrl + R`（如下图）**
 
 <div align=center>
