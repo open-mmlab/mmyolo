@@ -22,7 +22,7 @@
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/205423220-c4b8f2fd-22ba-4937-8e47-1b3f6a8facd8.png" alt="cat dataset"/>
 </div>
- 
+
 下载命令：
 
 ```shell
@@ -398,6 +398,7 @@ default_hooks = dict(
 脚本 `tools/analysis_tools/dataset_analysis.py` 能够帮助用户得到数据集的分析图，
 
 可以生成四种分析图：
+
 - 显示类别和 bbox 实例个数的分布图：`show_bbox_num`
 - 显示类别和 bbox 实例宽、高的分布图：`show_bbox_wh`
 - 显示类别和 bbox 实例宽/高比例的分布图：`show_bbox_wh_ratio`
@@ -451,7 +452,7 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
 脚本 `tools/analysis_tools/optimize_anchors.py` 支持 YOLO 系列中三种锚框生成方式，分别是 `k-means`、`differential_evolution`、`v5-k-means`.
 
 本示例使用的是 YOLOv5 进行训练，使用的是 `640 x 640` 的输入大小，故下面介绍 `v5-k-means` 的命令：
- 
+
 ```shell
 python tools/analysis_tools/optimize_anchors.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
                                                 --algorithm v5-k-means \
