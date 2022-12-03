@@ -336,7 +336,7 @@ python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
 
 ### Differential Evolution
 
-在 `Differential Evolution` 方法中，使用的是基于差分进化算法（简称 DE 算法）的聚类方式，其最小化目标函数为 `avg_iou_cost` ，具体使用命令如下:
+在 `Differential Evolution` 方法中，使用的是基于差分进化算法（简称 DE 算法）的聚类方式，其最小化目标函数为 `avg_iou_cost`，具体使用命令如下:
 
 ```shell
 python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
