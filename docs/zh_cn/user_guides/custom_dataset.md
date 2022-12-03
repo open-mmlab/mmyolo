@@ -459,7 +459,7 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
                                                 --val-dataset
 ```
 
-效果：
+效果（点击图片可查看大图）：
 
 <table align="center">
   <tbody>
