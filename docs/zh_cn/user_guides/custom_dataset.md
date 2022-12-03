@@ -237,7 +237,7 @@ python tools/analysis_tools/browse_coco_json.py --img-dir ${图片文件夹路�
 例子：
 
 ```shell
-python tools/dataset_converters/labelme2coco.py --img-dir ./data/cat/image \
+python tools/analysis_tools/browse_coco_json.py --img-dir ./data/cat/image \
                                                 --ann-file ./data/cat/annotations/annotations_all.json
 ```
 
