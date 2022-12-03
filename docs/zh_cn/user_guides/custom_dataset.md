@@ -473,10 +473,10 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
     </tr>
     <tr align="center" valign="center">
       <td>
-        <img alt="YOLOv5CocoDataset_bbox_area" src="https://user-images.githubusercontent.com/25873202/205420210-e31c8643-1a12-4b79-b423-b04adcc68deb.jpg" width="45%">
+        <img alt="YOLOv5CocoDataset_bbox_area" src="https://user-images.githubusercontent.com/25873202/205420210-e31c8643-1a12-4b79-b423-b04adcc68deb.jpg" width="60%">
       </td>
       <td>
-        <img alt="YOLOv5CocoDataset_bbox_wh" src="https://user-images.githubusercontent.com/25873202/205420277-ccd58eb5-1e36-425c-a221-934e54175ae7.jpg" width="45%">
+        <img alt="YOLOv5CocoDataset_bbox_wh" src="https://user-images.githubusercontent.com/25873202/205420277-ccd58eb5-1e36-425c-a221-934e54175ae7.jpg" width="60%">
       </td>
     </tr>
     <tr align="center" valign="center">
@@ -489,10 +489,10 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
     </tr>
     <tr align="center" valign="center">
       <td>
-        <img alt="YOLOv5CocoDataset_bbox_num" src="https://user-images.githubusercontent.com/25873202/205420241-f26c2310-8d4b-4b53-8331-bc2a67d62ce7.jpg" width="45%">
+        <img alt="YOLOv5CocoDataset_bbox_num" src="https://user-images.githubusercontent.com/25873202/205420241-f26c2310-8d4b-4b53-8331-bc2a67d62ce7.jpg" width="60%">
       </td>
       <td>
-        <img alt="YOLOv5CocoDataset_bbox_ratio" src="https://user-images.githubusercontent.com/25873202/205420256-8151f01a-2f54-46df-8a9f-2c5de05bbbc8.jpg" width="45%">
+        <img alt="YOLOv5CocoDataset_bbox_ratio" src="https://user-images.githubusercontent.com/25873202/205420256-8151f01a-2f54-46df-8a9f-2c5de05bbbc8.jpg" width="60%">
       </td>
     </tr>
   </tbody>
