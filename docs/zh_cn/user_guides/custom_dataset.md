@@ -151,7 +151,7 @@ python demo/image_demo.py ./data/cat/images \
 
 ```shell
 conda create -n labelme python=3.6
-conda actiavte labelme
+conda activate labelme
 pip install labelme
 ```
 
@@ -228,6 +228,7 @@ python tools/dataset_converters/labelme2coco.py --img-dir ./data/cat/image \
 ```
 
 本次演示的 `cat` 数据集，可以看到生成的 `class_with_id.txt` 中只有 `1` 类：
+
 ```text
 1 cat
 
