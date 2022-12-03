@@ -5,6 +5,7 @@ from statistics import median
 
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+from mmengine.dataset.dataset_wrapper import RepeatDataset
 import numpy as np
 from mmengine.config import Config
 from mmengine.utils import ProgressBar
@@ -47,8 +48,8 @@ def parse_args():
         ],
         help='Dataset analysis function selection.')
     parser.add_argument(
-        '--output-dir',
-        default='./',
+        '--out-dir',
+        default='./dataset_analysis',
         type=str,
         help='Save address of dataset analysis visualization results,'
         'Save in "./dataset_analysis/" by default')
@@ -56,7 +57,7 @@ def parse_args():
     return args
 
 
-def show_bbox_num(cfg, args, fig_set, class_name, class_num):
+def show_bbox_num(cfg, out_dir, fig_set, class_name, class_num):
     """Display the distribution map of categories and number of bbox
     instances."""
     print('\n\nDrawing bbox_num figure:')
@@ -73,8 +74,7 @@ def show_bbox_num(cfg, args, fig_set, class_name, class_num):
     plt.ylabel('Num of instances')
     plt.title(cfg.dataset_type)
 
-    # Save figuer
-    out_dir = os.path.join(args.output_dir, 'dataset_analysis')
+    # Save figure
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     out_name = fig_set['out_name']
@@ -86,7 +86,7 @@ def show_bbox_num(cfg, args, fig_set, class_name, class_num):
     print(f'End and save in {out_dir}/{out_name}_bbox_num.jpg')
 
 
-def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name):
+def show_bbox_wh(out_dir, fig_set, class_bbox_w, class_bbox_h, class_name):
     """Display the width and height distribution of categories and bbox
     instances."""
     print('\n\nDrawing bbox_wh figure:')
@@ -97,7 +97,7 @@ def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name):
     # Set the position of the map and label on the x-axis
     positions_w = list(range(0, 12 * len(class_name), 12))
     positions_h = list(range(6, 12 * len(class_name), 12))
-    positions_x_lable = list(range(3, 12 * len(class_name) + 1, 12))
+    positions_x_label = list(range(3, 12 * len(class_name) + 1, 12))
     ax.violinplot(
         class_bbox_w, positions_w, showmeans=True, showmedians=True, widths=4)
     ax.violinplot(
@@ -152,7 +152,7 @@ def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name):
             fontsize=fig_set['fontsize'])
 
     # Draw Legend
-    plt.setp(ax, xticks=positions_x_lable, xticklabels=class_name)
+    plt.setp(ax, xticks=positions_x_label, xticklabels=class_name)
     labels = ['bbox_w', 'bbox_h']
     colors = ['steelblue', 'darkorange']
     patches = [
@@ -164,8 +164,7 @@ def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name):
     ax.set_position([box.x0, box.y0, box.width, box.height * 0.8])
     ax.legend(loc='upper center', handles=patches, ncol=2)
 
-    # Save figuer
-    out_dir = os.path.join(args.output_dir, 'dataset_analysis')
+    # Save figure
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     out_name = fig_set['out_name']
@@ -177,7 +176,7 @@ def show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name):
     print(f'End and save in {out_dir}/{out_name}_bbox_wh.jpg')
 
 
-def show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio):
+def show_bbox_wh_ratio(out_dir, fig_set, class_name, class_bbox_ratio):
     """Display the distribution map of category and bbox instance width and
     height ratio."""
     print('\n\nDrawing bbox_wh_ratio figure:')
@@ -224,8 +223,7 @@ def show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio):
     # Set the position of the map and label on the x-axis
     plt.setp(ax, xticks=positions, xticklabels=class_name)
 
-    # Save figuer
-    out_dir = os.path.join(args.output_dir, 'dataset_analysis')
+    # Save figure
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     out_name = fig_set['out_name']
@@ -237,7 +235,7 @@ def show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio):
     print(f'End and save in {out_dir}/{out_name}_bbox_ratio.jpg')
 
 
-def show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num):
+def show_bbox_area(out_dir, fig_set, area_rule, class_name, bbox_area_num):
     """Display the distribution map of category and bbox instance area based on
     the rules of large, medium and small objects."""
     print('\n\nDrawing bbox_area figure:')
@@ -285,8 +283,7 @@ def show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num):
     ax.set_position([box.x0, box.y0, box.width, box.height * 0.8])
     ax.legend(loc='upper center', handles=patches, ncol=len(area_rule) - 1)
 
-    # Save figuer
-    out_dir = os.path.join(args.output_dir, 'dataset_analysis')
+    # Save figure
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     out_name = fig_set['out_name']
@@ -386,6 +383,10 @@ def main():
     # Build  lists to store data for all raw data
     data_list = dataset
 
+    if isinstance(data_list, RepeatDataset):
+        # Fix when RepeatDataset will crash
+        data_list = data_list.dataset
+
     # 2.Prepare data
     # Drawing settings
     fig_all_set = {
@@ -439,7 +440,7 @@ def main():
     show_data_list(args, area_rule)
     # Get the quantity and bbox data corresponding to each category
     print('\nRead the information of each picture in the dataset:')
-    progress_bar = ProgressBar(len(dataset))
+    progress_bar = ProgressBar(len(data_list))
     for img in data_list:
         for instance in img['instances']:
             if instance[
@@ -481,18 +482,18 @@ def main():
 
     # 3.draw Dataset Information
     if args.func is None:
-        show_bbox_num(cfg, args, fig_set, class_name, class_num)
-        show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name)
-        show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio)
-        show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num)
+        show_bbox_num(cfg, args.out_dir, fig_set, class_name, class_num)
+        show_bbox_wh(args.out_dir, fig_set, class_bbox_w, class_bbox_h, class_name)
+        show_bbox_wh_ratio(args.out_dir, fig_set, class_name, class_bbox_ratio)
+        show_bbox_area(args.out_dir, fig_set, area_rule, class_name, bbox_area_num)
     elif args.func == 'show_bbox_num':
-        show_bbox_num(cfg, args, fig_set, class_name, class_num)
+        show_bbox_num(cfg, args.out_dir, fig_set, class_name, class_num)
     elif args.func == 'show_bbox_wh':
-        show_bbox_wh(args, fig_set, class_bbox_w, class_bbox_h, class_name)
+        show_bbox_wh(args.out_dir, fig_set, class_bbox_w, class_bbox_h, class_name)
     elif args.func == 'show_bbox_wh_ratio':
-        show_bbox_wh_ratio(args, fig_set, class_name, class_bbox_ratio)
+        show_bbox_wh_ratio(args.out_dir, fig_set, class_name, class_bbox_ratio)
     elif args.func == 'show_bbox_area':
-        show_bbox_area(args, fig_set, area_rule, class_name, bbox_area_num)
+        show_bbox_area(args.out_dir, fig_set, area_rule, class_name, bbox_area_num)
     else:
         raise RuntimeError(
             'Please enter the correct func name, e.g., show_bbox_num')
