@@ -150,7 +150,7 @@ python demo/image_demo.py ./data/cat/images \
 - 安装 labelme
 
 ```shell
-conda create -n labelme python=3.6
+conda create -n labelme python=3.8
 conda activate labelme
 pip install labelme
 ```
