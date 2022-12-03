@@ -12,12 +12,14 @@ Example:
         python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
         --algorithm k-means --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
         --out-dir ${OUT_DIR}
+
     Use differential evolution to optimize anchors::
 
         python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
         --algorithm differential_evolution \
         --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
         --out-dir ${OUT_DIR}
+
     Use v5-k-means to optimize anchors::
 
         python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
@@ -76,8 +78,9 @@ def parse_args():
         '--prior-match-thr',
         default=4.0,
         type=float,
-        help='anchor-label `gt_filter_sizes` ratio threshold hyperparameter used'
-        ' for training, default=4.0, this parameter is unique to v5-k-means')
+        help='anchor-label `gt_filter_sizes` ratio threshold '
+        'hyperparameter used for training, default=4.0, this '
+        'parameter is unique to v5-k-means')
     parser.add_argument(
         '--mutation-args',
         type=float,
