@@ -173,6 +173,7 @@ labelme ${图片文件夹路径（即上一步的图片文件夹）} \
 例子：
 
 ```shell
+cd ${MMYOLO_PATH}
 labelme ./data/cat/images --output ./data/cat/labels --autosave --nodata
 ```
 
