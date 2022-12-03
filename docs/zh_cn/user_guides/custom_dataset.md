@@ -1,5 +1,7 @@
 # 自定义数据集 标注+训练+测试+部署 全流程
 
+平时的工作学习，我们经常会遇到一些任务需要训练自定义的私有数据集，开源数据集去作为上线模型的场景比较少（刷论文除外），这就需要我们去对自己的私有数据集进行一系列的操作，以确保模型能够上线生产服务于客户。
+
 本章节会介绍从 用户自定义图片数据集标注 到 最终进行训练和部署 的整体流程。流程步骤概览如下：
 
 01. 数据集准备：`tools/misc/download_dataset.py`
@@ -17,13 +19,13 @@
 
 ## 1. 数据集准备
 
-- 如果自己没有数据集，可以使用本教程提供的一个 `cat` 数据集（本 `cat` 数据集由 @RangeKing 提供原始图片，由 @PeterH0323 进行数据清洗）
+- 如果现在自己暂时没有数据集，亦或者想试下一个小的数据集来跑通我们的 demo，可以使用本教程提供的一个 144 张图片的 `cat` 数据集（本 `cat` 数据集由 @RangeKing 提供原始图片，由 @PeterH0323 进行数据清洗）
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/205423220-c4b8f2fd-22ba-4937-8e47-1b3f6a8facd8.png" alt="cat dataset"/>
 </div>
 
-下载命令：
+下载也非常简单，只需要一条命令即可完成：
 
 ```shell
 python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat --unzip --delete
@@ -51,7 +53,7 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat -
 
 **Tips**：这个数据集可以直接训练，如果您想体验整个流程的话，可以将 `images` 文件夹**以外的**其余文件都删除。
 
-- 如你已经有数据，可以将其组成下面的结构
+- 如您已经有数据，可以将其组成下面的结构：
 
 ```shell
 .
@@ -66,24 +68,20 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat -
 
 通常，标注有 2 种方法：
 
-- 软件或者算法辅助 + 人工修正 label
+- 软件或者算法辅助 + 人工修正 label（推荐，降本提速）
 - 仅人工标注
 
 ## 2.1 软件或者算法辅助 + 人工修正 label
 
-辅助标注的原理是用已有模型进行推理，将得出的推理信息保存为标注软件 label 文件格式。
+辅助标注的原理是用已有模型进行推理，将得出的推理信息保存为标注软件 label 文件格式。然后人工操作标注软件加载生成好的 label 文件，只需要检查每张图片的目标是否标准，以及是否有漏掉的目标。【辅助 + 人工标注】这种方式可以节省很多时间和精力，达到**降本提速**的目的。
 
-**Tips**：如果已有模型典型的如 COCO 预训练模型没有你自定义新数据集的类别，建议先人工打 100 张左右的图片 label，训练个初始模型，然后再进行辅助标注。
-
-人工操作标注软件加载生成好的 label 文件，只需要检查每张图片的目标是否标准，以及是否有漏掉的目标。
-
-【辅助 + 人工标注】这种方式可以节省很多时间和精力，达到降本提速的目的。
+**Tips**：如果已有模型（典型的如 COCO 预训练模型）没有您自定义新数据集的类别，建议先人工打 100 张左右的图片 label，训练个初始模型，然后再进行辅助标注。
 
 下面会分别介绍其过程：
 
 ### 2.1.1 软件或者算法辅助
 
-MMYOLO 提供的模型推理脚本 `demo/image_demo.py` 设置 `--to-labelme` 可以生成 labelme 格式 label 文件，具体用法如下：
+MMYOLO 提供的模型推理脚本 `demo/image_demo.py` 设置 `--to-labelme` 可以将推理结果生成 labelme 格式的 label 文件，具体用法如下：
 
 ```shell
 python demo/image_demo.py img \
@@ -132,7 +130,7 @@ python demo/image_demo.py ./data/cat/images \
 
 **Tips**：
 
-- 如果你的数据集需要标注多类，可以采用类似 `--class-name class1 class2` 格式输入；
+- 如果您的数据集需要标注多类，可以采用类似 `--class-name class1 class2` 格式输入；
 - 如果全部输出，则删掉 `--class-name` 这个 flag 即可全部类都输出。
 
 生成的 label 文件会在 `--out-dir` 中:
@@ -152,6 +150,8 @@ python demo/image_demo.py ./data/cat/images \
 - 安装 labelme
 
 ```shell
+conda create -n labelme python=3.6
+conda actiavte labelme
 pip install labelme
 ```
 
@@ -219,10 +219,18 @@ python tools/dataset_converters/labelme2coco.py --img-dir ${图片文件夹路�
 
 例子：
 
+以本教程的 `cat` 数据集为例：
+
 ```shell
 python tools/dataset_converters/labelme2coco.py --img-dir ./data/cat/image \
                                                 --labels-dir ./data/cat/labels \
                                                 --out ./data/cat/annotations/annotations_all.json
+```
+
+本次演示的 `cat` 数据集，可以看到生成的 `class_with_id.txt` 中只有 `1` 类：
+```text
+1 cat
+
 ```
 
 ### 3.2 检查转换的 COCO label
@@ -237,13 +245,19 @@ python tools/analysis_tools/browse_coco_json.py --img-dir ${图片文件夹路�
 例子：
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py --img-dir ./data/cat/image \
+python tools/analysis_tools/browse_coco_json.py --img-dir ./data/cat/images \
                                                 --ann-file ./data/cat/annotations/annotations_all.json
 ```
+
+<div align=center>
+<img alt="Image" src="https://user-images.githubusercontent.com/25873202/205429166-a6e48d20-c60b-4571-b00e-54439003ad3b.png">
+</div>
 
 关于 `tools/analysis_tools/browse_coco_json.py` 的更多用法请参考 [可视化 COCO label](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#coco)。
 
 ## 4. 数据集划分
+
+通常，自定义图片都是一个大文件夹，里面全部都是图片，需要我们自己去对图片进行训练集、验证集、测试集的划分，如果数据量比较少，可以不划分验证集。下面是划分脚本的具体用法：
 
 ```shell
 python tools/misc/coco_split.py --json ${COCO label json 路径} \
@@ -270,6 +284,10 @@ python tools/misc/coco_split.py --json ./data/cat/annotations/annotations_all.js
                                 --shuffle \
                                 --seed 666
 ```
+
+<div align=center>
+<img alt="Image" src="https://user-images.githubusercontent.com/25873202/205428346-5fdfbfca-0682-47aa-b0be-fa467cd0c5f8.png">
+</div>
 
 ## 5. 根据数据集内容新建 config 文件
 
@@ -301,6 +319,10 @@ python tools/misc/coco_split.py --json ./data/cat/annotations/annotations_all.js
 综上所述：可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`。
 
 我们可以在 configs 目录下新建一个新的目录 `custom_dataset`，同时在里面新建该 config 文件，并添加以下内容：
+
+<div align=center>
+<img alt="Image" src="https://user-images.githubusercontent.com/25873202/205428358-e32fb455-480a-4f14-9613-e4cc3193fb4d.png">
+</div>
 
 ```python
 _base_ = '../yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
@@ -464,7 +486,9 @@ python tools/analysis_tools/optimize_anchors.py configs/custom_dataset/yolov5_s-
 
 经过计算的 Anchor 如下：
 
+<div align=center>
 <img alt="Anchor" src="https://user-images.githubusercontent.com/25873202/205422434-1a68cded-b055-42e9-b01c-3e51f8f5ef81.png">
+</div>
 
 修改 config 文件里面的 `anchors` 变量：
 
