@@ -2,14 +2,16 @@
 
 本章节会介绍从 用户自定义图片数据集标注 到 最终进行训练和部署 的整体流程。流程步骤概览如下：
 
-1. 数据集准备：`tools/misc/download_dataset.py`
-2. 使用 [labelme](https://github.com/wkentaro/labelme) 进行数据集标注：`demo/image_demo.py` + labelme
-3. 使用脚本转换成 COCO 数据集格式：`tools/dataset_converters/labelme2coco.py`
-4. 数据集划分：`tools/misc/coco_split.py`
-5. 根据数据集内容新建 config 文件
-6. 训练：`tools/train.py`
-7. 推理：`demo/image_demo.py`
-8. 部署
+01. 数据集准备：`tools/misc/download_dataset.py`
+02. 使用 [labelme](https://github.com/wkentaro/labelme) 进行数据集标注：`demo/image_demo.py` + labelme
+03. 使用脚本转换成 COCO 数据集格式：`tools/dataset_converters/labelme2coco.py`
+04. 数据集划分：`tools/misc/coco_split.py`
+05. 根据数据集内容新建 config 文件
+06. 数据集分析：`tools/analysis_tools/dataset_analysis.py`
+07. 优化 Anchor 尺寸：`tools/analysis_tools/optimize_anchors.py`
+08. 训练：`tools/train.py`
+09. 推理：`demo/image_demo.py`
+10. 部署
 
 下面详细介绍每一步。
 
@@ -233,7 +235,7 @@ python tools/dataset_converters/labelme2coco.py --img-dir ./data/cat/image \
                                                 --ann-file ./data/cat/annotations/annotations_all.json
 ```
 
-关于 `tools/analysis_tools/browse_coco_json.py` 的更多用法请参考 [可视化 COCO label](useful_tools.md)。
+关于 `tools/analysis_tools/browse_coco_json.py` 的更多用法请参考 [可视化 COCO label](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#coco)。
 
 ## 4. 数据集划分
 
@@ -376,7 +378,60 @@ default_hooks = dict(
 )
 ```
 
-## 6. 训练
+## 6. 数据集分析
+
+脚本 `tools/analysis_tools/dataset_analysis.py` 能够帮助用户得到数据集的分析图，脚本如下
+
+```shell
+python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
+                                                [--val-dataset ${TYPE}] \
+                                                [--class-name ${CLASS_NAME}] \
+                                                [--area-rule ${AREA_RULE}] \
+                                                [--func ${FUNC}] \
+                                                [--out-dir ${OUT_DIR}]
+```
+
+例子：
+
+以本教程的数据集 cat config 为例：
+
+查看训练集情况
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+                                                --output-dir work_dirs/dataset_analysis_cat/train_dataset
+```
+
+查看验证集情况
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+                                                --output-dir work_dirs/dataset_analysis_cat/val_dataset \
+                                                --val-dataset
+```
+
+效果：
+
+<div align="center">
+  <img alt="YOLOv5CocoDataset_bbox_area" src="https://user-images.githubusercontent.com/25873202/205420210-e31c8643-1a12-4b79-b423-b04adcc68deb.jpg" width="45%">
+  <img alt="YOLOv5CocoDataset_bbox_wh" src="https://user-images.githubusercontent.com/25873202/205420277-ccd58eb5-1e36-425c-a221-934e54175ae7.jpg" width="45%">
+</div>
+<div align="center">
+  <img alt="YOLOv5CocoDataset_bbox_num" src="https://user-images.githubusercontent.com/25873202/205420241-f26c2310-8d4b-4b53-8331-bc2a67d62ce7.jpg" width="45%">
+  <img alt="YOLOv5CocoDataset_bbox_ratio" src="https://user-images.githubusercontent.com/25873202/205420256-8151f01a-2f54-46df-8a9f-2c5de05bbbc8.jpg" width="45%">
+</div>
+
+关于 `tools/analysis_tools/dataset_analysis.py` 的更多用法请参考 [可视化数据集分析](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id4)。
+
+## 7. 优化 Anchor 尺寸
+
+```shell
+python tools/analysis_tools/optimize_anchors.py
+```
+
+关于 `tools/analysis_tools/optimize_anchors.py` 的更多用法请参考 [优化锚框尺寸](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id8)。
+
+## 8. 训练
 
 使用下面命令进行启动训练（训练大约需要 2.5 个小时）：
 
@@ -404,7 +459,7 @@ bbox_mAP_copypaste: 0.950 1.000 1.000 -1.000 -1.000 0.950
 Epoch(val) [100][116/116]  coco/bbox_mAP: 0.9500  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9500
 ```
 
-## 7. 推理
+## 9. 推理
 
 使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_100.pth`，请用户自行修改为自己训练的最佳模型路径。
 
@@ -427,7 +482,7 @@ python demo/image_demo.py ./data/cat/images \
 2. 数据集优化：
    如果 epoch 加上去了还是不行，可以增加数据集数量，同时可以重新检查并优化数据集的标注，然后重新进行训练。
 
-## 8. 部署
+## 10. 部署
 
 MMYOLO 提供两种部署方式：
 
