@@ -538,6 +538,58 @@ anchors = [
 
 ## 8. 训练
 
+使用刚刚我们搞好的 config 文件执行训练。
+
+
+### 8.1 训练可视化
+
+如果需要训练过程可视化，MMYOLO 提供 2 种方式 `[wandb](https://wandb.ai/site)` 和 `[TensorBoard](https://tensorflow.google.cn/tensorboard)`，根据自己的情况选择其一即可。
+
+#### 8.1.1 wandb
+
+wandb 可视化需要在[官网](https://wandb.ai/site)注册，并在 https://wandb.ai/settings 获取到 wandb 的 API Keys。
+
+<div align=center>
+<img src="https://cdn.vansin.top/img/20220913212628.png" alt="image"/>
+</div>
+
+然后在命令行进行安装
+
+```shell
+pip install wandb
+# 运行了 wandb login 后输入上文中获取到的 API Keys ，便登录成功。
+wandb login
+```
+
+在我们刚刚新建的 config 文件 `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 添加 wandb 配置：
+
+```python
+visualizer = dict(vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')])
+```
+
+#### 8.1.2 TensorBoard
+
+安装 Tensorboard 环境
+
+```shell
+pip install tensorboard
+```
+
+在我们刚刚新建的 config 文件 `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 中添加 `tensorboard` 配置
+
+```python
+visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='TensorboardVisBackend')])
+```
+
+待会运行训练命令后，Tensorboard 文件会生成在可视化文件夹 `work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/${TIMESTAMP}/vis_data` 下，
+运行下面的命令便可以在网页链接使用 Tensorboard 查看 loss、学习率和 coco/bbox_mAP 等可视化数据了：
+
+```shell
+tensorboard --logdir=work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat
+```
+
+### 8.2 执行训练
+
 使用下面命令进行启动训练（训练大约需要 2.5 个小时）：
 
 ```shell
