@@ -440,9 +440,7 @@ default_hooks = dict(
 
 ## 6. 数据集可视化分析
 
-脚本 `tools/analysis_tools/dataset_analysis.py` 能够帮助用户得到数据集的分析图，
-
-可以生成四种分析图：
+脚本 `tools/analysis_tools/dataset_analysis.py` 能够帮助用户得到数据集的分析图。该脚本可以生成 4 种分析图：
 
 - 显示类别和 bbox 实例个数的分布图：`show_bbox_num`
 - 显示类别和 bbox 实例宽、高的分布图：`show_bbox_wh`
@@ -517,6 +515,13 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
     </tr>
   </tbody>
 </table>
+
+经过输出的图片分析可以得出，本教程使用的 cat 数据集的训练集具有以下情况：
+
+- 图片全部是 large object；
+- 类别 cat 的数量是 `129`；
+- bbox 的宽高比例大部分集中在 `1.14`，比例最小值是 0.36，最大值是 2.9；
+- bbox 的宽大部分是 `1034.74`，高大部分是 `926.67`。
 
 关于 `tools/analysis_tools/dataset_analysis.py` 的更多用法请参考 [可视化数据集分析](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id4)。
 
