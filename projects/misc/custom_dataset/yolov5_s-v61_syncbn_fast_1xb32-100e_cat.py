@@ -26,7 +26,7 @@ anchors = [  # 后面小节会演示如何生成 anchor 的例子，这里先占
     [(353, 337), (539, 341), (443, 432)]  # P5/32
 ]
 
-class_name = ('cat',)  # 根据 class_with_id.txt 类别信息，设置 class_name
+class_name = ('cat', )  # 根据 class_with_id.txt 类别信息，设置 class_name
 num_classes = len(class_name)
 metainfo = dict(
     CLASSES=class_name,
@@ -46,7 +46,7 @@ model = dict(
 
         # loss_cls 会根据 num_classes 动态调整，但是 num_classes = 1 的时候，loss_cls 恒为 0
         loss_cls=dict(loss_weight=0.5 *
-                                  (num_classes / 80 * 3 / _base_.num_det_layers))))
+                      (num_classes / 80 * 3 / _base_.num_det_layers))))
 
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
