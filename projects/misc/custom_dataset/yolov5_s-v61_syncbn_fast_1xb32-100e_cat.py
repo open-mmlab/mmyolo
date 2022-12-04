@@ -8,7 +8,7 @@ data_root = './data/cat/'  # 数据集目录的绝对路径
 work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat'
 
 # load_from 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
-# 因为我们是微调数据集，故这里需要 load MMYOLO 已经训练好的预训练模型，这样可以加快收敛速度的同时保证精度
+# 因为本教程是在 cat 数据集上微调，故这里需要使用 `load_from` 来加载 MMYOLO 中的预训练模型，这样可以在加快收敛速度的同时保证精度
 load_from = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa
 
 # 根据自己的 GPU 情况，修改 batch size，YOLOv5-s 默认为 8卡 x 16bs
@@ -20,13 +20,13 @@ save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
 # 根据自己的 GPU 情况，修改 base_lr，修改的比例是 base_lr_default * (your_bs / default_bs)
 base_lr = _base_.base_lr / 4
 
-anchors = [
+anchors = [  # 后面小节会演示如何生成 anchor 的例子，这里先占个位
     [(68, 69), (154, 91), (143, 162)],  # P3/8
     [(242, 160), (189, 287), (391, 207)],  # P4/16
     [(353, 337), (539, 341), (443, 432)]  # P5/32
 ]
 
-class_name = ('cat', )  # 根据 class_with_id.txt 类别信息，设置 class_name
+class_name = ('cat',)  # 根据 class_with_id.txt 类别信息，设置 class_name
 num_classes = len(class_name)
 metainfo = dict(
     CLASSES=class_name,
@@ -43,8 +43,10 @@ model = dict(
     bbox_head=dict(
         head_module=dict(num_classes=num_classes),
         prior_generator=dict(base_sizes=anchors),
+
+        # loss_cls 会根据 num_classes 动态调整，但是 num_classes = 1 的时候，loss_cls 恒为 0
         loss_cls=dict(loss_weight=0.5 *
-                      (num_classes / 80 * 3 / _base_.num_det_layers))))
+                                  (num_classes / 80 * 3 / _base_.num_det_layers))))
 
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,

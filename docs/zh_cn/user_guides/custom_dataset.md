@@ -1,25 +1,28 @@
 # 自定义数据集 标注+训练+测试+部署 全流程
 
-平时的工作学习，我们经常会遇到一些任务需要训练自定义的私有数据集，开源数据集去作为上线模型的场景比较少（刷论文除外），这就需要我们去对自己的私有数据集进行一系列的操作，以确保模型能够上线生产服务于客户。
+在平时的工作学习中，我们经常会遇到一些任务需要训练自定义的私有数据集，开源数据集去作为上线模型的场景比较少，这就需要我们对自己的私有数据集进行一系列的操作，以确保模型能够上线生产服务于客户。
 
 本章节会介绍从 用户自定义图片数据集标注 到 最终进行训练和部署 的整体流程。流程步骤概览如下：
 
 01. 数据集准备：`tools/misc/download_dataset.py`
-02. 使用 [labelme](https://github.com/wkentaro/labelme) 进行数据集标注：`demo/image_demo.py` + labelme
+02. 使用 [labelme](https://github.com/wkentaro/labelme) 和算法进行辅助和优化数据集标注：`demo/image_demo.py` + labelme
 03. 使用脚本转换成 COCO 数据集格式：`tools/dataset_converters/labelme2coco.py`
-04. 数据集划分：`tools/misc/coco_split.py`
+04. 数据集划分为训练集、验证集和测试集：`tools/misc/coco_split.py`
 05. 根据数据集内容新建 config 文件
-06. 数据集分析：`tools/analysis_tools/dataset_analysis.py`
+06. 数据集可视化分析：`tools/analysis_tools/dataset_analysis.py`
 07. 优化 Anchor 尺寸：`tools/analysis_tools/optimize_anchors.py`
-08. 训练：`tools/train.py`
-09. 推理：`demo/image_demo.py`
-10. 部署
+08. 可视化 config 配置中数据处理部分： `tools/analysis_tools/browse_dataset.py`
+09. 训练：`tools/train.py`
+10. 推理：`demo/image_demo.py`
+11. 部署
+
+**Tips**：在训练得到模型权重和验证集的 mAP 后，用户会需要对预测错误的情况进行深入分析，以便优化模型，MMYOLO 在后续会增加这个功能，敬请期待
 
 下面详细介绍每一步。
 
 ## 1. 数据集准备
 
-- 如果现在暂时没有自己的数据集，亦或者想尝试用一个小型数据集来跑通我们的 demo，可以使用本教程提供的一个 144 张图片的 `cat` 数据集（本 `cat` 数据集由 @RangeKing 提供原始图片，由 @PeterH0323 进行数据清洗）
+- 如果您现在暂时没有自己的数据集，亦或者想尝试用一个小型数据集来跑通我们的 demo，可以使用本教程提供的一个 144 张图片的 `cat` 数据集（本 `cat` 数据集由 @RangeKing 提供原始图片，由 @PeterH0323 进行数据清洗）。本教程的剩余部分都将以此 `cat` 数据集为例进行讲解。
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/205423220-c4b8f2fd-22ba-4937-8e47-1b3f6a8facd8.png" alt="cat dataset"/>
@@ -64,12 +67,14 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat -
          └── ...
 ```
 
-## 2. 使用 labelme 进行数据集标注
+## 2. 使用 labelme 和算法进行辅助和优化数据集标注
 
 通常，标注有 2 种方法：
 
 - 软件或者算法辅助 + 人工修正 label（推荐，降本提速）
 - 仅人工标注
+
+目前我们也在考虑接入第三方库来支持通过 GUI 界面调用 MMYOLO 推理接口实现算法辅助标注和人工优化标注一体功能。如果您有兴趣或者想法可以在 issue 留言或直接联系我们！
 
 ## 2.1 软件或者算法辅助 + 人工修正 label
 
@@ -143,6 +148,13 @@ python demo/image_demo.py ./data/cat/images \
     └── ...
 ```
 
+这是一张原图及其生成的 json 例子：
+
+<div align=center>
+  <img src="https://user-images.githubusercontent.com/25873202/205471430-dcc882dd-16bb-45e4-938f-6b62ab3dff19.jpg" alt="图片" width="45%"/>
+  <img src="https://user-images.githubusercontent.com/25873202/205471559-643aecc8-7fa3-4fff-be51-2fb0a570fdd3.png" alt="图片" width="45%"/>
+</div>
+
 ### 2.1.2 人工标注
 
 本教程使用的标注软件是 [labelme](https://github.com/wkentaro/labelme)
@@ -152,7 +164,7 @@ python demo/image_demo.py ./data/cat/images \
 ```shell
 conda create -n labelme python=3.8
 conda activate labelme
-pip install labelme
+pip install labelme==5.1.1
 ```
 
 - 启动 labelme
@@ -232,7 +244,7 @@ python tools/dataset_converters/labelme2coco.py --img-dir ./data/cat/image \
                                                 --out ./data/cat/annotations/annotations_all.json
 ```
 
-本次演示的 `cat` 数据集，可以看到生成的 `class_with_id.txt` 中只有 `1` 类：
+本次演示的 `cat` 数据集（注意不需要包括背景类），可以看到生成的 `class_with_id.txt` 中只有 `1` 类：
 
 ```text
 1 cat
@@ -261,7 +273,7 @@ python tools/analysis_tools/browse_coco_json.py --img-dir ./data/cat/images \
 
 关于 `tools/analysis_tools/browse_coco_json.py` 的更多用法请参考 [可视化 COCO label](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#coco)。
 
-## 4. 数据集划分
+## 4. 数据集划分为训练集、验证集和测试集
 
 通常，自定义图片都是一个大文件夹，里面全部都是图片，需要我们自己去对图片进行训练集、验证集、测试集的划分，如果数据量比较少，可以不划分验证集。下面是划分脚本的具体用法：
 
@@ -303,8 +315,7 @@ python tools/misc/coco_split.py --json ./data/cat/annotations/annotations_all.js
 .
 └── $DATA_ROOT
     ├── annotations
-    │    ├── train.json # or trainval.json
-    │    ├── val.json # optional
+    │    ├── trainval.json # 根据上面的指令只划分 trainval + test，如果您使用 3 组划分比例的话，这里是 train.json、val.json、test.json
     │    └── test.json
     ├── images
     │    ├── image1.jpg
@@ -353,7 +364,7 @@ save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
 # 根据自己的 GPU 情况，修改 base_lr，修改的比例是 base_lr_default * (your_bs / default_bs)
 base_lr = _base_.base_lr / 4
 
-anchors = [
+anchors = [ # 后面小节会演示如何生成 anchor 的例子，这里先占个位
     [(68, 69), (154, 91), (143, 162)],  # P3/8
     [(242, 160), (189, 287), (391, 207)],  # P4/16
     [(353, 337), (539, 341), (443, 432)]  # P5/32
@@ -376,6 +387,8 @@ model = dict(
     bbox_head=dict(
         head_module=dict(num_classes=num_classes),
         prior_generator=dict(base_sizes=anchors),
+        
+        # loss_cls 会根据 num_classes 动态调整，但是 num_classes = 1 的时候，loss_cls 恒为 0
         loss_cls=dict(loss_weight=0.5 *
                       (num_classes / 80 * 3 / _base_.num_det_layers))))
 
@@ -422,7 +435,7 @@ default_hooks = dict(
 
 **Tips**：我们在 `projects/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 放了一份相同的 config 文件，用户可以选择复制到 `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 路径直接开始训练。
 
-## 6. 数据集分析
+## 6. 数据集可视化分析
 
 脚本 `tools/analysis_tools/dataset_analysis.py` 能够帮助用户得到数据集的分析图，
 
@@ -446,7 +459,7 @@ python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
 
 例子：
 
-以本教程的数据集 cat config 为例：
+以本教程 `cat` 数据集 的 config 为例：
 
 查看训练集数据分布情况：
 
@@ -536,16 +549,37 @@ anchors = [
 
 关于 `tools/analysis_tools/optimize_anchors.py` 的更多用法请参考 [优化锚框尺寸](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id8)。
 
-## 8. 训练
+## 8. 可视化 config 配置中数据处理部分
+
+脚本 `tools/analysis_tools/browse_dataset.py` 能够帮助用户去直接窗口可视化 config 配置中数据处理部分，同时可以选择保存可视化图片到指定文件夹内。
+
+下面演示使用我们刚刚新建的 config 文件 `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 来可视化图片，该命令会使得图片直接弹出显示，每张图片持续 `5` 秒，图片不进行保存：
+
+```shell
+python tools/analysis_tools/browse_dataset.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+                                              --show-interval 5
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205472078-c958e90d-8204-4c01-821a-8b6a006f05b2.png" alt="image"/>
+</div>
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205472197-8228c75e-6046-404a-89b4-ed55eeb2cb95.png" alt="image"/>
+</div>
+
+关于 `tools/analysis_tools/browse_dataset.py` 的更多用法请参考 [可视化数据集](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id3)。
+
+## 9. 训练
 
 使用刚刚我们搞好的 config 文件执行训练。
 
 
-### 8.1 训练可视化
+### 9.1 训练可视化
 
 如果需要训练过程可视化，MMYOLO 提供 2 种方式 `[wandb](https://wandb.ai/site)` 和 `[TensorBoard](https://tensorflow.google.cn/tensorboard)`，根据自己的情况选择其一即可。
 
-#### 8.1.1 wandb
+#### 9.1.1 wandb
 
 wandb 可视化需要在[官网](https://wandb.ai/site)注册，并在 https://wandb.ai/settings 获取到 wandb 的 API Keys。
 
@@ -567,7 +601,7 @@ wandb login
 visualizer = dict(vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')])
 ```
 
-#### 8.1.2 TensorBoard
+#### 9.1.2 TensorBoard
 
 安装 Tensorboard 环境
 
@@ -588,7 +622,7 @@ visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='Tensorbo
 tensorboard --logdir=work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat
 ```
 
-### 8.2 执行训练
+### 9.2 执行训练
 
 使用下面命令进行启动训练（训练大约需要 2.5 个小时）：
 
@@ -616,7 +650,7 @@ bbox_mAP_copypaste: 0.950 1.000 1.000 -1.000 -1.000 0.950
 Epoch(val) [100][116/116]  coco/bbox_mAP: 0.9500  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9500
 ```
 
-## 9. 推理
+## 10. 推理
 
 使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_100.pth`，请用户自行修改为自己训练的最佳模型路径。
 
@@ -639,7 +673,7 @@ python demo/image_demo.py ./data/cat/images \
 2. 数据集优化：
    如果 epoch 加上去了还是不行，可以增加数据集数量，同时可以重新检查并优化数据集的标注，然后重新进行训练。
 
-## 10. 部署
+## 11. 部署
 
 MMYOLO 提供两种部署方式：
 
