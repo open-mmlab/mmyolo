@@ -320,10 +320,10 @@ python tools/model_converters/yolox_to_mmyolo.py --src yolox_s.pth --dst mmyolox
 
 The converted `mmyolox.pt` can be used by MMYOLO.
 
-## optimize anchors size
+## Optimize anchors size
 
-script `tools/analysis_tools/optimize_anchors.py` supports three methods to optimize YOLO anchors including `k-means`
-anchor cluster, `differential_evolution` and `v5-k-means`.
+Script `tools/analysis_tools/optimize_anchors.py` supports three methods to optimize YOLO anchors including `k-means`
+anchor cluster, `Differential Evolution` and `v5-k-means`.
 
 ### k-means
 
@@ -331,32 +331,32 @@ In k-means method, the distance criteria is based IoU, python shell as follow:
 
 ```shell
 python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
-    --algorithm k-means \
-    --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
-    --output-dir ${OUTPUT_DIR}
+                                                --algorithm k-means \
+                                                --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
+                                                --out-dir ${OUT_DIR}
 ```
 
-### differential_evolution
+### Differential Evolution
 
 In differential_evolution method, based differential evolution algorithm, use `avg_iou_cost` as minimum target function, python shell as follow:
 
 ```shell
 python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
-    --algorithm differential_evolution \
-    --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
-    --output-dir ${OUTPUT_DIR}
+                                                --algorithm DE \
+                                                --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
+                                                --out-dir ${OUT_DIR}
 ```
 
 ### v5-k-means
 
-In v5-k-means method, clustering standard as same with yolov5 which use shape-match, python shell as follow:
+In v5-k-means method, clustering standard as same with YOLOv5 which use shape-match, python shell as follow:
 
 ```shell
 python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
-    --algorithm v5-k-means \
-    --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
-    --prior_match_thr ${PRIOR_MATCH_THR} \
-    --output-dir ${OUTPUT_DIR}
+                                                --algorithm v5-k-means \
+                                                --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
+                                                --prior_match_thr ${PRIOR_MATCH_THR} \
+                                                --out-dir ${OUT_DIR}
 ```
 
 ## Perform inference on large images
