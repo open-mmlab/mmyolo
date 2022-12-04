@@ -75,46 +75,45 @@ python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
 
 ### 可视化数据集
 
-脚本 `tools/analysis_tools/browse_dataset.py` 能够帮助用户去直接窗口可视化数据集的原始图片+展示标签的图片，或者保存可视化图片到指定文件夹内。
+脚本 `tools/analysis_tools/browse_dataset.py` 能够帮助用户去直接窗口可视化 config 配置中数据处理部分，同时可以选择保存可视化图片到指定文件夹内。
 
 ```shell
 python tools/analysis_tools/browse_dataset.py ${CONFIG} \
-                                              [-h] \
-                                              [--output-dir ${OUTPUT_DIR}] \
+                                              [--out-dir ${OUT_DIR}] \
                                               [--not-show] \
                                               [--show-interval ${SHOW_INTERVAL}]
 ```
 
 例子：
 
-1. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，同时保存到目录 `work-dir/browse_dataset`：
+1. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，同时保存到目录 `work_dirs/browse_dataset`：
 
 ```shell
 python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
-                                               --output-dir 'work-dir/browse_dataset'
+                                              --out-dir 'work_dirs/browse_dataset'
 ```
 
-2. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，每张图片持续 `10` 秒，同时保存到目录 `work-dir/browse_dataset`：
+2. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，每张图片持续 `10` 秒，同时保存到目录 `work_dirs/browse_dataset`：
 
 ```shell
 python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
-                                               --output-dir 'work-dir/browse_dataset' \
-                                               --show-interval 10
+                                              --out-dir 'work_dirs/browse_dataset' \
+                                              --show-interval 10
 ```
 
 3. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，每张图片持续 `10` 秒，图片不进行保存：
 
 ```shell
 python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
-                                               --show-interval 10
+                                              --show-interval 10
 ```
 
-4. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片不直接弹出显示，仅保存到目录 `work-dir/browse_dataset`：
+4. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片不直接弹出显示，仅保存到目录 `work_dirs/browse_dataset`：
 
 ```shell
 python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
-                                               --output-dir 'work-dir/browse_dataset' \
-                                               --not-show
+                                              --out-dir 'work_dirs/browse_dataset' \
+                                              --not-show
 ```
 
 ### 可视化数据集分析

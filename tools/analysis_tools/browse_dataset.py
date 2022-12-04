@@ -10,7 +10,7 @@ import numpy as np
 from mmdet.models.utils import mask2ndarray
 from mmdet.structures.bbox import BaseBoxes
 from mmengine.config import Config, DictAction
-from mmengine.dataset import Compose
+from mmengine.dataset import Compose, RepeatDataset
 from mmengine.utils import ProgressBar
 from mmengine.visualization import Visualizer
 
@@ -42,7 +42,7 @@ def parse_args():
         'to show images after transformed; "pipeline" means show all '
         'the intermediate images. Defaults to "transformed".')
     parser.add_argument(
-        '--output-dir',
+        '--out-dir',
         default=None,
         type=str,
         help='If there is no display interface, you can save it.')
@@ -191,6 +191,11 @@ def main():
     visualizer.dataset_meta = dataset.metainfo
 
     intermediate_imgs = []
+
+    if isinstance(dataset, RepeatDataset):
+        # Fix RepeatDataset get error
+        dataset = dataset.dataset
+
     # TODO: The dataset wrapper occasion is not considered here
     dataset.pipeline = InspectCompose(dataset.pipeline.transforms,
                                       intermediate_imgs)
@@ -239,8 +244,8 @@ def main():
         else:
             # some dataset have not image path
             filename = f'{i}.jpg'
-        out_file = osp.join(args.output_dir,
-                            filename) if args.output_dir is not None else None
+        out_file = osp.join(args.out_dir,
+                            filename) if args.out_dir is not None else None
 
         if out_file is not None:
             mmcv.imwrite(image[..., ::-1], out_file)
