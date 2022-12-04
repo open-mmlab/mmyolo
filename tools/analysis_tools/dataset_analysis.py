@@ -7,7 +7,7 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 from mmengine.config import Config
-from mmengine.dataset.dataset_wrapper import RepeatDataset
+from mmengine.dataset import RepeatDataset
 from mmengine.utils import ProgressBar
 from prettytable import PrettyTable
 
