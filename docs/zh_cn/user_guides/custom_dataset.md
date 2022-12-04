@@ -2,7 +2,11 @@
 
 在平时的工作学习中，我们经常会遇到一些任务需要训练自定义的私有数据集，开源数据集去作为上线模型的场景比较少，这就需要我们对自己的私有数据集进行一系列的操作，以确保模型能够上线生产服务于客户。
 
-本教程默认您已经完成 MMYOLO **最新稳定版本**的安装，如果未安装，请参考文档 [开始你的第一步](https://mmyolo.readthedocs.io/zh_CN/latest/get_started.html#id1) 进行安装。
+```{note}
+本教程所有指令是在 Linux 上面完成，Windows 也是完全可用的，但是命令和操作稍有不同。
+```
+
+本教程默认您已经完成 MMYOLO 的安装，如果未安装，请参考文档 [开始你的第一步](https://mmyolo.readthedocs.io/zh_CN/latest/get_started.html#id1) 进行安装。
 
 本章节会介绍从 用户自定义图片数据集标注 到 最终进行训练和部署 的整体流程。流程步骤概览如下：
 
@@ -18,7 +22,9 @@
 10. 推理：`demo/image_demo.py`
 11. 部署
 
-**Tips**：在训练得到模型权重和验证集的 mAP 后，用户会需要对预测错误的情况进行深入分析，以便优化模型，MMYOLO 在后续会增加这个功能，敬请期待
+```{note}
+在训练得到模型权重和验证集的 mAP 后，用户会需要对预测错误的情况进行深入分析，以便优化模型，MMYOLO 在后续会增加这个功能，敬请期待。
+```
 
 下面详细介绍每一步。
 
@@ -56,7 +62,9 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat -
     └── class_with_id.txt # id + class_name 文件
 ```
 
-**Tips**：这个数据集可以直接训练，如果您想体验整个流程的话，可以将 `images` 文件夹**以外的**其余文件都删除。
+```{note}
+这个数据集可以直接训练，如果您想体验整个流程的话，可以将 `images` 文件夹**以外的**其余文件都删除。
+```
 
 - 如您已经有数据，可以将其组成下面的结构：
 
@@ -82,7 +90,9 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat -
 
 辅助标注的原理是用已有模型进行推理，将得出的推理信息保存为标注软件 label 文件格式。然后人工操作标注软件加载生成好的 label 文件，只需要检查每张图片的目标是否标准，以及是否有漏掉的目标。【辅助 + 人工标注】这种方式可以节省很多时间和精力，达到**降本提速**的目的。
 
-**Tips**：如果已有模型（典型的如 COCO 预训练模型）没有您自定义新数据集的类别，建议先人工打 100 张左右的图片 label，训练个初始模型，然后再进行辅助标注。
+```{note}
+如果已有模型（典型的如 COCO 预训练模型）没有您自定义新数据集的类别，建议先人工打 100 张左右的图片 label，训练个初始模型，然后再进行辅助标注。
+```
 
 下面会分别介绍其过程：
 
@@ -436,7 +446,9 @@ default_hooks = dict(
 
 ```
 
-**Tips**：我们在 `projects/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 放了一份相同的 config 文件，用户可以选择复制到 `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 路径直接开始训练。
+```{note}
+我们在 `projects/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 放了一份相同的 config 文件，用户可以选择复制到 `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 路径直接开始训练。
+```
 
 ## 6. 数据集可视化分析
 
@@ -580,11 +592,11 @@ python tools/analysis_tools/browse_dataset.py configs/custom_dataset/yolov5_s-v6
 
 ## 9. 训练
 
-使用刚刚我们搞好的 config 文件执行训练。
+使用刚刚我们新建好的 config 文件执行训练。
 
 ### 9.1 训练可视化
 
-如果需要训练过程可视化，MMYOLO 提供 2 种方式 `[wandb](https://wandb.ai/site)` 和 `[TensorBoard](https://tensorflow.google.cn/tensorboard)`，根据自己的情况选择其一即可。
+如果需要采用浏览器对训练过程可视化，MMYOLO 目前提供 2 种方式 `[wandb](https://wandb.ai/site)` 和 `[TensorBoard](https://tensorflow.google.cn/tensorboard)`，根据自己的情况选择其一即可(后续会扩展更多可视化后端支持)。
 
 #### 9.1.1 wandb
 
@@ -687,11 +699,84 @@ MMYOLO 提供两种部署方式：
 1. [MMDeploy](https://github.com/open-mmlab/mmdeploy) 框架进行部署
 2. 使用 `projects/easydeploy` 进行部署
 
-### 8.1 MMDeploy 框架进行部署
+### 11.1 MMDeploy 框架进行部署
 
-详见[YOLOv5 部署全流程说明](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/yolov5_deployment.html)
+考虑到部署的机器环境千差万别，很多时候在本地机器可以，上生产直接翻车的情况，这里推荐使用 Docker，做到环境一次部署，终身使用，节省运维搭建环境和部署生产的时间，同时也保住了各位开发人员的秀发。
 
-### 8.2 使用 `projects/easydeploy` 进行部署
+1. 构建 Docker 镜像
+2. 创建 Docker 容器
+3. 转换 TensorRT 模型
+4. 部署模型执行推理
+
+#### 11.1.1 构建 Docker 镜像
+
+```bash
+git clone -b dev-1.x https://github.com/open-mmlab/mmdeploy.git
+cd mmdeploy
+docker build docker/GPU/ -t mmdeploy:master-gpu --build-arg USE_SRC_INSIDE=true
+```
+
+其中 `USE_SRC_INSIDE=true` 是拉取基础进行之后在内部切换国内源，构建速度会快一些。
+
+执行脚本后，会进行构建，此刻可以放松下心情，起身活动下身体，需要一段的时间：
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205482447-329186c8-eba3-443f-b1fa-b33c2ab3d5da.png" alt="Image"/>
+</div>
+
+#### 11.1.2 创建 Docker 容器
+
+```shell
+export MMYOLO_PATH=/path/to/mmyolo # 先将 MMYOLO 的路径写入环境变量
+docker run --gpus all --name mmyolo-deploy -v /project/mmyolo:${MMYOLO_PATH} -it mmdeploy:master-gpu
+```
+
+有关这部分的详细介绍可以看 MMDeploy 官方文档 [使用 Docker 镜像](https://mmdeploy.readthedocs.io/zh_CN/latest/01-how-to-build/build_from_docker.html#docker)
+
+#### 11.1.3 转换 TensorRT 模型
+
+```shell
+export MMYOLO_PATH=/project/mmyolo
+cd /root/workspace/mmdeploy
+python ./tools/deploy.py \
+    ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
+    ${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+    ${MMYOLO_PATH}/work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat-5-time/best_coco/bbox_mAP_epoch_100.pth \
+    ${MMYOLO_PATH}/cat/images/mmexport1633684751291.jpg \
+    --test-img ${MMYOLO_PATH}/cat/images/mmexport1633684751291.jpg \
+    --work-dir ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy \
+    --device cuda:0 \
+    --log-level INFO \
+    --dump-info
+```
+
+关于转换模型的详细介绍，请参考 [如何转换模型](https://mmdeploy.readthedocs.io/zh_CN/latest/02-how-to-run/convert_model.html)
+
+#### 11.1.4 部署模型执行推理
+
+```shell
+python demo/python/object_detection.py cuda \
+                                       ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy \
+                                       ${MMYOLO_PATH}/cat/images/mmexport1633684751291.jpg
+```
+
+#### 11.1.4 保存和加载 Docker 容器
+
+因为如果每次都进行 docker 镜像的构建，特别费时间，如果是公司的项目，不可以上传到公有的 dockerhub，如果有私有云 dockerhub 的可以跳过这一步。
+
+如果没有私有 dockerhub 的话，每次部署都要构建，而且有些场景（例如工厂）是不可以连接到外网的，或者网络特别慢，所以我建议使用 docker 自带的打包 api 进行打包和加载：
+
+```shell
+# 保存，存好的 tar 包可以放到移动硬盘
+docker save mmyolo-deploy > mmyolo-deploy.tar
+
+# 加载
+docker load < /path/to/mmyolo-deploy.tar
+```
+
+功能细节详见[YOLOv5 部署全流程说明](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/yolov5_deployment.html)
+
+### 11.2 使用 `projects/easydeploy` 进行部署
 
 详见[部署文档](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README_zh-CN.md)
 
