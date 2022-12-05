@@ -792,6 +792,12 @@ python ./tools/deploy.py \
 
 #### 11.1.4 部署模型执行推理
 
+需要将 `${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 里面的 `data_root` 修改为 Docker 容器里面的路径：
+
+```python
+data_root = '/root/workspace/mmyolo/data/cat/'  # Docker 容器里面数据集目录的绝对路径
+```
+
 可以执行速度和精度测试：
 
 ```shell
@@ -843,10 +849,20 @@ Epoch(test) [116/116]  coco/bbox_mAP: 0.9430  coco/bbox_mAP_50: 1.0000  coco/bbo
 单张图片推理：
 
 ```shell
-python demo/python/object_detection.py cuda \
-                                       ./work_dir/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16 \
-                                       ${MMYOLO_PATH}/data/cat/images/mmexport1633684751291.jpg
+cd ${MMYOLO_PATH}/projects/misc/custom_dataset
+python deploy_demo.py \
+    --deploy-cfg ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
+    --model-cfg ${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+    --device cuda:0 \
+    --backend-model /root/workspace/mmdeploy/work_dir/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16/end2end.engine \
+    --img ${MMYOLO_PATH}/data/cat/images/mmexport1633684751291.jpg
 ```
+
+执行之后，可以看到在 `deploy_demo.py` 同级目录下有一个 `output_detection.png` 图片生成，这就是推理好的图片
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205592790-931e2b0a-0452-4110-959b-21b1d2aa50e5.png" alt="Image"/>
+</div>
 
 #### 11.1.4 保存和加载 Docker 容器
 
