@@ -10,7 +10,7 @@ import numpy as np
 from mmdet.models.utils import mask2ndarray
 from mmdet.structures.bbox import BaseBoxes
 from mmengine.config import Config, DictAction
-from mmengine.dataset import Compose, RepeatDataset
+from mmengine.dataset import Compose
 from mmengine.utils import ProgressBar
 from mmengine.visualization import Visualizer
 
