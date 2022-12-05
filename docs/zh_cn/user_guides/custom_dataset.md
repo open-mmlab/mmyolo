@@ -701,7 +701,7 @@ MMYOLO 提供两种部署方式：
 
 ### 11.1 MMDeploy 框架进行部署
 
-考虑到部署的机器环境千差万别，很多时候在本地机器可以，上生产直接翻车的情况，这里推荐使用 Docker，做到环境一次部署，终身使用，节省运维搭建环境和部署生产的时间，同时也保住了各位开发人员的秀发。
+考虑到部署的机器环境千差万别，很多时候在本地机器可以，但是在生产环境则不一定，这里推荐使用 Docker，做到环境一次部署，终身使用，节省运维搭建环境和部署生产的时间。
 
 1. 构建 Docker 镜像
 2. 创建 Docker 容器
@@ -718,7 +718,7 @@ docker build docker/GPU/ -t mmdeploy:gpu --build-arg USE_SRC_INSIDE=true
 
 其中 `USE_SRC_INSIDE=true` 是拉取基础进行之后在内部切换国内源，构建速度会快一些。
 
-执行脚本后，会进行构建，此刻可以放松下心情，起身活动下身体，需要一段的时间：
+执行脚本后，会进行构建，此刻需要等一段时间：
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/205482447-329186c8-eba3-443f-b1fa-b33c2ab3d5da.png" alt="Image"/>
@@ -727,7 +727,7 @@ docker build docker/GPU/ -t mmdeploy:gpu --build-arg USE_SRC_INSIDE=true
 #### 11.1.2 创建 Docker 容器
 
 ```shell
-export MMYOLO_PATH=/mnt/e/mmyolo/official_repo/mmyolo # 先将您机器上 MMYOLO 的路径写入环境变量
+export MMYOLO_PATH=/path/to/local/mmyolo # 先将您机器上 MMYOLO 的路径写入环境变量
 docker run --gpus all --name mmyolo-deploy -v ${MMYOLO_PATH}:/root/workspace/mmyolo -it mmdeploy:gpu /bin/bash
 ```
 
@@ -809,7 +809,7 @@ python tools/test.py \
     --device cuda
 ```
 
-速度测试如下，可见平均速度是 `19.89 ms`，对比为转之前有了提升，同时显存也下降了很多：
+速度测试如下，可见平均速度是 `19.89 ms`，对比 PyTorch 推理有速度提升，同时显存也下降了很多：
 
 ```bash
 Epoch(test) [ 10/116]    eta: 0:00:08  time: 0.0806  data_time: 0.0726  memory: 12
@@ -826,7 +826,7 @@ Epoch(test) [100/116]    eta: 0:00:01  time: 0.0781  data_time: 0.0517  memory: 
 Epoch(test) [110/116]    eta: 0:00:00  time: 0.0871  data_time: 0.0611  memory: 12
 ```
 
-精度测试如下，此配置是 FP16，故有一定范围的掉点，但是速度加快，属于速度换精度，当然，这里只是简单的 demo 测试，如果是大批量的数据以及适当的调试，则可以保持精度或者有提升也不奇怪：
+精度测试如下。此配置采用 FP16 格式推理，会有一定程度掉点，但是推理速度更快：
 
 ```shell
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.943
@@ -865,7 +865,7 @@ python deploy_demo.py \
 </div>
 
 ```{note}
-当然，这只是一个 demo，未来还可以做很多优化调整，不限于增大 batch，量化 int8 等等的操作，这部分由用户自行去完成。
+您也可以做其他优化调整，例如增大 batch，量化 int8 等等。
 ```
 
 #### 11.1.4 保存和加载 Docker 容器
