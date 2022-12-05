@@ -439,11 +439,11 @@ class YOLOv5Head(BaseDenseHead):
         Returns:
             dict: A dictionary of loss components.
         """
-        outs = self(x)
 
         if isinstance(batch_data_samples, list):
             losses = super().loss(x, batch_data_samples)
         else:
+            outs = self(x)
             # Fast version
             loss_inputs = outs + (batch_data_samples['bboxes_labels'],
                                   batch_data_samples['img_metas'])
