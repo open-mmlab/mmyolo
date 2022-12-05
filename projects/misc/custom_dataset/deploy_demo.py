@@ -1,8 +1,8 @@
 import argparse
 
+import torch
 from mmdeploy.apis.utils import build_task_processor
 from mmdeploy.utils import get_input_shape, load_config
-import torch
 
 
 def parse_args():
@@ -48,7 +48,7 @@ def deploy_demo(args):
 def main():
     args = parse_args()
     deploy_demo(args)
-    print("All done!")
+    print('All done!')
 
 
 if __name__ == '__main__':
