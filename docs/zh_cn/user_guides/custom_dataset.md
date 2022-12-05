@@ -713,7 +713,7 @@ MMYOLO 提供两种部署方式：
 ```bash
 git clone -b dev-1.x https://github.com/open-mmlab/mmdeploy.git
 cd mmdeploy
-docker build docker/GPU/ -t mmdeploy:master-gpu --build-arg USE_SRC_INSIDE=true
+docker build docker/GPU/ -t mmdeploy:gpu --build-arg USE_SRC_INSIDE=true
 ```
 
 其中 `USE_SRC_INSIDE=true` 是拉取基础进行之后在内部切换国内源，构建速度会快一些。
@@ -727,37 +727,125 @@ docker build docker/GPU/ -t mmdeploy:master-gpu --build-arg USE_SRC_INSIDE=true
 #### 11.1.2 创建 Docker 容器
 
 ```shell
-export MMYOLO_PATH=/path/to/mmyolo # 先将 MMYOLO 的路径写入环境变量
-docker run --gpus all --name mmyolo-deploy -v /project/mmyolo:${MMYOLO_PATH} -it mmdeploy:master-gpu
+export MMYOLO_PATH=/mnt/e/mmyolo/official_repo/mmyolo # 先将您机器上 MMYOLO 的路径写入环境变量
+docker run --gpus all --name mmyolo-deploy -v ${MMYOLO_PATH}:/root/workspace/mmyolo -it mmdeploy:gpu /bin/bash
 ```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205536974-1eeb2901-9b14-4851-9c96-5046cd05f171.png" alt="Image"/>
+</div>
+
+可以看到本地的 MMYOLO 环境已经挂载到容器里面了
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205537473-0afc16c3-c6d4-451a-96d7-1a2388341b60.png" alt="Image"/>
+</div>
 
 有关这部分的详细介绍可以看 MMDeploy 官方文档 [使用 Docker 镜像](https://mmdeploy.readthedocs.io/zh_CN/latest/01-how-to-build/build_from_docker.html#docker)
 
 #### 11.1.3 转换 TensorRT 模型
 
+首先需要在 Docker 容器里面安装 MMYOLO
+
 ```shell
-export MMYOLO_PATH=/project/mmyolo
+export MMYOLO_PATH=/root/workspace/mmyolo # 镜像中的路径，这里不需要修改
+cd ${MMYOLO_PATH}
+export MMYOLO_VERSION=$(python -c "import mmyolo.version as v; print(v.__version__)")  # 查看训练使用的 MMYOLO 版本号
+echo "Using MMYOLO ${MMYOLO_VERSION}"
+mim install --no-cache-dir mmyolo==${MMYOLO_VERSION}
+```
+
+进行模型转换
+
+```shell
 cd /root/workspace/mmdeploy
 python ./tools/deploy.py \
     ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
     ${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
-    ${MMYOLO_PATH}/work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat-5-time/best_coco/bbox_mAP_epoch_100.pth \
-    ${MMYOLO_PATH}/cat/images/mmexport1633684751291.jpg \
-    --test-img ${MMYOLO_PATH}/cat/images/mmexport1633684751291.jpg \
-    --work-dir ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy \
+    ${MMYOLO_PATH}/work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_100.pth \
+    ${MMYOLO_PATH}/data/cat/images/mmexport1633684751291.jpg \
+    --test-img ${MMYOLO_PATH}/data/cat/images/mmexport1633684751291.jpg \
+    --work-dir ./work_dir/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16 \
     --device cuda:0 \
     --log-level INFO \
+    --show \
     --dump-info
 ```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205540259-ded15231-c428-4a5b-ac45-06cf15c5b7e9.png" alt="Image"/>
+</div>
+
+等待一段时间，出现了 `All process success.` 即为成功：
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205540981-355d34cb-6472-47e0-a7dd-11eb85b3b43c.png" alt="Image"/>
+</div>
+
+查看导出的路径，可以看到这样的文件结构：
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205541268-1807f3fd-1f22-42b0-9397-cb50c602f8e0.png" alt="Image"/>
+</div>
 
 关于转换模型的详细介绍，请参考 [如何转换模型](https://mmdeploy.readthedocs.io/zh_CN/latest/02-how-to-run/convert_model.html)
 
 #### 11.1.4 部署模型执行推理
 
+可以执行速度和精度测试：
+
+```shell
+python tools/test.py \
+    ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
+    ${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+    --model ./work_dir/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16/end2end.engine \
+    --speed-test \
+    --device cuda
+```
+
+速度测试如下，可见平均速度是 `19.89 ms`，对比为转之前有了提升，同时显存也下降了很多：
+
+```bash
+Epoch(test) [ 10/116]    eta: 0:00:08  time: 0.0806  data_time: 0.0726  memory: 12
+Epoch(test) [ 20/116]    eta: 0:00:08  time: 0.0899  data_time: 0.0805  memory: 12
+Epoch(test) [ 30/116]    eta: 0:00:07  time: 0.0887  data_time: 0.0644  memory: 12
+Epoch(test) [ 40/116]    eta: 0:00:06  time: 0.0779  data_time: 0.0525  memory: 12
+Epoch(test) [ 50/116]    eta: 0:00:05  time: 0.0789  data_time: 0.0546  memory: 12
+Epoch(test) [ 60/116]    eta: 0:00:04  time: 0.0763  data_time: 0.0521  memory: 12
+Epoch(test) [ 70/116]    eta: 0:00:03  time: 0.0738  data_time: 0.0482  memory: 16
+Epoch(test) [ 80/116]    eta: 0:00:02  time: 0.0737  data_time: 0.0478  memory: 12
+Epoch(test) [ 90/116]    eta: 0:00:02  time: 0.0835  data_time: 0.0574  memory: 12
+Epoch(test) [100/116]    eta: 0:00:01  time: 0.0781  data_time: 0.0517  memory: 12
+[tensorrt]-110 times per count: 19.89 ms, 50.28 FPS
+Epoch(test) [110/116]    eta: 0:00:00  time: 0.0871  data_time: 0.0611  memory: 12
+```
+
+精度测试如下，此配置是 FP16，故有一定范围的掉点，但是速度加快，属于速度换精度，当然，这里只是简单的 demo 测试，如果是大批量的数据以及适当的调试，则可以保持精度或者有提升也不奇怪：
+
+```shell
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.943
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.943
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.864
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.960
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.960
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.960
+
+bbox_mAP_copypaste: 0.943 1.000 1.000 -1.000 -1.000 0.943
+Epoch(test) [116/116]  coco/bbox_mAP: 0.9430  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9430
+```
+
+单张图片推理：
+
 ```shell
 python demo/python/object_detection.py cuda \
-                                       ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy \
-                                       ${MMYOLO_PATH}/cat/images/mmexport1633684751291.jpg
+                                       ./work_dir/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16 \
+                                       ${MMYOLO_PATH}/data/cat/images/mmexport1633684751291.jpg
 ```
 
 #### 11.1.4 保存和加载 Docker 容器
