@@ -1,9 +1,13 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from typing import Union
+
 import torch
 from mmdet.models.detectors.single_stage import SingleStageDetector
+from mmdet.structures import SampleList
 from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmengine.dist import get_world_size
 from mmengine.logging import print_log
+from torch import Tensor
 
 from mmyolo.registry import MODELS
 
@@ -51,3 +55,11 @@ class YOLODetector(SingleStageDetector):
         if use_syncbn and get_world_size() > 1:
             torch.nn.SyncBatchNorm.convert_sync_batchnorm(self)
             print_log('Using SyncBatchNorm()', 'current')
+
+    def assign(self, data: Union[dict, tuple, list]) -> Union[dict, list]:
+        data = self.data_preprocessor(data, True)
+        x = self.extract_feat(data['inputs'])
+        assign_results = self.bbox_head.assign(x, data['data_samples'])
+        return assign_results
+
+
