@@ -878,8 +878,6 @@ docker save mmyolo-deploy > mmyolo-deploy.tar
 docker load < /path/to/mmyolo-deploy.tar
 ```
 
-功能细节详见[YOLOv5 部署全流程说明](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/yolov5_deployment.html)
-
 ### 11.2 使用 `projects/easydeploy` 进行部署
 
 详见[部署文档](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README_zh-CN.md)
