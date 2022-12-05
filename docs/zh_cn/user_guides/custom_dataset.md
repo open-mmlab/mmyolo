@@ -864,6 +864,10 @@ python deploy_demo.py \
 <img src="https://user-images.githubusercontent.com/25873202/205592790-931e2b0a-0452-4110-959b-21b1d2aa50e5.png" alt="Image"/>
 </div>
 
+```{note}
+当然，这只是一个 demo，未来还可以做很多优化调整，不限于增大 batch，量化 int8 等等的操作，这部分由用户自行去完成。
+```
+
 #### 11.1.4 保存和加载 Docker 容器
 
 因为如果每次都进行 docker 镜像的构建，特别费时间，如果是公司的项目，不可以上传到公有的 dockerhub，如果有私有云 dockerhub 的可以跳过这一步。
