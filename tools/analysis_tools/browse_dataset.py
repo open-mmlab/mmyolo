@@ -192,8 +192,8 @@ def main():
 
     intermediate_imgs = []
 
-    if isinstance(dataset, RepeatDataset):
-        # Fix RepeatDataset get error
+    if not hasattr(dataset, 'pipeline'):
+        # Fix some dataset type may get error
         dataset = dataset.dataset
 
     # TODO: The dataset wrapper occasion is not considered here
