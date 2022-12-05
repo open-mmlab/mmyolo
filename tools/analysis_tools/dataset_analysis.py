@@ -7,7 +7,6 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 from mmengine.config import Config
-from mmengine.dataset import RepeatDataset
 from mmengine.utils import ProgressBar
 from prettytable import PrettyTable
 
@@ -383,8 +382,8 @@ def main():
     # Build  lists to store data for all raw data
     data_list = dataset
 
-    if isinstance(data_list, RepeatDataset):
-        # Fix when RepeatDataset will crash
+    if not hasattr(data_list, 'pipeline'):
+        # Fix some dataset type will get error result
         data_list = data_list.dataset
 
     # 2.Prepare data
