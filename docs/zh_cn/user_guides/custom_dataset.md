@@ -935,5 +935,5 @@ OpenCV: 4.6.0
 MMEngine: 0.3.1
 MMCV: 2.0.0rc3
 MMDetection: 3.0.0rc3
-MMYOLO: 0.1.3+3815671
+MMYOLO: 0.2.0+cf279a5
 ```
