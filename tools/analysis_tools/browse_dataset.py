@@ -193,7 +193,7 @@ def main():
     intermediate_imgs = []
 
     if not hasattr(dataset, 'pipeline'):
-        # Fix some dataset type may get error
+        # for dataset_wrapper
         dataset = dataset.dataset
 
     # TODO: The dataset wrapper occasion is not considered here
