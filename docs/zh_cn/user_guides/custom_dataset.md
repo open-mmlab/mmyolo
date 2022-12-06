@@ -674,6 +674,8 @@ bbox_mAP_copypaste: 0.939 1.000 1.000 -1.000 -1.000 0.939
 Epoch(val) [98][116/116]  coco/bbox_mAP: 0.9390  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9390
 ```
 
+在一般的 finetune 最佳实践中都会推荐将 backbone 固定不参与训练，并且学习率 lr 也进行相应缩放，但是在本教程中发现这种做法会出现一定程度掉点。猜测可能原因是 cat 类别已经在 COCO 数据集中，而 cat 数据集比较小。
+
 ## 10. 推理
 
 使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_98.pth`，请用户自行修改为自己训练的最佳模型路径。
@@ -879,9 +881,7 @@ python deploy_demo.py \
 
 #### 11.1.4 保存和加载 Docker 容器
 
-因为如果每次都进行 docker 镜像的构建，特别费时间，如果是公司的项目，不可以上传到公有的 dockerhub，如果有私有云 dockerhub 的可以跳过这一步。
-
-如果没有私有 dockerhub 的话，每次部署都要构建，而且有些场景（例如工厂）是不可以连接到外网的，或者网络特别慢，所以我建议使用 docker 自带的打包 api 进行打包和加载：
+因为如果每次都进行 docker 镜像的构建，特别费时间，此时你可以考虑使用 docker 自带的打包 api 进行打包和加载。
 
 ```shell
 # 保存，存好的 tar 包可以放到移动硬盘
