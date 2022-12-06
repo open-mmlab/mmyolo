@@ -862,11 +862,12 @@ Epoch(test) [116/116]  coco/bbox_mAP: 0.9370  coco/bbox_mAP_50: 1.0000  coco/bbo
 cd ${MMYOLO_PATH}/demo
 python deploy_demo.py \
     ${MMYOLO_PATH}/data/cat/images \
-    --model-cfg ${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
-    --backend-model /root/workspace/mmdeploy/work_dir/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16/end2end.engine \
+    ${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+    /root/workspace/mmdeploy/work_dir/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16/end2end.engine \
     --deploy-cfg ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
     --out-dir ${MMYOLO_PATH}/work_dirs/deploy_predict_out \
-    --device cuda:0
+    --device cuda:0 \
+    --score-thr 0.5
 ```
 
 执行之后，可以看到在 `--out-dir` 下面的推理图片结果，下面展示其中一张：
