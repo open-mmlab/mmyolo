@@ -8,10 +8,9 @@ import torch
 from mmengine import Config
 
 try:
-    # import importlib
-    # importlib.import_module('mmdeploy')
-    raise RuntimeError
-except RuntimeError:
+    import importlib
+    importlib.import_module('mmdeploy')
+except ImportError:
     pytest.skip('mmdeploy is not installed.', allow_module_level=True)
 
 import mmdeploy.backend.onnxruntime as ort_apis
