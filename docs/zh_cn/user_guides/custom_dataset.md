@@ -8,7 +8,7 @@
 
 本教程默认您已经完成 MMYOLO 的安装，如果未安装，请参考文档 [开始你的第一步](https://mmyolo.readthedocs.io/zh_CN/latest/get_started.html#id1) 进行安装。
 
-本章节会介绍从 用户自定义图片数据集标注 到 最终进行训练和部署 的整体流程。流程步骤概览如下：
+本教程涵盖从 用户自定义图片数据集标注 到 最终进行训练和部署 的整体流程。步骤概览如下：
 
 01. 数据集准备：`tools/misc/download_dataset.py`
 02. 使用 [labelme](https://github.com/wkentaro/labelme) 和算法进行辅助和优化数据集标注：`demo/image_demo.py` + labelme
@@ -23,20 +23,20 @@
 11. 部署
 
 ```{note}
-在训练得到模型权重和验证集的 mAP 后，用户会需要对预测错误的情况进行深入分析，以便优化模型，MMYOLO 在后续会增加这个功能，敬请期待。
+在训练得到模型权重和验证集的 mAP 后，用户需要对预测错误的 bad case 进行深入分析，以便优化模型，MMYOLO 在后续会增加这个功能，敬请期待。
 ```
 
 下面详细介绍每一步。
 
 ## 1. 数据集准备
 
-- 如果您现在暂时没有自己的数据集，亦或者想尝试用一个小型数据集来跑通我们的 demo，可以使用本教程提供的一个 144 张图片的 `cat` 数据集（本 `cat` 数据集由 @RangeKing 提供原始图片，由 @PeterH0323 进行数据清洗）。本教程的剩余部分都将以此 `cat` 数据集为例进行讲解。
+- 如果您现在暂时没有自己的数据集，亦或者想尝试用一个小型数据集来跑通我们的整体流程，可以使用本教程提供的一个 144 张图片的 `cat` 数据集（本 `cat` 数据集由 @RangeKing 提供原始图片，由 @PeterH0323 进行数据清洗）。本教程的剩余部分都将以此 `cat` 数据集为例进行讲解。
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/205423220-c4b8f2fd-22ba-4937-8e47-1b3f6a8facd8.png" alt="cat dataset"/>
 </div>
 
-下载也非常简单，只需要一条命令即可完成：
+下载也非常简单，只需要一条命令即可完成（数据集压缩包大小 `217 MB`）：
 
 ```shell
 python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat --unzip --delete
@@ -62,9 +62,7 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat -
     └── class_with_id.txt # id + class_name 文件
 ```
 
-```{note}
 这个数据集可以直接训练，如果您想体验整个流程的话，可以将 `images` 文件夹**以外的**其余文件都删除。
-```
 
 - 如您已经有数据，可以将其组成下面的结构：
 
@@ -84,11 +82,14 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat -
 - 软件或者算法辅助 + 人工修正 label（推荐，降本提速）
 - 仅人工标注
 
-目前我们也在考虑接入第三方库来支持通过 GUI 界面调用 MMYOLO 推理接口实现算法辅助标注和人工优化标注一体功能。如果您有兴趣或者想法可以在 issue 留言或直接联系我们！
+```{note}
+目前我们也在考虑接入第三方库来支持通过 GUI 界面调用 MMYOLO 推理接口实现算法辅助标注和人工优化标注一体功能。
+如果您有兴趣或者想法可以在 issue 留言或直接联系我们！
+```
 
 ## 2.1 软件或者算法辅助 + 人工修正 label
 
-辅助标注的原理是用已有模型进行推理，将得出的推理信息保存为标注软件 label 文件格式。然后人工操作标注软件加载生成好的 label 文件，只需要检查每张图片的目标是否标准，以及是否有漏掉的目标。【辅助 + 人工标注】这种方式可以节省很多时间和精力，达到**降本提速**的目的。
+辅助标注的原理是用已有模型进行推理，将得出的推理信息保存为标注软件 label 文件格式。然后人工操作标注软件加载生成好的 label 文件，只需要检查每张图片的目标是否标准，以及是否有漏掉、错标的目标。【软件或者算法辅助 + 人工修正 label】这种方式可以节省很多时间和精力，达到**降本提速**的目的。
 
 ```{note}
 如果已有模型（典型的如 COCO 预训练模型）没有您自定义新数据集的类别，建议先人工打 100 张左右的图片 label，训练个初始模型，然后再进行辅助标注。
@@ -98,7 +99,7 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat -
 
 ### 2.1.1 软件或者算法辅助
 
-MMYOLO 提供的模型推理脚本 `demo/image_demo.py` 设置 `--to-labelme` 可以将推理结果生成 labelme 格式的 label 文件，具体用法如下：
+使用 MMYOLO 提供的模型推理脚本 `demo/image_demo.py`，并设置 `--to-labelme` 则可以将推理结果生成 labelme 格式的 label 文件，具体用法如下：
 
 ```shell
 python demo/image_demo.py img \
@@ -197,7 +198,7 @@ labelme ${图片文件夹路径（即上一步的图片文件夹）} \
 例子：
 
 ```shell
-cd ${MMYOLO_PATH}
+cd /path/to/mmyolo
 labelme ./data/cat/images --output ./data/cat/labels --autosave --nodata
 ```
 
@@ -345,7 +346,7 @@ python tools/misc/coco_split.py --json ./data/cat/annotations/annotations_all.js
 - 本教程测试的显卡型号是 1 x 3080Ti 12G 显存，电脑内存 32G，可以训练 YOLOv5-s 最大批次是 `batch size = 32`（详细机器资料可见附录）；
 - 训练轮次是 `100 epoch`。
 
-综上所述：可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`。
+综上所述：可以将其命名为 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`，并将其放置在文件夹 `configs/custom_dataset` 中。
 
 我们可以在 configs 目录下新建一个新的目录 `custom_dataset`，同时在里面新建该 config 文件，并添加以下内容：
 
@@ -536,7 +537,7 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
 经过输出的图片分析可以得出，本教程使用的 cat 数据集的训练集具有以下情况：
 
 - 图片全部是 large object；
-- 类别 cat 的数量是 `129`；
+- 类别 cat 的数量是 `645`；
 - bbox 的宽高比例大部分集中在 `1.14`，比例最小值是 `0.36`，最大值是 `2.9`；
 - bbox 的宽大部分是 `1034.74`，高大部分是 `926.67`。
 
@@ -586,11 +587,11 @@ python tools/analysis_tools/browse_dataset.py configs/custom_dataset/yolov5_s-v6
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/25873202/205472078-c958e90d-8204-4c01-821a-8b6a006f05b2.png" alt="image"/>
+<img src="https://user-images.githubusercontent.com/25873202/205472078-c958e90d-8204-4c01-821a-8b6a006f05b2.png" alt="image" width="60%"/>
 </div>
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/25873202/205472197-8228c75e-6046-404a-89b4-ed55eeb2cb95.png" alt="image"/>
+<img src="https://user-images.githubusercontent.com/25873202/205472197-8228c75e-6046-404a-89b4-ed55eeb2cb95.png" alt="image" width="60%"/>
 </div>
 
 关于 `tools/analysis_tools/browse_dataset.py` 的更多用法请参考 [可视化数据集](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id3)。
@@ -674,7 +675,7 @@ bbox_mAP_copypaste: 0.939 1.000 1.000 -1.000 -1.000 0.939
 Epoch(val) [98][116/116]  coco/bbox_mAP: 0.9390  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9390
 ```
 
-在一般的 finetune 最佳实践中都会推荐将 backbone 固定不参与训练，并且学习率 lr 也进行相应缩放，但是在本教程中发现这种做法会出现一定程度掉点。猜测可能原因是 cat 类别已经在 COCO 数据集中，而 cat 数据集比较小。
+在一般的 finetune 最佳实践中都会推荐将 backbone 固定不参与训练，并且学习率 lr 也进行相应缩放，但是在本教程中发现这种做法会出现一定程度掉点。猜测可能原因是 cat 类别已经在 COCO 数据集中，而本教程使用的 cat 数据集数量比较小导致的。
 
 ## 10. 推理
 
@@ -709,6 +710,8 @@ MMYOLO 提供两种部署方式：
 ### 11.1 MMDeploy 框架进行部署
 
 考虑到部署的机器环境千差万别，很多时候在本地机器可以，但是在生产环境则不一定，这里推荐使用 Docker，做到环境一次部署，终身使用，节省运维搭建环境和部署生产的时间。
+
+本小节会从一下几个小点进行展开讲解：
 
 1. 构建 Docker 镜像
 2. 创建 Docker 容器
@@ -792,10 +795,10 @@ python ./tools/deploy.py \
 <img src="https://user-images.githubusercontent.com/25873202/205540981-355d34cb-6472-47e0-a7dd-11eb85b3b43c.png" alt="Image"/>
 </div>
 
-查看导出的路径，可以看到这样的文件结构：
+查看导出的路径，可以看到如下图所示的文件结构：
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/25873202/205541268-1807f3fd-1f22-42b0-9397-cb50c602f8e0.png" alt="Image"/>
+<img src="https://user-images.githubusercontent.com/25873202/205859050-164216bc-79d6-4ba2-9e63-f8f4c1d5ecaf.png" alt="Image"/>
 </div>
 
 关于转换模型的详细介绍，请参考 [如何转换模型](https://mmdeploy.readthedocs.io/zh_CN/latest/02-how-to-run/convert_model.html)
@@ -808,7 +811,7 @@ python ./tools/deploy.py \
 data_root = '/root/workspace/mmyolo/data/cat/'  # Docker 容器里面数据集目录的绝对路径
 ```
 
-可以执行速度和精度测试：
+执行速度和精度测试：
 
 ```shell
 python tools/test.py \
@@ -856,7 +859,7 @@ bbox_mAP_copypaste: 0.937 1.000 1.000 -1.000 -1.000 0.937
 Epoch(test) [116/116]  coco/bbox_mAP: 0.9370  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9370
 ```
 
-单张图片推理：
+图片文件夹批量推理（注意：该 demo 暂时没有做批量推理的处理，后续会优化，敬请期待）：
 
 ```shell
 cd ${MMYOLO_PATH}/demo
@@ -882,13 +885,13 @@ python deploy_demo.py \
 
 #### 11.1.4 保存和加载 Docker 容器
 
-因为如果每次都进行 docker 镜像的构建，特别费时间，此时你可以考虑使用 docker 自带的打包 api 进行打包和加载。
+因为如果每次都进行 docker 镜像的构建，特别费时间，此时您可以考虑使用 docker 自带的打包 api 进行打包和加载。
 
 ```shell
-# 保存，存好的 tar 包可以放到移动硬盘
+# 保存，得到的 tar 包可以放到移动硬盘
 docker save mmyolo-deploy > mmyolo-deploy.tar
 
-# 加载
+# 加载镜像到系统
 docker load < /path/to/mmyolo-deploy.tar
 ```
 
