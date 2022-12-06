@@ -379,13 +379,6 @@ def main():
         replace_pipeline_to_none(cfg.val_dataloader)
         dataset = DATASETS.build(cfg.val_dataloader.dataset)
 
-    # Build  lists to store data for all raw data
-    data_list = dataset
-
-    if not hasattr(data_list, 'pipeline'):
-        # Fix some dataset type will get error result
-        data_list = data_list.dataset
-
     # 2.Prepare data
     # Drawing settings
     fig_all_set = {
@@ -439,9 +432,9 @@ def main():
     show_data_list(args, area_rule)
     # Get the quantity and bbox data corresponding to each category
     print('\nRead the information of each picture in the dataset:')
-    progress_bar = ProgressBar(len(data_list))
-    for img in data_list:
-        for instance in img['instances']:
+    progress_bar = ProgressBar(len(dataset))
+    for index in range(len(dataset)):
+        for instance in dataset[index]['instances']:
             if instance[
                     'bbox_label'] in classes_idx and args.class_name is None:
                 class_num[instance['bbox_label']] += 1
