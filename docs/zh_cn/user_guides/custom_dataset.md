@@ -22,7 +22,7 @@
 10. 推理：`demo/image_demo.py`
 11. 部署
 
-```{note}
+```{Note}
 在训练得到模型权重和验证集的 mAP 后，用户需要对预测错误的 bad case 进行深入分析，以便优化模型，MMYOLO 在后续会增加这个功能，敬请期待。
 ```
 
@@ -694,13 +694,15 @@ python demo/image_demo.py ./data/cat/images \
 <img src="https://user-images.githubusercontent.com/25873202/204773727-5d3cbbad-1265-45a0-822a-887713555049.jpg" alt="推理图片"/>
 </div>
 
-**Tips**：如果推理结果不理想，这里举例 2 种情况：
+```{Tip}
+如果推理结果不理想，这里举例 2 种情况：
 
-1. 欠拟合：
+1. 模型欠拟合：
    需要先判断是不是训练 epoch 不够导致的欠拟合，如果是训练不够，则修改 config 文件里面的 `max_epochs` 和 `work_dir` 参数，或者根据上面的命名方式新建一个 config 文件，重新进行训练。
 
-2. 数据集优化：
+2. 数据集需优化：
    如果 epoch 加上去了还是不行，可以增加数据集数量，同时可以重新检查并优化数据集的标注，然后重新进行训练。
+```
 
 ## 11. 部署
 
@@ -803,7 +805,9 @@ python ./tools/deploy.py \
 <img src="https://user-images.githubusercontent.com/25873202/205859050-164216bc-79d6-4ba2-9e63-f8f4c1d5ecaf.png" alt="Image"/>
 </div>
 
+```{See also}
 关于转换模型的详细介绍，请参考 [如何转换模型](https://mmdeploy.readthedocs.io/zh_CN/latest/02-how-to-run/convert_model.html)
+```
 
 #### 11.1.4 部署模型执行推理
 
