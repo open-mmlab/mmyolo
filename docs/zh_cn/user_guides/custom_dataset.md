@@ -2,7 +2,7 @@
 
 在平时的工作学习中，我们经常会遇到一些任务需要训练自定义的私有数据集，开源数据集去作为上线模型的场景比较少，这就需要我们对自己的私有数据集进行一系列的操作，以确保模型能够上线生产服务于客户。
 
-```{note}
+```{Note}
 本教程所有指令是在 Linux 上面完成，Windows 也是完全可用的，但是命令和操作稍有不同。
 ```
 
@@ -82,7 +82,7 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat -
 - 软件或者算法辅助 + 人工修正 label（推荐，降本提速）
 - 仅人工标注
 
-```{note}
+```{Note}
 目前我们也在考虑接入第三方库来支持通过 GUI 界面调用 MMYOLO 推理接口实现算法辅助标注和人工优化标注一体功能。
 如果您有兴趣或者想法可以在 issue 留言或直接联系我们！
 ```
@@ -91,7 +91,7 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat -
 
 辅助标注的原理是用已有模型进行推理，将得出的推理信息保存为标注软件 label 文件格式。然后人工操作标注软件加载生成好的 label 文件，只需要检查每张图片的目标是否标准，以及是否有漏掉、错标的目标。【软件或者算法辅助 + 人工修正 label】这种方式可以节省很多时间和精力，达到**降本提速**的目的。
 
-```{note}
+```{Note}
 如果已有模型（典型的如 COCO 预训练模型）没有您自定义新数据集的类别，建议先人工打 100 张左右的图片 label，训练个初始模型，然后再进行辅助标注。
 ```
 
@@ -453,7 +453,7 @@ default_hooks = dict(
 
 ```
 
-```{note}
+```{Note}
 我们在 `projects/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 放了一份相同的 config 文件，用户可以选择复制到 `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 路径直接开始训练。
 ```
 
@@ -535,7 +535,7 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
   </tbody>
 </table>
 
-```{note}
+```{Note}
 因为本教程使用的 cat 数据集数量比较少，故 config 里面用了 RepeatDataset，显示的数目实际上都是重复了 5 次。如果您想得到无重复的分析结果，可以暂时将 RepeatDataset 下面的 `times` 参数从 `5` 改成 `1`。
 ```
 
@@ -808,7 +808,7 @@ python ./tools/deploy.py \
 <img src="https://user-images.githubusercontent.com/25873202/205859050-164216bc-79d6-4ba2-9e63-f8f4c1d5ecaf.png" alt="Image"/>
 </div>
 
-```{See also}
+```{SeeAlso}
 关于转换模型的详细介绍，请参考 [如何转换模型](https://mmdeploy.readthedocs.io/zh_CN/latest/02-how-to-run/convert_model.html)
 ```
 
@@ -888,7 +888,7 @@ python deploy_demo.py \
 <img src="https://user-images.githubusercontent.com/25873202/205815829-6f85e655-722a-47c8-9e23-2a74437c0923.jpg" alt="Image"/>
 </div>
 
-```{note}
+```{Note}
 您也可以做其他优化调整，例如增大 batch，量化 int8 等等。
 ```
 
