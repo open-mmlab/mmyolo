@@ -55,7 +55,8 @@ train_dataloader = dict(
     dataset=dict(
         _delete_=True,
         type='RepeatDataset',
-        times=5,  # 数据量太少的话，可以使用 RepeatDataset 来增量数据，这里设置 5 是 5 倍
+        # 数据量太少的话，可以使用 RepeatDataset ，在每个 epoch 内重复当前数据集 n 次，这里设置 5 是重复 5 次
+        times=5,
         dataset=dict(
             type=_base_.dataset_type,
             data_root=data_root,

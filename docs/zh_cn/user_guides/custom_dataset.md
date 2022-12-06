@@ -87,7 +87,7 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat -
 如果您有兴趣或者想法可以在 issue 留言或直接联系我们！
 ```
 
-## 2.1 软件或者算法辅助 + 人工修正 label
+### 2.1 软件或者算法辅助 + 人工修正 label
 
 辅助标注的原理是用已有模型进行推理，将得出的推理信息保存为标注软件 label 文件格式。然后人工操作标注软件加载生成好的 label 文件，只需要检查每张图片的目标是否标准，以及是否有漏掉、错标的目标。【软件或者算法辅助 + 人工修正 label】这种方式可以节省很多时间和精力，达到**降本提速**的目的。
 
@@ -97,7 +97,7 @@ python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat -
 
 下面会分别介绍其过程：
 
-### 2.1.1 软件或者算法辅助
+#### 2.1.1 软件或者算法辅助
 
 使用 MMYOLO 提供的模型推理脚本 `demo/image_demo.py`，并设置 `--to-labelme` 则可以将推理结果生成 labelme 格式的 label 文件，具体用法如下：
 
@@ -168,7 +168,7 @@ python demo/image_demo.py ./data/cat/images \
   <img src="https://user-images.githubusercontent.com/25873202/205471559-643aecc8-7fa3-4fff-be51-2fb0a570fdd3.png" alt="图片" width="45%"/>
 </div>
 
-### 2.1.2 人工标注
+#### 2.1.2 人工标注
 
 本教程使用的标注软件是 [labelme](https://github.com/wkentaro/labelme)
 
@@ -214,7 +214,7 @@ labelme ./data/cat/images --output ./data/cat/labels --autosave --nodata
 <img src="https://user-images.githubusercontent.com/25873202/204076212-86dab4fa-13dd-42cd-93d8-46b04b864449.png" alt="rectangle"/>
 </div>
 
-## 2.2 仅人工标注
+### 2.2 仅人工标注
 
 步骤和 【1.1.2 人工标注】 相同，只是这里是直接标注，没有预先生成的 label 。
 
@@ -412,7 +412,8 @@ train_dataloader = dict(
     dataset=dict(
         _delete_=True,
         type='RepeatDataset',
-        times=5,  # 数据量太少的话，可以使用 RepeatDataset 来增量数据，这里设置 5 是 5 倍
+        # 数据量太少的话，可以使用 RepeatDataset ，在每个 epoch 内重复当前数据集 n 次，这里设置 5 是重复 5 次
+        times=5,
         dataset=dict(
             type=_base_.dataset_type,
             data_root=data_root,
