@@ -817,41 +817,41 @@ python tools/test.py \
     --device cuda
 ```
 
-速度测试如下，可见平均速度是 `19.89 ms`，对比 PyTorch 推理有速度提升，同时显存也下降了很多：
+速度测试如下，可见平均推理速度是 `18.31 ms`，对比 PyTorch 推理有速度提升，同时显存也下降了很多：
 
 ```bash
-Epoch(test) [ 10/116]    eta: 0:00:08  time: 0.0806  data_time: 0.0726  memory: 12
-Epoch(test) [ 20/116]    eta: 0:00:08  time: 0.0899  data_time: 0.0805  memory: 12
-Epoch(test) [ 30/116]    eta: 0:00:07  time: 0.0887  data_time: 0.0644  memory: 12
-Epoch(test) [ 40/116]    eta: 0:00:06  time: 0.0779  data_time: 0.0525  memory: 12
-Epoch(test) [ 50/116]    eta: 0:00:05  time: 0.0789  data_time: 0.0546  memory: 12
-Epoch(test) [ 60/116]    eta: 0:00:04  time: 0.0763  data_time: 0.0521  memory: 12
-Epoch(test) [ 70/116]    eta: 0:00:03  time: 0.0738  data_time: 0.0482  memory: 16
-Epoch(test) [ 80/116]    eta: 0:00:02  time: 0.0737  data_time: 0.0478  memory: 12
-Epoch(test) [ 90/116]    eta: 0:00:02  time: 0.0835  data_time: 0.0574  memory: 12
-Epoch(test) [100/116]    eta: 0:00:01  time: 0.0781  data_time: 0.0517  memory: 12
-[tensorrt]-110 times per count: 19.89 ms, 50.28 FPS
-Epoch(test) [110/116]    eta: 0:00:00  time: 0.0871  data_time: 0.0611  memory: 12
+Epoch(test) [ 10/116]    eta: 0:00:10  time: 0.0950  data_time: 0.0844  memory: 12
+Epoch(test) [ 20/116]    eta: 0:00:09  time: 0.0945  data_time: 0.0891  memory: 12
+Epoch(test) [ 30/116]    eta: 0:00:08  time: 0.0953  data_time: 0.0804  memory: 12
+Epoch(test) [ 40/116]    eta: 0:00:07  time: 0.0902  data_time: 0.0712  memory: 12
+Epoch(test) [ 50/116]    eta: 0:00:06  time: 0.0858  data_time: 0.0622  memory: 12
+Epoch(test) [ 60/116]    eta: 0:00:05  time: 0.0902  data_time: 0.0662  memory: 12
+Epoch(test) [ 70/116]    eta: 0:00:04  time: 0.0901  data_time: 0.0645  memory: 16
+Epoch(test) [ 80/116]    eta: 0:00:03  time: 0.0761  data_time: 0.0507  memory: 12
+Epoch(test) [ 90/116]    eta: 0:00:02  time: 0.0958  data_time: 0.0692  memory: 12
+Epoch(test) [100/116]    eta: 0:00:01  time: 0.0904  data_time: 0.0571  memory: 12
+[tensorrt]-110 times per count: 18.31 ms, 54.61 FPS
+Epoch(test) [110/116]    eta: 0:00:00  time: 0.1123  data_time: 0.0896  memory: 12
 ```
 
 精度测试如下。此配置采用 FP16 格式推理，会有一定程度掉点，但是推理速度更快：
 
 ```shell
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.943
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.937
  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 1.000
  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.943
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.864
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.960
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.960
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.937
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.865
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.957
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.957
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.960
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.957
 
-bbox_mAP_copypaste: 0.943 1.000 1.000 -1.000 -1.000 0.943
-Epoch(test) [116/116]  coco/bbox_mAP: 0.9430  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9430
+bbox_mAP_copypaste: 0.937 1.000 1.000 -1.000 -1.000 0.937
+Epoch(test) [116/116]  coco/bbox_mAP: 0.9370  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9370
 ```
 
 单张图片推理：
