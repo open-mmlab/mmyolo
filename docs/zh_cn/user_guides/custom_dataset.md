@@ -10,7 +10,7 @@
 
 本教程涵盖从 用户自定义图片数据集标注 到 最终进行训练和部署 的整体流程。步骤概览如下：
 
-01. 数据集准备：`tools/misc/download_dataset.py`
+01. 数据集准备：``tools/misc/download_dataset.py``
 02. 使用 [labelme](https://github.com/wkentaro/labelme) 和算法进行辅助和优化数据集标注：`demo/image_demo.py` + labelme
 03. 使用脚本转换成 COCO 数据集格式：`tools/dataset_converters/labelme2coco.py`
 04. 数据集划分为训练集、验证集和测试集：`tools/misc/coco_split.py`
