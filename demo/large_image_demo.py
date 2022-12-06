@@ -111,7 +111,7 @@ def main():
 
     # start detector inference
     print(f'Performing inference on {len(files)} images.... '
-          f'This may take a while.')
+          'This may take a while.')
     progress_bar = ProgressBar(len(files))
     for file in files:
         # read image
