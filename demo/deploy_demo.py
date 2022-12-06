@@ -11,8 +11,10 @@ try:
     from mmdeploy.apis.utils import build_task_processor
     from mmdeploy.utils import get_input_shape, load_config
 except ImportError:
-    raise ImportError('mmdeploy is not installed, please see '
-                      'https://mmdeploy.readthedocs.io/en/latest/01-how-to-build/build_from_source.html')  # noqa
+    raise ImportError(
+        'mmdeploy is not installed, please see '
+        'https://mmdeploy.readthedocs.io/en/latest/01-how-to-build/build_from_source.html'
+    )  # noqa
 
 
 def parse_args():
