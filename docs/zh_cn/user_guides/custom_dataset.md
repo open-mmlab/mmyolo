@@ -146,10 +146,11 @@ python demo/image_demo.py ./data/cat/images \
                           --to-labelme
 ```
 
-**Tips**：
+```{Tip}
 
 - 如果您的数据集需要标注多类，可以采用类似 `--class-name class1 class2` 格式输入；
 - 如果全部输出，则删掉 `--class-name` 这个 flag 即可全部类都输出。
+```
 
 生成的 label 文件会在 `--out-dir` 中:
 
@@ -208,11 +209,13 @@ labelme ./data/cat/images --output ./data/cat/labels --autosave --nodata
 <img src="https://user-images.githubusercontent.com/25873202/205432185-54407d83-3cee-473f-8743-656da157cf80.png" alt="label UI"/>
 </div>
 
-**注意：标注的时候务必使用 `rectangle`，快捷键 `Ctrl + R`（如下图）**
+```{warning}
+标注的时候务必使用 `rectangle`，快捷键 `Ctrl + R`（如下图）
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/204076212-86dab4fa-13dd-42cd-93d8-46b04b864449.png" alt="rectangle"/>
 </div>
+```
 
 ### 2.2 仅人工标注
 
