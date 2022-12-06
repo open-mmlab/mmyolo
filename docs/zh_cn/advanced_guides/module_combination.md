@@ -1,10 +1,10 @@
-### 替换MMYOLO Head中的loss
+### 替换MMYOLO Head中的 loss
 
-OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification 中的loss注册表都继承自 MMEngine 中的根注册表。 因此用户可以在 MMYOLO 中使用来自 MMDetection、MMClassification 中实现的loss而无需重新实现。
+OpenMMLab 2.0 体系中 MMYOLO、MMDetection、MMClassification 中的 loss 注册表都继承自 MMEngine 中的根注册表。 因此用户可以在 MMYOLO 中使用来自 MMDetection、MMClassification 中实现的loss而无需重新实现。
 
 #### 使用实现好的损失函数替换 Head 中的 loss_cls
 
-1. 假设我们想使用 LabelSmoothLoss 作为 loss_cls 的损失函数。因为 LabelSmoothLoss 已经在 MMClassification 中实现了，所以可以直接在配置文件中进行替换。配置文件如下：
+1. 假设我们想使用 `LabelSmoothLoss` 作为 `loss_cls` 的损失函数。因为 `LabelSmoothLoss` 已经在 MMClassification 中实现了，所以可以直接在配置文件中进行替换。配置文件如下：
 
 ```python
 # 请先使用命令： mim install "mmcls>=1.0.0rc2"，安装 mmcls
@@ -21,7 +21,7 @@ model = dict(
         loss_weight=0.5)))
 ```
 
-2. 假设我们想使用 VarifocalLoss 作为 loss_cls 的损失函数。因为 VarifocalLoss 在 MMDetection 已经实现好了，所以可以直接替换。配置文件如下：
+2. 假设我们想使用 `VarifocalLoss` 作为 `loss_cls` 的损失函数。因为 `VarifocalLoss` 在 MMDetection 已经实现好了，所以可以直接替换。配置文件如下：
 
 ```python
 model = dict(
@@ -33,7 +33,7 @@ model = dict(
             loss_weight=1.0)))
 ```
 
-3. 假设我们想使用 FocalLoss 作为 loss_cls 的损失函数。配置文件如下：
+3. 假设我们想使用 `FocalLoss` 作为 `loss_cls` 的损失函数。配置文件如下：
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -45,7 +45,7 @@ model = dict(
             loss_weight=1.0)))
 ```
 
-4. 假设我们想使用 QualityFocalLoss 作为 loss_cls 的损失函数。配置文件如下：
+4. 假设我们想使用 `QualityFocalLoss` 作为 `loss_cls` 的损失函数。配置文件如下：
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -59,9 +59,9 @@ model = dict(
 
 #### 使用实现好的损失函数替换 Head 中的 loss_obj
 
-loss_obj 的替换与 loss_cls 的替换类似，我们可以使用已经实现好的损失函数对 loss_obj 的损失函数进行替换
+`loss_obj` 的替换与 `loss_cls` 的替换类似，我们可以使用已经实现好的损失函数对 `loss_obj` 的损失函数进行替换
 
-1. 假设我们想使用 VarifocalLoss 作为 loss_obj 的损失函数
+1. 假设我们想使用 `VarifocalLoss` 作为 `loss_obj` 的损失函数
 
 ```python
 model = dict(
@@ -73,7 +73,7 @@ model = dict(
             loss_weight=1.0)))
 ```
 
-2. 假设我们想使用 FocalLoss 作为 loss_obj 的损失函数。
+2. 假设我们想使用 `FocalLoss` 作为 `loss_obj` 的损失函数。
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -85,7 +85,7 @@ model = dict(
             loss_weight=1.0)))
 ```
 
-3. 假设我们想使用 QualityFocalLoss 作为 loss_obj 的损失函数。
+3. 假设我们想使用 `QualityFocalLoss` 作为 `loss_obj` 的损失函数。
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
@@ -100,4 +100,4 @@ model = dict(
 #### 注意
 
 1. 损失函数的替换只是在理论上的替换，不能保证实际效果会有所提升。
-2. 本次损失函数的替换都是以 yolov5 算法作为例子的，但是 MMYOLO 下的多个算法，如 yolov6，yolox 等算法都可以按照上述的例子进行替换。
+2. 本次损失函数的替换都是以 YOLOv5 算法作为例子的，但是 MMYOLO 下的多个算法，如 YOLOv6，YOLOX 等算法都可以按照上述的例子进行替换。
