@@ -110,7 +110,7 @@ def main():
     files, source_type = get_file_list(args.img)
 
     # start detector inference
-    print(f'Performing inference on {len(files)} images... . '
+    print(f'Performing inference on {len(files)} images.... '
           f'This may take a while.')
     progress_bar = ProgressBar(len(files))
     for file in files:
@@ -213,11 +213,11 @@ def main():
 
             if args.save_patch:
                 debug_patch_out_dir = os.path.join(args.out_dir,
-                                                   name + '_patch')
+                                                   f'{name}_patch')
                 for i, slice_result in enumerate(slice_results):
                     patch_out_file = os.path.join(
                         debug_patch_out_dir,
-                        filename + f'_slice_{i}_result.jpg')
+                        f'{filename}_slice_{i}_result.jpg')
                     image = mmcv.imconvert(sliced_image_object.images[i],
                                            'bgr', 'rgb')
 
