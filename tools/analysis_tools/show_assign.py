@@ -58,13 +58,17 @@ def main():
     visualizer = VISUALIZERS.build(cfg.visualizer)
     visualizer.dataset_meta = dataset.metainfo
 
-    idx = 0
+    idx = 1
 
     data_info = dataset.get_data_info(idx)
     data = dataset.prepare_data(idx)
 
     batch_data = collate_fn([data])
-    model.assign(batch_data)
+    assign_results = model.assign(batch_data)
+
+    # vis img 按照特征图的形式
+    for i in range(model.head.num_levels):
+
 
 
 

@@ -667,18 +667,29 @@ class YOLOv5Head(BaseDenseHead):
 
         device = batch_targets_normed.device
         scaled_factor = torch.ones(7, device=device)
+        gt_inds = torch.arange(
+            batch_gt_instances.shape[0],
+            dtype=torch.long,
+            device=device,
+            requires_grad=False).unsqueeze(0).repeat((self.num_base_priors, 1))
 
         assign_results = []
-
-
         for i in range(self.num_levels):
-
-
             batch_size, _, h, w = bbox_preds[i].shape
+            assert batch_size == 1, 'Only support batchsize == 1.'
             target_obj = torch.zeros_like(objectnesses[i])
 
             # empty gt bboxes
             if batch_targets_normed.shape[1] == 0:
+                assign_results.append({
+                    'strides': self.featmap_strides[i],
+                    'grid_x_inds': None,
+                    'grid_y_inds': None,
+                    'priors_inds': None,
+                    'img_inds': None,
+                    'class_inds': None,
+                    'retained_gt_inds': None
+                })
                 continue
 
             priors_base_sizes_i = self.priors_base_sizes[i]
@@ -695,9 +706,19 @@ class YOLOv5Head(BaseDenseHead):
             match_inds = torch.max(
                 wh_ratio, 1 / wh_ratio).max(2)[0] < self.prior_match_thr
             batch_targets_scaled = batch_targets_scaled[match_inds]
+            match_gt_inds = gt_inds[match_inds]
 
             # no gt bbox matches anchor
             if batch_targets_scaled.shape[0] == 0:
+                assign_results.append({
+                    'strides': self.featmap_strides[i],
+                    'grid_x_inds': None,
+                    'grid_y_inds': None,
+                    'priors_inds': None,
+                    'img_inds': None,
+                    'class_inds': None,
+                    'retained_gt_inds': None
+                })
                 continue
 
             # 3. Positive samples with additional neighbors
@@ -716,6 +737,7 @@ class YOLOv5Head(BaseDenseHead):
 
             batch_targets_scaled = batch_targets_scaled.repeat(
                 (5, 1, 1))[offset_inds]
+            retained_gt_inds = match_gt_inds.repeat((5, 1))[offset_inds]
             retained_offsets = self.grid_offset.repeat(1, offset_inds.shape[1],
                                                        1)[offset_inds]
 
@@ -733,10 +755,15 @@ class YOLOv5Head(BaseDenseHead):
 
             assign_results_i = {
                 'strides': self.featmap_strides[i],
-                'assign_x': grid_x_inds,
-                'assign_y': grid_y_inds,
-
+                'grid_x_inds': grid_x_inds,
+                'grid_y_inds': grid_y_inds,
+                'priors_inds': priors_inds,
+                'img_inds': img_inds,
+                'class_inds': bboxes_targets,
+                'retained_gt_inds': retained_gt_inds
             }
+            assign_results.append(assign_results_i)
+        return assign_results
 
     def assign(self, x: Tuple[Tensor],
                batch_data_samples: Union[list, dict]) -> dict:
