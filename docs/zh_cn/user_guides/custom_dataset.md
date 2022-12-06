@@ -722,7 +722,7 @@ MMYOLO 提供两种部署方式：
 
 #### 11.1.1 构建 Docker 镜像
 
-```bash
+```shell
 git clone -b dev-1.x https://github.com/open-mmlab/mmdeploy.git
 cd mmdeploy
 docker build docker/GPU/ -t mmdeploy:gpu --build-arg USE_SRC_INSIDE=true
@@ -824,7 +824,7 @@ python tools/test.py \
 
 速度测试如下，可见平均推理速度是 `18.31 ms`，对比 PyTorch 推理有速度提升，同时显存也下降了很多：
 
-```bash
+```shell
 Epoch(test) [ 10/116]    eta: 0:00:10  time: 0.0950  data_time: 0.0844  memory: 12
 Epoch(test) [ 20/116]    eta: 0:00:09  time: 0.0945  data_time: 0.0891  memory: 12
 Epoch(test) [ 30/116]    eta: 0:00:08  time: 0.0953  data_time: 0.0804  memory: 12
