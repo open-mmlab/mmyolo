@@ -87,5 +87,6 @@ default_hooks = dict(
         interval=save_epoch_intervals,
         max_keep_ckpts=5,
         save_best='auto'),
+    param_scheduler=dict(max_epochs=max_epochs),
     # logger 输出的间隔
     logger=dict(type='LoggerHook', interval=10))
