@@ -312,7 +312,7 @@ python tools/misc/coco_split.py --json ./data/cat/annotations/annotations_all.js
                                 --out-dir ./data/cat/annotations \
                                 --ratios 0.8 0.2 \
                                 --shuffle \
-                                --seed 666
+                                --seed 10
 ```
 
 <div align=center>
@@ -358,6 +358,7 @@ _base_ = '../yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 
 max_epochs = 100  # 训练的最大 epoch
 data_root = './data/cat/'  # 数据集目录的绝对路径
+# data_root = '/root/workspace/mmyolo/data/cat/'  # Docker 容器里面数据集目录的绝对路径
 
 # 结果保存的路径，可以省略，省略保存的文件名位于 work_dirs 下 config 同名的文件夹中
 # 如果某个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
@@ -391,7 +392,7 @@ metainfo = dict(
 
 train_cfg = dict(
     max_epochs=max_epochs,
-    val_begin=10,  # 第几个epoch后验证，这里设置 10 是因为前 10 个 epoch 精度不高，测试意义不大，故跳过
+    val_begin=20,  # 第几个epoch后验证，这里设置 20 是因为前 20 个 epoch 精度不高，测试意义不大，故跳过
     val_interval=save_epoch_intervals  # 每 val_interval 轮迭代进行一次测试评估
 )
 
@@ -649,34 +650,34 @@ tensorboard --logdir=work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat
 python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py
 ```
 
-下面是 `1 x 3080Ti`、`batch size = 32`，训练 `100 epoch` 最佳精度权重 `work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_100.pth` 得出来的精度（详细机器资料可见附录）：
+下面是 `1 x 3080Ti`、`batch size = 32`，训练 `100 epoch` 最佳精度权重 `work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_98.pth` 得出来的精度（详细机器资料可见附录）：
 
 ```shell
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.950
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.939
  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 1.000
  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.950
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.869
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.964
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.964
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.939
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.867
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.959
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.959
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.964
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.959
 
-bbox_mAP_copypaste: 0.950 1.000 1.000 -1.000 -1.000 0.950
-Epoch(val) [100][116/116]  coco/bbox_mAP: 0.9500  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9500
+bbox_mAP_copypaste: 0.939 1.000 1.000 -1.000 -1.000 0.939
+Epoch(val) [98][116/116]  coco/bbox_mAP: 0.9390  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9390
 ```
 
 ## 10. 推理
 
-使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_100.pth`，请用户自行修改为自己训练的最佳模型路径。
+使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_98.pth`，请用户自行修改为自己训练的最佳模型路径。
 
 ```shell
 python demo/image_demo.py ./data/cat/images \
                           ./configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
-                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_100.pth \
+                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_98.pth \
                           --out-dir ./data/cat/pred_images
 ```
 
@@ -762,7 +763,7 @@ cd /root/workspace/mmdeploy
 python ./tools/deploy.py \
     ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
     ${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
-    ${MMYOLO_PATH}/work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_100.pth \
+    ${MMYOLO_PATH}/work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_98.pth \
     ${MMYOLO_PATH}/data/cat/images/mmexport1633684751291.jpg \
     --test-img ${MMYOLO_PATH}/data/cat/images/mmexport1633684751291.jpg \
     --work-dir ./work_dir/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16 \

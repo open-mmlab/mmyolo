@@ -2,6 +2,7 @@ _base_ = '../yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 
 max_epochs = 100  # 训练的最大 epoch
 data_root = './data/cat/'  # 数据集目录的绝对路径
+# data_root = '/root/workspace/mmyolo/data/cat/'  # Docker 容器里面数据集目录的绝对路径
 
 # 结果保存的路径，可以省略，省略保存的文件名位于 work_dirs 下 config 同名的文件夹中
 # 如果某个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
@@ -35,7 +36,7 @@ metainfo = dict(
 
 train_cfg = dict(
     max_epochs=max_epochs,
-    val_begin=10,  # 第几个epoch后验证，这里设置 10 是因为前 10 个 epoch 精度不高，测试意义不大，故跳过
+    val_begin=20,  # 第几个epoch后验证，这里设置 20 是因为前 20 个 epoch 精度不高，测试意义不大，故跳过
     val_interval=save_epoch_intervals  # 每 val_interval 轮迭代进行一次测试评估
 )
 
