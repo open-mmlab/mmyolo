@@ -8,7 +8,7 @@ import torch
 from mmengine import Config
 
 try:
-    import importlib
+    # import importlib
     # importlib.import_module('mmdeploy')
     raise RuntimeError
 except RuntimeError:
