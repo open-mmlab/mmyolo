@@ -21,7 +21,7 @@ save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
 # 根据自己的 GPU 情况，修改 base_lr，修改的比例是 base_lr_default * (your_bs / default_bs)
 base_lr = _base_.base_lr / 4
 
-anchors = [
+anchors = [  # 此处已经根据数据集特点更新了 anchor，关于 anchor 的生成，后面小节会讲解
     [(68, 69), (154, 91), (143, 162)],  # P3/8
     [(242, 160), (189, 287), (391, 207)],  # P4/16
     [(353, 337), (539, 341), (443, 432)]  # P5/32
@@ -36,7 +36,7 @@ metainfo = dict(
 
 train_cfg = dict(
     max_epochs=max_epochs,
-    val_begin=20,  # 第几个epoch后验证，这里设置 20 是因为前 20 个 epoch 精度不高，测试意义不大，故跳过
+    val_begin=20,  # 第几个 epoch 后验证，这里设置 20 是因为前 20 个 epoch 精度不高，测试意义不大，故跳过
     val_interval=save_epoch_intervals  # 每 val_interval 轮迭代进行一次测试评估
 )
 

@@ -377,7 +377,7 @@ save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
 # 根据自己的 GPU 情况，修改 base_lr，修改的比例是 base_lr_default * (your_bs / default_bs)
 base_lr = _base_.base_lr / 4
 
-anchors = [
+anchors = [  # 此处已经根据数据集特点更新了 anchor，关于 anchor 的生成，后面小节会讲解
     [(68, 69), (154, 91), (143, 162)],  # P3/8
     [(242, 160), (189, 287), (391, 207)],  # P4/16
     [(353, 337), (539, 341), (443, 432)]  # P5/32
@@ -392,7 +392,7 @@ metainfo = dict(
 
 train_cfg = dict(
     max_epochs=max_epochs,
-    val_begin=20,  # 第几个epoch后验证，这里设置 20 是因为前 20 个 epoch 精度不高，测试意义不大，故跳过
+    val_begin=20,  # 第几个 epoch 后验证，这里设置 20 是因为前 20 个 epoch 精度不高，测试意义不大，故跳过
     val_interval=save_epoch_intervals  # 每 val_interval 轮迭代进行一次测试评估
 )
 
@@ -504,10 +504,10 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
     </tr>
     <tr align="center" valign="center">
       <td>
-        <img alt="YOLOv5CocoDataset_bbox_area" src="https://user-images.githubusercontent.com/25873202/205420210-e31c8643-1a12-4b79-b423-b04adcc68deb.jpg" width="60%">
+        <img alt="YOLOv5CocoDataset_bbox_area" src="https://user-images.githubusercontent.com/25873202/205805522-e066b93b-0952-40d0-be56-42fc20e85576.jpg" width="60%">
       </td>
       <td>
-        <img alt="YOLOv5CocoDataset_bbox_wh" src="https://user-images.githubusercontent.com/25873202/205420277-ccd58eb5-1e36-425c-a221-934e54175ae7.jpg" width="60%">
+        <img alt="YOLOv5CocoDataset_bbox_wh" src="https://user-images.githubusercontent.com/25873202/205805514-13e34d18-f9ee-4bca-b894-060bfea6ad56.jpg" width="60%">
       </td>
     </tr>
     <tr align="center" valign="center">
@@ -520,14 +520,18 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
     </tr>
     <tr align="center" valign="center">
       <td>
-        <img alt="YOLOv5CocoDataset_bbox_num" src="https://user-images.githubusercontent.com/25873202/205420241-f26c2310-8d4b-4b53-8331-bc2a67d62ce7.jpg" width="60%">
+        <img alt="YOLOv5CocoDataset_bbox_num" src="https://user-images.githubusercontent.com/25873202/205805529-6e0d2545-0a39-4be7-b212-9d16a16a0fcc.jpg" width="60%">
       </td>
       <td>
-        <img alt="YOLOv5CocoDataset_bbox_ratio" src="https://user-images.githubusercontent.com/25873202/205420256-8151f01a-2f54-46df-8a9f-2c5de05bbbc8.jpg" width="60%">
+        <img alt="YOLOv5CocoDataset_bbox_ratio" src="https://user-images.githubusercontent.com/25873202/205805501-2b2a40f4-5a0e-44b0-b07c-27af539fb971.jpg" width="60%">
       </td>
     </tr>
   </tbody>
 </table>
+
+```{note}
+因为本教程使用的 cat 数据集数量比较少，故 config 里面用了 RepeatDataset，显示的数目实际上都是重复了 5 次。如果您想得到无重复的分析结果，可以暂时将 RepeatDataset 下面的 `times` 参数从 `5` 改成 `1`。
+```
 
 经过输出的图片分析可以得出，本教程使用的 cat 数据集的训练集具有以下情况：
 
@@ -709,6 +713,8 @@ MMYOLO 提供两种部署方式：
 3. 转换 TensorRT 模型
 4. 部署模型执行推理
 
+如果是对 Docker 不熟悉的用户，可以参考 MMDeploy 的 [源码手动安装](https://mmdeploy.readthedocs.io/zh_CN/latest/01-how-to-build/build_from_source.html) 文档直接在本地编译。安装完之后，可以直接跳到 【11.1.3 转换 TensorRT 模型】 小节。
+
 #### 11.1.1 构建 Docker 镜像
 
 ```bash
@@ -746,7 +752,7 @@ docker run --gpus all --name mmyolo-deploy -v ${MMYOLO_PATH}:/root/workspace/mmy
 
 #### 11.1.3 转换 TensorRT 模型
 
-首先需要在 Docker 容器里面安装 MMYOLO
+首先需要在 Docker 容器里面安装 MMYOLO 和 `pycuda`：
 
 ```shell
 export MMYOLO_PATH=/root/workspace/mmyolo # 镜像中的路径，这里不需要修改
@@ -754,6 +760,7 @@ cd ${MMYOLO_PATH}
 export MMYOLO_VERSION=$(python -c "import mmyolo.version as v; print(v.__version__)")  # 查看训练使用的 MMYOLO 版本号
 echo "Using MMYOLO ${MMYOLO_VERSION}"
 mim install --no-cache-dir mmyolo==${MMYOLO_VERSION}
+pip install --no-cache-dir pycuda==2022.2
 ```
 
 进行模型转换
@@ -850,16 +857,17 @@ Epoch(test) [116/116]  coco/bbox_mAP: 0.9430  coco/bbox_mAP_50: 1.0000  coco/bbo
 单张图片推理：
 
 ```shell
-cd ${MMYOLO_PATH}/projects/misc/custom_dataset
+cd ${MMYOLO_PATH}/demo
 python deploy_demo.py \
+    ${MMYOLO_PATH}/data/cat/images \
+    ${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+    /root/workspace/mmdeploy/work_dir/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16/end2end.engine \
     --deploy-cfg ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
-    --model-cfg ${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
-    --device cuda:0 \
-    --backend-model /root/workspace/mmdeploy/work_dir/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16/end2end.engine \
-    --img ${MMYOLO_PATH}/data/cat/images/mmexport1633684751291.jpg
+    --out-dir ${MMYOLO_PATH}/work_dirs/deploy_predict_out \
+    --device cuda:0
 ```
 
-执行之后，可以看到在 `deploy_demo.py` 同级目录下有一个 `output_detection.png` 图片生成，这就是推理好的图片
+执行之后，可以看到在 `--out-dir` 下面的推理图片结果，下面展示其中一张：
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/205592790-931e2b0a-0452-4110-959b-21b1d2aa50e5.png" alt="Image"/>
