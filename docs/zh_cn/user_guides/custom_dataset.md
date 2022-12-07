@@ -741,6 +741,10 @@ Epoch(val) [98][116/116]  coco/bbox_mAP: 0.9680  coco/bbox_mAP_50: 1.0000  coco/
 +---------------+-------+--------------+-----+----------------+------+
 ```
 
+```{note}
+关于如何得到预训练权重的精度，可以详见附录【2. 如何测试数据集在预训练权重的精度】
+```
+
 ## 10. 推理
 
 使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_98.pth`，请用户自行修改为自己训练的最佳模型路径。
@@ -1023,4 +1027,114 @@ MMEngine: 0.3.1
 MMCV: 2.0.0rc3
 MMDetection: 3.0.0rc3
 MMYOLO: 0.2.0+cf279a5
+```
+
+### 2. 如何测试数据集在预训练权重的精度：
+
+```{Warning}
+前提：该类在 COCO 80 类中！
+```
+
+本小节以 `cat` 数据集为例进行讲解，使用的是：
+
+- config 文件：`configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py`
+- 权重 `yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth`
+
+1. 修改 config 文件中的路径
+
+因为 `configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py` 是继承于 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py`，故主要修改 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 文件即可。
+
+| 修改前                                                                            | 修改后                                                                         |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `data_root = 'data/coco/'`                                                        | `data_root = './data/cat/'`                                                    |
+| `ann_file='annotations/instances_train2017.json'`                                 | `ann_file='annotations/trainval.json'`                                         |
+| data_prefix=dict(img='train2017/')\`                                              | `data_prefix=dict(img='images/')`                                              |
+| `val_evaluator` 中的  `ann_file=data_root + 'annotations/instances_val2017.json'` | `val_evaluator` 中的  `dict(ann_file=data_root + 'annotations/trainval.json')` |
+
+2. 修改标签
+
+```{note}
+建议直接复制一份标签，防止弄坏好的标签
+```
+
+将 `trainval.json` 里面的 "categories" 字段改为 COCO 原本的：
+
+```json
+  "categories": [{"supercategory": "person","id": 1,"name": "person"},{"supercategory": "vehicle","id": 2,"name": "bicycle"},{"supercategory": "vehicle","id": 3,"name": "car"},{"supercategory": "vehicle","id": 4,"name": "motorcycle"},{"supercategory": "vehicle","id": 5,"name": "airplane"},{"supercategory": "vehicle","id": 6,"name": "bus"},{"supercategory": "vehicle","id": 7,"name": "train"},{"supercategory": "vehicle","id": 8,"name": "truck"},{"supercategory": "vehicle","id": 9,"name": "boat"},{"supercategory": "outdoor","id": 10,"name": "traffic light"},{"supercategory": "outdoor","id": 11,"name": "fire hydrant"},{"supercategory": "outdoor","id": 13,"name": "stop sign"},{"supercategory": "outdoor","id": 14,"name": "parking meter"},{"supercategory": "outdoor","id": 15,"name": "bench"},{"supercategory": "animal","id": 16,"name": "bird"},{"supercategory": "animal","id": 17,"name": "cat"},{"supercategory": "animal","id": 18,"name": "dog"},{"supercategory": "animal","id": 19,"name": "horse"},{"supercategory": "animal","id": 20,"name": "sheep"},{"supercategory": "animal","id": 21,"name": "cow"},{"supercategory": "animal","id": 22,"name": "elephant"},{"supercategory": "animal","id": 23,"name": "bear"},{"supercategory": "animal","id": 24,"name": "zebra"},{"supercategory": "animal","id": 25,"name": "giraffe"},{"supercategory": "accessory","id": 27,"name": "backpack"},{"supercategory": "accessory","id": 28,"name": "umbrella"},{"supercategory": "accessory","id": 31,"name": "handbag"},{"supercategory": "accessory","id": 32,"name": "tie"},{"supercategory": "accessory","id": 33,"name": "suitcase"},{"supercategory": "sports","id": 34,"name": "frisbee"},{"supercategory": "sports","id": 35,"name": "skis"},{"supercategory": "sports","id": 36,"name": "snowboard"},{"supercategory": "sports","id": 37,"name": "sports ball"},{"supercategory": "sports","id": 38,"name": "kite"},{"supercategory": "sports","id": 39,"name": "baseball bat"},{"supercategory": "sports","id": 40,"name": "baseball glove"},{"supercategory": "sports","id": 41,"name": "skateboard"},{"supercategory": "sports","id": 42,"name": "surfboard"},{"supercategory": "sports","id": 43,"name": "tennis racket"},{"supercategory": "kitchen","id": 44,"name": "bottle"},{"supercategory": "kitchen","id": 46,"name": "wine glass"},{"supercategory": "kitchen","id": 47,"name": "cup"},{"supercategory": "kitchen","id": 48,"name": "fork"},{"supercategory": "kitchen","id": 49,"name": "knife"},{"supercategory": "kitchen","id": 50,"name": "spoon"},{"supercategory": "kitchen","id": 51,"name": "bowl"},{"supercategory": "food","id": 52,"name": "banana"},{"supercategory": "food","id": 53,"name": "apple"},{"supercategory": "food","id": 54,"name": "sandwich"},{"supercategory": "food","id": 55,"name": "orange"},{"supercategory": "food","id": 56,"name": "broccoli"},{"supercategory": "food","id": 57,"name": "carrot"},{"supercategory": "food","id": 58,"name": "hot dog"},{"supercategory": "food","id": 59,"name": "pizza"},{"supercategory": "food","id": 60,"name": "donut"},{"supercategory": "food","id": 61,"name": "cake"},{"supercategory": "furniture","id": 62,"name": "chair"},{"supercategory": "furniture","id": 63,"name": "couch"},{"supercategory": "furniture","id": 64,"name": "potted plant"},{"supercategory": "furniture","id": 65,"name": "bed"},{"supercategory": "furniture","id": 67,"name": "dining table"},{"supercategory": "furniture","id": 70,"name": "toilet"},{"supercategory": "electronic","id": 72,"name": "tv"},{"supercategory": "electronic","id": 73,"name": "laptop"},{"supercategory": "electronic","id": 74,"name": "mouse"},{"supercategory": "electronic","id": 75,"name": "remote"},{"supercategory": "electronic","id": 76,"name": "keyboard"},{"supercategory": "electronic","id": 77,"name": "cell phone"},{"supercategory": "appliance","id": 78,"name": "microwave"},{"supercategory": "appliance","id": 79,"name": "oven"},{"supercategory": "appliance","id": 80,"name": "toaster"},{"supercategory": "appliance","id": 81,"name": "sink"},{"supercategory": "appliance","id": 82,"name": "refrigerator"},{"supercategory": "indoor","id": 84,"name": "book"},{"supercategory": "indoor","id": 85,"name": "clock"},{"supercategory": "indoor","id": 86,"name": "vase"},{"supercategory": "indoor","id": 87,"name": "scissors"},{"supercategory": "indoor","id": 88,"name": "teddy bear"},{"supercategory": "indoor","id": 89,"name": "hair drier"},{"supercategory": "indoor","id": 90,"name": "toothbrush"}],
+```
+
+同时，将 `"annotations"` 字段里面的 `"category_id"` 改为 COCO 对应的 `id` ，例如本例子的 `cat` 是 `17`，下面展示部分修改结果：
+
+```json
+  "annotations": [
+    {
+      "iscrowd": 0,
+      "category_id": 17, # 这个 "category_id" 改为 COCO 对应的 id，例如本例子的 cat 是 17
+      "id": 32,
+      "image_id": 32,
+      "bbox": [
+        822.49072265625,
+        958.3897094726562,
+        1513.693115234375,
+        988.3231811523438
+      ],
+      "area": 1496017.9949368387,
+      "segmentation": [
+        [
+          822.49072265625,
+          958.3897094726562,
+          822.49072265625,
+          1946.712890625,
+          2336.183837890625,
+          1946.712890625,
+          2336.183837890625,
+          958.3897094726562
+        ]
+      ]
+    }
+  ]
+```
+
+3. 执行命令
+
+```shell
+python tools\test.py configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+                     work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+                     --cfg-options test_evaluator.classwise=True
+```
+
+执行之后就可以看到测试后的指标了：
+
+```shell
++---------------+-------+--------------+-----+----------------+------+
+| category      | AP    | category     | AP  | category       | AP   |
++---------------+-------+--------------+-----+----------------+------+
+| person        | nan   | bicycle      | nan | car            | nan  |
+| motorcycle    | nan   | airplane     | nan | bus            | nan  |
+| train         | nan   | truck        | nan | boat           | nan  |
+| traffic light | nan   | fire hydrant | nan | stop sign      | nan  |
+| parking meter | nan   | bench        | nan | bird           | nan  |
+| cat           | 0.866 | dog          | nan | horse          | nan  |
+| sheep         | nan   | cow          | nan | elephant       | nan  |
+| bear          | nan   | zebra        | nan | giraffe        | nan  |
+| backpack      | nan   | umbrella     | nan | handbag        | nan  |
+| tie           | nan   | suitcase     | nan | frisbee        | nan  |
+| skis          | nan   | snowboard    | nan | sports ball    | nan  |
+| kite          | nan   | baseball bat | nan | baseball glove | nan  |
+| skateboard    | nan   | surfboard    | nan | tennis racket  | nan  |
+| bottle        | nan   | wine glass   | nan | cup            | nan  |
+| fork          | nan   | knife        | nan | spoon          | nan  |
+| bowl          | nan   | banana       | nan | apple          | nan  |
+| sandwich      | nan   | orange       | nan | broccoli       | nan  |
+| carrot        | nan   | hot dog      | nan | pizza          | nan  |
+| donut         | nan   | cake         | nan | chair          | nan  |
+| couch         | nan   | potted plant | nan | bed            | nan  |
+| dining table  | nan   | toilet       | nan | tv             | nan  |
+| laptop        | nan   | mouse        | nan | remote         | nan  |
+| keyboard      | nan   | cell phone   | nan | microwave      | nan  |
+| oven          | nan   | toaster      | nan | sink           | nan  |
+| refrigerator  | nan   | book         | nan | clock          | nan  |
+| vase          | nan   | scissors     | nan | teddy bear     | nan  |
+| hair drier    | nan   | toothbrush   | nan | None           | None |
++---------------+-------+--------------+-----+----------------+------+
 ```
