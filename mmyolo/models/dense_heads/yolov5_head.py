@@ -461,8 +461,10 @@ class YOLOv5Head(BaseDenseHead):
             # Fast version
             loss_inputs = outs + (batch_data_samples['bboxes_labels'],
                                   batch_data_samples['img_metas'])
-            losses = self.loss_by_feat(*loss_inputs)
-
+            if self.ignore_iof_thr == -1.0:
+                losses = self.loss_by_feat(*loss_inputs)
+            else:
+                losses = self.loss_by_feat_with_ignore(*loss_inputs)
         return losses
 
     def loss_by_feat(

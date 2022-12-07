@@ -51,12 +51,3 @@ train_pipeline = [
 ]
 
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
-'''
-        batch_targets_normed = self._convert_gt_to_norm_format(
-            batch_gt_instances, batch_img_metas)
-
-        batch_ignore_normed = self._convert_gt_to_norm_format(
-            batch_gt_instances_ignore, batch_img_metas)
-
-        with_ignore = any(i.bboxes.shape[0] for i in batch_gt_instances_ignore)
-'''
