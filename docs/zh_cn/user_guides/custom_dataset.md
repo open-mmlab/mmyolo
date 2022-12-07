@@ -860,6 +860,10 @@ custom_hooks = [
 
 ```
 
+```{Note}
+虽然新的 config 看上去好像很多东西，其实很多都是重复的，用户可以用对比软件对比一下即可看出 90% 都是和 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 相同的。
+```
+
 2. 下载 YOLOv6-s 的预训练权重
 
 ```bash
@@ -872,7 +876,31 @@ wget https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_s_syncbn_fast_8xb32-
 python tools/train.py configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py
 ```
 
+在我的实验中，最佳模型是 `work_dirs/yolov6_s_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_96.pth`，其精度如下：
+
+```bash
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.987
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.987
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.895
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.989
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.989
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.989
+
+bbox_mAP_copypaste: 0.987 1.000 1.000 -1.000 -1.000 0.987
+Epoch(val) [96][116/116]  coco/bbox_mAP: 0.9870  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9870
+```
+
+以上演示的是如何在 MMYOLO 中切换模型，可以快速对不同模型进行精度对比，精度高的可以上线生产。
+
 ## 10. 推理
+
+为了文章的连贯性，后续继续使用 `YOLOv5-s` 作为例子进行讲解。
 
 使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_98.pth`，请用户自行修改为自己训练的最佳模型路径。
 
