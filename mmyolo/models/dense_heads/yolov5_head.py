@@ -714,7 +714,6 @@ class YOLOv5Head(BaseDenseHead):
         loss_box = torch.zeros(1, device=device)
         loss_obj = torch.zeros(1, device=device)
         scaled_factor = torch.ones(7, device=device)
-
         for i in range(self.num_levels):
             priors_base_sizes_i = self.priors_base_sizes[i]
             batch_size, _, h, w = bbox_preds[i].shape
@@ -726,35 +725,39 @@ class YOLOv5Head(BaseDenseHead):
             match_ignore_pred_bboxes = []  # noqa F841
             layer_i_batch_ignore_bboxes = batch_ignore_normed[i]
             layer_i_bboxes_preds = bbox_preds[i]
+            not_ignore_flag = bbox_preds[i].new_ones(batch_size,
+                                                     self.num_base_priors, h,
+                                                     w)
             for b in range(batch_size):
                 select_inds = layer_i_batch_ignore_bboxes[:, 0] == b
                 if select_inds.any():
                     batch_b_layer_i_ignore_boxes = layer_i_batch_ignore_bboxes[
                         select_inds] * scaled_factor
-                    batch_b_layer_i_ignore_boxes_with_labels = \
-                        batch_b_layer_i_ignore_boxes[:, [2, 3, 4, 5, 1]]
-                    batch_b_layer_i_ignore_boxes_with_labels[:, :2] = \
+                    batch_b_layer_i_ignore_boxes = \
+                        batch_b_layer_i_ignore_boxes[:, [2, 3, 4, 5]]
+                    batch_b_layer_i_ignore_boxes[:, :2] = \
                         scaled_factor[[2, 3]] - \
-                        batch_b_layer_i_ignore_boxes_with_labels[:, :2]
+                        batch_b_layer_i_ignore_boxes[:, :2]
 
                     batch_b_layer_i_pred_boxes = \
-                        layer_i_bboxes_preds[b].permute(1, 2, 0). \
-                        contiguous().view(-1, self.num_base_priors, 4)
+                        layer_i_bboxes_preds[b].permute(1, 2, 0).contiguous().view(-1, self.num_base_priors, 4) # noqa E501
 
                     batch_b_layer_i_pred_xywh = self._decode_bbox_to_xywh(
                         batch_b_layer_i_pred_boxes.view(-1, 4),
                         priors_base_sizes_i.unsqueeze(0).repeat(h * w, 1,
                                                                 1).view(-1, 2))
                     bboxes_iof = self.bbox_overlaps_xywh_format(
-                        batch_b_layer_i_ignore_boxes_with_labels[:, :4],
+                        batch_b_layer_i_ignore_boxes,
                         batch_b_layer_i_pred_xywh)
                     ignore_idx, pred_idx = torch.where(
                         bboxes_iof > self.ignore_iof_thr)
                     if ignore_idx.shape[0]:
-                        pass
-
-                else:
-                    continue
+                        anchor_i = pred_idx // (w * h)
+                        tmp_2d_ids = pred_idx - anchor_i * w * h
+                        h_i = tmp_2d_ids // h
+                        w_i = torch.ceil(tmp_2d_ids.float() - h_i * h)
+                        for a_i, h_ii, w_ii in zip(anchor_i, h_i, w_i):
+                            not_ignore_flag[b, a_i, h_ii.int(), w_ii.int()] = 0
 
             target_obj = torch.zeros_like(objectnesses[i])
 
@@ -821,19 +824,23 @@ class YOLOv5Head(BaseDenseHead):
             retained_bbox_pred = bbox_preds[i].reshape(
                 batch_size, self.num_base_priors, -1, h,
                 w)[img_inds, priors_inds, :, grid_y_inds, grid_x_inds]
+            ignore_weight = not_ignore_flag[img_inds, priors_inds, grid_y_inds,
+                                            grid_x_inds]
             priors_base_sizes_i = priors_base_sizes_i[priors_inds]
             decoded_bbox_pred = self._decode_bbox_to_xywh(
                 retained_bbox_pred, priors_base_sizes_i)
-            loss_box_i, iou = self.loss_bbox(decoded_bbox_pred, bboxes_targets)
+            loss_box_i, iou = self.loss_bbox(
+                decoded_bbox_pred, bboxes_targets, weight=ignore_weight)
             loss_box += loss_box_i
 
             # obj loss
             iou = iou.detach().clamp(0)
             target_obj[img_inds, priors_inds, grid_y_inds,
                        grid_x_inds] = iou.type(target_obj.dtype)
+            # ignore target_obj = 1
+            target_obj[torch.where(not_ignore_flag == 0)] = 1
             loss_obj += self.loss_obj(objectnesses[i],
                                       target_obj) * self.obj_level_weights[i]
-
             # cls loss
             if self.num_classes > 1:
                 pred_cls_scores = cls_scores[i].reshape(
