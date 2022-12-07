@@ -147,7 +147,6 @@ python demo/image_demo.py ./data/cat/images \
 ```
 
 ```{Tip}
-
 - 如果您的数据集需要标注多类，可以采用类似 `--class-name class1 class2` 格式输入；
 - 如果全部输出，则删掉 `--class-name` 这个 flag 即可全部类都输出。
 ```
@@ -633,10 +632,14 @@ pip install wandb
 wandb login
 ```
 
-在我们刚刚新建的 config 文件 `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 添加 wandb 配置：
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/206070473-201795e0-c81f-4247-842a-16d6acae0474.png" alt="推理图片"/>
+</div>
+
+在我们刚刚新建的 config 文件 `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 的最后添加 wandb 配置：
 
 ```python
-visualizer = dict(vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')])
+visualizer = dict(vis_backends=[dict(type='LocalVisBackend'), dict(type='WandbVisBackend')])
 ```
 
 #### 9.1.2 TensorBoard
@@ -668,31 +671,41 @@ tensorboard --logdir=work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat
 python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py
 ```
 
+如果您开启了 wandb 的话，可以登录到自己的账户，在 wandb 中查看本次训练的详细信息了：
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/206097557-7b10cf0f-8a16-4ba6-8563-b0a3cb149537.png" alt="Image"/>
+</div>
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/206097706-7e131bf7-f3bf-43fb-9fe5-5589a324de69.png" alt="Image"/>
+</div>
+
 下面是 `1 x 3080Ti`、`batch size = 32`，训练 `100 epoch` 最佳精度权重 `work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_98.pth` 得出来的精度（详细机器资料可见附录）：
 
 ```shell
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.966
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.968
  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 1.000
  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.966
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.885
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.978
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.978
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.968
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.886
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.977
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.977
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.978
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.977
 
-bbox_mAP_copypaste: 0.966 1.000 1.000 -1.000 -1.000 0.966
-Epoch(test) [116/116]  coco/bbox_mAP: 0.9660  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9660
+bbox_mAP_copypaste: 0.968 1.000 1.000 -1.000 -1.000 0.968
+Epoch(val) [98][116/116]  coco/bbox_mAP: 0.9680  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9680
 ```
 
 ```{Tip}
 在一般的 finetune 最佳实践中都会推荐将 backbone 固定不参与训练，并且学习率 lr 也进行相应缩放，但是在本教程中发现这种做法会出现一定程度掉点。猜测可能原因是 cat 类别已经在 COCO 数据集中，而本教程使用的 cat 数据集数量比较小导致的。
 ```
 
-下表是采用 MMYOLO 没对 cat 数据集进行 finetune 的测试精度，可以看到 `cat` 类别的 mAP 只有 `0.866`，我们 finetune 之后，提升到了 `0.966`，提升了 `10%`，可以证明训练是非常成功的：
+下表是采用 MMYOLO YOLOv5 预训练模型 `yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth` 在没对 cat 数据集进行 finetune 的测试精度，可以看到 `cat` 类别的 mAP 只有 `0.866`，经过我们 finetune `mAP` 提升到了 `0.968`，提升了 `10.2 %`，可以证明训练是非常成功的：
 
 ```shell
 +---------------+-------+--------------+-----+----------------+------+
