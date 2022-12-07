@@ -688,7 +688,45 @@ bbox_mAP_copypaste: 0.966 1.000 1.000 -1.000 -1.000 0.966
 Epoch(test) [116/116]  coco/bbox_mAP: 0.9660  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9660
 ```
 
+```{Tip}
 在一般的 finetune 最佳实践中都会推荐将 backbone 固定不参与训练，并且学习率 lr 也进行相应缩放，但是在本教程中发现这种做法会出现一定程度掉点。猜测可能原因是 cat 类别已经在 COCO 数据集中，而本教程使用的 cat 数据集数量比较小导致的。
+```
+
+下表是采用 MMYOLO 没对 cat 数据集进行 finetune 的测试精度，可以看到 `cat` 类别的 mAP 只有 `0.866`，我们 finetune 之后，提升到了 `0.966`，提升了 `10%`，可以证明训练是非常成功的：
+
+```shell
++---------------+-------+--------------+-----+----------------+------+
+| category      | AP    | category     | AP  | category       | AP   |
++---------------+-------+--------------+-----+----------------+------+
+| person        | nan   | bicycle      | nan | car            | nan  |
+| motorcycle    | nan   | airplane     | nan | bus            | nan  |
+| train         | nan   | truck        | nan | boat           | nan  |
+| traffic light | nan   | fire hydrant | nan | stop sign      | nan  |
+| parking meter | nan   | bench        | nan | bird           | nan  |
+| cat           | 0.866 | dog          | nan | horse          | nan  |
+| sheep         | nan   | cow          | nan | elephant       | nan  |
+| bear          | nan   | zebra        | nan | giraffe        | nan  |
+| backpack      | nan   | umbrella     | nan | handbag        | nan  |
+| tie           | nan   | suitcase     | nan | frisbee        | nan  |
+| skis          | nan   | snowboard    | nan | sports ball    | nan  |
+| kite          | nan   | baseball bat | nan | baseball glove | nan  |
+| skateboard    | nan   | surfboard    | nan | tennis racket  | nan  |
+| bottle        | nan   | wine glass   | nan | cup            | nan  |
+| fork          | nan   | knife        | nan | spoon          | nan  |
+| bowl          | nan   | banana       | nan | apple          | nan  |
+| sandwich      | nan   | orange       | nan | broccoli       | nan  |
+| carrot        | nan   | hot dog      | nan | pizza          | nan  |
+| donut         | nan   | cake         | nan | chair          | nan  |
+| couch         | nan   | potted plant | nan | bed            | nan  |
+| dining table  | nan   | toilet       | nan | tv             | nan  |
+| laptop        | nan   | mouse        | nan | remote         | nan  |
+| keyboard      | nan   | cell phone   | nan | microwave      | nan  |
+| oven          | nan   | toaster      | nan | sink           | nan  |
+| refrigerator  | nan   | book         | nan | clock          | nan  |
+| vase          | nan   | scissors     | nan | teddy bear     | nan  |
+| hair drier    | nan   | toothbrush   | nan | None           | None |
++---------------+-------+--------------+-----+----------------+------+
+```
 
 ## 10. 推理
 
