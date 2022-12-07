@@ -832,7 +832,10 @@ class YOLOv5Head(BaseDenseHead):
             decoded_bbox_pred = self._decode_bbox_to_xywh(
                 retained_bbox_pred, priors_base_sizes_i)
             loss_box_i, iou = self.loss_bbox(
-                decoded_bbox_pred, bboxes_targets, weight=ignore_weight)
+                decoded_bbox_pred,
+                bboxes_targets,
+                weight=ignore_weight,
+                avg_factor=ignore_weight.sum())
             loss_box += loss_box_i
 
             # obj loss
