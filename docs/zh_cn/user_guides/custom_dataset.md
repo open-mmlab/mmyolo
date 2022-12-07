@@ -745,6 +745,133 @@ Epoch(val) [98][116/116]  coco/bbox_mAP: 0.9680  coco/bbox_mAP_50: 1.0000  coco/
 关于如何得到预训练权重的精度，可以详见附录【2. 如何测试数据集在预训练权重的精度】
 ```
 
+### 9.3 尝试 MMYOLO 其他模型
+
+MMYOLO 集成了多种 YOLO 算法，切换非常方便，无需重新熟悉一个新的 repo，直接切换 config 文件就可以轻松切换 YOLO 模型，只需简单 3 步即可切换模型：
+
+1. 新建 config 文件
+2. 下载预训练权重
+3. 启动训练
+
+下面以 YOLOv6-s 为例，进行讲解。
+
+1. 搭建一个新的 config：
+
+```python
+_base_ = '../yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco.py'
+
+max_epochs = 100  # 训练的最大 epoch
+data_root = './data/cat/'  # 数据集目录的绝对路径
+
+# 结果保存的路径，可以省略，省略保存的文件名位于 work_dirs 下 config 同名的文件夹中
+# 如果某个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
+work_dir = './work_dirs/yolov6_s_syncbn_fast_1xb32-100e_cat'
+
+# load_from 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
+# 因为本教程是在 cat 数据集上微调，故这里需要使用 `load_from` 来加载 MMYOLO 中的预训练模型，这样可以在加快收敛速度的同时保证精度
+load_from = './work_dirs/yolov6_s_syncbn_fast_8xb32-400e_coco_20221102_203035-932e1d91.pth'  # noqa
+
+# 根据自己的 GPU 情况，修改 batch size，YOLOv6-s 默认为 8卡 x 32bs
+train_batch_size_per_gpu = 32
+train_num_workers = 4  # 推荐使用 train_num_workers = nGPU x 4
+
+save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
+
+# 根据自己的 GPU 情况，修改 base_lr，修改的比例是 base_lr_default * (your_bs / default_bs)
+base_lr = _base_.base_lr / 8
+
+class_name = ('cat', )  # 根据 class_with_id.txt 类别信息，设置 class_name
+num_classes = len(class_name)
+metainfo = dict(
+    CLASSES=class_name,
+    PALETTE=[(220, 20, 60)]  # 画图时候的颜色，随便设置即可
+)
+
+train_cfg = dict(
+    max_epochs=max_epochs,
+    val_begin=20,  # 第几个 epoch 后验证，这里设置 20 是因为前 20 个 epoch 精度不高，测试意义不大，故跳过
+    val_interval=save_epoch_intervals,  # 每 val_interval 轮迭代进行一次测试评估
+    dynamic_intervals=[(max_epochs - _base_.num_last_epochs, 1)]
+)
+
+model = dict(
+    bbox_head=dict(
+        head_module=dict(num_classes=num_classes)),
+    train_cfg=dict(
+        initial_assigner=dict(num_classes=num_classes),
+        assigner=dict(num_classes=num_classes))
+)
+
+train_dataloader = dict(
+    batch_size=train_batch_size_per_gpu,
+    num_workers=train_num_workers,
+    dataset=dict(
+        _delete_=True,
+        type='RepeatDataset',
+        # 数据量太少的话，可以使用 RepeatDataset ，在每个 epoch 内重复当前数据集 n 次，这里设置 5 是重复 5 次
+        times=5,
+        dataset=dict(
+            type=_base_.dataset_type,
+            data_root=data_root,
+            metainfo=metainfo,
+            ann_file='annotations/trainval.json',
+            data_prefix=dict(img='images/'),
+            filter_cfg=dict(filter_empty_gt=False, min_size=32),
+            pipeline=_base_.train_pipeline)))
+
+val_dataloader = dict(
+    dataset=dict(
+        metainfo=metainfo,
+        data_root=data_root,
+        ann_file='annotations/trainval.json',
+        data_prefix=dict(img='images/')))
+
+test_dataloader = val_dataloader
+
+val_evaluator = dict(ann_file=data_root + 'annotations/trainval.json')
+test_evaluator = val_evaluator
+
+optim_wrapper = dict(optimizer=dict(lr=base_lr))
+
+default_hooks = dict(
+    # 设置间隔多少个 epoch 保存模型，以及保存模型最多几个，`save_best` 是另外保存最佳模型（推荐）
+    checkpoint=dict(
+        type='CheckpointHook',
+        interval=save_epoch_intervals,
+        max_keep_ckpts=5,
+        save_best='auto'),
+    param_scheduler=dict(max_epochs=max_epochs),
+    # logger 输出的间隔
+    logger=dict(type='LoggerHook', interval=10))
+
+custom_hooks = [
+    dict(
+        type='EMAHook',
+        ema_type='ExpMomentumEMA',
+        momentum=0.0001,
+        update_buffers=True,
+        strict_load=False,
+        priority=49),
+    dict(
+        type='mmdet.PipelineSwitchHook',
+        switch_epoch=max_epochs - _base_.num_last_epochs,
+        switch_pipeline=_base_.train_pipeline_stage2)
+]
+
+```
+
+2. 下载 YOLOv6-s 的预训练权重
+
+```bash
+wget https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco/yolov6_s_syncbn_fast_8xb32-400e_coco_20221102_203035-932e1d91.pth -P work_dirs/
+```
+
+3. 训练
+
+```shell
+python tools/train.py configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py
+```
+
 ## 10. 推理
 
 使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_98.pth`，请用户自行修改为自己训练的最佳模型路径。
