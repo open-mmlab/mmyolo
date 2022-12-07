@@ -863,7 +863,7 @@ custom_hooks = [
 ```{Note}
 同样，我们在 `projects/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py` 放了一份相同的 config 文件，用户可以选择复制到 `configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py` 路径直接开始训练。
 
-虽然新的 config 看上去好像很多东西，其实很多都是重复的，用户可以用对比软件对比一下即可看出 `95 %` 都是和 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 相同的。因为这 2 个 config 文件需要继承不同的 config，所以还是要添加一些必要的配置。
+虽然新的 config 看上去好像很多东西，其实很多都是重复的，用户可以用对比软件对比一下即可看出大部分的配置都是和 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 相同的。因为这 2 个 config 文件需要继承不同的 config，所以还是要添加一些必要的配置。
 ```
 
 2. 下载 YOLOv6-s 的预训练权重
