@@ -545,7 +545,7 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
 - 图片全部是 large object；
 - 类别 cat 的数量是 `645`；
 - bbox 的宽高比例大部分集中在 `1.14`，比例最小值是 `0.36`，最大值是 `2.9`；
-- bbox 的宽大部分是 `1034.74`，高大部分是 `926.67`。
+- bbox 的宽大部分是 `600` 左右，高大部分是 `600` 左右。
 
 ```{SeeAlso}
 关于 `tools/analysis_tools/dataset_analysis.py` 的更多用法请参考 [可视化数据集分析](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id4)。
