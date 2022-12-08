@@ -285,7 +285,7 @@ class LetterResize(MMDET_Resize):
         if len(results['pad_param']) != 4:
             return
         results['gt_bboxes'].translate_(
-            (results['pad_param'][2], results['pad_param'][1]))
+            (results['pad_param'][2], results['pad_param'][0]))
 
         if self.clip_object_border:
             results['gt_bboxes'].clip_(results['img_shape'])
