@@ -24,7 +24,7 @@ Note: Inference speed and accuracy test (excluding NMS) were performed on `Tenso
 The lightest model, RTMDet-tiny, can achieve 40.9 mAP with only 4M parameters and inference speed \< 1 ms.
 
 <div align=center>
-<img alt="RTMDet_精度图" src="https://user-images.githubusercontent.com/12907710/192182907-f9a671d6-89cb-4d73-abd8-c2b9dada3c66.png"/>
+<img alt="RTMDet_accuracy_graph" src="https://user-images.githubusercontent.com/12907710/192182907-f9a671d6-89cb-4d73-abd8-c2b9dada3c66.png"/>
 </div>
 
 The accuracy in this figure is a fair comparison to 300 training epochs, without distillation.
