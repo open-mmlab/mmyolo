@@ -254,7 +254,7 @@ python tools/dataset_converters/labelme2coco.py --img-dir ${图片文件夹路�
 以本教程的 `cat` 数据集为例：
 
 ```shell
-python tools/dataset_converters/labelme2coco.py --img-dir ./data/cat/image \
+python tools/dataset_converters/labelme2coco.py --img-dir ./data/cat/images \
                                                 --labels-dir ./data/cat/labels \
                                                 --out ./data/cat/annotations/annotations_all.json
 ```
