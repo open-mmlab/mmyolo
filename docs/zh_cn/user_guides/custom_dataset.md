@@ -553,7 +553,7 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
 
 ## 7. 优化 Anchor 尺寸
 
-脚本 `tools/analysis_tools/optimize_anchors.py` 支持 YOLO 系列中三种锚框生成方式，分别是 `k-means`、`differential_evolution`、`v5-k-means`.
+脚本 `tools/analysis_tools/optimize_anchors.py` 支持 YOLO 系列中三种锚框生成方式，分别是 `k-means`、`Differential Evolution`、`v5-k-means`.
 
 本示例使用的是 YOLOv5 进行训练，使用的是 `640 x 640` 的输入大小，使用 `v5-k-means` 进行描框的优化：
 
