@@ -1,8 +1,8 @@
-## YOLOV5使用其他的loss
+## YOLOv5使用其他的loss
 
-如果想在YOLOV5中使用其他model中的loss，同时保持YOLOV5的网络结构，可以在YOLOV5的配置文件中修改。需要修改配置文件中model的bbox_head部分，将type修改未YOLOv7Head或YOLOXHead，而haed_module中的type则继续使用YOLOv5HeadModule。其中，因为YOLOX是Anchor Free结构，所以需要将head_module中的num_base_priors设置为，同时增加train_cfg中assigner的设置。
+如果想在 YOLOv5 中使用其他 `model` 中的 `loss` ，同时保持 YOLOv5 的网络结构，可以在 YOLOv5 的配置文件中修改。需要修改配置文件中 `model` 的 `bbox_head` 部分，将 `type` 修改为 YOLOv7Head 或 YOLOXHead ，而 `haed_module` 中的 `type` 则继续使用 `YOLOv5HeadModule`。其中，因为 YOLOX 是 Anchor Free 结构，所以需要将 `head_module` 中的 `num_base_priors` 设置为1，同时增加 `train_cfg` 中 `assigner` 的设置。
 
-如果使用YOLOv7Head替代YOLOv5Head，可以如下配置：
+如果使用 YOLOv7Head 替代 YOLOv5Head，可以如下配置：
 
 ```python
 model = dict(
@@ -19,7 +19,7 @@ model = dict(
 )
 ```
 
-如果使用YOLOXHead替代YOLOv5Head，可以如下配置：
+如果使用 YOLOXHead 替代 YOLOv5Head，可以如下配置：
 
 ```python
 model = dict(
@@ -40,4 +40,4 @@ model = dict(
 )
 ```
 
-另外，由于YOLOv6和RTMDet的loss中不包含loss_obj，所以如果希望在YOLOv5中使用对应的YOLOv6Head或RTMDetHead，需要修改对应类中的loss_by_feat函数。
+另外，由于 YOLOv6 和 RTMDet 的 loss 中不包含 `loss_obj` ，所以如果希望在 YOLOv5 中使用对应的 YOLOv6Head 或 RTMDetHead，需要修改对应类中的 `loss_by_feat` 函数。
