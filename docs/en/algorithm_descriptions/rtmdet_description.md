@@ -106,7 +106,7 @@ if self.use_cached:
     dataset = results.pop('dataset', None)
     self.results_cache.append(copy.deepcopy(results))  # 将当前加载的图片数据缓存到 cache 中
     if len(self.results_cache) > self.max_cached_images:
-        if self.random_pop: # 除了tiny模型，self.random_pop=True
+        if self.random_pop: # Except for the tiny model, self.random_pop=True
             index = random.randint(0, len(self.results_cache) - 1)
         else:
             index = 0
