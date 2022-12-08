@@ -1,6 +1,6 @@
 # Algorithm principles and implementation with RTMDet
 
-## 0 Introoduction
+## 0 Introduction
 
 High performance, low latency one-stage object detection
 
@@ -10,7 +10,7 @@ High performance, low latency one-stage object detection
 
 RangeKing@github provides the graph above. Thanks, RangeKing!
 
-Recently,the open-source community has spring up a large number of high-precision object detection projects, one of the most prominent projects is YOLO series. OpenMMLab has also launched MMYOLO in collaboration with the community.
+Recently,the open-source community has spring up a large number of high-precision object detection projects, one of the most prominent projects is YOLO series. OpenMMLab has also launched `MMYOLO` in collaboration with the community.
 After investigating many improved models in current YOLO series, MMDetection core developers empirically summarized these designs and training methods, and optimized them to launch a single-stage object detector with high accuracy and low latency RTMDet, **R**eal-**t**ime **M**odels for Object **Det**ection
 (**R**elease **t**o **M**anufacture)
 
@@ -58,8 +58,29 @@ and mixins data augmentation:
 - **Mosaic**
 - **MixUp**
 
-The data augmentation process is as follows:
+The following picture demonstrates the data augmentation process:
 
 <div align=center>
 <img alt="image" src="https://user-images.githubusercontent.com/33799979/192956011-78f89d89-ac9f-4a40-b4f1-056b49b704ef.png" width=800 />
 </div>
+
+The `RandomResize` hyperparameters are different on the large models M,L,X and the small models S, Tiny. Due to the number of parameters,the large models can use the `large jitter scale strategy` with parameters of (0.1,2.0). The small model adopts the `stand scale jitter` strategy with parameters of (0.5, 2.0).
+
+The single image data augmentation has been packaged in `MMDetection` so users can directly use all methods through simple configurations. As a very ordinary and common processing method, this part will not be further introduced now. The implementation of mixins data augmentation is described in the following.
+
+Unlike `YOLOv5`, which considers the use of `MixUp` on S and Nano models is excessive. Small models do not need such strong data augmentation. However, RTMDet also uses `MixUp` on S and Tiny, because RTMDet will switch to `normal aug` at last 20 epochs, and this operation was proved to be effective by training. Moreover, RTMDet introduces a Cache scheme for mixins data augmentation, which effectively reduces the image processing time and introduces adjustable hyperparameters.
+
+`max_cached_images`, which is similar to `repeated augmentation` when using a smaller cache. The details are as follows:
+
+|        | Use cache | ms / 100 imgs |
+| ------ | --------- | ------------- |
+| Mosaic |           | 87.1          |
+| Mosaic | √         | **24.0**      |
+| MixUp  |           | 19.3          |
+| MixUp  | √         | **12.4**      |
+
+|                               | RTMDet-s | RTMDet-l |
+| ----------------------------- | -------- | -------- |
+| Mosaic + MixUp + 20e finetune | 43.9     | **51.3** |
+
+#### 1.1.1 Introducing Cache for mixins data augmentation
