@@ -383,9 +383,9 @@ save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
 base_lr = _base_.base_lr / 4
 
 anchors = [  # 此处已经根据数据集特点更新了 anchor，关于 anchor 的生成，后面小节会讲解
-    [(68, 68), (154, 92), (119, 164)],  # P3/8
-    [(229, 139), (193, 185), (163, 349)],  # P4/16
-    [(324, 248), (328, 473), (500, 370)]  # P5/32
+    [(68, 69), (154, 91), (143, 162)],  # P3/8
+    [(242, 160), (189, 287), (391, 207)],  # P4/16
+    [(353, 337), (539, 341), (443, 432)]  # P5/32
 ]
 
 class_name = ('cat', )  # 根据 class_with_id.txt 类别信息，设置 class_name
@@ -574,16 +574,16 @@ python tools/analysis_tools/optimize_anchors.py configs/custom_dataset/yolov5_s-
 经过计算的 Anchor 如下：
 
 <div align=center>
-<img alt="Anchor" src="https://user-images.githubusercontent.com/25873202/206711276-592c6b3c-2c6a-4b07-afab-a6a36951933a.png">
+<img alt="Anchor" src="https://user-images.githubusercontent.com/25873202/205422434-1a68cded-b055-42e9-b01c-3e51f8f5ef81.png">
 </div>
 
 修改 config 文件里面的 `anchors` 变量：
 
 ```python
 anchors = [
-    [(68, 68), (154, 92), (119, 164)],  # P3/8
-    [(229, 139), (193, 185), (163, 349)],  # P4/16
-    [(324, 248), (328, 473), (500, 370)]  # P5/32
+    [(68, 69), (154, 91), (143, 162)],  # P3/8
+    [(242, 160), (189, 287), (391, 207)],  # P4/16
+    [(353, 337), (539, 341), (443, 432)]  # P5/32
 ]
 ```
 
