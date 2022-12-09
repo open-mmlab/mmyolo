@@ -912,18 +912,16 @@ bbox_mAP_copypaste: 0.987 1.000 1.000 -1.000 -1.000 0.987
 Epoch(val) [96][116/116]  coco/bbox_mAP: 0.9870  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9870
 ```
 
-以上演示的是如何在 MMYOLO 中切换模型，可以快速对不同模型进行精度对比，精度高的可以上线生产。
+以上演示的是如何在 MMYOLO 中切换模型，可以快速对不同模型进行精度对比，精度高的模型可以上线生产。在我的实验中，YOLOv6 最佳精度 `0.9870` 比 YOLOv5 最佳精度 `0.9680` 高出 `1.9 %`，故后续我们使用 YOLOv6 来进行讲解。
 
 ## 10. 推理
 
-为了文章的连贯性，后续继续使用 `YOLOv5-s` 作为例子进行讲解。
-
-使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_98.pth`，请用户自行修改为自己训练的最佳模型路径。
+使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov6_s_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_96.pth`，请用户自行修改为自己训练的最佳模型路径。
 
 ```shell
 python demo/image_demo.py ./data/cat/images \
-                          ./configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
-                          ./work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_98.pth \
+                          ./configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py \
+                          ./work_dirs/yolov6_s_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_96.pth \
                           --out-dir ./data/cat/pred_images
 ```
 
