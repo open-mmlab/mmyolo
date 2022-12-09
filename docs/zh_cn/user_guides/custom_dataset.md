@@ -1055,7 +1055,7 @@ $WORK_DIR
 
 #### 11.1.4 部署模型执行推理
 
-需要将 `${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 里面的 `data_root` 修改为 Docker 容器里面的路径：
+需要将 `${MMYOLO_PATH}/configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py` 里面的 `data_root` 修改为 Docker 容器里面的路径：
 
 ```python
 data_root = '/root/workspace/mmyolo/data/cat/'  # Docker 容器里面数据集目录的绝对路径
