@@ -1072,51 +1072,57 @@ python tools/test.py \
     --device cuda
 ```
 
-速度测试如下，可见平均推理速度是 `18.31 ms`，对比 PyTorch 推理有速度提升，同时显存也下降了很多：
+速度测试如下，可见平均推理速度是 `24.10 ms`，对比 PyTorch 推理有速度提升，同时显存也下降了很多：
 
 ```shell
-Epoch(test) [ 10/116]    eta: 0:00:10  time: 0.0950  data_time: 0.0844  memory: 12
-Epoch(test) [ 20/116]    eta: 0:00:09  time: 0.0945  data_time: 0.0891  memory: 12
-Epoch(test) [ 30/116]    eta: 0:00:08  time: 0.0953  data_time: 0.0804  memory: 12
-Epoch(test) [ 40/116]    eta: 0:00:07  time: 0.0902  data_time: 0.0712  memory: 12
-Epoch(test) [ 50/116]    eta: 0:00:06  time: 0.0858  data_time: 0.0622  memory: 12
-Epoch(test) [ 60/116]    eta: 0:00:05  time: 0.0902  data_time: 0.0662  memory: 12
-Epoch(test) [ 70/116]    eta: 0:00:04  time: 0.0901  data_time: 0.0645  memory: 16
-Epoch(test) [ 80/116]    eta: 0:00:03  time: 0.0761  data_time: 0.0507  memory: 12
-Epoch(test) [ 90/116]    eta: 0:00:02  time: 0.0958  data_time: 0.0692  memory: 12
-Epoch(test) [100/116]    eta: 0:00:01  time: 0.0904  data_time: 0.0571  memory: 12
-[tensorrt]-110 times per count: 18.31 ms, 54.61 FPS
-Epoch(test) [110/116]    eta: 0:00:00  time: 0.1123  data_time: 0.0896  memory: 12
+Epoch(test) [ 10/116]    eta: 0:00:20  time: 0.1919  data_time: 0.1330  memory: 12
+Epoch(test) [ 20/116]    eta: 0:00:15  time: 0.1220  data_time: 0.0939  memory: 12
+Epoch(test) [ 30/116]    eta: 0:00:12  time: 0.1168  data_time: 0.0850  memory: 12
+Epoch(test) [ 40/116]    eta: 0:00:10  time: 0.1241  data_time: 0.0940  memory: 12
+Epoch(test) [ 50/116]    eta: 0:00:08  time: 0.0974  data_time: 0.0696  memory: 12
+Epoch(test) [ 60/116]    eta: 0:00:06  time: 0.0865  data_time: 0.0547  memory: 16
+Epoch(test) [ 70/116]    eta: 0:00:05  time: 0.1521  data_time: 0.1226  memory: 16
+Epoch(test) [ 80/116]    eta: 0:00:04  time: 0.1364  data_time: 0.1056  memory: 12
+Epoch(test) [ 90/116]    eta: 0:00:03  time: 0.0923  data_time: 0.0627  memory: 12
+Epoch(test) [100/116]    eta: 0:00:01  time: 0.0844  data_time: 0.0583  memory: 12
+[tensorrt]-110 times per count: 24.10 ms, 41.50 FPS
+Epoch(test) [110/116]    eta: 0:00:00  time: 0.1085  data_time: 0.0832  memory: 12
 ```
 
-精度测试如下。此配置采用 FP16 格式推理，会有一定程度掉点，但是推理速度更快：
+精度测试如下。此配置采用 FP16 格式推理，会有一定程度掉点，但是推理速度更快、显存占比更小：
 
 ```shell
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.937
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.954
  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 1.000
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.975
  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.937
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.865
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.957
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.957
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.954
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.860
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.965
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.965
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.957
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.965
 
-bbox_mAP_copypaste: 0.937 1.000 1.000 -1.000 -1.000 0.937
-Epoch(test) [116/116]  coco/bbox_mAP: 0.9370  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9370
+INFO - bbox_mAP_copypaste: 0.954 1.000 0.975 -1.000 -1.000 0.954
+INFO - Epoch(test) [116/116]  coco/bbox_mAP: 0.9540  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 0.9750  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9540
 ```
 
-图片文件夹批量推理（注意：该 demo 暂时没有做批量推理的处理，后续会优化，敬请期待）：
+图片文件夹批量推理：
+
+```{Warning}
+该 demo 暂时没有做批量推理的处理，而且代码前处理还需要完善，暂时不能完全展现出推理的速度，只能演示推理的结果，后续会优化，敬请期待。
+
+用户也可以参考 MMDeploy 的 SDK 部署方式，使用 C++ 来进行部署，进而进一步提升推理速度。
+```
 
 ```shell
 cd ${MMYOLO_PATH}/demo
 python deploy_demo.py \
     ${MMYOLO_PATH}/data/cat/images \
-    ${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
-    /root/workspace/mmdeploy/work_dir/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16/end2end.engine \
+    ${MMYOLO_PATH}/configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py \
+    /root/workspace/mmdeploy/work_dir/yolov6_s_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16/end2end.engine \
     --deploy-cfg ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
     --out-dir ${MMYOLO_PATH}/work_dirs/deploy_predict_out \
     --device cuda:0 \
