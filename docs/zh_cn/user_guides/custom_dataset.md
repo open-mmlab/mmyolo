@@ -511,10 +511,10 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
     </tr>
     <tr align="center" valign="center">
       <td>
-        <img alt="YOLOv5CocoDataset_bbox_area" src="https://user-images.githubusercontent.com/25873202/205805522-e066b93b-0952-40d0-be56-42fc20e85576.jpg" width="60%">
+        <img alt="YOLOv5CocoDataset_bbox_area" src="https://user-images.githubusercontent.com/25873202/206709093-1ed40f4e-cae3-4383-b120-79ad44c12312.jpg" width="60%">
       </td>
       <td>
-        <img alt="YOLOv5CocoDataset_bbox_wh" src="https://user-images.githubusercontent.com/25873202/205805514-13e34d18-f9ee-4bca-b894-060bfea6ad56.jpg" width="60%">
+        <img alt="YOLOv5CocoDataset_bbox_wh" src="https://user-images.githubusercontent.com/25873202/206709127-aebbb238-4af8-46c8-b71e-8540ed5f5de1.jpg" width="60%">
       </td>
     </tr>
     <tr align="center" valign="center">
@@ -527,10 +527,10 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
     </tr>
     <tr align="center" valign="center">
       <td>
-        <img alt="YOLOv5CocoDataset_bbox_num" src="https://user-images.githubusercontent.com/25873202/205805529-6e0d2545-0a39-4be7-b212-9d16a16a0fcc.jpg" width="60%">
+        <img alt="YOLOv5CocoDataset_bbox_num" src="https://user-images.githubusercontent.com/25873202/206709108-8cee54f3-3102-4ca2-a10a-e4adb760881b.jpg" width="60%">
       </td>
       <td>
-        <img alt="YOLOv5CocoDataset_bbox_ratio" src="https://user-images.githubusercontent.com/25873202/205805501-2b2a40f4-5a0e-44b0-b07c-27af539fb971.jpg" width="60%">
+        <img alt="YOLOv5CocoDataset_bbox_ratio" src="https://user-images.githubusercontent.com/25873202/206709115-17aeba09-4ff1-4697-8842-94fbada6c428.jpg" width="60%">
       </td>
     </tr>
   </tbody>
@@ -540,12 +540,12 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
 因为本教程使用的 cat 数据集数量比较少，故 config 里面用了 RepeatDataset，显示的数目实际上都是重复了 5 次。如果您想得到无重复的分析结果，可以暂时将 RepeatDataset 下面的 `times` 参数从 `5` 改成 `1`。
 ```
 
-经过输出的图片分析可以得出，本教程使用的 cat 数据集的训练集具有以下情况：
+经过输出的图片分析可以得出，本教程使用的 `cat` 数据集的训练集具有以下情况：
 
-- 图片全部是 large object；
-- 类别 cat 的数量是 `645`；
-- bbox 的宽高比例大部分集中在 `1.14`，比例最小值是 `0.36`，最大值是 `2.9`；
-- bbox 的宽大部分是 `600` 左右，高大部分是 `600` 左右。
+- 图片全部是 `large object`；
+- 类别 cat 的数量是 `655`；
+- bbox 的宽高比例大部分集中在 `1.0 ~ 1.11`，比例最小值是 `0.36`，最大值是 `2.9`；
+- bbox 的宽大部分是 `500 ~ 600` 左右，高大部分是 `500 ~ 600` 左右。
 
 ```{SeeAlso}
 关于 `tools/analysis_tools/dataset_analysis.py` 的更多用法请参考 [可视化数据集分析](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id4)。
