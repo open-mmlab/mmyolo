@@ -1017,11 +1017,11 @@ pip install --no-cache-dir pycuda==2022.2
 cd /root/workspace/mmdeploy
 python ./tools/deploy.py \
     ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
-    ${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
-    ${MMYOLO_PATH}/work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_98.pth \
+    ${MMYOLO_PATH}/configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py \
+    ${MMYOLO_PATH}/work_dirs/yolov6_s_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_96.pth \
     ${MMYOLO_PATH}/data/cat/images/mmexport1633684751291.jpg \
     --test-img ${MMYOLO_PATH}/data/cat/images/mmexport1633684751291.jpg \
-    --work-dir ./work_dir/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16 \
+    --work-dir ./work_dir/yolov6_s_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16 \
     --device cuda:0 \
     --log-level INFO \
     --show \
@@ -1029,20 +1029,25 @@ python ./tools/deploy.py \
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/25873202/205540259-ded15231-c428-4a5b-ac45-06cf15c5b7e9.png" alt="Image"/>
+<img src="https://user-images.githubusercontent.com/25873202/206736259-72b76698-cba4-4472-909d-0fd866b45d55.png" alt="Image"/>
 </div>
 
 等待一段时间，出现了 `All process success.` 即为成功：
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/25873202/205540981-355d34cb-6472-47e0-a7dd-11eb85b3b43c.png" alt="Image"/>
+<img src="https://user-images.githubusercontent.com/25873202/206736030-3b702929-4fcb-4cec-a6ce-f22a94777f6c.png" alt="Image"/>
 </div>
 
 查看导出的路径，可以看到如下图所示的文件结构：
 
-<div align=center>
-<img src="https://user-images.githubusercontent.com/25873202/205859050-164216bc-79d6-4ba2-9e63-f8f4c1d5ecaf.png" alt="Image"/>
-</div>
+```shell
+$WORK_DIR
+  ├── deploy.json
+  ├── detail.json
+  ├── end2end.engine
+  ├── end2end.onnx
+  └── pipeline.json
+```
 
 ```{SeeAlso}
 关于转换模型的详细介绍，请参考 [如何转换模型](https://mmdeploy.readthedocs.io/zh_CN/latest/02-how-to-run/convert_model.html)
@@ -1061,8 +1066,8 @@ data_root = '/root/workspace/mmyolo/data/cat/'  # Docker 容器里面数据集�
 ```shell
 python tools/test.py \
     ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
-    ${MMYOLO_PATH}/configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
-    --model ./work_dir/yolov5_s-v61_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16/end2end.engine \
+    ${MMYOLO_PATH}/configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py \
+    --model ./work_dir/yolov6_s_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16/end2end.engine \
     --speed-test \
     --device cuda
 ```
