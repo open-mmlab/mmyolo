@@ -571,6 +571,10 @@ python tools/analysis_tools/optimize_anchors.py configs/custom_dataset/yolov5_s-
                                                 --out-dir work_dirs/dataset_analysis_cat
 ```
 
+```{Note}
+因为该命令使用的是 k-means 聚类算法，存在一定的随机性，这与初始化有关。故每次执行得到的 Anchor 都会有些不一样，但是都是基于传递进去的数据集来进行生成的，故不会有什么不良影响。
+```
+
 经过计算的 Anchor 如下：
 
 <div align=center>
