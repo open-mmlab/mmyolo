@@ -620,11 +620,15 @@ python tools/analysis_tools/browse_dataset.py configs/custom_dataset/yolov5_s-v6
 
 ## 9. 训练
 
-使用刚刚我们新建好的 config 文件执行训练。
+下面会从以下 3 点来进行讲解：
+
+1. 训练可视化
+2. YOLOv5 模型训练
+3. 切换 YOLO 模型训练
 
 ### 9.1 训练可视化
 
-如果需要采用浏览器对训练过程可视化，MMYOLO 目前提供 2 种方式 `[wandb](https://wandb.ai/site)` 和 `[TensorBoard](https://tensorflow.google.cn/tensorboard)`，根据自己的情况选择其一即可(后续会扩展更多可视化后端支持)。
+如果需要采用浏览器对训练过程可视化，MMYOLO 目前提供 2 种方式 [wandb](https://wandb.ai/site) 和 [TensorBoard](https://tensorflow.google.cn/tensorboard)，根据自己的情况选择其一即可(后续会扩展更多可视化后端支持)。
 
 #### 9.1.1 wandb
 
