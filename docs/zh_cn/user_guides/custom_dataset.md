@@ -574,7 +574,7 @@ python tools/analysis_tools/optimize_anchors.py configs/custom_dataset/yolov5_s-
 经过计算的 Anchor 如下：
 
 <div align=center>
-<img alt="Anchor" src="https://user-images.githubusercontent.com/25873202/205422434-1a68cded-b055-42e9-b01c-3e51f8f5ef81.png">
+<img alt="Anchor" src="https://user-images.githubusercontent.com/25873202/206711276-592c6b3c-2c6a-4b07-afab-a6a36951933a.png">
 </div>
 
 修改 config 文件里面的 `anchors` 变量：
