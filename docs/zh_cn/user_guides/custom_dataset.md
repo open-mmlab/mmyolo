@@ -595,11 +595,11 @@ anchors = [
 
 脚本 `tools/analysis_tools/browse_dataset.py` 能够帮助用户去直接窗口可视化 config 配置中数据处理部分，同时可以选择保存可视化图片到指定文件夹内。
 
-下面演示使用我们刚刚新建的 config 文件 `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 来可视化图片，该命令会使得图片直接弹出显示，每张图片持续 `5` 秒，图片不进行保存：
+下面演示使用我们刚刚新建的 config 文件 `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 来可视化图片，该命令会使得图片直接弹出显示，每张图片持续 `3` 秒，图片不进行保存：
 
 ```shell
 python tools/analysis_tools/browse_dataset.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
-                                              --show-interval 5
+                                              --show-interval 3
 ```
 
 <div align=center>
