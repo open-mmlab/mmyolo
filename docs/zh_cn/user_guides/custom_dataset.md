@@ -1129,7 +1129,7 @@ python deploy_demo.py \
     --score-thr 0.5
 ```
 
-执行之后，可以看到在 `--out-dir` 下面的推理图片结果，下面展示其中一张：
+执行之后，可以看到在 `--out-dir` 下面的推理图片结果：
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/205815829-6f85e655-722a-47c8-9e23-2a74437c0923.jpg" alt="Image"/>
