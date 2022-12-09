@@ -554,7 +554,9 @@ python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-
 ## 7. 优化 Anchor 尺寸
 
 ```{Warning}
-该步骤仅适用于 anchor-base 的模型，例如 YOLOv5；不适用与 anchor-free 的模型，例如 YOLOv6、YOLOX。
+该步骤仅适用于 anchor-base 的模型，例如 YOLOv5；
+
+Anchor-free 的模型可以跳过此步骤，例如 YOLOv6、YOLOX。
 ```
 
 脚本 `tools/analysis_tools/optimize_anchors.py` 支持 YOLO 系列中三种锚框生成方式，分别是 `k-means`、`Differential Evolution`、`v5-k-means`.
