@@ -1,6 +1,6 @@
 _base_ = 'yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
-model = dict(bbox_head=dict(ignore_iof_thr=0.8))  # 默认值是 -1。0.8 是我瞎写的，估计要调参
+model = dict(bbox_head=dict(ignore_iof_thr=0.8))
 
 img_scale = _base_.img_scale
 
