@@ -1109,18 +1109,18 @@ INFO - bbox_mAP_copypaste: 0.954 1.000 0.975 -1.000 -1.000 0.954
 INFO - Epoch(test) [116/116]  coco/bbox_mAP: 0.9540  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 0.9750  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9540
 ```
 
-图片文件夹批量推理：
+图片推理：
 
 ```{Warning}
-该 demo 暂时没有做批量推理的处理，而且代码前处理还需要完善，暂时不能完全展现出推理的速度，只能演示推理的结果，后续会优化，敬请期待。
-
 用户也可以参考 MMDeploy 的 SDK 部署方式，使用 C++ 来进行部署，进而进一步提升推理速度。
+
+该 demo 暂时没有做批量推理的处理，而且代码前处理还需要完善，暂时不能完全展现出推理的速度，只能演示推理的结果，后续会优化，敬请期待。
 ```
 
 ```shell
 cd ${MMYOLO_PATH}/demo
 python deploy_demo.py \
-    ${MMYOLO_PATH}/data/cat/images \
+    ${MMYOLO_PATH}/data/cat/images/mmexport1633684900217.jpg \
     ${MMYOLO_PATH}/configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py \
     /root/workspace/mmdeploy/work_dir/yolov6_s_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16/end2end.engine \
     --deploy-cfg ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
