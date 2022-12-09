@@ -21,11 +21,12 @@ from mmyolo.registry import MODELS, TASK_UTILS
 from ..utils import make_divisible
 
 
-def get_prior_xy_info(index, num_base_priors, featmap_w):
+def get_prior_xy_info(index, num_base_priors, featmap_sizes):
+    featmap_h, featmap_w = featmap_sizes
     priors = index % num_base_priors
     xy_index = index // num_base_priors
     grid_y = xy_index // featmap_w
-    grid_x = xy_index % featmap_w
+    grid_x = xy_index % featmap_h
     return priors, grid_x, grid_y
 
 
@@ -760,7 +761,7 @@ class YOLOv5Head(BaseDenseHead):
                 as_tuple=True)[0]
             batch_inds = batch_inds[ignore_inds].long()
             ignore_priors, ignore_grid_xs, ignore_grid_ys = get_prior_xy_info(
-                ignore_inds, self.num_base_priors, self.featmap_sizes[i][1])
+                ignore_inds, self.num_base_priors, self.featmap_sizes[i])
             not_ignore_flags[batch_inds, ignore_priors, ignore_grid_ys,
                              ignore_grid_xs] = 0
 
