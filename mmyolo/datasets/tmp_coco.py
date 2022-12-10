@@ -1,6 +1,7 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import uuid
-from numbers import Number, Integral
+from numbers import Integral, Number
 from typing import List, Sequence
 
 import cv2
@@ -14,14 +15,16 @@ from mmengine.dataset import Compose
 from mmyolo.registry import DATASETS, TRANSFORMS
 
 
-class BaseOperator(object):
+class BaseOperator:
+
     def __init__(self, name=None):
         if name is None:
             name = self.__class__.__name__
         self._id = name + '_' + str(uuid.uuid4())[-6:]
 
     def transform(self, sample, context=None):
-        """ Process a sample.
+        """Process a sample.
+
         Args:
             sample (dict): a dict of sample, eg: {'image':xx, 'label': xxx}
             context (dict): info about this sample processing
@@ -31,7 +34,8 @@ class BaseOperator(object):
         return sample
 
     def __call__(self, sample, context=None):
-        """ Process a sample.
+        """Process a sample.
+
         Args:
             sample (dict): a dict of sample, eg: {'image':xx, 'label': xxx}
             context (dict): info about this sample processing
@@ -51,13 +55,14 @@ class BaseOperator(object):
 
 
 class Decode(BaseOperator):
+
     def __init__(self):
-        """ Transform the image data to numpy format following the rgb format
-        """
-        super(Decode, self).__init__()
+        """Transform the image data to numpy format following the rgb
+        format."""
+        super().__init__()
 
     def transform(self, sample, context=None):
-        """ load image if 'im_file' field is not empty but 'image' is"""
+        """load image if 'im_file' field is not empty but 'image' is."""
         im = sample['img']
         # print('img0', type(im))
         # data = np.frombuffer(im, dtype='uint8')
@@ -92,11 +97,10 @@ class Decode(BaseOperator):
 
 
 class Permute(BaseOperator):
+
     def __init__(self):
-        """
-        Change the channel to be (C, H, W)
-        """
-        super(Permute, self).__init__()
+        """Change the channel to be (C, H, W)"""
+        super().__init__()
 
     def transform(self, sample, context=None):
         im = sample['img']
@@ -106,26 +110,30 @@ class Permute(BaseOperator):
 
 
 class NormalizeImage(BaseOperator):
-    def __init__(self, mean=[0.485, 0.456, 0.406], std=[1, 1, 1],
+
+    def __init__(self,
+                 mean=[0.485, 0.456, 0.406],
+                 std=[1, 1, 1],
                  is_scale=True):
         """
         Args:
             mean (list): the pixel mean
             std (list): the pixel variance
         """
-        super(NormalizeImage, self).__init__()
+        super().__init__()
         self.mean = mean
         self.std = std
         self.is_scale = is_scale
-        if not (isinstance(self.mean, list) and isinstance(self.std, list) and
-                isinstance(self.is_scale, bool)):
-            raise TypeError("{}: input type is invalid.".format(self))
+        if not (isinstance(self.mean, list) and isinstance(self.std, list)
+                and isinstance(self.is_scale, bool)):
+            raise TypeError(f'{self}: input type is invalid.')
         from functools import reduce
         if reduce(lambda x, y: x * y, self.std) == 0:
-            raise ValueError('{}: std is invalid!'.format(self))
+            raise ValueError(f'{self}: std is invalid!')
 
     def transform(self, sample, context=None):
         """Normalize the image.
+
         Operators:
             1.(optional) Scale the image to [0,1]
             2. Each pixel minus mean and is divided by std
@@ -147,11 +155,15 @@ class NormalizeImage(BaseOperator):
 
 class RandomDistort(BaseOperator):
     """Random color distortion.
+
     Args:
         hue (list): hue settings. in [lower, upper, probability] format.
-        saturation (list): saturation settings. in [lower, upper, probability] format.
-        contrast (list): contrast settings. in [lower, upper, probability] format.
-        brightness (list): brightness settings. in [lower, upper, probability] format.
+        saturation (list): saturation settings. in
+        [lower, upper, probability] format.
+        contrast (list): contrast settings. in [lower,
+        upper, probability] format.
+        brightness (list): brightness settings. in [lower, upper,
+         probability] format.
         random_apply (bool): whether to apply in random (yolo) or fixed (SSD)
             order.
         count (int): the number of doing distrot
@@ -166,7 +178,7 @@ class RandomDistort(BaseOperator):
                  random_apply=True,
                  count=4,
                  random_channel=False):
-        super(RandomDistort, self).__init__()
+        super().__init__()
         self.hue = hue
         self.saturation = saturation
         self.contrast = contrast
@@ -259,16 +271,16 @@ class RandomDistort(BaseOperator):
 
 
 class RandomFlip(BaseOperator):
+
     def __init__(self, prob=0.5):
         """
         Args:
             prob (float): the probability of flipping image
         """
-        super(RandomFlip, self).__init__()
+        super().__init__()
         self.prob = prob
         if not (isinstance(self.prob, float)):
-            raise TypeError("{}: input type is invalid.".format(self))
-
+            raise TypeError(f'{self}: input type is invalid.')
 
     def apply_image(self, image):
         return image[:, ::-1, :]
@@ -281,7 +293,8 @@ class RandomFlip(BaseOperator):
         return bbox
 
     def transform(self, sample, context=None):
-        """Filp the image and bounding box.
+        """Flip the image and bounding box.
+
         Operators:
             1. Flip the image numpy.
             2. Transform the bboxes' x coordinates.
@@ -304,11 +317,12 @@ class RandomFlip(BaseOperator):
         return sample
 
 
-
 class Resize(BaseOperator):
+
     def __init__(self, target_size, keep_ratio, interp=cv2.INTER_LINEAR):
-        """
-        Resize image to target size. if keep_ratio is True,
+        """Resize image to target size.
+
+        if keep_ratio is True,
         resize the image's long side to the maximum of target_size
         if keep_ratio is False, resize the image to target size(h, w)
         Args:
@@ -316,13 +330,13 @@ class Resize(BaseOperator):
             keep_ratio (bool): whether keep_ratio or not, default true
             interp (int): the interpolation method
         """
-        super(Resize, self).__init__()
+        super().__init__()
         self.keep_ratio = keep_ratio
         self.interp = interp
         if not isinstance(target_size, (Integral, Sequence)):
             raise TypeError(
-                "Type of target_size is invalid. Must be Integer or List or Tuple, now is {}".
-                format(type(target_size)))
+                'Type of target_size is invalid. Must be Integer or'
+                ' List or Tuple, now is {}'.format(type(target_size)))
         if isinstance(target_size, Integral):
             target_size = [target_size, target_size]
         self.target_size = target_size
@@ -348,11 +362,10 @@ class Resize(BaseOperator):
         return bbox
 
     def transform(self, sample, context=None):
-        """ Resize the image numpy.
-        """
+        """Resize the image numpy."""
         im = sample['img']
         if not isinstance(im, np.ndarray):
-            raise TypeError("{}: image type is not numpy.".format(self))
+            raise TypeError(f'{self}: image type is not numpy.')
 
         # apply image
         im_shape = im.shape
@@ -386,8 +399,8 @@ class Resize(BaseOperator):
                 [scale_factor[0] * im_scale_x, scale_factor[1] * im_scale_y],
                 dtype=np.float32)
         else:
-            sample['scale_factor'] = np.asarray(
-                [im_scale_x, im_scale_y], dtype=np.float32)
+            sample['scale_factor'] = np.asarray([im_scale_x, im_scale_y],
+                                                dtype=np.float32)
 
         # apply bbox
         if 'gt_bbox' in sample and len(sample['gt_bbox']) > 0:
@@ -400,6 +413,7 @@ class Resize(BaseOperator):
 
 class RandomExpand(BaseOperator):
     """Random expand the canvas.
+
     Args:
         ratio (float): maximum expansion ratio.
         prob (float): probability to expand.
@@ -407,12 +421,12 @@ class RandomExpand(BaseOperator):
     """
 
     def __init__(self, ratio=4., prob=0.5, fill_value=(127.5, 127.5, 127.5)):
-        super(RandomExpand, self).__init__()
-        assert ratio > 1.01, "expand ratio must be larger than 1.01"
+        super().__init__()
+        assert ratio > 1.01, 'expand ratio must be larger than 1.01'
         self.ratio = ratio
         self.prob = prob
         assert isinstance(fill_value, (Number, Sequence)), \
-            "fill value must be either float or sequence"
+            'fill value must be either float or sequence'
         if isinstance(fill_value, Number):
             fill_value = (fill_value, ) * 3
         if not isinstance(fill_value, tuple):
@@ -434,16 +448,15 @@ class RandomExpand(BaseOperator):
         x = np.random.randint(0, w - width)
         offsets, size = [x, y], [h, w]
 
-        pad = Pad(size,
-                  pad_mode=-1,
-                  offsets=offsets,
-                  fill_value=self.fill_value)
+        pad = Pad(
+            size, pad_mode=-1, offsets=offsets, fill_value=self.fill_value)
 
         return pad(sample, context=context)
 
 
 class RandomCrop(BaseOperator):
     """Random crop image and bboxes.
+
     Args:
         aspect_ratio (list): aspect ratio of cropped region.
             in [min, max] format.
@@ -464,7 +477,7 @@ class RandomCrop(BaseOperator):
                  allow_no_crop=True,
                  cover_all_box=False,
                  is_mask_crop=False):
-        super(RandomCrop, self).__init__()
+        super().__init__()
         self.aspect_ratio = aspect_ratio
         self.thresholds = thresholds
         self.scaling = scaling
@@ -520,9 +533,8 @@ class RandomCrop(BaseOperator):
                 crop_y = np.random.randint(0, h - crop_h)
                 crop_x = np.random.randint(0, w - crop_w)
                 crop_box = [crop_x, crop_y, crop_x + crop_w, crop_y + crop_h]
-                iou = self._iou_matrix(
-                    gt_bbox, np.array(
-                        [crop_box], dtype=np.float32))
+                iou = self._iou_matrix(gt_bbox,
+                                       np.array([crop_box], dtype=np.float32))
                 if iou.max() < thresh:
                     continue
 
@@ -530,8 +542,7 @@ class RandomCrop(BaseOperator):
                     continue
 
                 cropped_box, valid_ids = self._crop_box_with_center_constraint(
-                    gt_bbox, np.array(
-                        crop_box, dtype=np.float32))
+                    gt_bbox, np.array(crop_box, dtype=np.float32))
                 if valid_ids.size > 0:
                     found = True
                     break
@@ -593,28 +604,34 @@ class RandomCrop(BaseOperator):
 
 
 class Pad(BaseOperator):
+
     def __init__(self,
                  size=None,
                  size_divisor=32,
                  pad_mode=0,
                  offsets=None,
                  fill_value=(127.5, 127.5, 127.5)):
-        """
-        Pad image to a specified size or multiple of size_divisor.
+        """Pad image to a specified size or multiple of size_divisor.
+
         Args:
-            size (int, Sequence): image target size, if None, pad to multiple of size_divisor, default None
+            size (int, Sequence): image target size, if None, pad to multiple
+             of size_divisor, default None
             size_divisor (int): size divisor, default 32
-            pad_mode (int): pad mode, currently only supports four modes [-1, 0, 1, 2]. if -1, use specified offsets
-                if 0, only pad to right and bottom. if 1, pad according to center. if 2, only pad left and top
-            offsets (list): [offset_x, offset_y], specify offset while padding, only supported pad_mode=-1
-            fill_value (bool): rgb value of pad area, default (127.5, 127.5, 127.5)
+            pad_mode (int): pad mode, currently only supports four modes
+             [-1, 0, 1, 2]. if -1, use specified offsets
+                if 0, only pad to right and bottom. if 1, pad according to
+                 center. if 2, only pad left and top
+            offsets (list): [offset_x, offset_y], specify offset while padding,
+             only supported pad_mode=-1
+            fill_value (bool): rgb value of pad area, default (127.5, 127.5,
+             127.5)
         """
-        super(Pad, self).__init__()
+        super().__init__()
 
         if not isinstance(size, (int, Sequence)):
             raise TypeError(
-                "Type of target_size is invalid when random_size is True. \
-                            Must be List, now is {}".format(type(size)))
+                'Type of target_size is invalid when random_size is True. \
+                            Must be List, now is {}'.format(type(size)))
 
         if isinstance(size, int):
             size = [size, size]
@@ -682,10 +699,8 @@ class Pad(BaseOperator):
 
 @TRANSFORMS.register_module()
 class PPYOLOEResize(BaseTransform):
-    def __init__(self,
-                 target_size=(640, 640),
-                 keep_ratio=True,
-                 interp=2):
+
+    def __init__(self, target_size=(640, 640), keep_ratio=True, interp=2):
         self.keep_ratio = keep_ratio
         self.interp = interp
         self.target_size = target_size
@@ -729,7 +744,8 @@ class PPYOLOEResize(BaseTransform):
     #             fx=im_scale_x,
     #             fy=im_scale_y,
     #             interpolation=self.interp)
-    #         rle = mask_util.encode(np.array(mask, order='F', dtype=np.uint8))
+    #         rle = mask_util.encode(np.array(mask, order='F',
+    #         dtype=np.uint8))
     #         return rle
     #
     #     im_h, im_w = im_size
@@ -739,7 +755,8 @@ class PPYOLOEResize(BaseTransform):
     #         if is_poly(segm):
     #             # Polygon format
     #             resized_segms.append([
-    #                 _resize_poly(poly, im_scale_x, im_scale_y) for poly in segm
+    #                 _resize_poly(poly, im_scale_x, im_scale_y)
+    #                 for poly in segm
     #             ])
     #         else:
     #             # RLE format
@@ -776,7 +793,8 @@ class PPYOLOEResize(BaseTransform):
         im = self.apply_image(results['img'], [im_scale_x, im_scale_y])
         results['img'] = im
 
-        results['img_shape'] = np.asarray([resize_h, resize_w], dtype=np.float32)
+        results['img_shape'] = np.asarray([resize_h, resize_w],
+                                          dtype=np.float32)
         # wh
         if 'scale_factor' in results:
             scale_factor = results['scale_factor']
@@ -784,8 +802,8 @@ class PPYOLOEResize(BaseTransform):
                 [scale_factor[0] * im_scale_x, scale_factor[1] * im_scale_y],
                 dtype=np.float32)
         else:
-            results['scale_factor'] = np.asarray(
-                [im_scale_x, im_scale_y], dtype=np.float32)
+            results['scale_factor'] = np.asarray([im_scale_x, im_scale_y],
+                                                 dtype=np.float32)
 
         if 'gt_bboxes' in results:
             results['gt_bbox'] = self.apply_bbox(results['gt_bbox'],
@@ -796,8 +814,10 @@ class PPYOLOEResize(BaseTransform):
 
 @TRANSFORMS.register_module()
 class PPYOLOENormalizeImage(BaseTransform):
+
     def __init__(self,
-                 mean=[0.485, 0.456, 0.406], std=[1, 1, 1],
+                 mean=[0.485, 0.456, 0.406],
+                 std=[1, 1, 1],
                  is_scale=True):
         self.mean = mean
         self.std = std
@@ -805,7 +825,7 @@ class PPYOLOENormalizeImage(BaseTransform):
 
     def transform(self, results):
         im = results['img']
-        im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)    # RGB
+        im = cv2.cvtColor(im, cv2.COLOR_BGR2RGB)  # RGB
         im = im.astype(np.float32, copy=False)
         mean = np.array(self.mean)[np.newaxis, np.newaxis, :]
         std = np.array(self.std)[np.newaxis, np.newaxis, :]
@@ -817,10 +837,8 @@ class PPYOLOENormalizeImage(BaseTransform):
         im /= std
 
         results['img'] = im
-        results['pad_param'] = np.array([0, 0, 0, 0],
-                                        dtype=np.float32)
+        results['pad_param'] = np.array([0, 0, 0, 0], dtype=np.float32)
         return results
-
 
 
 @DATASETS.register_module()
@@ -832,8 +850,7 @@ class TmpCocoDataset(CocoDataset):
                  batch_size=1,
                  stide=32,
                  file_client_args=None,
-                 **kwargs
-                 ):
+                 **kwargs):
         super(CocoDataset, self).__init__(*args, **kwargs)
         self.pipeline_train = Compose([
             Decode(),
@@ -872,11 +889,11 @@ class TmpCocoDataset(CocoDataset):
         #     img = cv2.resize(
         #         img, (int(w0 * r), int(h0 * r)),
         #         interpolation=cv2.INTER_LINEAR)
-        return img, (h0, w0)     #, img.shape[:2]
+        return img, (h0, w0)
 
     def _train(self, idx):
-        img, (orig_h, orig_w) = self._load_image(idx)   # BGR
-        gt_bboxes = []   # x1y1x2y2
+        img, (orig_h, orig_w) = self._load_image(idx)  # BGR
+        gt_bboxes = []  # x1y1x2y2
         gt_bboxes_labels = []
         for instance in self.data_list[idx]['instances']:
             if instance['ignore_flag'] == 0:
@@ -888,18 +905,13 @@ class TmpCocoDataset(CocoDataset):
         labels = gt_bboxes_labels
         # labels = np.concatenate((labels[:, None], bboxes), axis=1)
 
-        results = {
-            'img': img,
-            'gt_bbox': bboxes,
-            'gt_class': labels
-        }
+        results = {'img': img, 'gt_bbox': bboxes, 'gt_class': labels}
         results = self.pipeline_train(results)
-        # labels = np.concatenate((results['gt_class'][:, None], results['gt_bbox']), axis=1)
+        # labels = np.concatenate((results['gt_class'][:, None],
+        # results['gt_bbox']), axis=1)
 
         # return results['img'], labels
         return results
-
-
 
     def __getitem__(self, idx):
         if self.test_mode:
@@ -910,7 +922,8 @@ class TmpCocoDataset(CocoDataset):
             # img, labels = self._train(idx)
             #
             # nl = len(labels)  # 归一化 class cx cy w h
-            # labels_out = torch.zeros((nl, 6))  # 归一化 batch_idx class cx cy w h
+            # labels_out = torch.zeros((nl, 6))  # 归一化 batch_idx class
+            # # cx cy w h
             # if nl:
             #     labels_out[:, 1:] = torch.from_numpy(labels)
             #
@@ -921,7 +934,6 @@ class TmpCocoDataset(CocoDataset):
 
             # return torch.from_numpy(img), labels_out
             return results
-
 
     def filter_data(self) -> List[dict]:
         """Filter annotations according to filter_cfg.
@@ -935,12 +947,17 @@ class TmpCocoDataset(CocoDataset):
                 min_size = self.filter_cfg.get('min_size', 0)
 
                 # obtain images that contain annotation
-                ids_with_ann = set(data_info['img_id'] for data_info in self.data_list)
-                # obtain images that contain annotations of the required categories
+                ids_with_ann = {
+                    data_info['img_id']
+                    for data_info in self.data_list
+                }
+                # obtain images that contain annotations
+                # of the required categories
                 ids_in_cat = set()
                 for i, class_id in enumerate(self.cat_ids):
                     ids_in_cat |= set(self.cat_img_map[class_id])
-                # merge the image id sets of the two conditions and use the merged set
+                # merge the image id sets of the two conditions and use the
+                # merged set
                 # to filter out images if self.filter_empty_gt=True
                 ids_in_cat &= ids_with_ann
 
@@ -963,7 +980,7 @@ class TmpCocoDataset(CocoDataset):
         min_size = self.filter_cfg.get('min_size', 0)
 
         # obtain images that contain annotation
-        ids_with_ann = set(data_info['img_id'] for data_info in self.data_list)
+        ids_with_ann = {data_info['img_id'] for data_info in self.data_list}
         # obtain images that contain annotations of the required categories
         ids_in_cat = set()
         for i, class_id in enumerate(self.cat_ids):
