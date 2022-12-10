@@ -122,3 +122,70 @@ else:
 ```
 
 #### 1.1.2 Mosaic
+
+Mosaic concatenates four images into a large image, which is equivalent to increasing the batch size, as follows:
+
+1. Randomly resample three images from customize datasets based on the index, possibly repeated.
+
+```python
+def get_indexes(self, dataset: Union[BaseDataset, list]) -> list:
+    """Call function to collect indexes.
+
+    Args:
+        dataset (:obj:`Dataset` or list): The dataset or cached list.
+
+    Returns:
+        list: indexes.
+    """
+    indexes = [random.randint(0, len(dataset)) for _ in range(3)]
+    return indexes
+```
+
+2. Randomly select the midpoint of the intersection of four images.
+
+```python
+# mosaic center x, y
+center_x = int(
+    random.uniform(*self.center_ratio_range) * self.img_scale[1])
+center_y = int(
+    random.uniform(*self.center_ratio_range) * self.img_scale[0])
+center_position = (center_x, center_y)
+```
+
+3. Read and concatenate images based on the sampled index. Using the `keep-ratio` resize image (i.e. the maximum edge must be 640) before concatenating.
+
+```python
+# keep_ratio resize
+scale_ratio_i = min(self.img_scale[0] / h_i,
+                    self.img_scale[1] / w_i)
+img_i = mmcv.imresize(
+    img_i, (int(w_i * scale_ratio_i), int(h_i * scale_ratio_i)))
+```
+
+4. After concatenating images, the bboxes and labels are all concatenated together, and then the bboxes are cropped but not filtered (some invalid bboxes may appear).
+
+```python
+mosaic_bboxes.clip_([2 * self.img_scale[0], 2 * self.img_scale[1]])
+```
+
+Please reference the Mosaic theory of [YOLOv5](./yolov5_description.md) for more details.
+
+#### 1.1.3 MixUp
+
+The MixUp implementation of RTMDet is the same as YOLOX, with the addition of cache function similar to above mentioned.
+
+Please reference the MixUp theory of [YOLOv5](./yolov5_description.md) for more details.
+
+#### 1.1.4 Strong and weak two-stage training
+
+Mosaic + MixUp has high distortion. Continuously using strong data augmentation isn't beneficial. YOLOX use strong and weak two-stage training mode firstly. However, the introduction of rotation and shear result in box annotation errors, which needs to introduce L1 loss to correct the performance of regression branch.
+
+In order to make the data augmentation method more general, RTMDet uses Mosaic + MixUp without rotation during the first 280 epochs, and increases the intensity and positive samples by mixing eight images. During the last 20 epochs, a relatively small learning rate is used to fine-tune under weak agumentation, and slowly update parameters to model by EMA, which could obtain a large improvement.
+
+|                               | RTMDet-s | RTMDet-l |
+| ----------------------------- | -------- | -------- |
+| LSJ + rand crop               | 42.3     | 46.7     |
+| Mosaic+MixUp                  | 41.9     | 49.8     |
+| Mosaic + MixUp + 20e finetune | 43.9     | **51.3** |
+
+### 1.2 Model structure
