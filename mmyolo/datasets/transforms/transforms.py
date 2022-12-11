@@ -903,6 +903,7 @@ class PPYOLOERandomCrop(RandomCrop):
                 crop_x1, crop_y1, crop_x2, crop_y2 = crop_box
                 img = img[crop_y1:crop_y2, crop_x1:crop_x2, ...]
                 results['img'] = img
+                img_shape = img.shape
                 results['img_shape'] = img.shape
 
                 # Record the homography matrix for the RandomCrop
