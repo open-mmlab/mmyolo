@@ -15,7 +15,18 @@ from mmyolo.deploy.models.layers import efficient_nms
 from mmyolo.models.dense_heads import YOLOv5Head
 
 
-def yolov5_bbox_decoder(priors, bbox_preds, stride):
+def yolov5_bbox_decoder(priors: Tensor, bbox_preds: Tensor,
+                        stride: int) -> Tensor:
+    """Decode YOLOv5 bounding boxes.
+
+    Args:
+        priors (Tensor): Prior boxes in center-offset form.
+        bbox_preds (Tensor): Predicted bounding boxes.
+        stride (int): Stride of the feature map.
+
+    Returns:
+        Tensor: Decoded bounding boxes.
+    """
     bbox_preds = bbox_preds.sigmoid()
 
     x_center = (priors[..., 0] + priors[..., 2]) * 0.5
