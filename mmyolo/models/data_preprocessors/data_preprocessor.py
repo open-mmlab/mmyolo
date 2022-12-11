@@ -2,6 +2,7 @@
 import random
 from typing import List, Tuple, Union
 
+import cv2
 import torch
 import torch.nn.functional as F
 from mmdet.models import BatchSyncRandomResize
@@ -140,7 +141,7 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
                  size_divisor: int = 32,
                  random_interp=True,
                  interp_mode: Union[List[str], str] = [
-                     'nearest', 'bilinear', 'bicubic', 'area'
+                     'nearest', 'bilinear', 'bicubic', 'area', 'lanczos4'
                  ],
                  keep_ratio: bool = False,
                  broadcast_flag: bool = False) -> None:
@@ -165,6 +166,11 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
             self.interp_mode_list = None
             self.interp_mode = interp_mode
 
+        self.interp_dict = {
+            'area': cv2.INTER_AREA,
+            'lanczos4': cv2.INTER_LANCZOS4
+        }
+
     def forward(self, inputs, data_samples):
         assert isinstance(inputs, list)
         message_hub = MessageHub.get_current_instance()
@@ -186,15 +192,32 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
                 scale_y = self._input_size[0] / h
                 scale_x = self._input_size[1] / w
                 if scale_x != 1. or scale_y != 1.:
-                    if self.interp_mode in ('nearest', 'area'):
-                        align_corners = None
+                    if self.interp_mode in ('area', 'lanczos4'):
+                        # print('interp', self.interp_mode)
+                        device = _batch_input.device
+                        input_numpy = _batch_input.cpu().numpy().transpose(
+                            (1, 2, 0))
+                        input_numpy = cv2.resize(
+                            input_numpy,
+                            None,
+                            None,
+                            fx=scale_x,
+                            fy=scale_y,
+                            interpolation=self.interp_dict[self.interp_mode])
+                        _batch_input = input_numpy.transpose((2, 0, 1))
+                        _batch_input = torch.from_numpy(_batch_input).to(
+                            device).unsqueeze(0)
+
                     else:
-                        align_corners = False
-                    _batch_input = F.interpolate(
-                        _batch_input.unsqueeze(0),
-                        size=self._input_size,
-                        mode=self.interp_mode,
-                        align_corners=align_corners)
+                        if self.interp_mode in ('nearest', 'area'):
+                            align_corners = None
+                        else:
+                            align_corners = False
+                        _batch_input = F.interpolate(
+                            _batch_input.unsqueeze(0),
+                            size=self._input_size,
+                            mode=self.interp_mode,
+                            align_corners=align_corners)
 
                     # rescale bbox
                     data_sample[:, 2] *= scale_x
@@ -216,7 +239,8 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
         """Randomly generate a shape in ``_random_size_range`` and a
         interp_mode in interp_mode_list, and broadcast to all ranks."""
         tensor = torch.LongTensor(3).to(device)
-        if (self.broadcast_flag and self.rank == 0) or (not self.broadcast_flag):
+        if (self.broadcast_flag
+                and self.rank == 0) or (not self.broadcast_flag):
             size = random.randint(*self._random_size_range)
             size = (self._size_divisor * size, self._size_divisor * size)
             tensor[0] = size[0]
