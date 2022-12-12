@@ -81,18 +81,18 @@ def init_detector(
         if 'dataset_meta' in checkpoint_meta:
             # mmdet 3.x
             model.dataset_meta = checkpoint_meta['dataset_meta']
-        elif 'CLASSES' in checkpoint_meta:
+        elif 'classes' in checkpoint_meta:
             # < mmdet 3.x
-            classes = checkpoint_meta['CLASSES']
-            model.dataset_meta = {'CLASSES': classes, 'PALETTE': palette}
+            classes = checkpoint_meta['classes']
+            model.dataset_meta = {'classes': classes, 'palette': palette}
         else:
             warnings.simplefilter('once')
             warnings.warn(
                 'dataset_meta or class names are not saved in the '
                 'checkpoint\'s meta data, use COCO classes by default.')
             model.dataset_meta = {
-                'CLASSES': get_classes('coco'),
-                'PALETTE': palette
+                'classes': get_classes('coco'),
+                'palette': palette
             }
 
     model.cfg = config  # save the config in the model for convenience
@@ -254,7 +254,7 @@ class BoxAMDetectorVisualizer:
             if self.is_need_grad:
                 self.cam.activations_and_grads.release()
 
-        self.classes = model.detector.dataset_meta['CLASSES']
+        self.classes = model.detector.dataset_meta['classes']
         self.COLORS = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
     def switch_activations_and_grads(self, model) -> None:
