@@ -434,7 +434,7 @@ class PPYOLOEHead(YOLOv6Head):
                                     ])  # [n_pos, 4, 17]
             # 这里需要的都是除以了stride的变量
             assigned_ltrb = self.bbox_coder.encode(
-                self.flatten_priors[..., :2],
+                self.flatten_priors[..., :2] / self.stride_tensor,
                 assigned_bboxes,
                 max_dis=self.head_module.reg_max,
                 eps=0.01)
