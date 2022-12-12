@@ -114,11 +114,11 @@ For different parts from MMDetection, we have also prepared user guides and adva
   - [Train & Test](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#train-test)
     - [Learn about Configs with YOLOv5](docs/en/user_guides/config.md)
   - [From getting started to deployment](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#get-started-to-deployment)
+    - [Custom Dataset](docs/en/user_guides/custom_dataset.md)
     - [From getting started to deployment with YOLOv5](docs/en/user_guides/yolov5_tutorial.md)
   - [Useful Tools](https://mmdetection.readthedocs.io/en/latest/user_guides/index.html#useful-tools)
     - [Visualization](docs/en/user_guides/visualization.md)
     - [Useful Tools](docs/en/user_guides/useful_tools.md)
-    - [Custom Dataset](docs/en/user_guides/custom_dataset.md)
 
 - Algorithm description
 
