@@ -12,6 +12,7 @@ from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
+from mmdet.structures.mask import PolygonMasks
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
@@ -95,11 +96,19 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
 
             if ratio != 1:
                 # resize image according to the ratio
-                image = mmcv.imrescale(
+                # The difference between the two functions is that
+                # imrescale will add +0.5. In order to be consistent
+                # with the official, we use imresize to achieve.
+                image = mmcv.imresize(
                     img=image,
-                    scale=ratio,
+                    size=(int(original_w * ratio), int(original_h * ratio)),
                     interpolation='area' if ratio < 1 else 'bilinear',
                     backend=self.backend)
+                # image = mmcv.imrescale(
+                #     img=image,
+                #     scale=ratio,
+                #     interpolation='area' if ratio < 1 else 'bilinear',
+                #     backend=self.backend)
 
             resized_h, resized_w = image.shape[:2]
             scale_ratio = resized_h / original_h
@@ -242,13 +251,16 @@ class LetterResize(MMDET_Resize):
 
         results['img'] = image
         results['img_shape'] = image.shape
-        results['pad_param'] = np.array(padding_list, dtype=np.float32)
+        # Great influence on mask ap
+        # results['pad_param'] = np.array(padding_list, dtype=np.float32)
+        results['pad_param'] = np.array(
+            [padding_h / 2, padding_h / 2, padding_w / 2, padding_w / 2],
+            dtype=np.float32)
 
     def _resize_masks(self, results: dict):
         """Resize masks with ``results['scale']``"""
         if results.get('gt_masks', None) is None:
             return
-
         # resize the gt_masks
         gt_mask_height = results['gt_masks'].height * \
             results['scale_factor'][0]
@@ -257,24 +269,25 @@ class LetterResize(MMDET_Resize):
         gt_masks = results['gt_masks'].resize(
             (int(round(gt_mask_height)), int(round(gt_mask_width))))
 
-        # padding the gt_masks
-        if len(gt_masks) == 0:
-            padded_masks = np.empty((0, *results['img_shape'][:2]),
-                                    dtype=np.uint8)
+        # pad_val = self.pad_val.get('masks', 0)
+        if isinstance(gt_masks, PolygonMasks):
+            polys = gt_masks.masks
+
+            padded_polys = []
+            pad_param_x, pad_param_y = results['pad_param'][2], results[
+                'pad_param'][0]
+            for poly in polys:
+                padded_ploy_per_obj = []
+                for p in poly:
+                    p = p.copy()
+                    p[0::2] = p[0::2] + pad_param_x
+                    p[1::2] = p[1::2] + pad_param_y
+                    padded_ploy_per_obj.append(p)
+                padded_polys.append(padded_ploy_per_obj)
+            results['gt_masks'] = type(results['gt_masks'])(
+                padded_polys, *results['img_shape'][:2])
         else:
-            # TODO: The function is incorrect. Because the mask may not
-            #  be able to pad.
-            padded_masks = np.stack([
-                mmcv.impad(
-                    mask,
-                    padding=(int(results['pad_param'][2]),
-                             int(results['pad_param'][0]),
-                             int(results['pad_param'][3]),
-                             int(results['pad_param'][1])),
-                    pad_val=self.pad_val.get('masks', 0)) for mask in gt_masks
-            ])
-        results['gt_masks'] = type(results['gt_masks'])(
-            padded_masks, *results['img_shape'][:2])
+            raise NotImplementedError()
 
     def _resize_bboxes(self, results: dict):
         """Resize bounding boxes with ``results['scale_factor']``."""
