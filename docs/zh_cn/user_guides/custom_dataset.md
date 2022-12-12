@@ -1111,10 +1111,8 @@ INFO - Epoch(test) [116/116]  coco/bbox_mAP: 0.9540  coco/bbox_mAP_50: 1.0000  c
 
 部署模型图片推理演示：
 
-```{Warning}
+```{Note}
 用户可以参考 MMDeploy 的 SDK 部署方式，使用 C++ 来进行部署，进而进一步提升推理速度。
-
-该脚本 `deploy_demo.py` 暂时没有做批量推理的处理，而且代码前处理还需要完善，暂时不能完全展现出推理的速度，只能演示推理的结果，后续会优化，敬请期待。
 ```
 
 ```shell
@@ -1127,6 +1125,10 @@ python deploy_demo.py \
     --out-dir ${MMYOLO_PATH}/work_dirs/deploy_predict_out \
     --device cuda:0 \
     --score-thr 0.5
+```
+
+```{Warning}
+该脚本 `deploy_demo.py` 暂时没有做批量推理的处理，而且代码前处理还需要完善，暂时不能完全展现出推理的速度，只能演示推理的结果，后续会优化，敬请期待。
 ```
 
 执行之后，可以看到在 `--out-dir` 下面的推理图片结果：
