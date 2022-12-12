@@ -82,6 +82,7 @@ def main():
 
     if args.model_only:
         postprocess_cfg = None
+        output_names = None
     else:
         postprocess_cfg = ConfigDict(
             pre_top_k=args.pre_topk,
@@ -89,6 +90,7 @@ def main():
             iou_threshold=args.iou_threshold,
             score_threshold=args.score_threshold,
             backend=args.backend)
+        output_names = ['num_det', 'det_boxes', 'det_scores', 'det_classes']
     baseModel = build_model_from_cfg(args.config, args.checkpoint, args.device)
 
     deploy_model = DeployModel(
@@ -108,7 +110,7 @@ def main():
             fake_input,
             f,
             input_names=['images'],
-            output_names=['num_det', 'det_boxes', 'det_scores', 'det_classes'],
+            output_names=output_names,
             opset_version=args.opset)
         f.seek(0)
         onnx_model = onnx.load(f)
