@@ -81,5 +81,6 @@ class TestYOLOv5VocDataset(unittest.TestCase):
                     pipeline=[])
             ],
             ignore_keys='dataset_type')
+
         dataset.full_init()
         self.assertEqual(len(dataset), 2)
