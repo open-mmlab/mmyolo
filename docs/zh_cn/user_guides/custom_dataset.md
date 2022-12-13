@@ -6,7 +6,7 @@
 本文档配套的视频已发布在 B站:
 
 <div align=center>
-<img src="https://i2.hdslb.com/bfs/archive/13f566c89a18c9c881713b63ec14da952d4c0b14.jpg@112w_63h_1c.png" alt="rectangle"/>
+<img src="https://i2.hdslb.com/bfs/archive/13f566c89a18c9c881713b63ec14da952d4c0b14.jpg" alt="image"/>
 </div>
 ```
 
