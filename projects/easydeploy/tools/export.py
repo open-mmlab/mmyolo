@@ -22,6 +22,8 @@ def parse_args():
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
+        '--model-only', action='store_true', help='Export model only')
+    parser.add_argument(
         '--work-dir', default='./work_dir', help='Path to save export model')
     parser.add_argument(
         '--img-size',
@@ -78,13 +80,17 @@ def main():
     if not os.path.exists(args.work_dir):
         os.mkdir(args.work_dir)
 
-    postprocess_cfg = ConfigDict(
-        pre_top_k=args.pre_topk,
-        keep_top_k=args.keep_topk,
-        iou_threshold=args.iou_threshold,
-        score_threshold=args.score_threshold,
-        backend=args.backend)
-
+    if args.model_only:
+        postprocess_cfg = None
+        output_names = None
+    else:
+        postprocess_cfg = ConfigDict(
+            pre_top_k=args.pre_topk,
+            keep_top_k=args.keep_topk,
+            iou_threshold=args.iou_threshold,
+            score_threshold=args.score_threshold,
+            backend=args.backend)
+        output_names = ['num_det', 'det_boxes', 'det_scores', 'det_classes']
     baseModel = build_model_from_cfg(args.config, args.checkpoint, args.device)
 
     deploy_model = DeployModel(
@@ -104,7 +110,7 @@ def main():
             fake_input,
             f,
             input_names=['images'],
-            output_names=['num_det', 'det_boxes', 'det_scores', 'det_classes'],
+            output_names=output_names,
             opset_version=args.opset)
         f.seek(0)
         onnx_model = onnx.load(f)
