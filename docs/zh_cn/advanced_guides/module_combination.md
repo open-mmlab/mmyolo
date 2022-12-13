@@ -43,6 +43,7 @@ model = dict(
     bbox_head=dict(
         loss_cls= dict(
             _delete_=True,
+            _scope_='mmdet',
             type='FocalLoss',
             loss_weight=1.0)))
 ```
@@ -55,6 +56,7 @@ model = dict(
     bbox_head=dict(
       loss_cls= dict(
         _delete_=True,
+        _scope_='mmdet',
         type='QualityFocalLoss',
         loss_weight=1.0)))
 ```
@@ -83,6 +85,7 @@ model = dict(
     bbox_head=dict(
         loss_cls= dict(
             _delete_=True,
+            _scope_='mmdet',
             type='FocalLoss',
             loss_weight=1.0)))
 ```
@@ -95,6 +98,7 @@ model = dict(
     bbox_head=dict(
       loss_cls= dict(
         _delete_=True,
+        _scope_='mmdet',
         type='QualityFocalLoss',
         loss_weight=1.0)))
 ```
