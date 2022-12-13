@@ -2,8 +2,8 @@
 
 在平时的工作学习中，我们经常会遇到一些任务需要训练自定义的私有数据集，开源数据集去作为上线模型的场景比较少，这就需要我们对自己的私有数据集进行一系列的操作，以确保模型能够上线生产服务于客户。
 
-```{Note}
-本文档配套的视频已发布在 B站:
+```{SeeAlso}
+本文档配套的视频已发布在 B站: [自定义数据集从标注到部署保姆级教程](https://www.bilibili.com/video/BV1RG4y137i5)
 
 <div align=center>
 <img src="https://i2.hdslb.com/bfs/archive/13f566c89a18c9c881713b63ec14da952d4c0b14.jpg" alt="image"/>
