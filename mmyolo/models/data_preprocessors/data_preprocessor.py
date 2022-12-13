@@ -141,7 +141,7 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
                  size_divisor: int = 32,
                  random_interp=True,
                  interp_mode: Union[List[str], str] = [
-                     'nearest', 'bilinear', 'bicubic', 'area', 'lanczos4'
+                     'nearest', 'bilinear', 'bicubic', 'area'
                  ],
                  keep_ratio: bool = False,
                  broadcast_flag: bool = False) -> None:
@@ -166,10 +166,10 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
             self.interp_mode_list = None
             self.interp_mode = interp_mode
 
-        self.interp_dict = {
-            'area': cv2.INTER_AREA,
-            'lanczos4': cv2.INTER_LANCZOS4
-        }
+        # self.interp_dict = {
+        #     'area': cv2.INTER_AREA,
+        #     'lanczos4': cv2.INTER_LANCZOS4
+        # }
 
     def forward(self, inputs, data_samples):
         assert isinstance(inputs, list)
@@ -192,32 +192,32 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
                 scale_y = self._input_size[0] / h
                 scale_x = self._input_size[1] / w
                 if scale_x != 1. or scale_y != 1.:
-                    if self.interp_mode in ('area', 'lanczos4'):
-                        # print('interp', self.interp_mode)
-                        device = _batch_input.device
-                        input_numpy = _batch_input.cpu().numpy().transpose(
-                            (1, 2, 0))
-                        input_numpy = cv2.resize(
-                            input_numpy,
-                            None,
-                            None,
-                            fx=scale_x,
-                            fy=scale_y,
-                            interpolation=self.interp_dict[self.interp_mode])
-                        _batch_input = input_numpy.transpose((2, 0, 1))
-                        _batch_input = torch.from_numpy(_batch_input).to(
-                            device).unsqueeze(0)
+                    # if self.interp_mode in ('area', 'lanczos4'):
+                    #     # print('interp', self.interp_mode)
+                    #     device = _batch_input.device
+                    #     input_numpy = _batch_input.cpu().numpy().transpose(
+                    #         (1, 2, 0))
+                    #     input_numpy = cv2.resize(
+                    #         input_numpy,
+                    #         None,
+                    #         None,
+                    #         fx=scale_x,
+                    #         fy=scale_y,
+                    #         interpolation=self.interp_dict[self.interp_mode])
+                    #     _batch_input = input_numpy.transpose((2, 0, 1))
+                    #     _batch_input = torch.from_numpy(_batch_input).to(
+                    #         device).unsqueeze(0)
 
+                    # else:
+                    if self.interp_mode in ('nearest', 'area'):
+                        align_corners = None
                     else:
-                        if self.interp_mode in ('nearest', 'area'):
-                            align_corners = None
-                        else:
-                            align_corners = False
-                        _batch_input = F.interpolate(
-                            _batch_input.unsqueeze(0),
-                            size=self._input_size,
-                            mode=self.interp_mode,
-                            align_corners=align_corners)
+                        align_corners = False
+                    _batch_input = F.interpolate(
+                        _batch_input.unsqueeze(0),
+                        size=self._input_size,
+                        mode=self.interp_mode,
+                        align_corners=align_corners)
 
                     # rescale bbox
                     data_sample[:, 2] *= scale_x
