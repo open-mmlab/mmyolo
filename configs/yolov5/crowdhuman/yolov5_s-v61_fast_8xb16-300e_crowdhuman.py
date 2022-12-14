@@ -33,7 +33,8 @@ val_dataloader = dict(
 test_dataloader = val_dataloader
 
 val_evaluator = dict(
-    type='CrowdHumanMetric',
+    _delete_=True,
+    type='mmdet.CrowdHumanMetric',
     ann_file=data_root + 'annotation_val.odgt',
     metric=['AP', 'MR', 'JI'])
 test_evaluator = val_evaluator
