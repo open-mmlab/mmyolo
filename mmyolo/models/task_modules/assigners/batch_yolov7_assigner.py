@@ -232,6 +232,9 @@ class BatchYOLOv7Assigner(nn.Module):
                     [pred_positive_cxcy, pred_positive_wh], dim=-1)
                 _mlvl_decoderd_bboxes.append(pred_positive_xywh)
 
+            if len(_mlvl_decoderd_bboxes) == 0:
+                continue
+            
             # 1 calc pair_wise_iou_loss
             _mlvl_decoderd_bboxes = torch.cat(_mlvl_decoderd_bboxes, dim=0)
             num_pred_positive = _mlvl_decoderd_bboxes.shape[0]
