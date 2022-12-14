@@ -123,7 +123,8 @@ def distance2bbox(points: Tensor, distance: Tensor, ...) -> Tensor:
 - epoch \<= 4，使用 `BatchATSSAssigner`
 - epoch > 4，使用 `BatchTaskAlignedAssigner`
 
-####ATSSAssigner
+#### ATSSAssigner
+
 ATSSAssigner 是 [ATSS](https://arxiv.org/abs/1912.02424) 中提出的标签匹配策略。
 ATSS的匹配策略简单总结为：**通过中心点距离先验对样本进行初筛,然后自适应生成阈值筛选正样本。**
 其主要包括如下两个核心步骤：
