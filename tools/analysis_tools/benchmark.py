@@ -159,6 +159,7 @@ def repeat_measure_inference_speed(cfg,
 def main():
     args = parse_args()
 
+    # support auto regression test.
     cfg = Config.fromfile(args.config)
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
