@@ -162,7 +162,8 @@ is_pos = torch.where(
 pos_mask = is_pos * is_in_gts * pad_bbox_flag
 ```
 
-####TaskAlignedAssigner
+#### TaskAlignedAssigner
+
 TaskAlignedAssigner 是 [TOOD](https://arxiv.org/abs/2108.07755) 中提出的一种动态样本匹配策略。
 由于 `ATSSAssigner` 是属于静态标签匹配策略，其选取正样本的策略主要根据 `anchor` 的位置进行挑选，
 并不会随着网络的优化而选取到更好的样本。在目标检测中，分类和回归的任务最终作用于同一个目标，所以
@@ -295,8 +296,8 @@ def varifocal_loss(pred, target, alpha=0.75, gamma=2.0, iou_weighted=True):
 ##### SIou Loss
 
 SIoU 损失函数是 [SIoU Loss: More Powerful Learning for Bounding Box Regression](https://arxiv.org/pdf/2205.12740.pdf)
-中提出的度量预测框与 `GT` 的匹配度的指标，由之前的`GIoU`, `CIoU`, `DIoU` 都没有考虑回归框向 `GT`
-框回归的角度，因此提出了全新的`SioU`，然而方向也确实是回归中一个重要的影响因素。
+中提出的度量预测框与 `GT` 的匹配度的指标，由之前的`GIoU`, `CIoU`, `DIoU` 都没有考虑预测框向 `GT`
+框回归的角度，然而方向也确实是回归中一个重要的影响因素，因此提出了全新的`SioU`。
 
 SIoU 损失主要由四个度量方面组成：
 
@@ -309,7 +310,9 @@ SIoU 损失主要由四个度量方面组成：
 尽可能去使得优化过程中的不确定性因素减少，比如现将图中的角度 {math}`\alpha` 或者 {math}`\beta`
 变为 0 ，再去沿着 `x` 轴或者 `y` 轴去回归边界。
 
-![image](https://user-images.githubusercontent.com/52028100/207532021-6a4660bf-be94-4c21-a608-a44fc3b3ccb8.png)
+<div align=center>
+<img src="https://user-images.githubusercontent.com/52028100/207532021-6a4660bf-be94-4c21-a608-a44fc3b3ccb8.png" alt="image"/>
+</div>
 
 在 `mmyolo` 代码中的代码：
 
