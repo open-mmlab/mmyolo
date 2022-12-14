@@ -6,10 +6,11 @@ dataset_type = 'YOLOv5CrowdHumanDataset'
 
 # parameters that often need to be modified
 num_classes = 1
+
 anchors = [
-    [(10, 13), (16, 30), (33, 23)],  # P3/8
-    [(30, 61), (62, 45), (59, 119)],  # P4/16
-    [(116, 90), (156, 198), (373, 326)]  # P5/32
+    [(6, 14), (12, 28), (19, 48)],  # P3/8
+    [(29, 79), (46, 124), (142, 54)],  # P4/16
+    [(73, 198), (124, 330), (255, 504)]  # P5/32
 ]
 
 model = dict(
