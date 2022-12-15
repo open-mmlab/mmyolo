@@ -264,8 +264,8 @@ def varifocal_loss(pred, target, alpha=0.75, gamma=2.0, iou_weighted=True):
         target (torch.Tensor): 经过对齐度归一化后的 IoU 分数，形状为 (B,N,C)，数值范围为 0~1
         The learning target of the iou-aware
             classification score with shape (N, C), C is the number of classes.
-        alpha (float, optional): 调节正负样本之前的平衡因子，默认 0.75.
-        gamma (float, optional): 负样本 focal 权重因子. 默认 2.0.
+        alpha (float, optional): 调节正负样本之间的平衡因子，默认 0.75.
+        gamma (float, optional): 负样本 focal 权重因子， 默认 2.0.
         iou_weighted (bool, optional): 正样本是否用 IoU 加权
     """
     pred_sigmoid = pred.sigmoid()
