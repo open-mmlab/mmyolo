@@ -135,7 +135,7 @@ ATSS的匹配策略简单总结为：**通过中心点距离先验对样本进�
    作为该 `GT` 的正样本的 **自适应 IoU 阈值** ，大于该 **自适应阈值** 且中心点在 `GT` 内部的 `anchor`
    才作为正样本，使得样本能够被 `assign` 到合适的 `FPN` 特征层上。
 
-下图中，(a)所示中等大小物体被assign 到FPN的中层，(b)所示偏大的物体被assign到FPN中检测大物体和偏大物体的两个层。
+下图中，(a) 所示中等大小物体被 assign 到 FPN 的中层，(b) 所示偏大的物体被 assign 到 FPN 中检测大物体和偏大物体的两个层。
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/52028100/204796892-6df4fb85-e2cf-4d84-b85f-d8e8efccc644.png" alt="image"/>
