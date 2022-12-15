@@ -91,7 +91,7 @@ self.mlvl_priors = self.prior_generator.grid_priors(
 
 #### 1.3.2 Bbox 编解码过程
 
-YOLOv6 的 BBox Coder 采用的是 `mmdet.DistancePointBBoxCoder`。
+YOLOv6 的 BBox Coder 采用的是 `DistancePointBBoxCoder`。
 
 网络 bbox 预测的值为 (top, bottom, left, right)，解码器将 `anchor point` 通过四个距离解码到坐标 (x1,y1,x2,y2)。
 
