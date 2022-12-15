@@ -3,7 +3,7 @@ _base_ = '../yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa
 
 # dataset settings
-data_root = 'data/crowdhuman/'
+data_root = 'data/CrowdHuman/'
 dataset_type = 'YOLOv5CrowdHumanDataset'
 
 # parameters that often need to be modified
