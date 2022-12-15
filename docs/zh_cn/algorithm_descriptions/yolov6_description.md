@@ -67,7 +67,7 @@ YOLOv6 目标检测算法中使用的数据增强与 YOLOv5 基本一致，唯�
 
 YOLOv6 采用的标签匹配策略与 [TOOD](https://arxiv.org/abs/2108.07755)
 相同, 前 4 个 epoch 采用 `ATSSAssigner` 作为标签匹配策略的 `warm-up` ,
-后续使用 `TaskAlignedAssigner` 算法选择正负样本, 在 `MMYOLO` 中对两个算法进行了优化, 改进为 `Batch` 维度进行计算，
+后续使用 `TaskAlignedAssigner` 算法选择正负样本, 基于官方开源代码,  `MMYOLO` 中也对两个 assigner 算法进行了优化, 改进为 `Batch` 维度进行计算，
 能够一定程度的加快速度。 下面会对每个部分进行详细说明。
 
 #### 1.3.1 Anchor 设置
