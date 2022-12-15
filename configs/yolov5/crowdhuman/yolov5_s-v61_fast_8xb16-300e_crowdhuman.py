@@ -32,7 +32,10 @@ val_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         ann_file='annotation_val.odgt',
-        data_prefix=dict(img='Images/')))
+        data_prefix=dict(img='Images/'),
+        # CrowdHumanMetric does not support out-of-order output images
+        # for the time being. batch_shapes_cfg does not support.
+        batch_shapes_cfg=None))
 test_dataloader = val_dataloader
 
 val_evaluator = dict(
