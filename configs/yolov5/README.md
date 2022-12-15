@@ -56,7 +56,7 @@ In the official YOLOv5 code, the `random_perspective` data augmentation in COCO 
 
 **Note**:
 
-1. This is a very simple implementation that simply replaces COCO's anchor with the `tools/analysis_tools/optimize_anchors.py` script. We'll adjust the parameters later to improve performance.
+1. This is a very simple implementation that simply replaces COCO's anchor with the `tools/analysis_tools/optimize_anchors.py` script. We'll adjust other parameters later to improve performance.
 2. The above table shows the performance of the model with the best performance on the validation set, which is the 160th epoch. This means that there is no need to train so many epochs.
 
 ## Citation
