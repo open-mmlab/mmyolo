@@ -1,7 +1,9 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/coco/'
+# data_root = 'data/coco/'
+data_root = r'C:\PycharmProjects\data\subcoco/'
+# data_root = r'C:\PycharmProjects\data\coco/images/'
 dataset_type = 'YOLOv5CocoDataset'
 
 num_last_epochs = 15
@@ -14,8 +16,10 @@ deepen_factor = 0.33
 widen_factor = 0.5
 affine_scale = 0.5
 save_epoch_intervals = 10
-train_batch_size_per_gpu = 32
-train_num_workers = 8
+# train_batch_size_per_gpu = 32
+# train_num_workers = 8
+train_batch_size_per_gpu = 2
+train_num_workers = 1
 val_batch_size_per_gpu = 1
 val_num_workers = 2
 
@@ -75,7 +79,7 @@ model = dict(
             loss_weight=2.5,
             return_iou=False)),
     train_cfg=dict(
-        initial_epoch=4,
+        initial_epoch=0,
         initial_assigner=dict(
             type='BatchATSSAssigner',
             num_classes=num_classes,
