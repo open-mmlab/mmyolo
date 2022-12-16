@@ -1,4 +1,6 @@
 import math
+
+import mmcv
 import numpy as np
 import torch
 from mmdet.visualization import DetLocalVisualizer
@@ -7,7 +9,6 @@ from mmengine.visualization import Visualizer
 from torch import Tensor
 
 from mmyolo.registry import VISUALIZERS
-
 
 
 @VISUALIZERS.register_module()
@@ -27,7 +28,7 @@ class DetAssignerVisualizer(DetLocalVisualizer):
         assert self._image is not None, 'Please set image using `set_image`'
         # draw vertical lines
         x_datas_vertical = ((np.arange(self.width // stride - 1) + 1) * stride).reshape((-1, 1)).repeat(2, axis=1)
-        y_datas_vertical = np.array([[0, self.height-1]]).repeat(self.width // stride - 1, axis=0)
+        y_datas_vertical = np.array([[0, self.height - 1]]).repeat(self.width // stride - 1, axis=0)
         self.draw_lines(x_datas_vertical, y_datas_vertical, colors=colors, line_styles=line_styles,
                         line_widths=line_widths)
 
@@ -42,7 +43,8 @@ class DetAssignerVisualizer(DetLocalVisualizer):
     def draw_instances_assign(
             self,
             instances,
-            retained_gt_inds):
+            retained_gt_inds,
+            not_show_label=False):
         assert self.dataset_meta is not None
         classes = self.dataset_meta['CLASSES']
         palette = self.dataset_meta['PALETTE']
@@ -64,28 +66,29 @@ class DetAssignerVisualizer(DetLocalVisualizer):
         self.draw_bboxes(bboxes, edge_colors=edge_colors,
                          alpha=self.alpha, line_widths=self.line_width)
 
-        positions = bboxes[:, :2] + self.line_width
-        areas = (bboxes[:, 3] - bboxes[:, 1]) * (
-                bboxes[:, 2] - bboxes[:, 0])
-        scales = _get_adaptive_scales(areas)
-        for i, (pos, label) in enumerate(zip(positions, labels)):
-            label_text = classes[
-                label] if classes is not None else f'class {label}'
+        if not not_show_label:
+            positions = bboxes[:, :2] + self.line_width
+            areas = (bboxes[:, 3] - bboxes[:, 1]) * (
+                    bboxes[:, 2] - bboxes[:, 0])
+            scales = _get_adaptive_scales(areas)
+            for i, (pos, label) in enumerate(zip(positions, labels)):
+                label_text = classes[
+                    label] if classes is not None else f'class {label}'
 
-            self.draw_texts(
-                label_text,
-                pos,
-                colors=text_colors[i],
-                font_sizes=int(13 * scales[i]),
-                bboxes=[{
-                    'facecolor': 'black',
-                    'alpha': 0.8,
-                    'pad': 0.7,
-                    'edgecolor': 'none'
-                }])
+                self.draw_texts(
+                    label_text,
+                    pos,
+                    colors=text_colors[i],
+                    font_sizes=int(13 * scales[i]),
+                    bboxes=[{
+                        'facecolor': 'black',
+                        'alpha': 0.8,
+                        'pad': 0.7,
+                        'edgecolor': 'none'
+                    }])
         return self.get_image()
 
-    def draw_positive_assign(self, grid_x_inds, grid_y_inds, class_inds, stride,bboxes,retained_gt_inds, offset=0.5):
+    def draw_positive_assign(self, grid_x_inds, grid_y_inds, class_inds, stride, bboxes, retained_gt_inds, offset=0.5):
         if not isinstance(bboxes, Tensor):
             bboxes = bboxes.tensor
 
@@ -105,29 +108,7 @@ class DetAssignerVisualizer(DetLocalVisualizer):
         self.draw_circles(center, radius, colors, line_widths=0,
                           face_colors=colors, alpha=1.0)
 
-    def draw_prior(self, ind_feat, ind_prior, font_sizes):
-        prior_size = self.priors_size[ind_feat][ind_prior]
-        w_prior, h_prior = prior_size[2:] - prior_size[:2]
-        xyxy_prior = np.array((20, 40+int(font_sizes*1.4), 20+w_prior, 40+int(font_sizes*1.4)+h_prior))
-
-        self.draw_bboxes(
-            xyxy_prior,
-            (255, 255, 255)
-        )
-
-        self.draw_texts(
-            'base prior',
-            np.array([xyxy_prior[2]+20, xyxy_prior[1]]),
-            colors=self.text_color,
-            font_sizes=font_sizes,
-            bboxes=[{
-                'facecolor': 'black',
-                'alpha': 0.8,
-                'pad': 0.7,
-                'edgecolor': 'none'
-            }])
-
-    def draw_prior_on_matched_gt(self, grid_x_inds, grid_y_inds,stride,class_inds,ind_feat,ind_prior, offset=0.5):
+    def draw_prior(self, grid_x_inds, grid_y_inds, stride, class_inds, ind_feat, ind_prior, offset=0.5):
 
         palette = self.dataset_meta['PALETTE']
         center_x = ((grid_x_inds + offset) * stride)
@@ -139,61 +120,57 @@ class DetAssignerVisualizer(DetLocalVisualizer):
         self.draw_bboxes(xyxy, edge_colors=colors,
                          alpha=self.alpha,
                          line_styles='--',
-                         line_widths=math.ceil(self.line_width*0.3))
+                         line_widths=math.ceil(self.line_width * 0.3))
 
-        # def draw_bboxes(
-        #         self,
-        #         bboxes: Union[np.ndarray, torch.Tensor],
-        #         edge_colors: Union[str, tuple, List[str], List[tuple]] = 'g',
-        #         line_styles: Union[str, List[str]] = '-',
-        #         line_widths: Union[Union[int, float], List[Union[int, float]]] = 2,
-        #         face_colors: Union[str, tuple, List[str], List[tuple]] = 'none',
-        #         alpha: Union[int, float] = 0.8,
-        # ) -> 'Visualizer':
+    def draw_assign(self, img, assign_results, gt_instances, show_prior=False, not_show_label=False):
+        img_show_list = []
+        for ind_feat, assign_results_feat in enumerate(assign_results):
+            img_show_list_feat = []
+            for ind_prior, assign_results_prior in enumerate(assign_results_feat):
+                self.set_image(img)
+                h, w = img.shape[:2]
 
-    def draw_assign(self, img, assign_results_prior, gt_instances, ind_feat):
-        self.set_image(img)
-        h, w = img.shape[:2]
+                # draw grid
+                stride = assign_results_prior['stride']
+                self.draw_grid(stride)
 
-        # draw grid
-        stride = assign_results_prior['stride']
-        self.draw_grid(stride)
+                # draw prior on matched gt
+                grid_x_inds = assign_results_prior['grid_x_inds']
+                grid_y_inds = assign_results_prior['grid_y_inds']
+                class_inds = assign_results_prior['class_inds']
+                ind_prior = assign_results_prior['prior_ind']
+                if show_prior:
+                    self.draw_prior(grid_x_inds, grid_y_inds, stride, class_inds, ind_feat, ind_prior)
 
-        # draw prior on matched gt
-        grid_x_inds = assign_results_prior['grid_x_inds']
-        grid_y_inds = assign_results_prior['grid_y_inds']
-        class_inds = assign_results_prior['class_inds']
-        ind_prior = assign_results_prior['prior_ind']
-        self.draw_prior_on_matched_gt(grid_x_inds, grid_y_inds, stride, class_inds, ind_feat, ind_prior)
+                # draw matched gt
+                retained_gt_inds = assign_results_prior['retained_gt_inds']
+                self.draw_instances_assign(gt_instances, retained_gt_inds, not_show_label)
 
-        # draw matched gt
-        retained_gt_inds = assign_results_prior['retained_gt_inds']
-        self.draw_instances_assign(gt_instances, retained_gt_inds)
+                # draw positive
+                self.draw_positive_assign(grid_x_inds, grid_y_inds, class_inds, stride, gt_instances.bboxes,
+                                          retained_gt_inds)
 
-        # draw positive
-        self.draw_positive_assign(grid_x_inds, grid_y_inds, class_inds, stride, gt_instances.bboxes, retained_gt_inds)
+                # draw title
+                base_prior = self.priors_size[ind_feat][ind_prior]
+                prior_size = (base_prior[2] - base_prior[0], base_prior[3] - base_prior[1])
+                pos = np.array((20, 20))
+                text = f'feat_ind: {ind_feat}  prior_ind: {ind_prior} prior_size: ({prior_size[0]}, {prior_size[1]})'
+                scales = _get_adaptive_scales(np.array([h * w / 16]))
+                font_sizes = int(13 * scales)
+                self.draw_texts(
+                    text,
+                    pos,
+                    colors=self.text_color,
+                    font_sizes=font_sizes,
+                    bboxes=[{
+                        'facecolor': 'black',
+                        'alpha': 0.8,
+                        'pad': 0.7,
+                        'edgecolor': 'none'
+                    }])
 
-        # draw title
-        base_prior = self.priors_size[ind_feat][ind_prior]
-        prior_size = (base_prior[2]-base_prior[0], base_prior[3]-base_prior[1])
-        pos = np.array((20, 20))
-        text = f'feat_ind: {ind_feat}  prior_ind: {ind_prior} prior_size: ({prior_size[0]}, {prior_size[1]})'
-        scales = _get_adaptive_scales(np.array([h * w / 16]))
-        font_sizes = int(13 * scales)
-        self.draw_texts(
-            text,
-            pos,
-            colors=self.text_color,
-            font_sizes=font_sizes,
-            bboxes=[{
-                'facecolor': 'black',
-                'alpha': 0.8,
-                'pad': 0.7,
-                'edgecolor': 'none'
-            }])
-
-        # # draw base prior
-        # self.draw_prior(ind_feat, ind_prior, font_sizes)
-
-        return self.get_image()
-
+                img_show = self.get_image()
+                img_show = mmcv.impad(img_show, padding=(5, 5, 5, 5))
+                img_show_list_feat.append(img_show)
+            img_show_list.append(np.concatenate(img_show_list_feat, axis=1))
+        return np.concatenate(img_show_list, axis=0)

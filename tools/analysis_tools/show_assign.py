@@ -48,10 +48,11 @@ def parse_args():
         'default "sys.maxsize", show all images in dataset')
     parser.add_argument(
         '--output-dir',
-        default=None,
+        default='show',
         type=str,
         help='If there is no display interface, you can save it.')
-    parser.add_argument('--not-show', default=False, action='store_true')
+    parser.add_argument('--show-prior', default=False, action='store_true')
+    parser.add_argument('--not-show-label', default=False, action='store_true')
     parser.add_argument('--seed', default=-1, type=int, help='seed')
 
     args = parser.parse_args()
@@ -64,6 +65,7 @@ def main():
 
     assert 'yolov5' in args.config, 'Now, this script only support yolov5.'
 
+    # set random seed
     seed = int(args.seed)
     if seed != -1:
         print(f'Set the global seed: {seed}')
@@ -86,13 +88,12 @@ def main():
     collate_fn = COLLATE_FUNCTIONS.get(collate_fn_type)
 
     # init visualizer
-    # cfg.merge_from_dict(dict(visualizer=dict(type='DetAssignerVisualizer')))
-    # visualizer = VISUALIZERS.build(cfg['visualizer'])   # type: DetAssignerVisualizer
-    # visualizer.dataset_meta = dataset.metainfo
     visualizer = DetAssignerVisualizer(vis_backends=[{'type': 'LocalVisBackend'}], name='visualizer')
     visualizer.dataset_meta = dataset.metainfo
     visualizer.priors_size = model.bbox_head.prior_generator.base_anchors
-    # visualizer = DetLocalVisualizer(vis_backends=[{'type': 'LocalVisBackend'}], name='visualizer')
+
+    # make output dir
+    os.makedirs(args.output_dir, exist_ok=True)
 
     # init visualization image number
     assert args.show_number > 0
@@ -100,43 +101,30 @@ def main():
 
     progress_bar = ProgressBar(display_number)
     for ind_img in range(display_number):
-        # data_info = dataset.get_data_info(idx)
         data = dataset.prepare_data(ind_img)
 
+        # convert data to batch format
         batch_data = collate_fn([data])
         assign_results = model.assign(batch_data)
 
         img = data['inputs'].cpu().numpy().astype(np.uint8).transpose((1, 2, 0))
+        # bgr2rgb
         img = mmcv.bgr2rgb(img)
 
         gt_instances = data['data_samples'].gt_instances
 
-        # gt_labels = data['data_samples'].gt_instances.labels
-        # gt_bboxes = data['data_samples'].gt_instances.bboxes
+        img_show = visualizer.draw_assign(img, assign_results, gt_instances,
+                                          args.show_prior, args.not_show_label)
 
-        for ind_feat, assign_results_feat in enumerate(assign_results):
-            for ind_prior, assign_results_prior in enumerate(assign_results_feat):
-                img_show = visualizer.draw_assign(img, assign_results_prior, gt_instances, ind_feat)
+        if hasattr(data['data_samples'], 'img_path'):
+            filename = osp.basename(data['data_samples'].img_path)
+        else:
+            # some dataset have not image path
+            filename = f'{ind_img}.jpg'
+        out_file = osp.join(args.output_dir, filename)
 
-                if hasattr(data['data_samples'], 'img_path'):
-                    filename = osp.basename(data['data_samples'].img_path)
-                    filename = f'{osp.splitext(filename)[0]}_feat{ind_feat}_prior{ind_prior}{osp.splitext(filename)[1]}'
-                else:
-                    # some dataset have not image path
-                    filename = f'{ind_img}_feat{ind_feat}_prior{ind_prior}.jpg'
-                out_file = osp.join(args.output_dir,
-                                    filename) if args.output_dir is not None else None
-
-                if out_file is not None:
-                    mmcv.imwrite(img_show[..., ::-1], out_file)
-
-                if not args.not_show:
-                    visualizer.show(
-                        img_show, win_name=filename, wait_time=args.show_interval)
-
-                progress_bar.update()
-
-
+        mmcv.imwrite(mmcv.rgb2bgr(img_show), out_file)
+        progress_bar.update()
 
 
 if __name__ == '__main__':
