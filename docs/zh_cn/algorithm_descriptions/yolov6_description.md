@@ -120,7 +120,7 @@ def decode(points: torch.Tensor, pred_bboxes: torch.Tensor, stride: torch.Tensor
 
 #### 1.3.3 匹配策略
 
-- epoch \<= 4，使用 `BatchATSSAssigner`
+- epoch <= 4，使用 `BatchATSSAssigner`
 - epoch > 4，使用 `BatchTaskAlignedAssigner`
 
 #### ATSSAssigner
