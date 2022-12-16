@@ -135,12 +135,39 @@ model = dict(
 _base_ = './rtmdet_l_syncbn_8xb32-300e_coco.py'
 model = dict(
     bbox_head=dict(
-        type='YOLOv6Head'),
-        train_cfg=dict(
+        _delete_=True,
+        type='YOLOv6Head',
+        head_module=dict(
+            type='RTMDetSepBNHeadModule',
+            num_classes=80,
+            in_channels=256,
+            stacked_convs=2,
+            feat_channels=256,
+            norm_cfg=dict(type='BN'),
+            act_cfg=dict(type='SiLU', inplace=True),
+            share_conv=True,
+            pred_kernel_size=1,
+            featmap_strides=[8, 16, 32]),
+        loss_bbox=dict(
+            type='IoULoss',
+            iou_mode='giou',
+            bbox_format='xyxy',
+            reduction='mean',
+            loss_weight=2.5,
+            return_iou=False)),
+    train_cfg=dict(
+        _delete_=True,
         initial_epoch=4,
         initial_assigner=dict(
             type='BatchATSSAssigner',
             num_classes=80,
             topk=9,
-            iou_calculator=dict(type='mmdet.BboxOverlaps2D'))))
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D')),
+        assigner=dict(
+            type='BatchTaskAlignedAssigner',
+            num_classes=80,
+            topk=13,
+            alpha=1,
+            beta=6)
+    ))
 ```
