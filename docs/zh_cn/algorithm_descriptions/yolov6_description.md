@@ -235,7 +235,7 @@ Varifocal Loss 原本的公式：
    而是认为在网络的学习过程中正样本相对于负样本的学习信号来说更为重要，所以使用了分类的标签 {math}`q`,
    即 `IoU` 作为 `focal weight`, 使得聚焦到具有高质量的样本上。
 
-但是 YOLOV6 中的 Varifocal Loss 公式采用 `TOOD` 中的 `Task ALignment Learning (TAL)`,
+但是 YOLOv6 中的 Varifocal Loss 公式采用 `TOOD` 中的 `Task ALignment Learning (TAL)`,
 将预测的 `IoU` 根据之前标签匹配策略中的分类对齐度 `alignment_metrics` 进行了归一化,
 得到归一化 {math}`\hat{t}`。
 具体实现方式为：
