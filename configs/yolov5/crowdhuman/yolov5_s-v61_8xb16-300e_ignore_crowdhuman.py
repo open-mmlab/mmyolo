@@ -7,7 +7,7 @@ model = dict(
         mean=[0., 0., 0.],
         std=[255., 255., 255.],
         bgr_to_rgb=True),
-    bbox_head=dict(ignore_iof_thr=0.8))
+    bbox_head=dict(ignore_iof_thr=0.5))
 
 img_scale = _base_.img_scale
 
