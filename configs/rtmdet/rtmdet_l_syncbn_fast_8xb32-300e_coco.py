@@ -22,7 +22,7 @@ base_lr = 0.004
 model = dict(
     type='YOLODetector',
     data_preprocessor=dict(
-        type='mmdet.DetDataPreprocessor',
+        type='YOLOv5DetDataPreprocessor',
         mean=[103.53, 116.28, 123.675],
         std=[57.375, 57.12, 58.395],
         bgr_to_rgb=False),
@@ -76,11 +76,11 @@ model = dict(
         pos_weight=-1,
         debug=False),
     test_cfg=dict(
-        nms_pre=1000,
+        nms_pre=30000,
         min_bbox_size=0,
-        score_thr=0.05,
-        nms=dict(type='nms', iou_threshold=0.6),
-        max_per_img=100),
+        score_thr=0.001,
+        nms=dict(type='nms', iou_threshold=0.65),
+        max_per_img=300),
 )
 
 train_pipeline = [
@@ -144,6 +144,7 @@ train_dataloader = dict(
     num_workers=train_num_workers,
     persistent_workers=persistent_workers,
     pin_memory=True,
+    collate_fn=dict(type='yolov5_collate'),
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
