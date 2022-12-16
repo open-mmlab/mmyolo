@@ -120,7 +120,7 @@ def decode(points: torch.Tensor, pred_bboxes: torch.Tensor, stride: torch.Tensor
 
 #### 1.3.3 匹配策略
 
-- epoch <= 4，使用 `BatchATSSAssigner`
+- 0 \<= epoch \< 4，使用 `BatchATSSAssigner`
 - epoch > 4，使用 `BatchTaskAlignedAssigner`
 
 #### ATSSAssigner
@@ -171,7 +171,7 @@ TaskAlignedAssigner 是 [TOOD](https://arxiv.org/abs/2108.07755) 中提出的一
 
 `TaskAlignedAssigner` 的匹配策略简单总结为： **根据分类与回归的分数加权的分数选择正样本**。
 
-1. 对于每一个 `GT`，对所有的 `anchor `基于 **GT类别对应分类分数** 与 **预测框与 GT 的 IoU** 的加权得到一个关联分类以及回归的对齐分数 `alignment_metrics`。
+1. 对于每一个 `GT`，对所有的 `anchor` 基于 **GT类别对应分类分数** 与 **预测框与 GT 的 IoU** 的加权得到一个关联分类以及回归的对齐分数 `alignment_metrics`。
 2. 对于每一个 `GT`，直接基于 `alignment_metrics` 对齐分数选取 `topK` 大的 `anchor` 作为正样本。
 
 因为在网络初期参数随机， `分类分数` 和 `预测框与 GT 的 IoU` 都不准确，所以需要经过前 4 个 `epoch` 的 `ATSSAssigner`
