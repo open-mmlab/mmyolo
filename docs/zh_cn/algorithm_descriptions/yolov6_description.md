@@ -126,12 +126,13 @@ def decode(points: torch.Tensor, pred_bboxes: torch.Tensor, stride: torch.Tensor
 #### ATSSAssigner
 
 ATSSAssigner 是 [ATSS](https://arxiv.org/abs/1912.02424) 中提出的标签匹配策略。
-ATSS 的匹配策略简单总结为：**通过中心点距离先验对样本进行初筛,然后自适应生成阈值筛选正样本。**
+ATSS 的匹配策略简单总结为：**通过中心点距离先验对样本进行初筛,然后自适应生成 IoU 阈值筛选正样本。**
 YOLOv6 的实现种主要包括如下三个核心步骤：
 
-1. 对于每一个 `GT`，在 `FPN` 的每一个特征层上， 计算与该层所有 `anchor` 中心点距离(位置先验)，
+1. 因为 YOLOv6 是 Anchor-free，所以首先将 `anchor point` 转化为大小为 `5*strdie` 的 `anchor`。
+2. 对于每一个 `GT`，在 `FPN` 的每一个特征层上， 计算与该层所有 `anchor` 中心点距离(位置先验)，
    然后优先选取距离 `topK` 近的样本，作为 **初筛样本**。
-2. 对于每一个 `GT`，计算其 **初筛样本** 的 `IoU` 的均值 `mean`与标准差 `std`，将 `mean + std`
+3. 对于每一个 `GT`，计算其 **初筛样本** 的 `IoU` 的均值 `mean`与标准差 `std`，将 `mean + std`
    作为该 `GT` 的正样本的 **自适应 IoU 阈值** ，大于该 **自适应阈值** 且中心点在 `GT` 内部的 `anchor`
    才作为正样本，使得样本能够被 `assign` 到合适的 `FPN` 特征层上。
 
@@ -142,19 +143,26 @@ YOLOv6 的实现种主要包括如下三个核心步骤：
 </div>
 
 ```python
-# 1. 计算 anchors 与 GT 的 IoU
+# 1. 首先将anchor points 转化为 anchors
+# priors为(point_x,point_y,stride_w,stride_h), shape 为(N,4)
+cell_half_size = priors[:, 2:] * 2.5
+priors_gen = torch.zeros_like(priors)
+priors_gen[:, :2] = priors[:, :2] - cell_half_size
+priors_gen[:, 2:] = priors[:, :2] + cell_half_size
+priors = priors_gen
+# 2. 计算 anchors 与 GT 的 IoU
 overlaps = self.iou_calculator(gt_bboxes.reshape([-1, 4]), priors)
-# 2. 计算 anchor 与 GT 的中心距离
+# 3. 计算 anchor 与 GT 的中心距离
 distances, priors_points = bbox_center_distance(
         gt_bboxes.reshape([-1, 4]), priors)
-# 3. 根据中心点距离，在 FPN 的每一层选取 TopK 临近的样本作为初筛样本
+# 4. 根据中心点距离，在 FPN 的每一层选取 TopK 临近的样本作为初筛样本
 is_in_candidate, candidate_idxs = self.select_topk_candidates(
         distances, num_level_priors, pad_bbox_flag)
-# 4. 对于每一个 GT 计算其对应初筛样本的均值与标准差的和, 作为该GT的样本阈值
+# 5. 对于每一个 GT 计算其对应初筛样本的均值与标准差的和, 作为该GT的样本阈值
 overlaps_thr_per_gt, iou_candidates = self.threshold_calculator(
         is_in_candidate, candidate_idxs, overlaps, num_priors, batch_size,
         num_gt)
-# 5. 筛选大于阈值的样本作为正样本
+# 6. 筛选大于阈值的样本作为正样本
 is_pos = torch.where(
         iou_candidates > overlaps_thr_per_gt.repeat([1, 1, num_priors]),
         is_in_candidate, torch.zeros_like(is_in_candidate))
@@ -229,9 +237,9 @@ Varifocal Loss 原本的公式：
 
 1. 对于负样本，即当 {math}`q = 0` 时，标准交叉熵部分为 {math}`-\log(p)`，负样本权重使用 {math}`\alpha p^\gamma` 作为 `focal weight`
    使样本聚焦与困难样本上，这与 `Focal Loss` 基本一致。
-2. 对于正样本，即当 {math}`q > 0` 时，首先计算标准二值交叉熵部分 {math}`-(qlog(p) +(1-q)log(1-p))`,
+2. 对于正样本，即当 {math}`q > 0` 时，首先计算标准二值交叉熵部分 {math}`-(qlog(p) +(1-q)log(1-p))`，
    但是针对正样本的权重设置，`Varifocal Loss` 中并没有采用类似 {math}`\alpha p^\gamma`的方式降权，
-   而是认为在网络的学习过程中正样本相对于负样本的学习信号来说更为重要，所以使用了分类的标签 {math}`q`,
+   而是认为在网络的学习过程中正样本相对于负样本的学习信号来说更为重要，所以使用了分类的标签 {math}`q`，
    即 `IoU` 作为 `focal weight`, 使得聚焦到具有高质量的样本上。
 
 但是 YOLOv6 中的 Varifocal Loss 公式采用 `TOOD` 中的 `Task ALignment Learning (TAL)`,
@@ -288,7 +296,7 @@ def varifocal_loss(pred, target, alpha=0.75, gamma=2.0, iou_weighted=True):
 
 在 YOLOv6 中，针对不同大小的模型采用了不同的回归损失函数，其中 l/m/s使用的是 `GIoULoss`,  t/n 用的是 `SIoULoss`。
 
-其中` GIoULoss` 详情请看 [GIoU详解](rtmdet_description.md)
+其中` GIoULoss` 详情请看 [GIoU详解](rtmdet_description.md)。
 
 ##### SIou Loss
 
@@ -340,7 +348,7 @@ def bbox_overlaps(bboxes1, bboxes2, mode='siou', is_aligned=False, eps=1e-6):
     enclose_h = enclose_wh[:, 1]  # enclose_h
     elif iou_mode == 'siou':
         # 1.计算 σ （两个box中心点距离）:
-        # sigma_cw：上图中cw,ch
+        # sigma_cw，sigma_ch：上图中cw,ch
         sigma_cw = (bbox2_x1 + bbox2_x2) / 2 - (bbox1_x1 + bbox1_x2) / 2 + eps
         sigma_ch = (bbox2_y1 + bbox2_y2) / 2 - (bbox1_y1 + bbox1_y2) / 2 + eps
         sigma = torch.pow(sigma_cw**2 + sigma_ch**2, 0.5)
@@ -355,13 +363,13 @@ def bbox_overlaps(bboxes1, bboxes2, mode='siou', is_aligned=False, eps=1e-6):
         # 这里就是角度损失，当 α=0 或者 α=90° 时损失为 0, 当 α=45° 损失为 1
         angle_cost = torch.cos(torch.arcsin(sin_alpha) * 2 - math.pi / 2)
 
-        # 3.这里将角度损失与距离损失进行融合，
+        # 3.这里将角度损失与距离损失进行融合
         # Distance cost = Σ_(t=x,y) (1 - e ^ (- γ ρ_t))
         rho_x = (sigma_cw / enclose_w)**2  # ρ_x:x轴中心点距离距离损失
         rho_y = (sigma_ch / enclose_h)**2  # ρ_y:y轴中心点距离距离损失
         gamma = 2 - angle_cost  # γ
         # 当 α=0, angle_cost=0, gamma=2, dis_cost_x =  1 - e ^ (-2 p_x)，因为 ρ_x>0, 主要优化距离
-        # 当 α=45° ，angle_cost=1, gamma=1, dis_cost_x =  1 - e ^ (-1* p_x)，因为 ρ_x<1, 主要优化角度
+        # 当 α=45°，angle_cost=1, gamma=1, dis_cost_x =  1 - e ^ (-1* p_x)，因为 ρ_x<1, 主要优化角度
         distance_cost = (1 - torch.exp(-1 * gamma * rho_x)) + (
             1 - torch.exp(-1 * gamma * rho_y))
 
