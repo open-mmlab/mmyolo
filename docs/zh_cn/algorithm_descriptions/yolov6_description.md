@@ -121,13 +121,13 @@ def decode(points: torch.Tensor, pred_bboxes: torch.Tensor, stride: torch.Tensor
 #### 1.3.3 匹配策略
 
 - 0 \<= epoch \< 4，使用 `BatchATSSAssigner`
-- epoch > 4，使用 `BatchTaskAlignedAssigner`
+- epoch >= 4，使用 `BatchTaskAlignedAssigner`
 
 #### ATSSAssigner
 
 ATSSAssigner 是 [ATSS](https://arxiv.org/abs/1912.02424) 中提出的标签匹配策略。
 ATSS 的匹配策略简单总结为：**通过中心点距离先验对样本进行初筛,然后自适应生成阈值筛选正样本。**
-其主要包括如下两个核心步骤：
+YOLOv6 的实现种主要包括如下三个核心步骤：
 
 1. 对于每一个 `GT`，在 `FPN` 的每一个特征层上， 计算与该层所有 `anchor` 中心点距离(位置先验)，
    然后优先选取距离 `topK` 近的样本，作为 **初筛样本**。
@@ -171,8 +171,8 @@ TaskAlignedAssigner 是 [TOOD](https://arxiv.org/abs/2108.07755) 中提出的一
 
 `TaskAlignedAssigner` 的匹配策略简单总结为： **根据分类与回归的分数加权的分数选择正样本**。
 
-1. 对于每一个 `GT`，对所有的 `anchor` 基于 **GT类别对应分类分数** 与 **预测框与 GT 的 IoU** 的加权得到一个关联分类以及回归的对齐分数 `alignment_metrics`。
-2. 对于每一个 `GT`，直接基于 `alignment_metrics` 对齐分数选取 `topK` 大的 `anchor` 作为正样本。
+1. 对于每一个 `GT`，对所有的 `预测框` 基于 **GT类别对应分类分数** 与 **预测框与 GT 的 IoU** 的加权得到一个关联分类以及回归的对齐分数 `alignment_metrics`。
+2. 对于每一个 `GT`，直接基于 `alignment_metrics` 对齐分数选取 `topK` 大的作为正样本。
 
 因为在网络初期参数随机， `分类分数` 和 `预测框与 GT 的 IoU` 都不准确，所以需要经过前 4 个 `epoch` 的 `ATSSAssigner`
 的 `warm-up`。经过预热之后的 `TaskAlignedAssigner` 标签匹配策略就不使用中心距离的先验,
@@ -245,7 +245,7 @@ Varifocal Loss 原本的公式：
 \hat{t} = AlignmentMetrics / max(AlignmentMetrics) * max(IoU)
 ```
 
-最终 YOLOV6 分类损失损失函数为：
+最终 YOLOv6 分类损失损失函数为：
 
 ```{math}
 {VFL}(p,\hat{t})= \begin{cases}
