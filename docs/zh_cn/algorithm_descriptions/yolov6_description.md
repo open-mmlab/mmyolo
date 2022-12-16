@@ -72,7 +72,7 @@ YOLOv6 采用的标签匹配策略与 [TOOD](https://arxiv.org/abs/2108.07755)
 
 #### 1.3.1 Anchor 设置
 
-YOLOv6 采用与 YOLOX 一样的 Anchor-free 无锚范式，省略的了聚类和繁琐的 Anchor 超参设定，泛化能力强，解码逻辑简单。在训练的过程中会根据 feature size 去自动生成先验框。
+YOLOv6 采用与 YOLOX 一样的 Anchor-free 无锚范式，省略了聚类和繁琐的 Anchor 超参设定，泛化能力强，解码逻辑简单。在训练的过程中会根据 feature size 去自动生成先验框。
 
 使用 `mmdet.MlvlPointGenerator` 生成 anchor points。
 
