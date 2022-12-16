@@ -231,6 +231,10 @@ class YOLOv6Head(YOLOv5Head):
 
         The special_init function is designed to deal with this situation.
         """
+
+        # whether with stride when grid priors in predict
+        self.grid_priors_with_stride = True
+
         if self.train_cfg:
             self.initial_epoch = self.train_cfg['initial_epoch']
             self.initial_assigner = TASK_UTILS.build(
@@ -293,7 +297,7 @@ class YOLOv6Head(YOLOv5Head):
                 self.featmap_sizes,
                 dtype=cls_scores[0].dtype,
                 device=cls_scores[0].device,
-                with_stride=True)
+                with_stride=self.grid_priors_with_stride)
 
             self.num_level_priors = [len(n) for n in self.mlvl_priors]
             self.flatten_priors = torch.cat(self.mlvl_priors, dim=0)

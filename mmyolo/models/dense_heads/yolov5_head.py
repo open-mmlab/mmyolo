@@ -196,6 +196,9 @@ class YOLOv5Head(BaseDenseHead):
         self.near_neighbor_thr = near_neighbor_thr
         self.obj_level_weights = obj_level_weights
 
+        # whether with stride when grid priors in predict
+        self.grid_priors_with_stride = False
+
         self.special_init()
 
     def special_init(self):
@@ -316,7 +319,8 @@ class YOLOv5Head(BaseDenseHead):
             self.mlvl_priors = self.prior_generator.grid_priors(
                 featmap_sizes,
                 dtype=cls_scores[0].dtype,
-                device=cls_scores[0].device)
+                device=cls_scores[0].device,
+                with_stride=self.grid_priors_with_stride)
             self.featmap_sizes = featmap_sizes
         flatten_priors = torch.cat(self.mlvl_priors)
 
