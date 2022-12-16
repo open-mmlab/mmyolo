@@ -675,21 +675,21 @@ class YOLOv5Head(BaseDenseHead):
 
         assign_results = []
         for i in range(self.num_levels):
+            assign_results_feat = []
             batch_size, _, h, w = bbox_preds[i].shape
             assert batch_size == 1, 'Only support batchsize == 1.'
-            target_obj = torch.zeros_like(objectnesses[i])
 
             # empty gt bboxes
             if batch_targets_normed.shape[1] == 0:
-                assign_results.append({
-                    'strides': self.featmap_strides[i],
-                    'grid_x_inds': None,
-                    'grid_y_inds': None,
-                    'priors_inds': None,
-                    'img_inds': None,
-                    'class_inds': None,
-                    'retained_gt_inds': None
-                })
+                for k in range(self.num_base_priors):
+                    assign_results_feat.append({
+                        'stride': self.featmap_strides[i],
+                        'grid_x_inds': torch.zeros([0], dtype=torch.int64).to(device),
+                        'grid_y_inds': torch.zeros([0], dtype=torch.int64).to(device),
+                        'img_inds': torch.zeros([0], dtype=torch.int64).to(device),
+                        'class_inds': torch.zeros([0], dtype=torch.int64).to(device),
+                        'retained_gt_inds': torch.zeros([0], dtype=torch.int64).to(device)
+                    })
                 continue
 
             priors_base_sizes_i = self.priors_base_sizes[i]
@@ -710,15 +710,15 @@ class YOLOv5Head(BaseDenseHead):
 
             # no gt bbox matches anchor
             if batch_targets_scaled.shape[0] == 0:
-                assign_results.append({
-                    'strides': self.featmap_strides[i],
-                    'grid_x_inds': None,
-                    'grid_y_inds': None,
-                    'priors_inds': None,
-                    'img_inds': None,
-                    'class_inds': None,
-                    'retained_gt_inds': None
-                })
+                for k in range(self.num_base_priors):
+                    assign_results_feat.append({
+                        'stride': self.featmap_strides[i],
+                        'grid_x_inds': torch.zeros([0], dtype=torch.int64).to(device),
+                        'grid_y_inds': torch.zeros([0], dtype=torch.int64).to(device),
+                        'img_inds': torch.zeros([0], dtype=torch.int64).to(device),
+                        'class_inds': torch.zeros([0], dtype=torch.int64).to(device),
+                        'retained_gt_inds': torch.zeros([0], dtype=torch.int64).to(device)
+                    })
                 continue
 
             # 3. Positive samples with additional neighbors
@@ -752,17 +752,19 @@ class YOLOv5Head(BaseDenseHead):
                             retained_offsets * self.near_neighbor_thr).long()
             grid_x_inds, grid_y_inds = grid_xy_long.T
             bboxes_targets = torch.cat((grid_xy - grid_xy_long, grid_wh), 1)
-
-            assign_results_i = {
-                'strides': self.featmap_strides[i],
-                'grid_x_inds': grid_x_inds,
-                'grid_y_inds': grid_y_inds,
-                'priors_inds': priors_inds,
-                'img_inds': img_inds,
-                'class_inds': bboxes_targets,
-                'retained_gt_inds': retained_gt_inds
-            }
-            assign_results.append(assign_results_i)
+            for k in range(self.num_base_priors):
+                retained_inds = priors_inds == k
+                assign_results_prior = {
+                    'stride': self.featmap_strides[i],
+                    'grid_x_inds': grid_x_inds[retained_inds],
+                    'grid_y_inds': grid_y_inds[retained_inds],
+                    'img_inds': img_inds[retained_inds],
+                    'class_inds': class_inds[retained_inds],
+                    'retained_gt_inds': retained_gt_inds[retained_inds],
+                    'prior_ind': k
+                }
+                assign_results_feat.append(assign_results_prior)
+            assign_results.append(assign_results_feat)
         return assign_results
 
     def assign(self, x: Tuple[Tensor],
