@@ -196,9 +196,6 @@ class YOLOv5Head(BaseDenseHead):
         self.near_neighbor_thr = near_neighbor_thr
         self.obj_level_weights = obj_level_weights
 
-        # whether with stride when grid priors in predict
-        self.grid_priors_with_stride = False
-
         self.special_init()
 
     def special_init(self):
@@ -243,6 +240,9 @@ class YOLOv5Head(BaseDenseHead):
         prior_inds = torch.arange(self.num_base_priors).float().view(
             self.num_base_priors, 1)
         self.register_buffer('prior_inds', prior_inds, persistent=False)
+
+        # whether with stride when grid priors in predict
+        self.grid_priors_with_stride = False
 
     def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         """Forward features from the upstream network.
@@ -315,12 +315,13 @@ class YOLOv5Head(BaseDenseHead):
         featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
 
         # If the shape does not change, use the previous mlvl_priors
-        if featmap_sizes != self.featmap_sizes:
+        if (featmap_sizes != self.featmap_sizes) or (
+                self.grid_priors_with_stride is True
+                and featmap_sizes == self.featmap_sizes):
             self.mlvl_priors = self.prior_generator.grid_priors(
                 featmap_sizes,
                 dtype=cls_scores[0].dtype,
-                device=cls_scores[0].device,
-                with_stride=self.grid_priors_with_stride)
+                device=cls_scores[0].device)
             self.featmap_sizes = featmap_sizes
         flatten_priors = torch.cat(self.mlvl_priors)
 

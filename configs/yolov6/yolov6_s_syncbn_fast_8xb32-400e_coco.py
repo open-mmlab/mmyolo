@@ -1,7 +1,7 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/coco/'
+data_root = 'data/coco-mini/'
 dataset_type = 'YOLOv5CocoDataset'
 
 num_last_epochs = 15
@@ -13,9 +13,9 @@ img_scale = (640, 640)  # height, width
 deepen_factor = 0.33
 widen_factor = 0.5
 affine_scale = 0.5
-save_epoch_intervals = 10
-train_batch_size_per_gpu = 32
-train_num_workers = 8
+save_epoch_intervals = 1
+train_batch_size_per_gpu = 16
+train_num_workers = 4
 val_batch_size_per_gpu = 1
 val_num_workers = 2
 
@@ -174,6 +174,7 @@ test_pipeline = [
         scale=img_scale,
         allow_scale_up=False,
         pad_val=dict(img=114)),
+    dict(type='mmdet.Resize', scale=(640, 640)),  # note
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
         type='mmdet.PackDetInputs',
@@ -246,8 +247,8 @@ val_evaluator = dict(
 test_evaluator = val_evaluator
 
 train_cfg = dict(
-    type='EpochBasedTrainLoop',
-    max_epochs=max_epochs,
+    type='IterBasedTrainLoop',
+    max_iters=max_epochs,
     val_interval=save_epoch_intervals,
     dynamic_intervals=[(max_epochs - num_last_epochs, 1)])
 val_cfg = dict(type='ValLoop')
