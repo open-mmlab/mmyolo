@@ -126,7 +126,7 @@ def decode(points: torch.Tensor, pred_bboxes: torch.Tensor, stride: torch.Tensor
 #### ATSSAssigner
 
 ATSSAssigner 是 [ATSS](https://arxiv.org/abs/1912.02424) 中提出的标签匹配策略。
-ATSS的匹配策略简单总结为：**通过中心点距离先验对样本进行初筛,然后自适应生成阈值筛选正样本。**
+ATSS 的匹配策略简单总结为：**通过中心点距离先验对样本进行初筛,然后自适应生成阈值筛选正样本。**
 其主要包括如下两个核心步骤：
 
 1. 对于每一个 `GT`，在 `FPN` 的每一个特征层上， 计算与该层所有 `anchor` 中心点距离(位置先验)，
