@@ -195,7 +195,7 @@ class PPYOLOEHead(YOLOv5Head):
 
     def special_init(self):
         """Not Implenented."""
-        pass
+        self.grid_priors_with_stride = False
 
     def loss_by_feat(
             self,
