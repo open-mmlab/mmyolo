@@ -21,12 +21,14 @@ from mmyolo.registry import MODELS, TASK_UTILS
 from ..utils import make_divisible
 
 
-def get_prior_xy_info(index, num_base_priors, featmap_sizes):
-    featmap_h, featmap_w = featmap_sizes
+def get_prior_xy_info(index: int, num_base_priors: int,
+                      featmap_sizes: int) -> Tuple[int, int, int]:
+    """Get prior index and xy index in feature map by flatten index."""
+    _, featmap_w = featmap_sizes
     priors = index % num_base_priors
     xy_index = index // num_base_priors
     grid_y = xy_index // featmap_w
-    grid_x = xy_index % featmap_h
+    grid_x = xy_index % featmap_w
     return priors, grid_x, grid_y
 
 
@@ -498,7 +500,7 @@ class YOLOv5Head(BaseDenseHead):
             dict[str, Tensor]: A dictionary of losses.
         """
         if self.ignore_iof_thr != -1:
-
+            # TODO: Support fast version
             # convert ignore gt
             batch_target_ignore_list = []
             for i, gt_instances_ignore in enumerate(batch_gt_instances_ignore):
