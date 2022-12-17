@@ -67,7 +67,7 @@ YOLOv6 目标检测算法中使用的数据增强与 YOLOv5 基本一致，唯�
 
 ### 1.2 网络结构
 
-YOLOv6 N/T/S 模型的网络结构由 `EfficientRep` + `Rep-PAN` + `Efficient decoupled Head` 构成，M/L 模型的网络结构则由 `CSPBep` + `CSPRepPAFPN` +  `Efficient decoupled Head` 构成。其中，Backbone 和 Neck 部分的结构与 YOLOv5 较为相似，但不同的是其采用了重参数化结构 `RepVGG Block` 替换掉了原本的 `ConvModule`，在此基础上，将 `CSPLayer` 改进为了多个 `RepVGG` 堆叠的 `RepStageBlock`（N/T/S模型）或 `BepC3StageBlock`（M/L模型）；Head 部分则参考了 FCOS 和 YOLOX 的检测头，将回归与分类分支解耦成两个分支进行预测。YOLOv6-S 和 YOLOv6-L 整体结构分别如图 1 和图 2 所示。
+YOLOv6 N/T/S 模型的网络结构由 `EfficientRep` + `Rep-PAN` + `Efficient decoupled Head` 构成，M/L 模型的网络结构则由 `CSPBep` + `CSPRepPAFPN` +  `Efficient decoupled Head` 构成。其中，Backbone 和 Neck 部分的结构与 YOLOv5 较为相似，但不同的是其采用了重参数化结构 `RepVGG Block` 替换掉了原本的 `ConvModule`，在此基础上，将 `CSPLayer` 改进为了多个 `RepVGG` 堆叠的 `RepStageBlock`（N/T/S 模型）或 `BepC3StageBlock`（M/L 模型）；Head 部分则参考了 FCOS 和 YOLOX 的检测头，将回归与分类分支解耦成两个分支进行预测。YOLOv6-S 和 YOLOv6-L 整体结构分别如图 1 和图 2 所示。
 
 #### 1.2.1 Backbone
 
