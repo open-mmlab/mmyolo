@@ -6,7 +6,8 @@ from typing import List, Optional, Sequence, Tuple, Union
 import torch
 import torch.nn as nn
 from mmdet.models.dense_heads.base_dense_head import BaseDenseHead
-from mmdet.models.utils import filter_scores_and_topk, multi_apply, unpack_gt_instances
+from mmdet.models.utils import (filter_scores_and_topk, multi_apply,
+                                unpack_gt_instances)
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
                          OptMultiConfig)
 from mmengine.config import ConfigDict
@@ -653,14 +654,30 @@ class YOLOv5Head(BaseDenseHead):
         decoded_bbox_pred = torch.cat((pred_xy, pred_wh), dim=-1)
         return decoded_bbox_pred
 
-    def assign_(
-            self,
-            cls_scores: Sequence[Tensor],
-            bbox_preds: Sequence[Tensor],
-            objectnesses: Sequence[Tensor],
-            batch_gt_instances: Sequence[InstanceData],
-            batch_img_metas: Sequence[dict],
-            batch_gt_instances_ignore: OptInstanceList = None) -> dict:
+    def assign_by_gt_and_feat(
+        self,
+        batch_gt_instances: Sequence[InstanceData],
+        batch_img_metas: Sequence[dict],
+        batch_gt_instances_ignore: OptInstanceList = None,
+        inputs_hw: Union[Tensor, tuple] = (640, 640)
+    ) -> dict:
+        """Calculate the assigning results based on the gt and features
+        extracted by the detection head.
+
+        Args:
+            batch_gt_instances (Sequence[InstanceData]): Batch of
+                gt_instance. It usually includes ``bboxes`` and ``labels``
+                attributes.
+            batch_img_metas (Sequence[dict]): Meta information of each image,
+                e.g., image size, scaling factor, etc.
+            batch_gt_instances_ignore (list[:obj:`InstanceData`], optional):
+                Batch of gt_instances_ignore. It includes ``bboxes`` attribute
+                data that is ignored during training and testing.
+                Defaults to None.
+            inputs_hw (Union[Tensor, tuple]): Height and width of inputs size.
+        Returns:
+            dict[str, Tensor]: A dictionary of assigning results.
+        """
         # 1. Convert gt to norm format
         batch_targets_normed = self._convert_gt_to_norm_format(
             batch_gt_instances, batch_img_metas)
@@ -668,7 +685,7 @@ class YOLOv5Head(BaseDenseHead):
         device = batch_targets_normed.device
         scaled_factor = torch.ones(7, device=device)
         gt_inds = torch.arange(
-            batch_gt_instances.shape[0],
+            batch_targets_normed.shape[1],
             dtype=torch.long,
             device=device,
             requires_grad=False).unsqueeze(0).repeat((self.num_base_priors, 1))
@@ -676,26 +693,31 @@ class YOLOv5Head(BaseDenseHead):
         assign_results = []
         for i in range(self.num_levels):
             assign_results_feat = []
-            batch_size, _, h, w = bbox_preds[i].shape
-            assert batch_size == 1, 'Only support batchsize == 1.'
+            h = inputs_hw[0] // self.featmap_strides[i]
+            w = inputs_hw[1] // self.featmap_strides[i]
 
             # empty gt bboxes
             if batch_targets_normed.shape[1] == 0:
                 for k in range(self.num_base_priors):
                     assign_results_feat.append({
-                        'stride': self.featmap_strides[i],
-                        'grid_x_inds': torch.zeros([0], dtype=torch.int64).to(device),
-                        'grid_y_inds': torch.zeros([0], dtype=torch.int64).to(device),
-                        'img_inds': torch.zeros([0], dtype=torch.int64).to(device),
-                        'class_inds': torch.zeros([0], dtype=torch.int64).to(device),
-                        'retained_gt_inds': torch.zeros([0], dtype=torch.int64).to(device)
+                        'stride':
+                        self.featmap_strides[i],
+                        'grid_x_inds':
+                        torch.zeros([0], dtype=torch.int64).to(device),
+                        'grid_y_inds':
+                        torch.zeros([0], dtype=torch.int64).to(device),
+                        'img_inds':
+                        torch.zeros([0], dtype=torch.int64).to(device),
+                        'class_inds':
+                        torch.zeros([0], dtype=torch.int64).to(device),
+                        'retained_gt_inds':
+                        torch.zeros([0], dtype=torch.int64).to(device)
                     })
                 continue
 
             priors_base_sizes_i = self.priors_base_sizes[i]
             # feature map scale whwh
-            scaled_factor[2:6] = torch.tensor(
-                bbox_preds[i].shape)[[3, 2, 3, 2]]
+            scaled_factor[2:6] = torch.tensor([w, h, w, h])
             # Scale batch_targets from range 0-1 to range 0-features_maps size.
             # (num_base_priors, num_bboxes, 7)
             batch_targets_scaled = batch_targets_normed * scaled_factor
@@ -712,12 +734,18 @@ class YOLOv5Head(BaseDenseHead):
             if batch_targets_scaled.shape[0] == 0:
                 for k in range(self.num_base_priors):
                     assign_results_feat.append({
-                        'stride': self.featmap_strides[i],
-                        'grid_x_inds': torch.zeros([0], dtype=torch.int64).to(device),
-                        'grid_y_inds': torch.zeros([0], dtype=torch.int64).to(device),
-                        'img_inds': torch.zeros([0], dtype=torch.int64).to(device),
-                        'class_inds': torch.zeros([0], dtype=torch.int64).to(device),
-                        'retained_gt_inds': torch.zeros([0], dtype=torch.int64).to(device)
+                        'stride':
+                        self.featmap_strides[i],
+                        'grid_x_inds':
+                        torch.zeros([0], dtype=torch.int64).to(device),
+                        'grid_y_inds':
+                        torch.zeros([0], dtype=torch.int64).to(device),
+                        'img_inds':
+                        torch.zeros([0], dtype=torch.int64).to(device),
+                        'class_inds':
+                        torch.zeros([0], dtype=torch.int64).to(device),
+                        'retained_gt_inds':
+                        torch.zeros([0], dtype=torch.int64).to(device)
                     })
                 continue
 
@@ -751,7 +779,6 @@ class YOLOv5Head(BaseDenseHead):
             grid_xy_long = (grid_xy -
                             retained_offsets * self.near_neighbor_thr).long()
             grid_x_inds, grid_y_inds = grid_xy_long.T
-            bboxes_targets = torch.cat((grid_xy - grid_xy_long, grid_wh), 1)
             for k in range(self.num_base_priors):
                 retained_inds = priors_inds == k
                 assign_results_prior = {
@@ -767,23 +794,31 @@ class YOLOv5Head(BaseDenseHead):
             assign_results.append(assign_results_feat)
         return assign_results
 
-    def assign(self, x: Tuple[Tensor],
-               batch_data_samples: Union[list, dict]) -> dict:
-        outs = self(x)
+    def assign(self, batch_data_samples: Union[list, dict],
+               inputs_hw: Union[tuple, torch.Size]) -> dict:
+        """Calculate assigning results. This function is provided to the
+        `show_assign.py` script.
 
-        # 非fast版本
+        Args:
+            batch_data_samples (List[:obj:`DetDataSample`], dict): The Data
+                Samples. It usually includes information such as
+                `gt_instance`, `gt_panoptic_seg` and `gt_sem_seg`.
+            inputs_hw: Height and width of inputs size
+
+        Returns:
+            dict: A dictionary of assigning components.
+        """
         if isinstance(batch_data_samples, list):
             outputs = unpack_gt_instances(batch_data_samples)
             (batch_gt_instances, batch_gt_instances_ignore,
              batch_img_metas) = outputs
 
-            assign_inputs = outs + (batch_gt_instances, batch_img_metas,
-                                    batch_gt_instances_ignore)
+            assign_inputs = (batch_gt_instances, batch_img_metas,
+                             batch_gt_instances_ignore, inputs_hw)
         else:
             # Fast version
-            assign_inputs = outs + (batch_data_samples['bboxes_labels'],
-                                  batch_data_samples['img_metas'])
-        assign_results = self.assign_(*assign_inputs)
+            assign_inputs = (batch_data_samples['bboxes_labels'],
+                             batch_data_samples['img_metas'], inputs_hw)
+        assign_results = self.assign_by_gt_and_feat(*assign_inputs)
 
         return assign_results
-

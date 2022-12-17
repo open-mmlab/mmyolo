@@ -2,31 +2,28 @@
 import argparse
 import os
 import os.path as osp
-import random
 import sys
 
-import cv2
-import numpy as np
 import mmcv
-from mmdet.engine.hooks.utils import trigger_visualization_hook
-from mmdet.visualization import DetLocalVisualizer
+import numpy as np
 from mmengine import ProgressBar
 from mmengine.config import Config, DictAction
 from mmengine.dataset import COLLATE_FUNCTIONS
-from mmengine.evaluator import DumpResults
-from mmengine.runner import Runner
-from matplotlib import pyplot as plt
+from numpy import random
 
-from mmyolo.datasets import YOLOv5CocoDataset
-from mmyolo.registry import RUNNERS, MODELS, DATASETS, VISUALIZERS
+from mmyolo.registry import DATASETS, MODELS
 from mmyolo.utils import register_all_modules
 from mmyolo.visualization import DetAssignerVisualizer
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='MMYOLO test (and eval) a model')
-    parser.add_argument('config', help='test config file path')
+        description='MMYOLO show the positive sample assign'
+        ' results.')
+    parser.add_argument(
+        'config',
+        default='configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py',
+        help='config file path')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
@@ -69,7 +66,7 @@ def main():
     seed = int(args.seed)
     if seed != -1:
         print(f'Set the global seed: {seed}')
-        np.random.seed(int(args.seed))
+        random.seed(int(args.seed))
 
     cfg = Config.fromfile(args.config)
     if args.cfg_options is not None:
@@ -79,16 +76,19 @@ def main():
     model = MODELS.build(cfg.model)
     model.eval()
     dataset_cfg = cfg.get('train_dataloader').get('dataset')
-    dataset = DATASETS.build(dataset_cfg)    # type: YOLOv5CocoDataset
+    dataset = DATASETS.build(dataset_cfg)
 
     # get collate_fn
-    collate_fn_cfg = cfg.get('train_dataloader').pop('collate_fn',
-                                                     dict(type='pseudo_collate'))
+    collate_fn_cfg = cfg.get('train_dataloader').pop(
+        'collate_fn', dict(type='pseudo_collate'))
     collate_fn_type = collate_fn_cfg.pop('type')
     collate_fn = COLLATE_FUNCTIONS.get(collate_fn_type)
 
     # init visualizer
-    visualizer = DetAssignerVisualizer(vis_backends=[{'type': 'LocalVisBackend'}], name='visualizer')
+    visualizer = DetAssignerVisualizer(
+        vis_backends=[{
+            'type': 'LocalVisBackend'
+        }], name='visualizer')
     visualizer.dataset_meta = dataset.metainfo
     visualizer.priors_size = model.bbox_head.prior_generator.base_anchors
 
@@ -107,7 +107,8 @@ def main():
         batch_data = collate_fn([data])
         assign_results = model.assign(batch_data)
 
-        img = data['inputs'].cpu().numpy().astype(np.uint8).transpose((1, 2, 0))
+        img = data['inputs'].cpu().numpy().astype(np.uint8).transpose(
+            (1, 2, 0))
         # bgr2rgb
         img = mmcv.bgr2rgb(img)
 
@@ -123,6 +124,7 @@ def main():
             filename = f'{ind_img}.jpg'
         out_file = osp.join(args.output_dir, filename)
 
+        # convert rgb 2 bgr and save img
         mmcv.imwrite(mmcv.rgb2bgr(img_show), out_file)
         progress_bar.update()
 
