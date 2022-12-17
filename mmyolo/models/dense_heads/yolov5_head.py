@@ -713,6 +713,7 @@ class YOLOv5Head(BaseDenseHead):
                         'retained_gt_inds':
                         torch.zeros([0], dtype=torch.int64).to(device)
                     })
+                assign_results.append(assign_results_feat)
                 continue
 
             priors_base_sizes_i = self.priors_base_sizes[i]
@@ -747,6 +748,7 @@ class YOLOv5Head(BaseDenseHead):
                         'retained_gt_inds':
                         torch.zeros([0], dtype=torch.int64).to(device)
                     })
+                assign_results.append(assign_results_feat)
                 continue
 
             # 3. Positive samples with additional neighbors
