@@ -383,8 +383,14 @@ class RTMDetHead(YOLOv5Head):
             batch_gt_instances = batch_instance_list
 
         device = cls_scores[0].device
-        anchor_list = self.get_anchors(
-            featmap_sizes, batch_img_metas, device=device)
+
+        # If the shape does not equal, generate new one
+        if featmap_sizes != self.featmap_sizes:
+            self.featmap_sizes = featmap_sizes
+            self.multi_level_anchors = self.prior_generator.grid_priors(
+                featmap_sizes, device=device, with_stride=True)
+        anchor_list = [self.multi_level_anchors for _ in range(num_imgs)]
+
         flatten_cls_scores = torch.cat([
             cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1,
                                                   self.cls_out_channels)
@@ -599,30 +605,3 @@ class RTMDetHead(YOLOv5Head):
                 gt_class_inds]
 
         return anchors, labels, label_weights, bbox_targets, assign_metrics
-
-    def get_anchors(self,
-                    featmap_sizes: List[tuple],
-                    batch_img_metas: List[dict],
-                    device: Union[torch.device, str] = 'cuda') \
-            -> Tuple[List[List[Tensor]], List[List[Tensor]]]:
-        """Get anchors according to feature map sizes.
-
-        Args:
-            featmap_sizes (list[tuple]): Multi-level feature map sizes.
-            batch_img_metas (list[dict]): Image meta info.
-            device (torch.device or str): Device for returned tensors.
-                Defaults to cuda.
-
-        Returns:
-            tuple:
-
-            - anchor_list (list[list[Tensor]]): Anchors of each image.
-        """
-        num_imgs = len(batch_img_metas)
-
-        # since feature map sizes of all images are the same, we only compute
-        # anchors for one time
-        multi_level_anchors = self.prior_generator.grid_priors(
-            featmap_sizes, device=device, with_stride=True)
-        anchor_list = [multi_level_anchors for _ in range(num_imgs)]
-        return anchor_list
