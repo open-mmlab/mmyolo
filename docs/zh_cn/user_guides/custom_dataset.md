@@ -178,7 +178,7 @@ labelme ./data/cat/images --output ./data/cat/labels --autosave --nodata
 
 ## 2.2 仅人工标注
 
-步骤和 【1.1.2 人工标注】 相同，只是这里是直接标注，没有预先生成的 label 。
+步骤和 【2.1.2 人工标注】 相同，只是这里是直接标注，没有预先生成的 label 。
 
 ## 3. 使用脚本转换成 COCO 数据集格式
 
