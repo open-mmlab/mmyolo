@@ -21,7 +21,7 @@ from mmyolo.utils import register_all_modules
 # TODO: Support for printing the change in key of results
 def parse_args():
     parser = argparse.ArgumentParser(description='Browse a dataset')
-    parser.add_argument('--config', help='train config file path', default='configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py')
+    parser.add_argument('config', help='train config file path')
     parser.add_argument(
         '--phase',
         '-p',
