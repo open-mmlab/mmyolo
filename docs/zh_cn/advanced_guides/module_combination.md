@@ -107,3 +107,67 @@ model = dict(
 
 1. 在本教程中损失函数的替换是运行不报错的，但无法保证性能一定会上升。
 2. 本次损失函数的替换都是以 YOLOv5 算法作为例子的，但是 MMYOLO 下的多个算法，如 YOLOv6，YOLOX 等算法都可以按照上述的例子进行替换。
+
+## model 和 loss 组合替换
+
+在 MMYOLO 中，model 即网络本身和 loss 是解耦的，用户可以简单的通过修改配置文件中 model 和 loss 来组合不同模块。下面给出两个具体例子。
+
+(1) YOLOv5 model 组合 YOLOv7 loss，配置文件如下：
+
+```python
+_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+model = dict(
+    bbox_head=dict(
+        _delete_=True,
+        type='YOLOv7Head',
+        head_module=dict(
+            type='YOLOv5HeadModule',
+            num_classes=80,
+            in_channels=[256, 512, 1024],
+            widen_factor=0.5,
+            featmap_strides=[8, 16, 32],
+            num_base_priors=3)))
+```
+
+(2) RTMDet model 组合 YOLOv6 loss，配置文件如下：
+
+```python
+_base_ = './rtmdet_l_syncbn_8xb32-300e_coco.py'
+model = dict(
+    bbox_head=dict(
+        _delete_=True,
+        type='YOLOv6Head',
+        head_module=dict(
+            type='RTMDetSepBNHeadModule',
+            num_classes=80,
+            in_channels=256,
+            stacked_convs=2,
+            feat_channels=256,
+            norm_cfg=dict(type='BN'),
+            act_cfg=dict(type='SiLU', inplace=True),
+            share_conv=True,
+            pred_kernel_size=1,
+            featmap_strides=[8, 16, 32]),
+        loss_bbox=dict(
+            type='IoULoss',
+            iou_mode='giou',
+            bbox_format='xyxy',
+            reduction='mean',
+            loss_weight=2.5,
+            return_iou=False)),
+    train_cfg=dict(
+        _delete_=True,
+        initial_epoch=4,
+        initial_assigner=dict(
+            type='BatchATSSAssigner',
+            num_classes=80,
+            topk=9,
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D')),
+        assigner=dict(
+            type='BatchTaskAlignedAssigner',
+            num_classes=80,
+            topk=13,
+            alpha=1,
+            beta=6)
+    ))
+```
