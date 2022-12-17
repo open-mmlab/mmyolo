@@ -239,11 +239,11 @@ class DetAssignerVisualizer(DetLocalVisualizer):
                     gt_instances: InstanceData,
                     show_prior: bool = False,
                     not_show_label: bool = False) -> np.ndarray:
-        """Draw results of assigner.
+        """Draw assigning results.
 
         Args:
             image (np.ndarray): The image to draw.
-            assign_results (list): The results of assigner.
+            assign_results (list): The assigning results.
             gt_instances (:obj:`InstanceData`): Data structure for
                 instance-level annotations or predictions.
             show_prior (bool): Whether to show prior on image.

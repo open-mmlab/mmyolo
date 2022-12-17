@@ -6,6 +6,7 @@ import sys
 
 import mmcv
 import numpy as np
+import torch
 from mmengine import ProgressBar
 from mmengine.config import Config, DictAction
 from mmengine.dataset import COLLATE_FUNCTIONS
@@ -18,12 +19,9 @@ from mmyolo.visualization import DetAssignerVisualizer
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='MMYOLO show the positive sample assign'
+        description='MMYOLO show the positive sample assigning'
         ' results.')
-    parser.add_argument(
-        'config',
-        default='configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py',
-        help='config file path')
+    parser.add_argument('config', help='config file path')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
@@ -39,7 +37,7 @@ def parse_args():
         '-n',
         type=int,
         default=sys.maxsize,
-        help='number of images selected to visualize, '
+        help='number of images selected to save, '
         'must bigger than 0. if the number is bigger than length '
         'of dataset, show all the images in dataset; '
         'default "sys.maxsize", show all images in dataset')
@@ -47,10 +45,20 @@ def parse_args():
         '--output-dir',
         default='show',
         type=str,
-        help='If there is no display interface, you can save it.')
-    parser.add_argument('--show-prior', default=False, action='store_true')
-    parser.add_argument('--not-show-label', default=False, action='store_true')
-    parser.add_argument('--seed', default=-1, type=int, help='seed')
+        help='The name of the folder where the image is saved.')
+    parser.add_argument(
+        '--device', default='cuda:0', help='Device used for inference')
+    parser.add_argument(
+        '--show-prior',
+        default=False,
+        action='store_true',
+        help='Whether to show prior on image')
+    parser.add_argument(
+        '--not-show-label',
+        default=False,
+        action='store_true',
+        help='Whether to show label on image')
+    parser.add_argument('--seed', default=-1, type=int, help='random seed')
 
     args = parser.parse_args()
     return args
@@ -75,6 +83,9 @@ def main():
     # build model
     model = MODELS.build(cfg.model)
     model.eval()
+    model.to(args.device)
+
+    # build dataset
     dataset_cfg = cfg.get('train_dataloader').get('dataset')
     dataset = DATASETS.build(dataset_cfg)
 
@@ -106,7 +117,8 @@ def main():
 
         # convert data to batch format
         batch_data = collate_fn([data])
-        assign_results = model.assign(batch_data)
+        with torch.no_grad():
+            assign_results = model.assign(batch_data)
 
         img = data['inputs'].cpu().numpy().astype(np.uint8).transpose(
             (1, 2, 0))
