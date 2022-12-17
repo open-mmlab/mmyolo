@@ -90,6 +90,7 @@ def main():
             'type': 'LocalVisBackend'
         }], name='visualizer')
     visualizer.dataset_meta = dataset.metainfo
+    # need priors size to draw priors
     visualizer.priors_size = model.bbox_head.prior_generator.base_anchors
 
     # make output dir
