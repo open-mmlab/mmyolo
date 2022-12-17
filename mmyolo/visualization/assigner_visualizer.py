@@ -1,11 +1,14 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
+from typing import List, Union
 
 import mmcv
 import numpy as np
 import torch
+from mmdet.structures.bbox import HorizontalBoxes
 from mmdet.visualization import DetLocalVisualizer
 from mmdet.visualization.palette import _get_adaptive_scales, get_palette
+from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import VISUALIZERS
@@ -13,16 +16,48 @@ from mmyolo.registry import VISUALIZERS
 
 @VISUALIZERS.register_module()
 class DetAssignerVisualizer(DetLocalVisualizer):
-    # def __init__(self, *args, **kwargs):
-    #     pass
-    #     super().__init__(*args, **kwargs)
-    #     self.priors_size = None
+    """MMYOLO Detection Assigner Visualizer.
+
+    This class is provided to the `show_assign.py` script.
+    Args:
+        name (str): Name of the instance. Defaults to 'visualizer'.
+    """
+
+    def __init__(self, name: str = 'visualizer', *args, **kwargs):
+        super().__init__(name=name, *args, **kwargs)
+        # need priors_size from config
+        self.priors_size = None
 
     def draw_grid(self,
-                  stride=8,
-                  line_styles=':',
-                  colors=(180, 180, 180),
-                  line_widths=1):
+                  stride: int = 8,
+                  line_styles: Union[str, List[str]] = ':',
+                  colors: Union[str, tuple, List[str],
+                                List[tuple]] = (180, 180, 180),
+                  line_widths: Union[Union[int, float],
+                                     List[Union[int, float]]] = 1):
+        """Draw grids on image.
+
+        Args:
+            stride (int): Downsample factor of feature map.
+            line_styles (Union[str, List[str]]): The linestyle
+                of lines. ``line_styles`` can have the same length with
+                texts or just single value. If ``line_styles`` is single
+                value, all the lines will have the same linestyle.
+                Reference to
+                https://matplotlib.org/stable/api/collections_api.html?highlight=collection#matplotlib.collections.AsteriskPolygonCollection.set_linestyle
+                for more details. Defaults to ':'.
+            colors (Union[str, tuple, List[str], List[tuple]]): The colors of
+                lines. ``colors`` can have the same length with lines or just
+                single value. If ``colors`` is single value, all the lines
+                will have the same colors. Reference to
+                https://matplotlib.org/stable/gallery/color/named_colors.html
+                for more details. Defaults to (180, 180, 180).
+            line_widths (Union[Union[int, float], List[Union[int, float]]]):
+                The linewidth of lines. ``line_widths`` can have
+                the same length with lines or just single value.
+                If ``line_widths`` is single value, all the lines will
+                have the same linewidth. Defaults to 1.
+        """
         assert self._image is not None, 'Please set image using `set_image`'
         # draw vertical lines
         x_datas_vertical = ((np.arange(self.width // stride - 1) + 1) *
@@ -50,12 +85,19 @@ class DetAssignerVisualizer(DetLocalVisualizer):
             line_styles=line_styles,
             line_widths=line_widths)
 
-        return self
-
     def draw_instances_assign(self,
-                              instances,
-                              retained_gt_inds,
-                              not_show_label=False):
+                              instances: InstanceData,
+                              retained_gt_inds: Tensor,
+                              not_show_label: bool = False):
+        """Draw instances of GT.
+
+        Args:
+            instances (:obj:`InstanceData`): gt_instance. It usually
+             includes ``bboxes`` and ``labels`` attributes.
+            retained_gt_inds (Tensor): The gt indexes assigned as the
+                positive sample in the current prior.
+            not_show_label (bool): Whether to show gt labels on images.
+        """
         assert self.dataset_meta is not None
         classes = self.dataset_meta['CLASSES']
         palette = self.dataset_meta['PALETTE']
@@ -102,25 +144,41 @@ class DetAssignerVisualizer(DetLocalVisualizer):
                         'pad': 0.7,
                         'edgecolor': 'none'
                     }])
-        return self.get_image()
 
     def draw_positive_assign(self,
-                             grid_x_inds,
-                             grid_y_inds,
-                             class_inds,
-                             stride,
-                             bboxes,
-                             retained_gt_inds,
-                             offset=0.5):
+                             grid_x_inds: Tensor,
+                             grid_y_inds: Tensor,
+                             class_inds: Tensor,
+                             stride: int,
+                             bboxes: Union[Tensor, HorizontalBoxes],
+                             retained_gt_inds: Tensor,
+                             offset: float = 0.5):
+        """
+
+        Args:
+            grid_x_inds (Tensor): The X-axis indexes of the positive sample
+                in current prior.
+            grid_y_inds (Tensor): The Y-axis indexes of the positive sample
+                in current prior.
+            class_inds (Tensor): The classes indexes of the positive sample
+                in current prior.
+            stride (int): Downsample factor of feature map.
+            bboxes (Union[Tensor, HorizontalBoxes]): Bounding boxes of GT.
+            retained_gt_inds (Tensor): The gt indexes assigned as the
+                positive sample in the current prior.
+            offset (float): The offset of points, the value is normalized
+                with corresponding stride. Defaults to 0.5.
+        """
         if not isinstance(bboxes, Tensor):
+            # Convert HorizontalBoxes to Tensor
             bboxes = bboxes.tensor
 
+        # The PALETTE in the dataset_meta is required
         assert self.dataset_meta is not None
         palette = self.dataset_meta['PALETTE']
         x = ((grid_x_inds + offset) * stride).long()
         y = ((grid_y_inds + offset) * stride).long()
         center = torch.stack((x, y), dim=-1)
-        # radius = torch.ones_like(x) * (stride // 4)
 
         retained_bboxes = bboxes[retained_gt_inds]
         bbox_wh = retained_bboxes[:, 2:] - retained_bboxes[:, :2]
@@ -137,19 +195,35 @@ class DetAssignerVisualizer(DetLocalVisualizer):
             alpha=1.0)
 
     def draw_prior(self,
-                   grid_x_inds,
-                   grid_y_inds,
-                   stride,
-                   class_inds,
-                   ind_feat,
-                   ind_prior,
-                   offset=0.5):
+                   grid_x_inds: Tensor,
+                   grid_y_inds: Tensor,
+                   class_inds: Tensor,
+                   stride: int,
+                   feat_ind: int,
+                   prior_ind: int,
+                   offset: float = 0.5):
+        """Draw priors on image.
+
+        Args:
+            grid_x_inds (Tensor): The X-axis indexes of the positive sample
+                in current prior.
+            grid_y_inds (Tensor): The Y-axis indexes of the positive sample
+                in current prior.
+            class_inds (Tensor): The classes indexes of the positive sample
+                in current prior.
+            stride (int): Downsample factor of feature map.
+            feat_ind (int): Index of featmap.
+            prior_ind (int): Index of prior in current featmap.
+            offset (float): The offset of points, the value is normalized
+                with corresponding stride. Defaults to 0.5.
+        """
 
         palette = self.dataset_meta['PALETTE']
         center_x = ((grid_x_inds + offset) * stride)
         center_y = ((grid_y_inds + offset) * stride)
         xyxy = torch.stack((center_x, center_y, center_x, center_y), dim=1)
-        xyxy += self.priors_size[ind_feat][ind_prior]
+        assert self.priors_size is not None
+        xyxy += self.priors_size[feat_ind][prior_ind]
 
         colors = [palette[i] for i in class_inds]
         self.draw_bboxes(
@@ -160,18 +234,31 @@ class DetAssignerVisualizer(DetLocalVisualizer):
             line_widths=math.ceil(self.line_width * 0.3))
 
     def draw_assign(self,
-                    img,
-                    assign_results,
-                    gt_instances,
-                    show_prior=False,
-                    not_show_label=False):
+                    image: np.ndarray,
+                    assign_results: List[List[dict]],
+                    gt_instances: InstanceData,
+                    show_prior: bool = False,
+                    not_show_label: bool = False) -> np.ndarray:
+        """Draw results of assigner.
+
+        Args:
+            image (np.ndarray): The image to draw.
+            assign_results (list): The results of assigner.
+            gt_instances (:obj:`InstanceData`): Data structure for
+                instance-level annotations or predictions.
+            show_prior (bool): Whether to show prior on image.
+            not_show_label (bool): Whether to show gt labels on images.
+
+        Returns:
+            np.ndarray: the drawn image which channel is RGB.
+        """
         img_show_list = []
-        for ind_feat, assign_results_feat in enumerate(assign_results):
+        for feat_ind, assign_results_feat in enumerate(assign_results):
             img_show_list_feat = []
-            for ind_prior, assign_results_prior in enumerate(
+            for prior_ind, assign_results_prior in enumerate(
                     assign_results_feat):
-                self.set_image(img)
-                h, w = img.shape[:2]
+                self.set_image(image)
+                h, w = image.shape[:2]
 
                 # draw grid
                 stride = assign_results_prior['stride']
@@ -181,10 +268,10 @@ class DetAssignerVisualizer(DetLocalVisualizer):
                 grid_x_inds = assign_results_prior['grid_x_inds']
                 grid_y_inds = assign_results_prior['grid_y_inds']
                 class_inds = assign_results_prior['class_inds']
-                ind_prior = assign_results_prior['prior_ind']
+                prior_ind = assign_results_prior['prior_ind']
                 if show_prior:
-                    self.draw_prior(grid_x_inds, grid_y_inds, stride,
-                                    class_inds, ind_feat, ind_prior)
+                    self.draw_prior(grid_x_inds, grid_y_inds, class_inds,
+                                    stride, feat_ind, prior_ind)
 
                 # draw matched gt
                 retained_gt_inds = assign_results_prior['retained_gt_inds']
@@ -197,12 +284,12 @@ class DetAssignerVisualizer(DetLocalVisualizer):
                                           retained_gt_inds)
 
                 # draw title
-                base_prior = self.priors_size[ind_feat][ind_prior]
+                base_prior = self.priors_size[feat_ind][prior_ind]
                 prior_size = (base_prior[2] - base_prior[0],
                               base_prior[3] - base_prior[1])
                 pos = np.array((20, 20))
-                text = f'feat_ind: {ind_feat}  ' \
-                       f'prior_ind: {ind_prior} ' \
+                text = f'feat_ind: {feat_ind}  ' \
+                       f'prior_ind: {prior_ind} ' \
                        f'prior_size: ({prior_size[0]}, {prior_size[1]})'
                 scales = _get_adaptive_scales(np.array([h * w / 16]))
                 font_sizes = int(13 * scales)
@@ -222,4 +309,6 @@ class DetAssignerVisualizer(DetLocalVisualizer):
                 img_show = mmcv.impad(img_show, padding=(5, 5, 5, 5))
                 img_show_list_feat.append(img_show)
             img_show_list.append(np.concatenate(img_show_list_feat, axis=1))
+
+        # Merge all images into one image
         return np.concatenate(img_show_list, axis=0)
