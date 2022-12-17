@@ -12,12 +12,20 @@ interval = 10
 
 train_batch_size_per_gpu = 32
 train_num_workers = 10
-val_batch_size_per_gpu = 5
-val_num_workers = 10
+val_batch_size_per_gpu = 1
+val_num_workers = 2
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
 strides = [8, 16, 32]
 base_lr = 0.004
+
+# only on Val
+batch_shapes_cfg = dict(
+    type='BatchShapePolicy',
+    batch_size=val_batch_size_per_gpu,
+    img_size=img_scale[0],
+    size_divisor=32,
+    extra_pad_ratio=0.5)
 
 model = dict(
     type='YOLODetector',
@@ -60,7 +68,7 @@ model = dict(
             featmap_strides=strides),
         prior_generator=dict(
             type='mmdet.MlvlPointGenerator', offset=0, strides=strides),
-        bbox_coder=dict(type='mmdet.DistancePointBBoxCoder'),
+        bbox_coder=dict(type='DistancePointBBoxCoder'),
         loss_cls=dict(
             type='mmdet.QualityFocalLoss',
             use_sigmoid=True,
@@ -76,8 +84,8 @@ model = dict(
         pos_weight=-1,
         debug=False),
     test_cfg=dict(
+        multi_label=True,
         nms_pre=30000,
-        min_bbox_size=0,
         score_thr=0.001,
         nms=dict(type='nms', iou_threshold=0.65),
         max_per_img=300),
@@ -130,13 +138,17 @@ train_pipeline_stage2 = [
 
 test_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
-    dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
+    dict(type='YOLOv5KeepRatioResize', scale=img_scale),
+    dict(
+        type='LetterResize',
+        scale=img_scale,
+        allow_scale_up=False,
+        pad_val=dict(img=114)),
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor'))
+                   'scale_factor', 'pad_param'))
 ]
 
 train_dataloader = dict(
@@ -167,6 +179,7 @@ val_dataloader = dict(
         ann_file='annotations/instances_val2017.json',
         data_prefix=dict(img='val2017/'),
         test_mode=True,
+        batch_shapes_cfg=batch_shapes_cfg,
         pipeline=test_pipeline))
 
 test_dataloader = val_dataloader

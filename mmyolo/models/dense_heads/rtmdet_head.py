@@ -183,7 +183,8 @@ class RTMDetSepBNHeadModule(BaseModule):
             for reg_layer in self.reg_convs[idx]:
                 reg_feat = reg_layer(reg_feat)
 
-            reg_dist = self.rtm_reg[idx](reg_feat) * stride
+            # reg_dist = self.rtm_reg[idx](reg_feat) * stride
+            reg_dist = self.rtm_reg[idx](reg_feat)
             cls_scores.append(cls_score)
             bbox_preds.append(reg_dist)
         return tuple(cls_scores), tuple(bbox_preds)
@@ -275,53 +276,6 @@ class RTMDetHead(YOLOv5Head):
             predictions, and objectnesses.
         """
         return self.head_module(x)
-
-    def predict_by_feat(self,
-                        cls_scores: List[Tensor],
-                        bbox_preds: List[Tensor],
-                        batch_img_metas: Optional[List[dict]] = None,
-                        cfg: Optional[ConfigDict] = None,
-                        rescale: bool = True,
-                        with_nms: bool = True) -> List[InstanceData]:
-        """Transform a batch of output features extracted from the head into
-        bbox results.
-
-        Args:
-            cls_scores (list[Tensor]): Classification scores for all
-                scale levels, each is a 4D-tensor, has shape
-                (batch_size, num_priors * num_classes, H, W).
-            bbox_preds (list[Tensor]): Box energies / deltas for all
-                scale levels, each is a 4D-tensor, has shape
-                (batch_size, num_priors * 4, H, W).
-            batch_img_metas (list[dict], Optional): Batch image meta info.
-                Defaults to None.
-            cfg (ConfigDict, optional): Test / postprocessing
-                configuration, if None, test_cfg would be used.
-                Defaults to None.
-            rescale (bool): If True, return boxes in original image space.
-                Defaults to False.
-            with_nms (bool): If True, do nms before return boxes.
-                Defaults to True.
-
-        Returns:
-            list[:obj:`InstanceData`]: Object detection results of each image
-            after the post process. Each item usually contains following keys.
-
-                - scores (Tensor): Classification scores, has a shape
-                  (num_instance, )
-                - labels (Tensor): Labels of bboxes, has a shape
-                  (num_instances, ).
-                - bboxes (Tensor): Has a shape (num_instances, 4),
-                  the last dimension 4 arrange as (x1, y1, x2, y2).
-        """
-        return super(YOLOv5Head, self).predict_by_feat(
-            cls_scores,
-            bbox_preds,
-            None,
-            batch_img_metas=batch_img_metas,
-            cfg=cfg,
-            rescale=rescale,
-            with_nms=with_nms)
 
     def loss_by_feat_single(self, cls_score: Tensor, bbox_pred: Tensor,
                             labels: Tensor, label_weights: Tensor,
