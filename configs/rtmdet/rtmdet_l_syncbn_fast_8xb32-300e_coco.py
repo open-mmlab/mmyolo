@@ -21,7 +21,7 @@ base_lr = 0.004
 
 # single-scale training is recommended to
 # be turned on, which can speed up training.
-env_cfg = dict(cudnn_benchmark=True)
+# env_cfg = dict(cudnn_benchmark=True)
 
 # only on Val
 batch_shapes_cfg = dict(
