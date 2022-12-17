@@ -48,6 +48,7 @@ class ChannelAttention(BaseModule):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward function."""
         avgpool_out = self.fc(self.avg_pool(x))
         maxpool_out = self.fc(self.max_pool(x))
         out = self.sigmoid(avgpool_out + maxpool_out)
@@ -74,6 +75,7 @@ class SpatialAttention(BaseModule):
             act_cfg=dict(type='Sigmoid'))
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward function."""
         avg_out = torch.mean(x, dim=1, keepdim=True)
         max_out, _ = torch.max(x, dim=1, keepdim=True)
         out = torch.cat([avg_out, max_out], dim=1)
@@ -111,6 +113,7 @@ class CBAM(BaseModule):
         self.spatial_attention = SpatialAttention(kernel_size)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Forward function."""
         out = self.channel_attention(x) * x
         out = self.spatial_attention(out) * out
         return out

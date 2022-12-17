@@ -30,7 +30,7 @@ mim install -v -e .
 本文选取不到 40MB 大小的 balloon 气球数据集作为 MMYOLO 的学习数据集。
 
 ```shell
-python tools/misc/download_dataset.py  --dataset-name balloon --save-dir data --unzip
+python tools/misc/download_dataset.py --dataset-name balloon --save-dir data --unzip
 python tools/dataset_converters/balloon2coco.py
 ```
 

@@ -1,5 +1,7 @@
 # Visualization
 
+This article includes feature map visualization and Grad-Based and Grad-Free CAM visualization
+
 ## Feature map visualization
 
 <div align=center>
@@ -13,7 +15,7 @@ In MMYOLO, you can use the `Visualizer` provided in MMEngine for feature map vis
 - Support basic drawing interfaces and feature map visualization.
 - Support selecting different layers in the model to get the feature map. The display methods include `squeeze_mean`, `select_max`, and `topk`. Users can also customize the layout of the feature map display with `arrangement`.
 
-## Feature map generation
+### Feature map generation
 
 You can use `demo/featmap_vis_demo.py` to get a quick view of the visualization results. To better understand all functions, we list all primary parameters and their features here as follows:
 
@@ -51,7 +53,7 @@ You can use `demo/featmap_vis_demo.py` to get a quick view of the visualization 
 
 **Note: When the image and feature map scales are different, the `draw_featmap` function will automatically perform an upsampling alignment. If your image has an operation such as `Pad` in the preprocessing during the inference, the feature map obtained is processed with `Pad`, which may cause misalignment problems if you directly upsample the image.**
 
-## Usage examples
+### Usage examples
 
 Take the pre-trained YOLOv5-s model as an example. Please download the model weight file to the root directory.
 
@@ -88,7 +90,7 @@ The original `test_pipeline` is:
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+        file_client_args=_base_.file_client_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
@@ -166,7 +168,7 @@ python demo/featmap_vis_demo.py demo/dog.jpg \
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/17425982/198522489-8adee6ae-9915-4e9d-bf50-167b8a12c275.png" width="1200" alt="image"/>
+<img src="https://user-images.githubusercontent.com/17425982/198522489-8adee6ae-9915-4e9d-bf50-167b8a12c275.png" width="800" alt="image"/>
 </div>
 
 (5) When the visualization process finishes, you can choose to display the result or store it locally. You only need to add the parameter `--out-file xxx.jpg`:
@@ -179,3 +181,113 @@ python demo/featmap_vis_demo.py demo/dog.jpg \
                                 --channel-reduction select_max \
                                 --out-file featmap_backbone.jpg
 ```
+
+## Grad-Based and Grad-Free CAM Visualization
+
+Object detection CAM visualization is much more complex and different than classification CAM.
+This article only briefly explains the usage, and a separate document will be opened to describe the implementation principles and precautions in detail later.
+
+You can call `demo/boxmap_vis_demo.py` to get the AM visualization results at the Box level easily and quickly. Currently, `YOLOv5/YOLOv6/YOLOX/RTMDet` is supported.
+
+Taking YOLOv5 as an example, as with the feature map visualization, you need to modify the `test_pipeline` first, otherwise there will be a problem of misalignment between the feature map and the original image.
+
+The original `test_pipeline` is:
+
+```python
+test_pipeline = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args=_base_.file_client_args),
+    dict(type='YOLOv5KeepRatioResize', scale=img_scale),
+    dict(
+        type='LetterResize',
+        scale=img_scale,
+        allow_scale_up=False,
+        pad_val=dict(img=114)),
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor', 'pad_param'))
+]
+```
+
+Change to the following version:
+
+```python
+test_pipeline = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args=_base_.file_client_args),
+    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # change the  LetterResize to mmdet.Resize
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor'))
+]
+```
+
+(1) Use the `GradCAM` method to visualize the AM of the last output layer of the neck module
+
+```shell
+python demo/boxam_vis_demo.py \
+        demo/dog.jpg \
+        configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+        yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/203775584-c4aebf11-4ff8-4530-85fe-7dda897e95a8.jpg" width="800" alt="image"/>
+</div>
+
+The corresponding feature AM is as follows:
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/203774801-1555bcfb-a8f9-4688-8ed6-982d6ad38e1d.jpg" width="800" alt="image"/>
+</div>
+
+It can be seen that the `GradCAM` effect can highlight the AM information at the box level.
+
+You can choose to visualize only the top prediction boxes with the highest prediction scores via the `--topk` parameter
+
+```shell
+python demo/boxam_vis_demo.py \
+        demo/dog.jpg \
+        configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+        yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+        --topk 2
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/203778700-3165aa72-ecaf-40cc-b470-6911646e6046.jpg" width="800" alt="image"/>
+</div>
+
+(2) Use the AblationCAM method to visualize the AM of the last output layer of the neck module
+
+```shell
+python demo/boxam_vis_demo.py \
+        demo/dog.jpg \
+        configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+        yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+        --method ablationcam
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/203776978-b5a9b383-93b4-4b35-9e6a-7cac684b372c.jpg" width="800" alt="image"/>
+</div>
+
+Since `AblationCAM` is weighted by the contribution of each channel to the score, it is impossible to visualize only the AM information at the box level like `GradCAN`. But you can use `--norm-in-bbox` to only show bbox inside AM
+
+```shell
+python demo/boxam_vis_demo.py \
+        demo/dog.jpg \
+        configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+        yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+        --method ablationcam \
+        --norm-in-bbox
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/203777566-7c74e82f-b477-488e-958f-91e1d10833b9.jpg" width="800" alt="image"/>
+</div>

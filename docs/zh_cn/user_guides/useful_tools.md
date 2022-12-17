@@ -5,10 +5,8 @@
 以 MMDetection 为例，如果想利用 [print_config.py](https://github.com/open-mmlab/mmdetection/blob/3.x/tools/misc/print_config.py)，你可以直接采用如下命令，而无需复制源码到 MMYOLO 库中。
 
 ```shell
-mim run mmdet print_config [CONFIG]
+mim run mmdet print_config ${CONFIG}
 ```
-
-**注意**：上述命令能够成功的前提是 MMDetection 库必须通过 MIM 来安装。
 
 ## 可视化
 
@@ -17,49 +15,60 @@ mim run mmdet print_config [CONFIG]
 脚本 `tools/analysis_tools/browse_coco_json.py` 能够使用可视化显示 COCO 标签在图片的情况。
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py ${DATA_ROOT} \
-                                                [--ann_file ${ANN_FILE}] \
-                                                [--img_dir ${IMG_DIR}] \
+python tools/analysis_tools/browse_coco_json.py [--data-root ${DATA_ROOT}] \
+                                                [--img-dir ${IMG_DIR}] \
+                                                [--ann-file ${ANN_FILE}] \
                                                 [--wait-time ${WAIT_TIME}] \
                                                 [--disp-all] [--category-names CATEGORY_NAMES [CATEGORY_NAMES ...]] \
                                                 [--shuffle]
 ```
+
+其中，如果图片、标签都在同一个文件夹下的话，可以指定 `--data-root` 到该文件夹，然后 `--img-dir` 和 `--ann-file` 指定该文件夹的相对路径，代码会自动拼接。
+如果图片、标签文件不在同一个文件夹下的话，则无需指定 `--data-root` ，直接指定绝对路径的 `--img-dir` 和 `--ann-file` 即可。
 
 例子：
 
 1. 查看 `COCO` 全部类别，同时展示 `bbox`、`mask` 等所有类型的标注：
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
+                                                --disp-all
+```
+
+如果图片、标签不在同一个文件夹下的话，可以使用绝对路径：
+
+```shell
+python tools/analysis_tools/browse_coco_json.py --img-dir '/dataset/image/coco/train2017' \
+                                                --ann-file '/label/instances_train2017.json' \
                                                 --disp-all
 ```
 
 2. 查看 `COCO` 全部类别，同时仅展示 `bbox` 类型的标注，并打乱显示：
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
                                                 --shuffle
 ```
 
 3. 只查看 `bicycle` 和 `person` 类别，同时仅展示 `bbox` 类型的标注：
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
                                                 --category-names 'bicycle' 'person'
 ```
 
 4. 查看 `COCO` 全部类别，同时展示 `bbox`、`mask` 等所有类型的标注，并打乱显示：
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
                                                 --disp-all \
                                                 --shuffle
 ```
@@ -351,7 +360,21 @@ python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
 ## 提取 COCO 子集
 
 COCO2017 数据集训练数据集包括 118K 张图片，验证集包括 5K 张图片，数据集比较大。在调试或者快速验证程序是否正确的场景下加载 json 会需要消耗较多资源和带来较慢的启动速度，这会导致程序体验不好。
-`extract_subcoco.py` 脚本提供了切分指定张图片的功能，用户可以通过 `--num-img` 参数来得到指定图片数目的 COCO 子集，从而满足上述需求。
+
+`extract_subcoco.py` 脚本提供了按指定图片数量、类别、锚框尺寸来切分图片的功能，用户可以通过 `--num-img`, `--classes`, `--area-size` 参数来得到指定条件的 COCO 子集，从而满足上述需求。
+
+例如通过以下脚本切分图片：
+
+```shell
+python tools/misc/extract_subcoco.py \
+    ${ROOT} \
+    ${OUT_DIR} \
+    --num-img 20 \
+    --classes cat dog person \
+    --area-size small
+```
+
+会切分出 20 张图片，且这 20 张图片只会保留同时满足类别条件和锚框尺寸条件的标注信息, 没有满足条件的标注信息的图片不会被选择，保证了这 20 张图都是有 annotation info 的。
 
 注意： 本脚本目前仅仅支持 COCO2017 数据集，未来会支持更加通用的 COCO JSON 格式数据集
 
@@ -381,4 +404,16 @@ python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --num-img 20 --use-train
 
 ```shell
 python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --num-img 20 --use-training-set --seed 1
+```
+
+4. 按指定类别切分图片
+
+```shell
+python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --classes cat dog person
+```
+
+5. 按指定锚框尺寸切分图片
+
+```shell
+python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --area-size small
 ```

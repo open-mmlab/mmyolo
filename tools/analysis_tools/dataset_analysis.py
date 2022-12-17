@@ -7,12 +7,12 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 from mmengine.config import Config
-from mmengine.dataset.dataset_wrapper import ConcatDataset
 from mmengine.utils import ProgressBar
 from prettytable import PrettyTable
 
 from mmyolo.registry import DATASETS
 from mmyolo.utils import register_all_modules
+from mmyolo.utils.misc import show_data_classes
 
 
 def parse_args():
@@ -348,29 +348,6 @@ def show_data_list(args, area_rule):
     print(data_info)
 
 
-def show_data_classes(data_classes):
-    """When printing an error, all class names of the dataset."""
-    print('\n\nThe name of the class contained in the dataset:')
-    data_classes_info = PrettyTable()
-    data_classes_info.title = 'Information of dataset class'
-    # List Print Settings
-    # If the quantity is too large, 25 rows will be displayed in each column
-    if len(data_classes) < 25:
-        data_classes_info.add_column('Class name', data_classes)
-    elif len(data_classes) % 25 != 0 and len(data_classes) > 25:
-        col_num = int(len(data_classes) / 25) + 1
-        data_name_list = list(data_classes)
-        for i in range(0, (col_num * 25) - len(data_classes)):
-            data_name_list.append('')
-        for i in range(0, len(data_name_list), 25):
-            data_classes_info.add_column('Class name',
-                                         data_name_list[i:i + 25])
-
-    # Align display data to the left
-    data_classes_info.align['Class name'] = 'l'
-    print(data_classes_info)
-
-
 def main():
     args = parse_args()
     cfg = Config.fromfile(args.config)
@@ -378,21 +355,36 @@ def main():
     # register all modules in mmdet into the registries
     register_all_modules()
 
+    def replace_pipeline_to_none(cfg):
+        """Recursively iterate over all dataset(or datasets) and set their
+        pipelines to none.Datasets are mean ConcatDataset.
+
+        Recursively terminates only when all dataset(or datasets) have been
+        traversed
+        """
+
+        if cfg.get('dataset', None) is None and cfg.get('datasets',
+                                                        None) is None:
+            return
+        dataset = cfg.dataset if cfg.get('dataset', None) else cfg.datasets
+        if isinstance(dataset, list):
+            for item in dataset:
+                item.pipeline = None
+        elif dataset.get('pipeline', None):
+            dataset.pipeline = None
+        else:
+            replace_pipeline_to_none(dataset)
+
     # 1.Build Dataset
     if args.val_dataset is False:
+        replace_pipeline_to_none(cfg.train_dataloader)
         dataset = DATASETS.build(cfg.train_dataloader.dataset)
-    elif args.val_dataset is True:
+    else:
+        replace_pipeline_to_none(cfg.val_dataloader)
         dataset = DATASETS.build(cfg.val_dataloader.dataset)
 
-    # Determine whether the dataset is ConcatDataset
-    if isinstance(dataset, ConcatDataset):
-        datasets = dataset.datasets
-        data_list = []
-        for idx in range(len(datasets)):
-            datasets_list = datasets[idx].load_data_list()
-            data_list += datasets_list
-    else:
-        data_list = dataset.load_data_list()
+    # Build  lists to store data for all raw data
+    data_list = dataset
 
     # 2.Prepare data
     # Drawing settings

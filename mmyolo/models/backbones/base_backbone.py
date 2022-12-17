@@ -48,7 +48,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
      In P6 model, n=5
 
     Args:
-        arch_setting (dict): Architecture of BaseBackbone.
+        arch_setting (list): Architecture of BaseBackbone.
         plugins (list[dict]): List of plugins for stages, each dict contains:
 
             - cfg (dict, required): Cfg dict to build plugin.
@@ -75,7 +75,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
     """
 
     def __init__(self,
-                 arch_setting: dict,
+                 arch_setting: list,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
                  input_channels: int = 3,
@@ -87,7 +87,6 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg)
-
         self.num_stages = len(arch_setting)
         self.arch_setting = arch_setting
 
@@ -135,7 +134,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
         """
         pass
 
-    def make_stage_plugins(self, plugins, idx, setting):
+    def make_stage_plugins(self, plugins, stage_idx, setting):
         """Make plugins for backbone ``stage_idx`` th stage.
 
         Currently we support to insert ``context_block``,
@@ -154,7 +153,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
             ... ]
             >>> model = YOLOv5CSPDarknet()
             >>> stage_plugins = model.make_stage_plugins(plugins, 0, setting)
-            >>> assert len(stage_plugins) == 3
+            >>> assert len(stage_plugins) == 1
 
         Suppose ``stage_idx=0``, the structure of blocks in the stage would be:
 
@@ -162,7 +161,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
 
             conv1 -> conv2 -> conv3 -> yyy
 
-        Suppose 'stage_idx=1', the structure of blocks in the stage would be:
+        Suppose ``stage_idx=1``, the structure of blocks in the stage would be:
 
         .. code-block:: none
 
@@ -188,7 +187,7 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
             plugin = plugin.copy()
             stages = plugin.pop('stages', None)
             assert stages is None or len(stages) == self.num_stages
-            if stages is None or stages[idx]:
+            if stages is None or stages[stage_idx]:
                 name, layer = build_plugin_layer(
                     plugin['cfg'], in_channels=in_channels)
                 plugin_layers.append(layer)
