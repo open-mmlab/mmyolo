@@ -48,6 +48,17 @@ In the official YOLOv5 code, the `random_perspective` data augmentation in COCO 
 4. We converted the VOC test dataset to COCO format offline, while reproducing mAP result as shown above. We will support to use COCO metric while training VOC dataset in later version.
 5. Hyperparameter reference from `https://wandb.ai/glenn-jocher/YOLOv5_VOC_official`.
 
+### CrowdHuman
+
+| Backbone | size | SyncBN | AMP | Mem (GB) | box AP50(CrowDHuman Metric) |  MR  |  JI   |                                                             Config                                                              | Download |
+| :------: | :--: | :----: | :-: | :------: | :-------------------------: | :--: | :---: | :-----------------------------------------------------------------------------------------------------------------------------: | :------: |
+| YOLOv5-s | 640  |  Yes   | Yes |   2.6    |            85.79            | 48.7 | 75.33 | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/crowdhuman/yolov5_s-v61_fast_8xb16-300e_crowdhuman.py) |          |
+
+**Note**:
+
+1. This is a very simple implementation that simply replaces COCO's anchor with the `tools/analysis_tools/optimize_anchors.py` script. We'll adjust other parameters later to improve performance.
+2. The above table shows the performance of the model with the best performance on the validation set, which is the 160th epoch. This means that there is no need to train so many epochs.
+
 ## Citation
 
 ```latex

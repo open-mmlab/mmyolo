@@ -81,7 +81,7 @@ class YOLOv5HeadModule(BaseModule):
         """Initialize the bias of YOLOv5 head."""
         super().init_weights()
         for mi, s in zip(self.convs_pred, self.featmap_strides):  # from
-            b = mi.bias.data.view(3, -1)
+            b = mi.bias.data.view(self.num_base_priors, -1)
             # obj (8 objects per 640 image)
             b.data[:, 4] += math.log(8 / (640 / s)**2)
             b.data[:, 5:] += math.log(0.6 / (self.num_classes - 0.999999))
@@ -440,11 +440,11 @@ class YOLOv5Head(BaseDenseHead):
         Returns:
             dict: A dictionary of loss components.
         """
-        outs = self(x)
 
         if isinstance(batch_data_samples, list):
             losses = super().loss(x, batch_data_samples)
         else:
+            outs = self(x)
             # Fast version
             loss_inputs = outs + (batch_data_samples['bboxes_labels'],
                                   batch_data_samples['img_metas'])
