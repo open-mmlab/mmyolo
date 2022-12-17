@@ -711,7 +711,9 @@ class YOLOv5Head(BaseDenseHead):
                         'class_inds':
                         torch.zeros([0], dtype=torch.int64).to(device),
                         'retained_gt_inds':
-                        torch.zeros([0], dtype=torch.int64).to(device)
+                        torch.zeros([0], dtype=torch.int64).to(device),
+                        'prior_ind':
+                        k
                     })
                 assign_results.append(assign_results_feat)
                 continue
@@ -746,7 +748,9 @@ class YOLOv5Head(BaseDenseHead):
                         'class_inds':
                         torch.zeros([0], dtype=torch.int64).to(device),
                         'retained_gt_inds':
-                        torch.zeros([0], dtype=torch.int64).to(device)
+                        torch.zeros([0], dtype=torch.int64).to(device),
+                        'prior_ind':
+                        k
                     })
                 assign_results.append(assign_results_feat)
                 continue
