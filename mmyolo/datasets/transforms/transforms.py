@@ -211,9 +211,8 @@ class LetterResize(MMDET_Resize):
         scale_factor = np.array([ratio[0], ratio[1]], dtype=np.float32)
 
         if 'scale_factor' in results:
-            results['scale_factor'] = results['scale_factor'] * scale_factor
-        else:
-            results['scale_factor'] = scale_factor
+            results['scale_factor_origin'] = results['scale_factor']
+        results['scale_factor'] = scale_factor
 
         # padding
         top_padding, left_padding = int(round(padding_h // 2 - 0.1)), int(
@@ -240,6 +239,9 @@ class LetterResize(MMDET_Resize):
 
         results['img'] = image
         results['img_shape'] = image.shape
+        if 'pad_param' in results:
+            results['pad_param_origin'] = results['pad_param'] * \
+                np.repeat(scale_factor, 2)
         results['pad_param'] = np.array(padding_list, dtype=np.float32)
 
     def _resize_masks(self, results: dict):
@@ -287,6 +289,17 @@ class LetterResize(MMDET_Resize):
 
         if self.clip_object_border:
             results['gt_bboxes'].clip_(results['img_shape'])
+
+    def transform(self, results: dict) -> dict:
+        super().transform(results)
+        if 'scale_factor_origin' in results:
+            scale_factor_origin = results.pop('scale_factor_origin')
+            results['scale_factor'] *= scale_factor_origin
+        if 'pad_param_origin' in results:
+            pad_param_origin = results.pop('pad_param_origin')
+            results['pad_param'] += pad_param_origin
+        return results
+
 
 
 # TODO: Check if it can be merged with mmdet.YOLOXHSVRandomAug
