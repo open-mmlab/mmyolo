@@ -252,9 +252,6 @@ class YOLOXHead(YOLOv5Head):
         The special_init function is designed to deal with this situation.
         """
 
-        # whether with stride when grid priors in predict
-        self.grid_priors_with_stride = True
-
         self.loss_bbox_aux: nn.Module = MODELS.build(self.loss_bbox_aux)
         if self.train_cfg:
             self.assigner = TASK_UTILS.build(self.train_cfg.assigner)
@@ -306,7 +303,7 @@ class YOLOXHead(YOLOv5Head):
             featmap_sizes,
             dtype=cls_scores[0].dtype,
             device=cls_scores[0].device,
-            with_stride=self.grid_priors_with_stride)
+            with_stride=True)
 
         flatten_cls_preds = [
             cls_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1,
