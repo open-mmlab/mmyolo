@@ -120,6 +120,10 @@ class YOLOv5OptimizerConstructor:
         # bias
         optimizer_cfg['params'].append({'params': params_groups[2]})
 
+        print_log(
+            'Optimizer groups: %g .bias, %g conv.weight, %g other' %
+            (len(params_groups[2]), len(params_groups[0]), len(
+                params_groups[1])), 'current')
         del params_groups
 
         optimizer = OPTIMIZERS.build(optimizer_cfg)

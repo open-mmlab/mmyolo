@@ -52,6 +52,13 @@ Welcome to MMYOLO's documentation!
    notes/faq.md
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Community
+
+   community/contributing.md
+   community/code_style.md
+
+.. toctree::
    :caption: Switch Languag
 
    switch_language.md

@@ -127,7 +127,7 @@ class TestYOLOv5Head(TestCase):
         head = YOLOv5Head(head_module=self.head_module)
         gt_instances = InstanceData(
             bboxes=torch.Tensor([[23.6667, 23.8757, 238.6326, 151.8874]]),
-            labels=torch.LongTensor([1]))
+            labels=torch.LongTensor([0]))
 
         one_gt_losses = head.loss_by_feat(cls_scores, bbox_preds, objectnesses,
                                           [gt_instances], img_metas)

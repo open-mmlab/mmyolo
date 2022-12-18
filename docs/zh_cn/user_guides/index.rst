@@ -24,5 +24,6 @@ MMYOLO 在 `Model Zoo <https://mmyolo.readthedocs.io/en/latest/model_zoo.html>`_
 .. toctree::
    :maxdepth: 1
 
+   custom_dataset.md
    visualization.md
    useful_tools.md

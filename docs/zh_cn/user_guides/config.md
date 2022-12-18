@@ -79,7 +79,7 @@ model = dict(
 
 ### 数据集和评测器配置
 
-在使用 [执行器](https://mmengine.readthedocs.io/en/latest/tutorials/runner.html) 进行训练、测试、验证时，我们需要配置 [Dataloader](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader) 。构建数据 dataloader 需要设置数据集（dataset）和数据处理流程（data pipeline）。 由于这部分的配置较为复杂，我们使用中间变量来简化 dataloader 配置的编写。由于 MMYOLO 中各类轻量目标检测算法使用了更加复杂的数据增强方法，因此会比 MMDetection 中的其他模型拥有更多样的数据集配置。
+在使用 [执行器](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/runner.html) 进行训练、测试、验证时，我们需要配置 [Dataloader](https://pytorch.org/docs/stable/data.html?highlight=data%20loader#torch.utils.data.DataLoader) 。构建数据 dataloader 需要设置数据集（dataset）和数据处理流程（data pipeline）。 由于这部分的配置较为复杂，我们使用中间变量来简化 dataloader 配置的编写。由于 MMYOLO 中各类轻量目标检测算法使用了更加复杂的数据增强方法，因此会比 MMDetection 中的其他模型拥有更多样的数据集配置。
 
 YOLOv5 的训练与测试的数据流存在一定差异，这里我们分别进行介绍。
 
@@ -198,7 +198,7 @@ val_dataloader = dict(
 test_dataloader = val_dataloader
 ```
 
-[评测器](https://mmengine.readthedocs.io/en/latest/tutorials/metric_and_evaluator.html) 用于计算训练模型在验证和测试数据集上的指标。评测器的配置由一个或一组评价指标（Metric）配置组成：
+[评测器](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/evaluation.html) 用于计算训练模型在验证和测试数据集上的指标。评测器的配置由一个或一组评价指标（Metric）配置组成：
 
 ```python
 val_evaluator = dict(  # 验证过程使用的评测器
@@ -270,7 +270,7 @@ test_cfg = dict(type='TestLoop')  # 测试循环的类型
 
 ### 优化相关配置
 
-`optim_wrapper` 是配置优化相关设置的字段。优化器封装（OptimWrapper）不仅提供了优化器的功能，还支持梯度裁剪、混合精度训练等功能。更多内容请看[优化器封装教程](https://mmengine.readthedocs.io/en/latest/tutorials/optimizer.html).
+`optim_wrapper` 是配置优化相关设置的字段。优化器封装（OptimWrapper）不仅提供了优化器的功能，还支持梯度裁剪、混合精度训练等功能。更多内容请看[优化器封装教程](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/optim_wrapper.html).
 
 ```python
 optim_wrapper = dict(  # 优化器封装的配置
@@ -282,7 +282,7 @@ optim_wrapper = dict(  # 优化器封装的配置
         weight_decay=0.0005, # 权重衰减
         nesterov=True, # 开启Nesterov momentum，公式详见 http://www.cs.toronto.edu/~hinton/absps/momentum.pdf
         batch_size_per_gpu=train_batch_size_per_gpu),  # 该选项实现了自动权重衰减系数缩放
-    clip_grad=None,  # 梯度裁剪的配置，设置为 None 关闭梯度裁剪。使用方法请见 https://mmengine.readthedocs.io/en/latest/tutorials/optimizer.html
+    clip_grad=None,  # 梯度裁剪的配置，设置为 None 关闭梯度裁剪。使用方法请见 https://mmengine.readthedocs.io/zh_CN/latest/tutorials/optim_wrapper.html
     constructor='YOLOv5OptimizerConstructor') # YOLOv5 优化器构建器
 
 ```
@@ -328,7 +328,7 @@ custom_hooks = [
 ### 运行相关配置
 
 ```python
-default_scope = 'mmyolo'  # 默认的注册器域名，默认从此注册器域中寻找模块。请参考 https://mmengine.readthedocs.io/en/latest/tutorials/registry.html
+default_scope = 'mmyolo'  # 默认的注册器域名，默认从此注册器域中寻找模块。请参考 https://mmengine.readthedocs.io/zh_CN/latest/tutorials/registry.html
 
 env_cfg = dict(
     cudnn_benchmark=True,  # 是否启用 cudnn benchmark, 推荐单尺度训练时开启，可加速训练
@@ -361,7 +361,7 @@ resume = False  # 是否从 `load_from` 中定义的检查点恢复。 如果 `l
 
 如果你在构建一个与任何现有方法不共享结构的全新方法，那么可以在 `configs` 文件夹下创建一个新的例如 `yolov100` 文件夹。
 
-更多细节请参考 [MMEngine 配置文件教程](https://mmengine.readthedocs.io/en/latest/tutorials/config.html)。
+更多细节请参考 [MMEngine 配置文件教程](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/config.html)。
 
 通过设置 `_base_` 字段，我们可以设置当前配置文件继承自哪些文件。
 
@@ -384,7 +384,7 @@ _base_ = [
 
 ### 忽略基础配置文件里的部分内容
 
-有时，您也许会设置 `_delete_=True` 去忽略基础配置文件里的一些域内容。 您也许可以参照 [MMEngine 配置文件教程](https://mmengine.readthedocs.io/en/latest/tutorials/config.html) 来获得一些简单的指导。
+有时，您也许会设置 `_delete_=True` 去忽略基础配置文件里的一些域内容。 您也许可以参照 [MMEngine 配置文件教程](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/config.html) 来获得一些简单的指导。
 
 在 MMYOLO 里，例如为了改变 RTMDet 的主干网络的某些内容：
 
@@ -540,7 +540,7 @@ pre_transform = _base_.pre_transform # 变量 pre_transform 等于 _base_ 中定
 我们遵循以下样式来命名配置文件。建议贡献者遵循相同的风格。
 
 ```
-{algorithm name}_{model component names [component1]_[component2]_[...]}-[version id]_[norm setting]_[data preprocessor type]_{training settings}_{training dataset information}_{testing dataset information}.py
+{algorithm name}_{model component names [component1]_[component2]_[...]}-[version id]_[norm setting]_[data preprocessor type]_{training settings}_{training dataset information}_[testing dataset information].py
 ```
 
 文件名分为 8 个部分，其中 4 个必填部分、4 个可选部分。 每个部分用 `_` 连接，每个部分内的单词应该用 `-` 连接。`{}` 表示必填部分，`[]` 表示选填部分。

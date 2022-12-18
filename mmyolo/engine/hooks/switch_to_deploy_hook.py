@@ -17,4 +17,5 @@ class SwitchToDeployHook(Hook):
     """
 
     def before_test_epoch(self, runner: Runner):
+        """Switch to deploy mode before testing."""
         switch_to_deploy(runner.model)

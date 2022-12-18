@@ -3,7 +3,7 @@ from typing import List, Tuple, Union
 
 import torch
 import torch.nn as nn
-from mmcv.cnn import ConvModule
+from mmcv.cnn import ConvModule, DepthwiseSeparableConvModule
 from mmdet.models.backbones.csp_darknet import CSPLayer, Focus
 from mmdet.utils import ConfigType, OptMultiConfig
 
@@ -146,8 +146,8 @@ class YOLOv5CSPDarknet(BaseBackbone):
         return stage
 
     def init_weights(self):
+        """Initialize the parameters."""
         if self.init_cfg is None:
-            """Initialize the parameters."""
             for m in self.modules():
                 if isinstance(m, torch.nn.Conv2d):
                     # In order to be consistent with the source code,
@@ -178,6 +178,8 @@ class YOLOXCSPDarknet(BaseBackbone):
             Defaults to (2, 3, 4).
         frozen_stages (int): Stages to be frozen (stop grad and set eval
             mode). -1 means not freezing any parameters. Defaults to -1.
+        use_depthwise (bool): Whether to use depthwise separable convolution.
+            Defaults to False.
         spp_kernal_sizes: (tuple[int]): Sequential of kernel sizes of SPP
             layers. Defaults to (5, 9, 13).
         norm_cfg (dict): Dictionary to construct and config norm layer.
@@ -218,12 +220,14 @@ class YOLOXCSPDarknet(BaseBackbone):
                  input_channels: int = 3,
                  out_indices: Tuple[int] = (2, 3, 4),
                  frozen_stages: int = -1,
+                 use_depthwise: bool = False,
                  spp_kernal_sizes: Tuple[int] = (5, 9, 13),
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None):
+        self.use_depthwise = use_depthwise
         self.spp_kernal_sizes = spp_kernal_sizes
         super().__init__(self.arch_settings[arch], deepen_factor, widen_factor,
                          input_channels, out_indices, frozen_stages, plugins,
@@ -251,7 +255,9 @@ class YOLOXCSPDarknet(BaseBackbone):
         out_channels = make_divisible(out_channels, self.widen_factor)
         num_blocks = make_round(num_blocks, self.deepen_factor)
         stage = []
-        conv_layer = ConvModule(
+        conv = DepthwiseSeparableConvModule \
+            if self.use_depthwise else ConvModule
+        conv_layer = conv(
             in_channels,
             out_channels,
             kernel_size=3,

@@ -195,15 +195,15 @@ class Mosaic(BaseMixImageTransform):
                         mosaic transform
                            center_x
                 +------------------------------+
-                |       pad        |  pad      |
-                |      +-----------+           |
+                |       pad        |           |
+                |      +-----------+    pad    |
                 |      |           |           |
-                |      |  image1   |--------+  |
-                |      |           |        |  |
-                |      |           | image2 |  |
-     center_y   |----+-------------+-----------|
+                |      |  image1   +-----------+
+                |      |           |           |
+                |      |           |   image2  |
+     center_y   |----+-+-----------+-----------+
                 |    |   cropped   |           |
-                |pad |   image3    |  image4   |
+                |pad |   image3    |   image4  |
                 |    |             |           |
                 +----|-------------+-----------+
                      |             |
@@ -466,12 +466,305 @@ class Mosaic(BaseMixImageTransform):
 
 
 @TRANSFORMS.register_module()
+class Mosaic9(BaseMixImageTransform):
+    """Mosaic9 augmentation.
+
+    Given 9 images, mosaic transform combines them into
+    one output image. The output image is composed of the parts from each sub-
+    image.
+
+                +-------------------------------+------------+
+                | pad           |      pad      |            |
+                |    +----------+               |            |
+                |    |          +---------------+  top_right |
+                |    |          |      top      |   image2   |
+                |    | top_left |     image1    |            |
+                |    |  image8  o--------+------+--------+---+
+                |    |          |        |               |   |
+                +----+----------+        |     right     |pad|
+                |               | center |     image3    |   |
+                |     left      | image0 +---------------+---|
+                |    image7     |        |               |   |
+            +---+-----------+---+--------+               |   |
+            |   |  cropped  |            |  bottom_right |pad|
+            |   |bottom_left|            |    image4     |   |
+            |   |  image6   |   bottom   |               |   |
+            +---|-----------+   image5   +---------------+---|
+                |    pad    |            |        pad        |
+                +-----------+------------+-------------------+
+
+    The mosaic transform steps are as follows:
+
+        1. Get the center image according to the index, and randomly
+           sample another 8 images from the custom dataset.
+        2. Randomly offset the image after Mosaic
+
+    Required Keys:
+
+    - img
+    - gt_bboxes (BaseBoxes[torch.float32]) (optional)
+    - gt_bboxes_labels (np.int64) (optional)
+    - gt_ignore_flags (np.bool) (optional)
+    - mix_results (List[dict])
+
+    Modified Keys:
+
+    - img
+    - img_shape
+    - gt_bboxes (optional)
+    - gt_bboxes_labels (optional)
+    - gt_ignore_flags (optional)
+
+    Args:
+        img_scale (Sequence[int]): Image size after mosaic pipeline of single
+            image. The shape order should be (height, width).
+            Defaults to (640, 640).
+        bbox_clip_border (bool, optional): Whether to clip the objects outside
+            the border of the image. In some dataset like MOT17, the gt bboxes
+            are allowed to cross the border of images. Therefore, we don't
+            need to clip the gt bboxes in these cases. Defaults to True.
+        pad_val (int): Pad value. Defaults to 114.
+        pre_transform(Sequence[dict]): Sequence of transform object or
+            config dict to be composed.
+        prob (float): Probability of applying this transformation.
+            Defaults to 1.0.
+        use_cached (bool): Whether to use cache. Defaults to False.
+        max_cached_images (int): The maximum length of the cache. The larger
+            the cache, the stronger the randomness of this transform. As a
+            rule of thumb, providing 5 caches for each image suffices for
+            randomness. Defaults to 50.
+        random_pop (bool): Whether to randomly pop a result from the cache
+            when the cache is full. If set to False, use FIFO popping method.
+            Defaults to True.
+        max_refetch (int): The maximum number of retry iterations for getting
+            valid results from the pipeline. If the number of iterations is
+            greater than `max_refetch`, but results is still None, then the
+            iteration is terminated and raise the error. Defaults to 15.
+    """
+
+    def __init__(self,
+                 img_scale: Tuple[int, int] = (640, 640),
+                 bbox_clip_border: bool = True,
+                 pad_val: Union[float, int] = 114.0,
+                 pre_transform: Sequence[dict] = None,
+                 prob: float = 1.0,
+                 use_cached: bool = False,
+                 max_cached_images: int = 50,
+                 random_pop: bool = True,
+                 max_refetch: int = 15):
+        assert isinstance(img_scale, tuple)
+        assert 0 <= prob <= 1.0, 'The probability should be in range [0,1]. ' \
+                                 f'got {prob}.'
+        if use_cached:
+            assert max_cached_images >= 9, 'The length of cache must >= 9, ' \
+                                           f'but got {max_cached_images}.'
+
+        super().__init__(
+            pre_transform=pre_transform,
+            prob=prob,
+            use_cached=use_cached,
+            max_cached_images=max_cached_images,
+            random_pop=random_pop,
+            max_refetch=max_refetch)
+
+        self.img_scale = img_scale
+        self.bbox_clip_border = bbox_clip_border
+        self.pad_val = pad_val
+
+        # intermediate variables
+        self._current_img_shape = [0, 0]
+        self._center_img_shape = [0, 0]
+        self._previous_img_shape = [0, 0]
+
+    def get_indexes(self, dataset: Union[BaseDataset, list]) -> list:
+        """Call function to collect indexes.
+
+        Args:
+            dataset (:obj:`Dataset` or list): The dataset or cached list.
+
+        Returns:
+            list: indexes.
+        """
+        indexes = [random.randint(0, len(dataset)) for _ in range(8)]
+        return indexes
+
+    def mix_img_transform(self, results: dict) -> dict:
+        """Mixed image data transformation.
+
+        Args:
+            results (dict): Result dict.
+
+        Returns:
+            results (dict): Updated result dict.
+        """
+        assert 'mix_results' in results
+
+        mosaic_bboxes = []
+        mosaic_bboxes_labels = []
+        mosaic_ignore_flags = []
+
+        img_scale_h, img_scale_w = self.img_scale
+
+        if len(results['img'].shape) == 3:
+            mosaic_img = np.full(
+                (int(img_scale_h * 3), int(img_scale_w * 3), 3),
+                self.pad_val,
+                dtype=results['img'].dtype)
+        else:
+            mosaic_img = np.full((int(img_scale_h * 3), int(img_scale_w * 3)),
+                                 self.pad_val,
+                                 dtype=results['img'].dtype)
+
+        # index = 0 is mean original image
+        # len(results['mix_results']) = 8
+        loc_strs = ('center', 'top', 'top_right', 'right', 'bottom_right',
+                    'bottom', 'bottom_left', 'left', 'top_left')
+
+        results_all = [results, *results['mix_results']]
+        for index, results_patch in enumerate(results_all):
+            img_i = results_patch['img']
+            # keep_ratio resize
+            img_i_h, img_i_w = img_i.shape[:2]
+            scale_ratio_i = min(img_scale_h / img_i_h, img_scale_w / img_i_w)
+            img_i = mmcv.imresize(
+                img_i,
+                (int(img_i_w * scale_ratio_i), int(img_i_h * scale_ratio_i)))
+
+            paste_coord = self._mosaic_combine(loc_strs[index],
+                                               img_i.shape[:2])
+
+            padw, padh = paste_coord[:2]
+            x1, y1, x2, y2 = (max(x, 0) for x in paste_coord)
+            mosaic_img[y1:y2, x1:x2] = img_i[y1 - padh:, x1 - padw:]
+
+            gt_bboxes_i = results_patch['gt_bboxes']
+            gt_bboxes_labels_i = results_patch['gt_bboxes_labels']
+            gt_ignore_flags_i = results_patch['gt_ignore_flags']
+            gt_bboxes_i.rescale_([scale_ratio_i, scale_ratio_i])
+            gt_bboxes_i.translate_([padw, padh])
+
+            mosaic_bboxes.append(gt_bboxes_i)
+            mosaic_bboxes_labels.append(gt_bboxes_labels_i)
+            mosaic_ignore_flags.append(gt_ignore_flags_i)
+
+        # Offset
+        offset_x = int(random.uniform(0, img_scale_w))
+        offset_y = int(random.uniform(0, img_scale_h))
+        mosaic_img = mosaic_img[offset_y:offset_y + 2 * img_scale_h,
+                                offset_x:offset_x + 2 * img_scale_w]
+
+        mosaic_bboxes = mosaic_bboxes[0].cat(mosaic_bboxes, 0)
+        mosaic_bboxes.translate_([-offset_x, -offset_y])
+        mosaic_bboxes_labels = np.concatenate(mosaic_bboxes_labels, 0)
+        mosaic_ignore_flags = np.concatenate(mosaic_ignore_flags, 0)
+
+        if self.bbox_clip_border:
+            mosaic_bboxes.clip_([2 * img_scale_h, 2 * img_scale_w])
+        else:
+            # remove outside bboxes
+            inside_inds = mosaic_bboxes.is_inside(
+                [2 * img_scale_h, 2 * img_scale_w]).numpy()
+            mosaic_bboxes = mosaic_bboxes[inside_inds]
+            mosaic_bboxes_labels = mosaic_bboxes_labels[inside_inds]
+            mosaic_ignore_flags = mosaic_ignore_flags[inside_inds]
+
+        results['img'] = mosaic_img
+        results['img_shape'] = mosaic_img.shape
+        results['gt_bboxes'] = mosaic_bboxes
+        results['gt_bboxes_labels'] = mosaic_bboxes_labels
+        results['gt_ignore_flags'] = mosaic_ignore_flags
+        return results
+
+    def _mosaic_combine(self, loc: str,
+                        img_shape_hw: Tuple[int, int]) -> Tuple[int, ...]:
+        """Calculate global coordinate of mosaic image.
+
+        Args:
+            loc (str): Index for the sub-image.
+            img_shape_hw (Sequence[int]): Height and width of sub-image
+
+        Returns:
+             paste_coord (tuple): paste corner coordinate in mosaic image.
+        """
+        assert loc in ('center', 'top', 'top_right', 'right', 'bottom_right',
+                       'bottom', 'bottom_left', 'left', 'top_left')
+
+        img_scale_h, img_scale_w = self.img_scale
+
+        self._current_img_shape = img_shape_hw
+        current_img_h, current_img_w = self._current_img_shape
+        previous_img_h, previous_img_w = self._previous_img_shape
+        center_img_h, center_img_w = self._center_img_shape
+
+        if loc == 'center':
+            self._center_img_shape = self._current_img_shape
+            #  xmin, ymin, xmax, ymax
+            paste_coord = img_scale_w, \
+                img_scale_h, \
+                img_scale_w + current_img_w, \
+                img_scale_h + current_img_h
+        elif loc == 'top':
+            paste_coord = img_scale_w, \
+                          img_scale_h - current_img_h, \
+                          img_scale_w + current_img_w, \
+                          img_scale_h
+        elif loc == 'top_right':
+            paste_coord = img_scale_w + previous_img_w, \
+                          img_scale_h - current_img_h, \
+                          img_scale_w + previous_img_w + current_img_w, \
+                          img_scale_h
+        elif loc == 'right':
+            paste_coord = img_scale_w + center_img_w, \
+                          img_scale_h, \
+                          img_scale_w + center_img_w + current_img_w, \
+                          img_scale_h + current_img_h
+        elif loc == 'bottom_right':
+            paste_coord = img_scale_w + center_img_w, \
+                          img_scale_h + previous_img_h, \
+                          img_scale_w + center_img_w + current_img_w, \
+                          img_scale_h + previous_img_h + current_img_h
+        elif loc == 'bottom':
+            paste_coord = img_scale_w + center_img_w - current_img_w, \
+                          img_scale_h + center_img_h, \
+                          img_scale_w + center_img_w, \
+                          img_scale_h + center_img_h + current_img_h
+        elif loc == 'bottom_left':
+            paste_coord = img_scale_w + center_img_w - \
+                          previous_img_w - current_img_w, \
+                          img_scale_h + center_img_h, \
+                          img_scale_w + center_img_w - previous_img_w, \
+                          img_scale_h + center_img_h + current_img_h
+        elif loc == 'left':
+            paste_coord = img_scale_w - current_img_w, \
+                          img_scale_h + center_img_h - current_img_h, \
+                          img_scale_w, \
+                          img_scale_h + center_img_h
+        elif loc == 'top_left':
+            paste_coord = img_scale_w - current_img_w, \
+                          img_scale_h + center_img_h - \
+                          previous_img_h - current_img_h, \
+                          img_scale_w, \
+                          img_scale_h + center_img_h - previous_img_h
+
+        self._previous_img_shape = self._current_img_shape
+        #  xmin, ymin, xmax, ymax
+        return paste_coord
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(img_scale={self.img_scale}, '
+        repr_str += f'pad_val={self.pad_val}, '
+        repr_str += f'prob={self.prob})'
+        return repr_str
+
+
+@TRANSFORMS.register_module()
 class YOLOv5MixUp(BaseMixImageTransform):
     """MixUp data augmentation for YOLOv5.
 
     .. code:: text
 
-     The mixup transform steps are as follows:
+    The mixup transform steps are as follows:
 
         1. Another random image is picked by dataset.
         2. Randomly obtain the fusion ratio from the beta distribution,
@@ -514,7 +807,7 @@ class YOLOv5MixUp(BaseMixImageTransform):
             when the cache is full. If set to False, use FIFO popping method.
             Defaults to True.
         max_refetch (int): The maximum number of iterations. If the number of
-            iterations is greater than `max_iters`, but gt_bbox is still
+            iterations is greater than `max_refetch`, but gt_bbox is still
             empty, then the iteration is terminated. Defaults to 15.
     """
 
@@ -599,20 +892,20 @@ class YOLOXMixUp(BaseMixImageTransform):
     .. code:: text
 
                          mixup transform
-                +------------------------------+
+                +---------------+--------------+
                 | mixup image   |              |
                 |      +--------|--------+     |
                 |      |        |        |     |
-                |---------------+        |     |
+                +---------------+        |     |
                 |      |                 |     |
                 |      |      image      |     |
                 |      |                 |     |
                 |      |                 |     |
-                |      |-----------------+     |
+                |      +-----------------+     |
                 |             pad              |
                 +------------------------------+
 
-     The mixup transform steps are as follows:
+    The mixup transform steps are as follows:
 
         1. Another random image is picked by dataset and embedded in
            the top left patch(after padding and resizing)
@@ -662,7 +955,7 @@ class YOLOXMixUp(BaseMixImageTransform):
             when the cache is full. If set to False, use FIFO popping method.
             Defaults to True.
         max_refetch (int): The maximum number of iterations. If the number of
-            iterations is greater than `max_iters`, but gt_bbox is still
+            iterations is greater than `max_refetch`, but gt_bbox is still
             empty, then the iteration is terminated. Defaults to 15.
     """
 
@@ -759,9 +1052,9 @@ class YOLOXMixUp(BaseMixImageTransform):
         ori_img = results['img']
         origin_h, origin_w = out_img.shape[:2]
         target_h, target_w = ori_img.shape[:2]
-        padded_img = np.zeros(
-            (max(origin_h, target_h), max(origin_w,
-                                          target_w), 3)).astype(np.uint8)
+        padded_img = np.ones((max(origin_h, target_h), max(
+            origin_w, target_w), 3)) * self.pad_val
+        padded_img = padded_img.astype(np.uint8)
         padded_img[:origin_h, :origin_w] = out_img
 
         x_offset, y_offset = 0, 0
@@ -823,6 +1116,6 @@ class YOLOXMixUp(BaseMixImageTransform):
         repr_str += f'ratio_range={self.ratio_range}, '
         repr_str += f'flip_ratio={self.flip_ratio}, '
         repr_str += f'pad_val={self.pad_val}, '
-        repr_str += f'max_iters={self.max_iters}, '
+        repr_str += f'max_refetch={self.max_refetch}, '
         repr_str += f'bbox_clip_border={self.bbox_clip_border})'
         return repr_str
