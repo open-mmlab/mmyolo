@@ -71,19 +71,14 @@ And the figure of P6 model is in [model_design.md](docs/en/algorithm_description
 
 ## What's New
 
-💎 **v0.1.3** was released on 10/11/2022:
+💎 **v0.2.0** was released on 1/12/2022:
 
-1. Fix training failure when saving best weights based on mmengine 0.3.1
-2. Fix `add_dump_metric` error based on mmdet 3.0.0rc3
-
-💎 **v0.1.2** was released on 3/11/2022:
-
-1. Support [YOLOv5/YOLOv6/YOLOX/RTMDet deployments](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy) for ONNXRuntime and TensorRT
-2. Support [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov6) s/t/n model training
-3. YOLOv5 supports [P6 model training which can input 1280-scale images](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5)
-4. YOLOv5 supports [VOC dataset training](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/voc)
-5. Support [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/main/configs/ppyoloe) and [YOLOv7](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov7) model inference and official weight conversion
-6. Add YOLOv5 replacement [backbone tutorial](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/advanced_guides/how_to.md#use-backbone-network-implemented-in-other-openmmlab-repositories) in How-to documentation
+1. Support [YOLOv7](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov7) P5 and P6 model
+2. Support [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov6/README.md) ML model
+3. Support [Grad-Based CAM and Grad-Free CAM](https://github.com/open-mmlab/mmyolo/blob/dev/demo/boxam_vis_demo.py)
+4. Support [large image inference](https://github.com/open-mmlab/mmyolo/blob/dev/demo/large_image_demo.py) based on sahi
+5. Add [easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README.md) project under the projects folder
+6. Add [custom dataset guide](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/user_guides/custom_dataset.md)
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
@@ -119,6 +114,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
   - [Train & Test](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#train-test)
     - [Learn about Configs with YOLOv5](docs/en/user_guides/config.md)
   - [From getting started to deployment](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#get-started-to-deployment)
+    - [Custom Dataset](docs/en/user_guides/custom_dataset.md)
     - [From getting started to deployment with YOLOv5](docs/en/user_guides/yolov5_tutorial.md)
   - [Useful Tools](https://mmdetection.readthedocs.io/en/latest/user_guides/index.html#useful-tools)
     - [Visualization](docs/en/user_guides/visualization.md)
@@ -155,8 +151,8 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 - [x] [YOLOX](configs/yolox)
 - [x] [RTMDet](configs/rtmdet)
 - [x] [YOLOv6](configs/yolov6)
+- [x] [YOLOv7](configs/yolov7)
 - [ ] [PPYOLOE](configs/ppyoloe)(Inference only)
-- [ ] [YOLOv7](configs/yolov7)(Inference only)
 
 </details>
 

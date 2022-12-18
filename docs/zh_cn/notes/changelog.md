@@ -1,5 +1,60 @@
 # 更新日志
 
+## v0.2.0（1/12/2022)
+
+### 亮点
+
+1. 支持 [YOLOv7](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov7) P5 和 P6 模型
+2. 支持 [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov6/README.md) 中的 ML 大模型
+3. 支持 [Grad-Based CAM 和 Grad-Free CAM](https://github.com/open-mmlab/mmyolo/blob/dev/demo/boxam_vis_demo.py)
+4. 基于 sahi 支持 [大图推理](https://github.com/open-mmlab/mmyolo/blob/dev/demo/large_image_demo.py)
+5. projects 文件夹下新增 [easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README.md) 项目
+6. 新增 [自定义数据集教程](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/user_guides/custom_dataset.md)
+
+### 新特性
+
+1. `browse_dataset.py` 脚本支持可视化原图、数据增强后和中间结果功能 (#304)
+2. `image_demo.py` 新增预测结果保存为 labelme 格式功能 (#288, #314)
+3. 新增 labelme 格式转 COCO 格式脚本 `labelme2coco` (#308, #313)
+4. 新增 COCO 数据集切分脚本 `coco_split.py` (#311)
+5. `how-to.md` 文档中新增两个 backbone 替换案例以及更新 `plugin.md` (#291)
+6. 新增贡献者文档 `contributing.md` and 代码规范文档 `code_style.md` (#322)
+7. 新增如何通过 mim 跨库调用脚本文档 (#321)
+8. `YOLOv5` 支持 RV1126 设备部署 (#262)
+
+### Bug 修复
+
+1. 修复 `MixUp` padding 错误 (#319)
+2. 修复 `LetterResize` 和 `YOLOv5KeepRatioResize` 中 `scale_factor` 参数顺序错误 (#305)
+3. 修复 `YOLOX Nano` 模型训练错误问题 (#285)
+4. 修复 `RTMDet` 部署没有导包的错误 (#287)
+5. 修复 int8 部署配置错误 (#315)
+6. 修复 `basebackbone` 中 `make_stage_plugins` 注释 (#296)
+7. 部署模块支持切换为 deploy 模式功能 (#324)
+8. 修正 `RTMDet` 模型结构图中的错误 (#317)
+
+### 完善
+
+1. `test.py` 中新增 json 格式导出选项 (#316)
+2. `extract_subcoco.py` 脚本中新增基于面积阈值过滤规则 (#286)
+3. 部署相关中文文档翻译为英文 (#289)
+4. 新增 `YOLOv6` 算法描述大纲文档 (#252)
+5. 完善 `config.md` (#297, #303)
+6. 完善 `mosiac9` 的 docstring (#307)
+7. 完善 `browse_coco_json.py` 脚本输入参数 (#309)
+8. 重构 `dataset_analysis.py` 中部分函数使其更加通用 (#294)
+
+### 视频
+
+1. 发布了 [工程文件结构简析](https://www.bilibili.com/video/BV1LP4y117jS)
+2. 发布了 [10分钟换遍主干网络文档](https://www.bilibili.com/video/BV1JG4y1d7GC)
+
+### 贡献者
+
+总共 14 位开发者参与了本次版本
+
+谢谢 @fcakyon, @matrixgame2018, @MambaWong, @imAzhou, @triple-Mu, @RangeKing, @PeterH0323, @xin-li-67, @kitecats, @hanrui1sensetime, @AllentDan, @Zheng-LinXiao, @hhaAndroid, @wanghonglie
+
 ## v0.1.3（10/11/2022)
 
 ### 新特性

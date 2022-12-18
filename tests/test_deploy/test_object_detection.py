@@ -37,7 +37,7 @@ deploy_cfg = Config(
     dict(
         backend_config=dict(type='onnxruntime'),
         codebase_config=dict(
-            type='mmdet',
+            type='mmyolo',
             task='ObjectDetection',
             post_processing=dict(
                 score_threshold=0.05,

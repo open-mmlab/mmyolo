@@ -15,7 +15,18 @@ from mmyolo.deploy.models.layers import efficient_nms
 from mmyolo.models.dense_heads import YOLOv5Head
 
 
-def yolov5_bbox_decoder(priors, bbox_preds, stride):
+def yolov5_bbox_decoder(priors: Tensor, bbox_preds: Tensor,
+                        stride: int) -> Tensor:
+    """Decode YOLOv5 bounding boxes.
+
+    Args:
+        priors (Tensor): Prior boxes in center-offset form.
+        bbox_preds (Tensor): Predicted bounding boxes.
+        stride (int): Stride of the feature map.
+
+    Returns:
+        Tensor: Decoded bounding boxes.
+    """
     bbox_preds = bbox_preds.sigmoid()
 
     x_center = (priors[..., 0] + priors[..., 2]) * 0.5
@@ -37,8 +48,7 @@ def yolov5_bbox_decoder(priors, bbox_preds, stride):
 @FUNCTION_REWRITER.register_rewriter(
     func_name='mmyolo.models.dense_heads.yolov5_head.'
     'YOLOv5Head.predict_by_feat')
-def yolov5_head__predict_by_feat(ctx,
-                                 self,
+def yolov5_head__predict_by_feat(self,
                                  cls_scores: List[Tensor],
                                  bbox_preds: List[Tensor],
                                  objectnesses: Optional[List[Tensor]] = None,
@@ -74,6 +84,7 @@ def yolov5_head__predict_by_feat(ctx,
             tensor in the tuple is (N, num_box), and each element
             represents the class label of the corresponding box.
     """
+    ctx = FUNCTION_REWRITER.get_context()
     detector_type = type(self)
     deploy_cfg = ctx.cfg
     use_efficientnms = deploy_cfg.get('use_efficientnms', False)
@@ -146,3 +157,33 @@ def yolov5_head__predict_by_feat(ctx,
 
     return nms_func(bboxes, scores, max_output_boxes_per_class, iou_threshold,
                     score_threshold, pre_top_k, keep_top_k)
+
+
+@FUNCTION_REWRITER.register_rewriter(
+    func_name='mmyolo.models.dense_heads.yolov5_head.'
+    'YOLOv5Head.predict',
+    backend='rknn')
+def yolov5_head__predict__rknn(self, x: Tuple[Tensor], *args,
+                               **kwargs) -> Tuple[Tensor, Tensor, Tensor]:
+    """Perform forward propagation of the detection head and predict detection
+    results on the features of the upstream network.
+
+    Args:
+        x (tuple[Tensor]): Multi-level features from the
+            upstream network, each is a 4D-tensor.
+    """
+    outs = self(x)
+    return outs
+
+
+@FUNCTION_REWRITER.register_rewriter(
+    func_name='mmyolo.models.dense_heads.yolov5_head.'
+    'YOLOv5HeadModule.forward',
+    backend='rknn')
+def yolov5_head_module__forward__rknn(
+        self, x: Tensor, *args, **kwargs) -> Tuple[Tensor, Tensor, Tensor]:
+    """Forward feature of a single scale level."""
+    out = []
+    for i, feat in enumerate(x):
+        out.append(self.convs_pred[i](feat))
+    return out

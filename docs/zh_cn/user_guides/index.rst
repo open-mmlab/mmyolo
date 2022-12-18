@@ -15,8 +15,8 @@ MMYOLO 在 `Model Zoo <https://mmyolo.readthedocs.io/en/latest/model_zoo.html>`_
 .. toctree::
    :maxdepth: 1
 
+   custom_dataset.md
    yolov5_tutorial.md
-
 
 实用工具
 ************

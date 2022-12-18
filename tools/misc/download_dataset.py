@@ -91,10 +91,14 @@ def main():
         balloon=[
             # src link: https://github.com/matterport/Mask_RCNN/releases/download/v2.1/balloon_dataset.zip # noqa
             'https://download.openmmlab.com/mmyolo/data/balloon_dataset.zip'
-        ])
+        ],
+        cat=[
+            'https://download.openmmlab.com/mmyolo/data/cat_dataset.zip'  # noqa
+        ],
+    )
     url = data2url.get(args.dataset_name, None)
     if url is None:
-        print('Only support COCO, VOC, balloon,and LVIS now!')
+        print('Only support COCO, VOC, balloon, cat and LVIS now!')
         return
     download(
         url,

@@ -21,7 +21,7 @@ ncnn 和其他后端的支持会在后续支持。
 
 ## MMYOLO 中部署相关配置说明
 
-所有部署配置文件在 [`configs/deploy`](configs/deploy) 目录下。
+所有部署配置文件在 [`configs/deploy`](../../../configs/deploy/) 目录下。
 
 您可以部署静态输入或者动态输入的模型，因此您需要修改模型配置文件中与此相关的数据处理流程。
 
@@ -89,7 +89,7 @@ test_dataloader = dict(
 
 以 `MMYOLO` 中的 `YOLOv5` 部署配置为例，下面是对配置文件参数说明介绍。
 
-`ONNXRuntime` 部署 `YOLOv5` 可以使用 [`detection_onnxruntime_static.py`](configs/deploy/detection_onnxruntime_static.py) 配置。
+`ONNXRuntime` 部署 `YOLOv5` 可以使用 [`detection_onnxruntime_static.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_onnxruntime_static.py) 配置。
 
 ```python
 _base_ = ['./base_static.py']
@@ -111,7 +111,7 @@ backend_config = dict(type='onnxruntime')
 
 `backend_config` 中指定了部署后端 `type=‘onnxruntime’`，其他信息可参考第三小节。
 
-`TensorRT` 部署 `YOLOv5` 可以使用 [`detection_tensorrt_static-640x640.py`](config/deploy/detection_tensorrt_static-640x640.py) 配置。
+`TensorRT` 部署 `YOLOv5` 可以使用 [`detection_tensorrt_static-640x640.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_tensorrt_static-640x640.py) 配置。
 
 ```python
 _base_ = ['./base_static.py']
@@ -135,7 +135,7 @@ use_efficientnms = False
 与 `ONNXRuntime` 部署配置不同的是，`TensorRT`  需要指定输入图片尺寸和构建引擎文件需要的参数，包括：
 
 - `onnx_config` 中指定 `input_shape=(640, 640)`
-- `backend_config['common_config']` 中 `fp16_mode=False` 和 `max_workspace_size=1 << 30`, `fp16_mode` 表示是否以 `fp16` 的参数格式构建引擎，`max_workspace_size` 表示当前 `gpu` 设备最大显存, 单位为 `GB`。`fp16` 的详细配置可以参考 [`detection_tensorrt-fp16_static-640x640.py`](configs/deploy/detection_tensorrt-fp16_static-640x640.py)
+- `backend_config['common_config']` 中包括 `fp16_mode=False` 和 `max_workspace_size=1 << 30`, `fp16_mode` 表示是否以 `fp16` 的参数格式构建引擎，`max_workspace_size` 表示当前 `gpu` 设备最大显存, 单位为 `GB`。`fp16` 的详细配置可以参考 [`detection_tensorrt-fp16_static-640x640.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_tensorrt-fp16_static-640x640.py)
 - `backend_config['model_inputs']['input_shapes']['input']` 中 `min_shape` /`opt_shape`/`max_shape` 对应的值在静态输入下应该保持相同，即默认均为 `[1, 3, 640, 640]`。
 
 `use_efficientnms` 是 `MMYOLO` 系列新引入的配置，表示在导出 `onnx` 时是否启用`Efficient NMS Plugin`来替换 `MMDeploy` 中的 `TRTBatchedNMS plugin` 。
@@ -148,11 +148,11 @@ use_efficientnms = False
 
 #### (1) 模型配置文件介绍
 
-当您部署静态输入模型时，您无需修改任何模型配置文件，仅需要修改部署配置文件即可。
+当您部署动态输入模型时，您无需修改任何模型配置文件，仅需要修改部署配置文件即可。
 
 #### (2) 部署配置文件介绍
 
-`ONNXRuntime` 部署 `YOLOv5` 可以使用  [`detection_onnxruntime_dynamic.py`](configs/deploy/detection_onnxruntime_dynamic.py)  配置。
+`ONNXRuntime` 部署 `YOLOv5` 可以使用  [`detection_onnxruntime_dynamic.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_onnxruntime_dynamic.py)  配置。
 
 ```python
 _base_ = ['./base_dynamic.py']
@@ -174,7 +174,7 @@ backend_config = dict(type='onnxruntime')
 
 `backend_config` 中指定了后端 `type='onnxruntime'`，其他配置与上一节在 ONNXRuntime 部署静态输入模型相同。
 
-`TensorRT` 部署 `YOLOv5` 可以使用  [`detection_tensorrt_dynamic-192x192-960x960.py`](config/deploy/detection_tensorrt_dynamic-192x192-960x960.py) 配置。
+`TensorRT` 部署 `YOLOv5` 可以使用  [`detection_tensorrt_dynamic-192x192-960x960.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_tensorrt_dynamic-192x192-960x960.py) 配置。
 
 ```python
 _base_ = ['./base_dynamic.py']
@@ -228,8 +228,8 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
 ### 参数描述
 
 - `deploy_cfg` : mmdeploy 针对此模型的部署配置，包含推理框架类型、是否量化、输入 shape 是否动态等。配置文件之间可能有引用关系，`configs/deploy/detection_onnxruntime_static.py` 是一个示例。
-- `model_cfg` : MMYOLO 算法库的模型配置，例如 `configs/deploy/model/yolov5_s-deploy.py`, 与 mmdeploy 的路径无关.
-- `checkpoint` : torch 模型路径。可以 http/https 开头，详见 `mmcv.FileClient` 的实现。.
+- `model_cfg` : MMYOLO 算法库的模型配置，例如 `configs/deploy/model/yolov5_s-deploy.py`, 与 mmdeploy 的路径无关。
+- `checkpoint` : torch 模型路径。可以 http/https 开头，详见 `mmengine.fileio` 的实现。
 - `img` : 模型转换时，用做测试的图像文件路径。
 - `--test-img` : 用于测试模型的图像文件路径。默认设置成`None`。
 - `--work-dir` : 工作目录，用来保存日志和模型文件。

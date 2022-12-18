@@ -80,7 +80,7 @@ class YOLOv5HeadModule(BaseModule):
         """Initialize the bias of YOLOv5 head."""
         super().init_weights()
         for mi, s in zip(self.convs_pred, self.featmap_strides):  # from
-            b = mi.bias.data.view(3, -1)
+            b = mi.bias.data.view(self.num_base_priors, -1)
             # obj (8 objects per 640 image)
             b.data[:, 4] += math.log(8 / (640 / s)**2)
             b.data[:, 5:] += math.log(0.6 / (self.num_classes - 0.999999))
@@ -167,6 +167,7 @@ class YOLOv5Head(BaseDenseHead):
                      reduction='mean',
                      loss_weight=1.0),
                  prior_match_thr: float = 4.0,
+                 near_neighbor_thr: float = 0.5,
                  obj_level_weights: List[float] = [4.0, 1.0, 0.4],
                  train_cfg: OptConfigType = None,
                  test_cfg: OptConfigType = None,
@@ -192,6 +193,7 @@ class YOLOv5Head(BaseDenseHead):
         self.featmap_sizes = [torch.empty(1)] * self.num_levels
 
         self.prior_match_thr = prior_match_thr
+        self.near_neighbor_thr = near_neighbor_thr
         self.obj_level_weights = obj_level_weights
 
         self.special_init()
@@ -231,7 +233,7 @@ class YOLOv5Head(BaseDenseHead):
             [0, 1],  # up
             [-1, 0],  # right
             [0, -1],  # bottom
-        ]).float() * 0.5
+        ]).float()
         self.register_buffer(
             'grid_offset', grid_offset[:, None], persistent=False)
 
@@ -437,11 +439,11 @@ class YOLOv5Head(BaseDenseHead):
         Returns:
             dict: A dictionary of loss components.
         """
-        outs = self(x)
 
         if isinstance(batch_data_samples, list):
             losses = super().loss(x, batch_data_samples)
         else:
+            outs = self(x)
             # Fast version
             loss_inputs = outs + (batch_data_samples['bboxes_labels'],
                                   batch_data_samples['img_metas'])
@@ -534,9 +536,10 @@ class YOLOv5Head(BaseDenseHead):
             # them as positive samples as well.
             batch_targets_cxcy = batch_targets_scaled[:, 2:4]
             grid_xy = scaled_factor[[2, 3]] - batch_targets_cxcy
-            left, up = ((batch_targets_cxcy % 1 < 0.5) &
+            left, up = ((batch_targets_cxcy % 1 < self.near_neighbor_thr) &
                         (batch_targets_cxcy > 1)).T
-            right, bottom = ((grid_xy % 1 < 0.5) & (grid_xy > 1)).T
+            right, bottom = ((grid_xy % 1 < self.near_neighbor_thr) &
+                             (grid_xy > 1)).T
             offset_inds = torch.stack(
                 (torch.ones_like(left), left, up, right, bottom))
 
@@ -552,7 +555,8 @@ class YOLOv5Head(BaseDenseHead):
             priors_inds, (img_inds, class_inds) = priors_inds.long().view(
                 -1), img_class_inds.long().T
 
-            grid_xy_long = (grid_xy - retained_offsets).long()
+            grid_xy_long = (grid_xy -
+                            retained_offsets * self.near_neighbor_thr).long()
             grid_x_inds, grid_y_inds = grid_xy_long.T
             bboxes_targets = torch.cat((grid_xy - grid_xy_long, grid_wh), 1)
 

@@ -58,6 +58,13 @@
    notes/changelog.md
 
 .. toctree::
+   :maxdepth: 2
+   :caption: 社区
+
+   community/contributing.md
+   community/code_style.md
+
+.. toctree::
    :caption: 语言切换
 
    switch_language.md

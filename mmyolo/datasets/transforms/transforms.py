@@ -104,8 +104,7 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
             resized_h, resized_w = image.shape[:2]
             scale_ratio = resized_h / original_h
 
-            scale_factor = np.array([scale_ratio, scale_ratio],
-                                    dtype=np.float32)
+            scale_factor = (scale_ratio, scale_ratio)
 
             results['img'] = image
             results['img_shape'] = image.shape[:2]
@@ -208,7 +207,7 @@ class LetterResize(MMDET_Resize):
                 interpolation=self.interpolation,
                 backend=self.backend)
 
-        scale_factor = np.array([ratio[0], ratio[1]], dtype=np.float32)
+        scale_factor = (ratio[1], ratio[0])  # mmcv scale factor is (w, h)
 
         if 'scale_factor' in results:
             results['scale_factor_origin'] = results['scale_factor']
@@ -285,7 +284,7 @@ class LetterResize(MMDET_Resize):
         if len(results['pad_param']) != 4:
             return
         results['gt_bboxes'].translate_(
-            (results['pad_param'][2], results['pad_param'][1]))
+            (results['pad_param'][2], results['pad_param'][0]))
 
         if self.clip_object_border:
             results['gt_bboxes'].clip_(results['img_shape'])
@@ -294,7 +293,10 @@ class LetterResize(MMDET_Resize):
         super().transform(results)
         if 'scale_factor_origin' in results:
             scale_factor_origin = results.pop('scale_factor_origin')
-            results['scale_factor'] *= scale_factor_origin
+            results['scale_factor'] = (results['scale_factor'][0] *
+                                       scale_factor_origin[0],
+                                       results['scale_factor'][1] *
+                                       scale_factor_origin[1])
         if 'pad_param_origin' in results:
             pad_param_origin = results.pop('pad_param_origin')
             results['pad_param'] += pad_param_origin

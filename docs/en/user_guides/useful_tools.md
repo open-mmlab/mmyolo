@@ -5,10 +5,8 @@ We provide lots of useful tools under the `tools/` directory. In addition, you c
 Take MMDetection as an example. If you want to use [print_config.py](https://github.com/open-mmlab/mmdetection/blob/3.x/tools/misc/print_config.py), you can directly use the following commands without copying the source code to the MMYOLO library.
 
 ```shell
-mim run mmdet print_config [CONFIG]
+mim run mmdet print_config ${CONFIG}
 ```
-
-**Note**: The MMDetection library must be installed through the MIM before the above command can succeed.
 
 ## Visualization
 
@@ -17,49 +15,60 @@ mim run mmdet print_config [CONFIG]
 `tools/analysis_tools/browse_coco_json.py` is a script that can visualization to display the COCO label in the picture.
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py ${DATA_ROOT} \
-                                                [--ann_file ${ANN_FILE}] \
-                                                [--img_dir ${IMG_DIR}] \
+python tools/analysis_tools/browse_coco_json.py [--data-root ${DATA_ROOT}] \
+                                                [--img-dir ${IMG_DIR}] \
+                                                [--ann-file ${ANN_FILE}] \
                                                 [--wait-time ${WAIT_TIME}] \
                                                 [--disp-all] [--category-names CATEGORY_NAMES [CATEGORY_NAMES ...]] \
                                                 [--shuffle]
 ```
+
+If images and labels are in the same folder, you can specify `--data-root` to the folder, and then `--img-dir` and `--ann-file` to specify the relative path of the folder. The code will be automatically spliced.
+If the image and label files are not in the same folder, you do not need to specify `--data-root`, but directly specify `--img-dir` and `--ann-file` of the absolute path.
 
 E.g:
 
 1. Visualize all categories of `COCO` and display all types of annotations such as `bbox` and `mask`:
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
+                                                --disp-all
+```
+
+If images and labels are not in the same folder, you can use a absolutely path:
+
+```shell
+python tools/analysis_tools/browse_coco_json.py --img-dir '/dataset/image/coco/train2017' \
+                                                --ann-file '/label/instances_train2017.json' \
                                                 --disp-all
 ```
 
 2. Visualize all categories of `COCO`, and display only the `bbox` type labels, and shuffle the image to show:
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
                                                 --shuffle
 ```
 
 3. Only visualize the `bicycle` and `person` categories of `COCO` and only the `bbox` type labels are displayed:
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
                                                 --category-names 'bicycle' 'person'
 ```
 
 4. Visualize all categories of `COCO`, and display all types of label such as `bbox`, `mask`, and shuffle the image to show:
 
 ```shell
-python tools/analysis_tools/browse_coco_json.py './data/coco/' \
-                                                --ann_file 'annotations/instances_train2017.json' \
-                                                --img_dir 'train2017' \
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
                                                 --disp-all \
                                                 --shuffle
 ```
@@ -70,49 +79,51 @@ python tools/analysis_tools/browse_coco_json.py './data/coco/' \
 
 ```shell
 python tools/analysis_tools/browse_dataset.py ${CONFIG} \
-                                              [-h] \
-                                              [--output-dir ${OUTPUT_DIR}] \
+                                              [--out-dir ${OUT_DIR}] \
                                               [--not-show] \
                                               [--show-interval ${SHOW_INTERVAL}]
 ```
 
 E,g：
 
-1. Use `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` to visualize the picture. The picture will pop up directly and be saved to the directory `work dir/browse_ dataset` at the same time:
+1. Use `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` to visualize the picture. The picture will pop up directly and be saved to the directory `work_dirs/browse_ dataset` at the same time:
 
 ```shell
 python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
-                                               --output-dir 'work-dir/browse_dataset'
+                                              --out-dir 'work_dirs/browse_dataset'
 ```
 
-2. Use `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` to visualize the picture. The picture will pop up and display directly. Each picture lasts for `10` seconds. At the same time, it will be saved to the directory `work dir/browse_ dataset`:
+2. Use `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` to visualize the picture. The picture will pop up and display directly. Each picture lasts for `10` seconds. At the same time, it will be saved to the directory `work_dirs/browse_ dataset`:
 
 ```shell
 python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
-                                               --output-dir 'work-dir/browse_dataset' \
-                                               --show-interval 10
+                                              --out-dir 'work_dirs/browse_dataset' \
+                                              --show-interval 10
 ```
 
 3. Use `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` to visualize the picture. The picture will pop up and display directly. Each picture lasts for `10` seconds and the picture will not be saved:
 
 ```shell
 python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
-                                               --show-interval 10
+                                              --show-interval 10
 ```
 
-4. Use `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` to visualize the picture. The picture will not pop up directly, but only saved to the directory `work dir/browse_ dataset`:
+4. Use `config` file `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` to visualize the picture. The picture will not pop up directly, but only saved to the directory `work_dirs/browse_ dataset`:
 
 ```shell
 python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
-                                               --output-dir 'work-dir/browse_dataset' \
-                                               --not-show
+                                              --out-dir 'work_dirs/browse_dataset' \
+                                              --not-show
 ```
 
 ### Visualize dataset analysis
 
 `tools/analysis_tools/dataset_analysis.py` help users get the renderings of the four functions, and save the pictures to the `dataset_analysis` folder under the current running directory.
+
 Description of the script's functions:
+
 The data required by each sub function is obtained through the data preparation of `main()`.
+
 Function 1: Generated by the sub function `show_bbox_num` to display the distribution of categories and bbox instances.
 
 <img src="https://user-images.githubusercontent.com/90811472/200314770-4fb21626-72f2-4a4c-be5d-bf860ad830ec.jpg"/>
@@ -135,17 +146,16 @@ Print List: Generated by the sub function `show_class_list` and `show_data_list`
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
-                                              [-h] \
-                                              [--type ${TYPE}] \
-                                              [--class-name ${CLASS_NAME}] \
-                                              [--area-rule ${AREA_RULE}] \
-                                              [--func ${FUNC}] \
-                                              [--output-dir ${OUTPUT_DIR}]
+                                                [--type ${TYPE}] \
+                                                [--class-name ${CLASS_NAME}] \
+                                                [--area-rule ${AREA_RULE}] \
+                                                [--func ${FUNC}] \
+                                                [--out-dir ${OUT_DIR}]
 ```
 
 E,g：
 
-1.Use `config` file `configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py` analyze the dataset, By default,the data loadingt type is `train_dataset`, the area rule is `[0,32,96,1e5]`, generate a result graph containing all functions and save the graph to the current running directory `./dataset_analysis` folder:
+1.Use `config` file `configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py` analyze the dataset, By default,the data loading type is `train_dataset`, the area rule is `[0,32,96,1e5]`, generate a result graph containing all functions and save the graph to the current running directory `./dataset_analysis` folder:
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py
@@ -155,35 +165,35 @@ python tools/analysis_tools/dataset_analysis.py configs/yolov5/voc/yolov5_s-v61_
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py \
-                                               --val-dataset
+                                                --val-dataset
 ```
 
 3.Use `config` file `configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py` analyze the dataset, change the display of all generated classes to specific classes. Take the display of `person` classes as an example:
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py \
-                                               --class-name person
+                                                --class-name person
 ```
 
 4.Use `config` file `configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py` analyze the dataset, redefine the area rule through `--area-rule` . Take `30 70 125` as an example, the area rule becomes `[0,30,70,125,1e5]`：
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py \
-                                               --area-rule 30 70 125
+                                                --area-rule 30 70 125
 ```
 
 5.Use `config` file `configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py` analyze the dataset, change the display of four function renderings to only display `Function 1` as an example:
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py \
-                                               --func show_bbox_num
+                                                --func show_bbox_num
 ```
 
-6.Use `config` file `configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py` analyze the dataset, modify the picture saving address to `work_ir/dataset_analysis`:
+6.Use `config` file `configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py` analyze the dataset, modify the picture saving address to `work_dirs/dataset_analysis`:
 
 ```shell
 python tools/analysis_tools/dataset_analysis.py configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py \
-                                               --output-dir work_dir/dataset_analysis
+                                                --out-dir work_dirs/dataset_analysis
 ```
 
 ## Dataset Conversion
@@ -311,10 +321,10 @@ python tools/model_converters/yolox_to_mmyolo.py --src yolox_s.pth --dst mmyolox
 
 The converted `mmyolox.pt` can be used by MMYOLO.
 
-## optimize anchors size
+## Optimize anchors size
 
-script `tools/analysis_tools/optimize_anchors.py` supports three methods to optimize YOLO anchors including `k-means`
-anchor cluster, `differential_evolution` and `v5-k-means`.
+Script `tools/analysis_tools/optimize_anchors.py` supports three methods to optimize YOLO anchors including `k-means`
+anchor cluster, `Differential Evolution` and `v5-k-means`.
 
 ### k-means
 
@@ -322,38 +332,105 @@ In k-means method, the distance criteria is based IoU, python shell as follow:
 
 ```shell
 python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
-    --algorithm k-means \
-    --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
-    --output-dir ${OUTPUT_DIR}
+                                                --algorithm k-means \
+                                                --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
+                                                --out-dir ${OUT_DIR}
 ```
 
-### differential_evolution
+### Differential Evolution
 
 In differential_evolution method, based differential evolution algorithm, use `avg_iou_cost` as minimum target function, python shell as follow:
 
 ```shell
 python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
-    --algorithm differential_evolution \
-    --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
-    --output-dir ${OUTPUT_DIR}
+                                                --algorithm DE \
+                                                --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
+                                                --out-dir ${OUT_DIR}
 ```
 
 ### v5-k-means
 
-In v5-k-means method, clustering standard as same with yolov5 which use shape-match, python shell as follow:
+In v5-k-means method, clustering standard as same with YOLOv5 which use shape-match, python shell as follow:
 
 ```shell
 python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
-    --algorithm v5-k-means \
-    --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
-    --prior_match_thr ${PRIOR_MATCH_THR} \
-    --output-dir ${OUTPUT_DIR}
+                                                --algorithm v5-k-means \
+                                                --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
+                                                --prior_match_thr ${PRIOR_MATCH_THR} \
+                                                --out-dir ${OUT_DIR}
+```
+
+## Perform inference on large images
+
+First install [`sahi`](https://github.com/obss/sahi) with:
+
+```shell
+pip install -U sahi>=0.11.4
+```
+
+Perform MMYOLO inference on large images (as satellite imagery) as:
+
+```shell
+wget -P checkpoint https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth
+
+python demo/large_image_demo.py \
+    demo/large_image.jpg \
+    configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py \
+    checkpoint/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth \
+```
+
+Arrange slicing parameters as:
+
+```shell
+python demo/large_image_demo.py \
+    demo/large_image.jpg \
+    configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py \
+    checkpoint/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth \
+    --patch-size 512
+    --patch-overlap-ratio 0.25
+```
+
+Export debug visuals while performing inference on large images as:
+
+```shell
+python demo/large_image_demo.py \
+    demo/large_image.jpg \
+    configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py \
+    checkpoint/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth \
+    --debug
+```
+
+[`sahi`](https://github.com/obss/sahi) citation:
+
+```
+@article{akyon2022sahi,
+  title={Slicing Aided Hyper Inference and Fine-tuning for Small Object Detection},
+  author={Akyon, Fatih Cagatay and Altinuc, Sinan Onur and Temizel, Alptekin},
+  journal={2022 IEEE International Conference on Image Processing (ICIP)},
+  doi={10.1109/ICIP46576.2022.9897990},
+  pages={966-970},
+  year={2022}
+}
 ```
 
 ## Extracts a subset of COCO
 
 The training dataset of the COCO2017 dataset includes 118K images, and the validation set includes 5K images, which is a relatively large dataset. Loading JSON in debugging or quick verification scenarios will consume more resources and bring slower startup speed.
-The `extract_subcoco.py` script provides the ability to extract a specified number of images. The user can use the `--num-img` parameter to get a COCO subset of the specified number of images.
+
+The `extract_subcoco.py` script provides the ability to extract a specified number/classes/area-size of images. The user can use the `--num-img`, `--classes`, `--area-size` parameter to get a COCO subset of the specified condition of images.
+
+For example, extract images use scripts as follows:
+
+```shell
+python tools/misc/extract_subcoco.py \
+    ${ROOT} \
+    ${OUT_DIR} \
+    --num-img 20 \
+    --classes cat dog person \
+    --area-size small
+```
+
+It gone be extract 20 images, and only includes annotations which belongs to cat(or dog/person) and bbox area size is small, after filter by class and area size, the empty annotation images won't be chosen, guarantee the images be extracted definitely has annotation info.
 
 Currently, only support COCO2017. In the future will support user-defined datasets of standard coco JSON format.
 
@@ -383,4 +460,16 @@ python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --num-img 20 --use-train
 
 ```shell
 python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --num-img 20 --use-training-set --seed 1
+```
+
+4. Extract images by specify classes
+
+```shell
+python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --classes cat dog person
+```
+
+5. Extract images by specify anchor size
+
+```shell
+python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --area-size small
 ```

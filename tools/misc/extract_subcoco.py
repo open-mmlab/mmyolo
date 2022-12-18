@@ -49,23 +49,47 @@ def _process_data(args,
         'annotations': []
     }
 
-    images = json_data['images']
+    area_dict = {
+        'small': [0., 32 * 32],
+        'medium': [32 * 32, 96 * 96],
+        'large': [96 * 96, float('inf')]
+    }
+
     coco = COCO(ann_path)
 
+    # filter annotations by category ids and area range
+    areaRng = area_dict[args.area_size] if args.area_size else []
+    catIds = coco.getCatIds(args.classes) if args.classes else []
+    ann_ids = coco.getAnnIds(catIds=catIds, areaRng=areaRng)
+    ann_info = coco.loadAnns(ann_ids)
+
+    # get image ids by anns set
+    filter_img_ids = {ann['image_id'] for ann in ann_info}
+    filter_img = coco.loadImgs(filter_img_ids)
+
     # shuffle
-    np.random.shuffle(images)
+    np.random.shuffle(filter_img)
 
-    progress_bar = mmengine.ProgressBar(args.num_img)
+    num_img = args.num_img if args.num_img > 0 else len(filter_img)
+    if num_img > len(filter_img):
+        print(
+            f'num_img is too big, will be set to {len(filter_img)}, '
+            'because of not enough image after filter by classes and area_size'
+        )
+        num_img = len(filter_img)
 
-    for i in range(args.num_img):
-        file_name = images[i]['file_name']
+    progress_bar = mmengine.ProgressBar(num_img)
+
+    for i in range(num_img):
+        file_name = filter_img[i]['file_name']
         image_path = osp.join(args.root, in_dataset_type + year, file_name)
 
-        ann_ids = coco.getAnnIds(imgIds=[images[i]['id']])
-        ann_info = coco.loadAnns(ann_ids)
+        ann_ids = coco.getAnnIds(
+            imgIds=[filter_img[i]['id']], catIds=catIds, areaRng=areaRng)
+        img_ann_info = coco.loadAnns(ann_ids)
 
-        new_json_data['images'].append(images[i])
-        new_json_data['annotations'].extend(ann_info)
+        new_json_data['images'].append(filter_img[i])
+        new_json_data['annotations'].extend(img_ann_info)
 
         shutil.copy(image_path, osp.join(args.out_dir,
                                          out_dataset_type + year))
@@ -88,7 +112,16 @@ def parse_args():
     parser.add_argument(
         'out_dir', type=str, help='directory where subset coco will be saved.')
     parser.add_argument(
-        '--num-img', default=50, type=int, help='num of extract image')
+        '--num-img',
+        default=50,
+        type=int,
+        help='num of extract image, -1 means all images')
+    parser.add_argument(
+        '--area-size',
+        choices=['small', 'medium', 'large'],
+        help='filter ground-truth info by area size')
+    parser.add_argument(
+        '--classes', nargs='+', help='filter ground-truth by class name')
     parser.add_argument(
         '--use-training-set',
         action='store_true',

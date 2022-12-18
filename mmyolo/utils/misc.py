@@ -5,6 +5,7 @@ import urllib
 import numpy as np
 import torch
 from mmengine.utils import scandir
+from prettytable import PrettyTable
 
 from mmyolo.models import RepVGGBlock
 
@@ -90,3 +91,26 @@ def get_file_list(source_root: str) -> [list, dict]:
     source_type = dict(is_dir=is_dir, is_url=is_url, is_file=is_file)
 
     return source_file_path_list, source_type
+
+
+def show_data_classes(data_classes):
+    """When printing an error, all class names of the dataset."""
+    print('\n\nThe name of the class contained in the dataset:')
+    data_classes_info = PrettyTable()
+    data_classes_info.title = 'Information of dataset class'
+    # List Print Settings
+    # If the quantity is too large, 25 rows will be displayed in each column
+    if len(data_classes) < 25:
+        data_classes_info.add_column('Class name', data_classes)
+    elif len(data_classes) % 25 != 0 and len(data_classes) > 25:
+        col_num = int(len(data_classes) / 25) + 1
+        data_name_list = list(data_classes)
+        for i in range(0, (col_num * 25) - len(data_classes)):
+            data_name_list.append('')
+        for i in range(0, len(data_name_list), 25):
+            data_classes_info.add_column('Class name',
+                                         data_name_list[i:i + 25])
+
+    # Align display data to the left
+    data_classes_info.align['Class name'] = 'l'
+    print(data_classes_info)

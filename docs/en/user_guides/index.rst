@@ -15,8 +15,8 @@ From Getting Started to Deployment tutorial
 .. toctree::
    :maxdepth: 1
 
+   custom_dataset.md
    yolov5_tutorial.md
-
 
 Useful Tools
 ************
