@@ -232,9 +232,6 @@ class YOLOv6Head(YOLOv5Head):
         The special_init function is designed to deal with this situation.
         """
 
-        # whether with stride when grid priors in predict
-        self.grid_priors_with_stride = True
-
         if self.train_cfg:
             self.initial_epoch = self.train_cfg['initial_epoch']
             self.initial_assigner = TASK_UTILS.build(
@@ -296,11 +293,21 @@ class YOLOv6Head(YOLOv5Head):
             self.mlvl_priors = self.prior_generator.grid_priors(
                 self.featmap_sizes,
                 dtype=cls_scores[0].dtype,
-                device=cls_scores[0].device,
-                with_stride=self.grid_priors_with_stride)
+                device=cls_scores[0].device)
 
-            self.num_level_priors = [len(n) for n in self.mlvl_priors]
-            self.flatten_priors = torch.cat(self.mlvl_priors, dim=0)
+            flatten_priors = torch.cat(self.mlvl_priors)
+            mlvl_strides = [
+                flatten_priors.new_full(
+                    (featmap_size.numel() * self.num_base_priors,), stride) for
+                featmap_size, stride in zip(self.featmap_sizes, self.featmap_strides)
+            ]
+
+            # Add stride in mlvl
+            mlvl_priors_with_stride = [torch.stack([mlvl[:,0], mlvl[:,1], stride, stride], dim=-1)
+                           for mlvl, stride in zip(self.mlvl_priors, mlvl_strides)]
+
+            self.num_level_priors = [len(n) for n in mlvl_priors_with_stride]
+            self.flatten_priors = torch.cat(mlvl_priors_with_stride, dim=0)
             self.stride_tensor = self.flatten_priors[..., [2]]
 
         # gt info
