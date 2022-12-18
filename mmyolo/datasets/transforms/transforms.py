@@ -303,7 +303,6 @@ class LetterResize(MMDET_Resize):
         return results
 
 
-
 # TODO: Check if it can be merged with mmdet.YOLOXHSVRandomAug
 @TRANSFORMS.register_module()
 class YOLOv5HSVRandomAug(BaseTransform):
