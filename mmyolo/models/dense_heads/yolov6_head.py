@@ -298,13 +298,16 @@ class YOLOv6Head(YOLOv5Head):
             flatten_priors = torch.cat(self.mlvl_priors)
             mlvl_strides = [
                 flatten_priors.new_full(
-                    (featmap_size.numel() * self.num_base_priors,), stride) for
-                featmap_size, stride in zip(self.featmap_sizes, self.featmap_strides)
+                    (featmap_size.numel() * self.num_base_priors, ), stride)
+                for featmap_size, stride in zip(self.featmap_sizes,
+                                                self.featmap_strides)
             ]
 
             # Add stride in mlvl
-            mlvl_priors_with_stride = [torch.stack([mlvl[:,0], mlvl[:,1], stride, stride], dim=-1)
-                           for mlvl, stride in zip(self.mlvl_priors, mlvl_strides)]
+            mlvl_priors_with_stride = [
+                torch.stack([mlvl[:, 0], mlvl[:, 1], stride, stride], dim=-1)
+                for mlvl, stride in zip(self.mlvl_priors, mlvl_strides)
+            ]
 
             self.num_level_priors = [len(n) for n in mlvl_priors_with_stride]
             self.flatten_priors = torch.cat(mlvl_priors_with_stride, dim=0)
