@@ -231,7 +231,6 @@ class YOLOv6Head(YOLOv5Head):
 
         The special_init function is designed to deal with this situation.
         """
-
         if self.train_cfg:
             self.initial_epoch = self.train_cfg['initial_epoch']
             self.initial_assigner = TASK_UTILS.build(
