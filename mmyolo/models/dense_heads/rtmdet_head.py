@@ -257,9 +257,6 @@ class RTMDetHead(YOLOv5Head):
         The special_init function is designed to deal with this situation.
         """
 
-        # whether with stride when grid priors in predict
-        self.grid_priors_with_stride = True
-
         if self.train_cfg:
             self.assigner = TASK_UTILS.build(self.train_cfg.assigner)
             if self.train_cfg.get('sampler', None) is not None:
@@ -695,9 +692,8 @@ class RTMDetHead(YOLOv5Head):
         # since feature map sizes of all images are the same, we only compute
         # anchors for one time
         multi_level_anchors = self.prior_generator.grid_priors(
-            featmap_sizes,
-            device=device,
-            with_stride=self.grid_priors_with_stride)
+            featmap_sizes, device=device, with_stride=True)
+
         anchor_list = [multi_level_anchors for _ in range(num_imgs)]
 
         # for each image, we compute valid flags of multi level anchors
