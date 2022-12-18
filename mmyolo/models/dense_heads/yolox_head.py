@@ -251,7 +251,6 @@ class YOLOXHead(YOLOv5Head):
 
         The special_init function is designed to deal with this situation.
         """
-
         self.loss_bbox_aux: nn.Module = MODELS.build(self.loss_bbox_aux)
         if self.train_cfg:
             self.assigner = TASK_UTILS.build(self.train_cfg.assigner)
