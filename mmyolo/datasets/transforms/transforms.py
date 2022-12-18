@@ -290,7 +290,7 @@ class LetterResize(MMDET_Resize):
             results['gt_bboxes'].clip_(results['img_shape'])
 
     def transform(self, results: dict) -> dict:
-        super().transform(results)
+        results = super().transform(results)
         if 'scale_factor_origin' in results:
             scale_factor_origin = results.pop('scale_factor_origin')
             results['scale_factor'] = (results['scale_factor'][0] *
