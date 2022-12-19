@@ -15,8 +15,9 @@ import argparse
 
 import cv2
 import mmcv
+from mmcv.transforms import Compose
 from mmdet.apis import inference_detector, init_detector
-from mmengine.utils import ProgressBar
+from mmengine.utils import track_iter_progress
 
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules
@@ -43,17 +44,26 @@ def parse_args():
 
 
 def main():
-    # register all modules in mmyolo into the registries
-    register_all_modules()
-
     args = parse_args()
     assert args.out or args.show, \
         ('Please specify at least one operation (save/show the '
          'video) with the argument "--out" or "--show"')
 
+    # register all modules in mmdet into the registries
+    register_all_modules()
+
+    # build the model from a config file and a checkpoint file
     model = init_detector(args.config, args.checkpoint, device=args.device)
 
+    # build test pipeline
+    model.cfg.test_dataloader.dataset.pipeline[
+        0].type = 'mmdet.LoadImageFromNDArray'
+    test_pipeline = Compose(model.cfg.test_dataloader.dataset.pipeline)
+
+    # init visualizer
     visualizer = VISUALIZERS.build(model.cfg.visualizer)
+    # the dataset_meta is loaded from the checkpoint and
+    # then pass to the model in init_detector
     visualizer.dataset_meta = model.dataset_meta
 
     video_reader = mmcv.VideoReader(args.video)
@@ -64,26 +74,22 @@ def main():
             args.out, fourcc, video_reader.fps,
             (video_reader.width, video_reader.height))
 
-    progress_bar = ProgressBar(len(video_reader))
+    for frame in track_iter_progress(video_reader):
+        result = inference_detector(model, frame, test_pipeline=test_pipeline)
+        visualizer.add_datasample(
+            name='video',
+            image=frame,
+            data_sample=result,
+            draw_gt=False,
+            show=False,
+            pred_score_thr=args.score_thr)
+        frame = visualizer.get_image()
 
-    for frame in video_reader:
-        result = inference_detector(model, frame)
         if args.show:
             cv2.namedWindow('video', 0)
             mmcv.imshow(frame, 'video', args.wait_time)
-        else:
-            visualizer.add_datasample(
-                'result',
-                frame,
-                data_sample=result,
-                draw_gt=False,
-                show=args.show,
-                wait_time=0,
-                out_file=None,
-                pred_score_thr=args.score_thr)
         if args.out:
-            video_writer.write(visualizer.get_image())
-        progress_bar.update()
+            video_writer.write(frame)
 
     if video_writer:
         video_writer.release()
