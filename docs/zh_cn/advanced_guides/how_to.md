@@ -486,4 +486,4 @@ python ./tools/train.py \
 
 - `randomness.diff_rank_seed=True`，根据 rank 来设置不同的种子，`diff_rank_seed` 默认为 False。
 
-- `randomness.deterministic=True`，把 cuDNN 后端确定性选项设置为 True，即把torch.backends.cudnn.deterministic 设为 True，把 torch.backends.cudnn.benchmark 设为False。`deterministic` 默认为 False。更多细节见 https://pytorch.org/docs/stable/notes/randomness.html。
+- `randomness.deterministic=True`，把 cuDNN 后端确定性选项设置为 True，即把`torch.backends.cudnn.deterministic` 设为 True，把 `torch.backends.cudnn.benchmark` 设为False。`deterministic` 默认为 False。更多细节见 https://pytorch.org/docs/stable/notes/randomness.html。
