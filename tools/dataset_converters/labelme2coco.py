@@ -274,7 +274,15 @@ def convert_labelme_to_coco(image_dir: str,
         assert len(txt_lines) > 0
 
         for txt_line in txt_lines:
-            v, k = txt_line.split(' ')
+            class_info = txt_line.split(' ')
+            if len(class_info) != 2:
+                raise ValueError('Error parse "class_id_txt" file '
+                                 f'{class_id_txt},  please check if some of '
+                                 'the class names is blank, like "1  " -> '
+                                 '"1 blank", or class name has space between'
+                                 ' words, like "1 Big house" -> "1 '
+                                 'Big-house".')
+            v, k = class_info
             all_classes_id.update({k: v})
     else:
         all_classes_id = None
