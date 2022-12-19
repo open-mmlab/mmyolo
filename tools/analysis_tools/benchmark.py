@@ -5,7 +5,6 @@ import os
 import time
 
 import torch
-from mmdet.registry import MODELS
 from mmengine import Config, DictAction
 from mmengine.dist import get_world_size, init_dist
 from mmengine.logging import MMLogger, print_log
@@ -13,6 +12,7 @@ from mmengine.runner import Runner, load_checkpoint
 from mmengine.utils import mkdir_or_exist
 from mmengine.utils.dl_utils import set_multi_processing
 
+from mmyolo.registry import MODELS
 from mmyolo.utils import register_all_modules
 
 register_all_modules()

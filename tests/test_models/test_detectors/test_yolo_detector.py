@@ -29,7 +29,7 @@ class TestSingleStageDetector(TestCase):
         model = get_detector_cfg(cfg_file)
         model.backbone.init_cfg = None
 
-        from mmdet.registry import MODELS
+        from mmyolo.registry import MODELS
         detector = MODELS.build(model)
         self.assertTrue(detector.backbone)
         self.assertTrue(detector.neck)
@@ -56,7 +56,7 @@ class TestSingleStageDetector(TestCase):
                 std=[255., 255., 255.],
                 bgr_to_rgb=True)
 
-        from mmdet.registry import MODELS
+        from mmyolo.registry import MODELS
         assert all([device in ['cpu', 'cuda'] for device in devices])
 
         for device in devices:
@@ -85,7 +85,7 @@ class TestSingleStageDetector(TestCase):
         model = get_detector_cfg(cfg_file)
         model.backbone.init_cfg = None
 
-        from mmdet.registry import MODELS
+        from mmyolo.registry import MODELS
         assert all([device in ['cpu', 'cuda'] for device in devices])
 
         for device in devices:
@@ -117,7 +117,7 @@ class TestSingleStageDetector(TestCase):
         model = get_detector_cfg(cfg_file)
         model.backbone.init_cfg = None
 
-        from mmdet.registry import MODELS
+        from mmyolo.registry import MODELS
         assert all([device in ['cpu', 'cuda'] for device in devices])
 
         for device in devices:
