@@ -10,10 +10,10 @@ max_epochs = 300
 stage2_num_epochs = 20
 interval = 10
 
-train_batch_size_per_gpu = 32
-train_num_workers = 10
-val_batch_size_per_gpu = 1
-val_num_workers = 2
+train_batch_size_per_gpu = 16
+train_num_workers = 8
+val_batch_size_per_gpu = 32
+val_num_workers = 8
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
 strides = [8, 16, 32]
@@ -115,12 +115,9 @@ train_pipeline = [
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(
-        type='YOLOXMixUp',
-        img_scale=img_scale,
+        type='YOLOv5MixUp',
         use_cached=True,
-        ratio_range=(1.0, 1.0),
-        max_cached_images=20,
-        pad_val=(114, 114, 114)),
+        max_cached_images=20),
     dict(type='mmdet.PackDetInputs')
 ]
 

@@ -43,12 +43,9 @@ train_pipeline = [
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(
-        type='YOLOXMixUp',
-        img_scale=img_scale,
+        type='YOLOv5MixUp',
         use_cached=True,
-        ratio_range=(1.0, 1.0),
-        max_cached_images=20,
-        pad_val=(114, 114, 114)),
+        max_cached_images=20),
     dict(type='mmdet.PackDetInputs')
 ]
 
