@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import json
+import os.path
 
 from mmengine.structures import InstanceData
 
@@ -29,7 +30,7 @@ class LabelmeFormat:
 
         Labelme file eg.
             {
-              "version": "5.0.5",
+              "version": "5.1.1",
               "flags": {},
               "imagePath": "/data/cat/1.jpg",
               "imageData": null,
@@ -57,10 +58,10 @@ class LabelmeFormat:
             }
         """
 
-        image_path = metainfo['img_path']
+        image_path = os.path.abspath(metainfo['img_path'])
 
         json_info = {
-            'version': '5.0.5',
+            'version': '5.1.1',
             'flags': {},
             'imagePath': image_path,
             'imageData': None,

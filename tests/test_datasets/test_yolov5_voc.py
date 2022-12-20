@@ -80,6 +80,7 @@ class TestYOLOv5VocDataset(unittest.TestCase):
                     filter_cfg=dict(filter_empty_gt=False, min_size=32),
                     pipeline=[])
             ],
-            ignore_keys='DATASET_TYPE')
+            ignore_keys='dataset_type')
+
         dataset.full_init()
         self.assertEqual(len(dataset), 2)
