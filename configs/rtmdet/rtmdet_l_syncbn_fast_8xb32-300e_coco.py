@@ -17,11 +17,11 @@ val_num_workers = 8
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
 strides = [8, 16, 32]
-base_lr = 0.004
+base_lr = 0.002
 
 # single-scale training is recommended to
 # be turned on, which can speed up training.
-# env_cfg = dict(cudnn_benchmark=True)
+env_cfg = dict(cudnn_benchmark=True)
 
 # only on Val
 batch_shapes_cfg = dict(
