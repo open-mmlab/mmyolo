@@ -3,6 +3,8 @@ import torch.nn as nn
 import torch
 
 from ..necks.giraffe_neck import RepConv
+from .base_backbone import BaseBackbone
+
 
 
 def get_norm(name, out_channels, inplace=True):
@@ -387,3 +389,4 @@ class TinyNAS(nn.Module):
             if idx in self.out_indices:
                 stage_feature_list.append(output)
         return stage_feature_list
+

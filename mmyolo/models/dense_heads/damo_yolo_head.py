@@ -1,15 +1,21 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from mmdet.models.dense_heads.base_dense_head import BaseDenseHead
 import numpy as np
 from mmcv.cnn import Scale
 from ..task_modules.assigners.ota_assigner import AlignOTAAssigner
+from ..utils import BoxList
 from mmdet.models.utils import multi_apply
 from mmdet.utils import reduce_mean
 from mmdet.models.losses import (DistributionFocalLoss, GIoULoss, weighted_loss)
-
+from typing import List, Optional, Tuple
+from torch import Tensor
 import torchvision
+from mmengine.config import ConfigDict
+from mmdet.structures import SampleList
+from mmengine.structures import InstanceData
+from mmdet.utils import InstanceList, OptMultiConfig
 
 @weighted_loss
 def quality_focal_loss(pred, target, beta=2.0, use_sigmoid=True):
@@ -177,12 +183,12 @@ def multiclass_nms(multi_bboxes,
     return bboxes[keep], scores[keep], labels[keep]
 
 
-def postprocess(cls_scores,
-                bbox_preds,
-                num_classes,
-                conf_thre=0.7,
-                nms_thre=0.45,
-                imgs=None):
+def postprocess(cls_scores: object,
+                bbox_preds: object,
+                num_classes: object,
+                conf_thre: object = 0.7,
+                nms_thre: object = 0.45,
+                imgs: object = None) -> object:
     batch_size = bbox_preds.size(0)
     output = [None for _ in range(batch_size)]
     for i in range(batch_size):
@@ -210,13 +216,20 @@ def postprocess(cls_scores,
             boxlist.add_field('scores', 0)
             boxlist.add_field('labels', -1)
         else:
-            img_h, img_w = imgs.image_sizes[i]
+            img_h, img_w = imgs[i].batch_input_shape
             boxlist = BoxList(res[:, :4], (img_w, img_h), mode='xyxy')
             boxlist.add_field('objectness', res[:, 4])
             boxlist.add_field('scores', res[:, 5])
             boxlist.add_field('labels', res[:, 6] + 1)
         output[i] = boxlist
-    return output
+    result_list = []
+    for boxlist in output:
+        result = InstanceData()
+        result.bboxes=boxlist.bbox
+        result.labels = boxlist.extra_fields['labels'].to(int)
+        result.scores = boxlist.extra_fields['scores']
+        result_list.append(result)
+    return result
 
 
 def normal_init(module, mean=0, std=1, bias=0):
@@ -284,7 +297,7 @@ class Integral(nn.Module):
 from mmyolo.registry import MODELS
 
 @MODELS.register_module()
-class ZeroHead(nn.Module):
+class ZeroHead(BaseDenseHead):
     """Ref to Generalized Focal Loss V2: Learning Reliable Localization Quality
     Estimation for Dense Object Detection.
     """
@@ -301,7 +314,9 @@ class ZeroHead(nn.Module):
             nms_conf_thre=0.05,
             nms_iou_thre=0.7,
             nms=True,
+            init_cfg=None,
             **kwargs):
+        super().__init__(init_cfg=init_cfg)
         self.in_channels = in_channels
         self.num_classes = num_classes
         self.stacked_convs = stacked_convs
@@ -417,11 +432,11 @@ class ZeroHead(nn.Module):
             self.gfl_reg,
             self.scales,
         )
-        return cls_scores, bbox_preds, bbox_before_softmax
-        # if self.training:
-        #     return self.forward_train(xin=xin, labels=labels, imgs=imgs)
-        # else:
-        #     return self.forward_eval(xin=xin, labels=labels, imgs=imgs)
+
+        if self.training:
+            return cls_scores, bbox_preds, bbox_before_softmax
+        else:
+            return cls_scores, bbox_preds
 
     def loss(self, xin, labels=None, imgs=None, aux_targets=None):
 
@@ -471,24 +486,32 @@ class ZeroHead(nn.Module):
         )
         return loss
 
-    def predict(self, xin, labels=None, imgs=None):
+
+    def loss_by_feat(self, **kwargs) -> dict:
+        pass
+
+
+    def predict(self,
+                x: Tuple[Tensor],
+                batch_data_samples: SampleList,
+                rescale: bool = False) -> InstanceList:
         # prepare priors for label assignment and bbox decode
-        if self.feat_size[0] != xin[0].shape:
+        if self.feat_size[0] != x[0].shape:
             mlvl_priors_list = [
-                self.get_single_level_center_priors(xin[i].shape[0],
-                                                    xin[i].shape[-2:],
+                self.get_single_level_center_priors(x[i].shape[0],
+                                                    x[i].shape[-2:],
                                                     stride,
                                                     dtype=torch.float32,
-                                                    device=xin[0].device)
+                                                    device=x[0].device)
                 for i, stride in enumerate(self.strides)
             ]
             self.mlvl_priors = torch.cat(mlvl_priors_list, dim=1)
-            self.feat_size[0] = xin[0].shape
+            self.feat_size[0] = x[0].shape
 
         # forward for bboxes and classification prediction
-        cls_scores, bbox_preds = multi_apply(
+        cls_scores, bbox_preds,bbox_before_softmax = multi_apply(
             self.forward_single,
-            xin,
+            x,
             self.cls_convs,
             self.reg_convs,
             self.gfl_cls,
@@ -500,12 +523,13 @@ class ZeroHead(nn.Module):
         # batch bbox decode
         bbox_preds = self.integral(bbox_preds) * self.mlvl_priors[..., 2, None]
         bbox_preds = distance2bbox(self.mlvl_priors[..., :2], bbox_preds)
-
+        ## TODO:discuss with teacher about the postprocess postion
         if self.nms:
             output = postprocess(cls_scores, bbox_preds, self.num_classes,
-                                 self.nms_conf_thre, self.nms_iou_thre, imgs)
+                                 self.nms_conf_thre, self.nms_iou_thre, imgs=batch_data_samples)
             return output
         return cls_scores, bbox_preds
+
 
     def forward_single(self, x, cls_convs, reg_convs, gfl_cls, gfl_reg, scale):
         """Forward feature of a single scale level.
@@ -520,11 +544,11 @@ class ZeroHead(nn.Module):
 
         bbox_pred = scale(gfl_reg(reg_feat)).float()
         N, C, H, W = bbox_pred.size()
-        if self.training:
-            bbox_before_softmax = bbox_pred.reshape(N, 4, self.reg_max + 1, H,
-                                                    W)
-            bbox_before_softmax = bbox_before_softmax.flatten(
-                start_dim=3).permute(0, 3, 1, 2)
+        ##
+        bbox_before_softmax = bbox_pred.reshape(N, 4, self.reg_max + 1, H,
+                                                W)
+        bbox_before_softmax = bbox_before_softmax.flatten(
+            start_dim=3).permute(0, 3, 1, 2)
         bbox_pred = F.softmax(bbox_pred.reshape(N, 4, self.reg_max + 1, H, W),
                               dim=2)
 
@@ -534,10 +558,7 @@ class ZeroHead(nn.Module):
             0, 2, 1)  # N, h*w, self.num_classes+1
         bbox_pred = bbox_pred.flatten(start_dim=3).permute(
             0, 3, 1, 2)  # N, h*w, 4, self.reg_max+1
-        if self.training:
-            return cls_score, bbox_pred, bbox_before_softmax
-        else:
-            return cls_score, bbox_pred
+        return cls_score, bbox_pred, bbox_before_softmax
 
     def get_single_level_center_priors(self, batch_size, featmap_size, stride,
                                        dtype, device):
