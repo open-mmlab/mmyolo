@@ -1,21 +1,46 @@
 # The whole process of custom dataset annotation+training+testing+deployment
 
+In our daily work and study, we often encounter some tasks that need to train custom dataset. There are few scenarios in which open-source datasets can be used as online models, so we need to carry out a series of operations on our custom datasets to ensure that the models can be put into production and serve users.
+
+```{SeeAlso}
+The video of this document has been posted on Bilibili: [A nanny level tutorials for custom datasets from annotationt to deployment](https://www.bilibili.com/video/BV1RG4y137i5)
+```
+
+```{Note}
+All instructions in this document are done on Linux and are fully available on Windows, only slightly different in commands and operations.
+```
+
+Default that you have completed the installation of MMYOLO, if not installed, please refer to the document \[start your first step\] (https://mmyolo.readthedocs.io/zh_CN/latest/get_started.html#id1) for installation.
+
 In this tutorial, we will introduce the whole process from annotating custom dataset to final training, testing and deployment. The overview steps are as below:
 
-1. Prepare the customized dataset: `tools/misc/download_dataset.py`
-2. Use the tool of [labelme](https://github.com/wkentaro/labelme) to annotate: `demo/image_demo.py` + labelme
-3. Reorganize the dataset into COCO format: `tools/dataset_converters/labelme2coco.py`
-4. Split dataset:`tools/misc/coco_split.py`
-5. Creat a config file based on dataset
-6. Train: `tools/train.py`
-7. Inference: `demo/image_demo.py`
-8. Deployment
+01. Prepare dataset: `tools/misc/download_dataset.py`
+02. Use the software of [labelme](https://github.com/wkentaro/labelme) to annotate: `demo/image_demo.py` + labelme
+03. Reorganize the dataset into COCO format: `tools/dataset_converters/labelme2coco.py`
+04. Split dataset:`tools/misc/coco_split.py`
+05. Creat a config file based on dataset
+06. Dataset visualization analysis: `tools/analysis_tools/dataset_analysis.py`
+07. Optimize Anchor size: `tools/analysis_tools/optimize_anchors.py`
+08. Visualization the data processing part of config: `tools/analysis_tools/browse_dataset.py`
+09. Train: `tools/train.py`
+10. Inference: `demo/image_demo.py`
+11. Deployment
+
+```{Note}
+After obtaining the model weight and the mAP of validation set, users need to deep analyse the  bad cases of incorrect predictions in order to optimize model. MMYOLO will add this function in the future. Expect.
+```
 
 Each step is described in detail below.
 
 ## 1. Prepare the customized dataset
 
-- If you don't have your own dataset, you can use the `cat` dataset provided with this tutorial by the command:
+- If you don't have your own dataset, or want to use a small dataset to run the whole process, you can use the 144 images `cat` dataset provided with this tutorial (the raw picture of this dataset is supplied by @RangeKing, cleaned by @PeterH0323). This `cat` dataset will be used as an example for the rest tutorial.
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205423220-c4b8f2fd-22ba-4937-8e47-1b3f6a8facd8.png" alt="cat dataset"/>
+</div>
+
+The download is also very simple, requiring only one command (dataset compression package size `217 MB`):
 
 ```shell
 python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat --unzip --delete
@@ -54,7 +79,7 @@ This dataset is automatically downloaded to the `./data/cat` dir with the follow
          └── ...
 ```
 
-## 2. Use the software of labelme to annotate
+## 2. Use the software of labelme to annotate \[to be update\]
 
 In general, there are two annotation methods:
 
