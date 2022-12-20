@@ -387,15 +387,20 @@ class RTMDetHead(YOLOv5Head):
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.prior_generator.num_levels
 
-        if isinstance(batch_gt_instances, torch.Tensor):
-            batch_instance_list = []
-            for i in range(num_imgs):
-                single_batch_instance = \
-                    batch_gt_instances[batch_gt_instances[:, 0] == i, :]
-                single_gt_instance = InstanceData(bboxes=single_batch_instance[:, 2:],
-                                                  labels=single_batch_instance[:, 1])
-                batch_instance_list.append(single_gt_instance)
-            batch_gt_instances = batch_instance_list
+        gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
+        gt_labels = gt_info[:, :, :1]
+        gt_bboxes = gt_info[:, :, 1:]  # xyxy
+        pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
+
+        # if isinstance(batch_gt_instances, torch.Tensor):
+        #     batch_instance_list = []
+        #     for i in range(num_imgs):
+        #         single_batch_instance = \
+        #             batch_gt_instances[batch_gt_instances[:, 0] == i, :]
+        #         single_gt_instance = InstanceData(bboxes=single_batch_instance[:, 2:],
+        #                                           labels=single_batch_instance[:, 1])
+        #         batch_instance_list.append(single_gt_instance)
+        #     batch_gt_instances = batch_instance_list
 
         device = cls_scores[0].device
 
@@ -404,6 +409,8 @@ class RTMDetHead(YOLOv5Head):
             self.featmap_sizes = featmap_sizes
             self.multi_level_anchors = self.prior_generator.grid_priors(
                 featmap_sizes, device=device, with_stride=True)
+            self.flatten_priors = torch.cat(self.multi_level_anchors, dim=0)
+
         anchor_list = [self.multi_level_anchors for _ in range(num_imgs)]
 
         flatten_cls_scores = torch.cat([
@@ -419,30 +426,32 @@ class RTMDetHead(YOLOv5Head):
         anchor = torch.cat(anchor_list[0])[None]
         flatten_bboxes = distance2bbox(anchor, flatten_bboxes)
 
-        # decoded_bboxes = []
-        # for anchor, bbox_pred, stride in zip(anchor_list[0], bbox_preds, self.featmap_strides):
-        #     anchor = anchor.reshape(-1, 4)
-        #     bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
-        #     bbox_pred = distance2bbox(anchor, bbox_pred * stride)
-        #     decoded_bboxes.append(bbox_pred)
-        #
-        # flatten_bboxes = torch.cat(decoded_bboxes, 1)
+        use_batch = True
+        if use_batch:
+            assigned_result = self.assigner(flatten_bboxes.detach(),
+                                            flatten_cls_scores.detach(),
+                                            self.flatten_priors, gt_labels,
+                                            gt_bboxes, pad_bbox_flag)
 
-        cls_reg_targets = self.get_targets(
-            flatten_cls_scores,
-            flatten_bboxes,
-            anchor_list,
-            batch_gt_instances,
-            batch_img_metas,
-            batch_gt_instances_ignore=batch_gt_instances_ignore)
-        (anchor_list, labels_list, label_weights_list, bbox_targets_list,
-         assign_metrics_list) = cls_reg_targets
+            labels_list = assigned_result['assigned_labels']
+            label_weights_list = assigned_result['assigned_labels_weights']
+            bbox_targets_list = assigned_result['assigned_bboxes']
+            assign_metrics_list = assigned_result['assign_metrics']
+        else:
+            cls_reg_targets = self.get_targets(
+                flatten_cls_scores,
+                flatten_bboxes,
+                anchor_list,
+                batch_gt_instances,
+                batch_img_metas,
+                batch_gt_instances_ignore=batch_gt_instances_ignore)
+            (anchor_list, labels_list, label_weights_list, bbox_targets_list,
+             assign_metrics_list) = cls_reg_targets
 
-        # anchor_list = torch.cat(anchor_list, dim=1)
-        labels_list = torch.cat(labels_list, dim=1)
-        label_weights_list = torch.cat(label_weights_list, dim=1)
-        bbox_targets_list = torch.cat(bbox_targets_list, dim=1)
-        assign_metrics_list = torch.cat(assign_metrics_list, dim=1)
+            labels_list = torch.cat(labels_list, dim=1)
+            label_weights_list = torch.cat(label_weights_list, dim=1)
+            bbox_targets_list = torch.cat(bbox_targets_list, dim=1)
+            assign_metrics_list = torch.cat(assign_metrics_list, dim=1)
 
         num_classes = flatten_cls_scores.shape[-1]
         cls_target = F.one_hot(labels_list, num_classes=num_classes + 1)
@@ -488,24 +497,6 @@ class RTMDetHead(YOLOv5Head):
 
         bbox_avg_factor = reduce_mean(pos_bbox_weight.sum()).clamp_(min=1).item()
         losses_bbox = losses_bbox / bbox_avg_factor
-
-        # losses_cls, losses_bbox, \
-        # cls_avg_factors, bbox_avg_factors = multi_apply(
-        #     self.loss_by_feat_single,
-        #     cls_scores,
-        #     decoded_bboxes,
-        #     labels_list,
-        #     label_weights_list,
-        #     bbox_targets_list,
-        #     assign_metrics_list,
-        #     self.prior_generator.strides)
-        #
-        # cls_avg_factor = reduce_mean(sum(cls_avg_factors)).clamp_(min=1).item()
-        # losses_cls = list(map(lambda x: x / cls_avg_factor, losses_cls))
-        #
-        # bbox_avg_factor = reduce_mean(
-        #     sum(bbox_avg_factors)).clamp_(min=1).item()
-        # losses_bbox = list(map(lambda x: x / bbox_avg_factor, losses_bbox))
         print(dict(loss_cls=losses_cls, loss_bbox=losses_bbox))
         # {'loss_cls': [tensor(2.1434, device='cuda:0', grad_fn=<DivBackward0>),
         # tensor(0.5287, device='cuda:0', grad_fn=<DivBackward0>),
@@ -514,6 +505,72 @@ class RTMDetHead(YOLOv5Head):
         # tensor(0.0001, device='cuda:0', grad_fn=<DivBackward0>),
         # tensor(0.0968, device='cuda:0', grad_fn=<DivBackward0>)]} sum=0.1003
         return dict(loss_cls=losses_cls, loss_bbox=losses_bbox)
+
+    @staticmethod
+    def gt_instances_preprocess(batch_gt_instances: Union[Tensor, Sequence],
+                                batch_size: int) -> Tensor:
+        """Split batch_gt_instances with batch size, from [all_gt_bboxes, 6]
+        to.
+
+        [batch_size, number_gt, 5]. If some shape of single batch smaller than
+        gt bbox len, then using [-1., 0., 0., 0., 0.] to fill.
+
+        Args:
+            batch_gt_instances (Sequence[Tensor]): Ground truth
+                instances for whole batch, shape [all_gt_bboxes, 6]
+            batch_size (int): Batch size.
+
+        Returns:
+            Tensor: batch gt instances data, shape [batch_size, number_gt, 5]
+        """
+        if isinstance(batch_gt_instances, Sequence):
+            max_gt_bbox_len = max(
+                [len(gt_instances) for gt_instances in batch_gt_instances])
+            # fill [-1., 0., 0., 0., 0.] if some shape of
+            # single batch not equal max_gt_bbox_len
+            batch_instance_list = []
+            for index, gt_instance in enumerate(batch_gt_instances):
+                bboxes = gt_instance.bboxes
+                labels = gt_instance.labels
+                batch_instance_list.append(
+                    torch.cat((labels[:, None], bboxes), dim=-1))
+
+                if bboxes.shape[0] >= max_gt_bbox_len:
+                    continue
+
+                fill_tensor = bboxes.new_full(
+                    [max_gt_bbox_len - bboxes.shape[0], 5], 0)
+                fill_tensor[:, 0] = -1.
+                batch_instance_list[index] = torch.cat(
+                    (batch_instance_list[-1], fill_tensor), dim=0)
+
+            return torch.stack(batch_instance_list)
+        else:
+            # faster version
+            # sqlit batch gt instance [all_gt_bboxes, 6] ->
+            # [batch_size, number_gt_each_batch, 5]
+            batch_instance_list = []
+            max_gt_bbox_len = 0
+            for i in range(batch_size):
+                single_batch_instance = \
+                    batch_gt_instances[batch_gt_instances[:, 0] == i, :]
+                single_batch_instance = single_batch_instance[:, 1:]
+                batch_instance_list.append(single_batch_instance)
+                if len(single_batch_instance) > max_gt_bbox_len:
+                    max_gt_bbox_len = len(single_batch_instance)
+
+            # fill [-1., 0., 0., 0., 0.] if some shape of
+            # single batch not equal max_gt_bbox_len
+            for index, gt_instance in enumerate(batch_instance_list):
+                if gt_instance.shape[0] >= max_gt_bbox_len:
+                    continue
+                fill_tensor = batch_gt_instances.new_full(
+                    [max_gt_bbox_len - gt_instance.shape[0], 5], 0)
+                fill_tensor[:, 0] = -1.
+                batch_instance_list[index] = torch.cat(
+                    (batch_instance_list[index], fill_tensor), dim=0)
+
+            return torch.stack(batch_instance_list)
 
     def get_targets(self,
                     cls_scores: Tensor,

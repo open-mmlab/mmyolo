@@ -1,0 +1,182 @@
+# Copyright (c) OpenMMLab. All rights reserved.
+from typing import Optional, Tuple
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from torch import Tensor
+
+from mmyolo.registry import TASK_UTILS
+from mmdet.structures.bbox import BaseBoxes
+from mmdet.utils import ConfigType
+
+INF = 100000000
+EPS = 1.0e-7
+
+
+@TASK_UTILS.register_module()
+class BatchDynamicSoftLabelAssigner(nn.Module):
+    """Computes matching between predictions and ground truth with dynamic soft
+    label assignment.
+
+    Args:
+        soft_center_radius (float): Radius of the soft center prior.
+            Defaults to 3.0.
+        topk (int): Select top-k predictions to calculate dynamic k
+            best matches for each gt. Defaults to 13.
+        iou_weight (float): The scale factor of iou cost. Defaults to 3.0.
+        iou_calculator (ConfigType): Config of overlaps Calculator.
+            Defaults to dict(type='BboxOverlaps2D').
+    """
+
+    def __init__(self,
+                 num_classes: int = 80,
+                 soft_center_radius: float = 3.0,
+                 topk: int = 13,
+                 iou_weight: float = 3.0,
+                 iou_calculator: ConfigType = dict(type='mmdet.BboxOverlaps2D')) -> None:
+        super().__init__()
+        self.num_classes = num_classes
+        self.soft_center_radius = soft_center_radius
+        self.topk = topk
+        self.iou_weight = iou_weight
+        self.iou_calculator = TASK_UTILS.build(iou_calculator)
+
+    @torch.no_grad()
+    def forward(self,
+                pred_bboxes: Tensor,
+                pred_scores: Tensor,
+                priors: Tensor,
+                gt_labels: Tensor,
+                gt_bboxes: Tensor,
+                pad_bbox_flag: Tensor) -> dict:
+        num_gt = gt_bboxes.size(1)
+        decoded_bboxes = pred_bboxes
+        num_bboxes = decoded_bboxes.size(1)
+
+        if num_gt == 0 or num_bboxes == 0:
+            return {
+                'assigned_labels':  # b,n
+                    gt_bboxes.new_full(pred_scores[..., 0].shape, self.num_classes),
+                'assigned_labels_weights':  # b,n
+                    gt_bboxes.new_full(pred_scores[..., 0].shape, self.num_classes),
+                'assigned_bboxes':  # b,n,4
+                    gt_bboxes.new_full(pred_bboxes.shape, 0),
+                'assign_metrics':  # b,n
+                    gt_bboxes.new_full(pred_scores[..., 0].shape, 0),
+                # 'fg_mask_pre_prior':
+                # gt_bboxes.new_full(pred_scores[..., 0].shape, 0)
+            }
+
+        prior_center = priors[:, :2]
+        if isinstance(gt_bboxes, BaseBoxes):
+            is_in_gts = gt_bboxes.find_inside_points(prior_center)
+        else:
+            # Tensor boxes will be treated as horizontal boxes by defaults
+            lt_ = prior_center[:, None] - gt_bboxes[:, :2]
+            rb_ = gt_bboxes[:, 2:] - prior_center[:, None]
+
+            deltas = torch.cat([lt_, rb_], dim=-1)
+            is_in_gts = deltas.min(dim=-1).values > 0
+
+        valid_mask = is_in_gts.sum(dim=1) > 0
+
+        valid_decoded_bbox = decoded_bboxes[valid_mask]
+        valid_pred_scores = pred_scores[valid_mask]
+        num_valid = valid_decoded_bbox.size(0)
+
+        if num_valid == 0:
+            # No ground truth or boxes, return empty assignment
+            max_overlaps = decoded_bboxes.new_zeros((num_bboxes,))
+            assigned_labels = decoded_bboxes.new_full((num_bboxes,),
+                                                      -1,
+                                                      dtype=torch.long)
+            return AssignResult(
+                num_gt, assigned_gt_inds, max_overlaps, labels=assigned_labels)
+        if hasattr(gt_instances, 'masks'):
+            gt_center = center_of_mass(gt_instances.masks, eps=EPS)
+        elif isinstance(gt_bboxes, BaseBoxes):
+            gt_center = gt_bboxes.centers
+        else:
+            # Tensor boxes will be treated as horizontal boxes by defaults
+            gt_center = (gt_bboxes[:, :2] + gt_bboxes[:, 2:]) / 2.0
+        valid_prior = priors[valid_mask]
+        strides = valid_prior[:, 2]
+        distance = (valid_prior[:, None, :2] - gt_center[None, :, :]
+                    ).pow(2).sum(-1).sqrt() / strides[:, None]
+        soft_center_prior = torch.pow(10, distance - self.soft_center_radius)
+
+        pairwise_ious = self.iou_calculator(valid_decoded_bbox, gt_bboxes)
+        iou_cost = -torch.log(pairwise_ious + EPS) * self.iou_weight
+
+        gt_onehot_label = (
+            F.one_hot(gt_labels.to(torch.int64),
+                      pred_scores.shape[-1]).float().unsqueeze(0).repeat(
+                num_valid, 1, 1))
+        valid_pred_scores = valid_pred_scores.unsqueeze(1).repeat(1, num_gt, 1)
+
+        soft_label = gt_onehot_label * pairwise_ious[..., None]
+        scale_factor = soft_label - valid_pred_scores.sigmoid()
+        soft_cls_cost = F.binary_cross_entropy_with_logits(
+            valid_pred_scores, soft_label,
+            reduction='none') * scale_factor.abs().pow(2.0)
+        soft_cls_cost = soft_cls_cost.sum(dim=-1)
+
+        cost_matrix = soft_cls_cost + iou_cost + soft_center_prior
+
+        matched_pred_ious, matched_gt_inds = self.dynamic_k_matching(
+            cost_matrix, pairwise_ious, num_gt, valid_mask)
+
+        # convert to AssignResult format
+        assigned_gt_inds[valid_mask] = matched_gt_inds + 1
+        assigned_labels = assigned_gt_inds.new_full((num_bboxes,), -1)
+        assigned_labels[valid_mask] = gt_labels[matched_gt_inds].long()
+        max_overlaps = assigned_gt_inds.new_full((num_bboxes,),
+                                                 -INF,
+                                                 dtype=torch.float32)
+        max_overlaps[valid_mask] = matched_pred_ious
+        return AssignResult(
+            num_gt, assigned_gt_inds, max_overlaps, labels=assigned_labels)
+
+    def dynamic_k_matching(self, cost: Tensor, pairwise_ious: Tensor,
+                           num_gt: int,
+                           valid_mask: Tensor) -> Tuple[Tensor, Tensor]:
+        """Use IoU and matching cost to calculate the dynamic top-k positive
+        targets. Same as SimOTA.
+
+        Args:
+            cost (Tensor): Cost matrix.
+            pairwise_ious (Tensor): Pairwise iou matrix.
+            num_gt (int): Number of gt.
+            valid_mask (Tensor): Mask for valid bboxes.
+
+        Returns:
+            tuple: matched ious and gt indexes.
+        """
+        matching_matrix = torch.zeros_like(cost, dtype=torch.uint8)
+        # select candidate topk ious for dynamic-k calculation
+        candidate_topk = min(self.topk, pairwise_ious.size(0))
+        topk_ious, _ = torch.topk(pairwise_ious, candidate_topk, dim=0)
+        # calculate dynamic k for each gt
+        dynamic_ks = torch.clamp(topk_ious.sum(0).int(), min=1)
+        for gt_idx in range(num_gt):
+            _, pos_idx = torch.topk(
+                cost[:, gt_idx], k=dynamic_ks[gt_idx], largest=False)
+            matching_matrix[:, gt_idx][pos_idx] = 1
+
+        del topk_ious, dynamic_ks, pos_idx
+
+        prior_match_gt_mask = matching_matrix.sum(1) > 1
+        if prior_match_gt_mask.sum() > 0:
+            cost_min, cost_argmin = torch.min(
+                cost[prior_match_gt_mask, :], dim=1)
+            matching_matrix[prior_match_gt_mask, :] *= 0
+            matching_matrix[prior_match_gt_mask, cost_argmin] = 1
+        # get foreground mask inside box and center prior
+        fg_mask_inboxes = matching_matrix.sum(1) > 0
+        valid_mask[valid_mask.clone()] = fg_mask_inboxes
+
+        matched_gt_inds = matching_matrix[fg_mask_inboxes, :].argmax(1)
+        matched_pred_ious = (matching_matrix *
+                             pairwise_ious).sum(1)[fg_mask_inboxes]
+        return matched_pred_ious, matched_gt_inds
