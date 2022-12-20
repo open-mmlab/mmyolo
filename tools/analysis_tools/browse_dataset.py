@@ -218,7 +218,7 @@ def main():
             gt_masks = gt_instances.get('masks', None)
             if gt_masks is not None:
                 masks = mask2ndarray(gt_masks)
-                gt_instances.masks = masks.astype(np.bool)
+                gt_instances.masks = masks.astype(bool)
                 datasample.gt_instances = gt_instances
             # get filename from dataset or just use index as filename
             visualizer.add_datasample(
