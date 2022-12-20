@@ -277,7 +277,7 @@ class BatchYOLOv7Assigner(nn.Module):
                 self.iou_weight * pair_wise_iou_loss)
 
             # num_gt, num_match_pred
-            matching_matrix = torch.zeros_like(cost)
+            matching_matrix = torch.zeros_like(cost, device=_from_which_layer.device) 
 
             top_k, _ = torch.topk(
                 pair_wise_iou,
