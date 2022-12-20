@@ -18,6 +18,7 @@ from torch import Tensor
 
 from mmyolo.registry import MODELS, TASK_UTILS
 from .yolov5_head import YOLOv5Head
+import torch.nn.functional as F
 
 
 @MODELS.register_module()
@@ -368,6 +369,20 @@ class RTMDetHead(YOLOv5Head):
         Returns:
             dict[str, Tensor]: A dictionary of loss components.
         """
+        load = True
+        if load:
+            xx = torch.load('xx.pth')
+            cls_scores = xx['cls_scores']
+            bbox_preds = xx['bbox_preds']
+            batch_gt_instances = xx['batch_gt_instances']
+            batch_img_metas = xx['batch_img_metas']
+        else:
+            save_dict = dict(cls_scores=cls_scores,
+                             bbox_preds=bbox_preds,
+                             batch_gt_instances=batch_gt_instances,
+                             batch_img_metas=batch_img_metas)
+            torch.save(save_dict, 'xx.pth')
+
         num_imgs = len(batch_img_metas)
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.prior_generator.num_levels
@@ -396,14 +411,22 @@ class RTMDetHead(YOLOv5Head):
                                                   self.cls_out_channels)
             for cls_score in cls_scores
         ], 1)
-        decoded_bboxes = []
-        for anchor, bbox_pred, stride in zip(anchor_list[0], bbox_preds, self.featmap_strides):
-            anchor = anchor.reshape(-1, 4)
-            bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
-            bbox_pred = distance2bbox(anchor, bbox_pred * stride)
-            decoded_bboxes.append(bbox_pred)
 
-        flatten_bboxes = torch.cat(decoded_bboxes, 1)
+        flatten_bboxes = torch.cat([
+            bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4) * stride
+            for bbox_pred, stride in zip(bbox_preds, self.featmap_strides)
+        ], 1)
+        anchor = torch.cat(anchor_list[0])[None]
+        flatten_bboxes = distance2bbox(anchor, flatten_bboxes)
+
+        # decoded_bboxes = []
+        # for anchor, bbox_pred, stride in zip(anchor_list[0], bbox_preds, self.featmap_strides):
+        #     anchor = anchor.reshape(-1, 4)
+        #     bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
+        #     bbox_pred = distance2bbox(anchor, bbox_pred * stride)
+        #     decoded_bboxes.append(bbox_pred)
+        #
+        # flatten_bboxes = torch.cat(decoded_bboxes, 1)
 
         cls_reg_targets = self.get_targets(
             flatten_cls_scores,
@@ -415,23 +438,81 @@ class RTMDetHead(YOLOv5Head):
         (anchor_list, labels_list, label_weights_list, bbox_targets_list,
          assign_metrics_list) = cls_reg_targets
 
-        losses_cls, losses_bbox, \
-        cls_avg_factors, bbox_avg_factors = multi_apply(
-            self.loss_by_feat_single,
-            cls_scores,
-            decoded_bboxes,
-            labels_list,
-            label_weights_list,
-            bbox_targets_list,
-            assign_metrics_list,
-            self.prior_generator.strides)
+        # anchor_list = torch.cat(anchor_list, dim=1)
+        labels_list = torch.cat(labels_list, dim=1)
+        label_weights_list = torch.cat(label_weights_list, dim=1)
+        bbox_targets_list = torch.cat(bbox_targets_list, dim=1)
+        assign_metrics_list = torch.cat(assign_metrics_list, dim=1)
 
-        cls_avg_factor = reduce_mean(sum(cls_avg_factors)).clamp_(min=1).item()
-        losses_cls = list(map(lambda x: x / cls_avg_factor, losses_cls))
+        num_classes = flatten_cls_scores.shape[-1]
+        cls_target = F.one_hot(labels_list, num_classes=num_classes + 1)
+        cls_target = cls_target[..., :num_classes].float()
+        cls_target *= assign_metrics_list[..., None]
 
-        bbox_avg_factor = reduce_mean(
-            sum(bbox_avg_factors)).clamp_(min=1).item()
-        losses_bbox = list(map(lambda x: x / bbox_avg_factor, losses_bbox))
+        flatten_cls_scores = flatten_cls_scores.reshape(-1, num_classes).contiguous()
+        cls_target = cls_target.reshape(-1, num_classes)
+        label_weights_list = label_weights_list.reshape(-1)
+
+        losses_cls = self.loss_cls(
+            flatten_cls_scores, cls_target, label_weights_list, avg_factor=1.0)
+        cls_avg_factor = reduce_mean(assign_metrics_list.sum()).clamp_(min=1).item()
+        losses_cls = losses_cls / cls_avg_factor
+
+        bbox_pred = flatten_bboxes.reshape(-1, 4)
+        bbox_targets = bbox_targets_list.reshape(-1, 4)
+
+        labels_list = labels_list.reshape(-1)
+        assign_metrics_list = assign_metrics_list.reshape(-1)
+        pos_inds = ((labels_list >= 0)
+                    & (labels_list < num_classes)).nonzero().squeeze(1)
+
+        # TODO： 不需要 reshape 为 -1
+        if len(pos_inds) > 0:
+            pos_bbox_targets = bbox_targets[pos_inds]
+            pos_bbox_pred = bbox_pred[pos_inds]
+
+            pos_decode_bbox_pred = pos_bbox_pred
+            pos_decode_bbox_targets = pos_bbox_targets
+
+            # regression loss
+            pos_bbox_weight = assign_metrics_list[pos_inds]
+
+            losses_bbox = self.loss_bbox(
+                pos_decode_bbox_pred,
+                pos_decode_bbox_targets,
+                weight=pos_bbox_weight,
+                avg_factor=1.0)
+        else:
+            losses_bbox = bbox_pred.sum() * 0
+            pos_bbox_weight = bbox_targets.new_tensor(0.)
+
+        bbox_avg_factor = reduce_mean(pos_bbox_weight.sum()).clamp_(min=1).item()
+        losses_bbox = losses_bbox / bbox_avg_factor
+
+        # losses_cls, losses_bbox, \
+        # cls_avg_factors, bbox_avg_factors = multi_apply(
+        #     self.loss_by_feat_single,
+        #     cls_scores,
+        #     decoded_bboxes,
+        #     labels_list,
+        #     label_weights_list,
+        #     bbox_targets_list,
+        #     assign_metrics_list,
+        #     self.prior_generator.strides)
+        #
+        # cls_avg_factor = reduce_mean(sum(cls_avg_factors)).clamp_(min=1).item()
+        # losses_cls = list(map(lambda x: x / cls_avg_factor, losses_cls))
+        #
+        # bbox_avg_factor = reduce_mean(
+        #     sum(bbox_avg_factors)).clamp_(min=1).item()
+        # losses_bbox = list(map(lambda x: x / bbox_avg_factor, losses_bbox))
+        print(dict(loss_cls=losses_cls, loss_bbox=losses_bbox))
+        # {'loss_cls': [tensor(2.1434, device='cuda:0', grad_fn=<DivBackward0>),
+        # tensor(0.5287, device='cuda:0', grad_fn=<DivBackward0>),
+        # tensor(0.1318, device='cuda:0', grad_fn=<DivBackward0>)], sum=2.8040
+        # 'loss_bbox': [tensor(0.0033, device='cuda:0', grad_fn=<DivBackward0>),
+        # tensor(0.0001, device='cuda:0', grad_fn=<DivBackward0>),
+        # tensor(0.0968, device='cuda:0', grad_fn=<DivBackward0>)]} sum=0.1003
         return dict(loss_cls=losses_cls, loss_bbox=losses_bbox)
 
     def get_targets(self,
