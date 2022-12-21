@@ -369,19 +369,19 @@ class RTMDetHead(YOLOv5Head):
         Returns:
             dict[str, Tensor]: A dictionary of loss components.
         """
-        load = True
-        if load:
-            xx = torch.load('xx.pth')
-            cls_scores = xx['cls_scores']
-            bbox_preds = xx['bbox_preds']
-            batch_gt_instances = xx['batch_gt_instances']
-            batch_img_metas = xx['batch_img_metas']
-        else:
-            save_dict = dict(cls_scores=cls_scores,
-                             bbox_preds=bbox_preds,
-                             batch_gt_instances=batch_gt_instances,
-                             batch_img_metas=batch_img_metas)
-            torch.save(save_dict, 'xx.pth')
+        # load = False
+        # if load:
+        #     xx = torch.load('xx.pth')
+        #     cls_scores = xx['cls_scores']
+        #     bbox_preds = xx['bbox_preds']
+        #     batch_gt_instances = xx['batch_gt_instances']
+        #     batch_img_metas = xx['batch_img_metas']
+        # else:
+        #     save_dict = dict(cls_scores=cls_scores,
+        #                      bbox_preds=bbox_preds,
+        #                      batch_gt_instances=batch_gt_instances,
+        #                      batch_img_metas=batch_img_metas)
+        #     # torch.save(save_dict, 'xx.pth')
 
         num_imgs = len(batch_img_metas)
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
@@ -407,11 +407,11 @@ class RTMDetHead(YOLOv5Head):
         # If the shape does not equal, generate new one
         if featmap_sizes != self.featmap_sizes:
             self.featmap_sizes = featmap_sizes
-            self.multi_level_anchors = self.prior_generator.grid_priors(
+            multi_level_anchors = self.prior_generator.grid_priors(
                 featmap_sizes, device=device, with_stride=True)
-            self.flatten_priors = torch.cat(self.multi_level_anchors, dim=0)
+            self.flatten_priors = torch.cat(multi_level_anchors, dim=0)
 
-        anchor_list = [self.multi_level_anchors for _ in range(num_imgs)]
+        # anchor_list = [self.multi_level_anchors for _ in range(num_imgs)]
 
         flatten_cls_scores = torch.cat([
             cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1,
@@ -423,15 +423,15 @@ class RTMDetHead(YOLOv5Head):
             bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4) * stride
             for bbox_pred, stride in zip(bbox_preds, self.featmap_strides)
         ], 1)
-        anchor = torch.cat(anchor_list[0])[None]
-        flatten_bboxes = distance2bbox(anchor, flatten_bboxes)
+        # anchor = torch.cat(anchor_list[0])[None]
+        flatten_bboxes = distance2bbox(self.flatten_priors, flatten_bboxes)
 
         use_batch = True
         if use_batch:
             assigned_result = self.assigner(flatten_bboxes.detach(),
                                             flatten_cls_scores.detach(),
-                                            self.flatten_priors, gt_labels,
-                                            gt_bboxes, pad_bbox_flag)
+                                            self.flatten_priors,
+                                            gt_labels, gt_bboxes, pad_bbox_flag)
 
             labels_list = assigned_result['assigned_labels']
             label_weights_list = assigned_result['assigned_labels_weights']
@@ -475,7 +475,7 @@ class RTMDetHead(YOLOv5Head):
         pos_inds = ((labels_list >= 0)
                     & (labels_list < num_classes)).nonzero().squeeze(1)
 
-        # TODO： 不需要 reshape 为 -1
+        # TODO： no reshape to -1
         if len(pos_inds) > 0:
             pos_bbox_targets = bbox_targets[pos_inds]
             pos_bbox_pred = bbox_pred[pos_inds]
@@ -497,13 +497,15 @@ class RTMDetHead(YOLOv5Head):
 
         bbox_avg_factor = reduce_mean(pos_bbox_weight.sum()).clamp_(min=1).item()
         losses_bbox = losses_bbox / bbox_avg_factor
-        print(dict(loss_cls=losses_cls, loss_bbox=losses_bbox))
+        # print(dict(loss_cls=losses_cls, loss_bbox=losses_bbox))
         # {'loss_cls': [tensor(2.1434, device='cuda:0', grad_fn=<DivBackward0>),
         # tensor(0.5287, device='cuda:0', grad_fn=<DivBackward0>),
         # tensor(0.1318, device='cuda:0', grad_fn=<DivBackward0>)], sum=2.8040
         # 'loss_bbox': [tensor(0.0033, device='cuda:0', grad_fn=<DivBackward0>),
         # tensor(0.0001, device='cuda:0', grad_fn=<DivBackward0>),
         # tensor(0.0968, device='cuda:0', grad_fn=<DivBackward0>)]} sum=0.1003
+
+        # {'loss_cls': tensor(2.8029, device='cuda:0', grad_fn=<DivBackward0>), 'loss_bbox': tensor(0.0159, device='cuda:0', grad_fn=<DivBackward0>)}
         return dict(loss_cls=losses_cls, loss_bbox=losses_bbox)
 
     @staticmethod
@@ -566,7 +568,7 @@ class RTMDetHead(YOLOv5Head):
                     continue
                 fill_tensor = batch_gt_instances.new_full(
                     [max_gt_bbox_len - gt_instance.shape[0], 5], 0)
-                fill_tensor[:, 0] = -1.
+                # fill_tensor[:, 0] = -1.
                 batch_instance_list[index] = torch.cat(
                     (batch_instance_list[index], fill_tensor), dim=0)
 

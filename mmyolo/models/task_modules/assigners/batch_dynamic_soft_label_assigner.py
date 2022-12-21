@@ -53,67 +53,54 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
         num_gt = gt_bboxes.size(1)
         decoded_bboxes = pred_bboxes
         num_bboxes = decoded_bboxes.size(1)
+        batch_size = decoded_bboxes.size(0)
 
         if num_gt == 0 or num_bboxes == 0:
             return {
-                'assigned_labels':  # b,n
-                    gt_bboxes.new_full(pred_scores[..., 0].shape, self.num_classes),
-                'assigned_labels_weights':  # b,n
-                    gt_bboxes.new_full(pred_scores[..., 0].shape, self.num_classes),
-                'assigned_bboxes':  # b,n,4
+                'assigned_labels':
+                    gt_labels.new_full(pred_scores[..., 0].shape,
+                                       self.num_classes, dtype=torch.long),
+                'assigned_labels_weights':
+                    gt_bboxes.new_full(pred_scores[..., 0].shape, 1),
+                'assigned_bboxes':
                     gt_bboxes.new_full(pred_bboxes.shape, 0),
-                'assign_metrics':  # b,n
-                    gt_bboxes.new_full(pred_scores[..., 0].shape, 0),
-                # 'fg_mask_pre_prior':
-                # gt_bboxes.new_full(pred_scores[..., 0].shape, 0)
+                'assign_metrics':
+                    gt_bboxes.new_full(pred_scores[..., 0].shape, 0)
             }
 
         prior_center = priors[:, :2]
         if isinstance(gt_bboxes, BaseBoxes):
-            is_in_gts = gt_bboxes.find_inside_points(prior_center)
+            raise NotImplementedError(f'type of {type(gt_bboxes)} are not implemented !')
         else:
             # Tensor boxes will be treated as horizontal boxes by defaults
-            lt_ = prior_center[:, None] - gt_bboxes[:, :2]
-            rb_ = gt_bboxes[:, 2:] - prior_center[:, None]
+            lt_ = prior_center[:, None, None] - gt_bboxes[..., :2]
+            rb_ = gt_bboxes[..., 2:] - prior_center[:, None, None]
 
             deltas = torch.cat([lt_, rb_], dim=-1)
             is_in_gts = deltas.min(dim=-1).values > 0
+            is_in_gts = is_in_gts * pad_bbox_flag[..., 0][None]
+            is_in_gts = is_in_gts.permute(1, 0, 2)
+            valid_mask = is_in_gts.sum(dim=-1) > 0
 
-        valid_mask = is_in_gts.sum(dim=1) > 0
+        # Tensor boxes will be treated as horizontal boxes by defaults
+        gt_center = (gt_bboxes[..., :2] + gt_bboxes[..., 2:]) / 2.0
 
-        valid_decoded_bbox = decoded_bboxes[valid_mask]
-        valid_pred_scores = pred_scores[valid_mask]
-        num_valid = valid_decoded_bbox.size(0)
+        strides = priors[..., 2]
+        distance = (priors[None].unsqueeze(2)[..., :2] - gt_center[:, None, :, :]
+                    ).pow(2).sum(-1).sqrt() / strides[None, :, None]
 
-        if num_valid == 0:
-            # No ground truth or boxes, return empty assignment
-            max_overlaps = decoded_bboxes.new_zeros((num_bboxes,))
-            assigned_labels = decoded_bboxes.new_full((num_bboxes,),
-                                                      -1,
-                                                      dtype=torch.long)
-            return AssignResult(
-                num_gt, assigned_gt_inds, max_overlaps, labels=assigned_labels)
-        if hasattr(gt_instances, 'masks'):
-            gt_center = center_of_mass(gt_instances.masks, eps=EPS)
-        elif isinstance(gt_bboxes, BaseBoxes):
-            gt_center = gt_bboxes.centers
-        else:
-            # Tensor boxes will be treated as horizontal boxes by defaults
-            gt_center = (gt_bboxes[:, :2] + gt_bboxes[:, 2:]) / 2.0
-        valid_prior = priors[valid_mask]
-        strides = valid_prior[:, 2]
-        distance = (valid_prior[:, None, :2] - gt_center[None, :, :]
-                    ).pow(2).sum(-1).sqrt() / strides[:, None]
+        # prevent overflow
+        distance = distance * valid_mask.unsqueeze(-1)
         soft_center_prior = torch.pow(10, distance - self.soft_center_radius)
 
-        pairwise_ious = self.iou_calculator(valid_decoded_bbox, gt_bboxes)
+        pairwise_ious = self.iou_calculator(decoded_bboxes, gt_bboxes)
         iou_cost = -torch.log(pairwise_ious + EPS) * self.iou_weight
 
         gt_onehot_label = (
-            F.one_hot(gt_labels.to(torch.int64),
-                      pred_scores.shape[-1]).float().unsqueeze(0).repeat(
-                num_valid, 1, 1))
-        valid_pred_scores = valid_pred_scores.unsqueeze(1).repeat(1, num_gt, 1)
+            F.one_hot(gt_labels[..., 0].to(torch.int64),
+                      pred_scores.shape[-1]).float().unsqueeze(1).repeat(
+                1, decoded_bboxes.shape[1], 1, 1))
+        valid_pred_scores = pred_scores.unsqueeze(2).repeat(1, 1, num_gt, 1)
 
         soft_label = gt_onehot_label * pairwise_ious[..., None]
         scale_factor = soft_label - valid_pred_scores.sigmoid()
@@ -124,28 +111,41 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
 
         cost_matrix = soft_cls_cost + iou_cost + soft_center_prior
 
-        matched_pred_ious, matched_gt_inds = self.dynamic_k_matching(
-            cost_matrix, pairwise_ious, num_gt, valid_mask)
+        max_pad_value = torch.ones_like(cost_matrix) * INF
+        cost_matrix = torch.where(valid_mask[..., None].repeat(1, 1, num_gt), cost_matrix, max_pad_value)
 
-        # convert to AssignResult format
-        assigned_gt_inds[valid_mask] = matched_gt_inds + 1
-        assigned_labels = assigned_gt_inds.new_full((num_bboxes,), -1)
-        assigned_labels[valid_mask] = gt_labels[matched_gt_inds].long()
-        max_overlaps = assigned_gt_inds.new_full((num_bboxes,),
-                                                 -INF,
-                                                 dtype=torch.float32)
-        max_overlaps[valid_mask] = matched_pred_ious
-        return AssignResult(
-            num_gt, assigned_gt_inds, max_overlaps, labels=assigned_labels)
+        matched_pred_ious, matched_gt_inds, fg_mask_inboxes = self.dynamic_k_matching(
+            cost_matrix, pairwise_ious, pad_bbox_flag)
 
-    def dynamic_k_matching(self, cost: Tensor, pairwise_ious: Tensor,
-                           num_gt: int,
-                           valid_mask: Tensor) -> Tuple[Tensor, Tensor]:
+        del pairwise_ious, cost_matrix
+
+        batch_index = (fg_mask_inboxes > 0).nonzero(as_tuple=True)[0]
+
+        assigned_labels = gt_labels.new_full(pred_scores[..., 0].shape, self.num_classes)
+        assigned_labels[fg_mask_inboxes] = gt_labels[batch_index, matched_gt_inds].squeeze(-1)
+        assigned_labels = assigned_labels.long()
+
+        assigned_labels_weights = gt_bboxes.new_full(pred_scores[..., 0].shape, 1)
+
+        assigned_bboxes = gt_bboxes.new_full(pred_bboxes.shape, 0)
+        assigned_bboxes[fg_mask_inboxes] = gt_bboxes[batch_index, matched_gt_inds]
+
+        assign_metrics = gt_bboxes.new_full(pred_scores[..., 0].shape, 0)
+        assign_metrics[fg_mask_inboxes] = matched_pred_ious
+
+        return dict(assigned_labels=assigned_labels,
+                    assigned_labels_weights=assigned_labels_weights,
+                    assigned_bboxes=assigned_bboxes,
+                    assign_metrics=assign_metrics)
+
+    def dynamic_k_matching(self, cost_matrix: Tensor,
+                           pairwise_ious: Tensor,
+                           pad_bbox_flag: int) -> Tuple[Tensor, Tensor]:
         """Use IoU and matching cost to calculate the dynamic top-k positive
         targets. Same as SimOTA.
 
         Args:
-            cost (Tensor): Cost matrix.
+            cost_matrix (Tensor): Cost matrix.
             pairwise_ious (Tensor): Pairwise iou matrix.
             num_gt (int): Number of gt.
             valid_mask (Tensor): Mask for valid bboxes.
@@ -153,30 +153,32 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
         Returns:
             tuple: matched ious and gt indexes.
         """
-        matching_matrix = torch.zeros_like(cost, dtype=torch.uint8)
+        matching_matrix = torch.zeros_like(cost_matrix, dtype=torch.uint8)
         # select candidate topk ious for dynamic-k calculation
-        candidate_topk = min(self.topk, pairwise_ious.size(0))
-        topk_ious, _ = torch.topk(pairwise_ious, candidate_topk, dim=0)
+        candidate_topk = min(self.topk, pairwise_ious.size(1))
+        topk_ious, _ = torch.topk(pairwise_ious, candidate_topk, dim=1)
         # calculate dynamic k for each gt
-        dynamic_ks = torch.clamp(topk_ious.sum(0).int(), min=1)
-        for gt_idx in range(num_gt):
-            _, pos_idx = torch.topk(
-                cost[:, gt_idx], k=dynamic_ks[gt_idx], largest=False)
-            matching_matrix[:, gt_idx][pos_idx] = 1
+        dynamic_ks = torch.clamp(topk_ious.sum(1).int(), min=1)
 
-        del topk_ious, dynamic_ks, pos_idx
+        # TODO: Parallel Computation
+        for b in range(pad_bbox_flag.shape[0]):
+            num_gt = pad_bbox_flag[b, :, 0].sum()
+            for gt_idx in range(int(num_gt.item())):
+                _, pos_idx = torch.topk(
+                    cost_matrix[b, :, gt_idx], k=dynamic_ks[b, gt_idx], largest=False)
+                matching_matrix[b, :, gt_idx][pos_idx] = 1
+        del topk_ious, dynamic_ks
 
-        prior_match_gt_mask = matching_matrix.sum(1) > 1
+        prior_match_gt_mask = matching_matrix.sum(2) > 1
         if prior_match_gt_mask.sum() > 0:
+            # TODO: to check
             cost_min, cost_argmin = torch.min(
-                cost[prior_match_gt_mask, :], dim=1)
+                cost_matrix[prior_match_gt_mask, :], dim=1)
             matching_matrix[prior_match_gt_mask, :] *= 0
             matching_matrix[prior_match_gt_mask, cost_argmin] = 1
-        # get foreground mask inside box and center prior
-        fg_mask_inboxes = matching_matrix.sum(1) > 0
-        valid_mask[valid_mask.clone()] = fg_mask_inboxes
 
+        # get foreground mask inside box and center prior
+        fg_mask_inboxes = matching_matrix.sum(2) > 0
+        matched_pred_ious = (matching_matrix * pairwise_ious).sum(2)[fg_mask_inboxes]
         matched_gt_inds = matching_matrix[fg_mask_inboxes, :].argmax(1)
-        matched_pred_ious = (matching_matrix *
-                             pairwise_ious).sum(1)[fg_mask_inboxes]
-        return matched_pred_ious, matched_gt_inds
+        return matched_pred_ious, matched_gt_inds, fg_mask_inboxes

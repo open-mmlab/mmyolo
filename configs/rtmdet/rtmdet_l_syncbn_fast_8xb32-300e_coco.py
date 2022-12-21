@@ -1,6 +1,6 @@
 _base_ = '../_base_/default_runtime.py'
 
-data_root = '/home/hha/dataset/coco20/'
+data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 img_scale = (640, 640)  # height, width
@@ -10,12 +10,12 @@ max_epochs = 300
 stage2_num_epochs = 20
 interval = 10
 
-train_batch_size_per_gpu = 1
-train_num_workers = 0
+train_batch_size_per_gpu = 32
+train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
 # persistent_workers must be False if num_workers is 0.
-persistent_workers = False
+persistent_workers = True
 strides = [8, 16, 32]
 base_lr = 0.004
 
@@ -81,8 +81,8 @@ model = dict(
         loss_bbox=dict(type='mmdet.GIoULoss', loss_weight=2.0)),
     train_cfg=dict(
         assigner=dict(
-            # type='BatchDynamicSoftLabelAssigner',
-            type='mmdet.DynamicSoftLabelAssigner',
+            type='BatchDynamicSoftLabelAssigner',
+            # type='mmdet.DynamicSoftLabelAssigner',
             topk=13,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D')),
         allowed_border=-1,
