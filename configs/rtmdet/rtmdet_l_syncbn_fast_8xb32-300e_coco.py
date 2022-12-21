@@ -11,7 +11,7 @@ stage2_num_epochs = 20
 interval = 10
 
 train_batch_size_per_gpu = 32
-train_num_workers = 8
+train_num_workers = 10
 val_batch_size_per_gpu = 1
 val_num_workers = 2
 # persistent_workers must be False if num_workers is 0.
