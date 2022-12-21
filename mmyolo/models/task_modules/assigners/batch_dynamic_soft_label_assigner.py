@@ -104,9 +104,20 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
 
         soft_label = gt_onehot_label * pairwise_ious[..., None]
         scale_factor = soft_label - valid_pred_scores.sigmoid()
-        soft_cls_cost = F.binary_cross_entropy_with_logits(
-            valid_pred_scores, soft_label,
-            reduction='none') * scale_factor.abs().pow(2.0)
+
+        # always OOM
+        # soft_cls_cost = F.binary_cross_entropy_with_logits(
+        #     valid_pred_scores, soft_label,
+        #     reduction='none') * scale_factor.abs().pow(2.0)
+
+        soft_cls_costs = []
+        for b in range(batch_size):
+            soft_cls_cost = F.binary_cross_entropy_with_logits(
+                valid_pred_scores[b], soft_label[b],
+                reduction='none') * scale_factor[b].abs().pow(2.0)
+            soft_cls_costs.append(soft_cls_cost)
+        soft_cls_cost = torch.stack(soft_cls_costs, dim=0)
+
         soft_cls_cost = soft_cls_cost.sum(dim=-1)
 
         cost_matrix = soft_cls_cost + iou_cost + soft_center_prior
