@@ -55,6 +55,7 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
                                       | bottom_up |--->|  out  |---> output2
                                       |  layer1   |    | layer2|
                                       +-----------+    +-------+
+
     .. code:: text
 
      P6 neck model structure diagram
