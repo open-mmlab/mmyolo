@@ -14,15 +14,15 @@ Default that you have completed the installation of MMYOLO, if not installed, pl
 
 In this tutorial, we will introduce the whole process from annotating custom dataset to final training, testing and deployment. The overview steps are as below:
 
-01. Prepare dataset: `tools/misc/download_dataset.py`
-02. Use the software of [labelme](https://github.com/wkentaro/labelme) to annotate: `demo/image_demo.py` + labelme
-03. Convert the dataset into COCO format: `tools/dataset_converters/labelme2coco.py`
-04. Split dataset:`tools/misc/coco_split.py`
-05. Creat a config file based on dataset
-06. Dataset visualization analysis: `tools/analysis_tools/dataset_analysis.py`
-07. Optimize Anchor size: `tools/analysis_tools/optimize_anchors.py`
-08. Visualization the data processing part of config: `tools/analysis_tools/browse_dataset.py`
-09. Train: `tools/train.py`
+1.  Prepare dataset: `tools/misc/download_dataset.py`
+2.  Use the software of [labelme](https://github.com/wkentaro/labelme) to annotate: `demo/image_demo.py` + labelme
+3.  Convert the dataset into COCO format: `tools/dataset_converters/labelme2coco.py`
+4.  Split dataset:`tools/misc/coco_split.py`
+5.  Creat a config file based on dataset
+6.  Dataset visualization analysis: `tools/analysis_tools/dataset_analysis.py`
+7.  Optimize Anchor size: `tools/analysis_tools/optimize_anchors.py`
+8.  Visualization the data processing part of config: `tools/analysis_tools/browse_dataset.py`
+9.  Train: `tools/train.py`
 10. Inference: `demo/image_demo.py`
 11. Deployment
 
@@ -398,7 +398,7 @@ anchors = [  # the anchor has been updated according to the characteristics of d
     [(353, 337), (539, 341), (443, 432)]  # P5/32
 ]
 
-class_name = ('cat', )  # according to the label information of  class_with_id.txt, set the class_name
+class_name = ('cat', )  # according to the label information of class_with_id.txt, set the class_name
 num_classes = len(class_name)
 metainfo = dict(
     CLASSES=class_name,
@@ -466,4 +466,304 @@ default_hooks = dict(
 
 ```{Note}
 We put an identical config file in `projects/misc/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`. You can choose to copy to `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` to start training directly.
+```
+
+## 6. Visual analysis of datasets
+
+The script `tools/analysis_tools/dataset_analysis.py` will helo you get a plot of your dataset. The script can generate four types of analysis graphs:
+
+- A distribution plot showing categories and the number of bbox instances: `show_bbox_num`
+- A distribution plot showing categories and the width and height of bbox instances: `show_bbox_wh`
+- A distribution plot showing categories and the width/height ratio of bbox instances: `show_bbox_wh_ratio`
+- A distribution plot showing categories and the area of bbox instances based on the area rule: `show_bbox_area`
+
+Here's how the script works:
+
+```shell
+python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
+                                                [--val-dataset ${TYPE}] \
+                                                [--class-name ${CLASS_NAME}] \
+                                                [--area-rule ${AREA_RULE}] \
+                                                [--func ${FUNC}] \
+                                                [--out-dir ${OUT_DIR}]
+```
+
+For example:
+
+Consider the config of `cat` dataset in this tutorial:
+
+Check the distribution of the training data:
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+                                                --out-dir work_dirs/dataset_analysis_cat/train_dataset
+```
+
+Check the distribution of the validation data:
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+                                                --out-dir work_dirs/dataset_analysis_cat/val_dataset \
+                                                --val-dataset
+```
+
+Effect (click on the image to view a larger image):
+
+<table align="center">
+  <tbody>
+    <tr align="center" valign="center">
+      <td>
+        <b>A distribution plot showing categories and the area of bbox instances based on the area rule</b>
+      </td>
+      <td>
+        <b>A distribution plot showing categories and the width and height of bbox instances</b>
+      </td>
+    </tr>
+    <tr align="center" valign="center">
+      <td>
+        <img alt="YOLOv5CocoDataset_bbox_area" src="https://user-images.githubusercontent.com/25873202/206709093-1ed40f4e-cae3-4383-b120-79ad44c12312.jpg" width="60%">
+      </td>
+      <td>
+        <img alt="YOLOv5CocoDataset_bbox_wh" src="https://user-images.githubusercontent.com/25873202/206709127-aebbb238-4af8-46c8-b71e-8540ed5f5de1.jpg" width="60%">
+      </td>
+    </tr>
+    <tr align="center" valign="center">
+      <td>
+        <b>A distribution plot showing categories and the number of bbox instances</b>
+      </td>
+      <td>
+        <b>A distribution plot showing categories and the width/height ratio of bbox instances</b>
+      </td>
+    </tr>
+    <tr align="center" valign="center">
+      <td>
+        <img alt="YOLOv5CocoDataset_bbox_num" src="https://user-images.githubusercontent.com/25873202/206709108-8cee54f3-3102-4ca2-a10a-e4adb760881b.jpg" width="60%">
+      </td>
+      <td>
+        <img alt="YOLOv5CocoDataset_bbox_ratio" src="https://user-images.githubusercontent.com/25873202/206709115-17aeba09-4ff1-4697-8842-94fbada6c428.jpg" width="60%">
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+```{Note}
+Due to the cat dataset used in this tutorial is relatively small, we use RepeatDataset in config. The numbers shown are actually repeated five times. If you want a repeat-free analysis, you can change the `times` argument in RepeatDataset from `5` to `1` for now.
+```
+
+From the analysis output, we can conclude that the training set of the `cat` dataset used in this tutorial has the following characteristics:
+
+- The images are all `large object`;
+- The number of categories cat is `655`;
+- The width and height ratio of bbox is mostly concentrated in `1.0 ~ 1.11`, the minimum ratio is `0.36` and the maximum ratio is `2.9`;
+- The width of bbox is about `500 ~ 600` , and the height is about `500 ~ 600`.
+
+```{SeeAlso}
+See [Visualizing Dataset Analysis](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id4) for more information on `tools/analysis_tools/dataset_analysis.py`
+```
+
+## 7. Optimize Anchor size
+
+```{Warning}
+This step only works for anchor-base models such as YOLOv5;
+
+This step can be skipped for Anchor-free models, such as YOLOv6, YOLOX.
+```
+
+The `tools/analysis_tools/optimize_anchors.py` script supports three anchor generation methods from YOLO series: `k-means`, `Differential Evolution` and `v5-k-means`.
+
+In this tutorial, we will use YOLOv5 for training, with an input size of `640 x 640`, and `v5-k-means` to optimize anchor:
+
+```shell
+python tools/analysis_tools/optimize_anchors.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+                                                --algorithm v5-k-means \
+                                                --input-shape 640 640 \
+                                                --prior-match-thr 4.0 \
+                                                --out-dir work_dirs/dataset_analysis_cat
+```
+
+```{Note}
+Because this command uses the k-means clustering algorithm, there is some randomness, which is related to the initialization. Therefore, the Anchor obtained by each execution will be somewhat different, but it is generated based on the dataset passed in, so it will not have any adverse effects.
+```
+
+The calculated anchors are as follows:
+
+<div align=center>
+<img alt="Anchor" src="https://user-images.githubusercontent.com/25873202/205422434-1a68cded-b055-42e9-b01c-3e51f8f5ef81.png">
+</div>
+
+Modify the `anchors` variable in config file:
+
+```python
+anchors = [
+    [(68, 69), (154, 91), (143, 162)],  # P3/8
+    [(242, 160), (189, 287), (391, 207)],  # P4/16
+    [(353, 337), (539, 341), (443, 432)]  # P5/32
+]
+```
+
+```{SeeAlso}
+See [Optimize Anchor Sizes](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id8) for more information on `tools/analysis_tools/optimize_anchors.py`
+```
+
+## 8. Visualization the data processing part of config
+
+The script `tools/analysis_tools/browse_dataset.py` allows you to visualize the data processing part of config directly in the window, with the option to save the visualization to a specific directory.
+
+Let's use the config file we just created `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` to visualize the images. Each image lasts for `3` seconds, and the images are not saved:
+
+```shell
+python tools/analysis_tools/browse_dataset.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py \
+                                              --show-interval 3
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205472078-c958e90d-8204-4c01-821a-8b6a006f05b2.png" alt="image" width="60%"/>
+</div>
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205472197-8228c75e-6046-404a-89b4-ed55eeb2cb95.png" alt="image" width="60%"/>
+</div>
+
+```{SeeAlso}
+See [Visualizing Datasets](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id3) for more information on `tools/analysis_tools/browse_dataset.py`
+```
+
+## 9. Train
+
+Here are three points to explain:
+
+1. Training visualization
+2. YOLOv5 model training
+3. Switching YOLO model training
+
+### 9.1 Training visualization
+
+If you need to use a browser to visualize the training process, MMYOLO currently offers two ways [wandb](https://wandb.ai/site) and [TensorBoard](https://tensorflow.google.cn/tensorboard). Pick one according to your own situation (we'll expand support for more visualization backends in the future).
+
+#### 9.1.1 wandb
+
+Wandb visualization need registered in [website](https://wandb.ai/site), and in the https://wandb.ai/settings for wandb API Keys.
+
+<div align=center>
+<img src="https://cdn.vansin.top/img/20220913212628.png" alt="image"/>
+</div>
+
+Then install it from the command line:
+
+```shell
+pip install wandb
+# After running wandb login, enter the API Keys obtained above, and the login is successful.
+wandb login
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/206070473-201795e0-c81f-4247-842a-16d6acae0474.png" alt="推理图片"/>
+</div>
+
+Add the `wandb` configuration at the end of config file we just created, `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`.
+
+```python
+visualizer = dict(vis_backends=[dict(type='LocalVisBackend'), dict(type='WandbVisBackend')])
+```
+
+#### 9.1.2 TensorBoard
+
+Install Tensorboard environment
+
+```shell
+pip install tensorboard
+```
+
+Add the `tensorboard` configuration at the end of config file we just created, `configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`.
+
+```python
+visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='TensorboardVisBackend')])
+```
+
+After running the training command, Tensorboard files will be generated in the visualization folder `work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/${TIMESTAMP}/vis_data`. We can use Tensorboard to view the loss, learning rate, and coco/bbox_mAP visualizations from a web link by running the following command:
+
+```shell
+tensorboard --logdir=work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat
+```
+
+### 9.2 Perform training
+
+Let's start the training with the following command (training takes about 2.5 hours) :
+
+```shell
+python tools/train.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py
+```
+
+If you have enabled wandb, you can log in to your account to view the details of this training in wandb:
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/206097557-7b10cf0f-8a16-4ba6-8563-b0a3cb149537.png" alt="Image"/>
+</div>
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/206097706-7e131bf7-f3bf-43fb-9fe5-5589a324de69.png" alt="Image"/>
+</div>
+
+The following is `1 x 3080Ti`, `batch size = 32`, training `100 epoch` optimal precision weight `work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_98.pth` obtained accuracy (see Appendix for detailed machine information):
+
+```shell
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.968
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.968
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.886
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.977
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.977
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.977
+
+bbox_mAP_copypaste: 0.968 1.000 1.000 -1.000 -1.000 0.968
+Epoch(val) [98][116/116]  coco/bbox_mAP: 0.9680  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9680
+```
+
+```{Tip}
+In general finetune best practice, it is recommended that backbone be left out of training and that the learning rate lr be scaled accordingly. However, in this tutorial, we found this approach can fall short to some extent. The possible reason is that the cat category is already in the COCO dataset, and the cat dataset used in this tutorial is relatively small
+```
+
+The following table shows the test accuracy of the MMYOLO YOLOv5 pre-trained model `yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth` without finetune on the cat dataset. It can be seen that the mAP of the `cat` category is only `0.866`, which improve to `0.968` after finetune, improved by '10.2%', which proves that the training was very successful:
+
+```shell
++---------------+-------+--------------+-----+----------------+------+
+| category      | AP    | category     | AP  | category       | AP   |
++---------------+-------+--------------+-----+----------------+------+
+| person        | nan   | bicycle      | nan | car            | nan  |
+| motorcycle    | nan   | airplane     | nan | bus            | nan  |
+| train         | nan   | truck        | nan | boat           | nan  |
+| traffic light | nan   | fire hydrant | nan | stop sign      | nan  |
+| parking meter | nan   | bench        | nan | bird           | nan  |
+| cat           | 0.866 | dog          | nan | horse          | nan  |
+| sheep         | nan   | cow          | nan | elephant       | nan  |
+| bear          | nan   | zebra        | nan | giraffe        | nan  |
+| backpack      | nan   | umbrella     | nan | handbag        | nan  |
+| tie           | nan   | suitcase     | nan | frisbee        | nan  |
+| skis          | nan   | snowboard    | nan | sports ball    | nan  |
+| kite          | nan   | baseball bat | nan | baseball glove | nan  |
+| skateboard    | nan   | surfboard    | nan | tennis racket  | nan  |
+| bottle        | nan   | wine glass   | nan | cup            | nan  |
+| fork          | nan   | knife        | nan | spoon          | nan  |
+| bowl          | nan   | banana       | nan | apple          | nan  |
+| sandwich      | nan   | orange       | nan | broccoli       | nan  |
+| carrot        | nan   | hot dog      | nan | pizza          | nan  |
+| donut         | nan   | cake         | nan | chair          | nan  |
+| couch         | nan   | potted plant | nan | bed            | nan  |
+| dining table  | nan   | toilet       | nan | tv             | nan  |
+| laptop        | nan   | mouse        | nan | remote         | nan  |
+| keyboard      | nan   | cell phone   | nan | microwave      | nan  |
+| oven          | nan   | toaster      | nan | sink           | nan  |
+| refrigerator  | nan   | book         | nan | clock          | nan  |
+| vase          | nan   | scissors     | nan | teddy bear     | nan  |
+| hair drier    | nan   | toothbrush   | nan | None           | None |
++---------------+-------+--------------+-----+----------------+------+
+```
+
+```{SeeAlso}
+For details on how to get the accuracy of the pre-trained weights, see the appendix【2. How to test the accuracy of dataset on pre-trained weights】
 ```
