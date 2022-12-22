@@ -221,7 +221,7 @@ class Mosaic(BaseMixImageTransform):
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
     - mix_results (List[dict])
 
     Modified Keys:
@@ -504,7 +504,7 @@ class Mosaic9(BaseMixImageTransform):
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
     - mix_results (List[dict])
 
     Modified Keys:
@@ -776,7 +776,7 @@ class YOLOv5MixUp(BaseMixImageTransform):
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
     - mix_results (List[dict])
 
 
@@ -917,7 +917,7 @@ class YOLOXMixUp(BaseMixImageTransform):
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
     - mix_results (List[dict])
 
 
