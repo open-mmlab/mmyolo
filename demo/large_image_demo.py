@@ -2,12 +2,12 @@
 """Perform MMYOLO inference on large images (as satellite imagery) as:
 
 ```shell
-wget -P checkpoint https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth   syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth  # noqa: E501, E261.
+wget -P checkpoint https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth # noqa: E501, E261.
 
 python demo/large_image_demo.py \
     demo/large_image.jpg \
-    configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py \
-    checkpoint/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth
+    configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+    checkpoint/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
 ```
 """
 
