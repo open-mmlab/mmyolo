@@ -10,8 +10,8 @@ deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 80
 num_classes = 80
-save_epoch_intervals = 10  # fast val
-train_batch_size_per_gpu = 8  # TODO
+save_epoch_intervals = 10
+train_batch_size_per_gpu = 8
 train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
@@ -30,7 +30,7 @@ model = dict(
         batch_augments=[
             dict(
                 type='PPYOLOEBatchSyncRandomResize',
-                random_size_range=(320, 768),
+                random_size_range=(320, 800),
                 interval=1,
                 size_divisor=32,
                 random_interp=True,
@@ -94,7 +94,7 @@ model = dict(
             reduction='mean',
             loss_weight=2.5,
             return_iou=False),
-        # Since the average is implemented differently in the official
+        # Since the dflloss is implemented differently in the official
         # and mmdet, we're going to divide loss_weight by 4.
         loss_dfl=dict(
             type='mmdet.DistributionFocalLoss',
@@ -152,9 +152,7 @@ train_dataloader = dict(
         pipeline=train_pipeline))
 
 test_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     # 精度对齐时候，这里先转成RGB,preprocess里不转
     dict(type='PPYOLOECvt'),
     dict(
@@ -211,7 +209,7 @@ custom_hooks = [
     dict(
         type='EMAHook',
         ema_type='ExpMomentumEMA',
-        momentum=1-0.9998,
+        momentum=0.0002,
         update_buffers=True,
         strict_load=False,
         priority=49)
