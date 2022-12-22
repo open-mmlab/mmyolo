@@ -10,7 +10,7 @@ from mmyolo.registry import MODELS
 
 
 @MODELS.register_module()
-class YOLOv5HeadAssigner(YOLOv5Head):
+class YOLOv5HeadShowAssigner(YOLOv5Head):
 
     def assign_by_gt_and_feat(
         self,
