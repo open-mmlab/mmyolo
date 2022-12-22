@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-
 import torch
 from mmdet.models.detectors.single_stage import SingleStageDetector
 from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
