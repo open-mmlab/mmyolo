@@ -38,7 +38,7 @@ model = dict(
         ],
         mean=[0., 0., 0.],
         std=[255., 255., 255.],
-        bgr_to_rgb=False),
+        bgr_to_rgb=True),
     backbone=dict(
         type='PPYOLOECSPResNet',
         deepen_factor=deepen_factor,
@@ -124,8 +124,6 @@ model = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True),
-    # 精度对齐时候，这里先转成RGB,preprocess里不转
-    dict(type='PPYOLOECvt'),
     dict(type='PPYOLOERandomDistort'),
     dict(type='PPYOLOERandomExpand', fill_value=(123.675, 116.28, 103.53)),
     dict(type='PPYOLOERandomCrop'),
@@ -153,8 +151,6 @@ train_dataloader = dict(
 
 test_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    # 精度对齐时候，这里先转成RGB,preprocess里不转
-    dict(type='PPYOLOECvt'),
     dict(
         type='mmdet.FixShapeResize',
         width=img_scale[1],

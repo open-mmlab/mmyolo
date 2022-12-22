@@ -699,10 +699,10 @@ class PPYOLOERandomDistort(BaseTransform):
         u = np.cos(delta * np.pi)
         w = np.sin(delta * np.pi)
         bt = np.array([[1.0, 0.0, 0.0], [0.0, u, -w], [0.0, w, u]])
-        tyiq = np.array([[0.299, 0.587, 0.114], [0.596, -0.274, -0.321],
-                         [0.211, -0.523, 0.311]])
-        ityiq = np.array([[1.0, 0.956, 0.621], [1.0, -0.272, -0.647],
-                          [1.0, -1.107, 1.705]])
+        tyiq = np.array([[0.114, 0.587, 0.299], [-0.321, -0.274, 0.596],
+                         [0.311, -0.523, 0.211]])
+        ityiq = np.array([[1.0, -1.107, 1.705], [1.0, -0.272, -0.647],
+                          [1.0, 0.956, 0.621]])
         t = np.dot(np.dot(ityiq, bt), tyiq).T
         img = np.dot(img, t)
         results['img'] = img
@@ -716,7 +716,7 @@ class PPYOLOERandomDistort(BaseTransform):
                                self.saturation_cfg['max'])
         img = img.astype(np.float32)
 
-        gray = img * np.array([[[0.299, 0.587, 0.114]]], dtype=np.float32)
+        gray = img * np.array([[[0.114, 0.587, 0.299]]], dtype=np.float32)
         gray = gray.sum(axis=2, keepdims=True)
         gray *= (1.0 - delta)
         img *= delta

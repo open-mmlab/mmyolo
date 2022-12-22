@@ -82,17 +82,17 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
         inputs, data_samples = data['inputs'], data['data_samples']
 
         # Process data.
-        if is_list_of(inputs, torch.Tensor):
-            batch_inputs = []
-            for _batch_input, data_sample in zip(inputs, data_samples):
-                # channel transform
-                if self._channel_conversion:
-                    _batch_input = _batch_input[[2, 1, 0], ...]
-                # Convert to float after channel conversion to ensure
-                # efficiency
-                _batch_input = _batch_input.float()
 
-                batch_inputs.append(_batch_input)
+        batch_inputs = []
+        for _batch_input, data_sample in zip(inputs, data_samples):
+            # channel transform
+            if self._channel_conversion:
+                _batch_input = _batch_input[[2, 1, 0], ...]
+            # Convert to float after channel conversion to ensure
+            # efficiency
+            _batch_input = _batch_input.float()
+
+            batch_inputs.append(_batch_input)
 
         # Batch random resize image.
         if self.batch_augments is not None:
@@ -168,8 +168,7 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
         message_hub = MessageHub.get_current_instance()
         if (message_hub.get_info('iter') + 1) % self._interval == 0:
             # get current input size
-            self._input_size, interp_mode = self._get_random_size_and_interp(
-                device=inputs[0].device)
+            self._input_size, interp_mode = self._get_random_size_and_interp()
             if self.random_interp:
                 self.interp_mode = interp_mode
 

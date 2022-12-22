@@ -85,7 +85,7 @@ class TestPPYOLOEDetDataPreprocessor(TestCase):
             batch_augments=[
                 dict(
                     type='PPYOLOEBatchSyncRandomResize',
-                    random_size_range=(320, 768),
+                    random_size_range=(320, 800),
                     interval=1,
                     size_divisor=32,
                     random_interp=True,
