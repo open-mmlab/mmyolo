@@ -14,7 +14,7 @@ from numpy import random
 
 from mmyolo.registry import DATASETS, MODELS
 from mmyolo.utils import register_all_modules
-from mmyolo.visualization import DetAssignerVisualizer
+from projects.showassignment.visualization import DetAssignerVisualizer
 
 
 def parse_args():
