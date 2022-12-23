@@ -82,7 +82,6 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
         inputs, data_samples = data['inputs'], data['data_samples']
 
         # Process data.
-
         batch_inputs = []
         for _batch_input, data_sample in zip(inputs, data_samples):
             # channel transform
