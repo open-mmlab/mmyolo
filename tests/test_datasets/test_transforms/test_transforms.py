@@ -439,9 +439,9 @@ class TestPPYOLOERandomExpand(unittest.TestCase):
         }
 
     def test_transform(self):
-        # test assertion for invalid ratio
+        # test assertion for invalid expand_ratio
         with self.assertRaises(AssertionError):
-            transform = PPYOLOERandomExpand(ratio=0.8)
+            transform = PPYOLOERandomExpand(expand_ratio=0.8)
 
         # test assertion for invalid prob
         with self.assertRaises(AssertionError):
