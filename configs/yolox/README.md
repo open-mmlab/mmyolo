@@ -13,6 +13,7 @@ In this report, we present some experienced improvements to YOLO series, forming
 </div>
 <div align=center>
 <img src="https://user-images.githubusercontent.com/71306851/208933940-ffcd2f53-7630-4c7e-bf0d-695eb3cfe851.jpg"/>
+YOLOX_l model structure
 </div>
 
 ## Results and Models
