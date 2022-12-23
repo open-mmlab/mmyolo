@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
 from numbers import Number
-from typing import Sequence, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 
 import cv2
 import mmcv
@@ -858,7 +858,7 @@ class PPYOLOERandomExpand(BaseTransform):
         img = mmcv.impad(
             img=img,
             padding=(left_padding, top_padding, right_padding, bottom_padding),
-            pad_val=self.fill_value,
+            pad_val=self.pad_value,
             padding_mode='constant')
 
         results['img'] = img
@@ -895,11 +895,11 @@ class PPYOLOERandomCrop(MMDET_RandomCrop):
     - pad_param (np.float32)
 
     Args:
-        aspect_ratio (list[float]): Aspect ratio of cropped region. Default to
+        aspect_ratio (List[float]): Aspect ratio of cropped region. Default to
              [.5, 2].
-        thresholds (list[float]): Iou thresholds for decide a valid bbox crop
+        thresholds (List[float]): Iou thresholds for decide a valid bbox crop
             in [min, max] format. Defaults to [.0, .1, .3, .5, .7, .9].
-        scaling (list[float]): Ratio between a cropped region and the original
+        scaling (List[float]): Ratio between a cropped region and the original
             image in [min, max] format. Default to [.3, 1.].
         num_attempts (int): Number of tries for each threshold before
             giving up. Default to 50.
@@ -910,9 +910,9 @@ class PPYOLOERandomCrop(MMDET_RandomCrop):
     """
 
     def __init__(self,
-                 aspect_ratio: list[float] = [.5, 2.],
-                 thresholds: list[float] = [.0, .1, .3, .5, .7, .9],
-                 scaling: list[float] = [.3, 1.],
+                 aspect_ratio: List[float] = [.5, 2.],
+                 thresholds: List[float] = [.0, .1, .3, .5, .7, .9],
+                 scaling: List[float] = [.3, 1.],
                  num_attempts: int = 50,
                  allow_no_crop: bool = True,
                  cover_all_box: bool = False):
