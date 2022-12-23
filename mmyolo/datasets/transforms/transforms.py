@@ -10,7 +10,7 @@ import torch
 from mmcv.transforms import BaseTransform
 from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
-from mmdet.datasets.transforms import RandomCrop
+from mmdet.datasets.transforms import RandomCrop as MMDET_RandomCrop
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
@@ -669,19 +669,41 @@ class YOLOv5RandomAffine(BaseTransform):
 
 @TRANSFORMS.register_module()
 class PPYOLOERandomDistort(BaseTransform):
+    """Random hue, saturation, contrast and brightness distortion.
+
+    Required Keys:
+
+    - img
+
+    Modified Keys:
+
+    - img (np.float32)
+
+    Args:
+        hue_cfg (dict): Hue settings. Default to dict(min=-18,
+            max=18, prob=0.5).
+        saturation_cfg (dict): Saturation settings. Default to dict(
+            min=0.5, max=1.5, prob=0.5).
+        contrast_cfg (dict): Contrast settings. Default to dict(
+            min=0.5, max=1.5, prob=0.5).
+        brightness_cfg (dict): Brightness settings. Default to dict(
+            min=0.5, max=1.5, prob=0.5).
+        distortion_num (int): The number of doing distortion. Default
+            to 4.
+    """
 
     def __init__(self,
-                 hue_cfg=dict(min=-18, max=18, prob=0.5),
-                 saturation_cfg=dict(min=0.5, max=1.5, prob=0.5),
-                 contrast_cfg=dict(min=0.5, max=1.5, prob=0.5),
-                 brightness_cfg=dict(min=0.5, max=1.5, prob=0.5),
-                 transform_num=4):
+                 hue_cfg: dict = dict(min=-18, max=18, prob=0.5),
+                 saturation_cfg: dict = dict(min=0.5, max=1.5, prob=0.5),
+                 contrast_cfg: dict = dict(min=0.5, max=1.5, prob=0.5),
+                 brightness_cfg: dict = dict(min=0.5, max=1.5, prob=0.5),
+                 distortion_num: int = 4):
         self.hue_cfg = hue_cfg
         self.saturation_cfg = saturation_cfg
         self.contrast_cfg = contrast_cfg
         self.brightness_cfg = brightness_cfg
-        self.transform_num = transform_num
-        assert 0 < self.transform_num <= 4, 'transform_num must > 0 and <= 4'
+        self.distortion_num = distortion_num
+        assert 0 < self.distortion_num <= 4, 'distortion_num must > 0 and <= 4'
         for cfg in [
                 self.hue_cfg, self.saturation_cfg, self.contrast_cfg,
                 self.brightness_cfg
@@ -689,11 +711,11 @@ class PPYOLOERandomDistort(BaseTransform):
             assert 0. <= cfg['prob'] <= 1., 'prob must >=0 and <=1'
 
     def transform_hue(self, results):
+        """Transform hue randomly."""
         if random.uniform(0., 1.) >= self.hue_cfg['prob']:
             return results
 
         img = results['img']
-        img = img.astype(np.float32)
 
         delta = random.uniform(self.hue_cfg['min'], self.hue_cfg['max'])
         u = np.cos(delta * np.pi)
@@ -709,12 +731,12 @@ class PPYOLOERandomDistort(BaseTransform):
         return results
 
     def transform_saturation(self, results):
+        """Transform saturation randomly."""
         if random.uniform(0., 1.) >= self.saturation_cfg['prob']:
             return results
         img = results['img']
         delta = random.uniform(self.saturation_cfg['min'],
                                self.saturation_cfg['max'])
-        img = img.astype(np.float32)
 
         gray = img * np.array([[[0.114, 0.587, 0.299]]], dtype=np.float32)
         gray = gray.sum(axis=2, keepdims=True)
@@ -725,33 +747,43 @@ class PPYOLOERandomDistort(BaseTransform):
         return results
 
     def transform_contrast(self, results):
+        """Transform contrast randomly."""
         if random.uniform(0., 1.) >= self.contrast_cfg['prob']:
             return results
         img = results['img']
         delta = random.uniform(self.contrast_cfg['min'],
                                self.contrast_cfg['max'])
-        img = img.astype(np.float32)
         img *= delta
         results['img'] = img
         return results
 
     def transform_brightness(self, results):
+        """Transform brightness randomly."""
         if random.uniform(0., 1.) >= self.brightness_cfg['prob']:
             return results
         img = results['img']
         delta = random.uniform(self.brightness_cfg['min'],
                                self.brightness_cfg['max'])
-        img = img.astype(np.float32)
         img += delta
         results['img'] = img
         return results
 
     def transform(self, results: dict) -> dict:
+        """The hue, saturation, contrast and brightness distortion function.
+
+        Args:
+            results (dict): The result dict.
+
+        Returns:
+            dict: The result dict.
+        """
+        results['img'] = results['img'].astype(np.float32)
+
         functions = [
             self.transform_brightness, self.transform_contrast,
             self.transform_saturation, self.transform_hue
         ]
-        distortions = random.permutation(functions)[:self.transform_num]
+        distortions = random.permutation(functions)[:self.distortion_num]
         for func in distortions:
             results = func(results)
         return results
@@ -759,24 +791,54 @@ class PPYOLOERandomDistort(BaseTransform):
 
 @TRANSFORMS.register_module()
 class PPYOLOERandomExpand(BaseTransform):
+    """Random expand the canvas.
+
+    Required Keys:
+
+    - img
+    - gt_bboxes (BaseBoxes[torch.float32]) (optional)
+
+    Modified Keys:
+
+    - img
+    - img_shape (tuple)
+    - gt_bboxes (optional)
+
+    Added Keys:
+    - pad_param (np.float32)
+
+    Args:
+        expand_ratio (float): Maximum expansion ratio.
+        prob (float): The transformation probability. Defaults to 0.5.
+        pad_value (Union[tuple, int, float]): Color value used to fill
+            the canvas in BGR order.
+    """
 
     def __init__(self,
-                 expand_ratio=4.,
-                 prob=0.5,
-                 fill_value=(127.5, 127.5, 127.5)):
+                 expand_ratio: float = 4.,
+                 prob: float = 0.5,
+                 pad_value: Union[tuple, int, float] = (127.5, 127.5, 127.5)):
         assert expand_ratio > 1.01, 'expand ratio must be larger than 1.01'
         self.expand_ratio = expand_ratio
         self.prob = prob
         assert 0. <= self.prob <= 1.
-        assert isinstance(fill_value, (Number, Sequence)), \
+        assert isinstance(pad_value, (Number, Sequence)), \
             'fill value must be either float or sequence'
-        if isinstance(fill_value, Number):
-            fill_value = (fill_value, ) * 3
-        if not isinstance(fill_value, tuple):
-            fill_value = tuple(fill_value)
-        self.fill_value = fill_value
+        if isinstance(pad_value, Number):
+            pad_value = (pad_value, ) * 3
+        if not isinstance(pad_value, tuple):
+            pad_value = tuple(pad_value)
+        self.pad_value = pad_value
 
     def transform(self, results: dict) -> dict:
+        """The random expand augmentation transform function.
+
+        Args:
+            results (dict): The result dict.
+
+        Returns:
+            dict: The result dict.
+        """
         if random.uniform(0., 1.) >= self.prob:
             return results
 
@@ -811,21 +873,49 @@ class PPYOLOERandomExpand(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class PPYOLOERandomCrop(RandomCrop):
-    """
-    TODO: 需要重构
+class PPYOLOERandomCrop(MMDET_RandomCrop):
+    """Random crop the img and bboxes.
 
-    1. numpy 操作改成tensor操作
-    2. 参照randomcrop进行格式化
+    Required Keys:
+
+    - img
+    - gt_bboxes (BaseBoxes[torch.float32]) (optional)
+    - gt_bboxes_labels (np.int64) (optional)
+    - gt_ignore_flags (bool) (optional)
+
+    Modified Keys:
+
+    - img
+    - img_shape
+    - gt_bboxes (optional)
+    - gt_bboxes_labels (optional)
+    - gt_ignore_flags (optional)
+
+    Added Keys:
+    - pad_param (np.float32)
+
+    Args:
+        aspect_ratio (list[float]): Aspect ratio of cropped region. Default to
+             [.5, 2].
+        thresholds (list[float]): Iou thresholds for decide a valid bbox crop
+            in [min, max] format. Defaults to [.0, .1, .3, .5, .7, .9].
+        scaling (list[float]): Ratio between a cropped region and the original
+            image in [min, max] format. Default to [.3, 1.].
+        num_attempts (int): Number of tries for each threshold before
+            giving up. Default to 50.
+        allow_no_crop (bool): Allow return without actually cropping them.
+            Default to True.
+        cover_all_box (bool): Ensure all bboxes are covered in the final crop.
+            Default to False.
     """
 
     def __init__(self,
-                 aspect_ratio=[.5, 2.],
-                 thresholds=[.0, .1, .3, .5, .7, .9],
-                 scaling=[.3, 1.],
-                 num_attempts=50,
-                 allow_no_crop=True,
-                 cover_all_box=False):
+                 aspect_ratio: list[float] = [.5, 2.],
+                 thresholds: list[float] = [.0, .1, .3, .5, .7, .9],
+                 scaling: list[float] = [.3, 1.],
+                 num_attempts: int = 50,
+                 allow_no_crop: bool = True,
+                 cover_all_box: bool = False):
         self.aspect_ratio = aspect_ratio
         self.thresholds = thresholds
         self.scaling = scaling
@@ -835,6 +925,14 @@ class PPYOLOERandomCrop(RandomCrop):
 
     @autocast_box_type()
     def transform(self, results: dict) -> Union[dict, None]:
+        """The random crop transform function.
+
+        Args:
+            results (dict): The result dict.
+
+        Returns:
+            dict: The result dict.
+        """
         if 'gt_bboxes' in results and len(results['gt_bboxes']) == 0:
             return results
 
@@ -842,19 +940,12 @@ class PPYOLOERandomCrop(RandomCrop):
         h, w = img_shape[:2]
         gt_bbox = results['gt_bboxes']
 
-        # NOTE Original method attempts to generate one candidate for each
-        # threshold then randomly sample one from the resulting list.
-        # Here a short circuit approach is taken, i.e., randomly choose a
-        # threshold and attempt to find a valid crop, and simply return the
-        # first one found.
-        # The probability is not exactly the same, kinda resembling the
-        # "Monty Hall" problem. Actually carrying out the attempts will affect
-        # observability (just like opening doors in the "Monty Hall" game).
         thresholds = list(self.thresholds)
         if self.allow_no_crop:
             thresholds.append('no_crop')
         random.shuffle(thresholds)
 
+        # Determine the coordinates for cropping
         for thresh in thresholds:
             if thresh == 'no_crop':
                 return results
@@ -890,10 +981,9 @@ class PPYOLOERandomCrop(RandomCrop):
                 if self.cover_all_box and iou.min() < thresh:
                     continue
 
-                cropped_gtbox, valid_ids = \
-                    self._crop_box_with_center_constraint(
-                        gt_bbox, np.array(crop_box, dtype=np.float32))
-                if valid_ids.size > 0:
+                valid_inds = self._get_valid_inds(
+                    gt_bbox, np.array(crop_box, dtype=np.float32))
+                if valid_inds.size > 0:
                     found = True
                     break
 
@@ -906,47 +996,27 @@ class PPYOLOERandomCrop(RandomCrop):
                 img_shape = img.shape
                 results['img_shape'] = img.shape
 
-                # Record the homography matrix for the RandomCrop
-                homography_matrix = np.array(
-                    [[1, 0, -crop_x1], [0, 1, -crop_y1], [0, 0, 1]],
-                    dtype=np.float32)
-                if results.get('homography_matrix', None) is None:
-                    results['homography_matrix'] = homography_matrix
-                else:
-                    results['homography_matrix'] = homography_matrix @ results[
-                        'homography_matrix']
-
                 # crop bboxes accordingly and clip to the image boundary
                 if results.get('gt_bboxes', None) is not None:
                     bboxes = results['gt_bboxes']
                     bboxes.translate_([-crop_x1, -crop_y1])
-                    # if self.bbox_clip_border:
                     bboxes.clip_(img_shape[:2])
-                    # valid_inds = bboxes.is_inside(img_shape[:2]).numpy()
-                    # # If the crop does not contain any gt-bbox area and
-                    # # allow_negative_crop is False, skip this image.
-                    # if not valid_inds.any():
-                    #     return None
 
-                    results['gt_bboxes'] = bboxes[valid_ids]
+                    results['gt_bboxes'] = bboxes[valid_inds]
 
                     if results.get('gt_ignore_flags', None) is not None:
                         results['gt_ignore_flags'] = \
-                            results['gt_ignore_flags'][valid_ids]
+                            results['gt_ignore_flags'][valid_inds]
 
                     if results.get('gt_bboxes_labels', None) is not None:
                         results['gt_bboxes_labels'] = \
-                            results['gt_bboxes_labels'][valid_ids]
+                            results['gt_bboxes_labels'][valid_inds]
 
                     if results.get('gt_masks', None) is not None:
                         results['gt_masks'] = results['gt_masks'][
-                            valid_ids.nonzero()[0]].crop(
+                            valid_inds.nonzero()[0]].crop(
                                 np.asarray(
                                     [crop_x1, crop_y1, crop_x2, crop_y2]))
-                        if self.recompute_bbox:
-                            results['gt_bboxes'] = results[
-                                'gt_masks'].get_bboxes(
-                                    type(results['gt_bboxes']))
 
                 # crop semantic seg
                 if results.get('gt_seg_map', None) is not None:
@@ -956,33 +1026,56 @@ class PPYOLOERandomCrop(RandomCrop):
                 return results
         return results
 
-    def _iou_matrix(self, a, b):
-        # TODO: copy is necessary?
-        # TODO: use bbox_overlaps instead of _iou_matrix
-        a = a.tensor.numpy().copy()
-        tl_i = np.maximum(a[:, np.newaxis, :2], b[:, :2])
-        br_i = np.minimum(a[:, np.newaxis, 2:], b[:, 2:])
+    def _iou_matrix(self,
+                    gt_bbox: HorizontalBoxes,
+                    crop_bbox: np.ndarray,
+                    eps: float = 1e-10) -> np.ndarray:
+        """Calculate iou between gt and image crop box.
 
-        area_i = np.prod(br_i - tl_i, axis=2) * (tl_i < br_i).all(axis=2)
-        area_a = np.prod(a[:, 2:] - a[:, :2], axis=1)
-        area_b = np.prod(b[:, 2:] - b[:, :2], axis=1)
-        area_o = (area_a[:, np.newaxis] + area_b - area_i)
-        return area_i / (area_o + 1e-10)
+        Args:
+            gt_bbox (HorizontalBoxes): Ground truth bounding boxes.
+            crop_bbox (np.ndarray): Image crop coordinates in
+                [x1, y1, x2, y2] format.
+            eps (float): Default to 1e-10.
+        Return:
+            (np.ndarray): IoU.
+        """
+        gt_bbox = gt_bbox.tensor.numpy()
+        lefttop = np.maximum(gt_bbox[:, np.newaxis, :2], crop_bbox[:, :2])
+        rightbottom = np.minimum(gt_bbox[:, np.newaxis, 2:], crop_bbox[:, 2:])
 
-    def _crop_box_with_center_constraint(self, box, crop):
-        # TODO: copy is necessary?
-        cropped_box = box.tensor.numpy().copy()
-        box = box.tensor.numpy().copy()
+        overlap = np.prod(
+            rightbottom - lefttop,
+            axis=2) * (lefttop < rightbottom).all(axis=2)
+        area_gt_bbox = np.prod(gt_bbox[:, 2:] - crop_bbox[:, :2], axis=1)
+        area_crop_bbox = np.prod(gt_bbox[:, 2:] - crop_bbox[:, :2], axis=1)
+        area_o = (area_gt_bbox[:, np.newaxis] + area_crop_bbox - overlap)
+        return overlap / (area_o + eps)
 
-        cropped_box[:, :2] = np.maximum(box[:, :2], crop[:2])
-        cropped_box[:, 2:] = np.minimum(box[:, 2:], crop[2:])
-        cropped_box[:, :2] -= crop[:2]
-        cropped_box[:, 2:] -= crop[:2]
+    def _get_valid_inds(self, gt_bbox: HorizontalBoxes,
+                        img_crop_bbox: np.ndarray) -> np.ndarray:
+        """Get which Bboxes to keep at the current cropping coordinates.
 
-        centers = (box[:, :2] + box[:, 2:]) / 2
-        valid = np.logical_and(crop[:2] <= centers,
-                               centers < crop[2:]).all(axis=1)
+        Args:
+            gt_bbox (HorizontalBoxes): Ground truth bounding boxes.
+            img_crop_bbox (np.ndarray): Image crop coordinates in
+                [x1, y1, x2, y2] format.
+
+        Returns:
+            (np.ndarray): Valid indexes.
+        """
+        cropped_box = gt_bbox.tensor.numpy().copy()
+        gt_bbox = gt_bbox.tensor.numpy().copy()
+
+        cropped_box[:, :2] = np.maximum(gt_bbox[:, :2], img_crop_bbox[:2])
+        cropped_box[:, 2:] = np.minimum(gt_bbox[:, 2:], img_crop_bbox[2:])
+        cropped_box[:, :2] -= img_crop_bbox[:2]
+        cropped_box[:, 2:] -= img_crop_bbox[:2]
+
+        centers = (gt_bbox[:, :2] + gt_bbox[:, 2:]) / 2
+        valid = np.logical_and(img_crop_bbox[:2] <= centers,
+                               centers < img_crop_bbox[2:]).all(axis=1)
         valid = np.logical_and(
             valid, (cropped_box[:, :2] < cropped_box[:, 2:]).all(axis=1))
 
-        return cropped_box, np.where(valid)[0]
+        return np.where(valid)[0]
