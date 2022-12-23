@@ -134,6 +134,8 @@ class PPYOLOEHeadModule(BaseModule):
         avg_feat = F.adaptive_avg_pool2d(x, (1, 1))
         cls_logit = cls_pred(cls_stem(x, avg_feat) + x)
         bbox_dist_preds = reg_pred(reg_stem(x, avg_feat))
+        # TODO: Use different logic when training and testing
+        #  for fast training.
         bbox_dist_preds = bbox_dist_preds.reshape(
             [-1, 4, self.reg_max + 1, hw]).permute(0, 2, 3, 1)
 
