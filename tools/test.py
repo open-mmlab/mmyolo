@@ -17,7 +17,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='MMYOLO test (and eval) a model')
     parser.add_argument('config', help='test config file path')
-    parser.add_argument('--checkpoint', help='checkpoint file')
+    parser.add_argument('checkpoint', help='checkpoint file')
     parser.add_argument(
         '--work-dir',
         help='the directory to save the file containing evaluation metrics')
@@ -123,7 +123,13 @@ def main():
             DumpResults(out_file_path=args.out))
 
     # start testing
+    # import torch
+    # torch.save(runner.model.state_dict(),'checkpoint/damoyolo_s_mmyolo.pth')
+
     runner.test()
+
+    # for p in runner.model.backbone.parameters():
+    #     print(p)
 
 
 if __name__ == '__main__':

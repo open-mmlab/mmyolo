@@ -10,7 +10,7 @@ max_epochs = 300
 save_epoch_intervals = 10
 train_batch_size_per_gpu = 2
 train_num_workers = 2
-val_batch_size_per_gpu = 1
+val_batch_size_per_gpu = 20
 val_num_workers = 2
 base_lr = 0.01
 
@@ -22,7 +22,7 @@ model = dict(
     data_preprocessor=dict(
         type='mmdet.DetDataPreprocessor',
         mean=[0., 0., 0.],
-        std=[255., 255., 255.],
+        std=[1., 1., 1.],
         bgr_to_rgb=True),
     backbone=dict(type='TinyNAS'),
     neck=dict(type='GiraffeNeckv2'),
@@ -36,8 +36,8 @@ test_pipeline = [
         type='mmdet.FixShapeResize',
         width=img_scale[1],
         height=img_scale[0],
-        keep_ratio=False,
-        interpolation='bicubic'),
+        keep_ratio=True,
+        interpolation='bilinear'),
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
         type='mmdet.PackDetInputs',

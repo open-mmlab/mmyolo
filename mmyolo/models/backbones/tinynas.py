@@ -385,6 +385,8 @@ class TinyNAS(nn.Module):
         output = x
         stage_feature_list = []
         for idx, block in enumerate(self.block_list):
+            # for a in block.parameters():
+            #     print(a)
             output = block(output)
             if idx in self.out_indices:
                 stage_feature_list.append(output)
