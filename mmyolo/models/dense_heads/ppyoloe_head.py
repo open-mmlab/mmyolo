@@ -19,7 +19,9 @@ from .yolov6_head import YOLOv6Head
 
 @MODELS.register_module()
 class PPYOLOEHeadModule(BaseModule):
-    """PPYOLOEHead head module used in `PPYOLOE`
+    """PPYOLOEHead head module used in `PPYOLOE.
+
+    <https://arxiv.org/abs/2203.16250>`_.
 
     Args:
         num_classes (int): Number of categories excluding the background
@@ -102,6 +104,8 @@ class PPYOLOEHeadModule(BaseModule):
             self.reg_preds.append(
                 nn.Conv2d(in_channel, 4 * (self.reg_max + 1), 3, padding=1))
 
+        # When loading the model, missing bbox_head.head_module.proj
+        # in state_dict is normal, just ignore it.
         self.proj_conv = nn.Conv2d(self.reg_max + 1, 1, 1, bias=False)
         self.proj = nn.Parameter(
             torch.linspace(0, self.reg_max, self.reg_max + 1),
@@ -141,7 +145,7 @@ class PPYOLOEHeadModule(BaseModule):
 
         bbox_preds = self.proj_conv(F.softmax(bbox_dist_preds, dim=1))
 
-        # While training, `df_loss` need `bbox_dist_preds`
+        # While training, `loss_dfl` needs `bbox_dist_preds`
         if self.training:
             return cls_logit, bbox_preds, bbox_dist_preds
         else:
@@ -150,7 +154,7 @@ class PPYOLOEHeadModule(BaseModule):
 
 @MODELS.register_module()
 class PPYOLOEHead(YOLOv6Head):
-    """PPYOLOEHead head used in `PPYOLOE`.
+    """PPYOLOEHead head used in `PPYOLOE <https://arxiv.org/abs/2203.16250>`_.
 
     Args:
         head_module (nn.Module): Base module used for PPYOLOEHead
