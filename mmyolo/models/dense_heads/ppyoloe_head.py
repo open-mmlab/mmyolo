@@ -210,15 +210,6 @@ class PPYOLOEHead(YOLOv6Head):
         # ppyoloe doesn't need loss_obj
         self.loss_obj = None
 
-    def special_init(self):
-        # Use yolov6's special init
-        super().special_init()
-        if self.train_cfg:
-            # Ppyoloe use multi scale training by default.
-            # During training and testing, different variables
-            # are used to store scales
-            self.featmap_sizes_train = None
-
     def loss_by_feat(
             self,
             cls_scores: Sequence[Tensor],
@@ -251,92 +242,32 @@ class PPYOLOEHead(YOLOv6Head):
         Returns:
             dict[str, Tensor]: A dictionary of losses.
         """
-        # TODO: 精度对齐后，删除注释
+
         # get epoch information from message hub
         message_hub = MessageHub.get_current_instance()
         current_epoch = message_hub.get_info('epoch')
-        # # 临时用于精度对齐
-        # heads_out = torch.load(
-        #     '/data/computervision/gulingrui/code/yolobenchmark/yolobenchmark/duiqi_head_outs.pth')
-        # loss_dict = torch.load(
-        # '/data/computervision/gulingrui/code/yolobenchmark/yolobenchmark/duiqi_loss.pth')
-        # targets = torch.load(
-        # '/data/computervision/gulingrui/code/yolobenchmark/yolobenchmark/duiqi_targets.pth')
-        #
-        # pred_scores, pred_distri, anchors, \
-        # anchor_points, num_anchors_list, stride_tensor = heads_out
-        #
-        # # yolobenchmark里是从20*20-80*80
-        # # mmyolo里是从80-20
-        # base_size = 23
-        #
-        # # 这边把yolobenchmark转成mmyolo
-        # bench_cls_scores = [
-        #     pred_scores[:, base_size * base_size*5:].view(
-        #     32, base_size*4, base_size*4, 80).permute((0, 3, 1, 2)),
-        #     pred_scores[:,
-        #     base_size * base_size:base_size * base_size*5].view(
-        #     32, base_size*2, base_size*2, 80).permute((0, 3, 1, 2)),
-        #     pred_scores[:, :base_size * base_size].view(
-        #     32, base_size, base_size, 80).permute((0, 3, 1, 2)),
-        # ]
-        #
-        # # mmyolo bbox_dist_preds[1].shape torch.Size([32, 17, 1444, 4])
-        # # benchmark pred_distri.shape     torch.Size([32, 12096, 68])
-        #
-        # bench_dist = [
-        #     pred_distri[:,
-        #     base_size * base_size+base_size*base_size*4:].view(
-        #     32, -1, 4, 17).permute((0, 3, 1, 2)),     # (32, 17, 6400, 4)
-        #     pred_distri[:,
-        #     base_size * base_size:base_size * base_size*5].view(
-        #     32, -1, 4, 17).permute((0, 3, 1, 2)),
-        #     pred_distri[:, :base_size * base_size].view(
-        #     32, -1, 4, 17).permute((0, 3, 1, 2)),
-        # ]
-        # # bench_bbox_preds[0].shape   torch.Size([32, 1, 6400, 4])
-        # bench_bbox_preds = [self.head_module.proj_conv(
-        # F.softmax(i, dim=1)) for i in bench_dist]
-        #
-        # bench_target = []
-        # for i in range(32):
-        #     temp_target = targets[i]
-        #     valid_indx = temp_target.sum(-1) > 0
-        #     num = valid_indx.sum().long()
-        #     batch_idx = targets.new_full((num, 1), i)
-        #     gt_labels = temp_target[valid_indx]
-        #     bench_target.append(torch.cat(
-        #         (batch_idx, gt_labels), dim=1
-        #     ))
-        # bench_target = torch.cat(bench_target, 0)
-        #
-        # cls_scores = bench_cls_scores
-        # bbox_dist_preds = bench_dist
-        # bbox_preds = bench_bbox_preds
-        # batch_gt_instances = bench_target
-
-        # cls_scores[0].shape (32, 80, 48, 48)
 
         num_imgs = len(batch_img_metas)
         if batch_gt_instances_ignore is None:
             batch_gt_instances_ignore = [None] * num_imgs
 
-        current_featmap_sizes_train = [
+        current_featmap_sizes = [
             cls_score.shape[2:] for cls_score in cls_scores
         ]
         # If the shape does not equal, generate new one
-        if current_featmap_sizes_train != self.featmap_sizes_train:
-            self.featmap_sizes_train = current_featmap_sizes_train
+        if current_featmap_sizes != self.featmap_sizes:
+            self.featmap_sizes = current_featmap_sizes
 
-            self.mlvl_priors_train = self.prior_generator.grid_priors(
-                self.featmap_sizes_train,
+            mlvl_priors = self.prior_generator.grid_priors(
+                self.featmap_sizes,
                 dtype=cls_scores[0].dtype,
                 device=cls_scores[0].device,
                 with_stride=True)
 
-            self.num_level_priors = [len(n) for n in self.mlvl_priors_train]
-            self.flatten_priors = torch.cat(self.mlvl_priors_train, dim=0)
+            self.num_level_priors = [len(n) for n in mlvl_priors]
+            self.flatten_priors = torch.cat(mlvl_priors, dim=0)
             self.stride_tensor = self.flatten_priors[..., [2]]
+            self.mlvl_priors = [mlvl[:, :2] for mlvl in mlvl_priors]
 
         # gt info
         gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
@@ -344,22 +275,21 @@ class PPYOLOEHead(YOLOv6Head):
         gt_bboxes = gt_info[:, :, 1:]  # xyxy
         pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
 
-        # pred info torch.Size([32, 1600, 80])
+        # pred info
         flatten_cls_preds = [
             cls_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1,
                                                  self.num_classes)
             for cls_pred in cls_scores
         ]
-        # bbox_preds[1].permute(0, 2, 3, 1).shape torch.Size([32, 1600, 4, 1])
         flatten_pred_bboxes = [
             bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
             for bbox_pred in bbox_preds
         ]
 
+        # (bs, reg_max+1, n, 4) -> (bs, n, 4, reg_max+1)
         flatten_pred_dists = [
             bbox_pred_org.permute(0, 2, 3, 1).reshape(
-                num_imgs, -1, (self.head_module.reg_max + 1) *
-                4)  # (32, 17, 1600, 4) -> (32, 1600, 4, 17)
+                num_imgs, -1, (self.head_module.reg_max + 1) * 4)
             for bbox_pred_org in bbox_dist_preds
         ]
 
@@ -368,11 +298,10 @@ class PPYOLOEHead(YOLOv6Head):
         flatten_pred_bboxes = torch.cat(flatten_pred_bboxes, dim=1)
         flatten_pred_bboxes = self.bbox_coder.decode(
             self.flatten_priors[..., :2], flatten_pred_bboxes,
-            self.flatten_priors[..., 2])  # 这里已经乘上stride了
+            self.flatten_priors[..., 2])
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if current_epoch < self.initial_epoch:
-            # if False:
             assigned_result = self.initial_assigner(
                 flatten_pred_bboxes.detach(), self.flatten_priors,
                 self.num_level_priors, gt_labels, gt_bboxes, pad_bbox_flag)
@@ -382,11 +311,8 @@ class PPYOLOEHead(YOLOv6Head):
                                             self.flatten_priors, gt_labels,
                                             gt_bboxes, pad_bbox_flag)
 
-        # [32, 8400, 4]
         assigned_bboxes = assigned_result['assigned_bboxes']
-        # [32, 8400, 80]
         assigned_scores = assigned_result['assigned_scores']
-        # [32, 8400]
         fg_mask_pre_prior = assigned_result['fg_mask_pre_prior']
 
         # cls loss
@@ -398,6 +324,7 @@ class PPYOLOEHead(YOLOv6Head):
         flatten_pred_bboxes /= self.stride_tensor
 
         assigned_scores_sum = assigned_scores.sum()
+        # reduce_mean between all gpus
         assigned_scores_sum = torch.clamp(
             reduce_mean(assigned_scores_sum), min=1)
         loss_cls /= assigned_scores_sum
@@ -408,8 +335,7 @@ class PPYOLOEHead(YOLOv6Head):
             # when num_pos > 0, assigned_scores_sum will >0, so the loss_bbox
             # will not report an error
             # iou loss
-            prior_bbox_mask = fg_mask_pre_prior.unsqueeze(-1).repeat(
-                [1, 1, 4])  # [32, 8400, 4]
+            prior_bbox_mask = fg_mask_pre_prior.unsqueeze(-1).repeat([1, 1, 4])
             pred_bboxes_pos = torch.masked_select(
                 flatten_pred_bboxes, prior_bbox_mask).reshape([-1, 4])
             assigned_bboxes_pos = torch.masked_select(
@@ -423,16 +349,12 @@ class PPYOLOEHead(YOLOv6Head):
                 avg_factor=assigned_scores_sum)
 
             # dfl loss
-            dist_mask = fg_mask_pre_prior.unsqueeze(
-                -1).repeat(  # [32, 8400, 68]
-                    [1, 1, (self.head_module.reg_max + 1) * 4])
+            dist_mask = fg_mask_pre_prior.unsqueeze(-1).repeat(
+                [1, 1, (self.head_module.reg_max + 1) * 4])
 
-            # 这里其实需要的是decode之前的
             pred_dist_pos = torch.masked_select(
                 flatten_dist_preds,
-                dist_mask).reshape([-1, 4, self.head_module.reg_max + 1
-                                    ])  # [n_pos, 4, 17]
-            # 这里需要的都是除以了stride的变量
+                dist_mask).reshape([-1, 4, self.head_module.reg_max + 1])
             assigned_ltrb = self.bbox_coder.encode(
                 self.flatten_priors[..., :2] / self.stride_tensor,
                 assigned_bboxes,
@@ -441,25 +363,22 @@ class PPYOLOEHead(YOLOv6Head):
             assigned_ltrb_pos = torch.masked_select(
                 assigned_ltrb, prior_bbox_mask).reshape([-1, 4])
             loss_dfl = self.loss_dfl(
-                # (n*4, 17)
                 pred_dist_pos.reshape(-1, self.head_module.reg_max + 1),
-                # (n*4, )
                 assigned_ltrb_pos.reshape(-1),
                 weight=bbox_weight.expand(-1, 4).reshape(-1),
                 avg_factor=assigned_scores_sum)
 
-            # loss_l1 = F.l1_loss(pred_bboxes_pos, assigned_bboxes_pos)
+            # l1 loss
+            loss_l1 = F.l1_loss(pred_bboxes_pos, assigned_bboxes_pos)
 
         else:
             loss_bbox = flatten_pred_bboxes.sum() * 0
             loss_dfl = flatten_pred_bboxes.sum() * 0
-            # loss_l1 = (flatten_pred_bboxes.sum() * 0)
+            loss_l1 = (flatten_pred_bboxes.sum() * 0)
 
-        # _, world_size = get_dist_info()
         return dict(
-            loss_cls=loss_cls,  # * world_size,
-            loss_bbox=loss_bbox,  # * world_size,
-            loss_dfl=loss_dfl,  # * world_size,
+            loss_cls=loss_cls,
+            loss_bbox=loss_bbox,
+            loss_dfl=loss_dfl,
             # loss_l1 do not participate in backward
-            # loss_l1=loss_l1.detach()
-        )
+            loss_l1=loss_l1.detach())
