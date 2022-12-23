@@ -298,7 +298,7 @@ class PPYOLOEHead(YOLOv6Head):
         flatten_pred_bboxes = torch.cat(flatten_pred_bboxes, dim=1)
         flatten_pred_bboxes = self.bbox_coder.decode(
             self.flatten_priors[..., :2], flatten_pred_bboxes,
-            self.flatten_priors[..., 2])
+            self.stride_tensor[..., 0])
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if current_epoch < self.initial_epoch:
