@@ -372,7 +372,7 @@ Create a new directory named `custom_dataset` inside configs dir, and add config
 _base_ = '../yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 
 max_epochs = 100  # maximum epochs for training
-data_root = './data/cat/'  # absolute path to the dataset dir
+data_root = './data/cat/'  # absolute path to the dataset directory
 # data_root = '/root/workspace/mmyolo/data/cat/'  # absolute path to the dataset dir inside the Docker container
 
 # the path of result save, can be omitted, omitted save file name is located under work_dirs with the same name of config file.
@@ -380,16 +380,16 @@ data_root = './data/cat/'  # absolute path to the dataset dir
 work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat'
 
 # load_from can specify a local path or URL, setting the URL will automatically download, because the above has been downloaded, we set the local path here
-# Since this tutorial is fine-tuning on the cat dataset, we need to use `load_from` to load the pre-trained model from MMYOLO. This allows for faster convergence and accuracy
+# since this tutorial is fine-tuning on the cat dataset, we need to use `load_from` to load the pre-trained model from MMYOLO. This allows for faster convergence and accuracy
 load_from = './work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa
 
-# According to your GPU situation, modify the batch size, and YOLOv5-s defaults to 8 cards x 16bs
+# according to your GPU situation, modify the batch size, and YOLOv5-s defaults to 8 cards x 16bs
 train_batch_size_per_gpu = 32
 train_num_workers = 4  # recommend to use train_num_workers = nGPU x 4
 
 save_epoch_intervals = 2  # save weights every interval round
 
-# According to your GPU situation, modify the base_lr, modification ratio is base_lr_default * (your_bs / default_bs)
+# according to your GPU situation, modify the base_lr, modification ratio is base_lr_default * (your_bs / default_bs)
 base_lr = _base_.base_lr / 4
 
 anchors = [  # the anchor has been updated according to the characteristics of dataset. The generation of anchor will be explained in the following section.
@@ -768,52 +768,52 @@ The following table shows the test accuracy of the MMYOLO YOLOv5 pre-trained mod
 For details on how to get the accuracy of the pre-trained weights, see the appendix【2. How to test the accuracy of dataset on pre-trained weights】
 ```
 
-### 9.3 尝试 MMYOLO 其他模型
+### 9.3 Switch other models in MMYOLO
 
-MMYOLO 集成了多种 YOLO 算法，切换非常方便，无需重新熟悉一个新的 repo，直接切换 config 文件就可以轻松切换 YOLO 模型，只需简单 3 步即可切换模型：
+MMYOLO integrates multiple YOLO algorithms, which makes switching between YOLO models very easy. There is no need to reacquaint with a new repo. You can easily switch between YOLO models by simply modifying the config file:
 
-1. 新建 config 文件
-2. 下载预训练权重
-3. 启动训练
+1. Create a new config file
+2. Download the pre-trained weights
+3. Starting training
 
-下面以 YOLOv6-s 为例，进行讲解。
+Let's take YOLOv6-s as an example.
 
-1. 搭建一个新的 config：
+1. Create a new config file：
 
 ```python
 _base_ = '../yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco.py'
 
-max_epochs = 100  # 训练的最大 epoch
-data_root = './data/cat/'  # 数据集目录的绝对路径
+max_epochs = 100  # maximum of training epoch
+data_root = './data/cat/'  # absolute path to the dataset directory
 
-# 结果保存的路径，可以省略，省略保存的文件名位于 work_dirs 下 config 同名的文件夹中
-# 如果某个 config 只是修改了部分参数，修改这个变量就可以将新的训练文件保存到其他地方
+# the path of result save, can be omitted, omitted save file name is located under work_dirs with the same name of config file.
+# If a config variable changes only part of its parameters, changing this variable will save the new training file elsewhere
 work_dir = './work_dirs/yolov6_s_syncbn_fast_1xb32-100e_cat'
 
-# load_from 可以指定本地路径或者 URL，设置了 URL 会自动进行下载，因为上面已经下载过，我们这里设置本地路径
-# 因为本教程是在 cat 数据集上微调，故这里需要使用 `load_from` 来加载 MMYOLO 中的预训练模型，这样可以在加快收敛速度的同时保证精度
+# load_from can specify a local path or URL, setting the URL will automatically download, because the above has been downloaded, we set the local path here
+# since this tutorial is fine-tuning on the cat dataset, we need to use `load_from` to load the pre-trained model from MMYOLO. This allows for faster convergence and accuracy
 load_from = './work_dirs/yolov6_s_syncbn_fast_8xb32-400e_coco_20221102_203035-932e1d91.pth'  # noqa
 
-# 根据自己的 GPU 情况，修改 batch size，YOLOv6-s 默认为 8卡 x 32bs
+# according to your GPU situation, modify the batch size, and YOLOv6-s defaults to 8 cards x 32bs
 train_batch_size_per_gpu = 32
-train_num_workers = 4  # 推荐使用 train_num_workers = nGPU x 4
+train_num_workers = 4  # recommend to use  train_num_workers = nGPU x 4
 
-save_epoch_intervals = 2  # 每 interval 轮迭代进行一次保存一次权重
+save_epoch_intervals = 2  # save weights every interval round
 
-# 根据自己的 GPU 情况，修改 base_lr，修改的比例是 base_lr_default * (your_bs / default_bs)
+# according to your GPU situation, modify the base_lr, modification ratio is base_lr_default * (your_bs / default_bs)
 base_lr = _base_.base_lr / 8
 
-class_name = ('cat', )  # 根据 class_with_id.txt 类别信息，设置 class_name
+class_name = ('cat', )  # according to the label information of class_with_id.txt, set the class_name
 num_classes = len(class_name)
 metainfo = dict(
     CLASSES=class_name,
-    PALETTE=[(220, 20, 60)]  # 画图时候的颜色，随便设置即可
+    PALETTE=[(220, 20, 60)]  # the color of drawing, free to set
 )
 
 train_cfg = dict(
     max_epochs=max_epochs,
-    val_begin=20,  # 第几个 epoch 后验证，这里设置 20 是因为前 20 个 epoch 精度不高，测试意义不大，故跳过
-    val_interval=save_epoch_intervals,  # 每 val_interval 轮迭代进行一次测试评估
+    val_begin=20,  # number of epochs to start validation.  Here 20 is set because the accuracy of the first 20 epochs is not high and the test is not meaningful, so it is skipped
+    val_interval=save_epoch_intervals,  # the test evaluation is performed  iteratively every val_interval round
     dynamic_intervals=[(max_epochs - _base_.num_last_epochs, 1)]
 )
 
@@ -831,7 +831,7 @@ train_dataloader = dict(
     dataset=dict(
         _delete_=True,
         type='RepeatDataset',
-        # 数据量太少的话，可以使用 RepeatDataset ，在每个 epoch 内重复当前数据集 n 次，这里设置 5 是重复 5 次
+        # if the dataset is too small, you can use RepeatDataset, which repeats the current dataset n times per epoch, where 5 is set.
         times=5,
         dataset=dict(
             type=_base_.dataset_type,
@@ -857,14 +857,14 @@ test_evaluator = val_evaluator
 optim_wrapper = dict(optimizer=dict(lr=base_lr))
 
 default_hooks = dict(
-    # 设置间隔多少个 epoch 保存模型，以及保存模型最多几个，`save_best` 是另外保存最佳模型（推荐）
+    # set how many epochs to save the model, and the maximum number of models to save,`save_best` is also the best model (recommended).
     checkpoint=dict(
         type='CheckpointHook',
         interval=save_epoch_intervals,
         max_keep_ckpts=5,
         save_best='auto'),
     param_scheduler=dict(max_epochs=max_epochs),
-    # logger 输出的间隔
+    # logger output interval
     logger=dict(type='LoggerHook', interval=10))
 
 custom_hooks = [
@@ -884,24 +884,24 @@ custom_hooks = [
 ```
 
 ```{Note}
-同样，我们在 `projects/misc/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py` 放了一份相同的 config 文件，用户可以选择复制到 `configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py` 路径直接开始训练。
+Similarly, We put an identical config file in `projects/misc/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py`. You can choose to copy to `configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py` to start training directly.
 
-虽然新的 config 看上去好像很多东西，其实很多都是重复的，用户可以用对比软件对比一下即可看出大部分的配置都是和 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` 相同的。因为这 2 个 config 文件需要继承不同的 config，所以还是要添加一些必要的配置。
+Even though the new config looks like a lot of stuff, it's actually a lot of duplication. You can use a comparison software to see that most of the configuration is identical to 'yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py'. Because the two config files need to inherit from different config files, you still need to add the necessary configuration.
 ```
 
-2. 下载 YOLOv6-s 的预训练权重
+2. Download the pre-trained weights
 
 ```bash
 wget https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco/yolov6_s_syncbn_fast_8xb32-400e_coco_20221102_203035-932e1d91.pth -P work_dirs/
 ```
 
-3. 训练
+3. Starting training
 
 ```shell
 python tools/train.py configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py
 ```
 
-在我的实验中，最佳模型是 `work_dirs/yolov6_s_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_96.pth`，其精度如下：
+In my experiments, the best model is `work_dirs/yolov6_s_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_96.pth`,which accuracy is as follows:
 
 ```bash
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.987
@@ -921,11 +921,11 @@ bbox_mAP_copypaste: 0.987 1.000 1.000 -1.000 -1.000 0.987
 Epoch(val) [96][116/116]  coco/bbox_mAP: 0.9870  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9870
 ```
 
-以上演示的是如何在 MMYOLO 中切换模型，可以快速对不同模型进行精度对比，精度高的模型可以上线生产。在我的实验中，YOLOv6 最佳精度 `0.9870` 比 YOLOv5 最佳精度 `0.9680` 高出 `1.9 %`，故后续我们使用 YOLOv6 来进行讲解。
+The above demonstrates how to switch models in MMYOLO, you can quickly compare the accuracy of different models, and the model with high accuracy can be put into production. In my experiment, the best accuracy of YOLOv6 `0.9870` is `1.9 %` higher than the best accuracy of YOLOv5 `0.9680` , so we will use YOLOv6 for explanation.
 
-## 10. 推理
+## 10. Inference
 
-使用最佳的模型进行推理，下面命令中的最佳模型路径是 `./work_dirs/yolov6_s_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_96.pth`，请用户自行修改为自己训练的最佳模型路径。
+Using the best model for inference, the best model path in the following command is `./work_dirs/yolov6_s_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_96.pth`, please modify the best model path you trained.
 
 ```shell
 python demo/image_demo.py ./data/cat/images \
@@ -939,38 +939,39 @@ python demo/image_demo.py ./data/cat/images \
 </div>
 
 ```{Tip}
-如果推理结果不理想，这里举例 2 种情况：
+If the inference result is not ideal, here are two cases:
 
-1. 模型欠拟合：
-   需要先判断是不是训练 epoch 不够导致的欠拟合，如果是训练不够，则修改 config 文件里面的 `max_epochs` 和 `work_dir` 参数，或者根据上面的命名方式新建一个 config 文件，重新进行训练。
+1. Model underfitting:
 
-2. 数据集需优化：
-   如果 epoch 加上去了还是不行，可以增加数据集数量，同时可以重新检查并优化数据集的标注，然后重新进行训练。
+   First, we need to determine if there is not enough training epochs resulting in underfitting. If there is not enough training, we need to change the `max_epochs` and `work_dir` parameters in the config file, or create a new config file named as above and start the training again.
+
+2. The dataset needs to be optimized:
+   If adding epochs still doesn't work, we can increase the number of datasets and re-examine and refine the annotations of the dataset before retraining.
 ```
 
-## 11. 部署
+## 11. Deployment
 
-MMYOLO 提供两种部署方式：
+MMYOLO provides two deployment options:
 
-1. [MMDeploy](https://github.com/open-mmlab/mmdeploy) 框架进行部署
-2. 使用 `projects/easydeploy` 进行部署
+1. [MMDeploy](https://github.com/open-mmlab/mmdeploy) framework for deployment
+2. Using `projects/easydeploy` to deployment
 
-### 11.1 MMDeploy 框架进行部署
+### 11.1 MMDeploy framework for deployment
 
-考虑到部署的机器环境千差万别，很多时候在本地机器可以，但是在生产环境则不一定，这里推荐使用 Docker，做到环境一次部署，终身使用，节省运维搭建环境和部署生产的时间。
+Considering that the wide variety of machine deployments, there are many times when a local machine will work, but not in production. Here, we recommended to use Docker, so that the environment can be deployed once and used for life, saving the time of operation and maintenance to build the environment and deploy production.
 
-本小节会从一下几个小点进行展开讲解：
+In this part, we will introduce the following steps:
 
-1. 构建 Docker 镜像
-2. 创建 Docker 容器
-3. 转换 TensorRT 模型
-4. 部署模型执行推理
+1. Building a Docker image
+2. Creating a Docker container
+3. Transforming TensorRT models
+4. Deploying model and performing inference
 
 ```{SeeAlso}
-如果是对 Docker 不熟悉的用户，可以参考 MMDeploy 的 [源码手动安装](https://mmdeploy.readthedocs.io/zh_CN/latest/01-how-to-build/build_from_source.html) 文档直接在本地编译。安装完之后，可以直接跳到 【11.1.3 转换 TensorRT 模型】 小节。
+If you are not familiar with Docker, you can refer to the MMDeploy [source manual installation].(https://mmdeploy.readthedocs.io/zh_CN/latest/01-how-to-build/build_from_source.html) file to compile directly locally. Once installed, you can skip to【11.1.3 Transforming TensorRT models】
 ```
 
-#### 11.1.1 构建 Docker 镜像
+#### 11.1.1 Building a Docker image
 
 ```shell
 git clone -b dev-1.x https://github.com/open-mmlab/mmdeploy.git
@@ -978,18 +979,18 @@ cd mmdeploy
 docker build docker/GPU/ -t mmdeploy:gpu --build-arg USE_SRC_INSIDE=true
 ```
 
-其中 `USE_SRC_INSIDE=true` 是拉取基础进行之后在内部切换国内源，构建速度会快一些。
+Where `USE_SRC_INSIDE=true` is to pull the basis after switching the domestic source, the build speed will be faster.
 
-执行脚本后，会进行构建，此刻需要等一段时间：
+After executing the script, the build will start, which will take a while:
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/205482447-329186c8-eba3-443f-b1fa-b33c2ab3d5da.png" alt="Image"/>
 </div>
 
-#### 11.1.2 创建 Docker 容器
+#### 11.1.2 Creating a Docker container
 
 ```shell
-export MMYOLO_PATH=/path/to/local/mmyolo # 先将您机器上 MMYOLO 的路径写入环境变量
+export MMYOLO_PATH=/path/to/local/mmyolo # write the path to MMYOLO on your machine to an environment variable
 docker run --gpus all --name mmyolo-deploy -v ${MMYOLO_PATH}:/root/workspace/mmyolo -it mmdeploy:gpu /bin/bash
 ```
 
@@ -997,12 +998,14 @@ docker run --gpus all --name mmyolo-deploy -v ${MMYOLO_PATH}:/root/workspace/mmy
 <img src="https://user-images.githubusercontent.com/25873202/205536974-1eeb2901-9b14-4851-9c96-5046cd05f171.png" alt="Image"/>
 </div>
 
-可以看到本地的 MMYOLO 环境已经挂载到容器里面了
+You can see your local MMYOLO environment mounted inside the container
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/25873202/205537473-0afc16c3-c6d4-451a-96d7-1a2388341b60.png" alt="Image"/>
 </div>
 
 ```{SeeAlso}
-有关这部分的详细介绍可以看 MMDeploy 官方文档 [使用 Docker 镜像](https://mmdeploy.readthedocs.io/zh_CN/latest/01-how-to-build/build_from_docker.html#docker)
+You can read more about this in the MMDeploy official documentation [Using Docker Images](https://mmdeploy.readthedocs.io/zh_CN/latest/01-how-to-build/build_from_docker.html#docker)
 ```
+
+#### 11.1.3 Transforming TensorRT models
