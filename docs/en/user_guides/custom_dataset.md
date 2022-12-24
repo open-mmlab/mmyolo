@@ -14,15 +14,15 @@ Default that you have completed the installation of MMYOLO, if not installed, pl
 
 In this tutorial, we will introduce the whole process from annotating custom dataset to final training, testing and deployment. The overview steps are as below:
 
-1.  Prepare dataset: `tools/misc/download_dataset.py`
-2.  Use the software of [labelme](https://github.com/wkentaro/labelme) to annotate: `demo/image_demo.py` + labelme
-3.  Convert the dataset into COCO format: `tools/dataset_converters/labelme2coco.py`
-4.  Split dataset:`tools/misc/coco_split.py`
-5.  Creat a config file based on dataset
-6.  Dataset visualization analysis: `tools/analysis_tools/dataset_analysis.py`
-7.  Optimize Anchor size: `tools/analysis_tools/optimize_anchors.py`
-8.  Visualization the data processing part of config: `tools/analysis_tools/browse_dataset.py`
-9.  Train: `tools/train.py`
+01. Prepare dataset: `tools/misc/download_dataset.py`
+02. Use the software of [labelme](https://github.com/wkentaro/labelme) to annotate: `demo/image_demo.py` + labelme
+03. Convert the dataset into COCO format: `tools/dataset_converters/labelme2coco.py`
+04. Split dataset:`tools/misc/coco_split.py`
+05. Creat a config file based on dataset
+06. Dataset visualization analysis: `tools/analysis_tools/dataset_analysis.py`
+07. Optimize Anchor size: `tools/analysis_tools/optimize_anchors.py`
+08. Visualization the data processing part of config: `tools/analysis_tools/browse_dataset.py`
+09. Train: `tools/train.py`
 10. Inference: `demo/image_demo.py`
 11. Deployment
 
