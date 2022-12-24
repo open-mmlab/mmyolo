@@ -1009,3 +1009,324 @@ You can read more about this in the MMDeploy official documentation [Using Docke
 ```
 
 #### 11.1.3 Transforming TensorRT models
+
+The first step is to install MMYOLO and `pycuda` in a Docker container：
+
+```shell
+export MMYOLO_PATH=/root/workspace/mmyolo # path in the image, which doesn't need to modify
+cd ${MMYOLO_PATH}
+export MMYOLO_VERSION=$(python -c "import mmyolo.version as v; print(v.__version__)")  # Check the version number of MMYOLO used for training
+echo "Using MMYOLO ${MMYOLO_VERSION}"
+mim install --no-cache-dir mmyolo==${MMYOLO_VERSION}
+pip install --no-cache-dir pycuda==2022.2
+```
+
+Performing model transformations
+
+```shell
+cd /root/workspace/mmdeploy
+python ./tools/deploy.py \
+    ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
+    ${MMYOLO_PATH}/configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py \
+    ${MMYOLO_PATH}/work_dirs/yolov6_s_syncbn_fast_1xb32-100e_cat/best_coco/bbox_mAP_epoch_96.pth \
+    ${MMYOLO_PATH}/data/cat/images/mmexport1633684751291.jpg \
+    --test-img ${MMYOLO_PATH}/data/cat/images/mmexport1633684751291.jpg \
+    --work-dir ./work_dir/yolov6_s_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16 \
+    --device cuda:0 \
+    --log-level INFO \
+    --show \
+    --dump-info
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/206736259-72b76698-cba4-4472-909d-0fd866b45d55.png" alt="Image"/>
+</div>
+
+Wait for a few minutes, `All process success.` appearance indicates success:
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/206736030-3b702929-4fcb-4cec-a6ce-f22a94777f6c.png" alt="Image"/>
+</div>
+
+Looking at the exported path, you can see the file structure as shown in the following screenshot:
+
+```shell
+$WORK_DIR
+  ├── deploy.json
+  ├── detail.json
+  ├── end2end.engine
+  ├── end2end.onnx
+  └── pipeline.json
+```
+
+```{SeeAlso}
+For a detailed description of transforming models, see [How to Transform Models](https://mmdeploy.readthedocs.io/zh_CN/latest/02-how-to-run/convert_model.html)
+```
+
+#### 11.1.4 Deploying model and performing inference
+
+We need to change the `data_root` in `${MMYOLO_PATH}/configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py` to the path in the Docker container:
+
+```python
+data_root = '/root/workspace/mmyolo/data/cat/'  # absolute path of the dataset dir in the Docker container.
+```
+
+Execute speed and accuracy tests:
+
+```shell
+python tools/test.py \
+    ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
+    ${MMYOLO_PATH}/configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py \
+    --model ./work_dir/yolov6_s_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16/end2end.engine \
+    --speed-test \
+    --device cuda
+```
+
+The speed test is as follows, we can see that the average inference speed is `24.10ms`, which is a speed improvement compared to PyTorch inference, but also reduce lots of video memory usage:
+
+```shell
+Epoch(test) [ 10/116]    eta: 0:00:20  time: 0.1919  data_time: 0.1330  memory: 12
+Epoch(test) [ 20/116]    eta: 0:00:15  time: 0.1220  data_time: 0.0939  memory: 12
+Epoch(test) [ 30/116]    eta: 0:00:12  time: 0.1168  data_time: 0.0850  memory: 12
+Epoch(test) [ 40/116]    eta: 0:00:10  time: 0.1241  data_time: 0.0940  memory: 12
+Epoch(test) [ 50/116]    eta: 0:00:08  time: 0.0974  data_time: 0.0696  memory: 12
+Epoch(test) [ 60/116]    eta: 0:00:06  time: 0.0865  data_time: 0.0547  memory: 16
+Epoch(test) [ 70/116]    eta: 0:00:05  time: 0.1521  data_time: 0.1226  memory: 16
+Epoch(test) [ 80/116]    eta: 0:00:04  time: 0.1364  data_time: 0.1056  memory: 12
+Epoch(test) [ 90/116]    eta: 0:00:03  time: 0.0923  data_time: 0.0627  memory: 12
+Epoch(test) [100/116]    eta: 0:00:01  time: 0.0844  data_time: 0.0583  memory: 12
+[tensorrt]-110 times per count: 24.10 ms, 41.50 FPS
+Epoch(test) [110/116]    eta: 0:00:00  time: 0.1085  data_time: 0.0832  memory: 12
+```
+
+Accuracy test is as follows. This configuration uses FP16 format inference, which has some drop points, but it is faster and uses less video memory:
+
+```shell
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.954
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.975
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.954
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.860
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.965
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.965
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.965
+
+INFO - bbox_mAP_copypaste: 0.954 1.000 0.975 -1.000 -1.000 0.954
+INFO - Epoch(test) [116/116]  coco/bbox_mAP: 0.9540  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 0.9750  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9540
+```
+
+Deployment model and inference demonstration:
+
+```{Note}
+You can use the MMDeploy SDK for deployment and use C++ to further improve inference speed.
+```
+
+```shell
+cd ${MMYOLO_PATH}/demo
+python deploy_demo.py \
+    ${MMYOLO_PATH}/data/cat/images/mmexport1633684900217.jpg \
+    ${MMYOLO_PATH}/configs/custom_dataset/yolov6_s_syncbn_fast_1xb32-100e_cat.py \
+    /root/workspace/mmdeploy/work_dir/yolov6_s_syncbn_fast_1xb32-100e_cat_deploy_dynamic_fp16/end2end.engine \
+    --deploy-cfg ${MMYOLO_PATH}/configs/deploy/detection_tensorrt-fp16_dynamic-192x192-960x960.py \
+    --out-dir ${MMYOLO_PATH}/work_dirs/deploy_predict_out \
+    --device cuda:0 \
+    --score-thr 0.5
+```
+
+```{Warning}
+The script `deploy_demo.py` doesn't achieve batch inference, and the pre-processing code needs to be improved. It cannot fully show the inference speed at the moment, only demonstrate the inference results. we will optimize in the future. Expect!
+```
+
+After executing, you can see the inference image results in `--out-dir` :
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/25873202/205815829-6f85e655-722a-47c8-9e23-2a74437c0923.jpg" alt="Image"/>
+</div>
+
+```{Note}
+You can also use other optimizations like increasing batch size, int8 quantization, etc.
+```
+
+#### 11.1.5 Save and load the Docker container
+
+It would be a waste of time to build a docker image every time. At this point you can consider using docker's packaging api for packaging and loading.
+
+```shell
+# save, the result tar package can be placed on mobile hard disk
+docker save mmyolo-deploy > mmyolo-deploy.tar
+
+# load image to system
+docker load < /path/to/mmyolo-deploy.tar
+```
+
+### 11.2 Using `projects/easydeploy` to deploy
+
+```{SeeAlso}
+See [deployment documentation](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README_zh-CN.md) for details.
+```
+
+TODO: This part will be improved in the next version...
+
+## Appendix
+
+### 1. The detailed environment for training the machine in this tutorial is as follows:
+
+```shell
+sys.platform: linux
+Python: 3.9.13 | packaged by conda-forge | (main, May 27 2022, 16:58:50) [GCC 10.3.0]
+CUDA available: True
+numpy_random_seed: 2147483648
+GPU 0: NVIDIA GeForce RTX 3080 Ti
+CUDA_HOME: /usr/local/cuda
+NVCC: Cuda compilation tools, release 11.5, V11.5.119
+GCC: gcc (Ubuntu 9.4.0-1ubuntu1~20.04.1) 9.4.0
+PyTorch: 1.10.0
+PyTorch compiling details: PyTorch built with:
+  - GCC 7.3
+  - C++ Version: 201402
+  - Intel(R) oneAPI Math Kernel Library Version 2021.4-Product Build 20210904 for Intel(R) 64 architecture applications
+  - Intel(R) MKL-DNN v2.2.3 (Git Hash 7336ca9f055cf1bfa13efb658fe15dc9b41f0740)
+  - OpenMP 201511 (a.k.a. OpenMP 4.5)
+  - LAPACK is enabled (usually provided by MKL)
+  - NNPACK is enabled
+  - CPU capability usage: AVX2
+  - CUDA Runtime 11.3
+  - NVCC architecture flags: -gencode;arch=compute_37,code=sm_37;-gencode;arch=compute_50,code=sm_50;-gencode;
+                             arch=compute_60,code=sm_60;-gencode;arch=compute_61,code=sm_61;-gencode;arch=compute_70,code=sm_70;
+                             -gencode;arch=compute_75,code=sm_75;-gencode;arch=compute_80,code=sm_80;-gencode;
+                             arch=compute_86,code=sm_86;-gencode;arch=compute_37,code=compute_37
+  - CuDNN 8.2
+  - Magma 2.5.2
+  - Build settings: BLAS_INFO=mkl, BUILD_TYPE=Release, CUDA_VERSION=11.3, CUDNN_VERSION=8.2.0,
+                    CXX_COMPILER=/opt/rh/devtoolset-7/root/usr/bin/c++, CXX_FLAGS= -Wno-deprecated -fvisibility-inlines-hidden
+                    -DUSE_PTHREADPOOL -fopenmp -DNDEBUG -DUSE_KINETO -DUSE_FBGEMM -DUSE_QNNPACK -DUSE_PYTORCH_QNNPACK -DUSE_XNNPACK
+                    -DSYMBOLICATE_MOBILE_DEBUG_HANDLE -DEDGE_PROFILER_USE_KINETO -O2 -fPIC -Wno-narrowing -Wall -Wextra
+                    -Werror=return-type -Wno-missing-field-initializers -Wno-type-limits -Wno-array-bounds -Wno-unknown-pragmas
+                    -Wno-sign-compare -Wno-error=deprecated-declarations -Wno-stringop-overflow -Wno-psabi -Wno-error=pedantic
+                    -Wno-error=redundant-decls -Wno-error=old-style-cast -fdiagnostics-color=always -faligned-new
+                    -Wno-unused-but-set-variable -Wno-maybe-uninitialized -fno-math-errno -fno-trapping-math -Werror=format
+                    -Wno-stringop-overflow, LAPACK_INFO=mkl, PERF_WITH_AVX=1, PERF_WITH_AVX2=1, PERF_WITH_AVX512=1,
+                    TORCH_VERSION=1.10.0, USE_CUDA=ON, USE_CUDNN=ON, USE_EXCEPTION_PTR=1, USE_GFLAGS=OFF, USE_GLOG=OFF, USE_MKL=ON,
+                    USE_MKLDNN=ON, USE_MPI=OFF, USE_NCCL=ON, USE_NNPACK=ON, USE_OPENMP=ON,
+
+TorchVision: 0.11.0
+OpenCV: 4.6.0
+MMEngine: 0.3.1
+MMCV: 2.0.0rc3
+MMDetection: 3.0.0rc3
+MMYOLO: 0.2.0+cf279a5
+```
+
+### 2. How to test the accuracy of our dataset on the pre-trained weights:
+
+```{Warning}
+Premise: The class is in the COCO 80 class!
+```
+
+In this part, we will use the `cat` dataset as an example, using:
+
+- config file: `configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py`
+- weight `yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth`
+
+1. modify the path in config file
+
+Because `configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py` is inherited from `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py`. Therefore, you can mainly modify the `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` file.
+
+| before modification                                                            | after modification                                                          |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| `data_root = 'data/coco/'`                                                     | `data_root = './data/cat/'`                                                 |
+| `ann_file='annotations/instances_train2017.json'`                              | `ann_file='annotations/trainval.json'`                                      |
+| data_prefix=dict(img='train2017/')\`                                           | `data_prefix=dict(img='images/')`                                           |
+| `val_evaluator` of `ann_file=data_root + 'annotations/instances_val2017.json'` | `val_evaluator` of `dict(ann_file=data_root + 'annotations/trainval.json')` |
+
+2. modify label
+
+```{note}
+It is recommended to make a copy of the label directly to prevent damage to original label
+```
+
+Change the `categories` in `trainval.json` to COCO's original:
+
+```json
+  "categories": [{"supercategory": "person","id": 1,"name": "person"},{"supercategory": "vehicle","id": 2,"name": "bicycle"},{"supercategory": "vehicle","id": 3,"name": "car"},{"supercategory": "vehicle","id": 4,"name": "motorcycle"},{"supercategory": "vehicle","id": 5,"name": "airplane"},{"supercategory": "vehicle","id": 6,"name": "bus"},{"supercategory": "vehicle","id": 7,"name": "train"},{"supercategory": "vehicle","id": 8,"name": "truck"},{"supercategory": "vehicle","id": 9,"name": "boat"},{"supercategory": "outdoor","id": 10,"name": "traffic light"},{"supercategory": "outdoor","id": 11,"name": "fire hydrant"},{"supercategory": "outdoor","id": 13,"name": "stop sign"},{"supercategory": "outdoor","id": 14,"name": "parking meter"},{"supercategory": "outdoor","id": 15,"name": "bench"},{"supercategory": "animal","id": 16,"name": "bird"},{"supercategory": "animal","id": 17,"name": "cat"},{"supercategory": "animal","id": 18,"name": "dog"},{"supercategory": "animal","id": 19,"name": "horse"},{"supercategory": "animal","id": 20,"name": "sheep"},{"supercategory": "animal","id": 21,"name": "cow"},{"supercategory": "animal","id": 22,"name": "elephant"},{"supercategory": "animal","id": 23,"name": "bear"},{"supercategory": "animal","id": 24,"name": "zebra"},{"supercategory": "animal","id": 25,"name": "giraffe"},{"supercategory": "accessory","id": 27,"name": "backpack"},{"supercategory": "accessory","id": 28,"name": "umbrella"},{"supercategory": "accessory","id": 31,"name": "handbag"},{"supercategory": "accessory","id": 32,"name": "tie"},{"supercategory": "accessory","id": 33,"name": "suitcase"},{"supercategory": "sports","id": 34,"name": "frisbee"},{"supercategory": "sports","id": 35,"name": "skis"},{"supercategory": "sports","id": 36,"name": "snowboard"},{"supercategory": "sports","id": 37,"name": "sports ball"},{"supercategory": "sports","id": 38,"name": "kite"},{"supercategory": "sports","id": 39,"name": "baseball bat"},{"supercategory": "sports","id": 40,"name": "baseball glove"},{"supercategory": "sports","id": 41,"name": "skateboard"},{"supercategory": "sports","id": 42,"name": "surfboard"},{"supercategory": "sports","id": 43,"name": "tennis racket"},{"supercategory": "kitchen","id": 44,"name": "bottle"},{"supercategory": "kitchen","id": 46,"name": "wine glass"},{"supercategory": "kitchen","id": 47,"name": "cup"},{"supercategory": "kitchen","id": 48,"name": "fork"},{"supercategory": "kitchen","id": 49,"name": "knife"},{"supercategory": "kitchen","id": 50,"name": "spoon"},{"supercategory": "kitchen","id": 51,"name": "bowl"},{"supercategory": "food","id": 52,"name": "banana"},{"supercategory": "food","id": 53,"name": "apple"},{"supercategory": "food","id": 54,"name": "sandwich"},{"supercategory": "food","id": 55,"name": "orange"},{"supercategory": "food","id": 56,"name": "broccoli"},{"supercategory": "food","id": 57,"name": "carrot"},{"supercategory": "food","id": 58,"name": "hot dog"},{"supercategory": "food","id": 59,"name": "pizza"},{"supercategory": "food","id": 60,"name": "donut"},{"supercategory": "food","id": 61,"name": "cake"},{"supercategory": "furniture","id": 62,"name": "chair"},{"supercategory": "furniture","id": 63,"name": "couch"},{"supercategory": "furniture","id": 64,"name": "potted plant"},{"supercategory": "furniture","id": 65,"name": "bed"},{"supercategory": "furniture","id": 67,"name": "dining table"},{"supercategory": "furniture","id": 70,"name": "toilet"},{"supercategory": "electronic","id": 72,"name": "tv"},{"supercategory": "electronic","id": 73,"name": "laptop"},{"supercategory": "electronic","id": 74,"name": "mouse"},{"supercategory": "electronic","id": 75,"name": "remote"},{"supercategory": "electronic","id": 76,"name": "keyboard"},{"supercategory": "electronic","id": 77,"name": "cell phone"},{"supercategory": "appliance","id": 78,"name": "microwave"},{"supercategory": "appliance","id": 79,"name": "oven"},{"supercategory": "appliance","id": 80,"name": "toaster"},{"supercategory": "appliance","id": 81,"name": "sink"},{"supercategory": "appliance","id": 82,"name": "refrigerator"},{"supercategory": "indoor","id": 84,"name": "book"},{"supercategory": "indoor","id": 85,"name": "clock"},{"supercategory": "indoor","id": 86,"name": "vase"},{"supercategory": "indoor","id": 87,"name": "scissors"},{"supercategory": "indoor","id": 88,"name": "teddy bear"},{"supercategory": "indoor","id": 89,"name": "hair drier"},{"supercategory": "indoor","id": 90,"name": "toothbrush"}],
+```
+
+Also, change the `category_id` in the `annotations` to the `id` corresponding to COCO, for example, `cat` is `17` in this example. Here are some of the results:
+
+```json
+  "annotations": [
+    {
+      "iscrowd": 0,
+      "category_id": 17, # This "category_id" is changed to the id corresponding to COCO, for example, cat is 17
+      "id": 32,
+      "image_id": 32,
+      "bbox": [
+        822.49072265625,
+        958.3897094726562,
+        1513.693115234375,
+        988.3231811523438
+      ],
+      "area": 1496017.9949368387,
+      "segmentation": [
+        [
+          822.49072265625,
+          958.3897094726562,
+          822.49072265625,
+          1946.712890625,
+          2336.183837890625,
+          1946.712890625,
+          2336.183837890625,
+          958.3897094726562
+        ]
+      ]
+    }
+  ]
+```
+
+3. executive command
+
+```shell
+python tools\test.py configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
+                     work_dirs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth \
+                     --cfg-options test_evaluator.classwise=True
+```
+
+After executing it, we can see the test metrics:
+
+```shell
++---------------+-------+--------------+-----+----------------+------+
+| category      | AP    | category     | AP  | category       | AP   |
++---------------+-------+--------------+-----+----------------+------+
+| person        | nan   | bicycle      | nan | car            | nan  |
+| motorcycle    | nan   | airplane     | nan | bus            | nan  |
+| train         | nan   | truck        | nan | boat           | nan  |
+| traffic light | nan   | fire hydrant | nan | stop sign      | nan  |
+| parking meter | nan   | bench        | nan | bird           | nan  |
+| cat           | 0.866 | dog          | nan | horse          | nan  |
+| sheep         | nan   | cow          | nan | elephant       | nan  |
+| bear          | nan   | zebra        | nan | giraffe        | nan  |
+| backpack      | nan   | umbrella     | nan | handbag        | nan  |
+| tie           | nan   | suitcase     | nan | frisbee        | nan  |
+| skis          | nan   | snowboard    | nan | sports ball    | nan  |
+| kite          | nan   | baseball bat | nan | baseball glove | nan  |
+| skateboard    | nan   | surfboard    | nan | tennis racket  | nan  |
+| bottle        | nan   | wine glass   | nan | cup            | nan  |
+| fork          | nan   | knife        | nan | spoon          | nan  |
+| bowl          | nan   | banana       | nan | apple          | nan  |
+| sandwich      | nan   | orange       | nan | broccoli       | nan  |
+| carrot        | nan   | hot dog      | nan | pizza          | nan  |
+| donut         | nan   | cake         | nan | chair          | nan  |
+| couch         | nan   | potted plant | nan | bed            | nan  |
+| dining table  | nan   | toilet       | nan | tv             | nan  |
+| laptop        | nan   | mouse        | nan | remote         | nan  |
+| keyboard      | nan   | cell phone   | nan | microwave      | nan  |
+| oven          | nan   | toaster      | nan | sink           | nan  |
+| refrigerator  | nan   | book         | nan | clock          | nan  |
+| vase          | nan   | scissors     | nan | teddy bear     | nan  |
+| hair drier    | nan   | toothbrush   | nan | None           | None |
++---------------+-------+--------------+-----+----------------+------+
+```
