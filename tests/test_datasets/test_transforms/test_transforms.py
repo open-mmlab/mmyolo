@@ -123,6 +123,44 @@ class TestLetterResize(unittest.TestCase):
             results = transform(data_info)
             self.assertEqual(results['img_shape'], (640, 640, 3))
 
+        # Test scale_factor and pad_param in LetterResize
+        transform = [YOLOv5KeepRatioResize(scale=(1280, 1280)),
+                     LetterResize(scale=(640, 640), pad_val=dict(img=144))]
+        for _ in range(5):
+            input_h, input_w = np.random.randint(100, 700), np.random.randint(
+                100, 700)
+            output_h, output_w = np.random.randint(100,
+                                                   700), np.random.randint(
+                                                       100, 700)
+            data_info = dict(
+                img=np.random.random((input_h, input_w, 3)),
+                gt_bboxes=np.array([[0, 0, 10, 10]], dtype=np.float32),
+                batch_shape=np.array([output_h, output_w], dtype=np.int64),
+                gt_masks=BitmapMasks(
+                    rng.rand(1, input_h, input_w),
+                    height=input_h,
+                    width=input_w))
+            for t in transform:
+                data_info = t(data_info)
+            # calculate the pad_param value
+            ratio = min(output_h / 1280, output_w / 1280)
+            padding_h, padding_w = [
+                output_h - int(round(1280 * ratio)),
+                output_w - int(round(1280 * ratio))
+            ]
+            top_padding, left_padding = int(round(padding_h // 2 - 0.1)), int(
+                round(padding_w // 2 - 0.1))
+            bottom_padding = padding_h - top_padding
+            right_padding = padding_w - left_padding
+            self.assertEqual(data_info['scale_factor'], (output_h / input_h, output_w / input_w))
+            self.assertEqual(data_info['pad_param'],
+                             np.array([top_padding, bottom_padding, left_padding, right_padding
+                                       ], dtype=np.float32))
+
+
+
+unittest.main()
+
 
 class TestYOLOv5KeepRatioResize(unittest.TestCase):
 
