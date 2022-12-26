@@ -473,6 +473,8 @@ class Mosaic9(BaseMixImageTransform):
     one output image. The output image is composed of the parts from each sub-
     image.
 
+    .. code:: text
+
                 +-------------------------------+------------+
                 | pad           |      pad      |            |
                 |    +----------+               |            |
@@ -493,11 +495,11 @@ class Mosaic9(BaseMixImageTransform):
                 |    pad    |            |        pad        |
                 +-----------+------------+-------------------+
 
-    The mosaic transform steps are as follows:
+     The mosaic transform steps are as follows:
 
-        1. Get the center image according to the index, and randomly
-           sample another 8 images from the custom dataset.
-        2. Randomly offset the image after Mosaic
+         1. Get the center image according to the index, and randomly
+            sample another 8 images from the custom dataset.
+         2. Randomly offset the image after Mosaic
 
     Required Keys:
 
