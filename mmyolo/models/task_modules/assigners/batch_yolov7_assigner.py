@@ -198,7 +198,7 @@ class BatchYOLOv7Assigner(nn.Module):
             _mlvl_positive_infos = []
             _from_which_layer = []
 
-            device_tensor = torch.Tensor(1, device='cuda')
+            device_tensor = torch.tensor(1, device='cuda')
 
             for i, head_pred in enumerate(pred_results):
                 # (num_matched_target, 4)
