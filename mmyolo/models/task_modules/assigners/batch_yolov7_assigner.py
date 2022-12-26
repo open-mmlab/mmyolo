@@ -197,6 +197,8 @@ class BatchYOLOv7Assigner(nn.Module):
             _mlvl_priors = []
             _mlvl_positive_infos = []
             _from_which_layer = []
+            
+            device_tensor = torch.ones([1,], device=pred_results[0].device)
 
             for i, head_pred in enumerate(pred_results):
                 # (num_matched_target, 4)
@@ -213,7 +215,7 @@ class BatchYOLOv7Assigner(nn.Module):
                 _mlvl_priors.append(priors)
 
                 _from_which_layer.append(
-                    torch.ones(size=(_mlvl_positive_info.shape[0], )) * i)
+                    device_tensor.new_full(size=(_mlvl_positive_info.shape[0], ), fill_value=i))
 
                 # (n,85)
                 level_batch_idx, prior_ind, \
@@ -277,8 +279,7 @@ class BatchYOLOv7Assigner(nn.Module):
                 self.iou_weight * pair_wise_iou_loss)
 
             # num_gt, num_match_pred
-            matching_matrix = torch.zeros_like(
-                cost, device=_from_which_layer.device)
+            matching_matrix = torch.zeros_like(cost)
 
             top_k, _ = torch.topk(
                 pair_wise_iou,
