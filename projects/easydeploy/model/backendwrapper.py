@@ -45,8 +45,13 @@ class TRTWrapper(torch.nn.Module):
 
         names = [model.get_binding_name(i) for i in range(model.num_bindings)]
 
-        num_inputs = sum(
-            [model.binding_is_input(i) for i in range(model.num_bindings)])
+        num_inputs, num_outputs = 0, 0
+
+        for i in range(model.num_bindings):
+            if model.binding_is_input(i):
+                num_inputs += 1
+            else:
+                num_outputs += 1
 
         self.is_dynamic = -1 in model.get_binding_shape(0)
 
@@ -55,35 +60,33 @@ class TRTWrapper(torch.nn.Module):
         self.input_names = names[:num_inputs]
         self.output_names = names[num_inputs:]
         self.num_inputs = num_inputs
-        self.num_outputs = len(names) - num_inputs
-        self.num_bindings = len(names)
+        self.num_outputs = num_outputs
+        self.num_bindings = num_inputs + num_outputs
+        self.bindings: List[int] = [0] * self.num_bindings
 
     def __init_bindings(self):
-        input_dtypes = []
-        input_shapes = []
-        output_dtypes = []
-        output_shapes = []
+        Binding = namedtuple('Binding', ('name', 'dtype', 'shape'))
+        inputs_info = []
+        outputs_info = []
+
         for i, name in enumerate(self.input_names):
             assert self.model.get_binding_name(i) == name
             dtype = self.torch_dtype_from_trt(self.model.get_binding_dtype(i))
             shape = tuple(self.model.get_binding_shape(i))
-            input_dtypes.append(dtype)
-            input_shapes.append(shape)
+            inputs_info.append(Binding(name, dtype, shape))
+
         for i, name in enumerate(self.output_names):
             i += self.num_inputs
             assert self.model.get_binding_name(i) == name
             dtype = self.torch_dtype_from_trt(self.model.get_binding_dtype(i))
             shape = tuple(self.model.get_binding_shape(i))
-            output_dtypes.append(dtype)
-            output_shapes.append(shape)
-        self.input_dtypes = input_dtypes
-        self.input_shapes = input_shapes
-        self.output_dtypes = output_dtypes
-        self.output_shapes = output_shapes
+            outputs_info.append(Binding(name, dtype, shape))
+        self.inputs_info = inputs_info
+        self.outputs_info = outputs_info
         if not self.is_dynamic:
             self.output_tensor = [
-                torch.empty(shape, dtype=dtype, device=self.device)
-                for (shape, dtype) in zip(output_shapes, output_dtypes)
+                torch.empty(o.shape, dtype=o.dtype, device=self.device)
+                for o in outputs_info
             ]
 
     def forward(self, *inputs):
@@ -93,12 +96,12 @@ class TRTWrapper(torch.nn.Module):
         contiguous_inputs: List[torch.Tensor] = [
             i.contiguous() for i in inputs
         ]
-        bindings: List[int] = [0] * self.num_bindings
 
         for i in range(self.num_inputs):
-            bindings[i] = contiguous_inputs[i].data_ptr()
-            self.context.set_binding_shape(i,
-                                           tuple(contiguous_inputs[i].shape))
+            self.bindings[i] = contiguous_inputs[i].data_ptr()
+            if self.is_dynamic:
+                self.context.set_binding_shape(
+                    i, tuple(contiguous_inputs[i].shape))
 
         # create output tensors
         outputs: List[torch.Tensor] = []
@@ -115,9 +118,10 @@ class TRTWrapper(torch.nn.Module):
             else:
                 output = self.output_tensor[i]
             outputs.append(output)
-            bindings[j] = output.data_ptr()
+            self.bindings[j] = output.data_ptr()
 
-        self.context.execute_async_v2(bindings, self.stream.cuda_stream)
+        self.context.execute_async_v2(self.bindings, self.stream.cuda_stream)
+        self.stream.synchronize()
 
         return tuple(outputs)
 
