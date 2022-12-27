@@ -238,8 +238,6 @@ class BatchYOLOv7Assigner(nn.Module):
             # 1 calc pair_wise_iou_loss
             _mlvl_decoderd_bboxes = torch.cat(_mlvl_decoderd_bboxes, dim=0)
             num_pred_positive = _mlvl_decoderd_bboxes.shape[0]
-            if num_pred_positive == 0:
-                continue
 
             # scaled xywh
             batch_input_shape_wh = pred_results[0].new_tensor(
