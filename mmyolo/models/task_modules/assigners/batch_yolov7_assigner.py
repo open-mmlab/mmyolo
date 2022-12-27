@@ -227,7 +227,8 @@ class BatchYOLOv7Assigner(nn.Module):
                 _mlvl_priors.append(priors)
 
                 _from_which_layer.append(
-                    torch.ones(size=(_mlvl_positive_info.shape[0], )) * i)
+                    _mlvl_positive_info.new_full(
+                        size=(_mlvl_positive_info.shape[0], ), fill_value=i))
 
                 # (n,85)
                 level_batch_idx, prior_ind, \
