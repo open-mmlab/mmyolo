@@ -198,7 +198,9 @@ default_hooks = dict(
         min_lr_ratio=0.0,
         total_epochs=int(max_epochs * 1.2)),
     checkpoint=dict(
-        type='CheckpointHook', interval=save_epoch_intervals,
+        type='CheckpointHook',
+        interval=save_epoch_intervals,
+        save_best='auto',
         max_keep_ckpts=3))
 
 custom_hooks = [
