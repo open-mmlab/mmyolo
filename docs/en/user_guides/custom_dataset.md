@@ -10,7 +10,7 @@ The video of this document has been posted on Bilibili: [A nanny level tutorials
 All instructions in this document are done on Linux and are fully available on Windows, only slightly different in commands and operations.
 ```
 
-Default that you have completed the installation of MMYOLO, if not installed, please refer to the document \[start your first step\] (https://mmyolo.readthedocs.io/zh_CN/latest/get_started.html#id1) for installation.
+Default that you have completed the installation of MMYOLO, if not installed, please refer to the document [GET STARTED](https://mmyolo.readthedocs.io/en/latest/get_started.html) for installation.
 
 In this tutorial, we will introduce the whole process from annotating custom dataset to final training, testing and deployment. The overview steps are as below:
 
