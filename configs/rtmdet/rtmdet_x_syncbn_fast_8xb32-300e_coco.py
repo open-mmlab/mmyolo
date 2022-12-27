@@ -1,7 +1,7 @@
-_base_ = './rtmdet_l_syncbn_8xb32-300e_coco.py'
+_base_ = './rtmdet_l_syncbn_fast__8xb32-300e_coco.py'
 
-deepen_factor = 0.67
-widen_factor = 0.75
+deepen_factor = 1.33
+widen_factor = 1.25
 
 model = dict(
     backbone=dict(deepen_factor=deepen_factor, widen_factor=widen_factor),
