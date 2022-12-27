@@ -304,7 +304,7 @@ class YOLOv5Head(BaseDenseHead):
         cfg = self.test_cfg if cfg is None else cfg
         cfg = copy.deepcopy(cfg)
 
-        multi_label = cfg.multi_label
+        multi_label = cfg.get('multi_label', True)
         multi_label &= self.num_classes > 1
         cfg.multi_label = multi_label
 

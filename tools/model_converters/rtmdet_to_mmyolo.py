@@ -7,10 +7,11 @@ import torch
 
 def convert(src, dst):
     """Convert keys in pretrained RTMDet models to MMYOLO style."""
-    blobs = torch.load(src)['state_dict']
+    blobs = torch.load(src)
+    blobs_state_dict = blobs['state_dict']
     state_dict = OrderedDict()
 
-    for key, weight in blobs.items():
+    for key, weight in blobs_state_dict.items():
         if 'neck.reduce_layers.0' in key:
             new_key = key.replace('.0', '.2')
             state_dict[new_key] = weight

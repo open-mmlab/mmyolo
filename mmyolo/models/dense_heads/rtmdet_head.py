@@ -4,13 +4,11 @@ from typing import List, Optional, Sequence, Tuple, Union
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule, is_norm
-from mmdet.models.task_modules.prior_generators import anchor_inside_flags
 from mmdet.models.task_modules.samplers import PseudoSampler
-from mmdet.models.utils import images_to_levels, multi_apply, unmap
+from mmdet.models.utils import images_to_levels, multi_apply
 from mmdet.structures.bbox import distance2bbox
 from mmdet.utils import (ConfigType, InstanceList, OptConfigType,
                          OptInstanceList, OptMultiConfig, reduce_mean)
-from mmengine.config import ConfigDict
 from mmengine.model import (BaseModule, bias_init_with_prob, constant_init,
                             normal_init)
 from mmengine.structures import InstanceData
@@ -172,7 +170,7 @@ class RTMDetSepBNHeadModule(BaseModule):
 
         cls_scores = []
         bbox_preds = []
-        for idx, (x, stride) in enumerate(zip(feats, self.featmap_strides)):
+        for idx, x in enumerate(feats):
             cls_feat = x
             reg_feat = x
 
@@ -183,7 +181,6 @@ class RTMDetSepBNHeadModule(BaseModule):
             for reg_layer in self.reg_convs[idx]:
                 reg_feat = reg_layer(reg_feat)
 
-            # reg_dist = self.rtm_reg[idx](reg_feat) * stride
             reg_dist = self.rtm_reg[idx](reg_feat)
             cls_scores.append(cls_score)
             bbox_preds.append(reg_dist)
@@ -440,8 +437,7 @@ class RTMDetHead(YOLOv5Head):
                     anchor_list: List[List[Tensor]],
                     batch_gt_instances: InstanceList,
                     batch_img_metas: List[dict],
-                    batch_gt_instances_ignore: OptInstanceList = None,
-                    unmap_outputs=True) -> Union[tuple, None]:
+                    batch_gt_instances_ignore: OptInstanceList = None) -> Union[tuple, None]:
         """Compute regression and classification targets for anchors in
         multiple images.
 
@@ -464,8 +460,6 @@ class RTMDetHead(YOLOv5Head):
                 Batch of gt_instances_ignore. It includes ``bboxes`` attribute
                 data that is ignored during training and testing.
                 Defaults to None.
-            unmap_outputs (bool): Whether to map outputs back to the original
-                set of anchors. Defaults to True.
 
         Returns:
             tuple: a tuple containing learning targets.
@@ -500,8 +494,7 @@ class RTMDetHead(YOLOv5Head):
             anchor_list,
             batch_gt_instances,
             batch_img_metas,
-            batch_gt_instances_ignore,
-            unmap_outputs=unmap_outputs)
+            batch_gt_instances_ignore)
         # no valid anchors
         if any([labels is None for labels in all_labels]):
             return None
@@ -525,8 +518,7 @@ class RTMDetHead(YOLOv5Head):
                             flat_anchors: Tensor,
                             gt_instances: InstanceData,
                             img_meta: dict,
-                            gt_instances_ignore: Optional[InstanceData] = None,
-                            unmap_outputs=True) -> tuple:
+                            gt_instances_ignore: Optional[InstanceData] = None) -> tuple:
         """Compute regression, classification targets for anchors in a single
         image.
 
@@ -543,8 +535,6 @@ class RTMDetHead(YOLOv5Head):
                 to be ignored during training. It includes ``bboxes`` attribute
                 data that is ignored during training and testing.
                 Defaults to None.
-            unmap_outputs (bool): Whether to map outputs back to the original
-                set of anchors. Defaults to True.
 
         Returns:
             tuple: N is the number of total anchors in the image.

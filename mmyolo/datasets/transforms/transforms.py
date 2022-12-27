@@ -95,9 +95,12 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
 
             if ratio != 1:
                 # resize image according to the ratio
-                image = mmcv.imrescale(
+                # The difference between the two functions is that
+                # imrescale will add +0.5. In order to be consistent
+                # with the official, we use imresize to achieve.
+                image = mmcv.imresize(
                     img=image,
-                    scale=ratio,
+                    size=(int(original_w * ratio), int(original_h * ratio)),
                     interpolation='area' if ratio < 1 else 'bilinear',
                     backend=self.backend)
 
@@ -242,7 +245,10 @@ class LetterResize(MMDET_Resize):
 
         results['img'] = image
         results['img_shape'] = image.shape
-        results['pad_param'] = np.array(padding_list, dtype=np.float32)
+        # results['pad_param'] = np.array(padding_list, dtype=np.float32)
+        results['pad_param'] = np.array(
+            [padding_h / 2, padding_h / 2, padding_w / 2, padding_w / 2],
+            dtype=np.float32)
 
     def _resize_masks(self, results: dict):
         """Resize masks with ``results['scale']``"""
