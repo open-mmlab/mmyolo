@@ -68,6 +68,8 @@ def main():
     elif args.checkpoint.endswith('.engine') or args.checkpoint.endswith(
             '.plan'):
         model = TRTWrapper(args.checkpoint, args.device)
+    else:
+        raise NotImplementedError
 
     model.to(args.device)
 
