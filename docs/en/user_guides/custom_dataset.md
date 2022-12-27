@@ -165,8 +165,7 @@ the generated label files saved in `--out-dir`:
     └── ...
 ```
 
-Here is an example of the original image and it's
-generating json file:
+Here is an example of the original image and it's generating json file:
 
 <div align=center>
   <img src="https://user-images.githubusercontent.com/25873202/205471430-dcc882dd-16bb-45e4-938f-6b62ab3dff19.jpg" alt="图片" width="45%"/>
