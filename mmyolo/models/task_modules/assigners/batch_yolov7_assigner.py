@@ -198,8 +198,6 @@ class BatchYOLOv7Assigner(nn.Module):
             _mlvl_positive_infos = []
             _from_which_layer = []
 
-            device_tensor = torch.tensor(1, device='cuda')
-
             for i, head_pred in enumerate(pred_results):
                 # (num_matched_target, 4)
                 #  4 is mean (batch_idx, prior_idx, grid_x, grid_y)
@@ -215,7 +213,7 @@ class BatchYOLOv7Assigner(nn.Module):
                 _mlvl_priors.append(priors)
 
                 _from_which_layer.append(
-                    device_tensor.new_full(
+                    _mlvl_positive_info.new_full(
                         size=(_mlvl_positive_info.shape[0], ), fill_value=i))
 
                 # (n,85)
