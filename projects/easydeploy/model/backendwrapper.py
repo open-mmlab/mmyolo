@@ -183,11 +183,11 @@ class ORTWrapper(torch.nn.Module):
             if any(not isinstance(i, int) for i in tensor.shape):
                 self.is_dynamic = True
             inputs_info.append(
-                Binding(tensor.name, tensor.dtype, tensor.shape))
+                Binding(tensor.name, tensor.type, tuple(tensor.shape)))
 
         for i, tensor in enumerate(self.session.get_outputs()):
             outputs_info.append(
-                Binding(tensor.name, tensor.dtype, tensor.shape))
+                Binding(tensor.name, tensor.type, tuple(tensor.shape)))
         self.inputs_info = inputs_info
         self.outputs_info = outputs_info
         self.num_inputs = len(inputs_info)
@@ -210,4 +210,4 @@ class ORTWrapper(torch.nn.Module):
             for i, j in enumerate(self.inputs_info)
         })
 
-        return tuple(outputs)
+        return tuple(torch.from_numpy(o).to(self.device) for o in outputs)
