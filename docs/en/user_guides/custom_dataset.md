@@ -934,7 +934,7 @@ python demo/image_demo.py ./data/cat/images \
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/25873202/204773727-5d3cbbad-1265-45a0-822a-887713555049.jpg" alt="推理图片"/>
+<img src="https://user-images.githubusercontent.com/25873202/204773727-5d3cbbad-1265-45a0-822a-887713555049.jpg" alt="Image"/>
 </div>
 
 ```{Tip}
