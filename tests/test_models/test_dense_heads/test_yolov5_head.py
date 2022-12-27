@@ -164,8 +164,9 @@ class TestYOLOv5Head(TestCase):
         # background
         gt_instances = InstanceData(
             bboxes=torch.empty((0, 4)), labels=torch.LongTensor([]))
-
-        gt_instances_ignore = torch.empty((0, 6), dtype=torch.float32)
+        # ignore boxes
+        gt_instances_ignore = torch.tensor(
+            [[0, 0, 69.7688, 0, 619.3611, 62.2711]], dtype=torch.float32)
 
         empty_gt_losses = head._loss_by_feat_with_ignore(
             cls_scores, bbox_preds, objectnesses, [gt_instances], img_metas,
@@ -192,7 +193,7 @@ class TestYOLOv5Head(TestCase):
             labels=torch.LongTensor([1]))
 
         gt_instances_ignore = torch.tensor(
-            [0, 0, 69.7688, 0, 619.3611, 62.2711], dtype=torch.float32)
+            [[0, 0, 69.7688, 0, 619.3611, 62.2711]], dtype=torch.float32)
 
         one_gt_losses = head._loss_by_feat_with_ignore(cls_scores, bbox_preds,
                                                        objectnesses,
@@ -217,7 +218,7 @@ class TestYOLOv5Head(TestCase):
             labels=torch.LongTensor([0]))
 
         gt_instances_ignore = torch.tensor(
-            [0, 0, 69.7688, 0, 619.3611, 62.2711], dtype=torch.float32)
+            [[0, 0, 69.7688, 0, 619.3611, 62.2711]], dtype=torch.float32)
 
         one_gt_losses = head._loss_by_feat_with_ignore(cls_scores, bbox_preds,
                                                        objectnesses,

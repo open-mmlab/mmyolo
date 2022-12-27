@@ -694,12 +694,12 @@ class YOLOv5Head(BaseDenseHead):
         decoded_bbox_pred = torch.cat((pred_xy, pred_wh), dim=-1)
         return decoded_bbox_pred
 
-    def _loss_by_feat_with_ignore(self, cls_scores: Sequence[Tensor],
-                                  bbox_preds: Sequence[Tensor],
-                                  objectnesses: Sequence[Tensor],
-                                  batch_gt_instances: Sequence[InstanceData],
-                                  batch_img_metas: Sequence[dict],
-                                  batch_gt_instances_ignore: Tensor) -> dict:
+    def _loss_by_feat_with_ignore(
+            self, cls_scores: Sequence[Tensor], bbox_preds: Sequence[Tensor],
+            objectnesses: Sequence[Tensor],
+            batch_gt_instances: Sequence[InstanceData],
+            batch_img_metas: Sequence[dict],
+            batch_gt_instances_ignore: Sequence[Tensor]) -> dict:
         """Calculate the loss based on the features extracted by the detection
         head.
 
@@ -718,10 +718,9 @@ class YOLOv5Head(BaseDenseHead):
                 attributes.
             batch_img_metas (Sequence[dict]): Meta information of each image,
                 e.g., image size, scaling factor, etc.
-            batch_gt_instances_ignore (list[:obj:`InstanceData`], optional):
-                Batch of gt_instances_ignore. It includes ``bboxes`` attribute
-                data that is ignored during training and testing.
-                Defaults to None.
+            batch_gt_instances_ignore (Sequence[Tensor]): Ignore boxes with
+                batch_ids and labels, each is a 2D-tensor, the channel number
+                is 6, means that (batch_id, label, xmin, ymin, xmax, ymax).
         Returns:
             dict[str, Tensor]: A dictionary of losses.
         """
