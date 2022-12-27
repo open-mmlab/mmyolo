@@ -1,4 +1,4 @@
-# The whole process of custom dataset annotation+training+testing+deployment
+# Annotation-to-deployment workflow for custom dataset
 
 In our daily work and study, we often encounter some tasks that need to train custom dataset. There are few scenarios in which open-source datasets can be used as online models, so we need to carry out a series of operations on our custom datasets to ensure that the models can be put into production and serve users.
 
@@ -32,7 +32,7 @@ After obtaining the model weight and the mAP of validation set, users need to de
 
 Each step is described in detail below.
 
-## 1. Prepare the customized dataset
+## 1. Prepare custom dataset
 
 - If you don't have your own dataset, or want to use a small dataset to run the whole process, you can use the 144 images `cat` dataset provided with this tutorial (the raw picture of this dataset is supplied by @RangeKing, cleaned by @PeterH0323). This `cat` dataset will be used as an example for the rest tutorial.
 
@@ -292,7 +292,7 @@ python tools/analysis_tools/browse_coco_json.py --img-dir ./data/cat/images \
 </div>
 
 ```{SeeAlso}
-See [Visualizing COCO label](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#coco) for more information on `tools/analysis_tools/browse_coco_json.py`.
+See [Visualizing COCO label](https://mmyolo.readthedocs.io/en/latest/user_guides/useful_tools.html#coco) for more information on `tools/analysis_tools/browse_coco_json.py`.
 ```
 
 ## 4. Divide dataset into training set, validation set and test set
@@ -557,7 +557,7 @@ From the analysis output, we can conclude that the training set of the `cat` dat
 - The width of bbox is about `500 ~ 600` , and the height is about `500 ~ 600`.
 
 ```{SeeAlso}
-See [Visualizing Dataset Analysis](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id4) for more information on `tools/analysis_tools/dataset_analysis.py`
+See [Visualizing Dataset Analysis](https://mmyolo.readthedocs.io/en/latest/user_guides/useful_tools.html#id4) for more information on `tools/analysis_tools/dataset_analysis.py`
 ```
 
 ## 7. Optimize Anchor size
@@ -601,7 +601,7 @@ anchors = [
 ```
 
 ```{SeeAlso}
-See [Optimize Anchor Sizes](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id8) for more information on `tools/analysis_tools/optimize_anchors.py`
+See [Optimize Anchor Sizes](https://mmyolo.readthedocs.io/en/latest/user_guides/useful_tools.html#id8) for more information on `tools/analysis_tools/optimize_anchors.py`
 ```
 
 ## 8. Visualization the data processing part of config
@@ -624,7 +624,7 @@ python tools/analysis_tools/browse_dataset.py configs/custom_dataset/yolov5_s-v6
 </div>
 
 ```{SeeAlso}
-See [Visualizing Datasets](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id3) for more information on `tools/analysis_tools/browse_dataset.py`
+See [Visualizing Datasets](https://mmyolo.readthedocs.io/en/latest/user_guides/useful_tools.html#id3) for more information on `tools/analysis_tools/browse_dataset.py`
 ```
 
 ## 9. Train
@@ -967,7 +967,7 @@ In this part, we will introduce the following steps:
 4. Deploying model and performing inference
 
 ```{SeeAlso}
-If you are not familiar with Docker, you can refer to the MMDeploy [source manual installation].(https://mmdeploy.readthedocs.io/zh_CN/latest/01-how-to-build/build_from_source.html) file to compile directly locally. Once installed, you can skip to【11.1.3 Transforming TensorRT models】
+If you are not familiar with Docker, you can refer to the MMDeploy [source manual installation].(https://mmdeploy.readthedocs.io/en/latest/01-how-to-build/build_from_source.html) file to compile directly locally. Once installed, you can skip to【11.1.3 Transforming TensorRT models】
 ```
 
 #### 11.1.1 Building a Docker image
@@ -1004,7 +1004,7 @@ You can see your local MMYOLO environment mounted inside the container
 </div>
 
 ```{SeeAlso}
-You can read more about this in the MMDeploy official documentation [Using Docker Images](https://mmdeploy.readthedocs.io/zh_CN/latest/01-how-to-build/build_from_docker.html#docker)
+You can read more about this in the MMDeploy official documentation [Using Docker Images](https://mmdeploy.readthedocs.io/en/latest/01-how-to-build/build_from_docker.html#docker)
 ```
 
 #### 11.1.3 Transforming TensorRT models
@@ -1059,7 +1059,7 @@ $WORK_DIR
 ```
 
 ```{SeeAlso}
-For a detailed description of transforming models, see [How to Transform Models](https://mmdeploy.readthedocs.io/zh_CN/latest/02-how-to-run/convert_model.html)
+For a detailed description of transforming models, see [How to Transform Models](https://mmdeploy.readthedocs.io/en/latest/02-how-to-run/convert_model.html)
 ```
 
 #### 11.1.4 Deploying model and performing inference
@@ -1165,7 +1165,7 @@ docker load < /path/to/mmyolo-deploy.tar
 ### 11.2 Using `projects/easydeploy` to deploy
 
 ```{SeeAlso}
-See [deployment documentation](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README_zh-CN.md) for details.
+See [deployment documentation](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README_en.md) for details.
 ```
 
 TODO: This part will be improved in the next version...
