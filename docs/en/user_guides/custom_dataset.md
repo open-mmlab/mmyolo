@@ -400,7 +400,7 @@ anchors = [  # the anchor has been updated according to the characteristics of d
 class_name = ('cat', )  # according to the label information of class_with_id.txt, set the class_name
 num_classes = len(class_name)
 metainfo = dict(
-    CLASSES=class_name,
+    classes=class_name,
     palette=[(220, 20, 60)]  # the color of drawing, free to set
 )
 
