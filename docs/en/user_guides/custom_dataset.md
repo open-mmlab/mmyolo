@@ -805,8 +805,8 @@ base_lr = _base_.base_lr / 8
 class_name = ('cat', )  # according to the label information of class_with_id.txt, set the class_name
 num_classes = len(class_name)
 metainfo = dict(
-    CLASSES=class_name,
-    PALETTE=[(220, 20, 60)]  # the color of drawing, free to set
+    classes=class_name,
+    palette=[(220, 20, 60)]  # the color of drawing, free to set
 )
 
 train_cfg = dict(
