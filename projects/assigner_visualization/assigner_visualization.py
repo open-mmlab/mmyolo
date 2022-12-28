@@ -25,16 +25,6 @@ def parse_args():
         ' results.')
     parser.add_argument('config', help='config file path')
     parser.add_argument(
-        '--cfg-options',
-        nargs='+',
-        action=DictAction,
-        help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
-    parser.add_argument(
         '--show-number',
         '-n',
         type=int,
@@ -45,7 +35,7 @@ def parse_args():
         'default "sys.maxsize", show all images in dataset')
     parser.add_argument(
         '--output-dir',
-        default='show',
+        default='assigned_results',
         type=str,
         help='The name of the folder where the image is saved.')
     parser.add_argument(
@@ -61,6 +51,16 @@ def parse_args():
         action='store_true',
         help='Whether to show label on image.')
     parser.add_argument('--seed', default=-1, type=int, help='random seed')
+    parser.add_argument(
+        '--cfg-options',
+        nargs='+',
+        action=DictAction,
+        help='override some settings in the used config, the key-value pair '
+        'in xxx=yyy format will be merged into config file. If the value to '
+        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+        'Note that the quotation marks are necessary and that no white space '
+        'is allowed.')
 
     args = parser.parse_args()
     return args
