@@ -124,8 +124,10 @@ class TestLetterResize(unittest.TestCase):
             self.assertEqual(results['img_shape'], (640, 640, 3))
 
         # TODO: Testing the existence of multiple scale_factor and pad_param
-        transform = [YOLOv5KeepRatioResize(scale=(1280, 1280)),
-                     LetterResize(scale=(640, 640), pad_val=dict(img=144))]
+        transform = [
+            YOLOv5KeepRatioResize(scale=(1280, 1280)),
+            LetterResize(scale=(640, 640), pad_val=dict(img=144))
+        ]
         for _ in range(10):
             input_h, input_w = np.random.randint(100, 700), np.random.randint(
                 100, 700)
@@ -146,11 +148,11 @@ class TestLetterResize(unittest.TestCase):
             self.assertIn('pad_param', data_info)
             pad_param = data_info['pad_param'].reshape(-1, 2).sum(1)
             scale_factor = np.asarray(data_info['scale_factor'])
-            self.assertTrue((np.ceil((data_info["img_shape"][:2] - pad_param
-                                      + 1.) / scale_factor)
+            self.assertTrue((np.ceil(
+                (data_info["img_shape"][:2] - pad_param + 1.) / scale_factor)
                              >= (input_h, input_w)).all())
-            self.assertTrue((np.floor((data_info["img_shape"][:2] - pad_param
-                                       - 1.) / scale_factor)
+            self.assertTrue((np.floor(
+                (data_info["img_shape"][:2] - pad_param - 1.) / scale_factor)
                              <= (input_h, input_w)).all())
 
 
