@@ -146,9 +146,11 @@ class TestLetterResize(unittest.TestCase):
             self.assertIn('pad_param', data_info)
             pad_param = data_info['pad_param'].reshape(-1, 2).sum(1)
             scale_factor = np.asarray(data_info['scale_factor'])
-            self.assertTrue((np.ceil((data_info["img_shape"][:2] - pad_param + 1.) / scale_factor)
+            self.assertTrue((np.ceil((data_info["img_shape"][:2] - pad_param
+                                      + 1.) / scale_factor)
                              >= (input_h, input_w)).all())
-            self.assertTrue((np.floor((data_info["img_shape"][:2] - pad_param - 1.) / scale_factor)
+            self.assertTrue((np.floor((data_info["img_shape"][:2] - pad_param
+                                       - 1.) / scale_factor)
                              <= (input_h, input_w)).all())
 
 
