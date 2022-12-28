@@ -317,11 +317,11 @@ model = dict(
 
 #### 不使用预训练权重
 
-当我们替换主干网络时，模型初始化的时都是默认加载主干网络的预训练权重进行训练的。如果，不想使用主干网络的预训练权重进行训练，而是想从头开始训练时模型时，
-我们可以将 `backbone` 中的 `init_cfg` 设置为 `None`，届时主干网络将会以默认的初始化方法进行初始化，而不会使用训练好的预训练权重进行初始。
+通常情况下，骨干网络初始化都是优先选择预训练权重。如果你不想使用预训练权重，而是想从头开始训练时模型时，
+我们可以将 `backbone` 中的 `init_cfg` 设置为 `None`，此时骨干网络将会以默认的初始化方法进行初始化，
+而不会使用训练好的预训练权重进行初始。以下是以 `YOLOv5` 使用 resnet 作为主干网络为例子，其余算法也是同样的处理：
 
 ```python
-# 以 yolov5 使用 resnet 作为主干网络为例子，其余算法也是同样的处理
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
 deepen_factor = _base_.deepen_factor
@@ -344,7 +344,7 @@ model = dict(
     neck=dict(
         type='YOLOv5PAFPN',
         widen_factor=widen_factor,
-        in_channels=channels, # 注意：ResNet-50 输出的3个通道是 [512, 1024, 2048]，和原先的 yolov5-s neck 不匹配，需要更改
+        in_channels=channels, # 注意：ResNet-50 输出的 3 个通道是 [512, 1024, 2048]，和原先的 yolov5-s neck 不匹配，需要更改
         out_channels=channels),
     bbox_head=dict(
         type='YOLOv5Head',
