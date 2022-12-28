@@ -315,6 +315,46 @@ model = dict(
 )
 ```
 
+#### 不使用预训练权重
+
+通常情况下，骨干网络初始化都是优先选择预训练权重。如果你不想使用预训练权重，而是想从头开始训练时模型时，
+我们可以将 `backbone` 中的 `init_cfg` 设置为 `None`，此时骨干网络将会以默认的初始化方法进行初始化，
+而不会使用训练好的预训练权重进行初始。以下是以 `YOLOv5` 使用 resnet 作为主干网络为例子，其余算法也是同样的处理：
+
+```python
+_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+
+deepen_factor = _base_.deepen_factor
+widen_factor = 1.0
+channels = [512, 1024, 2048]
+
+model = dict(
+    backbone=dict(
+        _delete_=True, # 将 _base_ 中关于 backbone 的字段删除
+        type='mmdet.ResNet', # 使用 mmdet 中的 ResNet
+        depth=50,
+        num_stages=4,
+        out_indices=(1, 2, 3),
+        frozen_stages=1,
+        norm_cfg=dict(type='BN', requires_grad=True),
+        norm_eval=True,
+        style='pytorch',
+        init_cfg=None # init_cfg 设置为 None，则 backbone 将不会使用预训练好的权重进行初始化了
+    ),
+    neck=dict(
+        type='YOLOv5PAFPN',
+        widen_factor=widen_factor,
+        in_channels=channels, # 注意：ResNet-50 输出的 3 个通道是 [512, 1024, 2048]，和原先的 yolov5-s neck 不匹配，需要更改
+        out_channels=channels),
+    bbox_head=dict(
+        type='YOLOv5Head',
+        head_module=dict(
+            type='YOLOv5HeadModule',
+            in_channels=channels, # head 部分输入通道也要做相应更改
+            widen_factor=widen_factor))
+)
+```
+
 ## 输出预测结果
 
 如果想将预测结果保存为特定的文件，用于离线评估，目前 MMYOLO 支持 json 和 pkl 两种格式。
