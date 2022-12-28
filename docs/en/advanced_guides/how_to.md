@@ -314,8 +314,8 @@ model = dict(
 
 #### Don't used pre-training weights
 
-When we replace the backbone network, the model initialization is trained by default loading the pre-training weight of the backbone network. If, instead of using the pre-training weights of the backbone network, you want to train the time model from scratch,
-We can set `init_cfg` in 'backbone' to 'None'. In this case, the backbone network will be initialized with the default initialization method, instead of using the trained pre-training weight.
+When we replace the backbone network, the model initialization is trained by default loading the pre-training weight of the backbone network. Instead of using the pre-training weights of the backbone network, if you want to train the time model from scratch,
+You can set `init_cfg` in 'backbone' to 'None'. In this case, the backbone network will be initialized with the default initialization method, instead of using the trained pre-training weight.
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
