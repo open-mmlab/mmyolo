@@ -118,18 +118,23 @@ albu_train_transforms = [
 
 pre_transform = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='LoadAnnotations', with_bbox=True)
+    dict(
+        type='LoadAnnotations',
+        with_bbox=True,
+        with_mask=True,
+        poly2mask=False,
+        _scope_='mmdet')
 ]
 
 train_pipeline = [
     *pre_transform,
     dict(
-        type='Mosaic',
+        type='Mosaic_seg',
         img_scale=img_scale,
         pad_val=114.0,
         pre_transform=pre_transform),
     dict(
-        type='YOLOv5RandomAffine',
+        type='YOLOv5RandomAffine_seg',
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
         scaling_ratio_range=(0.5, 1.5),

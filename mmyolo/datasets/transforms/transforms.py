@@ -676,3 +676,321 @@ class YOLOv5RandomAffine(BaseTransform):
         translation_matrix = np.array([[1, 0., x], [0., 1, y], [0., 0., 1.]],
                                       dtype=np.float32)
         return translation_matrix
+
+
+@TRANSFORMS.register_module()
+class YOLOv5RandomAffine_seg(BaseTransform):
+    """Random affine transform data augmentation in YOLOv5. It is different
+    from the implementation in YOLOX.
+
+    This operation randomly generates affine transform matrix which including
+    rotation, translation, shear and scaling transforms.
+
+    Required Keys:
+
+    - img
+    - gt_bboxes (BaseBoxes[torch.float32]) (optional)
+    - gt_bboxes_labels (np.int64) (optional)
+    - gt_ignore_flags (np.bool) (optional)
+
+    Modified Keys:
+
+    - img
+    - img_shape
+    - gt_bboxes (optional)
+    - gt_bboxes_labels (optional)
+    - gt_ignore_flags (optional)
+
+    Args:
+        max_rotate_degree (float): Maximum degrees of rotation transform.
+            Defaults to 10.
+        max_translate_ratio (float): Maximum ratio of translation.
+            Defaults to 0.1.
+        scaling_ratio_range (tuple[float]): Min and max ratio of
+            scaling transform. Defaults to (0.5, 1.5).
+        max_shear_degree (float): Maximum degrees of shear
+            transform. Defaults to 2.
+        border (tuple[int]): Distance from height and width sides of input
+            image to adjust output shape. Only used in mosaic dataset.
+            Defaults to (0, 0).
+        border_val (tuple[int]): Border padding values of 3 channels.
+            Defaults to (114, 114, 114).
+        bbox_clip_border (bool, optional): Whether to clip the objects outside
+            the border of the image. In some dataset like MOT17, the gt bboxes
+            are allowed to cross the border of images. Therefore, we don't
+            need to clip the gt bboxes in these cases. Defaults to True.
+    """
+
+    def __init__(self,
+                 max_rotate_degree: float = 10.0,
+                 max_translate_ratio: float = 0.1,
+                 scaling_ratio_range: Tuple[float, float] = (0.5, 1.5),
+                 max_shear_degree: float = 2.0,
+                 border: Tuple[int, int] = (0, 0),
+                 border_val: Tuple[int, int, int] = (114, 114, 114),
+                 bbox_clip_border: bool = True,
+                 min_bbox_size: int = 2,
+                 min_area_ratio: float = 0.1,
+                 max_aspect_ratio: int = 20):
+        assert 0 <= max_translate_ratio <= 1
+        assert scaling_ratio_range[0] <= scaling_ratio_range[1]
+        assert scaling_ratio_range[0] > 0
+        self.max_rotate_degree = max_rotate_degree
+        self.max_translate_ratio = max_translate_ratio
+        self.scaling_ratio_range = scaling_ratio_range
+        self.max_shear_degree = max_shear_degree
+        self.border = border
+        self.border_val = border_val
+        self.bbox_clip_border = bbox_clip_border
+        self.min_bbox_size = min_bbox_size
+        self.min_bbox_size = min_bbox_size
+        self.min_area_ratio = min_area_ratio
+        self.max_aspect_ratio = max_aspect_ratio
+
+    @cache_randomness
+    def _get_random_homography_matrix(self, height: int,
+                                      width: int) -> Tuple[np.ndarray, float]:
+        """Get random homography matrix.
+
+        Args:
+            height (int): Image height.
+            width (int): Image width.
+
+        Returns:
+            Tuple[np.ndarray, float]: The result of warp_matrix and
+            scaling_ratio.
+        """
+        # Rotation
+        rotation_degree = random.uniform(-self.max_rotate_degree,
+                                         self.max_rotate_degree)
+        rotation_matrix = self._get_rotation_matrix(rotation_degree)
+
+        # Scaling
+        scaling_ratio = random.uniform(self.scaling_ratio_range[0],
+                                       self.scaling_ratio_range[1])
+        scaling_matrix = self._get_scaling_matrix(scaling_ratio)
+
+        # Shear
+        x_degree = random.uniform(-self.max_shear_degree,
+                                  self.max_shear_degree)
+        y_degree = random.uniform(-self.max_shear_degree,
+                                  self.max_shear_degree)
+        shear_matrix = self._get_shear_matrix(x_degree, y_degree)
+
+        # Translation
+        trans_x = random.uniform(0.5 - self.max_translate_ratio,
+                                 0.5 + self.max_translate_ratio) * width
+        trans_y = random.uniform(0.5 - self.max_translate_ratio,
+                                 0.5 + self.max_translate_ratio) * height
+        translate_matrix = self._get_translation_matrix(trans_x, trans_y)
+        warp_matrix = (
+            translate_matrix @ shear_matrix @ rotation_matrix @ scaling_matrix)
+        return warp_matrix, scaling_ratio
+
+    @autocast_box_type()
+    def transform(self, results: dict) -> dict:
+        """The YOLOv5 random affine transform function.
+
+        Args:
+            results (dict): The result dict.
+
+        Returns:
+            dict: The result dict.
+        """
+        img = results['img']
+        height = img.shape[0] + self.border[0] * 2
+        width = img.shape[1] + self.border[1] * 2
+
+        # Note: Different from YOLOX
+        center_matrix = np.eye(3, dtype=np.float32)
+        center_matrix[0, 2] = -img.shape[1] / 2
+        center_matrix[1, 2] = -img.shape[0] / 2
+
+        warp_matrix, scaling_ratio = self._get_random_homography_matrix(
+            height, width)
+        warp_matrix = warp_matrix @ center_matrix
+
+        img = cv2.warpPerspective(
+            img,
+            warp_matrix,
+            dsize=(width, height),
+            borderValue=self.border_val)
+        results['img'] = img
+        results['img_shape'] = img.shape
+
+        bboxes = results['gt_bboxes']
+
+        with_mask = True if 'gt_masks' in results else False
+        num_bboxes = len(bboxes)
+        if num_bboxes:
+
+            orig_bboxes = bboxes.clone()
+
+            if with_mask and results.get('gt_masks', None) is not None:
+                gt_masks = results['gt_masks'].resize(results['img_shape'])
+                assert isinstance(gt_masks, PolygonMasks)
+                segments = gt_masks.masks  # upsample
+                n = 1000
+                # resample_segments()
+                resized_masks = []
+                new = np.zeros((num_bboxes, 4))
+                xy = np.ones((1, 3))
+                c = np.zeros(n * 2)
+                j = 0
+                for poly_per_obj in segments:
+
+                    poly_per_obj = poly_per_obj.copy()
+                    translated_poly_per_obj = []
+                    s1 = []
+                    s2 = []
+                    for p in poly_per_obj:
+                        s1 = np.append(s1, p[0::2], axis=1)
+                        s2 = np.append(s1, p[1::2], axis=1)
+
+                    x = np.linspace(0, len(poly_per_obj) - 1, n)
+                    xp = np.arange(len(poly_per_obj))
+                    c[0::2] = np.interp(x, xp, s1)
+                    c[1::2] = np.interp(x, xp, s2)
+
+                    for i in range(n):
+                        xy[:2] = [c[2 * i], c[2 * i + 1]]
+                        xy = xy @ warp_matrix
+                        if (xy[0] >= 0) & (xy[1] >= 0) & (xy[0] <= width) & (
+                                xy[1] <= height):
+
+                            translated_poly_per_obj.append(xy[:2])
+
+                    resized_masks.append(translated_poly_per_obj)
+                    x = translated_poly_per_obj[:][0]
+                    y = translated_poly_per_obj[:][1]
+                    new[j] = np.array(
+                        [x.min(), y.min(), x.max(),
+                         y.max()]) if any(x) else np.zeros((1, 4))  # xyxy
+                    j += 1
+
+                results['gt_masks'] = PolygonMasks(resized_masks, height,
+                                                   width)
+                bboxes = new
+
+            else:
+                bboxes.project_(warp_matrix)
+                if self.bbox_clip_border:
+                    bboxes.clip_([height, width])
+
+            # filter bboxes
+            orig_bboxes.rescale_([scaling_ratio, scaling_ratio])
+
+            # Be careful: valid_index must convert to numpy,
+            # otherwise it will raise out of bounds when len(valid_index)=1
+            valid_index = self.filter_gt_bboxes(orig_bboxes, bboxes).numpy()
+            results['gt_bboxes'] = bboxes[valid_index]
+            results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
+                valid_index]
+            results['gt_ignore_flags'] = results['gt_ignore_flags'][
+                valid_index]
+            if with_mask:
+                results['gt_masks'] = results['gt_masks'][valid_index]
+
+        return results
+
+    def filter_gt_bboxes(self, origin_bboxes: HorizontalBoxes,
+                         wrapped_bboxes: HorizontalBoxes) -> torch.Tensor:
+        """Filter gt bboxes.
+
+        Args:
+            origin_bboxes (HorizontalBoxes): Origin bboxes.
+            wrapped_bboxes (HorizontalBoxes): Wrapped bboxes
+
+        Returns:
+            dict: The result dict.
+        """
+        origin_w = origin_bboxes.widths
+        origin_h = origin_bboxes.heights
+        wrapped_w = wrapped_bboxes.widths
+        wrapped_h = wrapped_bboxes.heights
+        aspect_ratio = np.maximum(wrapped_w / (wrapped_h + 1e-16),
+                                  wrapped_h / (wrapped_w + 1e-16))
+
+        wh_valid_idx = (wrapped_w > self.min_bbox_size) & \
+                       (wrapped_h > self.min_bbox_size)
+        area_valid_idx = wrapped_w * wrapped_h / (origin_w * origin_h +
+                                                  1e-16) > self.min_area_ratio
+        aspect_ratio_valid_idx = aspect_ratio < self.max_aspect_ratio
+        return wh_valid_idx & area_valid_idx & aspect_ratio_valid_idx
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(max_rotate_degree={self.max_rotate_degree}, '
+        repr_str += f'max_translate_ratio={self.max_translate_ratio}, '
+        repr_str += f'scaling_ratio_range={self.scaling_ratio_range}, '
+        repr_str += f'max_shear_degree={self.max_shear_degree}, '
+        repr_str += f'border={self.border}, '
+        repr_str += f'border_val={self.border_val}, '
+        repr_str += f'bbox_clip_border={self.bbox_clip_border})'
+        return repr_str
+
+    @staticmethod
+    def _get_rotation_matrix(rotate_degrees: float) -> np.ndarray:
+        """Get rotation matrix.
+
+        Args:
+            rotate_degrees (float): Rotate degrees.
+
+        Returns:
+            np.ndarray: The rotation matrix.
+        """
+        radian = math.radians(rotate_degrees)
+        rotation_matrix = np.array(
+            [[np.cos(radian), -np.sin(radian), 0.],
+             [np.sin(radian), np.cos(radian), 0.], [0., 0., 1.]],
+            dtype=np.float32)
+        return rotation_matrix
+
+    @staticmethod
+    def _get_scaling_matrix(scale_ratio: float) -> np.ndarray:
+        """Get scaling matrix.
+
+        Args:
+            scale_ratio (float): Scale ratio.
+
+        Returns:
+            np.ndarray: The scaling matrix.
+        """
+        scaling_matrix = np.array(
+            [[scale_ratio, 0., 0.], [0., scale_ratio, 0.], [0., 0., 1.]],
+            dtype=np.float32)
+        return scaling_matrix
+
+    @staticmethod
+    def _get_shear_matrix(x_shear_degrees: float,
+                          y_shear_degrees: float) -> np.ndarray:
+        """Get shear matrix.
+
+        Args:
+            x_shear_degrees (float): X shear degrees.
+            y_shear_degrees (float): Y shear degrees.
+
+        Returns:
+            np.ndarray: The shear matrix.
+        """
+        x_radian = math.radians(x_shear_degrees)
+        y_radian = math.radians(y_shear_degrees)
+        shear_matrix = np.array([[1, np.tan(x_radian), 0.],
+                                 [np.tan(y_radian), 1, 0.], [0., 0., 1.]],
+                                dtype=np.float32)
+        return shear_matrix
+
+    @staticmethod
+    def _get_translation_matrix(x: float, y: float) -> np.ndarray:
+        """Get translation matrix.
+
+        Args:
+            x (float): X translation.
+            y (float): Y translation.
+
+        Returns:
+            np.ndarray: The translation matrix.
+        """
+        translation_matrix = np.array([[1, 0., x], [0., 1, y], [0., 0., 1.]],
+                                      dtype=np.float32)
+        return translation_matrix
