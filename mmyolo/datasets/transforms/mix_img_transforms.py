@@ -221,7 +221,7 @@ class Mosaic(BaseMixImageTransform):
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
     - mix_results (List[dict])
 
     Modified Keys:
@@ -473,6 +473,8 @@ class Mosaic9(BaseMixImageTransform):
     one output image. The output image is composed of the parts from each sub-
     image.
 
+    .. code:: text
+
                 +-------------------------------+------------+
                 | pad           |      pad      |            |
                 |    +----------+               |            |
@@ -493,18 +495,18 @@ class Mosaic9(BaseMixImageTransform):
                 |    pad    |            |        pad        |
                 +-----------+------------+-------------------+
 
-    The mosaic transform steps are as follows:
+     The mosaic transform steps are as follows:
 
-        1. Get the center image according to the index, and randomly
-           sample another 8 images from the custom dataset.
-        2. Randomly offset the image after Mosaic
+         1. Get the center image according to the index, and randomly
+            sample another 8 images from the custom dataset.
+         2. Randomly offset the image after Mosaic
 
     Required Keys:
 
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
     - mix_results (List[dict])
 
     Modified Keys:
@@ -776,7 +778,7 @@ class YOLOv5MixUp(BaseMixImageTransform):
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
     - mix_results (List[dict])
 
 
@@ -917,7 +919,7 @@ class YOLOXMixUp(BaseMixImageTransform):
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
     - mix_results (List[dict])
 
 

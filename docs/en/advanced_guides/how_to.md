@@ -312,6 +312,45 @@ model = dict(
 )
 ```
 
+#### Don't used pre-training weights
+
+When we replace the backbone network, the model initialization is trained by default loading the pre-training weight of the backbone network. Instead of using the pre-training weights of the backbone network, if you want to train the time model from scratch,
+You can set `init_cfg` in 'backbone' to 'None'. In this case, the backbone network will be initialized with the default initialization method, instead of using the trained pre-training weight.
+
+```python
+_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+
+deepen_factor = _base_.deepen_factor
+widen_factor = 1.0
+channels = [512, 1024, 2048]
+
+model = dict(
+   backbone=dict(
+       _delete_=True, # Delete the backbone field in _base_
+       type='mmdet.ResNet', # Using ResNet from mmdet
+       depth=50,
+       num_stages=4,
+       out_indices=(1, 2, 3),
+       frozen_stages=1,
+       norm_cfg=dict(type='BN', requires_grad=True),
+       norm_eval=True,
+       style='pytorch',
+       init_cfg=None # If init_cfg is set to None, backbone will not be initialized with pre-trained weights
+   ),
+   neck=dict(
+       type='YOLOv5PAFPN',
+       widen_factor=widen_factor,
+       in_channels=channels, # Note: The 3 channels of ResNet-50 output are [512, 1024, 2048], which do not match the original yolov5-s neck and need to be changed.
+       out_channels=channels),
+   bbox_head=dict(
+       type='YOLOv5Head',
+       head_module=dict(
+           type='YOLOv5HeadModule',
+           in_channels=channels, # input channels of head need to be changed accordingly
+           widen_factor=widen_factor))
+)
+```
+
 ## Output prediction results
 
 If you want to save the prediction results as a specific file for offline evaluation, MMYOLO currently supports both json and pkl formats.
@@ -463,3 +502,22 @@ mim run mmdet print_config \
 ```
 
 Running the above command will save the `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` config file with the inheritance relationship expanded to \`\`yolov5_s-v61_syncbn_fast_1xb4-300e_balloon_whole.py`in the`./work_dirs\` folder.
+
+## Set the random seed
+
+If you want to set the random seed during training, you can use the following command.
+
+```shell
+python ./tools/train.py \
+    ${CONFIG} \                               # path of the config file
+    --cfg-options randomness.seed=2023 \      # set seed to 2023
+    [randomness.diff_rank_seed=True] \        # set different seeds according to global rank
+    [randomness.deterministic=True]           # set the deterministic option for CUDNN backend
+# [] stands for optional parameters, when actually entering the command line, you do not need to enter []
+```
+
+`randomness` has three parameters that can be set, with the following meanings.
+
+- `randomness.seed=2023`, set the random seed to 2023.
+- `randomness.diff_rank_seed=True`, set different seeds according to global rank. Defaults to False.
+- `randomness.deterministic=True`, set the deterministic option for cuDNN backend, i.e., set `torch.backends.cudnn.deterministic` to True and `torch.backends.cudnn.benchmark` to False. Defaults to False. See https://pytorch.org/docs/stable/notes/randomness.html for more details.
