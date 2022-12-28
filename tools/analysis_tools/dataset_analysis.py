@@ -383,7 +383,7 @@ def main():
     # Drawing settings
     fig_all_set = {
         'figsize': [35, 18],
-        'fontsize': int(10 - 0.08 * len(dataset.metainfo['CLASSES'])),
+        'fontsize': int(10 - 0.08 * len(dataset.metainfo['classes'])),
         'xticks_angle': 70,
         'out_name': cfg.dataset_type
     }
@@ -396,15 +396,15 @@ def main():
 
     # Call the category name and save address
     if args.class_name is None:
-        classes = dataset.metainfo['CLASSES']
+        classes = dataset.metainfo['classes']
         classes_idx = [i for i in range(len(classes))]
         fig_set = fig_all_set
-    elif args.class_name in dataset.metainfo['CLASSES']:
+    elif args.class_name in dataset.metainfo['classes']:
         classes = [args.class_name]
-        classes_idx = [dataset.metainfo['CLASSES'].index(args.class_name)]
+        classes_idx = [dataset.metainfo['classes'].index(args.class_name)]
         fig_set = fig_one_set
     else:
-        data_classes = dataset.metainfo['CLASSES']
+        data_classes = dataset.metainfo['classes']
         show_data_classes(data_classes)
         raise RuntimeError(f'Expected args.class_name to be one of the list,'
                            f'but got "{args.class_name}"')
