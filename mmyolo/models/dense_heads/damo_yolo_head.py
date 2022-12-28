@@ -216,7 +216,7 @@ def postprocess(cls_scores: object,
             boxlist.add_field('scores', 0)
             boxlist.add_field('labels', -1)
         else:
-            img_h, img_w = imgs[i].batch_input_shape
+            img_h, img_w = imgs[i].ori_shape
             boxlist = BoxList(res[:, :4], (img_w, img_h), mode='xyxy')
             boxlist.add_field('objectness', res[:, 4])
             boxlist.add_field('scores', res[:, 5])
@@ -225,11 +225,11 @@ def postprocess(cls_scores: object,
     result_list = []
     for boxlist in output:
         result = InstanceData()
-        result.bboxes=boxlist.bbox
-        result.labels = boxlist.extra_fields['labels'].to(int)
+        result.bboxes = boxlist.bbox
+        result.labels = boxlist.extra_fields['labels'].to(int)-1
         result.scores = boxlist.extra_fields['scores']
         result_list.append(result)
-    return result
+    return result_list
 
 
 def normal_init(module, mean=0, std=1, bias=0):
@@ -507,7 +507,9 @@ class ZeroHead(BaseDenseHead):
             ]
             self.mlvl_priors = torch.cat(mlvl_priors_list, dim=1)
             self.feat_size[0] = x[0].shape
-
+        # x = (torch.ones((20,128,80,80),device='cuda'),
+        #      torch.ones((20,256,40,40),device='cuda'),
+        #      torch.ones((20,512,20,20),device='cuda'))
         # forward for bboxes and classification prediction
         cls_scores, bbox_preds,bbox_before_softmax = multi_apply(
             self.forward_single,

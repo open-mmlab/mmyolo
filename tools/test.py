@@ -122,14 +122,7 @@ def main():
         runner.test_evaluator.metrics.append(
             DumpResults(out_file_path=args.out))
 
-    # start testing
-    # import torch
-    # torch.save(runner.model.state_dict(),'checkpoint/damoyolo_s_mmyolo.pth')
-
     runner.test()
-
-    # for p in runner.model.backbone.parameters():
-    #     print(p)
 
 
 if __name__ == '__main__':

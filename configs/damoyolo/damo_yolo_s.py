@@ -1,7 +1,7 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/coco20/'
+data_root = 'data/coco/'
 dataset_type = 'mmdet.CocoDataset'
 
 # parameters that often need to be modified
@@ -18,15 +18,37 @@ base_lr = 0.01
 persistent_workers = True
 
 model = dict(
-    type='YOLODetector',
+    type='DAMOYOLODetector',
     data_preprocessor=dict(
         type='mmdet.DetDataPreprocessor',
         mean=[0., 0., 0.],
         std=[1., 1., 1.],
         bgr_to_rgb=True),
-    backbone=dict(type='TinyNAS'),
-    neck=dict(type='GiraffeNeckv2'),
-    bbox_head=dict(type='ZeroHead'))
+    backbone=dict(type='TinyNAS',
+                  out_indices=(2, 4, 5),
+                    with_spp=True,
+                    use_focus= True,
+                    act='relu',
+                    reparam=True,
+),
+    neck=dict(type='GiraffeNeckv2',
+              depth=1.0,
+                hidden_ratio=0.75,
+                in_channels=[128, 256, 512],
+                out_channels=[128, 256, 512],
+                act='relu',
+                spp=False,
+                block_name='BasicBlock_3x3_Reverse',
+),
+    bbox_head=dict(type='ZeroHead',
+                   num_classes=80,
+                    in_channels=[128, 256, 512],
+                    stacked_convs=0,
+                    reg_max=16,
+                    act='silu',
+                    nms_conf_thre=0.05,
+                    nms_iou_thre= 0.7
+                    ))
 
 test_pipeline = [
     dict(
