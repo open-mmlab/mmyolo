@@ -15,10 +15,10 @@ from mmyolo.registry import VISUALIZERS
 
 
 @VISUALIZERS.register_module()
-class DetAssignerVisualizer(DetLocalVisualizer):
+class YOLOAssignerVisualizer(DetLocalVisualizer):
     """MMYOLO Detection Assigner Visualizer.
 
-    This class is provided to the `show_assign.py` script.
+    This class is provided to the `assigner_visualization.py` script.
     Args:
         name (str): Name of the instance. Defaults to 'visualizer'.
     """

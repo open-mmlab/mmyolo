@@ -1,4 +1,4 @@
-# MMYOLO Show Model Assignment
+# MMYOLO Model Assigner Visualization
 
 <img src="https://user-images.githubusercontent.com/40284075/208255302-dbcf8cb0-b9d1-495f-8908-57dd2370dba8.png"/>
 
@@ -11,4 +11,6 @@ Now, the script only support `YOLOV5` .
 
 ### Command
 
-`python projects/showassignment/show_assign.py projects/showassignment/configs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_showassignment.py `
+```shell
+python projects/assigner_visualization/assigner_visualization.py projects/assigner_visualization/configs/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_assignervisualization.py `
+```

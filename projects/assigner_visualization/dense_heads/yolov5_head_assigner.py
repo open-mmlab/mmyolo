@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from typing import Sequence, Union
 
 import torch
@@ -10,7 +11,7 @@ from mmyolo.registry import MODELS
 
 
 @MODELS.register_module()
-class YOLOv5HeadShowAssigner(YOLOv5Head):
+class YOLOv5HeadAssigner(YOLOv5Head):
 
     def assign_by_gt_and_feat(
         self,
@@ -160,7 +161,7 @@ class YOLOv5HeadShowAssigner(YOLOv5Head):
     def assign(self, batch_data_samples: Union[list, dict],
                inputs_hw: Union[tuple, torch.Size]) -> dict:
         """Calculate assigning results. This function is provided to the
-        `show_assign.py` script.
+        `assigner_visualization.py` script.
 
         Args:
             batch_data_samples (List[:obj:`DetDataSample`], dict): The Data

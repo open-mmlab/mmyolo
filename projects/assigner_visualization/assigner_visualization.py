@@ -14,7 +14,8 @@ from numpy import random
 
 from mmyolo.registry import DATASETS, MODELS
 from mmyolo.utils import register_all_modules
-from projects.showassignment.visualization import DetAssignerVisualizer
+from projects.assigner_visualization.dense_heads import YOLOv5HeadAssigner
+from projects.assigner_visualization.visualization import YOLOAssignerVisualizer
 
 
 def parse_args():
@@ -47,17 +48,17 @@ def parse_args():
         type=str,
         help='The name of the folder where the image is saved.')
     parser.add_argument(
-        '--device', default='cuda:0', help='Device used for inference')
+        '--device', default='cuda:0', help='Device used for inference.')
     parser.add_argument(
         '--show-prior',
         default=False,
         action='store_true',
-        help='Whether to show prior on image')
+        help='Whether to show prior on image.')
     parser.add_argument(
         '--not-show-label',
         default=False,
         action='store_true',
-        help='Whether to show label on image')
+        help='Whether to show label on image.')
     parser.add_argument('--seed', default=-1, type=int, help='random seed')
 
     args = parser.parse_args()
@@ -67,8 +68,6 @@ def parse_args():
 def main():
     args = parse_args()
     register_all_modules()
-
-    assert 'yolov5' in args.config, 'Now, this script only support yolov5.'
 
     # set random seed
     seed = int(args.seed)
@@ -82,6 +81,11 @@ def main():
 
     # build model
     model = MODELS.build(cfg.model)
+    assert isinstance(model.bbox_head, YOLOv5HeadAssigner),\
+        'Now, this script only support yolov5, and bbox_head must use ' \
+        '`YOLOv5HeadAssigner`. Please use ' \
+        '`yolov5_s-v61_syncbn_fast_8xb16-300e_coco_assignervisualization.py` ' \
+        'as config file.'
     model.eval()
     model.to(args.device)
 
@@ -96,7 +100,7 @@ def main():
     collate_fn = COLLATE_FUNCTIONS.get(collate_fn_type)
 
     # init visualizer
-    visualizer = DetAssignerVisualizer(
+    visualizer = YOLOAssignerVisualizer(
         vis_backends=[{
             'type': 'LocalVisBackend'
         }], name='visualizer')

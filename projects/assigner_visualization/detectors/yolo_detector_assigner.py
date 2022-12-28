@@ -6,11 +6,11 @@ from mmyolo.registry import MODELS
 
 
 @MODELS.register_module()
-class YOLODetectorShowAssigner(YOLODetector):
+class YOLODetectorAssigner(YOLODetector):
 
     def assign(self, data: dict) -> Union[dict, list]:
         """Calculate assigning results from a batch of inputs and data
-        samples.This function is provided to the `show_assign.py` script.
+        samples.This function is provided to the `assigner_visualization.py` script.
 
         Args:
             data (dict or tuple or list): Data sampled from dataset.
