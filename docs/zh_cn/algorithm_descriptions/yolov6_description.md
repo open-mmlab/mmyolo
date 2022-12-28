@@ -3,18 +3,18 @@
 ## 0 简介
 
 <div align=center >
-<img alt="YOLOv6-S" src="https://user-images.githubusercontent.com/58845482/208234811-e788aa3a-367d-4a6b-89c0-22abc27c69b7.png"/>
+<img alt="YOLOv6-S" src="https://user-images.githubusercontent.com/58845482/209790152-21c29d42-30cc-4c48-a723-39b198286c4d.png"/>
 图 1：YOLOv6-S 模型结构
 </div>
 
 <div align=center >
-<img alt="YOLOv6-L" src="https://user-images.githubusercontent.com/58845482/208235072-a95b8702-983e-41d7-9915-b10016998d33.png"/>
+<img alt="YOLOv6-L" src="https://user-images.githubusercontent.com/58845482/209787949-d57691c0-a2ea-4a0a-829f-e8a64ac29c7e.png"/>
 图 2：YOLOv6-L 模型结构
 </div>
 
 以上结构图由 wzr-skn@github 绘制。
 
-YOLOv6 有一系列适用于各种工业场景的模型，包括N/T/S/M/L，考虑到模型的大小，其架构有所不同，以获得更好的精度-速度权衡。 此外，还引入了一些 "Bag-of-freebies "方法来进一步提高性能，如自我渐变和更多的训练周期。 在工业部署方面，我们采用QAT与信道蒸馏和图形优化来追求极端的性能（后续支持）。
+YOLOv6 提出了一系列适用于各种工业场景的模型，包括 N/T/S/M/L，考虑到模型的大小，其架构有所不同，以获得更好的精度-速度权衡。本算法专注于检测的精度和推理效率，并在网络结构、训练策略等算法层面进行了多项改进和优化。
 
 简单来说 YOLOv6 开源库的主要特点为：
 
@@ -73,7 +73,7 @@ YOLOv6 N/T/S 模型的网络结构由 `EfficientRep` + `Rep-PAN` + `Efficient de
 
 已有研究表明，多分支的网络结构通常比单分支网络性能更加优异，例如 YOLOv5 的 `CSPDarknet`，但是这种结构会导致并行度降低进而增加推理延时；相反，类似于 `VGG` 的单分支网络则具有并行度高、内存占用小的优点，因此推理效率更高。而 `RepVGG` 则同时具备上述两种结构的优点，在训练时可解耦成多分支拓扑结构提升模型精度，实际部署时可等效融合为单个 3×3 卷积提升推理速度，`RepVGG` 示意图如下。因此，YOLOv6 基于 `RepVGG` 重参数化结构设计了高效的骨干网络 `EfficientRep` 和 `CSPBep`，其可以充分利用硬件算力，提升模型表征能力的同时降低推理延时。
 
-<img src="https://user-images.githubusercontent.com/58845482/208235402-782931dc-d517-4f61-8f6d-79a79a78c1d6.png" alt="image" style="zoom:67%;" />
+<img src="https://user-images.githubusercontent.com/58845482/209788313-05e3870b-9b25-4dbb-89c8-7c9502c84577.png" alt="image" style="zoom: 40%;" />
 
 在 N/T/S 模型中，YOLOv6 使用了 `EfficientRep` 作为骨干网络，其包含 1 个 `Stem Layer` 和 4 个 `Stage Layer`，具体细节如下：
 
@@ -82,7 +82,7 @@ YOLOv6 N/T/S 模型的网络结构由 `EfficientRep` + `Rep-PAN` + `Efficient de
 
 在 M/L 模型中，由于模型容量进一步增大，直接使用多个 `RepVGGBlock` 堆叠的 `RepStageBlock` 结构计算量和参数量呈现指数增长。因此，为了权衡计算负担和模型精度，在 M/L 模型中使用了 `CSPBep` 骨干网络，其采用 `BepC3StageBlock` 替换了小模型中的 `RepStageBlock` 。如下图所示，`BepC3StageBlock` 由 3 个 1×1 的 `ConvModule` 和多个子块（每个子块由两个 `RepVGGBlock` 残差连接）组成。
 
-<img src="https://user-images.githubusercontent.com/58845482/208235469-a85865a5-5d15-435d-bb74-0be6f56dd03f.png" alt="image" style="zoom:67%;" />
+<img src="https://user-images.githubusercontent.com/58845482/208235469-a85865a5-5d15-435d-bb74-0be6f56dd03f.png" alt="image" style="zoom: 67%;" />
 
 #### 1.2.2 Neck
 
