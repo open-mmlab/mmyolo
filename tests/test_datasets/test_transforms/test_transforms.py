@@ -123,7 +123,8 @@ class TestLetterResize(unittest.TestCase):
             results = transform(data_info)
             self.assertEqual(results['img_shape'], (640, 640, 3))
 
-        # Test scale_factor and pad_param in LetterResize
+
+        # TODO: Testing the existence of multiple scale_factor and pad_param
         transform = [YOLOv5KeepRatioResize(scale=(1280, 1280)),
                      LetterResize(scale=(640, 640), pad_val=dict(img=144))]
         for _ in range(10):
@@ -134,18 +135,16 @@ class TestLetterResize(unittest.TestCase):
                                                        100, 700)
             data_info = dict(
                 img=np.random.random((input_h, input_w, 3)),
-                gt_bboxes=np.array([[0, 0, 10, 10]], dtype=np.float32),
-                batch_shape=np.array([output_h, output_w], dtype=np.int64),
-                gt_masks=BitmapMasks(
-                    rng.rand(1, input_h, input_w),
-                    height=input_h,
-                    width=input_w))
+                gt_bboxes=np.array([[0, 0, 5, 5]], dtype=np.float32),
+                batch_shape=np.array([output_h, output_w], dtype=np.int64))
             for t in transform:
                 data_info = t(data_info)
             # because of the "math.round" operation,
             # it is unable to strictly restore the original input shape
             # we just validate the upper bound and the lower bound
             # (img_shape - pad_param) / scale_factor = input_shape
+            self.assertIn('scale_factor', data_info)
+            self.assertIn('pad_param', data_info)
             pad_param = data_info['pad_param'].reshape(-1, 2).sum(1)
             scale_factor = np.asarray(data_info['scale_factor'])
             self.assertTrue((np.ceil((data_info["img_shape"][:2] - pad_param + 1.) / scale_factor)
