@@ -126,7 +126,7 @@ class TestLetterResize(unittest.TestCase):
         # Test scale_factor and pad_param in LetterResize
         transform = [YOLOv5KeepRatioResize(scale=(1280, 1280)),
                      LetterResize(scale=(640, 640), pad_val=dict(img=144))]
-        for _ in range(5):
+        for _ in range(10):
             input_h, input_w = np.random.randint(100, 700), np.random.randint(
                 100, 700)
             output_h, output_w = np.random.randint(100,
@@ -142,24 +142,16 @@ class TestLetterResize(unittest.TestCase):
                     width=input_w))
             for t in transform:
                 data_info = t(data_info)
-            # calculate the pad_param value
-            ratio = min(output_h / 1280, output_w / 1280)
-            padding_h, padding_w = [
-                output_h - int(round(1280 * ratio)),
-                output_w - int(round(1280 * ratio))
-            ]
-            top_padding, left_padding = int(round(padding_h // 2 - 0.1)), int(
-                round(padding_w // 2 - 0.1))
-            bottom_padding = padding_h - top_padding
-            right_padding = padding_w - left_padding
-            self.assertEqual(data_info['scale_factor'], (output_h / input_h, output_w / input_w))
-            self.assertEqual(data_info['pad_param'],
-                             np.array([top_padding, bottom_padding, left_padding, right_padding
-                                       ], dtype=np.float32))
-
-
-
-unittest.main()
+            # because of the "math.round" operation,
+            # it is unable to strictly restore the original input shape
+            # we just validate the upper bound and the lower bound
+            # (img_shape - pad_param) / scale_factor = input_shape
+            pad_param = data_info['pad_param'].reshape(-1, 2).sum(1)
+            scale_factor = np.asarray(data_info['scale_factor'])
+            self.assertTrue((np.ceil((data_info["img_shape"][:2] - pad_param + 1.) / scale_factor)
+                             >= (input_h, input_w)).all())
+            self.assertTrue((np.floor((data_info["img_shape"][:2] - pad_param - 1.) / scale_factor)
+                             <= (input_h, input_w)).all())
 
 
 class TestYOLOv5KeepRatioResize(unittest.TestCase):
