@@ -15,7 +15,8 @@ from numpy import random
 from mmyolo.registry import DATASETS, MODELS
 from mmyolo.utils import register_all_modules
 from projects.assigner_visualization.dense_heads import YOLOv5HeadAssigner
-from projects.assigner_visualization.visualization import YOLOAssignerVisualizer
+from projects.assigner_visualization.visualization import \
+    YOLOAssignerVisualizer
 
 
 def parse_args():
@@ -83,9 +84,9 @@ def main():
     model = MODELS.build(cfg.model)
     assert isinstance(model.bbox_head, YOLOv5HeadAssigner),\
         'Now, this script only support yolov5, and bbox_head must use ' \
-        '`YOLOv5HeadAssigner`. Please use ' \
-        '`yolov5_s-v61_syncbn_fast_8xb16-300e_coco_assignervisualization.py` ' \
-        'as config file.'
+        '`YOLOv5HeadAssigner`. Please use `' \
+        'yolov5_s-v61_syncbn_fast_8xb16-300e_coco_assignervisualization.py' \
+        '` as config file.'
     model.eval()
     model.to(args.device)
 

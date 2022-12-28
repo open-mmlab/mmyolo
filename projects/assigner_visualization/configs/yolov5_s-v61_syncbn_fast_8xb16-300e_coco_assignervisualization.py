@@ -3,9 +3,9 @@ _base_ = [
 ]
 
 custom_imports = dict(imports=[
-    'projects.assigner_visualization.detectors', 'projects.assigner_visualization.dense_heads'
+    'projects.assigner_visualization.detectors',
+    'projects.assigner_visualization.dense_heads'
 ])
 
 model = dict(
-    type='YOLODetectorAssigner',
-    bbox_head=dict(type='YOLOv5HeadAssigner'))
+    type='YOLODetectorAssigner', bbox_head=dict(type='YOLOv5HeadAssigner'))
