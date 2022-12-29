@@ -327,26 +327,34 @@ class RTMDetHead(YOLOv5Head):
             self.featmap_sizes = featmap_sizes
             self.multi_level_anchors = self.prior_generator.grid_priors(
                 featmap_sizes, device=device, with_stride=True)
-        flatten_anchors = [torch.cat(self.multi_level_anchors)] * num_imgs
+            self.flatten_anchors = torch.cat(self.multi_level_anchors)
 
         flatten_cls_scores = torch.cat([
             cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1,
                                                   self.cls_out_channels)
             for cls_score in cls_scores
         ], 1)
-        decoded_bboxes = []
-        for anchor, bbox_pred, stride in zip(self.multi_level_anchors,
-                                             bbox_preds, self.featmap_strides):
-            anchor = anchor.reshape(-1, 4)
-            bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
-            bbox_pred = distance2bbox(anchor, bbox_pred * stride)
-            decoded_bboxes.append(bbox_pred)
 
-        flatten_bboxes = torch.cat(decoded_bboxes, 1)
+        flatten_bboxes = torch.cat([
+            bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
+            for bbox_pred in bbox_preds
+        ], 1)
+        flatten_bboxes = flatten_bboxes * self.flatten_anchors[..., -1, None]
+        flatten_bboxes = distance2bbox(self.flatten_anchors[..., :2], flatten_bboxes)
+
+        # decoded_bboxes = []
+        # for anchor, bbox_pred, stride in zip(self.multi_level_anchors,
+        #                                      bbox_preds, self.featmap_strides):
+        #     anchor = anchor.reshape(-1, 4)
+        #     bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
+        #     bbox_pred = distance2bbox(anchor, bbox_pred * stride)
+        #     decoded_bboxes.append(bbox_pred)
+
+        # flatten_bboxes = torch.cat(decoded_bboxes, 1)
 
         batch_targes = multi_apply(self._get_targets_single,
                                    flatten_cls_scores.detach(),
-                                   flatten_bboxes.detach(), flatten_anchors,
+                                   flatten_bboxes.detach(),
                                    batch_gt_instances, batch_img_metas)
 
         (labels_list, label_weights_list, bbox_targets_list,
@@ -387,7 +395,6 @@ class RTMDetHead(YOLOv5Head):
     def _get_targets_single(self,
                             cls_scores: Tensor,
                             bbox_preds: Tensor,
-                            flat_anchors: Tensor,
                             gt_instances: InstanceData,
                             img_meta: dict,
                             gt_instances_ignore: Optional[InstanceData] = None,
@@ -425,7 +432,7 @@ class RTMDetHead(YOLOv5Head):
               of all priors in the image with shape (N,).
         """
         # assign gt and sample anchors
-        anchors = flat_anchors
+        anchors = self.flatten_anchors
         pred_instances = InstanceData(
             scores=cls_scores, bboxes=bbox_preds, priors=anchors)
 
