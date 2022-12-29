@@ -90,7 +90,7 @@ def main():
             iou_threshold=args.iou_threshold,
             score_threshold=args.score_threshold,
             backend=args.backend)
-        output_names = ['num_det', 'det_boxes', 'det_scores', 'det_classes']
+        output_names = ['num_dets', 'boxes', 'scores', 'labels']
     baseModel = build_model_from_cfg(args.config, args.checkpoint, args.device)
 
     deploy_model = DeployModel(
