@@ -122,6 +122,8 @@ def main():
         runner.test_evaluator.metrics.append(
             DumpResults(out_file_path=args.out))
 
+    # import torch
+    # torch.save(runner.model.state_dict(),'damoyolo.pth')
     runner.test()
 
 

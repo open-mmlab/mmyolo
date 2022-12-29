@@ -283,10 +283,10 @@ class SPPBottleneck(nn.Module):
 
 
 @MODELS.register_module()
-class TinyNAS(nn.Module):
+class TinyNAS_res(nn.Module):
     # S
-    structure_info = [{'class': 'ConvKXBNRELU', 'in': 3, 'k': 3, 'out': 32, 's': 1},
-                      {'L': 1,
+    structure_info_s = [{'class': 'ConvKXBNRELU', 'in': 3, 'k': 3, 'out': 32, 's': 1},
+                        {'L': 1,
                        'btn': 24,
                        'class': 'SuperResConvK1KX',
                        'in': 32,
@@ -294,7 +294,7 @@ class TinyNAS(nn.Module):
                        'k': 3,
                        'out': 128,
                        's': 2},
-                      {'L': 5,
+                        {'L': 5,
                        'btn': 88,
                        'class': 'SuperResConvK1KX',
                        'in': 128,
@@ -302,7 +302,7 @@ class TinyNAS(nn.Module):
                        'k': 3,
                        'out': 128,
                        's': 2},
-                      {'L': 3,
+                        {'L': 3,
                        'btn': 128,
                        'class': 'SuperResConvK1KX',
                        'in': 128,
@@ -310,7 +310,7 @@ class TinyNAS(nn.Module):
                        'k': 3,
                        'out': 256,
                        's': 2},
-                      {'L': 2,
+                        {'L': 2,
                        'btn': 120,
                        'class': 'SuperResConvK1KX',
                        'in': 256,
@@ -318,7 +318,7 @@ class TinyNAS(nn.Module):
                        'k': 3,
                        'out': 256,
                        's': 1},
-                      {'L': 1,
+                        {'L': 1,
                        'btn': 144,
                        'class': 'SuperResConvK1KX',
                        'in': 256,
@@ -326,18 +326,77 @@ class TinyNAS(nn.Module):
                        'k': 3,
                        'out': 512,
                        's': 2}]
+    structure_info_t = [ {'class': 'ConvKXBNRELU', 'in': 3, 'k': 3, 'nbitsA': 8, 'nbitsW': 8, 'out': 24, 's': 1},
+  { 'L': 2,
+    'btn': 24,
+    'class': 'SuperResConvK1KX',
+    'in': 24,
+    'inner_class': 'ResConvK1KX',
+    'k': 3,
+    'nbitsA': [8, 8, 8, 8],
+    'nbitsW': [8, 8, 8, 8],
+    'out': 64,
+    's': 2},
+  { 'L': 2,
+    'btn': 64,
+    'class': 'SuperResConvK1KX',
+    'in': 64,
+    'inner_class': 'ResConvK1KX',
+    'k': 3,
+    'nbitsA': [8, 8, 8, 8],
+    'nbitsW': [8, 8, 8, 8],
+    'out': 96,
+    's': 2},
+  { 'L': 2,
+    'btn': 96,
+    'class': 'SuperResConvK1KX',
+    'in': 96,
+    'inner_class': 'ResConvK1KX',
+    'k': 3,
+    'nbitsA': [8, 8, 8, 8],
+    'nbitsW': [8, 8, 8, 8],
+    'out': 192,
+    's': 2},
+  { 'L': 2,
+    'btn': 152,
+    'class': 'SuperResConvK1KX',
+    'in': 192,
+    'inner_class': 'ResConvK1KX',
+    'k': 3,
+    'nbitsA': [8, 8, 8, 8],
+    'nbitsW': [8, 8, 8, 8],
+    'out': 192,
+    's': 1},
+  { 'L': 1,
+    'btn': 192,
+    'class': 'SuperResConvK1KX',
+    'in': 192,
+    'inner_class': 'ResConvK1KX',
+    'k': 3,
+    'nbitsA': [8, 8],
+    'nbitsW': [8, 8],
+    'out': 384,
+    's': 2}]
 
     def __init__(self,
                  out_indices=[2, 4, 5],
                  with_spp=True,
                  use_focus=True,
                  act='silu',
+                 backbone_structure='s',
                  reparam=True):
-        super(TinyNAS, self).__init__()
+        super(TinyNAS_res, self).__init__()
         self.out_indices = out_indices
         self.block_list = nn.ModuleList()
 
-        for idx, block_info in enumerate(self.structure_info):
+        if backbone_structure=='s':
+            structure_info = self.structure_info_s
+        elif backbone_structure=='t':
+            structure_info  = self.structure_info_t
+        else:
+            raise ValueError('please specify the right backbone structure')
+
+        for idx, block_info in enumerate(structure_info):
             the_block_class = block_info['class']
             if the_block_class == 'ConvKXBNRELU':
                 if use_focus:
@@ -353,7 +412,7 @@ class TinyNAS(nn.Module):
                                              act=act)
                 self.block_list.append(the_block)
             elif the_block_class == 'SuperResConvK1KX':
-                spp = with_spp if idx == len(self.structure_info) - 1 else False
+                spp = with_spp if idx == len(self.structure_info_s) - 1 else False
                 the_block = SuperResStem(block_info['in'],
                                          block_info['out'],
                                          block_info['btn'],
@@ -366,7 +425,7 @@ class TinyNAS(nn.Module):
                                          block_type='k1kx')
                 self.block_list.append(the_block)
             elif the_block_class == 'SuperResConvKXKX':
-                spp = with_spp if idx == len(self.structure_info) - 1 else False
+                spp = with_spp if idx == len(self.structure_info_s) - 1 else False
                 the_block = SuperResStem(block_info['in'],
                                          block_info['out'],
                                          block_info['btn'],

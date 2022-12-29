@@ -4,7 +4,7 @@ from mmdet.models.detectors.single_stage import SingleStageDetector
 from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmengine.dist import get_world_size
 from mmengine.logging import print_log
-from ..backbones.tinynas import RepConv
+from ..backbones.tinynas_res import RepConv
 import torch.nn as nn
 from mmyolo.registry import MODELS
 from mmdet.structures import  SampleList

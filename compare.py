@@ -1,11 +1,11 @@
 import torch
 
-ckp1 = torch.load('checkpoint/damoyolo_s_mmyolo.pth')
-ckp2 = torch.load('checkpoint/new_damoyolo.pth')
-ckp3 = torch.load('checkpoint/damoyolo_tinynasL25_S.pth')
+ckp1 = torch.load('checkpoint/damoyolo_m_mmyolo.pth')
+ckp2 = torch.load('checkpoint/damoyolo_m.pth')
+ckp3 = torch.load('checkpoint/damoyolo_tinynasL35_M.pth')
 
 for keys in ckp1:
     if keys in ckp2:
-        print(keys)
+        continue
     else:
         print('no')

@@ -1,7 +1,7 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/coco/'
+data_root = 'data/coco20/'
 dataset_type = 'mmdet.CocoDataset'
 
 # parameters that often need to be modified
@@ -24,12 +24,13 @@ model = dict(
         mean=[0., 0., 0.],
         std=[1., 1., 1.],
         bgr_to_rgb=True),
-    backbone=dict(type='TinyNAS',
+    backbone=dict(type='TinyNAS_res',
                   out_indices=(2, 4, 5),
                   with_spp=True,
                   use_focus=True,
                   act='relu',
                   reparam=True,
+                  backbone_structure='s',
                   ),
     neck=dict(type='GiraffeNeckv2',
               depth=1.0,
@@ -126,39 +127,6 @@ optim_wrapper = dict(
         nesterov=True,
         batch_size_per_gpu=train_batch_size_per_gpu),
     constructor='YOLOv5OptimizerConstructor')
-
-# test_pipeline = [
-#     dict(
-#         type='LoadImageFromFile',
-#         file_client_args={{_base_.file_client_args}}),
-#     dict(
-#         type='mmdet.FixShapeResize',
-#         width=img_scale[1],
-#         height=img_scale[0],
-#         keep_ratio=True,
-#         interpolation='bilinear'),
-#     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
-#     dict(
-#         type='mmdet.PackDetInputs',
-#         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-#                    'scale_factor'))
-# ]
-
-# val_dataloader = dict(
-#     batch_size=val_batch_size_per_gpu,
-#     num_workers=val_num_workers,
-#     persistent_workers=persistent_workers,
-#     pin_memory=True,
-#     drop_last=False,
-#     sampler=dict(type='DefaultSampler', shuffle=False),
-#     dataset=dict(
-#         type=dataset_type,
-#         data_root=data_root,
-#         test_mode=True,
-#         data_prefix=dict(img='val2017/'),
-#         filter_cfg=dict(filter_empty_gt=True, min_size=0),
-#         ann_file='annotations/instances_val2017.json',
-#         pipeline=test_pipeline))
 
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
