@@ -10,8 +10,8 @@ deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 80
 num_classes = 80
-save_epoch_intervals = 10  # fast val
-train_batch_size_per_gpu = 8  # TODO
+save_epoch_intervals = 10
+train_batch_size_per_gpu = 8
 train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
@@ -30,7 +30,7 @@ model = dict(
         batch_augments=[
             dict(
                 type='PPYOLOEBatchSyncRandomResize',
-                random_size_range=(320, 768),
+                random_size_range=(320, 800),
                 interval=1,
                 size_divisor=32,
                 random_interp=True,
@@ -38,7 +38,7 @@ model = dict(
         ],
         mean=[0., 0., 0.],
         std=[255., 255., 255.],
-        bgr_to_rgb=False),
+        bgr_to_rgb=True),
     backbone=dict(
         type='PPYOLOECSPResNet',
         deepen_factor=deepen_factor,
@@ -94,7 +94,7 @@ model = dict(
             reduction='mean',
             loss_weight=2.5,
             return_iou=False),
-        # Since the average is implemented differently in the official
+        # Since the dflloss is implemented differently in the official
         # and mmdet, we're going to divide loss_weight by 4.
         loss_dfl=dict(
             type='mmdet.DistributionFocalLoss',
@@ -124,10 +124,8 @@ model = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True),
-    # 精度对齐时候，这里先转成RGB,preprocess里不转
-    dict(type='PPYOLOECvt'),
     dict(type='PPYOLOERandomDistort'),
-    dict(type='PPYOLOERandomExpand', fill_value=(123.675, 116.28, 103.53)),
+    dict(type='PPYOLOERandomExpand', pad_value=(103.53, 116.28, 123.675)),
     dict(type='PPYOLOERandomCrop'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(
@@ -152,11 +150,7 @@ train_dataloader = dict(
         pipeline=train_pipeline))
 
 test_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
-    # 精度对齐时候，这里先转成RGB,preprocess里不转
-    dict(type='PPYOLOECvt'),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(
         type='mmdet.FixShapeResize',
         width=img_scale[1],
@@ -204,14 +198,16 @@ default_hooks = dict(
         min_lr_ratio=0.0,
         total_epochs=int(max_epochs * 1.2)),
     checkpoint=dict(
-        type='CheckpointHook', interval=save_epoch_intervals,
+        type='CheckpointHook',
+        interval=save_epoch_intervals,
+        save_best='auto',
         max_keep_ckpts=3))
 
 custom_hooks = [
     dict(
         type='EMAHook',
         ema_type='ExpMomentumEMA',
-        momentum=1-0.9998,
+        momentum=0.0002,
         update_buffers=True,
         strict_load=False,
         priority=49)
@@ -227,7 +223,8 @@ test_evaluator = val_evaluator
 train_cfg = dict(
     type='EpochBasedTrainLoop',
     max_epochs=max_epochs,
-    val_interval=save_epoch_intervals)
+    val_interval=save_epoch_intervals,
+    dynamic_intervals=[(max_epochs - 10, 1)])
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 

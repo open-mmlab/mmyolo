@@ -410,9 +410,9 @@ class TestPPYOLOERandomDistort(unittest.TestCase):
             transform = PPYOLOERandomDistort(
                 hue_cfg=dict(min=-18, max=18, prob=1.5))
 
-        # test assertion for invalid transform_num
+        # test assertion for invalid distortion_num
         with self.assertRaises(AssertionError):
-            transform = PPYOLOERandomDistort(transform_num=5)
+            transform = PPYOLOERandomDistort(distortion_num=5)
 
         transform = PPYOLOERandomDistort()
         results = transform(copy.deepcopy(self.results))
@@ -459,9 +459,9 @@ class TestPPYOLOERandomExpand(unittest.TestCase):
         }
 
     def test_transform(self):
-        # test assertion for invalid ratio
+        # test assertion for invalid expand_ratio
         with self.assertRaises(AssertionError):
-            transform = PPYOLOERandomExpand(ratio=0.8)
+            transform = PPYOLOERandomExpand(expand_ratio=0.8)
 
         # test assertion for invalid prob
         with self.assertRaises(AssertionError):

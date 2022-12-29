@@ -1,6 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .mix_img_transforms import Mosaic, Mosaic9, YOLOv5MixUp, YOLOXMixUp
-from .temp_transforms import PPYOLOECvt
 from .transforms import (LetterResize, LoadAnnotations, PPYOLOERandomCrop,
                          PPYOLOERandomDistort, PPYOLOERandomExpand,
                          YOLOv5HSVRandomAug, YOLOv5KeepRatioResize,
@@ -10,5 +9,5 @@ __all__ = [
     'YOLOv5KeepRatioResize', 'LetterResize', 'Mosaic', 'YOLOXMixUp',
     'YOLOv5MixUp', 'YOLOv5HSVRandomAug', 'LoadAnnotations',
     'YOLOv5RandomAffine', 'PPYOLOERandomDistort', 'PPYOLOERandomExpand',
-    'PPYOLOERandomCrop', 'PPYOLOECvt', 'Mosaic9'
+    'PPYOLOERandomCrop', 'Mosaic9'
 ]

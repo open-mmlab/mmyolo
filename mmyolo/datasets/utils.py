@@ -33,7 +33,8 @@ def yolov5_collate(data_batch: Sequence) -> dict:
 
 @COLLATE_FUNCTIONS.register_module()
 def ppyoloe_collate(data_batch: Sequence) -> dict:
-    """Rewrite collate_fn to get faster training speed."""
+    """Rewrite collate_fn to get faster training speed and support multi_scale
+    training."""
     batch_imgs = []
     batch_bboxes_labels = []
     for i in range(len(data_batch)):
@@ -50,9 +51,8 @@ def ppyoloe_collate(data_batch: Sequence) -> dict:
         batch_imgs.append(inputs)
 
     return {
-        # type: list
-        'inputs': batch_imgs,
-        'data_samples': batch_bboxes_labels
+        'inputs': batch_imgs,  # type: list
+        'data_samples': batch_bboxes_labels  # type: list
     }
 
 
