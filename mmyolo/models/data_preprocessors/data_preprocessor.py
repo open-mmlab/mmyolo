@@ -63,7 +63,10 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
 class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
     """Rewrite collate_fn to get faster training speed.
 
-    Note: It must be used together with `mmyolo.datasets.utils.ppyoloe_collate`
+    Note: Because the official PPYOLOE preprocessing sequence is slightly
+        different from the DetDataPreprocessor, it needs to be rewritten.
+        Official PPYOLOE resize image first, and then normalize image.
+        In DetDataPreprocessor, the order is reversed.
     """
 
     def forward(self, data: dict, training: bool = False) -> dict:
