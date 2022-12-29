@@ -10,14 +10,14 @@ max_epochs = 300
 stage2_num_epochs = 20
 interval = 10
 
-train_batch_size_per_gpu = 32
+train_batch_size_per_gpu = 16
 train_num_workers = 10
 val_batch_size_per_gpu = 32
 val_num_workers = 10
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
 strides = [8, 16, 32]
-base_lr = 0.004
+base_lr = 0.002
 
 # single-scale training is recommended to
 # be turned on, which can speed up training.
@@ -114,10 +114,7 @@ train_pipeline = [
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
-    dict(
-        type='YOLOv5MixUp',
-        use_cached=True,
-        max_cached_images=20),
+    dict(type='YOLOv5MixUp', use_cached=True, max_cached_images=20),
     dict(type='mmdet.PackDetInputs')
 ]
 
