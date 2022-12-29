@@ -27,6 +27,17 @@ class BatchYOLOv7Assigner(nn.Module):
 
     This code referenced to
     https://github.com/WongKinYiu/yolov7/blob/main/utils/loss.py.
+
+    Args:
+        num_classes (int): Number of classes.
+        num_base_priors (int): Number of base priors.
+        featmap_strides (Sequence[int]): Feature map strides.
+        prior_match_thr (float): Threshold to match priors.
+            Defaults to 4.0.
+        candidate_topk (int): Number of topk candidates to
+            assign. Defaults to 10.
+        iou_weight (float): IOU weight. Defaults to 3.0.
+        cls_weight (float): Class weight. Defaults to 1.0.
     """
 
     def __init__(self,
@@ -56,6 +67,7 @@ class BatchYOLOv7Assigner(nn.Module):
                 priors_base_sizes,
                 grid_offset,
                 near_neighbor_thr=0.5) -> dict:
+        """Forward function."""
         # (num_base_priors, num_batch_gt, 7)
         # 7 is mean (batch_idx, cls_id, x_norm, y_norm,
         # w_norm, h_norm, prior_idx)
@@ -104,6 +116,7 @@ class BatchYOLOv7Assigner(nn.Module):
                         priors_base_sizes,
                         grid_offset,
                         near_neighbor_thr=0.5):
+        """YOLOv5 cross-grid sample assigner."""
         num_batch_gts = batch_targets_normed.shape[1]
         assert num_batch_gts > 0
 
@@ -172,6 +185,7 @@ class BatchYOLOv7Assigner(nn.Module):
 
     def simota_assigner(self, pred_results, batch_targets_normed,
                         mlvl_positive_infos, mlvl_priors, batch_input_shape):
+        """SimOTA assigner."""
         num_batch_gts = batch_targets_normed.shape[1]
         assert num_batch_gts > 0
         num_levels = len(mlvl_positive_infos)
@@ -213,7 +227,8 @@ class BatchYOLOv7Assigner(nn.Module):
                 _mlvl_priors.append(priors)
 
                 _from_which_layer.append(
-                    torch.ones(size=(_mlvl_positive_info.shape[0], )) * i)
+                    _mlvl_positive_info.new_full(
+                        size=(_mlvl_positive_info.shape[0], ), fill_value=i))
 
                 # (n,85)
                 level_batch_idx, prior_ind, \
@@ -232,11 +247,12 @@ class BatchYOLOv7Assigner(nn.Module):
                     [pred_positive_cxcy, pred_positive_wh], dim=-1)
                 _mlvl_decoderd_bboxes.append(pred_positive_xywh)
 
+            if len(_mlvl_decoderd_bboxes) == 0:
+                continue
+
             # 1 calc pair_wise_iou_loss
             _mlvl_decoderd_bboxes = torch.cat(_mlvl_decoderd_bboxes, dim=0)
             num_pred_positive = _mlvl_decoderd_bboxes.shape[0]
-            if num_pred_positive == 0:
-                continue
 
             # scaled xywh
             batch_input_shape_wh = pred_results[0].new_tensor(

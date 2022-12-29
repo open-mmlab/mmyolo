@@ -7,6 +7,7 @@ import torch
 import torch.nn as nn
 from mmdet.models.dense_heads.base_dense_head import BaseDenseHead
 from mmdet.models.utils import filter_scores_and_topk, multi_apply
+from mmdet.structures.bbox import bbox_overlaps
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
                          OptMultiConfig)
 from mmengine.config import ConfigDict
@@ -18,6 +19,17 @@ from torch import Tensor
 
 from mmyolo.registry import MODELS, TASK_UTILS
 from ..utils import make_divisible
+
+
+def get_prior_xy_info(index: int, num_base_priors: int,
+                      featmap_sizes: int) -> Tuple[int, int, int]:
+    """Get prior index and xy index in feature map by flatten index."""
+    _, featmap_w = featmap_sizes
+    priors = index % num_base_priors
+    xy_index = index // num_base_priors
+    grid_y = xy_index // featmap_w
+    grid_x = xy_index % featmap_w
+    return priors, grid_x, grid_y
 
 
 @MODELS.register_module()
@@ -80,7 +92,7 @@ class YOLOv5HeadModule(BaseModule):
         """Initialize the bias of YOLOv5 head."""
         super().init_weights()
         for mi, s in zip(self.convs_pred, self.featmap_strides):  # from
-            b = mi.bias.data.view(3, -1)
+            b = mi.bias.data.view(self.num_base_priors, -1)
             # obj (8 objects per 640 image)
             b.data[:, 4] += math.log(8 / (640 / s)**2)
             b.data[:, 5:] += math.log(0.6 / (self.num_classes - 0.999999))
@@ -129,6 +141,7 @@ class YOLOv5Head(BaseDenseHead):
         loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
         loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
         prior_match_thr (float): Defaults to 4.0.
+        ignore_iof_thr (float): Defaults to -1.0.
         obj_level_weights (List[float]): Defaults to [4.0, 1.0, 0.4].
         train_cfg (:obj:`ConfigDict` or dict, optional): Training config of
             anchor head. Defaults to None.
@@ -168,6 +181,7 @@ class YOLOv5Head(BaseDenseHead):
                      loss_weight=1.0),
                  prior_match_thr: float = 4.0,
                  near_neighbor_thr: float = 0.5,
+                 ignore_iof_thr: float = -1.0,
                  obj_level_weights: List[float] = [4.0, 1.0, 0.4],
                  train_cfg: OptConfigType = None,
                  test_cfg: OptConfigType = None,
@@ -195,6 +209,7 @@ class YOLOv5Head(BaseDenseHead):
         self.prior_match_thr = prior_match_thr
         self.near_neighbor_thr = near_neighbor_thr
         self.obj_level_weights = obj_level_weights
+        self.ignore_iof_thr = ignore_iof_thr
 
         self.special_init()
 
@@ -439,11 +454,11 @@ class YOLOv5Head(BaseDenseHead):
         Returns:
             dict: A dictionary of loss components.
         """
-        outs = self(x)
 
         if isinstance(batch_data_samples, list):
             losses = super().loss(x, batch_data_samples)
         else:
+            outs = self(x)
             # Fast version
             loss_inputs = outs + (batch_data_samples['bboxes_labels'],
                                   batch_data_samples['img_metas'])
@@ -484,6 +499,32 @@ class YOLOv5Head(BaseDenseHead):
         Returns:
             dict[str, Tensor]: A dictionary of losses.
         """
+        if self.ignore_iof_thr != -1:
+            # TODO: Support fast version
+            # convert ignore gt
+            batch_target_ignore_list = []
+            for i, gt_instances_ignore in enumerate(batch_gt_instances_ignore):
+                bboxes = gt_instances_ignore.bboxes
+                labels = gt_instances_ignore.labels
+                index = bboxes.new_full((len(bboxes), 1), i)
+                # (batch_idx, label, bboxes)
+                target = torch.cat((index, labels[:, None].float(), bboxes),
+                                   dim=1)
+                batch_target_ignore_list.append(target)
+
+            # (num_bboxes, 6)
+            batch_gt_targets_ignore = torch.cat(
+                batch_target_ignore_list, dim=0)
+            if batch_gt_targets_ignore.shape[0] != 0:
+                # Consider regions with ignore in annotations
+                return self._loss_by_feat_with_ignore(
+                    cls_scores,
+                    bbox_preds,
+                    objectnesses,
+                    batch_gt_instances=batch_gt_instances,
+                    batch_img_metas=batch_img_metas,
+                    batch_gt_instances_ignore=batch_gt_targets_ignore)
+
         # 1. Convert gt to norm format
         batch_targets_normed = self._convert_gt_to_norm_format(
             batch_gt_instances, batch_img_metas)
@@ -652,3 +693,198 @@ class YOLOv5Head(BaseDenseHead):
         pred_wh = (bbox_pred[:, 2:] * 2)**2 * priors_base_sizes
         decoded_bbox_pred = torch.cat((pred_xy, pred_wh), dim=-1)
         return decoded_bbox_pred
+
+    def _loss_by_feat_with_ignore(
+            self, cls_scores: Sequence[Tensor], bbox_preds: Sequence[Tensor],
+            objectnesses: Sequence[Tensor],
+            batch_gt_instances: Sequence[InstanceData],
+            batch_img_metas: Sequence[dict],
+            batch_gt_instances_ignore: Sequence[Tensor]) -> dict:
+        """Calculate the loss based on the features extracted by the detection
+        head.
+
+        Args:
+            cls_scores (Sequence[Tensor]): Box scores for each scale level,
+                each is a 4D-tensor, the channel number is
+                num_priors * num_classes.
+            bbox_preds (Sequence[Tensor]): Box energies / deltas for each scale
+                level, each is a 4D-tensor, the channel number is
+                num_priors * 4.
+            objectnesses (Sequence[Tensor]): Score factor for
+                all scale level, each is a 4D-tensor, has shape
+                (batch_size, 1, H, W).
+            batch_gt_instances (Sequence[InstanceData]): Batch of
+                gt_instance. It usually includes ``bboxes`` and ``labels``
+                attributes.
+            batch_img_metas (Sequence[dict]): Meta information of each image,
+                e.g., image size, scaling factor, etc.
+            batch_gt_instances_ignore (Sequence[Tensor]): Ignore boxes with
+                batch_ids and labels, each is a 2D-tensor, the channel number
+                is 6, means that (batch_id, label, xmin, ymin, xmax, ymax).
+        Returns:
+            dict[str, Tensor]: A dictionary of losses.
+        """
+        # 1. Convert gt to norm format
+        batch_targets_normed = self._convert_gt_to_norm_format(
+            batch_gt_instances, batch_img_metas)
+
+        featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
+        if featmap_sizes != self.featmap_sizes:
+            self.mlvl_priors = self.prior_generator.grid_priors(
+                featmap_sizes,
+                dtype=cls_scores[0].dtype,
+                device=cls_scores[0].device)
+            self.featmap_sizes = featmap_sizes
+
+        device = cls_scores[0].device
+        loss_cls = torch.zeros(1, device=device)
+        loss_box = torch.zeros(1, device=device)
+        loss_obj = torch.zeros(1, device=device)
+        scaled_factor = torch.ones(7, device=device)
+
+        for i in range(self.num_levels):
+            batch_size, _, h, w = bbox_preds[i].shape
+            target_obj = torch.zeros_like(objectnesses[i])
+
+            not_ignore_flags = bbox_preds[i].new_ones(batch_size,
+                                                      self.num_base_priors, h,
+                                                      w)
+
+            ignore_overlaps = bbox_overlaps(self.mlvl_priors[i],
+                                            batch_gt_instances_ignore[..., 2:],
+                                            'iof')
+            ignore_max_overlaps, ignore_max_ignore_index = ignore_overlaps.max(
+                dim=1)
+
+            batch_inds = batch_gt_instances_ignore[:,
+                                                   0][ignore_max_ignore_index]
+            ignore_inds = (ignore_max_overlaps > self.ignore_iof_thr).nonzero(
+                as_tuple=True)[0]
+            batch_inds = batch_inds[ignore_inds].long()
+            ignore_priors, ignore_grid_xs, ignore_grid_ys = get_prior_xy_info(
+                ignore_inds, self.num_base_priors, self.featmap_sizes[i])
+            not_ignore_flags[batch_inds, ignore_priors, ignore_grid_ys,
+                             ignore_grid_xs] = 0
+
+            # empty gt bboxes
+            if batch_targets_normed.shape[1] == 0:
+                loss_box += bbox_preds[i].sum() * 0
+                loss_cls += cls_scores[i].sum() * 0
+                loss_obj += self.loss_obj(
+                    objectnesses[i],
+                    target_obj,
+                    weight=not_ignore_flags,
+                    avg_factor=max(not_ignore_flags.sum(),
+                                   1)) * self.obj_level_weights[i]
+                continue
+
+            priors_base_sizes_i = self.priors_base_sizes[i]
+            # feature map scale whwh
+            scaled_factor[2:6] = torch.tensor(
+                bbox_preds[i].shape)[[3, 2, 3, 2]]
+            # Scale batch_targets from range 0-1 to range 0-features_maps size.
+            # (num_base_priors, num_bboxes, 7)
+            batch_targets_scaled = batch_targets_normed * scaled_factor
+
+            # 2. Shape match
+            wh_ratio = batch_targets_scaled[...,
+                                            4:6] / priors_base_sizes_i[:, None]
+            match_inds = torch.max(
+                wh_ratio, 1 / wh_ratio).max(2)[0] < self.prior_match_thr
+            batch_targets_scaled = batch_targets_scaled[match_inds]
+
+            # no gt bbox matches anchor
+            if batch_targets_scaled.shape[0] == 0:
+                loss_box += bbox_preds[i].sum() * 0
+                loss_cls += cls_scores[i].sum() * 0
+                loss_obj += self.loss_obj(
+                    objectnesses[i],
+                    target_obj,
+                    weight=not_ignore_flags,
+                    avg_factor=max(not_ignore_flags.sum(),
+                                   1)) * self.obj_level_weights[i]
+                continue
+
+            # 3. Positive samples with additional neighbors
+
+            # check the left, up, right, bottom sides of the
+            # targets grid, and determine whether assigned
+            # them as positive samples as well.
+            batch_targets_cxcy = batch_targets_scaled[:, 2:4]
+            grid_xy = scaled_factor[[2, 3]] - batch_targets_cxcy
+            left, up = ((batch_targets_cxcy % 1 < self.near_neighbor_thr) &
+                        (batch_targets_cxcy > 1)).T
+            right, bottom = ((grid_xy % 1 < self.near_neighbor_thr) &
+                             (grid_xy > 1)).T
+            offset_inds = torch.stack(
+                (torch.ones_like(left), left, up, right, bottom))
+
+            batch_targets_scaled = batch_targets_scaled.repeat(
+                (5, 1, 1))[offset_inds]
+            retained_offsets = self.grid_offset.repeat(1, offset_inds.shape[1],
+                                                       1)[offset_inds]
+
+            # prepare pred results and positive sample indexes to
+            # calculate class loss and bbox lo
+            _chunk_targets = batch_targets_scaled.chunk(4, 1)
+            img_class_inds, grid_xy, grid_wh, priors_inds = _chunk_targets
+            priors_inds, (img_inds, class_inds) = priors_inds.long().view(
+                -1), img_class_inds.long().T
+
+            grid_xy_long = (grid_xy -
+                            retained_offsets * self.near_neighbor_thr).long()
+            grid_x_inds, grid_y_inds = grid_xy_long.T
+            bboxes_targets = torch.cat((grid_xy - grid_xy_long, grid_wh), 1)
+
+            # 4. Calculate loss
+            # bbox loss
+            retained_bbox_pred = bbox_preds[i].reshape(
+                batch_size, self.num_base_priors, -1, h,
+                w)[img_inds, priors_inds, :, grid_y_inds, grid_x_inds]
+            priors_base_sizes_i = priors_base_sizes_i[priors_inds]
+            decoded_bbox_pred = self._decode_bbox_to_xywh(
+                retained_bbox_pred, priors_base_sizes_i)
+
+            not_ignore_weights = not_ignore_flags[img_inds, priors_inds,
+                                                  grid_y_inds, grid_x_inds]
+            loss_box_i, iou = self.loss_bbox(
+                decoded_bbox_pred,
+                bboxes_targets,
+                weight=not_ignore_weights,
+                avg_factor=max(not_ignore_weights.sum(), 1))
+            loss_box += loss_box_i
+
+            # obj loss
+            iou = iou.detach().clamp(0)
+            target_obj[img_inds, priors_inds, grid_y_inds,
+                       grid_x_inds] = iou.type(target_obj.dtype)
+            loss_obj += self.loss_obj(
+                objectnesses[i],
+                target_obj,
+                weight=not_ignore_flags,
+                avg_factor=max(not_ignore_flags.sum(),
+                               1)) * self.obj_level_weights[i]
+
+            # cls loss
+            if self.num_classes > 1:
+                pred_cls_scores = cls_scores[i].reshape(
+                    batch_size, self.num_base_priors, -1, h,
+                    w)[img_inds, priors_inds, :, grid_y_inds, grid_x_inds]
+
+                target_class = torch.full_like(pred_cls_scores, 0.)
+                target_class[range(batch_targets_scaled.shape[0]),
+                             class_inds] = 1.
+                loss_cls += self.loss_cls(
+                    pred_cls_scores,
+                    target_class,
+                    weight=not_ignore_weights[:, None].repeat(
+                        1, self.num_classes),
+                    avg_factor=max(not_ignore_weights.sum(), 1))
+            else:
+                loss_cls += cls_scores[i].sum() * 0
+
+        _, world_size = get_dist_info()
+        return dict(
+            loss_cls=loss_cls * batch_size * world_size,
+            loss_obj=loss_obj * batch_size * world_size,
+            loss_bbox=loss_box * batch_size * world_size)

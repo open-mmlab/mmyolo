@@ -315,6 +315,46 @@ model = dict(
 )
 ```
 
+#### 不使用预训练权重
+
+通常情况下，骨干网络初始化都是优先选择预训练权重。如果你不想使用预训练权重，而是想从头开始训练时模型时，
+我们可以将 `backbone` 中的 `init_cfg` 设置为 `None`，此时骨干网络将会以默认的初始化方法进行初始化，
+而不会使用训练好的预训练权重进行初始。以下是以 `YOLOv5` 使用 resnet 作为主干网络为例子，其余算法也是同样的处理：
+
+```python
+_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+
+deepen_factor = _base_.deepen_factor
+widen_factor = 1.0
+channels = [512, 1024, 2048]
+
+model = dict(
+    backbone=dict(
+        _delete_=True, # 将 _base_ 中关于 backbone 的字段删除
+        type='mmdet.ResNet', # 使用 mmdet 中的 ResNet
+        depth=50,
+        num_stages=4,
+        out_indices=(1, 2, 3),
+        frozen_stages=1,
+        norm_cfg=dict(type='BN', requires_grad=True),
+        norm_eval=True,
+        style='pytorch',
+        init_cfg=None # init_cfg 设置为 None，则 backbone 将不会使用预训练好的权重进行初始化了
+    ),
+    neck=dict(
+        type='YOLOv5PAFPN',
+        widen_factor=widen_factor,
+        in_channels=channels, # 注意：ResNet-50 输出的 3 个通道是 [512, 1024, 2048]，和原先的 yolov5-s neck 不匹配，需要更改
+        out_channels=channels),
+    bbox_head=dict(
+        type='YOLOv5Head',
+        head_module=dict(
+            type='YOLOv5HeadModule',
+            in_channels=channels, # head 部分输入通道也要做相应更改
+            widen_factor=widen_factor))
+)
+```
+
 ## 输出预测结果
 
 如果想将预测结果保存为特定的文件，用于离线评估，目前 MMYOLO 支持 json 和 pkl 两种格式。
@@ -466,3 +506,24 @@ mim run mmdet print_config \
 ```
 
 运行以上命令，会将 `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` 继承关系展开后的配置文件保存到 `./work_dirs` 文件夹内的 `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon_whole.py` 文件中。
+
+## 设置随机种子
+
+如果想要在训练时指定随机种子，可以使用以下命令：
+
+```shell
+python ./tools/train.py \
+    ${CONFIG} \                               # 配置文件路径
+    --cfg-options randomness.seed=2023 \      # 设置随机种子为 2023
+    [randomness.diff_rank_seed=True] \        # 根据 rank 来设置不同的种子。
+    [randomness.deterministic=True]           # 把 cuDNN 后端确定性选项设置为 True
+# [] 代表可选参数，实际输入命令行时，不用输入 []
+```
+
+`randomness` 有三个参数可设置，具体含义如下：
+
+- `randomness.seed=2023` ，设置随机种子为 2023。
+
+- `randomness.diff_rank_seed=True`，根据 rank 来设置不同的种子，`diff_rank_seed` 默认为 False。
+
+- `randomness.deterministic=True`，把 cuDNN 后端确定性选项设置为 True，即把`torch.backends.cudnn.deterministic` 设为 True，把 `torch.backends.cudnn.benchmark` 设为False。`deterministic` 默认为 False。更多细节见 https://pytorch.org/docs/stable/notes/randomness.html。
