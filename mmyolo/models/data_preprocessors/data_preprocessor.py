@@ -2,7 +2,6 @@
 import random
 from typing import List, Tuple, Union
 
-import cv2
 import torch
 import torch.nn.functional as F
 from mmdet.models import BatchSyncRandomResize
@@ -110,9 +109,8 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
 
 
 @MODELS.register_module()
-class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
-    """PPYOLOE batch random resize which synchronizes the random size across
-    ranks.
+class PPYOLOEBatchRandomResize(BatchSyncRandomResize):
+    """PPYOLOE batch random resize.
 
     Args:
         random_size_range (tuple): The multi-scale random range during
@@ -224,143 +222,6 @@ class PPYOLOEBatchSyncRandomResize(BatchSyncRandomResize):
 
             # convert to Tensor
             return torch.cat(outputs, dim=0), data_samples
-        else:
-            raise NotImplementedError('Not implemented yet!')
-
-    def _get_random_size_and_interp(self) -> Tuple[int, int]:
-        """Randomly generate a shape in ``_random_size_range`` and a
-        interp_mode in interp_mode_list."""
-        size = random.randint(*self._random_size_range)
-        input_size = (self._size_divisor * size, self._size_divisor * size)
-
-        if self.random_interp:
-            interp_ind = random.randint(0, len(self.interp_mode_list) - 1)
-            interp_mode = self.interp_mode_list[interp_ind]
-        else:
-            interp_mode = None
-        return input_size, interp_mode
-
-
-@MODELS.register_module()
-class PPYOLOEBatchSyncRandomResizeallopencv(BatchSyncRandomResize):
-    """PPYOLOE batch random resize which synchronizes the random size across
-    ranks.
-
-    Args:
-        random_size_range (tuple): The multi-scale random range during
-            multi-scale training.
-        interval (int): The iter interval of change
-            image size. Defaults to 10.
-        size_divisor (int): Image size divisible factor.
-            Defaults to 32.
-        random_interp (bool): Whether to choose interp_mode randomly.
-            If set to True, the type of `interp_mode` must be list.
-            If set to False, the type of `interp_mode` must be str.
-            Defaults to True.
-        interp_mode (Union[List, str]): The modes available for resizing
-            are ('nearest', 'bilinear', 'bicubic', 'area').
-        keep_ratio (bool): Whether to keep the aspect ratio when resizing
-            the image. Now we only support keep_ratio=False.
-            Defaults to False.
-        broadcast_flag (bool): Whether to use same image size between
-            gpus while resize image.
-            Defaults to True.
-    """
-
-    def __init__(self,
-                 random_size_range: Tuple[int, int],
-                 interval: int = 1,
-                 size_divisor: int = 32,
-                 random_interp=True,
-                 interp_mode: Union[List[int], int] = [
-                     'nearest', 'bilinear', 'bicubic', 'area', 'lanczos4'
-                 ],
-                 keep_ratio: bool = False) -> None:
-        super().__init__(random_size_range, interval, size_divisor)
-        self.random_interp = random_interp
-        self.keep_ratio = keep_ratio
-        # TODO: need to support keep_ratio==True
-        assert not self.keep_ratio, 'We do not yet support keep_ratio=True'
-
-        if self.random_interp:
-            assert isinstance(interp_mode, list) and len(interp_mode) > 1,\
-                'While random_interp==True, the type of `interp_mode`' \
-                ' must be list and len(interp_mode) must large than 1'
-            self.interp_mode_list = interp_mode
-            self.interp_mode = None
-        else:
-            assert isinstance(interp_mode, str),\
-                'While random_interp==False, the type of ' \
-                '`interp_mode` must be str'
-            assert interp_mode in ['nearest', 'bilinear', 'bicubic', 'area']
-            self.interp_mode_list = None
-            self.interp_mode = interp_mode
-
-        self.interp_dict = {
-            'nearest': cv2.INTER_NEAREST,
-            'bilinear': cv2.INTER_LINEAR,
-            'bicubic': cv2.INTER_CUBIC,
-            'area': cv2.INTER_AREA,
-            'lanczos4': cv2.INTER_LANCZOS4
-        }
-
-    def forward(self, inputs, data_samples):
-        assert isinstance(inputs, list)
-        message_hub = MessageHub.get_current_instance()
-        if (message_hub.get_info('iter') + 1) % self._interval == 0:
-            # get current input size
-            self._input_size, interp_mode = self._get_random_size_and_interp()
-            if self.random_interp:
-                self.interp_mode = interp_mode
-
-        # TODO: need to support type(inputs)==Tensor
-        if isinstance(inputs, list):
-            outputs = []
-            for i in range(len(inputs)):
-                _batch_input = inputs[i]
-                data_sample = data_samples[i]
-                h, w = _batch_input.shape[-2:]
-                scale_y = self._input_size[0] / h
-                scale_x = self._input_size[1] / w
-                if scale_x != 1. or scale_y != 1.:
-                    # if self.interp_mode in ('area', 'lanczos4'):
-                    # print('interp', self.interp_mode)
-                    device = _batch_input.device
-                    input_numpy = _batch_input.cpu().numpy().transpose(
-                        (1, 2, 0))
-                    input_numpy = cv2.resize(
-                        input_numpy,
-                        (self._input_size[0], self._input_size[1]),
-                        interpolation=self.interp_dict[self.interp_mode])
-                    _batch_input = input_numpy.transpose((2, 0, 1))
-                    _batch_input = torch.from_numpy(_batch_input).to(
-                        device).unsqueeze(0)
-
-                    # else:
-                    #
-                    #
-                    # if self.interp_mode in ('nearest', 'area'):
-                    #     align_corners = None
-                    # else:
-                    #     align_corners = False
-                    # _batch_input = F.interpolate(
-                    #     _batch_input.unsqueeze(0),
-                    #     size=self._input_size,
-                    #     mode=self.interp_mode,
-                    #     align_corners=align_corners)
-
-                    # rescale bbox
-                    data_sample[:, 2] *= scale_x
-                    data_sample[:, 3] *= scale_y
-                    data_sample[:, 4] *= scale_x
-                    data_sample[:, 5] *= scale_y
-                else:
-                    _batch_input = _batch_input.unsqueeze(0)
-
-                outputs.append(_batch_input)
-
-            # convert to Tensor
-            return torch.cat(outputs, dim=0), torch.cat(data_samples, dim=0)
         else:
             raise NotImplementedError('Not implemented yet!')
 
