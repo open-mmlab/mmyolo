@@ -340,7 +340,8 @@ class RTMDetHead(YOLOv5Head):
             for bbox_pred in bbox_preds
         ], 1)
         flatten_bboxes = flatten_bboxes * self.flatten_anchors[..., -1, None]
-        flatten_bboxes = distance2bbox(self.flatten_anchors[..., :2], flatten_bboxes)
+        flatten_bboxes = distance2bbox(self.flatten_anchors[..., :2],
+                                       flatten_bboxes)
 
         # decoded_bboxes = []
         # for anchor, bbox_pred, stride in zip(self.multi_level_anchors,
@@ -354,8 +355,8 @@ class RTMDetHead(YOLOv5Head):
 
         batch_targes = multi_apply(self._get_targets_single,
                                    flatten_cls_scores.detach(),
-                                   flatten_bboxes.detach(),
-                                   batch_gt_instances, batch_img_metas)
+                                   flatten_bboxes.detach(), batch_gt_instances,
+                                   batch_img_metas)
 
         (labels_list, label_weights_list, bbox_targets_list,
          assign_metrics_list) = batch_targes
@@ -369,10 +370,6 @@ class RTMDetHead(YOLOv5Head):
 
         cls_avg_factor = reduce_mean(sum(assign_metrics)).clamp_(min=1).item()
 
-        targets = (labels, assign_metrics)
-        loss_cls = self.loss_cls(
-            cls_preds, targets, label_weights, avg_factor=cls_avg_factor)
-
         # FG cat_id: [0, num_classes -1], BG cat_id: num_classes
         bg_class_ind = self.num_classes
         pos_inds = ((labels >= 0)
@@ -380,6 +377,11 @@ class RTMDetHead(YOLOv5Head):
         pos_bbox_weight = assign_metrics[pos_inds]
         bbox_avg_factor = reduce_mean(
             sum(pos_bbox_weight)).clamp_(min=1).item()
+
+        loss_cls = self.loss_cls(
+            cls_preds, (labels, assign_metrics),
+            label_weights,
+            avg_factor=cls_avg_factor)
 
         if len(pos_inds) > 0:
             loss_bbox = self.loss_bbox(
