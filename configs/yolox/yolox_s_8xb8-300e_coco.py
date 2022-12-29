@@ -274,6 +274,5 @@ train_cfg = dict(
     val_interval=save_epoch_intervals,
     dynamic_intervals=[(max_epochs - num_last_epochs, 1)])
 
-auto_scale_lr = dict(base_batch_size=64)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
