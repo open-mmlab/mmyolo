@@ -365,7 +365,7 @@ class YOLOv5Head(BaseDenseHead):
             ]
             flatten_objectness = torch.cat(flatten_objectness, dim=1).sigmoid()
         else:
-            flatten_objectness = [None for _ in range(len(featmap_sizes))]
+            flatten_objectness = [None for _ in range(num_imgs)]
 
         results_list = []
         for (bboxes, scores, objectness,
