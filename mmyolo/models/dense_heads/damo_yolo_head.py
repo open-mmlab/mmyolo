@@ -529,6 +529,15 @@ class ZeroHead(BaseDenseHead):
         if self.nms:
             output = postprocess(cls_scores, bbox_preds, self.num_classes,
                                  self.nms_conf_thre, self.nms_iou_thre, imgs=batch_data_samples)
+            for index,data_samples in enumerate(batch_data_samples):
+                output[index].bboxes[:,0],\
+                    output[index].bboxes[:,2] = \
+                    output[index].bboxes[:,0]/data_samples.scale_factor[1],\
+                        output[index].bboxes[:,2]/data_samples.scale_factor[1]
+                output[index].bboxes[:, 1], \
+                    output[index].bboxes[:, 3] = \
+                    output[index].bboxes[:, 1] / data_samples.scale_factor[0], \
+                    output[index].bboxes[:, 3] / data_samples.scale_factor[0]
             return output
         return cls_scores, bbox_preds
 

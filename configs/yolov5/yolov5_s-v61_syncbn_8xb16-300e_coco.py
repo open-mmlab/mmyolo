@@ -1,7 +1,7 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/coco/'
+data_root = 'data/coco1/'
 dataset_type = 'YOLOv5CocoDataset'
 
 # parameters that often need to be modified

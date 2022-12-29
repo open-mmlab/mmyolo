@@ -748,9 +748,8 @@ class DamoyoloResize(MMDET_Resize):
         self.keep_ratio = keep_ratio
         self.clip_object_border = clip_object_border
 
-        if keep_ratio is True:
-            # padding to the fixed size when keep_ratio=True
-            self.pad_transform = Pad(size=self.scale, pad_val=pad_val)
+        self.pad_val = pad_val
+
 
     @autocast_box_type()
     def transform(self, results: dict) -> dict:
@@ -787,24 +786,13 @@ class DamoyoloResize(MMDET_Resize):
             results['scale_factor'] = (self.width / w, self.height / h)
             super()._resize_img(results)
 
-
-        # ## padding preprocess
-        # import math
-        #
-        # stride = 32
-        # max_size = list(max_size)
-        # max_size[1] = int(math.ceil(max_size[1] / stride) * stride)
-        # max_size[2] = int(math.ceil(max_size[2] / stride) * stride)
-        # max_size = tuple(max_size)
-        #
-        # pad_img[:img.shape[0], :img.shape[1], :img.shape[2]].copy_(img)
-        #
-        # self._resize_bboxes(results)
-        # self._resize_masks(results)
-        # self._resize_seg(results)
-        # self._record_homography_matrix(results)
-        # stride = 32
-
+        self._resize_bboxes(results)
+        self._resize_masks(results)
+        self._resize_seg(results)
+        self._record_homography_matrix(results)
+        if self.keep_ratio:
+            self.pad_transform = Pad(size=results['batch_shape'][::-1] ,pad_val=self.pad_val)
+            results = self.pad_transform(results)
         return results
 
     def __repr__(self) -> str:

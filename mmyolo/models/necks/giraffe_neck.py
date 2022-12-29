@@ -160,7 +160,9 @@ class RepConv(nn.Module):
     def forward(self, inputs):
         '''Forward process'''
         if hasattr(self, 'rbr_reparam'):
-            return self.nonlinearity(self.rbr_reparam(inputs))
+            inputs = self.rbr_reparam(inputs)
+            inputs = self.nonlinearity(inputs)
+            return inputs
 
         if self.rbr_identity is None:
             id_out = 0

@@ -26,47 +26,29 @@ model = dict(
         bgr_to_rgb=True),
     backbone=dict(type='TinyNAS',
                   out_indices=(2, 4, 5),
-                    with_spp=True,
-                    use_focus= True,
-                    act='relu',
-                    reparam=True,
-),
+                  with_spp=True,
+                  use_focus=True,
+                  act='relu',
+                  reparam=True,
+                  ),
     neck=dict(type='GiraffeNeckv2',
               depth=1.0,
-                hidden_ratio=0.75,
-                in_channels=[128, 256, 512],
-                out_channels=[128, 256, 512],
-                act='relu',
-                spp=False,
-                block_name='BasicBlock_3x3_Reverse',
-),
+              hidden_ratio=0.75,
+              in_channels=[128, 256, 512],
+              out_channels=[128, 256, 512],
+              act='relu',
+              spp=False,
+              block_name='BasicBlock_3x3_Reverse',
+              ),
     bbox_head=dict(type='ZeroHead',
                    num_classes=80,
-                    in_channels=[128, 256, 512],
-                    stacked_convs=0,
-                    reg_max=16,
-                    act='silu',
-                    nms_conf_thre=0.05,
-                    nms_iou_thre= 0.7
-                    ))
-
-test_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
-    dict(
-        type='mmdet.FixShapeResize',
-        width=img_scale[1],
-        height=img_scale[0],
-        keep_ratio=True,
-        interpolation='bilinear'),
-    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
-    dict(
-        type='mmdet.PackDetInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor'))
-]
-
+                   in_channels=[128, 256, 512],
+                   stacked_convs=0,
+                   reg_max=16,
+                   act='silu',
+                   nms_conf_thre=0.05,
+                   nms_iou_thre=0.7
+                   ))
 
 albu_train_transforms = [
     dict(type='Blur', p=0.01),
@@ -79,7 +61,6 @@ pre_transform = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True)
 ]
-
 
 train_pipeline = [
     *pre_transform,
@@ -114,7 +95,6 @@ train_pipeline = [
                    'flip_direction'))
 ]
 
-
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
@@ -147,21 +127,74 @@ optim_wrapper = dict(
         batch_size_per_gpu=train_batch_size_per_gpu),
     constructor='YOLOv5OptimizerConstructor')
 
+# test_pipeline = [
+#     dict(
+#         type='LoadImageFromFile',
+#         file_client_args={{_base_.file_client_args}}),
+#     dict(
+#         type='mmdet.FixShapeResize',
+#         width=img_scale[1],
+#         height=img_scale[0],
+#         keep_ratio=True,
+#         interpolation='bilinear'),
+#     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+#     dict(
+#         type='mmdet.PackDetInputs',
+#         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+#                    'scale_factor'))
+# ]
+
+# val_dataloader = dict(
+#     batch_size=val_batch_size_per_gpu,
+#     num_workers=val_num_workers,
+#     persistent_workers=persistent_workers,
+#     pin_memory=True,
+#     drop_last=False,
+#     sampler=dict(type='DefaultSampler', shuffle=False),
+#     dataset=dict(
+#         type=dataset_type,
+#         data_root=data_root,
+#         test_mode=True,
+#         data_prefix=dict(img='val2017/'),
+#         filter_cfg=dict(filter_empty_gt=True, min_size=0),
+#         ann_file='annotations/instances_val2017.json',
+#         pipeline=test_pipeline))
+
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
-    num_workers=val_num_workers,
-    persistent_workers=persistent_workers,
+    num_workers=2,
+    persistent_workers=True,
     pin_memory=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
-        type=dataset_type,
+        type='YOLOv5CocoDataset',
         data_root=data_root,
         test_mode=True,
         data_prefix=dict(img='val2017/'),
-        filter_cfg=dict(filter_empty_gt=True, min_size=0),
         ann_file='annotations/instances_val2017.json',
-        pipeline=test_pipeline))
+        pipeline=[
+            dict(
+                type='LoadImageFromFile',
+                imdecode_backend = 'pillow',
+                file_client_args=dict(backend='disk')),
+            dict(type='DamoyoloResize',
+                 width=img_scale[1],
+                 height=img_scale[0],
+                 keep_ratio=True,
+                 interpolation='bilinear'),
+            dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+            dict(
+                type='mmdet.PackDetInputs',
+                meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                           'scale_factor'))
+        ],
+        batch_shapes_cfg=dict(
+            type='BatchShapePolicy',
+            batch_size=val_batch_size_per_gpu,
+            img_size=img_scale[0],
+            size_divisor=32,
+            extra_pad_ratio=0)))
 
 test_dataloader = val_dataloader
 
