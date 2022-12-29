@@ -350,7 +350,7 @@ class YOLOv5Head(BaseDenseHead):
             ]
             flatten_objectness = torch.cat(flatten_objectness, dim=1).sigmoid()
         else:
-            flatten_objectness = [None for _ in range(len(featmap_sizes))]
+            flatten_objectness = [None for _ in range(num_imgs)]
 
         results_list = []
         for (bboxes, scores, objectness,
@@ -422,6 +422,7 @@ class YOLOv5Head(BaseDenseHead):
             results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
 
             results_list.append(results)
+        print(len(results_list))
         return results_list
 
     def loss(self, x: Tuple[Tensor], batch_data_samples: Union[list,
