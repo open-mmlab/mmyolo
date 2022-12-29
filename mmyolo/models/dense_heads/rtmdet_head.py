@@ -372,22 +372,19 @@ class RTMDetHead(YOLOv5Head):
         bg_class_ind = self.num_classes
         pos_inds = ((labels >= 0)
                     & (labels < bg_class_ind)).nonzero().squeeze(1)
-        pos_bbox_weight = assign_metrics[pos_inds]
-        bbox_avg_factor = reduce_mean(
-            sum(pos_bbox_weight)).clamp_(min=1).item()
-        cls_avg_factor = reduce_mean(sum(assign_metrics)).clamp_(min=1).item()
+        avg_factor = reduce_mean(sum(assign_metrics)).clamp_(min=1).item()
 
         loss_cls = self.loss_cls(
             cls_preds, (labels, assign_metrics),
             label_weights,
-            avg_factor=cls_avg_factor)
+            avg_factor=avg_factor)
 
         if len(pos_inds) > 0:
             loss_bbox = self.loss_bbox(
                 bbox_preds[pos_inds],
                 bbox_targets[pos_inds],
                 weight=assign_metrics[pos_inds],
-                avg_factor=bbox_avg_factor)
+                avg_factor=avg_factor)
         else:
             loss_bbox = bbox_preds.sum() * 0
 
