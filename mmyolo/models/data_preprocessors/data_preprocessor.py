@@ -166,7 +166,9 @@ class PPYOLOEBatchRandomResize(BatchSyncRandomResize):
             self.interp_mode = interp_mode
 
     def forward(self, inputs, data_samples):
-        assert isinstance(inputs, list)
+        assert isinstance(inputs, list),\
+            'The type of inputs must be list. The possible reason for this ' \
+            'is that you are not using it with `PPYOLOEDetDataPreprocessor`.'
         message_hub = MessageHub.get_current_instance()
         if (message_hub.get_info('iter') + 1) % self._interval == 0:
             # get current input size

@@ -29,7 +29,7 @@ model = dict(
         pad_size_divisor=32,
         batch_augments=[
             dict(
-                type='PPYOLOEBatchSyncRandomResize',
+                type='PPYOLOEBatchRandomResize',
                 random_size_range=(320, 800),
                 interval=1,
                 size_divisor=32,
