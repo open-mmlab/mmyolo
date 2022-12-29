@@ -368,8 +368,6 @@ class RTMDetHead(YOLOv5Head):
         cls_preds = flatten_cls_scores.reshape(-1, self.num_classes)
         bbox_preds = flatten_bboxes.reshape(-1, 4)
 
-        cls_avg_factor = reduce_mean(sum(assign_metrics)).clamp_(min=1).item()
-
         # FG cat_id: [0, num_classes -1], BG cat_id: num_classes
         bg_class_ind = self.num_classes
         pos_inds = ((labels >= 0)
@@ -377,6 +375,7 @@ class RTMDetHead(YOLOv5Head):
         pos_bbox_weight = assign_metrics[pos_inds]
         bbox_avg_factor = reduce_mean(
             sum(pos_bbox_weight)).clamp_(min=1).item()
+        cls_avg_factor = reduce_mean(sum(assign_metrics)).clamp_(min=1).item()
 
         loss_cls = self.loss_cls(
             cls_preds, (labels, assign_metrics),
