@@ -436,10 +436,10 @@ python tools/analysis_tools/browse_dataset.py \
 - `-o, --output-dir`: 保存图片文件夹，如果没有指定，默认为 `'./output'`。
 - **`-p, --phase`**: 可视化数据集的阶段，只能为 `['train', 'val', 'test']` 之一，默认为 `'train'`。
 - **`-n, --show-number`**: 可视化样本数量。如果没有指定，默认展示数据集的所有图片。
-- **`-m, --mode`**: 可视化的模式，只能为 `['original', 'transformed','pipeline']` 之一。 默认为`'transformed'`。
-- `--cfg-options` : 对配置文件的修改，参考[[学习配置文件](https://github.com/open-mmlab/mmyolo/compare/main...matrixgame2018:mmyolo-1:update-tools/config.md)](./config.md)。
+- **`-m, --mode`**: 可视化的模式，只能为 `['original', 'transformed', 'pipeline']` 之一。 默认为 `'transformed'`。
+- `--cfg-options` : 对配置文件的修改，参考[学习配置文件](./config.md)。
 
-```
+```shell
 `-m, --mode` 用于设置可视化的模式，默认设置为 'transformed'。
 - 如果 `--mode` 设置为 'original'，则获取原始图片；
 - 如果 `--mode` 设置为 'transformed'，则获取预处理后的图片；
@@ -450,7 +450,7 @@ python tools/analysis_tools/browse_dataset.py \
 
 1. **'original'** 模式 ：
 
-```
+```shell
 python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py --phase val --output-dir tmp --mode original
 ```
 
@@ -462,13 +462,13 @@ python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py
 
 2.**'transformed'** 模式 ：
 
-```
+```shell
 python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py 
 ```
 
 3.**'pipeline'** 模式 ：
 
-```
+```shell
 python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py -m pipeline
 ```
 
