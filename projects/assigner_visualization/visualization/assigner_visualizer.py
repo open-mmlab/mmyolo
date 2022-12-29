@@ -99,8 +99,8 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
             not_show_label (bool): Whether to show gt labels on images.
         """
         assert self.dataset_meta is not None
-        classes = self.dataset_meta['CLASSES']
-        palette = self.dataset_meta['PALETTE']
+        classes = self.dataset_meta['classes']
+        palette = self.dataset_meta['palette']
         if len(retained_gt_inds) == 0:
             return self.get_image()
         draw_gt_inds = torch.from_numpy(
