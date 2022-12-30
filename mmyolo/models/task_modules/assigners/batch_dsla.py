@@ -149,20 +149,32 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
         Returns:
             tuple: matched ious and gt indexes.
         """
-        matching_matrix = torch.zeros_like(cost_matrix, dtype=torch.uint8)
+        matching_matrix = torch.zeros_like(cost_matrix, dtype=torch.uint8) # bs, num_priors, num_gt
         # select candidate topk ious for dynamic-k calculation
         candidate_topk = min(self.topk, pairwise_ious.size(1))
-        topk_ious, _ = torch.topk(pairwise_ious, candidate_topk, dim=1)
+        topk_ious, _ = torch.topk(pairwise_ious, candidate_topk, dim=1)  # bs, topk, num_gt
         # calculate dynamic k for each gt
-        dynamic_ks = torch.clamp(topk_ious.sum(1).int(), min=1)
+        dynamic_ks = torch.clamp(topk_ious.sum(1).int(), min=1)  # bs, num_gt
 
-        # TODO: Parallel Computation
+        # # TODO: Parallel Computation
+        # for b in range(pad_bbox_flag.shape[0]):
+        #     num_gt = pad_bbox_flag[b, :, 0].sum()
+        #     for gt_idx in range(int(num_gt.item())):
+        #         _, pos_idx = torch.topk(
+        #             cost_matrix[b, :, gt_idx], k=dynamic_ks[b, gt_idx], largest=False)
+        #         matching_matrix[b, :, gt_idx][pos_idx] = 1
+
+        num_gts = pad_bbox_flag.sum((1,2)).int()
+        _, sorted_indices = torch.sort(cost_matrix, dim=1)
         for b in range(pad_bbox_flag.shape[0]):
-            num_gt = pad_bbox_flag[b, :, 0].sum()
-            for gt_idx in range(int(num_gt.item())):
-                _, pos_idx = torch.topk(
-                    cost_matrix[b, :, gt_idx], k=dynamic_ks[b, gt_idx], largest=False)
-                matching_matrix[b, :, gt_idx][pos_idx] = 1
+            for gt_idx in range(num_gts[b]):
+                topk_ids = sorted_indices[b, :dynamic_ks[b, gt_idx], gt_idx]
+                matching_matrix[b, :, gt_idx][topk_ids] = 1
+
+        # from mmengine.testing import assert_allclose
+        # assert_allclose(matching_matrix, matching_matrix2)
+
+        # import pdb; pdb.set_trace()
         del topk_ious, dynamic_ks
 
         prior_match_gt_mask = matching_matrix.sum(2) > 1
