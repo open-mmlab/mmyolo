@@ -342,7 +342,6 @@ class RTMDetHead(YOLOv5Head):
         flatten_bboxes = flatten_bboxes * self.flatten_anchors[..., -1, None]
         flatten_bboxes = distance2bbox(self.flatten_anchors[..., :2],
                                        flatten_bboxes)
-        num_level_anchors = [anchors.size(0) for anchors in self.multi_level_anchors]
         losses_bbox = []
         losses_cls = []
         num_poses = []
@@ -372,7 +371,7 @@ class RTMDetHead(YOLOv5Head):
             else:
                 loss_bbox = flatten_bboxes.sum() * 0
 
-            num_pos = sum(assign_metrics)
+            num_pos = assign_metrics.sum()
             losses_bbox.append(loss_bbox)
             losses_cls.append(loss_cls)
             num_poses.append(num_pos)
