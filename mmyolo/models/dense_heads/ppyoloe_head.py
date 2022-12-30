@@ -155,6 +155,8 @@ class PPYOLOEHeadModule(BaseModule):
 @MODELS.register_module()
 class PPYOLOEHead(YOLOv6Head):
     """PPYOLOEHead head used in `PPYOLOE <https://arxiv.org/abs/2203.16250>`_.
+    The YOLOv6 head and the PPYOLOE head are only slightly different.
+    Distribution focal loss is extra used in PPYOLOE, but not in YOLOv6.
 
     Args:
         head_module (nn.Module): Base module used for PPYOLOEHead
