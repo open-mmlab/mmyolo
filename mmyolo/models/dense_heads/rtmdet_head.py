@@ -342,16 +342,7 @@ class RTMDetHead(YOLOv5Head):
         flatten_bboxes = flatten_bboxes * self.flatten_anchors[..., -1, None]
         flatten_bboxes = distance2bbox(self.flatten_anchors[..., :2],
                                        flatten_bboxes)
-
-        # decoded_bboxes = []
-        # for anchor, bbox_pred, stride in zip(self.multi_level_anchors,
-        #                                      bbox_preds, self.featmap_strides):
-        #     anchor = anchor.reshape(-1, 4)
-        #     bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
-        #     bbox_pred = distance2bbox(anchor, bbox_pred * stride)
-        #     decoded_bboxes.append(bbox_pred)
-
-        # flatten_bboxes = torch.cat(decoded_bboxes, 1)
+        num_level_anchors = [anchors.size(0) for anchors in self.multi_level_anchors]
         losses_bbox = []
         losses_cls = []
         num_poses = []
@@ -379,7 +370,7 @@ class RTMDetHead(YOLOv5Head):
                     weight=assign_metrics[pos_inds],
                     avg_factor=1)
             else:
-                loss_bbox = bbox_preds.sum() * 0
+                loss_bbox = flatten_bboxes.sum() * 0
 
             num_pos = sum(assign_metrics)
             losses_bbox.append(loss_bbox)

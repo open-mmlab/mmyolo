@@ -422,7 +422,6 @@ class YOLOv5Head(BaseDenseHead):
             results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
 
             results_list.append(results)
-        print(len(results_list))
         return results_list
 
     def loss(self, x: Tuple[Tensor], batch_data_samples: Union[list,
