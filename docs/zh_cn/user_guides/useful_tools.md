@@ -75,47 +75,59 @@ python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
 
 ### 可视化数据集
 
-脚本 `tools/analysis_tools/browse_dataset.py` 能够帮助用户去直接窗口可视化数据集的原始图片+展示标签的图片，或者保存可视化图片到指定文件夹内。
-
-```shell
-python tools/analysis_tools/browse_dataset.py ${CONFIG} \
-                                              [-h] \
-                                              [--output-dir ${OUTPUT_DIR}] \
-                                              [--not-show] \
-                                              [--show-interval ${SHOW_INTERVAL}]
+```
+python tools/analysis_tools/browse_dataset.py \
+    ${CONFIG_FILE} \
+    [-o, --output-dir ${OUTPUT_DIR}] \
+    [-p, --phase ${DATASET_PHASE}] \
+    [-n, --show-number ${NUMBER_IMAGES_DISPLAY}] \
+    [-i, --show-interval ${SHOW_INTERRVAL}] \
+    [-m, --mode ${DISPLAY_MODE}] \
+    [--cfg-options ${CFG_OPTIONS}]
 ```
 
-例子：
+**所有参数的说明**：
 
-1. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，同时保存到目录 `work-dir/browse_dataset`：
-
-```shell
-python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
-                                               --output-dir 'work-dir/browse_dataset'
-```
-
-2. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，每张图片持续 `10` 秒，同时保存到目录 `work-dir/browse_dataset`：
+- `config` : 模型配置文件的路径。
+- `-o, --output-dir`: 保存图片文件夹，如果没有指定，默认为 `'./output'`。
+- **`-p, --phase`**: 可视化数据集的阶段，只能为 `['train', 'val', 'test']` 之一，默认为 `'train'`。
+- **`-n, --show-number`**: 可视化样本数量。如果没有指定，默认展示数据集的所有图片。
+- **`-m, --mode`**: 可视化的模式，只能为 `['original', 'transformed', 'pipeline']` 之一。 默认为 `'transformed'`。
+- `--cfg-options` : 对配置文件的修改，参考[学习配置文件](./config.md)。
 
 ```shell
-python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
-                                               --output-dir 'work-dir/browse_dataset' \
-                                               --show-interval 10
+`-m, --mode` 用于设置可视化的模式，默认设置为 'transformed'。
+- 如果 `--mode` 设置为 'original'，则获取原始图片；
+- 如果 `--mode` 设置为 'transformed'，则获取预处理后的图片；
+- 如果 `--mode` 设置为 'pipeline'，则获得数据流水线所有中间过程图片。
 ```
 
-3. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片直接弹出显示，每张图片持续 `10` 秒，图片不进行保存：
+**示例**：
+
+1. **'original'** 模式 ：
 
 ```shell
-python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
-                                               --show-interval 10
+python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py --phase val --output-dir tmp --mode original
 ```
 
-4. 使用 `config` 文件 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 可视化图片，图片不直接弹出显示，仅保存到目录 `work-dir/browse_dataset`：
+- `--phase val`: 可视化验证集, 可简化为 `-p val`;
+- `--output-dir tmp`: 可视化结果保存在 "tmp" 文件夹, 可简化为 `-o tmp`;
+- `--mode original`: 可视化原图, 可简化为 `-m original`;
+- `--show-number 100`: 可视化100张图，可简化为 `-n 100`;
+
+2.**'transformed'** 模式 ：
 
 ```shell
-python tools/analysis_tools/browse_dataset.py 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py' \
-                                               --output-dir 'work-dir/browse_dataset' \
-                                               --not-show
+python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py
 ```
+
+3.**'pipeline'** 模式 ：
+
+```shell
+python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py -m pipeline
+```
+
+![9041866c28ffef58c2597bc8cf6c272](https://user-images.githubusercontent.com/45811724/204810831-0fbc7f1c-0951-4be1-a11c-491cf0d194f6.png)
 
 ### 可视化数据集分析
 
@@ -417,59 +429,3 @@ python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --classes cat dog person
 ```shell
 python tools/misc/extract_subcoco.py ${ROOT} ${OUT_DIR} --area-size small
 ```
-## 浏览数据集
-
-```
-python tools/analysis_tools/browse_dataset.py \
-    ${CONFIG_FILE} \
-    [-o, --output-dir ${OUTPUT_DIR}] \
-    [-p, --phase ${DATASET_PHASE}] \
-    [-n, --show-number ${NUMBER_IMAGES_DISPLAY}] \
-    [-i, --show-interval ${SHOW_INTERRVAL}] \
-    [-m, --mode ${DISPLAY_MODE}] \
-    [--cfg-options ${CFG_OPTIONS}]
-```
-
-**所有参数的说明**：
-
-- `config` : 模型配置文件的路径。
-- `-o, --output-dir`: 保存图片文件夹，如果没有指定，默认为 `'./output'`。
-- **`-p, --phase`**: 可视化数据集的阶段，只能为 `['train', 'val', 'test']` 之一，默认为 `'train'`。
-- **`-n, --show-number`**: 可视化样本数量。如果没有指定，默认展示数据集的所有图片。
-- **`-m, --mode`**: 可视化的模式，只能为 `['original', 'transformed', 'pipeline']` 之一。 默认为 `'transformed'`。
-- `--cfg-options` : 对配置文件的修改，参考[学习配置文件](./config.md)。
-
-```shell
-`-m, --mode` 用于设置可视化的模式，默认设置为 'transformed'。
-- 如果 `--mode` 设置为 'original'，则获取原始图片；
-- 如果 `--mode` 设置为 'transformed'，则获取预处理后的图片；
-- 如果 `--mode` 设置为 'pipeline'，则获得数据流水线所有中间过程图片。
-```
-
-**示例**：
-
-1. **'original'** 模式 ：
-
-```shell
-python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py --phase val --output-dir tmp --mode original
-```
-
-- `--phase val`: 可视化验证集, 可简化为 `-p val`;
-- `--output-dir tmp`: 可视化结果保存在 "tmp" 文件夹, 可简化为 `-o tmp`;
-- `--mode original`: 可视化原图, 可简化为 `-m original`;
-- `--show-number 100`: 可视化100张图，可简化为 `-n 100`;
-
-
-2.**'transformed'** 模式 ：
-
-```shell
-python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py 
-```
-
-3.**'pipeline'** 模式 ：
-
-```shell
-python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py -m pipeline
-```
-
-![9041866c28ffef58c2597bc8cf6c272](https://user-images.githubusercontent.com/45811724/204810831-0fbc7f1c-0951-4be1-a11c-491cf0d194f6.png)
