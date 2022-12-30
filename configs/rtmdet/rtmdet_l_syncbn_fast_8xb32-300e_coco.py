@@ -81,7 +81,7 @@ model = dict(
         loss_bbox=dict(type='mmdet.GIoULoss', loss_weight=2.0)),
     train_cfg=dict(
         assigner=dict(
-            type='mmdet.DynamicSoftLabelAssigner',
+            type='BatchDynamicSoftLabelAssigner',
             topk=13,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D')),
         allowed_border=-1,
