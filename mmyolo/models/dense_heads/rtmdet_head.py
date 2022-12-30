@@ -333,7 +333,7 @@ class RTMDetHead(YOLOv5Head):
             cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1,
                                                   self.cls_out_channels)
             for cls_score in cls_scores
-        ], 1)
+        ], 1).contiguous()
 
         flatten_bboxes = torch.cat([
             bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
@@ -342,45 +342,84 @@ class RTMDetHead(YOLOv5Head):
         flatten_bboxes = flatten_bboxes * self.flatten_anchors[..., -1, None]
         flatten_bboxes = distance2bbox(self.flatten_anchors[..., :2],
                                        flatten_bboxes)
-        losses_bbox = []
-        losses_cls = []
-        num_poses = []
 
-        for i in range(num_imgs):
-            (labels, label_weights, bbox_targets,
-             assign_metrics) = self._get_targets_single(
-                 flatten_cls_scores[i].detach(), flatten_bboxes[i].detach(),
-                 batch_gt_instances[i], batch_img_metas[i])
+        batch_targes = multi_apply(self._get_targets_single,
+                                   flatten_cls_scores.detach(),
+                                   flatten_bboxes.detach(), batch_gt_instances,
+                                   batch_img_metas)
 
-            # FG cat_id: [0, num_classes -1], BG cat_id: num_classes
-            bg_class_ind = self.num_classes
-            pos_inds = ((labels >= 0)
-                        & (labels < bg_class_ind)).nonzero().squeeze(1)
+        (labels_list, label_weights_list, bbox_targets_list,
+         assign_metrics_list) = batch_targes
 
-            loss_cls = self.loss_cls(
-                flatten_cls_scores[i], (labels, assign_metrics),
-                label_weights,
-                avg_factor=1)
+        labels = torch.cat(labels_list, dim=0)
+        label_weights = torch.cat(label_weights_list, dim=0)
+        bbox_targets = torch.cat(bbox_targets_list, dim=0)
+        assign_metrics = torch.cat(assign_metrics_list, dim=0)
+        cls_preds = flatten_cls_scores.reshape(-1, self.num_classes)
+        bbox_preds = flatten_bboxes.reshape(-1, 4)
 
-            if len(pos_inds) > 0:
-                loss_bbox = self.loss_bbox(
-                    flatten_bboxes[i][pos_inds],
-                    bbox_targets[pos_inds],
-                    weight=assign_metrics[pos_inds],
-                    avg_factor=1)
-            else:
-                loss_bbox = flatten_bboxes.sum() * 0
+        # FG cat_id: [0, num_classes -1], BG cat_id: num_classes
+        bg_class_ind = self.num_classes
+        pos_inds = ((labels >= 0)
+                    & (labels < bg_class_ind)).nonzero().squeeze(1)
+        avg_factor = reduce_mean(assign_metrics.sum()).clamp_(min=1).item()
 
-            num_pos = assign_metrics.sum()
-            losses_bbox.append(loss_bbox)
-            losses_cls.append(loss_cls)
-            num_poses.append(num_pos)
+        loss_cls = self.loss_cls(
+            cls_preds, (labels, assign_metrics),
+            label_weights,
+            avg_factor=avg_factor)
 
-        avg_factor = reduce_mean(sum(num_poses)).clamp_(min=1).item()
-        losses_cls = list(map(lambda x: x / avg_factor, losses_cls))
-        losses_bbox = list(map(lambda x: x / avg_factor, losses_bbox))
+        if len(pos_inds) > 0:
+            loss_bbox = self.loss_bbox(
+                bbox_preds[pos_inds],
+                bbox_targets[pos_inds],
+                weight=assign_metrics[pos_inds],
+                avg_factor=avg_factor)
+        else:
+            loss_bbox = bbox_preds.sum() * 0
 
-        return dict(loss_cls=losses_cls, loss_bbox=losses_bbox)
+        return dict(loss_cls=loss_cls, loss_bbox=loss_bbox)
+
+
+        # losses_bbox = []
+        # losses_cls = []
+        # num_poses = []
+
+        # for i in range(num_imgs):
+        #     (labels, label_weights, bbox_targets,
+        #      assign_metrics) = self._get_targets_single(
+        #          flatten_cls_scores[i].detach(), flatten_bboxes[i].detach(),
+        #          batch_gt_instances[i], batch_img_metas[i])
+
+        #     # FG cat_id: [0, num_classes -1], BG cat_id: num_classes
+        #     bg_class_ind = self.num_classes
+        #     pos_inds = ((labels >= 0)
+        #                 & (labels < bg_class_ind)).nonzero().squeeze(1)
+
+        #     loss_cls = self.loss_cls(
+        #         flatten_cls_scores[i], (labels, assign_metrics),
+        #         label_weights,
+        #         avg_factor=1)
+
+        #     if len(pos_inds) > 0:
+        #         loss_bbox = self.loss_bbox(
+        #             flatten_bboxes[i][pos_inds],
+        #             bbox_targets[pos_inds],
+        #             weight=assign_metrics[pos_inds],
+        #             avg_factor=1)
+        #     else:
+        #         loss_bbox = flatten_bboxes.sum() * 0
+
+        #     num_pos = assign_metrics.sum()
+        #     losses_bbox.append(loss_bbox)
+        #     losses_cls.append(loss_cls)
+        #     num_poses.append(num_pos)
+
+        # avg_factor = reduce_mean(sum(num_poses)).clamp_(min=1).item()
+        # losses_cls = list(map(lambda x: x / avg_factor, losses_cls))
+        # losses_bbox = list(map(lambda x: x / avg_factor, losses_bbox))
+
+        # return dict(loss_cls=losses_cls, loss_bbox=losses_bbox)
 
     def _get_targets_single(self,
                             cls_scores: Tensor,
