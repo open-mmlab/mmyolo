@@ -402,6 +402,51 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         results['gt_bboxes_labels'] = np.array(
             gt_bboxes_labels, dtype=np.int64)
 
+    def _process_masks(self, results: dict) -> list:
+        """Process gt_masks and filter invalid polygons.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+
+        Returns:
+            list: Processed gt_masks.
+        """
+        gt_masks = []
+        gt_ignore_flags = []
+        for instance in results.get('instances', []):
+            if instance['ignore_flag'] == 1:
+                continue
+            gt_mask = instance['mask']
+            # If the annotation of segmentation mask is invalid,
+            # ignore the whole instance.
+            if isinstance(gt_mask, list):
+                gt_mask = [
+                    np.array(polygon) for polygon in gt_mask
+                    if len(polygon) % 2 == 0 and len(polygon) >= 6
+                ]
+                if len(gt_mask) == 0:
+                    # ignore this instance and set gt_mask to a fake mask
+                    instance['ignore_flag'] = 1
+                    gt_mask = [np.zeros(6)]
+            elif not self.poly2mask:
+                # `PolygonMasks` requires a ploygon of format List[np.array],
+                # other formats are invalid.
+                instance['ignore_flag'] = 1
+                gt_mask = [np.zeros(6)]
+            elif isinstance(gt_mask, dict) and \
+                    not (gt_mask.get('counts') is not None and
+                         gt_mask.get('size') is not None and
+                         isinstance(gt_mask['counts'], (list, str))):
+                # if gt_mask is a dict, it should include `counts` and `size`,
+                # so that `BitmapMasks` can uncompressed RLE
+                instance['ignore_flag'] = 1
+                gt_mask = [np.zeros(6)]
+            gt_masks.append(gt_mask)
+            # re-process gt_ignore_flags
+            gt_ignore_flags.append(instance['ignore_flag'])
+        results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=np.bool)
+        return gt_masks
+
 
 @TRANSFORMS.register_module()
 class YOLOv5RandomAffine(BaseTransform):
