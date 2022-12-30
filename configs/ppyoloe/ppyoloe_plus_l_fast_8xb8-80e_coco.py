@@ -10,3 +10,5 @@ model = dict(
         widen_factor=widen_factor,
     ),
     bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
+
+load_from = 'baidumodel/ppyoloe_plus_l_pretrained.pth'

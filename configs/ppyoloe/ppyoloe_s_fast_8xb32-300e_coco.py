@@ -22,4 +22,4 @@ default_hooks = dict(param_scheduler=dict(total_epochs=int(max_epochs * 1.2)))
 train_cfg = dict(max_epochs=max_epochs)
 
 # TODO: add imagenet pretrained model
-load_from = None
+load_from = 'baidumodel/CSPResNetb_s_pretrained.pth'

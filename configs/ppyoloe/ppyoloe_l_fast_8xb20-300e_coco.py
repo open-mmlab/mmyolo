@@ -14,3 +14,5 @@ model = dict(
     bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
 
 train_dataloader = dict(batch_size=train_batch_size_per_gpu)
+
+load_from = 'baidumodel/CSPResNetb_l_pretrained.pth'
