@@ -365,7 +365,7 @@ model = dict(
     ))
 ```
 
-In addition, MMYOLO can also use the parameter 'freeze_all' to freeze the whole 'neck' part of the parameter. The following is an example of 'YOLOv5' to demonstrate, other algorithms are the same logic:
+In addition, it's able to freeze the whole `neck` with the parameter `freeze_all` in MMYOLO. The following is an example of `YOLOv5`. Other algorithms are the same logic.
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
