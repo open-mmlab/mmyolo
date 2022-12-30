@@ -3,6 +3,7 @@ from typing import List, Sequence
 
 import numpy as np
 import torch
+from mmdet.structures.mask import BaseInstanceMasks
 from mmengine.dataset import COLLATE_FUNCTIONS
 
 from ..registry import TASK_UTILS
@@ -29,6 +30,45 @@ def yolov5_collate(data_batch: Sequence) -> dict:
         'inputs': torch.stack(batch_imgs, 0),
         'data_samples': torch.cat(batch_bboxes_labels, 0)
     }
+
+
+@COLLATE_FUNCTIONS.register_module()
+def batch_collate(data_batch: Sequence) -> dict:
+    """Rewrite collate_fn to get faster training speed."""
+    batch_imgs = []
+    batch_bboxes_labels = []
+    batch_masks = []
+    for i in range(len(data_batch)):
+        datasamples = data_batch[i]['data_samples']
+        inputs = data_batch[i]['inputs']
+
+        gt_instances = datasamples.gt_instances
+        gt_bboxes = gt_instances.bboxes.tensor
+        gt_labels = gt_instances.labels
+        batch_idx = gt_labels.new_full((len(gt_labels), 1), i)
+        bboxes_labels = torch.cat((batch_idx, gt_labels[:, None], gt_bboxes),
+                                  dim=1)
+        batch_bboxes_labels.append(bboxes_labels)
+
+        batch_imgs.append(inputs)
+
+        if 'masks' in gt_instances:
+            gt_masks = gt_instances.masks
+            if isinstance(gt_masks, BaseInstanceMasks):
+                gt_masks = gt_masks.to_tensor(dtype=torch.bool, device='cpu')
+            batch_masks.append(gt_masks)
+
+    collated_results = {
+        'inputs': torch.stack(batch_imgs, 0),
+        'data_samples': {
+            'bboxes_labels': torch.cat(batch_bboxes_labels, 0)
+        }
+    }
+    if len(batch_masks) != 0:
+        assert len(batch_masks) == len(batch_bboxes_labels)
+        #  TODO: Consider downsampling mask
+        collated_results['data_samples']['masks'] = torch.cat(batch_masks, 0)
+    return collated_results
 
 
 @TASK_UTILS.register_module()

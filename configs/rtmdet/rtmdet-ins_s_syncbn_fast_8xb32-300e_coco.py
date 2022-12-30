@@ -18,9 +18,7 @@ model = dict(
     bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
 
 train_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(
         type='LoadAnnotations',
         with_bbox=True,
@@ -58,9 +56,7 @@ train_pipeline = [
 ]
 
 train_pipeline_stage2 = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(
         type='LoadAnnotations',
         with_bbox=True,

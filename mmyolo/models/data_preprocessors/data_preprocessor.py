@@ -25,12 +25,6 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
         """
         if not training:
             return super().forward(data, training)
-        assert isinstance(data['data_samples'], torch.Tensor), \
-            '"data_samples" should be a tensor, but got ' \
-            f'{type(data["data_samples"])}. The possible reason for this ' \
-            'is that you are not using it with ' \
-            '"mmyolo.datasets.utils.yolov5_collate". Please refer to ' \
-            '"configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py".'
 
         inputs = data['inputs'].to(self.device, non_blocking=True)
 
@@ -40,13 +34,21 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
         if self._enable_normalize:
             inputs = (inputs - self.mean) / self.std
 
-        data_samples = data['data_samples'].to(self.device, non_blocking=True)
+        masks = None
+        if isinstance(data['data_samples'], dict):
+            data_samples = data['data_samples']
+            bboxes_labels = data_samples['bboxes_labels'].to(
+                self.device, non_blocking=True)
+            masks = data_samples['masks'].to(self.device, non_blocking=True)
+        else:
+            assert isinstance(data['data_samples'], torch.Tensor)
+            bboxes_labels = data['data_samples'].to(
+                self.device, non_blocking=True)
 
-        if self.batch_augments is not None:
-            for batch_aug in self.batch_augments:
-                inputs, data_samples = batch_aug(inputs, data_samples)
+        # TODO: Support batch aug
 
         img_metas = [{'batch_input_shape': inputs.shape[2:]}] * len(inputs)
-        data_samples = {'bboxes_labels': data_samples, 'img_metas': img_metas}
-
+        data_samples = {'bboxes_labels': bboxes_labels, 'img_metas': img_metas}
+        if masks is not None:
+            data_samples['masks'] = masks
         return {'inputs': inputs, 'data_samples': data_samples}

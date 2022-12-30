@@ -6,15 +6,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import ConvModule, is_norm
+from mmdet.models.utils import filter_scores_and_topk, multi_apply
+from mmdet.structures.bbox import distance2bbox
+from mmdet.utils import ConfigType, InstanceList, OptInstanceList, reduce_mean
 from mmengine.model import (BaseModule, bias_init_with_prob, constant_init,
                             normal_init)
 from mmengine.structures import InstanceData
 from torch import Tensor
 
-from mmdet.models.utils import (filter_scores_and_topk, multi_apply)
 from mmyolo.registry import MODELS
-from mmdet.structures.bbox import distance2bbox
-from mmdet.utils import ConfigType, InstanceList, OptInstanceList, reduce_mean
 from .rtmdet_head import RTMDetHead, RTMDetSepBNHeadModule
 
 
@@ -314,7 +314,7 @@ class RTMDetInsHead(RTMDetHead):
 
         mlvl_strides = [
             flatten_priors.new_full(
-                (featmap_size.numel() * self.num_base_priors,), stride) for
+                (featmap_size.numel() * self.num_base_priors, ), stride) for
             featmap_size, stride in zip(featmap_sizes, self.featmap_strides)
         ]
         flatten_stride = torch.cat(mlvl_strides)
@@ -348,8 +348,9 @@ class RTMDetInsHead(RTMDetHead):
 
         results_list = []
         for (bboxes, scores, kernel_preds, mask_feat_pre_batch,
-             img_meta) in zip(flatten_decoded_bboxes, flatten_cls_scores, flatten_kernel_preds,
-                              mask_feat, batch_img_metas):
+             img_meta) in zip(flatten_decoded_bboxes, flatten_cls_scores,
+                              flatten_kernel_preds, mask_feat,
+                              batch_img_metas):
             ori_shape = img_meta['ori_shape']
             scale_factor = img_meta['scale_factor']
             input_shape_h, input_shape_w = img_meta['batch_input_shape'][:2]
@@ -364,16 +365,21 @@ class RTMDetInsHead(RTMDetHead):
                     scores,
                     score_thr,
                     nms_pre,
-                    results=dict(labels=labels[:, 0],
-                                 kernel_preds=kernel_preds,
-                                 strides=flatten_stride,
-                                 priors=flatten_priors))
+                    results=dict(
+                        labels=labels[:, 0],
+                        kernel_preds=kernel_preds,
+                        strides=flatten_stride,
+                        priors=flatten_priors))
                 labels = results['labels']
             else:
                 scores, labels, keep_idxs, results = filter_scores_and_topk(
-                    scores, score_thr, nms_pre, results=dict(kernel_preds=kernel_preds,
-                                                             strides=flatten_stride,
-                                                             priors=flatten_priors))
+                    scores,
+                    score_thr,
+                    nms_pre,
+                    results=dict(
+                        kernel_preds=kernel_preds,
+                        strides=flatten_stride,
+                        priors=flatten_priors))
 
             priors = results['priors']
             kernel_preds = results['kernel_preds']
@@ -412,17 +418,21 @@ class RTMDetInsHead(RTMDetHead):
 
                 # process mask
                 mask_logits = self._mask_predict_by_feat_single(
-                    mask_feat_pre_batch, results.kernel_preds, results.priors, results.strides)
+                    mask_feat_pre_batch, results.kernel_preds, results.priors,
+                    results.strides)
 
                 mask_logits = F.interpolate(
-                    mask_logits.unsqueeze(0), scale_factor=stride, mode='bilinear')
+                    mask_logits.unsqueeze(0),
+                    scale_factor=stride,
+                    mode='bilinear')
 
                 if rescale:
                     if pad_param is not None:
                         top_pad, bottom_pad, left_pad, right_pad = pad_param
                         top, left = int(top_pad), int(left_pad)
                         bottom, right = int(input_shape_h -
-                                            top_pad), int(input_shape_w - left_pad)
+                                            top_pad), int(input_shape_w -
+                                                          left_pad)
                         mask_logits = mask_logits[..., top:bottom, left:right]
 
                     mask_logits = F.interpolate(
@@ -435,7 +445,8 @@ class RTMDetInsHead(RTMDetHead):
                 masks = masks > cfg.mask_thr_binary
                 results.masks = masks
             else:
-                h, w = ori_shape[:2] if rescale else img_meta['batch_input_shape'][:2]
+                h, w = ori_shape[:2] if rescale else img_meta[
+                    'batch_input_shape'][:2]
                 results.masks = torch.zeros(
                     size=(results.bboxes.shape[0], h, w),
                     dtype=torch.bool,
@@ -465,8 +476,12 @@ class RTMDetInsHead(RTMDetHead):
 
         return weight_splits, bias_splits
 
-    def _mask_predict_by_feat_single(self, mask_feat: Tensor, kernels: Tensor,
-                                     priors: Tensor, strides: Tensor) -> Tensor:
+    def _mask_predict_by_feat_single(
+            self,
+            mask_feat: Tensor,
+            kernels: Tensor,
+            priors: Tensor,
+            strides: Optional[Tensor] = None) -> Tensor:
         """Generate mask logits from mask features with dynamic convs.
 
         Args:
@@ -494,9 +509,12 @@ class RTMDetInsHead(RTMDetHead):
             (h, w), level_idx=0).reshape(1, -1, 2)
         num_inst = priors.shape[0]
         points = priors[:, :2].reshape(-1, 1, 2)
-        strides = strides[:, None].repeat(1, 2).reshape(-1, 1, 2)
+        if strides is None:
+            strides = priors[:, 2:].reshape(-1, 1, 2)
+        else:
+            strides = strides[:, None].repeat(1, 2).reshape(-1, 1, 2)
         relative_coord = (points - coord).permute(0, 2, 1) / (
-                strides[..., 0].reshape(-1, 1, 1) * 8)
+            strides[..., 0].reshape(-1, 1, 1) * 8)
         relative_coord = relative_coord.reshape(num_inst, 2, h, w)
 
         mask_feat = torch.cat(
@@ -537,8 +555,8 @@ class RTMDetInsHead(RTMDetHead):
         pos_gt_masks = []
         for idx, (mask_feat, kernels, sampling_results,
                   gt_instances) in enumerate(
-            zip(mask_feats, flatten_kernels, sampling_results_list,
-                batch_gt_instances)):
+                      zip(mask_feats, flatten_kernels, sampling_results_list,
+                          batch_gt_instances)):
             pos_priors = sampling_results.pos_priors
             pos_inds = sampling_results.pos_inds
             pos_kernels = kernels[pos_inds]  # n_pos, num_gen_params
@@ -548,7 +566,7 @@ class RTMDetInsHead(RTMDetHead):
                 gt_masks = torch.empty_like(gt_instances.masks)
             else:
                 gt_masks = gt_instances.masks[
-                           sampling_results.pos_assigned_gt_inds, :]
+                    sampling_results.pos_assigned_gt_inds, :]
             batch_pos_mask_logits.append(pos_mask_logits)
             pos_gt_masks.append(gt_masks)
 
@@ -572,9 +590,9 @@ class RTMDetInsHead(RTMDetHead):
             align_corners=False).squeeze(0)
         # downsample gt masks
         pos_gt_masks = pos_gt_masks[:, self.mask_loss_stride //
-                                       2::self.mask_loss_stride,
-                       self.mask_loss_stride //
-                       2::self.mask_loss_stride]
+                                    2::self.mask_loss_stride,
+                                    self.mask_loss_stride //
+                                    2::self.mask_loss_stride]
 
         loss_mask = self.loss_mask(
             batch_pos_mask_logits,
@@ -618,8 +636,13 @@ class RTMDetInsHead(RTMDetHead):
         assert len(featmap_sizes) == self.prior_generator.num_levels
 
         device = cls_scores[0].device
-        anchor_list, valid_flag_list = self.get_anchors(
-            featmap_sizes, batch_img_metas, device=device)
+        # If the shape does not equal, generate new one
+        if featmap_sizes != self.featmap_sizes:
+            self.featmap_sizes = featmap_sizes
+            self.multi_level_anchors = self.prior_generator.grid_priors(
+                featmap_sizes, device=device, with_stride=True)
+        anchor_list = [self.multi_level_anchors for _ in range(num_imgs)]
+
         flatten_cls_scores = torch.cat([
             cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1,
                                                   self.cls_out_channels)
@@ -630,23 +653,33 @@ class RTMDetInsHead(RTMDetHead):
                                                     self.num_gen_params)
             for kernel_pred in kernel_preds
         ], 1)
+
         decoded_bboxes = []
-        for anchor, bbox_pred in zip(anchor_list[0], bbox_preds):
+        for anchor, bbox_pred, stride in zip(anchor_list[0], bbox_preds,
+                                             self.featmap_strides):
             anchor = anchor.reshape(-1, 4)
             bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
-            bbox_pred = distance2bbox(anchor, bbox_pred)
+            bbox_pred = distance2bbox(anchor, bbox_pred * stride)
             decoded_bboxes.append(bbox_pred)
 
         flatten_bboxes = torch.cat(decoded_bboxes, 1)
-        for gt_instances in batch_gt_instances:
-            gt_instances.masks = gt_instances.masks.to_tensor(
-                dtype=torch.bool, device=device)
+
+        batch_instance_list = []
+        bboxes_labels, masks = batch_gt_instances
+        for i in range(num_imgs):
+            single_bboxes_labels = bboxes_labels[bboxes_labels[:, 0] == i, :]
+            single_masks = masks[bboxes_labels[:, 0] == i, :]
+            single_gt_instance = InstanceData(
+                bboxes=single_bboxes_labels[:, 2:],
+                labels=single_bboxes_labels[:, 1],
+                masks=single_masks)
+            batch_instance_list.append(single_gt_instance)
+        batch_gt_instances = batch_instance_list
 
         cls_reg_targets = self.get_targets(
             flatten_cls_scores,
             flatten_bboxes,
             anchor_list,
-            valid_flag_list,
             batch_gt_instances,
             batch_img_metas,
             batch_gt_instances_ignore=batch_gt_instances_ignore)
@@ -654,15 +687,15 @@ class RTMDetInsHead(RTMDetHead):
          assign_metrics_list, sampling_results_list) = cls_reg_targets
 
         losses_cls, losses_bbox, \
-        cls_avg_factors, bbox_avg_factors = multi_apply(
-            self.loss_by_feat_single,
-            cls_scores,
-            decoded_bboxes,
-            labels_list,
-            label_weights_list,
-            bbox_targets_list,
-            assign_metrics_list,
-            self.prior_generator.strides)
+            cls_avg_factors, bbox_avg_factors = multi_apply(
+                self.loss_by_feat_single,
+                cls_scores,
+                decoded_bboxes,
+                labels_list,
+                label_weights_list,
+                bbox_targets_list,
+                assign_metrics_list,
+                self.prior_generator.strides)
 
         cls_avg_factor = reduce_mean(sum(cls_avg_factors)).clamp_(min=1).item()
         losses_cls = list(map(lambda x: x / cls_avg_factor, losses_cls))
@@ -699,14 +732,14 @@ class MaskFeatModule(BaseModule):
     """
 
     def __init__(
-            self,
-            in_channels: int,
-            feat_channels: int = 256,
-            stacked_convs: int = 4,
-            num_levels: int = 3,
-            num_prototypes: int = 8,
-            act_cfg: ConfigType = dict(type='ReLU', inplace=True),
-            norm_cfg: ConfigType = dict(type='BN')
+        self,
+        in_channels: int,
+        feat_channels: int = 256,
+        stacked_convs: int = 4,
+        num_levels: int = 3,
+        num_prototypes: int = 8,
+        act_cfg: ConfigType = dict(type='ReLU', inplace=True),
+        norm_cfg: ConfigType = dict(type='BN')
     ) -> None:
         super().__init__(init_cfg=None)
         self.num_levels = num_levels

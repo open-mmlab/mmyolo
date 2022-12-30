@@ -24,7 +24,8 @@ model = dict(
             loss_weight=1.0),
         loss_bbox=dict(type='mmdet.GIoULoss', loss_weight=2.0),
         loss_mask=dict(
-            type='mmdet.DiceLoss', loss_weight=2.0, eps=5e-6, reduction='mean')),
+            type='mmdet.DiceLoss', loss_weight=2.0, eps=5e-6,
+            reduction='mean')),
     test_cfg=dict(
         multi_label=True,
         nms_pre=30000,
@@ -35,9 +36,7 @@ model = dict(
 )
 
 train_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(
         type='LoadAnnotations',
         with_bbox=True,
@@ -77,9 +76,7 @@ train_pipeline = [
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
 
 train_pipeline_stage2 = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(
         type='LoadAnnotations',
         with_bbox=True,

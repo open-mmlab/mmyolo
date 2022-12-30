@@ -445,8 +445,16 @@ class YOLOv5Head(BaseDenseHead):
         else:
             outs = self(x)
             # Fast version
-            loss_inputs = outs + (batch_data_samples['bboxes_labels'],
-                                  batch_data_samples['img_metas'])
+            # TODO: Refactoring to unify interfaces
+            if len(batch_data_samples) > 2:
+                # Includes other data such as mask
+                loss_inputs = outs + ([
+                    batch_data_samples['bboxes_labels'],
+                    batch_data_samples['masks']
+                ], batch_data_samples['img_metas'])
+            else:
+                loss_inputs = outs + (batch_data_samples['bboxes_labels'],
+                                      batch_data_samples['img_metas'])
             losses = self.loss_by_feat(*loss_inputs)
 
         return losses

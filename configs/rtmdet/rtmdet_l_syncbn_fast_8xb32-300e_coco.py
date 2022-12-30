@@ -160,7 +160,7 @@ train_dataloader = dict(
     num_workers=train_num_workers,
     persistent_workers=persistent_workers,
     pin_memory=True,
-    collate_fn=dict(type='yolov5_collate'),
+    collate_fn=dict(type='batch_collate'),
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,

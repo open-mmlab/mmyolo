@@ -51,20 +51,20 @@ class RTMDetSepBNHeadModule(BaseModule):
     """
 
     def __init__(
-            self,
-            num_classes: int,
-            in_channels: int,
-            widen_factor: float = 1.0,
-            num_base_priors: int = 1,
-            feat_channels: int = 256,
-            stacked_convs: int = 2,
-            featmap_strides: Sequence[int] = [8, 16, 32],
-            share_conv: bool = True,
-            pred_kernel_size: int = 1,
-            conv_cfg: OptConfigType = None,
-            norm_cfg: ConfigType = dict(type='BN'),
-            act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-            init_cfg: OptMultiConfig = None,
+        self,
+        num_classes: int,
+        in_channels: int,
+        widen_factor: float = 1.0,
+        num_base_priors: int = 1,
+        feat_channels: int = 256,
+        stacked_convs: int = 2,
+        featmap_strides: Sequence[int] = [8, 16, 32],
+        share_conv: bool = True,
+        pred_kernel_size: int = 1,
+        conv_cfg: OptConfigType = None,
+        norm_cfg: ConfigType = dict(type='BN'),
+        act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+        init_cfg: OptMultiConfig = None,
     ):
         super().__init__(init_cfg=init_cfg)
         self.share_conv = share_conv
@@ -208,28 +208,28 @@ class RTMDetHead(YOLOv5Head):
             Defaults to None.
     """
 
-    def __init__(
-            self,
-            head_module: nn.Module,
-            prior_generator: ConfigType = dict(
-                type='mmdet.MlvlPointGenerator', offset=0, strides=[8, 16,
-                                                                    32]),
-            bbox_coder: ConfigType = dict(type='DistancePointBBoxCoder'),
-            loss_cls: ConfigType = dict(
-                type='mmdet.QualityFocalLoss',
-                use_sigmoid=True,
-                beta=2.0,
-                loss_weight=1.0),
-            loss_bbox: ConfigType = dict(
-                type='mmdet.GIoULoss', loss_weight=2.0),
-            loss_obj: ConfigType = dict(
-                type='mmdet.CrossEntropyLoss',
-                use_sigmoid=True,
-                reduction='sum',
-                loss_weight=1.0),
-            train_cfg: OptConfigType = None,
-            test_cfg: OptConfigType = None,
-            init_cfg: OptMultiConfig = None):
+    def __init__(self,
+                 head_module: nn.Module,
+                 prior_generator: ConfigType = dict(
+                     type='mmdet.MlvlPointGenerator',
+                     offset=0,
+                     strides=[8, 16, 32]),
+                 bbox_coder: ConfigType = dict(type='DistancePointBBoxCoder'),
+                 loss_cls: ConfigType = dict(
+                     type='mmdet.QualityFocalLoss',
+                     use_sigmoid=True,
+                     beta=2.0,
+                     loss_weight=1.0),
+                 loss_bbox: ConfigType = dict(
+                     type='mmdet.GIoULoss', loss_weight=2.0),
+                 loss_obj: ConfigType = dict(
+                     type='mmdet.CrossEntropyLoss',
+                     use_sigmoid=True,
+                     reduction='sum',
+                     loss_weight=1.0),
+                 train_cfg: OptConfigType = None,
+                 test_cfg: OptConfigType = None,
+                 init_cfg: OptMultiConfig = None):
 
         super().__init__(
             head_module=head_module,
@@ -374,8 +374,9 @@ class RTMDetHead(YOLOv5Head):
             for i in range(num_imgs):
                 single_batch_instance = \
                     batch_gt_instances[batch_gt_instances[:, 0] == i, :]
-                single_gt_instance = InstanceData(bboxes=single_batch_instance[:, 2:],
-                                                  labels=single_batch_instance[:, 1])
+                single_gt_instance = InstanceData(
+                    bboxes=single_batch_instance[:, 2:],
+                    labels=single_batch_instance[:, 1])
                 batch_instance_list.append(single_gt_instance)
             batch_gt_instances = batch_instance_list
 
@@ -394,7 +395,8 @@ class RTMDetHead(YOLOv5Head):
             for cls_score in cls_scores
         ], 1)
         decoded_bboxes = []
-        for anchor, bbox_pred, stride in zip(anchor_list[0], bbox_preds, self.featmap_strides):
+        for anchor, bbox_pred, stride in zip(anchor_list[0], bbox_preds,
+                                             self.featmap_strides):
             anchor = anchor.reshape(-1, 4)
             bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
             bbox_pred = distance2bbox(anchor, bbox_pred * stride)
@@ -410,18 +412,18 @@ class RTMDetHead(YOLOv5Head):
             batch_img_metas,
             batch_gt_instances_ignore=batch_gt_instances_ignore)
         (anchor_list, labels_list, label_weights_list, bbox_targets_list,
-         assign_metrics_list) = cls_reg_targets
+         assign_metrics_list, _) = cls_reg_targets
 
         losses_cls, losses_bbox, \
-        cls_avg_factors, bbox_avg_factors = multi_apply(
-            self.loss_by_feat_single,
-            cls_scores,
-            decoded_bboxes,
-            labels_list,
-            label_weights_list,
-            bbox_targets_list,
-            assign_metrics_list,
-            self.prior_generator.strides)
+            cls_avg_factors, bbox_avg_factors = multi_apply(
+                self.loss_by_feat_single,
+                cls_scores,
+                decoded_bboxes,
+                labels_list,
+                label_weights_list,
+                bbox_targets_list,
+                assign_metrics_list,
+                self.prior_generator.strides)
 
         cls_avg_factor = reduce_mean(sum(cls_avg_factors)).clamp_(min=1).item()
         losses_cls = list(map(lambda x: x / cls_avg_factor, losses_cls))
@@ -431,13 +433,15 @@ class RTMDetHead(YOLOv5Head):
         losses_bbox = list(map(lambda x: x / bbox_avg_factor, losses_bbox))
         return dict(loss_cls=losses_cls, loss_bbox=losses_bbox)
 
-    def get_targets(self,
-                    cls_scores: Tensor,
-                    bbox_preds: Tensor,
-                    anchor_list: List[List[Tensor]],
-                    batch_gt_instances: InstanceList,
-                    batch_img_metas: List[dict],
-                    batch_gt_instances_ignore: OptInstanceList = None) -> Union[tuple, None]:
+    def get_targets(
+        self,
+        cls_scores: Tensor,
+        bbox_preds: Tensor,
+        anchor_list: List[List[Tensor]],
+        batch_gt_instances: InstanceList,
+        batch_img_metas: List[dict],
+        batch_gt_instances_ignore: OptInstanceList = None
+    ) -> Union[tuple, None]:
         """Compute regression and classification targets for anchors in
         multiple images.
 
@@ -487,14 +491,13 @@ class RTMDetHead(YOLOv5Head):
             batch_gt_instances_ignore = [None] * num_imgs
         # anchor_list: list(b * [-1, 4])
         (all_anchors, all_labels, all_label_weights, all_bbox_targets,
-         all_assign_metrics) = multi_apply(
-            self._get_targets_single,
-            cls_scores.detach(),
-            bbox_preds.detach(),
-            anchor_list,
-            batch_gt_instances,
-            batch_img_metas,
-            batch_gt_instances_ignore)
+         all_assign_metrics,
+         sampling_results_list) = multi_apply(self._get_targets_single,
+                                              cls_scores.detach(),
+                                              bbox_preds.detach(), anchor_list,
+                                              batch_gt_instances,
+                                              batch_img_metas,
+                                              batch_gt_instances_ignore)
         # no valid anchors
         if any([labels is None for labels in all_labels]):
             return None
@@ -510,15 +513,16 @@ class RTMDetHead(YOLOv5Head):
                                                num_level_anchors)
 
         return (anchors_list, labels_list, label_weights_list,
-                bbox_targets_list, assign_metrics_list)
+                bbox_targets_list, assign_metrics_list, sampling_results_list)
 
-    def _get_targets_single(self,
-                            cls_scores: Tensor,
-                            bbox_preds: Tensor,
-                            flat_anchors: Tensor,
-                            gt_instances: InstanceData,
-                            img_meta: dict,
-                            gt_instances_ignore: Optional[InstanceData] = None) -> tuple:
+    def _get_targets_single(
+            self,
+            cls_scores: Tensor,
+            bbox_preds: Tensor,
+            flat_anchors: Tensor,
+            gt_instances: InstanceData,
+            img_meta: dict,
+            gt_instances_ignore: Optional[InstanceData] = None) -> tuple:
         """Compute regression, classification targets for anchors in a single
         image.
 
@@ -552,9 +556,7 @@ class RTMDetHead(YOLOv5Head):
         # assign gt and sample anchors
         anchors = flat_anchors
         pred_instances = InstanceData(
-            scores=cls_scores,
-            bboxes=bbox_preds,
-            priors=anchors)
+            scores=cls_scores, bboxes=bbox_preds, priors=anchors)
 
         assign_result = self.assigner.assign(pred_instances, gt_instances,
                                              gt_instances_ignore)
@@ -564,7 +566,7 @@ class RTMDetHead(YOLOv5Head):
 
         num_valid_anchors = anchors.shape[0]
         bbox_targets = torch.zeros_like(anchors)
-        labels = anchors.new_full((num_valid_anchors,),
+        labels = anchors.new_full((num_valid_anchors, ),
                                   self.num_classes,
                                   dtype=torch.long)
         label_weights = anchors.new_zeros(num_valid_anchors, dtype=torch.float)
@@ -594,4 +596,5 @@ class RTMDetHead(YOLOv5Head):
             assign_metrics[gt_class_inds] = assign_result.max_overlaps[
                 gt_class_inds]
 
-        return anchors, labels, label_weights, bbox_targets, assign_metrics
+        return anchors, labels, label_weights, bbox_targets, \
+            assign_metrics, sampling_result
