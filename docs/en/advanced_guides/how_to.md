@@ -353,8 +353,8 @@ model = dict(
 
 #### Freeze the weight of backbone or neck
 
-In MMYOLO, we can freeze some 'stages' of the backbone network by setting' frozen_stages' parameters, so that these 'stages' parameters do not participate in model updating.
-It should be noted that 'frozen_stages = i' means that all parameters from the initial 'stage' to the 'ith' layer 'stage' will be frozen. The following is a demonstration of 'YOLOv5' as an example, and other algorithms have the same logic:
+In MMYOLO, we can freeze some `stages` of the backbone network by setting `frozen_stages` parameters, so that these `stage` parameters do not participate in model updating.
+It should be noted that `frozen_stages = i` means that all parameters from the initial `stage` to the `i`<sup>th</sup> `stage` will be frozen. The following is an example of `YOLOv5`. Other algorithms are the same logic.
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
