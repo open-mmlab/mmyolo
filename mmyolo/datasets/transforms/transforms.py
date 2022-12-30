@@ -768,13 +768,17 @@ class DamoyoloResize(MMDET_Resize):
         if self.keep_ratio:
             scale_factor = min(self.width / w, self.height / h)
             results['scale_factor'] = (scale_factor, scale_factor)
-            real_w, real_h = int(w * float(scale_factor) +
-                                 0.5), int(h * float(scale_factor) + 0.5)
-            img, scale_factor = mmcv.imrescale(
-                results['img'], (real_w, real_h),
-                interpolation=self.interpolation,
-                return_scale=True,
-                backend=self.backend)
+            real_w, real_h = int(w * float(scale_factor)), int(h * float(scale_factor))
+            cv2_interp_codes = {
+                'nearest': cv2.INTER_NEAREST,
+                'bilinear': cv2.INTER_LINEAR,
+                'bicubic': cv2.INTER_CUBIC,
+                'area': cv2.INTER_AREA,
+                'lanczos': cv2.INTER_LANCZOS4
+            }
+            cv2_interp  = cv2_interp_codes[self.interpolation]
+            img = cv2.resize(results['img'], (real_w, real_h),
+                           interpolation=cv2_interp).astype(np.uint8)
             # the w_scale and h_scale has minor difference
             # a real fix should be done in the mmcv.imrescale in the future
             results['img'] = img

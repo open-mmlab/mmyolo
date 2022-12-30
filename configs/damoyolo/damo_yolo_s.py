@@ -1,7 +1,7 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/coco20/'
+data_root = 'data/coco25/'
 dataset_type = 'mmdet.CocoDataset'
 
 # parameters that often need to be modified
@@ -10,7 +10,7 @@ max_epochs = 300
 save_epoch_intervals = 10
 train_batch_size_per_gpu = 2
 train_num_workers = 2
-val_batch_size_per_gpu = 20
+val_batch_size_per_gpu = 25
 val_num_workers = 2
 base_lr = 0.01
 

@@ -507,9 +507,6 @@ class ZeroHead(BaseDenseHead):
             ]
             self.mlvl_priors = torch.cat(mlvl_priors_list, dim=1)
             self.feat_size[0] = x[0].shape
-        # x = (torch.ones((20,128,80,80),device='cuda'),
-        #      torch.ones((20,256,40,40),device='cuda'),
-        #      torch.ones((20,512,20,20),device='cuda'))
         # forward for bboxes and classification prediction
         cls_scores, bbox_preds,bbox_before_softmax = multi_apply(
             self.forward_single,

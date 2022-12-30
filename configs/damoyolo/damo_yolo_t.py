@@ -1,0 +1,35 @@
+_base_ = './damo_yolo_s.py'
+
+model = dict(
+    type='DAMOYOLODetector',
+    data_preprocessor=dict(
+        type='mmdet.DetDataPreprocessor',
+        mean=[0., 0., 0.],
+        std=[1., 1., 1.],
+        bgr_to_rgb=True),
+    backbone=dict(type='TinyNAS_res',
+                  out_indices=(2, 4, 5),
+                  with_spp=True,
+                  use_focus=True,
+                  act='relu',
+                  reparam=True,
+                  backbone_structure='t',
+                  ),
+    neck=dict(type='GiraffeNeckv2',
+              depth=1.0,
+              hidden_ratio=1.0,
+              in_channels=[96, 192, 384],
+              out_channels=[64, 128, 256],
+              act='relu',
+              spp=False,
+              block_name='BasicBlock_3x3_Reverse',
+              ),
+    bbox_head=dict(type='ZeroHead',
+                   num_classes=80,
+                   in_channels=[64, 128, 256],
+                   stacked_convs=0,
+                   reg_max=16,
+                   act='silu',
+                   nms_conf_thre=0.05,
+                   nms_iou_thre=0.7
+                   ))

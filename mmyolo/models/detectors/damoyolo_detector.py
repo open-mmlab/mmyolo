@@ -96,8 +96,6 @@ class DAMOYOLODetector(SingleStageDetector):
         for layer in self.modules():
             if isinstance(layer, RepConv):
                 layer.switch_to_deploy()
-        # import torch
-        # batch_inputs = torch.ones((20, 3, 640, 640), device='cuda')
         x = self.extract_feat(batch_inputs)
         results_list = self.bbox_head.predict(
             x, batch_data_samples, rescale=rescale)
