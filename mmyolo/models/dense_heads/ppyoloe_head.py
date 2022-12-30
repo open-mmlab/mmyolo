@@ -374,17 +374,8 @@ class PPYOLOEHead(YOLOv6Head):
                 weight=bbox_weight.expand(-1, 4).reshape(-1),
                 avg_factor=assigned_scores_sum)
 
-            # l1 loss
-            loss_l1 = F.l1_loss(pred_bboxes_pos, assigned_bboxes_pos)
-
         else:
             loss_bbox = flatten_pred_bboxes.sum() * 0
             loss_dfl = flatten_pred_bboxes.sum() * 0
-            loss_l1 = (flatten_pred_bboxes.sum() * 0)
 
-        return dict(
-            loss_cls=loss_cls,
-            loss_bbox=loss_bbox,
-            loss_dfl=loss_dfl,
-            # loss_l1 do not participate in backward
-            loss_l1=loss_l1.detach())
+        return dict(loss_cls=loss_cls, loss_bbox=loss_bbox, loss_dfl=loss_dfl)
