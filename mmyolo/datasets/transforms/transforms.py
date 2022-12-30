@@ -1,7 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
-from numbers import Number
-from typing import List, Sequence, Tuple, Union
+from typing import List, Tuple, Union
 
 import cv2
 import mmcv
@@ -798,89 +797,6 @@ class PPYOLOERandomDistort(BaseTransform):
         distortions = random.permutation(functions)[:self.distortion_num]
         for func in distortions:
             results = func(results)
-        return results
-
-
-@TRANSFORMS.register_module()
-class PPYOLOERandomExpand(BaseTransform):
-    """Random expand the canvas.
-
-    Required Keys:
-
-    - img
-    - gt_bboxes (BaseBoxes[torch.float32]) (optional)
-
-    Modified Keys:
-
-    - img
-    - img_shape (tuple)
-    - gt_bboxes (optional)
-
-    Added Keys:
-    - pad_param (np.float32)
-
-    Args:
-        expand_ratio (float): Maximum expansion ratio.
-        prob (float): The transformation probability. Defaults to 0.5.
-        pad_value (Union[tuple, int, float]): Color value used to fill
-            the canvas in BGR order.
-    """
-
-    def __init__(self,
-                 expand_ratio: float = 4.,
-                 prob: float = 0.5,
-                 pad_value: Union[tuple, int, float] = (127.5, 127.5, 127.5)):
-        assert expand_ratio > 1.01, 'expand ratio must be larger than 1.01'
-        self.expand_ratio = expand_ratio
-        self.prob = prob
-        assert 0. <= self.prob <= 1.
-        assert isinstance(pad_value, (Number, Sequence)), \
-            'fill value must be either float or sequence'
-        if isinstance(pad_value, Number):
-            pad_value = (pad_value, ) * 3
-        if not isinstance(pad_value, tuple):
-            pad_value = tuple(pad_value)
-        self.pad_value = pad_value
-
-    def transform(self, results: dict) -> dict:
-        """The random expand augmentation transform function.
-
-        Args:
-            results (dict): The result dict.
-
-        Returns:
-            dict: The result dict.
-        """
-        if random.uniform(0., 1.) >= self.prob:
-            return results
-
-        img = results['img']
-        height, width = img.shape[:2]
-        expand_ratio = random.uniform(1., self.expand_ratio)
-        h = int(height * expand_ratio)
-        w = int(width * expand_ratio)
-        if not h > height or not w > width:
-            return results
-        top_padding = random.randint(0, h - height)
-        left_padding = random.randint(0, w - width)
-
-        right_padding = w - width - left_padding
-        bottom_padding = h - height - top_padding
-        img = img.astype(np.float32)
-        img = mmcv.impad(
-            img=img,
-            padding=(left_padding, top_padding, right_padding, bottom_padding),
-            pad_val=self.pad_value,
-            padding_mode='constant')
-
-        results['img'] = img
-        results['img_shape'] = img.shape
-        results['pad_param'] = np.array(
-            [top_padding, bottom_padding, left_padding, right_padding],
-            dtype=np.float32)
-        results['gt_bboxes'].translate_(
-            (results['pad_param'][2], results['pad_param'][0]))
-
         return results
 
 
