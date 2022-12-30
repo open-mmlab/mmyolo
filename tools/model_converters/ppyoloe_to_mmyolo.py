@@ -102,8 +102,7 @@ def convert(src, dst):
             if ('anchor_points' in k) or ('stride_tensor' in k):
                 continue
             if 'proj_conv' in k:
-                name = k.replace('yolo_head.proj_conv.',
-                                 'bbox_head.head_module.proj_conv.')
+                continue
             else:
                 for org_key, rep_key in [[
                         'yolo_head.stem_cls.',

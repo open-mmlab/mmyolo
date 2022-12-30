@@ -724,6 +724,7 @@ class PPYOLOERandomDistort(BaseTransform):
 
     def transform_hue(self, results):
         """Transform hue randomly."""
+        # TODO: 待优化注释、变量名，要搞清楚参数的原因
         if random.uniform(0., 1.) >= self.hue_cfg['prob']:
             return results
 
@@ -750,6 +751,7 @@ class PPYOLOERandomDistort(BaseTransform):
         delta = random.uniform(self.saturation_cfg['min'],
                                self.saturation_cfg['max'])
 
+        # convert bgr img to gray img
         gray = img * np.array([[[0.114, 0.587, 0.299]]], dtype=np.float32)
         gray = gray.sum(axis=2, keepdims=True)
         gray *= (1.0 - delta)
