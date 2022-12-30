@@ -856,6 +856,59 @@ class PPYOLOERandomCrop(MMDET_RandomCrop):
         self.allow_no_crop = allow_no_crop
         self.cover_all_box = cover_all_box
 
+    def _crop_data(self, results: dict, crop_box: Tuple[int, int, int, int],
+                   valid_inds: np.ndarray) -> Union[dict, None]:
+        """Function to randomly crop images, bounding boxes, masks, semantic
+        segmentation maps.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+            crop_box (Tuple[int, int, int, int]): Expected absolute coordinates
+                for cropping, (x1, y1, x2, y2).
+            valid_inds (np.ndarray): The indexes of gt that needs to be
+                retained.
+
+        Returns:
+            results (Union[dict, None]): Randomly cropped results, 'img_shape'
+                key in result dict is updated according to crop size. None will
+                be returned when there is no valid bbox after cropping.
+        """
+        # crop the image
+        img = results['img']
+        crop_x1, crop_y1, crop_x2, crop_y2 = crop_box
+        img = img[crop_y1:crop_y2, crop_x1:crop_x2, ...]
+        results['img'] = img
+        img_shape = img.shape
+        results['img_shape'] = img.shape
+
+        # crop bboxes accordingly and clip to the image boundary
+        if results.get('gt_bboxes', None) is not None:
+            bboxes = results['gt_bboxes']
+            bboxes.translate_([-crop_x1, -crop_y1])
+            bboxes.clip_(img_shape[:2])
+
+            results['gt_bboxes'] = bboxes[valid_inds]
+
+            if results.get('gt_ignore_flags', None) is not None:
+                results['gt_ignore_flags'] = \
+                    results['gt_ignore_flags'][valid_inds]
+
+            if results.get('gt_bboxes_labels', None) is not None:
+                results['gt_bboxes_labels'] = \
+                    results['gt_bboxes_labels'][valid_inds]
+
+            if results.get('gt_masks', None) is not None:
+                results['gt_masks'] = results['gt_masks'][
+                    valid_inds.nonzero()[0]].crop(
+                        np.asarray([crop_x1, crop_y1, crop_x2, crop_y2]))
+
+        # crop semantic seg
+        if results.get('gt_seg_map', None) is not None:
+            results['gt_seg_map'] = results['gt_seg_map'][crop_y1:crop_y2,
+                                                          crop_x1:crop_x2]
+
+        return results
+
     @autocast_box_type()
     def transform(self, results: dict) -> Union[dict, None]:
         """The random crop transform function.
@@ -886,27 +939,18 @@ class PPYOLOERandomCrop(MMDET_RandomCrop):
 
             found = False
             for i in range(self.num_attempts):
-                scale = random.uniform(*self.scaling)
-                if self.aspect_ratio is not None:
-                    min_ar, max_ar = self.aspect_ratio
-                    aspect_ratio = random.uniform(
-                        max(min_ar, scale**2), min(max_ar, scale**-2))
-                    h_scale = scale / np.sqrt(aspect_ratio)
-                    w_scale = scale * np.sqrt(aspect_ratio)
-                else:
-                    h_scale = random.uniform(*self.scaling)
-                    w_scale = random.uniform(*self.scaling)
-                crop_h = h * h_scale
-                crop_w = w * w_scale
+                crop_h, crop_w = self._get_crop_size((h, w))
                 if self.aspect_ratio is None:
                     if crop_h / crop_w < 0.5 or crop_h / crop_w > 2.0:
                         continue
 
-                crop_h = int(crop_h)
-                crop_w = int(crop_w)
-                crop_y = random.randint(0, h - crop_h)
-                crop_x = random.randint(0, w - crop_w)
-                crop_box = [crop_x, crop_y, crop_x + crop_w, crop_y + crop_h]
+                margin_h = max(img_shape[0] - crop_h, 0)
+                margin_w = max(img_shape[1] - crop_w, 0)
+                offset_h, offset_w = self._rand_offset((margin_h, margin_w))
+                crop_y1, crop_y2 = offset_h, offset_h + crop_h
+                crop_x1, crop_x2 = offset_w, offset_w + crop_w
+
+                crop_box = [crop_x1, crop_y1, crop_x2, crop_y2]
                 iou = self._iou_matrix(gt_bbox,
                                        np.array([crop_box], dtype=np.float32))
                 if iou.max() < thresh:
@@ -922,43 +966,34 @@ class PPYOLOERandomCrop(MMDET_RandomCrop):
                     break
 
             if found:
-                # crop the image
-                img = results['img']
-                crop_x1, crop_y1, crop_x2, crop_y2 = crop_box
-                img = img[crop_y1:crop_y2, crop_x1:crop_x2, ...]
-                results['img'] = img
-                img_shape = img.shape
-                results['img_shape'] = img.shape
-
-                # crop bboxes accordingly and clip to the image boundary
-                if results.get('gt_bboxes', None) is not None:
-                    bboxes = results['gt_bboxes']
-                    bboxes.translate_([-crop_x1, -crop_y1])
-                    bboxes.clip_(img_shape[:2])
-
-                    results['gt_bboxes'] = bboxes[valid_inds]
-
-                    if results.get('gt_ignore_flags', None) is not None:
-                        results['gt_ignore_flags'] = \
-                            results['gt_ignore_flags'][valid_inds]
-
-                    if results.get('gt_bboxes_labels', None) is not None:
-                        results['gt_bboxes_labels'] = \
-                            results['gt_bboxes_labels'][valid_inds]
-
-                    if results.get('gt_masks', None) is not None:
-                        results['gt_masks'] = results['gt_masks'][
-                            valid_inds.nonzero()[0]].crop(
-                                np.asarray(
-                                    [crop_x1, crop_y1, crop_x2, crop_y2]))
-
-                # crop semantic seg
-                if results.get('gt_seg_map', None) is not None:
-                    results['gt_seg_map'] = results['gt_seg_map'][
-                        crop_y1:crop_y2, crop_x1:crop_x2]
-
+                results = self._crop_data(results, crop_box, valid_inds)
                 return results
         return results
+
+    @cache_randomness
+    def _get_crop_size(self, image_size: Tuple[int, int]) -> Tuple[int, int]:
+        """Randomly generates the crop size based on `image_size`.
+
+        Args:
+            image_size (Tuple[int, int]): (h, w).
+
+        Returns:
+            crop_size (Tuple[int, int]): (crop_h, crop_w) in absolute pixels.
+        """
+        h, w = image_size
+        scale = random.uniform(*self.scaling)
+        if self.aspect_ratio is not None:
+            min_ar, max_ar = self.aspect_ratio
+            aspect_ratio = random.uniform(
+                max(min_ar, scale**2), min(max_ar, scale**-2))
+            h_scale = scale / np.sqrt(aspect_ratio)
+            w_scale = scale * np.sqrt(aspect_ratio)
+        else:
+            h_scale = random.uniform(*self.scaling)
+            w_scale = random.uniform(*self.scaling)
+        crop_h = h * h_scale
+        crop_w = w * w_scale
+        return int(crop_h), int(crop_w)
 
     def _iou_matrix(self,
                     gt_bbox: HorizontalBoxes,
