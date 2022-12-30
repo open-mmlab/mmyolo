@@ -104,15 +104,10 @@ class PPYOLOEHeadModule(BaseModule):
             self.reg_preds.append(
                 nn.Conv2d(in_channel, 4 * (self.reg_max + 1), 3, padding=1))
 
-        # When loading the model, missing bbox_head.head_module.proj
-        # in state_dict is normal, just ignore it.
-        self.proj_conv = nn.Conv2d(self.reg_max + 1, 1, 1, bias=False)
-        self.proj = nn.Parameter(
-            torch.linspace(0, self.reg_max, self.reg_max + 1),
-            requires_grad=False)
-        self.proj_conv.weight = nn.Parameter(
-            self.proj.view([1, self.reg_max + 1, 1, 1]).clone().detach(),
-            requires_grad=False)
+        # init proj
+        proj = torch.linspace(0, self.reg_max, self.reg_max + 1).view(
+            [1, self.reg_max + 1, 1, 1])
+        self.register_buffer('proj', proj, persistent=False)
 
     def forward(self, x: Tensor) -> Tensor:
         """Forward features from the upstream network.
@@ -138,12 +133,11 @@ class PPYOLOEHeadModule(BaseModule):
         avg_feat = F.adaptive_avg_pool2d(x, (1, 1))
         cls_logit = cls_pred(cls_stem(x, avg_feat) + x)
         bbox_dist_preds = reg_pred(reg_stem(x, avg_feat))
-        # TODO: Use different logic when training and testing
-        #  for fast training.
+        # TODO: Test whether use matmul instead of conv can speed up training.
         bbox_dist_preds = bbox_dist_preds.reshape(
             [-1, 4, self.reg_max + 1, hw]).permute(0, 2, 3, 1)
 
-        bbox_preds = self.proj_conv(F.softmax(bbox_dist_preds, dim=1))
+        bbox_preds = F.conv2d(F.softmax(bbox_dist_preds, dim=1), self.proj)
 
         # While training, `loss_dfl` needs `bbox_dist_preds`
         if self.training:
