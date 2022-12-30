@@ -10,7 +10,9 @@ from mmyolo.registry import HOOKS
 
 @HOOKS.register_module()
 class PPYOLOEParamSchedulerHook(ParamSchedulerHook):
-    """A hook to update learning rate and momentum in optimizer of PPYOLOE.
+    """A hook to update learning rate and momentum in optimizer of PPYOLOE. We
+    use this hook to implement adaptive computation for `warmup_total_iters`,
+    which is not possible with the built-in ParamScheduler in mmyolo.
 
     Args:
         warmup_min_iter (int): Minimum warmup iters. Defaults to 1000.
