@@ -369,7 +369,7 @@ model = dict(
     ))
 ```
 
-此外， MMYOLO 中也可以通过参数 `freeze_all` 去冻结整个 `neck` 的参数。下面是以 `YOLOv5` 的例子，其他算法也是同样的逻辑：
+此外， MMYOLO 中也可以通过参数 `freeze_all` 去冻结整个 `neck` 的参数。下面是 `YOLOv5` 的例子，其他算法也是同样的逻辑：
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
