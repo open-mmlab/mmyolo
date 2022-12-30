@@ -10,14 +10,14 @@ max_epochs = 300
 stage2_num_epochs = 20
 interval = 10
 
-train_batch_size_per_gpu = 16
+train_batch_size_per_gpu = 32
 train_num_workers = 10
 val_batch_size_per_gpu = 32
 val_num_workers = 10
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
 strides = [8, 16, 32]
-base_lr = 0.002
+base_lr = 0.004
 
 # single-scale training is recommended to
 # be turned on, which can speed up training.
