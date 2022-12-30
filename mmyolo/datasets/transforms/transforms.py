@@ -699,7 +699,7 @@ class PPYOLOERandomDistort(BaseTransform):
             min=0.5, max=1.5, prob=0.5).
         brightness_cfg (dict): Brightness settings. Default to dict(
             min=0.5, max=1.5, prob=0.5).
-        distortion_num (int): The number of doing distortion. Default
+        num_distort_func (int): The number of distort function. Default
             to 4.
     """
 
@@ -708,13 +708,14 @@ class PPYOLOERandomDistort(BaseTransform):
                  saturation_cfg: dict = dict(min=0.5, max=1.5, prob=0.5),
                  contrast_cfg: dict = dict(min=0.5, max=1.5, prob=0.5),
                  brightness_cfg: dict = dict(min=0.5, max=1.5, prob=0.5),
-                 distortion_num: int = 4):
+                 num_distort_func: int = 4):
         self.hue_cfg = hue_cfg
         self.saturation_cfg = saturation_cfg
         self.contrast_cfg = contrast_cfg
         self.brightness_cfg = brightness_cfg
-        self.distortion_num = distortion_num
-        assert 0 < self.distortion_num <= 4, 'distortion_num must > 0 and <= 4'
+        self.num_distort_func = num_distort_func
+        assert 0 < self.num_distort_func <= 4,\
+            'num_distort_func must > 0 and <= 4'
         for cfg in [
                 self.hue_cfg, self.saturation_cfg, self.contrast_cfg,
                 self.brightness_cfg
@@ -794,7 +795,7 @@ class PPYOLOERandomDistort(BaseTransform):
             self.transform_brightness, self.transform_contrast,
             self.transform_saturation, self.transform_hue
         ]
-        distortions = random.permutation(functions)[:self.distortion_num]
+        distortions = random.permutation(functions)[:self.num_distort_func]
         for func in distortions:
             results = func(results)
         return results
@@ -802,7 +803,9 @@ class PPYOLOERandomDistort(BaseTransform):
 
 @TRANSFORMS.register_module()
 class PPYOLOERandomCrop(MMDET_RandomCrop):
-    """Random crop the img and bboxes.
+    """Random crop the img and bboxes. Different thresholds are used in PPYOLOE
+    to judge whether the clipped image meets the requirements.This
+    implementation is different from the implementation of RandomCrop in mmdet.
 
     Required Keys:
 
@@ -861,7 +864,8 @@ class PPYOLOERandomCrop(MMDET_RandomCrop):
         Returns:
             dict: The result dict.
         """
-        if 'gt_bboxes' in results and len(results['gt_bboxes']) == 0:
+        if results.get('gt_bboxes', None) is None or len(
+                results['gt_bboxes']) == 0:
             return results
 
         img_shape = results['img'].shape

@@ -3,6 +3,9 @@ _base_ = './ppyoloe_plus_s_fast_8xb8-80e_coco.py'
 train_batch_size_per_gpu = 32
 max_epochs = 300
 
+# Base learning rate for optim_wrapper
+base_lr = 0.01
+
 model = dict(
     data_preprocessor=dict(
         mean=[0.485 * 255, 0.456 * 255, 0.406 * 255],
@@ -12,7 +15,7 @@ model = dict(
 
 train_dataloader = dict(batch_size=train_batch_size_per_gpu)
 
-optim_wrapper = dict(optimizer=dict(lr=0.01))
+optim_wrapper = dict(optimizer=dict(lr=base_lr))
 
 default_hooks = dict(param_scheduler=dict(total_epochs=int(max_epochs * 1.2)))
 

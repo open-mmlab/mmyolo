@@ -19,6 +19,9 @@ val_num_workers = 2
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
 
+# Base learning rate for optim_wrapper
+base_lr = 0.001
+
 strides = [8, 16, 32]
 
 model = dict(
@@ -185,7 +188,11 @@ param_scheduler = None
 optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(
-        type='SGD', lr=0.001, momentum=0.9, weight_decay=5e-4, nesterov=False),
+        type='SGD',
+        lr=base_lr,
+        momentum=0.9,
+        weight_decay=5e-4,
+        nesterov=False),
     paramwise_cfg=dict(norm_decay_mult=0.))
 
 default_hooks = dict(
