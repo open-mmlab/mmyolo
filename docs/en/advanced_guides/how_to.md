@@ -351,6 +351,31 @@ model = dict(
 )
 ```
 
+#### Freeze the weight of backbone or neck
+
+In MMYOLO, we can freeze some 'stages' of the backbone network by setting' frozen_stages' parameters, so that these 'stages' parameters do not participate in model updating.
+It should be noted that 'frozen_stages = i' means that all parameters from the initial 'stage' to the 'ith' layer 'stage' will be frozen. The following is a demonstration of 'YOLOv5' as an example, and other algorithms have the same logic:
+
+```python
+_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+
+model = dict(
+    backbone=dict(
+        frozen_stages=1 # Indicates that the parameters in the first stage and all stages before it are frozen
+    ))
+```
+
+In addition, MMYOLO can also use the parameter 'freeze_all' to freeze the whole 'neck' part of the parameter. The following is an example of 'YOLOv5' to demonstrate, other algorithms are the same logic:
+
+```python
+_base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+
+model = dict(
+    neck=dict(
+        freeze_all=True # If freeze_all=True, all parameters of the neck will be frozen
+    ))
+```
+
 ## Output prediction results
 
 If you want to save the prediction results as a specific file for offline evaluation, MMYOLO currently supports both json and pkl formats.
