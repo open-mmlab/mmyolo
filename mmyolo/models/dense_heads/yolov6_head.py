@@ -170,7 +170,6 @@ class YOLOv6Head(YOLOv5Head):
             in 2D points-based detectors.
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
         loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
-        loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
         train_cfg (:obj:`ConfigDict` or dict, optional): Training config of
             anchor head. Defaults to None.
         test_cfg (:obj:`ConfigDict` or dict, optional): Testing config of
@@ -202,11 +201,6 @@ class YOLOv6Head(YOLOv5Head):
                      reduction='mean',
                      loss_weight=2.5,
                      return_iou=False),
-                 loss_obj: ConfigType = dict(
-                     type='mmdet.CrossEntropyLoss',
-                     use_sigmoid=True,
-                     reduction='sum',
-                     loss_weight=1.0),
                  train_cfg: OptConfigType = None,
                  test_cfg: OptConfigType = None,
                  init_cfg: OptMultiConfig = None):
@@ -216,13 +210,11 @@ class YOLOv6Head(YOLOv5Head):
             bbox_coder=bbox_coder,
             loss_cls=loss_cls,
             loss_bbox=loss_bbox,
-            loss_obj=loss_obj,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             init_cfg=init_cfg)
-
-        self.loss_bbox = MODELS.build(loss_bbox)
-        self.loss_cls = MODELS.build(loss_cls)
+        # yolov6 doesn't need loss_obj
+        self.loss_obj = None
 
     def special_init(self):
         """Since YOLO series algorithms will inherit from YOLOv5Head, but
