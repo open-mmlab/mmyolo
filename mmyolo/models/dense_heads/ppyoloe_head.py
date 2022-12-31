@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Sequence, Union
+from typing import Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -109,7 +109,7 @@ class PPYOLOEHeadModule(BaseModule):
             [1, self.reg_max + 1, 1, 1])
         self.register_buffer('proj', proj, persistent=False)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tuple[Tensor]) -> Tensor:
         """Forward features from the upstream network.
 
         Args:
@@ -139,7 +139,6 @@ class PPYOLOEHeadModule(BaseModule):
 
         bbox_preds = F.conv2d(F.softmax(bbox_dist_preds, dim=1), self.proj)
 
-        # While training, `loss_dfl` needs `bbox_dist_preds`
         if self.training:
             return cls_logit, bbox_preds, bbox_dist_preds
         else:
@@ -250,8 +249,6 @@ class PPYOLOEHead(YOLOv6Head):
         current_epoch = message_hub.get_info('epoch')
 
         num_imgs = len(batch_img_metas)
-        if batch_gt_instances_ignore is None:
-            batch_gt_instances_ignore = [None] * num_imgs
 
         current_featmap_sizes = [
             cls_score.shape[2:] for cls_score in cls_scores
@@ -287,7 +284,6 @@ class PPYOLOEHead(YOLOv6Head):
             bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
             for bbox_pred in bbox_preds
         ]
-
         # (bs, reg_max+1, n, 4) -> (bs, n, 4, reg_max+1)
         flatten_pred_dists = [
             bbox_pred_org.permute(0, 2, 3, 1).reshape(
@@ -369,7 +365,6 @@ class PPYOLOEHead(YOLOv6Head):
                 assigned_ltrb_pos.reshape(-1),
                 weight=bbox_weight.expand(-1, 4).reshape(-1),
                 avg_factor=assigned_scores_sum)
-
         else:
             loss_bbox = flatten_pred_bboxes.sum() * 0
             loss_dfl = flatten_pred_bboxes.sum() * 0

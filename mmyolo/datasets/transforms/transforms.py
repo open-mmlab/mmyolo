@@ -691,15 +691,15 @@ class PPYOLOERandomDistort(BaseTransform):
     - img (np.float32)
 
     Args:
-        hue_cfg (dict): Hue settings. Default to dict(min=-18,
+        hue_cfg (dict): Hue settings. Defaults to dict(min=-18,
             max=18, prob=0.5).
-        saturation_cfg (dict): Saturation settings. Default to dict(
+        saturation_cfg (dict): Saturation settings. Defaults to dict(
             min=0.5, max=1.5, prob=0.5).
-        contrast_cfg (dict): Contrast settings. Default to dict(
+        contrast_cfg (dict): Contrast settings. Defaults to dict(
             min=0.5, max=1.5, prob=0.5).
-        brightness_cfg (dict): Brightness settings. Default to dict(
+        brightness_cfg (dict): Brightness settings. Defaults to dict(
             min=0.5, max=1.5, prob=0.5).
-        num_distort_func (int): The number of distort function. Default
+        num_distort_func (int): The number of distort function. Defaults
             to 4.
     """
 
@@ -724,7 +724,6 @@ class PPYOLOERandomDistort(BaseTransform):
 
     def transform_hue(self, results):
         """Transform hue randomly."""
-        # TODO: 待优化注释、变量名，要搞清楚参数的原因
         if random.uniform(0., 1.) >= self.hue_cfg['prob']:
             return results
 
@@ -806,7 +805,7 @@ class PPYOLOERandomDistort(BaseTransform):
 @TRANSFORMS.register_module()
 class PPYOLOERandomCrop(MMDET_RandomCrop):
     """Random crop the img and bboxes. Different thresholds are used in PPYOLOE
-    to judge whether the clipped image meets the requirements.This
+    to judge whether the clipped image meets the requirements. This
     implementation is different from the implementation of RandomCrop in mmdet.
 
     Required Keys:

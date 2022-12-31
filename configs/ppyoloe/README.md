@@ -7,7 +7,7 @@
 PP-YOLOE is an excellent single-stage anchor-free model based on PP-YOLOv2, surpassing a variety of popular YOLO models. PP-YOLOE has a series of models, named s/m/l/x, which are configured through width multiplier and depth multiplier. PP-YOLOE avoids using special operators, such as Deformable Convolution or Matrix NMS, to be deployed friendly on various hardware.
 
 <div align=center>
-<img src="https://github.com/PaddlePaddle/PaddleDetection/blob/release/2.5/docs/images/ppyoloe_plus_map_fps.png"/>
+<img src="https://github.com/PaddlePaddle/PaddleDetection/blob/release/2.5/docs/images/ppyoloe_plus_map_fps.png" width="600" />
 </div>
 
 ## Results and models
@@ -30,8 +30,6 @@ PP-YOLOE is an excellent single-stage anchor-free model based on PP-YOLOv2, surp
 | PPYOLOE -s |  P5  | 640  |  400  |  Yes   | Yes |   xxx    |  xxxx  | [config](../ppyoloe/ppyoloe_s_fast_8xb32-400e_coco.py) | [model](x) \| [log](x) |
 | PPYOLOE -s |  P5  | 640  |  300  |  Yes   | Yes |   xxx    |  xxxx  | [config](../ppyoloe/ppyoloe_s_fast_8xb32-300e_coco.py) | [model](x) \| [log](x) |
 | PPYOLOE -m |  P5  | 640  |  300  |  Yes   | Yes |   xxx    |  xxxx  | [config](../ppyoloe/ppyoloe_m_fast_8xb28-300e_coco.py) | [model](x) \| [log](x) |
-| PPYOLOE -l |  P5  | 640  |  300  |  Yes   | Yes |   xxx    |  xxxx  | [config](../ppyoloe/ppyoloe_l_fast_8xb20-300e_coco.py) | [model](x) \| [log](x) |
-| PPYOLOE -x |  P5  | 640  |  300  |  Yes   | Yes |   xxx    |  xxxx  | [config](../ppyoloe/ppyoloe_x_fast_8xb16-300e_coco.py) | [model](x) \| [log](x) |
 
 ```latex
 @article{Xu2022PPYOLOEAE,

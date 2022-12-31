@@ -61,12 +61,15 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
 
 @MODELS.register_module()
 class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
-    """Rewrite collate_fn to get faster training speed.
+    """Image pre-processor for detection tasks.
 
-    Note: Because the official PPYOLOE preprocessing sequence is slightly
-        different from the DetDataPreprocessor, it needs to be rewritten.
-        Official PPYOLOE resize image first, and then normalize image.
-        In DetDataPreprocessor, the order is reversed.
+    The main difference between PPYOLOEDetDataPreprocessor and
+    DetDataPreprocessor is the normalization order. The official
+    PPYOLOE resize image first, and then normalize image.
+    In DetDataPreprocessor, the order is reversed.
+
+    Note: It must be used together with
+    `mmyolo.datasets.utils.yolov5_collate`
     """
 
     def forward(self, data: dict, training: bool = False) -> dict:
@@ -78,7 +81,7 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
             '"inputs" should be a list of Tensor, but got ' \
             f'{type(data["inputs"])}. The possible reason for this ' \
             'is that you are not using it with ' \
-            '"mmyolo.datasets.utils.ppyoloe_collate". Please refer to ' \
+            '"mmyolo.datasets.utils.yolov5_collate". Please refer to ' \
             '"cconfigs/ppyoloe/ppyoloe_plus_s_fast_8xb8-80e_coco.py".'
 
         data = self.cast_data(data)
@@ -111,6 +114,8 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
         return {'inputs': inputs, 'data_samples': data_samples}
 
 
+# TODO: No generality. Its input data format is different
+#  mmdet's batch aug, and it must be compatible in the future.
 @MODELS.register_module()
 class PPYOLOEBatchRandomResize(BatchSyncRandomResize):
     """PPYOLOE batch random resize.
@@ -131,9 +136,6 @@ class PPYOLOEBatchRandomResize(BatchSyncRandomResize):
         keep_ratio (bool): Whether to keep the aspect ratio when resizing
             the image. Now we only support keep_ratio=False.
             Defaults to False.
-        broadcast_flag (bool): Whether to use same image size between
-            gpus while resize image.
-            Defaults to True.
     """
 
     def __init__(self,
