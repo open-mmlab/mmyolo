@@ -21,5 +21,5 @@ default_hooks = dict(param_scheduler=dict(total_epochs=int(max_epochs * 1.2)))
 
 train_cfg = dict(max_epochs=max_epochs)
 
-# TODO: add imagenet pretrained model
-load_from = 'baidumodel/CSPResNetb_s_pretrained.pth'
+# The pretrained model is converted from official PPYOLOE
+load_from = 'https://download.openmmlab.com/mmyolo/v0/ppyoloe/ppyoloe_pretrain/cspresnet_s_imagenet1k_pretrained-2be81763.pth'  # noqa

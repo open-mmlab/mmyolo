@@ -11,4 +11,4 @@ model = dict(
     ),
     bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
 
-load_from = 'baidumodel/ppyoloe_plus_l_pretrained.pth'
+load_from = 'https://download.openmmlab.com/mmyolo/v0/ppyoloe/ppyoloe_pretrain/ppyoloe_plus_l_obj365_pretrained-3dd89562.pth'  # noqa

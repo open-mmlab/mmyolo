@@ -15,4 +15,4 @@ model = dict(
 
 train_dataloader = dict(batch_size=train_batch_size_per_gpu)
 
-load_from = 'baidumodel/CSPResNetb_l_pretrained.pth'
+load_from = 'https://download.openmmlab.com/mmyolo/v0/ppyoloe/ppyoloe_pretrain/cspresnet_l_imagenet1k_pretrained-c0010e6c.pth'  # noqa

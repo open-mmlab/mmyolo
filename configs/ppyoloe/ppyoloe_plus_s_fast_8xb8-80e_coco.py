@@ -236,4 +236,4 @@ val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
 # TODO: add object365 pretrained model url. (s,m,l,x)
-load_from = 'baidumodel/ppyoloe_plus_s_pretrained.pth'
+load_from = 'https://download.openmmlab.com/mmyolo/v0/ppyoloe/ppyoloe_pretrain/ppyoloe_plus_s_obj365_pretrained-bcfe8478.pth'  # noqa
