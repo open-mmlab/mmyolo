@@ -164,7 +164,7 @@ class YOLOv6Head(YOLOv5Head):
     """YOLOv6Head head used in `YOLOv6 <https://arxiv.org/pdf/2209.02976>`_.
 
     Args:
-        head_module(nn.Module): Base module used for YOLOv6Head
+        head_module(ConfigType): Base module used for YOLOv6Head
         prior_generator(dict): Points generator feature maps
             in 2D points-based detectors.
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
@@ -180,7 +180,7 @@ class YOLOv6Head(YOLOv5Head):
     """
 
     def __init__(self,
-                 head_module: nn.Module,
+                 head_module: ConfigType,
                  prior_generator: ConfigType = dict(
                      type='mmdet.MlvlPointGenerator',
                      offset=0.5,
