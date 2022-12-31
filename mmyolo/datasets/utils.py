@@ -9,7 +9,8 @@ from ..registry import TASK_UTILS
 
 
 @COLLATE_FUNCTIONS.register_module()
-def yolov5_collate(data_batch: Sequence) -> dict:
+def yolov5_collate(data_batch: Sequence,
+                   use_multi_scale_training: bool = False) -> dict:
     """Rewrite collate_fn to get faster training speed."""
     batch_imgs = []
     batch_bboxes_labels = []
@@ -25,10 +26,13 @@ def yolov5_collate(data_batch: Sequence) -> dict:
         batch_bboxes_labels.append(bboxes_labels)
 
         batch_imgs.append(inputs)
-    return {
-        'inputs': torch.stack(batch_imgs, 0),
-        'data_samples': torch.cat(batch_bboxes_labels, 0)
-    }
+    if use_multi_scale_training:
+        return {'inputs': batch_imgs, 'data_samples': batch_bboxes_labels}
+    else:
+        return {
+            'inputs': torch.stack(batch_imgs, 0),
+            'data_samples': torch.cat(batch_bboxes_labels, 0)
+        }
 
 
 @TASK_UTILS.register_module()

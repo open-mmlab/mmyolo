@@ -143,6 +143,7 @@ train_dataloader = dict(
     persistent_workers=True,
     pin_memory=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
+    collate_fn=dict(type='yolov5_collate', use_multi_scale_training=True),
     dataset=dict(
         type=dataset_type,
         data_root=data_root,

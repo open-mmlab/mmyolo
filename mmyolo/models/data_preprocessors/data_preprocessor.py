@@ -6,7 +6,6 @@ import torch
 import torch.nn.functional as F
 from mmdet.models import BatchSyncRandomResize
 from mmdet.models.data_preprocessors import DetDataPreprocessor
-from mmdet.models.utils import samplelist_boxtype2tensor
 from mmengine import MessageHub, is_list_of
 
 from mmyolo.registry import MODELS
@@ -87,10 +86,6 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
         data = self.cast_data(data)
         inputs, data_samples = data['inputs'], data['data_samples']
 
-        if self.boxtype2tensor:
-            # convert HorizontalBoxes to Tensor
-            samplelist_boxtype2tensor(data_samples)
-
         # Process data.
         batch_inputs = []
         for _batch_input, data_sample in zip(inputs, data_samples):
@@ -110,6 +105,9 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
 
         if self._enable_normalize:
             inputs = (inputs - self.mean) / self.std
+
+        img_metas = [{'batch_input_shape': inputs.shape[2:]}] * len(inputs)
+        data_samples = {'bboxes_labels': data_samples, 'img_metas': img_metas}
 
         return {'inputs': inputs, 'data_samples': data_samples}
 
@@ -198,37 +196,18 @@ class PPYOLOEBatchRandomResize(BatchSyncRandomResize):
                         mode=self.interp_mode,
                         align_corners=align_corners)
 
-                    img_shape = (int(data_sample.img_shape[0] * scale_y),
-                                 int(data_sample.img_shape[1] * scale_x))
-                    data_sample.set_metainfo({
-                        'img_shape':
-                        img_shape,
-                        'batch_input_shape':
-                        self._input_size
-                    })
-                    data_sample.gt_instances.bboxes[
-                        ...,
-                        0::2] = data_sample.gt_instances.bboxes[...,
-                                                                0::2] * scale_x
-                    data_sample.gt_instances.bboxes[
-                        ...,
-                        1::2] = data_sample.gt_instances.bboxes[...,
-                                                                1::2] * scale_y
-                    if 'ignored_instances' in data_sample:
-                        data_sample.ignored_instances.bboxes[
-                            ..., 0::2] = data_sample.ignored_instances.bboxes[
-                                ..., 0::2] * scale_x
-                        data_sample.ignored_instances.bboxes[
-                            ..., 1::2] = data_sample.ignored_instances.bboxes[
-                                ..., 1::2] * scale_y
-
+                    # rescale bbox
+                    data_sample[:, 2] *= scale_x
+                    data_sample[:, 3] *= scale_y
+                    data_sample[:, 4] *= scale_x
+                    data_sample[:, 5] *= scale_y
                 else:
                     _batch_input = _batch_input.unsqueeze(0)
 
                 outputs.append(_batch_input)
 
             # convert to Tensor
-            return torch.cat(outputs, dim=0), data_samples
+            return torch.cat(outputs, dim=0), torch.cat(data_samples, dim=0)
         else:
             raise NotImplementedError('Not implemented yet!')
 
