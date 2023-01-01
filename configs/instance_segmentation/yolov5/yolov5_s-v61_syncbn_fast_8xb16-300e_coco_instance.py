@@ -118,7 +118,10 @@ albu_train_transforms = [
 
 pre_transform = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='LoadAnnotations', with_bbox=True)
+    dict(type='LoadAnnotations',
+         with_bbox=True,
+         with_mask=True,
+         poly2mask=False)
 ]
 
 train_pipeline = [
@@ -144,7 +147,8 @@ train_pipeline = [
             label_fields=['gt_bboxes_labels', 'gt_ignore_flags']),
         keymap={
             'img': 'image',
-            'gt_bboxes': 'bboxes'
+            'gt_bboxes': 'bboxes',
+            'gt_masks': 'masks'
         }),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
@@ -180,8 +184,7 @@ test_pipeline = [
         type='LoadAnnotations',
         with_bbox=True,
         with_mask=True,
-        poly2mask=False,
-        _scope_='mmdet'),
+        poly2mask=False),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',

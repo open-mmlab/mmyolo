@@ -10,6 +10,7 @@ from mmcv.transforms import BaseTransform
 from mmdet.structures.bbox import autocast_box_type
 from mmengine.dataset import BaseDataset
 from mmengine.dataset.base_dataset import Compose
+from mmdet.structures.mask import PolygonMasks
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
@@ -314,9 +315,12 @@ class Mosaic(BaseMixImageTransform):
             results (dict): Updated result dict.
         """
         assert 'mix_results' in results
+        with_mask = True if 'gt_masks' in results else False
+
         mosaic_bboxes = []
         mosaic_bboxes_labels = []
         mosaic_ignore_flags = []
+        mosaic_masks = []
         if len(results['img'].shape) == 3:
             mosaic_img = np.full(
                 (int(self.img_scale[0] * 2), int(self.img_scale[1] * 2), 3),
@@ -363,6 +367,7 @@ class Mosaic(BaseMixImageTransform):
             gt_bboxes_i = results_patch['gt_bboxes']
             gt_bboxes_labels_i = results_patch['gt_bboxes_labels']
             gt_ignore_flags_i = results_patch['gt_ignore_flags']
+            gt_masks_i = results_patch.get('gt_masks', None)
 
             padw = x1_p - x1_c
             padh = y1_p - y1_c
@@ -372,9 +377,27 @@ class Mosaic(BaseMixImageTransform):
             mosaic_bboxes_labels.append(gt_bboxes_labels_i)
             mosaic_ignore_flags.append(gt_ignore_flags_i)
 
+            if with_mask:
+                # since translate in polygonMasks clip the border
+                # we don't need clip again
+                gt_masks_i = gt_masks_i.rescale(scale_ratio_i)
+                gt_masks_i = gt_masks_i.translate(
+                    out_shape=(int(self.img_scale[0] * 2),
+                               int(self.img_scale[1] * 2)),
+                    offset=padw,
+                    direction='horizontal')
+                gt_masks_i = gt_masks_i.translate(
+                    out_shape=(int(self.img_scale[0] * 2),
+                               int(self.img_scale[1] * 2)),
+                    offset=padh,
+                    direction='vertical')
+                mosaic_masks.append(gt_masks_i)
+
         mosaic_bboxes = mosaic_bboxes[0].cat(mosaic_bboxes, 0)
         mosaic_bboxes_labels = np.concatenate(mosaic_bboxes_labels, 0)
         mosaic_ignore_flags = np.concatenate(mosaic_ignore_flags, 0)
+        if with_mask:
+            mosaic_masks = PolygonMasks.cat(mosaic_masks)
 
         if self.bbox_clip_border:
             mosaic_bboxes.clip_([2 * self.img_scale[0], 2 * self.img_scale[1]])
@@ -385,12 +408,16 @@ class Mosaic(BaseMixImageTransform):
             mosaic_bboxes = mosaic_bboxes[inside_inds]
             mosaic_bboxes_labels = mosaic_bboxes_labels[inside_inds]
             mosaic_ignore_flags = mosaic_ignore_flags[inside_inds]
+            if with_mask:
+                mosaic_masks = mosaic_masks[inside_inds]
 
         results['img'] = mosaic_img
         results['img_shape'] = mosaic_img.shape
         results['gt_bboxes'] = mosaic_bboxes
         results['gt_bboxes_labels'] = mosaic_bboxes_labels
         results['gt_ignore_flags'] = mosaic_ignore_flags
+        if with_mask:
+            results['gt_masks'] = mosaic_masks
         return results
 
     def _mosaic_combine(

@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
-from typing import Tuple, Union
+from typing import Tuple, Union, Optional
 
 import cv2
 import mmcv
@@ -10,9 +10,10 @@ from mmcv.transforms import BaseTransform
 from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
+from mmdet.datasets.transforms import Albu as MMDET_Albu
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
-from mmdet.structures.mask import PolygonMasks
+from mmdet.structures.mask import BitmapMasks, PolygonMasks
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
@@ -409,6 +410,44 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         results['gt_bboxes_labels'] = np.array(
             gt_bboxes_labels, dtype=np.int64)
 
+    def _process_masks(self, results: dict):
+        """Private function to load bounding box annotations.
+
+        Note: Masks with ignore_flag of 1 is not considered.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+
+        Returns:
+            dict: The dict contains loaded bounding box and masks annotations.
+        """
+        gt_masks = []
+        for instance in results.get('instances', []):
+            gt_mask = instance['mask']
+            # If the annotation of segmentation mask is invalid,
+            # ignore the whole instance.
+            if isinstance(gt_mask, list):
+                gt_mask = [
+                    np.array(polygon) for polygon in gt_mask
+                    if len(polygon) % 2 == 0 and len(polygon) >= 6
+                ]
+                if len(gt_mask) == 0:
+                    # ignore this instance and set gt_mask to a fake mask
+                    continue
+            elif not self.poly2mask:
+                # `PolygonMasks` requires a ploygon of format List[np.array],
+                # other formats are invalid.
+                continue
+            elif isinstance(gt_mask, dict) and \
+                    not (gt_mask.get('counts') is not None and
+                         gt_mask.get('size') is not None and
+                         isinstance(gt_mask['counts'], (list, str))):
+                # if gt_mask is a dict, it should include `counts` and `size`,
+                # so that `BitmapMasks` can uncompressed RLE
+                continue
+            gt_masks.append(gt_mask)
+        return gt_masks
+
 
 @TRANSFORMS.register_module()
 class YOLOv5RandomAffine(BaseTransform):
@@ -463,7 +502,8 @@ class YOLOv5RandomAffine(BaseTransform):
                  bbox_clip_border: bool = True,
                  min_bbox_size: int = 2,
                  min_area_ratio: float = 0.1,
-                 max_aspect_ratio: int = 20):
+                 max_aspect_ratio: int = 20,
+                 poly2mask=True):
         assert 0 <= max_translate_ratio <= 1
         assert scaling_ratio_range[0] <= scaling_ratio_range[1]
         assert scaling_ratio_range[0] > 0
@@ -478,6 +518,7 @@ class YOLOv5RandomAffine(BaseTransform):
         self.min_bbox_size = min_bbox_size
         self.min_area_ratio = min_area_ratio
         self.max_aspect_ratio = max_aspect_ratio
+        self.poly2mask = poly2mask
 
     @cache_randomness
     def _get_random_homography_matrix(self, height: int,
@@ -551,11 +592,42 @@ class YOLOv5RandomAffine(BaseTransform):
         results['img_shape'] = img.shape
 
         bboxes = results['gt_bboxes']
+        gt_masks = results.get('gt_masks', None)
+        with_mask = True if gt_masks is not None else False
         num_bboxes = len(bboxes)
         if num_bboxes:
             orig_bboxes = bboxes.clone()
+            if with_mask:
+                assert isinstance(gt_masks, PolygonMasks)
+                # resample for each polygon
+                for i, polygons in enumerate(gt_masks.masks):
+                    re_polygons = []
+                    for polygon in polygons:
+                        polygon = polygon.reshape(-1, 2)
+                        polygon = np.concatenate(
+                            (polygon, polygon[0:1, :]), axis=0)
+                        x = np.linspace(0, len(polygon) - 1, 1000)
+                        xp = np.arange(len(polygon))
+                        re_polygons.append(np.concatenate([
+                            np.interp(x, xp, polygon[:, i]) for i in range(2)]
+                        ).reshape(2, -1).T)
+                    gt_masks.masks[i] = re_polygons
 
-            bboxes.project_(warp_matrix)
+                # transform for each polygon
+                for i, polygons in enumerate(gt_masks.masks):
+                    trans_polygons = []
+                    for polygon in polygons:
+                        xy = np.ones((len(polygon), 3))
+                        xy[:, :2] = polygon
+                        xy = xy @ warp_matrix.T  # transform
+                        trans_polygons.append(xy[:, :2].reshape(-1,))
+                    gt_masks.masks[i] = trans_polygons
+
+                # get bbox from masks
+                gt_masks = PolygonMasks(gt_masks.masks, height, width)
+                bboxes = gt_masks.get_bboxes('hbox')
+            else:
+                bboxes.project_(warp_matrix)
             if self.bbox_clip_border:
                 bboxes.clip_([height, width])
 
@@ -570,9 +642,11 @@ class YOLOv5RandomAffine(BaseTransform):
                 valid_index]
             results['gt_ignore_flags'] = results['gt_ignore_flags'][
                 valid_index]
+            if with_mask:
+                results['gt_masks'] = gt_masks[valid_index]
+                if self.poly2mask:
+                    results['gt_masks'] = results['gt_masks'].to_bitmap()
 
-            if 'gt_masks' in results:
-                raise NotImplementedError('RandomAffine only supports bbox.')
         return results
 
     def filter_gt_bboxes(self, origin_bboxes: HorizontalBoxes,
@@ -676,3 +750,56 @@ class YOLOv5RandomAffine(BaseTransform):
         translation_matrix = np.array([[1, 0., x], [0., 1, y], [0., 0., 1.]],
                                       dtype=np.float32)
         return translation_matrix
+
+
+@TRANSFORMS.register_module()
+class Albu(MMDET_Albu):
+    def __init__(self, *arg, **kwargs):
+        super().__init__(*arg, **kwargs)
+    
+    def _postprocess_results(
+            self,
+            results: dict,
+            ori_masks: Optional[Union[BitmapMasks,
+                                      PolygonMasks]] = None) -> dict:
+        """Post-processing Albu output."""
+        # albumentations may return np.array or list on different versions
+        if 'gt_bboxes_labels' in results and isinstance(
+                results['gt_bboxes_labels'], list):
+            results['gt_bboxes_labels'] = np.array(
+                results['gt_bboxes_labels'], dtype=np.int64)
+        if 'gt_ignore_flags' in results and isinstance(
+                results['gt_ignore_flags'], list):
+            results['gt_ignore_flags'] = np.array(
+                results['gt_ignore_flags'], dtype=bool)
+
+        if 'bboxes' in results:
+            if isinstance(results['bboxes'], list):
+                results['bboxes'] = np.array(
+                    results['bboxes'], dtype=np.float32)
+            results['bboxes'] = results['bboxes'].reshape(-1, 4)
+            results['bboxes'] = HorizontalBoxes(results['bboxes'])
+
+            # filter label_fields
+            if self.filter_lost_elements:
+
+                for label in self.origin_label_fields:
+                    results[label] = np.array(
+                        [results[label][i] for i in results['idx_mapper']])
+                if 'masks' in results:
+                    assert ori_masks is not None
+                    results['masks'] = np.array(
+                        [results['masks'][i] for i in results['idx_mapper']])
+                    results['masks'] = ori_masks.__class__(
+                        results['masks'], results['image'].shape[0],
+                        results['image'].shape[1])
+
+                if (not len(results['idx_mapper'])
+                        and self.skip_img_without_anno):
+                    return None
+            elif 'masks' in results:
+                results['masks'] = ori_masks.__class__(
+                        results['masks'], results['image'].shape[0],
+                        results['image'].shape[1])
+
+        return results
