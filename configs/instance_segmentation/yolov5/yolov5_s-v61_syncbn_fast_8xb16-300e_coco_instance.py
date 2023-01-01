@@ -140,7 +140,7 @@ train_pipeline = [
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
         border_val=(114, 114, 114)),
     dict(
-        type='mmdet.Albu',
+        type='Albu',
         transforms=albu_train_transforms,
         bbox_params=dict(
             type='BboxParams',
