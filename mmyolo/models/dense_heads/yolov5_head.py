@@ -133,7 +133,7 @@ class YOLOv5Head(BaseDenseHead):
     """YOLOv5Head head used in `YOLOv5`.
 
     Args:
-        head_module(nn.Module): Base module used for YOLOv5Head
+        head_module(ConfigType): Base module used for YOLOv5Head
         prior_generator(dict): Points generator feature maps in
             2D points-based detectors.
         bbox_coder (:obj:`ConfigDict` or dict): Config of bbox coder.
@@ -153,7 +153,7 @@ class YOLOv5Head(BaseDenseHead):
     """
 
     def __init__(self,
-                 head_module: nn.Module,
+                 head_module: ConfigType,
                  prior_generator: ConfigType = dict(
                      type='mmdet.YOLOAnchorGenerator',
                      base_sizes=[[(10, 13), (16, 30), (33, 23)],
@@ -365,7 +365,7 @@ class YOLOv5Head(BaseDenseHead):
             ]
             flatten_objectness = torch.cat(flatten_objectness, dim=1).sigmoid()
         else:
-            flatten_objectness = [None for _ in range(len(featmap_sizes))]
+            flatten_objectness = [None for _ in range(num_imgs)]
 
         results_list = []
         for (bboxes, scores, objectness,

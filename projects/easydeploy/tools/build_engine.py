@@ -6,8 +6,12 @@ try:
     import tensorrt as trt
 except Exception:
     trt = None
+import warnings
+
 import numpy as np
 import torch
+
+warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 
 class EngineBuilder:
