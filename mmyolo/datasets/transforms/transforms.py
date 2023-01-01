@@ -726,9 +726,7 @@ class PPYOLOERandomDistort(BaseTransform):
         """Transform hue randomly."""
         if random.uniform(0., 1.) >= self.hue_cfg['prob']:
             return results
-
         img = results['img']
-
         delta = random.uniform(self.hue_cfg['min'], self.hue_cfg['max'])
         u = np.cos(delta * np.pi)
         w = np.sin(delta * np.pi)
