@@ -118,7 +118,11 @@ albu_train_transforms = [
 
 pre_transform = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='LoadAnnotations', with_bbox=True)
+    dict(
+        type='LoadAnnotations',
+        with_bbox=True,
+        with_mask=True,
+        poly2mask=False)
 ]
 
 train_pipeline = [
@@ -134,9 +138,11 @@ train_pipeline = [
         max_shear_degree=0.0,
         scaling_ratio_range=(0.5, 1.5),
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
-        border_val=(114, 114, 114)),
+        border_val=(114, 114, 114),
+        min_area_ratio=0.01,
+        max_aspect_ratio=100),
     dict(
-        type='mmdet.Albu',
+        type='Albu',
         transforms=albu_train_transforms,
         bbox_params=dict(
             type='BboxParams',
@@ -144,7 +150,8 @@ train_pipeline = [
             label_fields=['gt_bboxes_labels', 'gt_ignore_flags']),
         keymap={
             'img': 'image',
-            'gt_bboxes': 'bboxes'
+            'gt_bboxes': 'bboxes',
+            'gt_masks': 'masks'
         }),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
@@ -180,8 +187,7 @@ test_pipeline = [
         type='LoadAnnotations',
         with_bbox=True,
         with_mask=True,
-        poly2mask=False,
-        _scope_='mmdet'),
+        poly2mask=False),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
