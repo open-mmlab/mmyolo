@@ -40,17 +40,18 @@ def get_norm(name, out_channels, inplace=True):
 
 class ConvBNAct(nn.Module):
     """A Conv2d -> Batchnorm -> silu/leaky relu block"""
+
     def __init__(
-        self,
-        in_channels,
-        out_channels,
-        ksize,
-        stride=1,
-        groups=1,
-        bias=False,
-        act='silu',
-        norm='bn',
-        reparam=False,
+            self,
+            in_channels,
+            out_channels,
+            ksize,
+            stride=1,
+            groups=1,
+            bias=False,
+            act='silu',
+            norm='bn',
+            reparam=False,
     ):
         super().__init__()
         # same padding
@@ -103,6 +104,7 @@ class RepConv(nn.Module):
     '''RepConv is a basic rep-style block, including training and deploy status
     Code is based on https://github.com/DingXiaoH/RepVGG/blob/main/repvgg.py
     '''
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -266,12 +268,12 @@ class BasicBlock_3x3_Reverse(nn.Module):
 
 class SPP(nn.Module):
     def __init__(
-        self,
-        ch_in,
-        ch_out,
-        k,
-        pool_size,
-        act='swish',
+            self,
+            ch_in,
+            ch_out,
+            k,
+            pool_size,
+            act='swish',
     ):
         super(SPP, self).__init__()
         self.pool = []
@@ -347,15 +349,15 @@ class CSPStage(nn.Module):
 @MODELS.register_module()
 class GiraffeNeckv2(nn.Module):
     def __init__(
-        self,
-        depth=1.0,
-        hidden_ratio=0.75,
-        in_features=[2, 3, 4],
-        in_channels=[128, 256, 512],
-        out_channels=[128, 256, 512],
-        act='relu',
-        spp=False,
-        block_name='BasicBlock_3x3_Reverse',
+            self,
+            depth=1.0,
+            hidden_ratio=0.75,
+            in_features=[2, 3, 4],
+            in_channels=[128, 256, 512],
+            out_channels=[128, 256, 512],
+            act='relu',
+            spp=False,
+            block_name='BasicBlock_3x3_Reverse',
     ):
         super().__init__()
         self.in_features = in_features

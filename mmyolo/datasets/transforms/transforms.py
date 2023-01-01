@@ -253,12 +253,15 @@ class LetterResize(MMDET_Resize):
             return
 
         # resize the gt_masks
-        gt_mask_height = results['gt_masks'].height * \
+        gt_mask_height = \
+            results['gt_masks'].height * \
             results['scale_factor'][0]
-        gt_mask_width = results['gt_masks'].width * \
+        gt_mask_width = \
+            results['gt_masks'].width * \
             results['scale_factor'][1]
         gt_masks = results['gt_masks'].resize(
-            (int(round(gt_mask_height)), int(round(gt_mask_width))))
+            (int(round(gt_mask_height)),
+             int(round(gt_mask_width))))
 
         # padding the gt_masks
         if len(gt_masks) == 0:
@@ -506,7 +509,8 @@ class YOLOv5RandomAffine(BaseTransform):
                                  0.5 + self.max_translate_ratio) * height
         translate_matrix = self._get_translation_matrix(trans_x, trans_y)
         warp_matrix = (
-            translate_matrix @ shear_matrix @ rotation_matrix @ scaling_matrix)
+                translate_matrix
+                @ shear_matrix @ rotation_matrix @ scaling_matrix)
         return warp_matrix, scaling_ratio
 
     @autocast_box_type()
@@ -750,7 +754,6 @@ class DamoyoloResize(MMDET_Resize):
 
         self.pad_val = pad_val
 
-
     @autocast_box_type()
     def transform(self, results: dict) -> dict:
         """Transform function to resize images, bounding boxes and semantic
@@ -768,7 +771,8 @@ class DamoyoloResize(MMDET_Resize):
         if self.keep_ratio:
             scale_factor = min(self.width / w, self.height / h)
             results['scale_factor'] = (scale_factor, scale_factor)
-            real_w, real_h = int(w * float(scale_factor)), int(h * float(scale_factor))
+            real_w, real_h = int(w * float(scale_factor)), \
+                int(h * float(scale_factor))
             cv2_interp_codes = {
                 'nearest': cv2.INTER_NEAREST,
                 'bilinear': cv2.INTER_LINEAR,
@@ -776,9 +780,9 @@ class DamoyoloResize(MMDET_Resize):
                 'area': cv2.INTER_AREA,
                 'lanczos': cv2.INTER_LANCZOS4
             }
-            cv2_interp  = cv2_interp_codes[self.interpolation]
+            cv2_interp = cv2_interp_codes[self.interpolation]
             img = cv2.resize(results['img'], (real_w, real_h),
-                           interpolation=cv2_interp).astype(np.uint8)
+                             interpolation=cv2_interp).astype(np.uint8)
             # the w_scale and h_scale has minor difference
             # a real fix should be done in the mmcv.imrescale in the future
             results['img'] = img
@@ -795,7 +799,8 @@ class DamoyoloResize(MMDET_Resize):
         self._resize_seg(results)
         self._record_homography_matrix(results)
         if self.keep_ratio:
-            self.pad_transform = Pad(size=results['batch_shape'][::-1] ,pad_val=self.pad_val)
+            self.pad_transform = Pad(size=results['batch_shape'][::-1],
+                                     pad_val=self.pad_val)
             results = self.pad_transform(results)
         return results
 

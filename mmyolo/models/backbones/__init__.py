@@ -10,5 +10,6 @@ from .tinynas_csp import TinyNAS_csp
 
 __all__ = [
     'YOLOv5CSPDarknet', 'BaseBackbone', 'YOLOv6EfficientRep', 'YOLOv6CSPBep',
-    'YOLOXCSPDarknet', 'CSPNeXt', 'YOLOv7Backbone', 'PPYOLOECSPResNet', 'TinyNAS_res','TinyNAS_csp'
+    'YOLOXCSPDarknet', 'CSPNeXt', 'YOLOv7Backbone', 'PPYOLOECSPResNet',
+    'TinyNAS_res', 'TinyNAS_csp'
 ]

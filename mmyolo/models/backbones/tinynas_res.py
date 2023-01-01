@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch
 
 from ..necks.giraffe_neck import RepConv
-from .base_backbone import BaseBackbone
 
 
 def get_norm(name, out_channels, inplace=True):
@@ -285,7 +284,8 @@ class SPPBottleneck(nn.Module):
 @MODELS.register_module()
 class TinyNAS_res(nn.Module):
     # S
-    structure_info_s = [{'class': 'ConvKXBNRELU', 'in': 3, 'k': 3, 'out': 32, 's': 1},
+    structure_info_s = [{'class': 'ConvKXBNRELU',
+                         'in': 3, 'k': 3, 'out': 32, 's': 1},
                         {'L': 1,
                          'btn': 24,
                          'class': 'SuperResConvK1KX',
@@ -326,7 +326,9 @@ class TinyNAS_res(nn.Module):
                          'k': 3,
                          'out': 512,
                          's': 2}]
-    structure_info_t = [{'class': 'ConvKXBNRELU', 'in': 3, 'k': 3, 'nbitsA': 8, 'nbitsW': 8, 'out': 24, 's': 1},
+    structure_info_t = [{'class': 'ConvKXBNRELU',
+                         'in': 3, 'k': 3, 'nbitsA': 8,
+                         'nbitsW': 8, 'out': 24, 's': 1},
                         {'L': 2,
                          'btn': 24,
                          'class': 'SuperResConvK1KX',
@@ -412,7 +414,8 @@ class TinyNAS_res(nn.Module):
                                              act=act)
                 self.block_list.append(the_block)
             elif the_block_class == 'SuperResConvK1KX':
-                spp = with_spp if idx == len(self.structure_info_s) - 1 else False
+                spp = with_spp if idx == \
+                                  len(self.structure_info_s) - 1 else False
                 the_block = SuperResStem(block_info['in'],
                                          block_info['out'],
                                          block_info['btn'],
@@ -425,7 +428,8 @@ class TinyNAS_res(nn.Module):
                                          block_type='k1kx')
                 self.block_list.append(the_block)
             elif the_block_class == 'SuperResConvKXKX':
-                spp = with_spp if idx == len(self.structure_info_s) - 1 else False
+                spp = with_spp if idx == \
+                                  len(self.structure_info_s) - 1 else False
                 the_block = SuperResStem(block_info['in'],
                                          block_info['out'],
                                          block_info['btn'],

@@ -2,4 +2,4 @@
 from .yolo_detector import YOLODetector
 from .damoyolo_detector import DAMOYOLODetector
 
-__all__ = ['YOLODetector','DAMOYOLODetector']
+__all__ = ['YOLODetector', 'DAMOYOLODetector']

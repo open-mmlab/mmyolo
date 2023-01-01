@@ -10,5 +10,6 @@ from .giraffe_neck import GiraffeNeckv2
 
 __all__ = [
     'YOLOv5PAFPN', 'BaseYOLONeck', 'YOLOv6RepPAFPN', 'YOLOXPAFPN',
-    'CSPNeXtPAFPN', 'YOLOv7PAFPN', 'PPYOLOECSPPAFPN', 'YOLOv6CSPRepPAFPN','GiraffeNeckv2'
+    'CSPNeXtPAFPN', 'YOLOv7PAFPN', 'PPYOLOECSPPAFPN', 'YOLOv6CSPRepPAFPN',
+    'GiraffeNeckv2'
 ]

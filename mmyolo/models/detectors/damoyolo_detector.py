@@ -7,7 +7,7 @@ from mmengine.logging import print_log
 from ..backbones.tinynas_res import RepConv
 import torch.nn as nn
 from mmyolo.registry import MODELS
-from mmdet.structures import  SampleList
+from mmdet.structures import SampleList
 from torch import Tensor
 
 
@@ -52,7 +52,6 @@ class DAMOYOLODetector(SingleStageDetector):
 
         self.apply(self.init_bn)
 
-
         # TODO： Waiting for mmengine support
         if use_syncbn and get_world_size() > 1:
             torch.nn.SyncBatchNorm.convert_sync_batchnorm(self)
@@ -92,7 +91,7 @@ class DAMOYOLODetector(SingleStageDetector):
                 - bboxes (Tensor): Has a shape (num_instances, 4),
                     the last dimension 4 arrange as (x1, y1, x2, y2).
         """
-        ## todo: need to be discuss and about the process
+        # todo: need to be discuss and about the process
         for layer in self.modules():
             if isinstance(layer, RepConv):
                 layer.switch_to_deploy()

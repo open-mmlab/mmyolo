@@ -10,6 +10,7 @@ from mmdet.structures.bbox import bbox_overlaps
 
 class BaseAssigner(object):
     """Base assigner that assigns boxes to ground truth boxes."""
+
     def assign(self, bboxes, gt_bboxes, gt_bboxes_ignore=None, gt_labels=None):
         """Assign boxes to either a ground truth boxes or a negative boxes."""
 
@@ -44,6 +45,7 @@ class AssignResult(object):
         <AssignResult(num_gts=9, gt_inds.shape=(7,), max_overlaps.shape=(7,),
                       labels.shape=(7,))>
     """
+
     def __init__(self, num_gts, gt_inds, max_overlaps, labels=None):
         self.num_gts = num_gts
         self.gt_inds = gt_inds
@@ -109,6 +111,7 @@ class AlignOTAAssigner(BaseAssigner):
         cls_weight (int | float, optional): The scale factor for classification
             cost. Default 1.0.
     """
+
     def __init__(self,
                  center_radius=2.5,
                  candidate_topk=10,
@@ -208,7 +211,7 @@ class AlignOTAAssigner(BaseAssigner):
         num_bboxes = decoded_bboxes.size(0)
 
         # assign 0 by default
-        assigned_gt_inds = decoded_bboxes.new_full((num_bboxes, ),
+        assigned_gt_inds = decoded_bboxes.new_full((num_bboxes,),
                                                    0,
                                                    dtype=torch.long)
         valid_mask, is_in_boxes_and_center = self.get_in_gt_and_in_center_info(
@@ -219,14 +222,14 @@ class AlignOTAAssigner(BaseAssigner):
 
         if num_gt == 0 or num_bboxes == 0 or num_valid == 0:
             # No ground truth or boxes, return empty assignment
-            max_overlaps = decoded_bboxes.new_zeros((num_bboxes, ))
+            max_overlaps = decoded_bboxes.new_zeros((num_bboxes,))
             if num_gt == 0:
                 # No truth, assign everything to background
                 assigned_gt_inds[:] = 0
             if gt_labels is None:
                 assigned_labels = None
             else:
-                assigned_labels = decoded_bboxes.new_full((num_bboxes, ),
+                assigned_labels = decoded_bboxes.new_full((num_bboxes,),
                                                           -1,
                                                           dtype=torch.long)
             return AssignResult(num_gt,
@@ -239,7 +242,7 @@ class AlignOTAAssigner(BaseAssigner):
 
         gt_onehot_label = (F.one_hot(gt_labels.to(
             torch.int64), pred_scores.shape[-1]).float().unsqueeze(0).repeat(
-                num_valid, 1, 1))
+            num_valid, 1, 1))
 
         valid_pred_scores = valid_pred_scores.unsqueeze(1).repeat(1, num_gt, 1)
 
@@ -260,9 +263,9 @@ class AlignOTAAssigner(BaseAssigner):
 
         # convert to AssignResult format
         assigned_gt_inds[valid_mask] = matched_gt_inds + 1
-        assigned_labels = assigned_gt_inds.new_full((num_bboxes, ), -1)
+        assigned_labels = assigned_gt_inds.new_full((num_bboxes,), -1)
         assigned_labels[valid_mask] = gt_labels[matched_gt_inds].long()
-        max_overlaps = assigned_gt_inds.new_full((num_bboxes, ),
+        max_overlaps = assigned_gt_inds.new_full((num_bboxes,),
                                                  -INF,
                                                  dtype=torch.float32)
         max_overlaps[valid_mask] = matched_pred_ious

@@ -289,7 +289,8 @@ class CSPStem(nn.Module):
 
 @MODELS.register_module()
 class TinyNAS_csp(nn.Module):
-    structure_info_m = [{'class': 'ConvKXBNRELU', 'in': 3, 'k': 3, 'nbitsA': 8, 'nbitsW': 8, 'out': 32, 's': 1},
+    structure_info_m = [{'class': 'ConvKXBNRELU', 'in': 3, 'k': 3,
+                         'nbitsA': 8, 'nbitsW': 8, 'out': 32, 's': 1},
                         {'L': 2,
                          'btn': 64,
                          'class': 'SuperResConvKXKX',

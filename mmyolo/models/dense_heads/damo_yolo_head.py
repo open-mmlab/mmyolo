@@ -3,19 +3,35 @@ import torch.nn as nn
 import torch.nn.functional as F
 from mmdet.models.dense_heads.base_dense_head import BaseDenseHead
 import numpy as np
-from mmcv.cnn import Scale
 from ..task_modules.assigners.ota_assigner import AlignOTAAssigner
 from ..utils import BoxList
 from mmdet.models.utils import multi_apply
-from mmdet.utils import reduce_mean
-from mmdet.models.losses import (DistributionFocalLoss, GIoULoss, weighted_loss)
-from typing import List, Optional, Tuple
+from mmdet.models.losses import (DistributionFocalLoss,
+                                 GIoULoss, weighted_loss)
+from typing import Tuple
 from torch import Tensor
 import torchvision
-from mmengine.config import ConfigDict
 from mmdet.structures import SampleList
 from mmengine.structures import InstanceData
-from mmdet.utils import InstanceList, OptMultiConfig
+from mmdet.utils import InstanceList
+from mmyolo.registry import MODELS
+from ..necks.giraffe_neck import ConvBNAct
+
+
+class Scale(nn.Module):
+    """A learnable scale parameter.
+    This layer scales the input by a learnable factor. It multiplies a
+    learnable scale parameter of shape (1,) with input of any shape.
+    Args:
+        scale (float): Initial value of scale factor. Default: 1.0
+    """
+
+    def __init__(self, scale=1.0):
+        super(Scale, self).__init__()
+        self.scale = nn.Parameter(torch.tensor(scale, dtype=torch.float))
+
+    def forward(self, x):
+        return x * self.scale
 
 
 @weighted_loss
@@ -54,9 +70,10 @@ def quality_focal_loss(pred, target, beta=2.0, use_sigmoid=True):
     pos_label = label[pos].long()
     # positives are supervised by bbox quality (IoU) score
     scale_factor = score[pos] - pred_sigmoid[pos, pos_label]
-    loss[pos,
-    pos_label] = func(pred[pos, pos_label], score[pos],
-                      reduction='none') * scale_factor.abs().pow(beta)
+    loss[pos, pos_label] = \
+        func(pred[pos, pos_label],
+             score[pos],
+             reduction='none') * scale_factor.abs().pow(beta)
 
     loss = loss.sum(dim=1, keepdim=False)
     return loss
@@ -299,9 +316,6 @@ class Integral(nn.Module):
         return x
 
 
-from mmyolo.registry import MODELS
-
-
 @MODELS.register_module()
 class ZeroHead(BaseDenseHead):
     """Ref to Generalized Focal Loss V2: Learning Reliable Localization Quality
@@ -359,6 +373,78 @@ class ZeroHead(BaseDenseHead):
 
         self._init_layers()
 
+    def _build_not_shared_convs(self, in_channel, feat_channels):
+        cls_convs = nn.ModuleList()
+        reg_convs = nn.ModuleList()
+
+        for i in range(self.stacked_convs):
+            chn = feat_channels if i > 0 else in_channel
+            kernel_size = 3 if i > 0 else 1
+            cls_convs.append(
+                ConvBNAct(chn,
+                          feat_channels,
+                          kernel_size,
+                          stride=1,
+                          groups=1,
+                          norm='bn',
+                          act=self.act))
+            reg_convs.append(
+                ConvBNAct(chn,
+                          feat_channels,
+                          kernel_size,
+                          stride=1,
+                          groups=1,
+                          norm='bn',
+                          act=self.act))
+
+        return cls_convs, reg_convs
+
+    def _init_layers(self):
+        """Initialize layers of the head."""
+        self.cls_convs = nn.ModuleList()
+        self.reg_convs = nn.ModuleList()
+
+        for i in range(len(self.strides)):
+            cls_convs, reg_convs = self._build_not_shared_convs(
+                self.in_channels[i], self.feat_channels[i])
+            self.cls_convs.append(cls_convs)
+            self.reg_convs.append(reg_convs)
+
+        self.gfl_cls = nn.ModuleList([
+            nn.Conv2d(self.feat_channels[i],
+                      self.cls_out_channels,
+                      3,
+                      padding=1) for i in range(len(self.strides))
+        ])
+
+        self.gfl_reg = nn.ModuleList([
+            nn.Conv2d(self.feat_channels[i],
+                      4 * (self.reg_max + 1),
+                      3,
+                      padding=1) for i in range(len(self.strides))
+        ])
+
+        self.scales = nn.ModuleList([Scale(1.0) for _ in self.strides])
+
+    def get_single_level_center_priors(self, batch_size, featmap_size, stride,
+                                       dtype, device):
+
+        h, w = featmap_size
+        x_range = (torch.arange(0, int(w), dtype=dtype,
+                                device=device)) * stride
+        y_range = (torch.arange(0, int(h), dtype=dtype,
+                                device=device)) * stride
+
+        x = x_range.repeat(h, 1)
+        y = y_range.unsqueeze(-1).repeat(1, w)
+
+        y = y.flatten()
+        x = x.flatten()
+        strides = x.new_full((x.shape[0],), stride)
+        priors = torch.stack([x, y, strides, strides], dim=-1)
+
+        return priors.unsqueeze(0).repeat(batch_size, 1, 1)
+
     def predict(self,
                 x: Tuple[Tensor],
                 batch_data_samples: SampleList,
@@ -390,19 +476,24 @@ class ZeroHead(BaseDenseHead):
         # batch bbox decode
         bbox_preds = self.integral(bbox_preds) * self.mlvl_priors[..., 2, None]
         bbox_preds = distance2bbox(self.mlvl_priors[..., :2], bbox_preds)
-        ## TODO:discuss with teacher about the postprocess postion
+        # TODO:discuss with teacher about the postprocess postion
         if self.nms:
             output = postprocess(cls_scores, bbox_preds, self.num_classes,
-                                 self.nms_conf_thre, self.nms_iou_thre, imgs=batch_data_samples)
+                                 self.nms_conf_thre, self.nms_iou_thre,
+                                 imgs=batch_data_samples)
             for index, data_samples in enumerate(batch_data_samples):
                 output[index].bboxes[:, 0], \
                     output[index].bboxes[:, 2] = \
-                    output[index].bboxes[:, 0] / data_samples.scale_factor[1], \
-                    output[index].bboxes[:, 2] / data_samples.scale_factor[1]
+                    output[index].bboxes[:, 0] / \
+                    data_samples.scale_factor[1], \
+                    output[index].bboxes[:, 2] / \
+                    data_samples.scale_factor[1]
                 output[index].bboxes[:, 1], \
                     output[index].bboxes[:, 3] = \
-                    output[index].bboxes[:, 1] / data_samples.scale_factor[0], \
-                    output[index].bboxes[:, 3] / data_samples.scale_factor[0]
+                    output[index].bboxes[:, 1] / \
+                    data_samples.scale_factor[0], \
+                    output[index].bboxes[:, 3] / \
+                    data_samples.scale_factor[0]
             return output
         return cls_scores, bbox_preds
 
@@ -434,3 +525,6 @@ class ZeroHead(BaseDenseHead):
         bbox_pred = bbox_pred.flatten(start_dim=3).permute(
             0, 3, 1, 2)  # N, h*w, 4, self.reg_max+1
         return cls_score, bbox_pred, bbox_before_softmax
+
+    def loss_by_feat(self, **kwargs) -> dict:
+        pass
