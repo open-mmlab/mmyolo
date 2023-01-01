@@ -138,7 +138,9 @@ train_pipeline = [
         max_shear_degree=0.0,
         scaling_ratio_range=(0.5, 1.5),
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
-        border_val=(114, 114, 114)),
+        border_val=(114, 114, 114),
+        min_area_ratio=0.01,
+        max_aspect_ratio=100),
     dict(
         type='Albu',
         transforms=albu_train_transforms,
