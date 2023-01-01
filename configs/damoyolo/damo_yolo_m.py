@@ -8,7 +8,7 @@ model = dict(
         std=[1., 1., 1.],
         bgr_to_rgb=True),
     backbone=dict(type='TinyNAS_csp',
-                  out_indices=(2,3,4),
+                  out_indices=(2, 3, 4),
                   with_spp=True,
                   use_focus=True,
                   act='silu',

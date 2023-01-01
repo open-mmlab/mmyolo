@@ -3,9 +3,10 @@
 import torch
 import torch.nn as nn
 
-from ..necks.giraffe_neck import  RepConv
+from ..necks.giraffe_neck import RepConv
 
 from mmyolo.registry import MODELS
+
 
 def get_norm(name, out_channels, inplace=True):
     if name == 'bn':
@@ -13,6 +14,7 @@ def get_norm(name, out_channels, inplace=True):
     else:
         raise NotImplementedError
     return module
+
 
 def get_activation(name='silu', inplace=True):
     if name is None:
@@ -71,6 +73,7 @@ class SPPBottleneck(nn.Module):
         x = torch.cat([x] + [m(x) for m in self.m], dim=1)
         x = self.conv2(x)
         return x
+
 
 class ConvKXBN(nn.Module):
     def __init__(self, in_c, out_c, kernel_size, stride):
@@ -152,6 +155,7 @@ class ResConvBlock(nn.Module):
         x = self.activation_function(x)
         return x
 
+
 class ConvBNAct(nn.Module):
     """A Conv2d -> Batchnorm -> silu/leaky relu block"""
 
@@ -197,6 +201,7 @@ class ConvBNAct(nn.Module):
     def fuseforward(self, x):
         return self.act(self.conv(x))
 
+
 class Focus(nn.Module):
     """Focus width and height information into channel space."""
 
@@ -229,6 +234,7 @@ class Focus(nn.Module):
             dim=1,
         )
         return self.conv(x)
+
 
 class CSPStem(nn.Module):
     def __init__(self,
@@ -280,78 +286,78 @@ class CSPStem(nn.Module):
             output = block(output)
         return output
 
+
 @MODELS.register_module()
 class TinyNAS_csp(nn.Module):
-    structure_info_m =  [ {'class': 'ConvKXBNRELU', 'in': 3, 'k': 3, 'nbitsA': 8, 'nbitsW': 8, 'out': 32, 's': 1},
-                             { 'L': 2,
-                               'btn': 64,
-                               'class': 'SuperResConvKXKX',
-                               'in': 32,
-                               'inner_class': 'ResConvKXKX',
-                               'k': 3,
-                               'nbitsA': [8, 8, 8, 8],
-                               'nbitsW': [8, 8, 8, 8],
-                               'out': 128,
-                               's': 2},
-                             { 'L': 4,
-                               'btn': 64,
-                               'class': 'SuperResConvKXKX',
-                               'in': 128,
-                               'inner_class': 'ResConvKXKX',
-                               'k': 3,
-                               'nbitsA': [8, 8, 8, 8, 8, 8, 8, 8],
-                               'nbitsW': [8, 8, 8, 8, 8, 8, 8, 8],
-                               'out': 128,
-                               's': 2},
-                             { 'L': 4,
-                               'btn': 256,
-                               'class': 'SuperResConvKXKX',
-                               'in': 128,
-                               'inner_class': 'ResConvKXKX',
-                               'k': 3,
-                               'nbitsA': [8, 8, 8, 8, 8, 8, 8, 8],
-                               'nbitsW': [8, 8, 8, 8, 8, 8, 8, 8],
-                               'out': 256,
-                               's': 2},
-                             { 'L': 4,
-                               'btn': 256,
-                               'class': 'SuperResConvKXKX',
-                               'in': 256,
-                               'inner_class': 'ResConvKXKX',
-                               'k': 3,
-                               'nbitsA': [8, 8, 8, 8, 8, 8, 8, 8],
-                               'nbitsW': [8, 8, 8, 8, 8, 8, 8, 8],
-                               'out': 256,
-                               's': 1},
-                             { 'L': 3,
-                               'btn': 256,
-                               'class': 'SuperResConvKXKX',
-                               'in': 256,
-                               'inner_class': 'ResConvKXKX',
-                               'k': 3,
-                               'nbitsA': [8, 8, 8, 8, 8, 8],
-                               'nbitsW': [8, 8, 8, 8, 8, 8],
-                               'out': 512,
-                               's': 2}
-]
+    structure_info_m = [{'class': 'ConvKXBNRELU', 'in': 3, 'k': 3, 'nbitsA': 8, 'nbitsW': 8, 'out': 32, 's': 1},
+                        {'L': 2,
+                         'btn': 64,
+                         'class': 'SuperResConvKXKX',
+                         'in': 32,
+                         'inner_class': 'ResConvKXKX',
+                         'k': 3,
+                         'nbitsA': [8, 8, 8, 8],
+                         'nbitsW': [8, 8, 8, 8],
+                         'out': 128,
+                         's': 2},
+                        {'L': 4,
+                         'btn': 64,
+                         'class': 'SuperResConvKXKX',
+                         'in': 128,
+                         'inner_class': 'ResConvKXKX',
+                         'k': 3,
+                         'nbitsA': [8, 8, 8, 8, 8, 8, 8, 8],
+                         'nbitsW': [8, 8, 8, 8, 8, 8, 8, 8],
+                         'out': 128,
+                         's': 2},
+                        {'L': 4,
+                         'btn': 256,
+                         'class': 'SuperResConvKXKX',
+                         'in': 128,
+                         'inner_class': 'ResConvKXKX',
+                         'k': 3,
+                         'nbitsA': [8, 8, 8, 8, 8, 8, 8, 8],
+                         'nbitsW': [8, 8, 8, 8, 8, 8, 8, 8],
+                         'out': 256,
+                         's': 2},
+                        {'L': 4,
+                         'btn': 256,
+                         'class': 'SuperResConvKXKX',
+                         'in': 256,
+                         'inner_class': 'ResConvKXKX',
+                         'k': 3,
+                         'nbitsA': [8, 8, 8, 8, 8, 8, 8, 8],
+                         'nbitsW': [8, 8, 8, 8, 8, 8, 8, 8],
+                         'out': 256,
+                         's': 1},
+                        {'L': 3,
+                         'btn': 256,
+                         'class': 'SuperResConvKXKX',
+                         'in': 256,
+                         'inner_class': 'ResConvKXKX',
+                         'k': 3,
+                         'nbitsA': [8, 8, 8, 8, 8, 8],
+                         'nbitsW': [8, 8, 8, 8, 8, 8],
+                         'out': 512,
+                         's': 2}
+                        ]
 
     def __init__(self,
                  out_indices=[2, 3, 4],
                  with_spp=False,
                  use_focus=False,
                  act='silu',
-                 backbone_structure = 'm',
+                 backbone_structure='m',
                  reparam=False):
         super(TinyNAS_csp, self).__init__()
         self.out_indices = out_indices
         self.block_list = nn.ModuleList()
         self.stride_list = []
 
-        if backbone_structure=='m':
+        if backbone_structure == 'm':
             structure_info = self.structure_info_m
         else:
             raise ValueError('please specify the right backbone structure')
-
 
         for idx, block_info in enumerate(structure_info):
             the_block_class = block_info['class']
@@ -471,7 +477,6 @@ class CSPWrapper(nn.Module):
             x = torch.cat((x, shortcut), dim=1)
             x = self.conv_fuse(x)
         return x
-
 
 # def load_tinynas_net(backbone_cfg):
 #     # load masternet model to path

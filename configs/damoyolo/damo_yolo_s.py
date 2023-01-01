@@ -1,7 +1,7 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/coco25/'
+data_root = 'data/coco/'
 dataset_type = 'mmdet.CocoDataset'
 
 # parameters that often need to be modified
@@ -10,7 +10,7 @@ max_epochs = 300
 save_epoch_intervals = 10
 train_batch_size_per_gpu = 2
 train_num_workers = 2
-val_batch_size_per_gpu = 25
+val_batch_size_per_gpu = 1
 val_num_workers = 2
 base_lr = 0.01
 
@@ -130,8 +130,8 @@ optim_wrapper = dict(
 
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
-    num_workers=2,
-    persistent_workers=True,
+    num_workers=val_num_workers,
+    persistent_workers=persistent_workers,
     pin_memory=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -144,7 +144,7 @@ val_dataloader = dict(
         pipeline=[
             dict(
                 type='LoadImageFromFile',
-                imdecode_backend = 'pillow',
+                imdecode_backend='pillow',
                 file_client_args=dict(backend='disk')),
             dict(type='DamoyoloResize',
                  width=img_scale[1],
@@ -171,6 +171,7 @@ val_evaluator = dict(
     proposal_nums=(100, 1, 10),
     ann_file=data_root + 'annotations/instances_val2017.json',
     metric='bbox')
+
 test_evaluator = val_evaluator
 
 val_cfg = dict(type='ValLoop')
