@@ -8,9 +8,9 @@ import mmcv
 import numpy as np
 from mmcv.transforms import BaseTransform
 from mmdet.structures.bbox import autocast_box_type
+from mmdet.structures.mask import PolygonMasks
 from mmengine.dataset import BaseDataset
 from mmengine.dataset.base_dataset import Compose
-from mmdet.structures.mask import PolygonMasks
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS

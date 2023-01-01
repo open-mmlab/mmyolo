@@ -118,10 +118,11 @@ albu_train_transforms = [
 
 pre_transform = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='LoadAnnotations',
-         with_bbox=True,
-         with_mask=True,
-         poly2mask=False)
+    dict(
+        type='LoadAnnotations',
+        with_bbox=True,
+        with_mask=True,
+        poly2mask=False)
 ]
 
 train_pipeline = [

@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
-from typing import Tuple, Union, Optional
+from typing import Optional, Tuple, Union
 
 import cv2
 import mmcv
@@ -8,9 +8,9 @@ import numpy as np
 import torch
 from mmcv.transforms import BaseTransform
 from mmcv.transforms.utils import cache_randomness
+from mmdet.datasets.transforms import Albu as MMDET_Albu
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
-from mmdet.datasets.transforms import Albu as MMDET_Albu
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
 from mmdet.structures.mask import BitmapMasks, PolygonMasks
@@ -604,13 +604,15 @@ class YOLOv5RandomAffine(BaseTransform):
                     re_polygons = []
                     for polygon in polygons:
                         polygon = polygon.reshape(-1, 2)
-                        polygon = np.concatenate(
-                            (polygon, polygon[0:1, :]), axis=0)
+                        polygon = np.concatenate((polygon, polygon[0:1, :]),
+                                                 axis=0)
                         x = np.linspace(0, len(polygon) - 1, 1000)
                         xp = np.arange(len(polygon))
-                        re_polygons.append(np.concatenate([
-                            np.interp(x, xp, polygon[:, i]) for i in range(2)]
-                        ).reshape(2, -1).T)
+                        re_polygons.append(
+                            np.concatenate([
+                                np.interp(x, xp, polygon[:, i])
+                                for i in range(2)
+                            ]).reshape(2, -1).T)
                     gt_masks.masks[i] = re_polygons
 
                 # transform for each polygon
@@ -620,7 +622,7 @@ class YOLOv5RandomAffine(BaseTransform):
                         xy = np.ones((len(polygon), 3))
                         xy[:, :2] = polygon
                         xy = xy @ warp_matrix.T  # transform
-                        trans_polygons.append(xy[:, :2].reshape(-1,))
+                        trans_polygons.append(xy[:, :2].reshape(-1, ))
                     gt_masks.masks[i] = trans_polygons
 
                 # get bbox from masks
@@ -754,9 +756,10 @@ class YOLOv5RandomAffine(BaseTransform):
 
 @TRANSFORMS.register_module()
 class Albu(MMDET_Albu):
+
     def __init__(self, *arg, **kwargs):
         super().__init__(*arg, **kwargs)
-    
+
     def _postprocess_results(
             self,
             results: dict,
@@ -799,7 +802,7 @@ class Albu(MMDET_Albu):
                     return None
             elif 'masks' in results:
                 results['masks'] = ori_masks.__class__(
-                        results['masks'], results['image'].shape[0],
-                        results['image'].shape[1])
+                    results['masks'], results['image'].shape[0],
+                    results['image'].shape[1])
 
         return results
