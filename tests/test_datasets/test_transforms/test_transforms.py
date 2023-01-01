@@ -125,10 +125,10 @@ class TestLetterResize(unittest.TestCase):
 
         # TODO: Testing the existence of multiple scale_factor and pad_param
         transform = [
-            YOLOv5KeepRatioResize(scale=(1280, 1280)),
-            LetterResize(scale=(640, 640), pad_val=dict(img=144))
+            YOLOv5KeepRatioResize(scale=(32, 32)),
+            LetterResize(scale=(64, 68), pad_val=dict(img=144))
         ]
-        for _ in range(10):
+        for _ in range(5):
             input_h, input_w = np.random.randint(100, 700), np.random.randint(
                 100, 700)
             output_h, output_w = np.random.randint(100,
@@ -142,18 +142,26 @@ class TestLetterResize(unittest.TestCase):
                 data_info = t(data_info)
             # because of the "math.round" operation,
             # it is unable to strictly restore the original input shape
-            # we just validate the upper bound and the lower bound
-            # (img_shape - pad_param) / scale_factor = input_shape
+            # we just validate the correctness of scale_factor and pad_param
             self.assertIn('scale_factor', data_info)
             self.assertIn('pad_param', data_info)
-            pad_param = data_info['pad_param'].reshape(-1, 2).sum(1)
-            scale_factor = np.asarray(data_info['scale_factor'])
-            self.assertTrue((np.ceil(
-                (data_info['img_shape'][:2] - pad_param + 1.) / scale_factor)
-                             >= (input_h, input_w)).all())
-            self.assertTrue((np.floor(
-                (data_info['img_shape'][:2] - pad_param - 1.) / scale_factor)
-                             <= (input_h, input_w)).all())
+            pad_param = data_info['pad_param'].reshape(-1, 2).sum(
+                1)  # (top, b, l, r) -> (h, w)
+            scale_factor = np.asarray(
+                data_info['scale_factor'])[::-1]  # (w, h) -> (h, w)
+            scale_factor_keepratio = np.min(
+                np.asarray((32, 32)) / (input_h, input_w))
+            validate_shape = np.floor(
+                np.asarray((input_h, input_w)) * scale_factor_keepratio + 0.5)
+            scale_factor_keepratio = np.floor(scale_factor_keepratio *
+                                              input_h + 0.5) / input_h
+            scale_factor_letter = (output_h, output_w) / validate_shape
+            scale_factor_letter = (
+                scale_factor_letter -
+                (pad_param / validate_shape))[np.argmin(scale_factor_letter)]
+            self.assertTrue(data_info['img_shape'][:2] == (output_h, output_w))
+            self.assertTrue((scale_factor == (scale_factor_keepratio *
+                                              scale_factor_letter)).all())
 
 
 class TestYOLOv5KeepRatioResize(unittest.TestCase):
