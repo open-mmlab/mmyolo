@@ -8,6 +8,7 @@ from ..utils import BoxList
 from mmdet.models.utils import multi_apply
 from mmdet.models.losses import (DistributionFocalLoss,
                                  GIoULoss, weighted_loss)
+from mmcv.cnn import Scale
 from typing import Tuple
 from torch import Tensor
 import torchvision
@@ -16,23 +17,6 @@ from mmengine.structures import InstanceData
 from mmdet.utils import InstanceList
 from mmyolo.registry import MODELS
 from ..necks.giraffe_neck import ConvBNAct
-
-
-class Scale(nn.Module):
-    """A learnable scale parameter.
-    This layer scales the input by a learnable factor. It multiplies a
-    learnable scale parameter of shape (1,) with input of any shape.
-    Args:
-        scale (float): Initial value of scale factor. Default: 1.0
-    """
-
-    def __init__(self, scale=1.0):
-        super(Scale, self).__init__()
-        self.scale = nn.Parameter(torch.tensor(scale, dtype=torch.float))
-
-    def forward(self, x):
-        return x * self.scale
-
 
 @weighted_loss
 def quality_focal_loss(pred, target, beta=2.0, use_sigmoid=True):
