@@ -12,12 +12,13 @@ import torch.nn as nn
 import torchvision
 from mmcv.transforms import Compose
 from mmdet.evaluation import get_classes
-from mmdet.models import build_detector
 from mmdet.utils import ConfigType
 from mmengine.config import Config
 from mmengine.runner import load_checkpoint
 from mmengine.structures import InstanceData
 from torch import Tensor
+
+from mmyolo.registry import MODELS
 
 try:
     from pytorch_grad_cam import (AblationCAM, AblationLayer,
@@ -71,7 +72,7 @@ def init_detector(
     # grad based method requires train_cfg
     # config.model.train_cfg = None
 
-    model = build_detector(config.model)
+    model = MODELS.build(config.model)
     if checkpoint is not None:
         checkpoint = load_checkpoint(model, checkpoint, map_location='cpu')
         # Weights converted from elsewhere may not have meta fields.
