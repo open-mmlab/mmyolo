@@ -125,11 +125,11 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
   - [训练 & 测试](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#训练-测试)
     - [学习 YOLOv5 配置文件](docs/zh_cn/user_guides/config.md)
   - [从入门到部署全流程](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#从入门到部署全流程)
+    - [自定义数据集](docs/zh_cn/user_guides/custom_dataset.md)
     - [YOLOv5 从入门到部署全流程](docs/zh_cn/user_guides/yolov5_tutorial.md)
   - [实用工具](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#实用工具)
     - [可视化教程](docs/zh_cn/user_guides/visualization.md)
     - [实用工具](docs/zh_cn/user_guides/useful_tools.md)
-    - [自定义数据集](docs/zh_cn/user_guides/custom_dataset.md)
 
 - 算法描述
 
