@@ -62,8 +62,8 @@ class TestYOLOv5Collate(unittest.TestCase):
         out = yolov5_collate([dict(inputs=inputs, data_samples=data_samples)],
                              use_ms_training=True)
         self.assertIsInstance(out, dict)
-        self.assertTrue(out['inputs'].shape == (1, 3, 10, 10))
-        self.assertTrue(out['data_samples'].shape == (4, 6))
+        self.assertTrue(out['inputs'][0].shape == (3, 10, 10))
+        self.assertTrue(out['data_samples'][0].shape == (4, 6))
         self.assertIsInstance(out['inputs'], list)
         self.assertIsInstance(out['data_samples'], list)
 
@@ -71,8 +71,8 @@ class TestYOLOv5Collate(unittest.TestCase):
             [dict(inputs=inputs, data_samples=data_samples)] * 2,
             use_ms_training=True)
         self.assertIsInstance(out, dict)
-        self.assertTrue(out['inputs'].shape == (2, 3, 10, 10))
-        self.assertTrue(out['data_samples'].shape == (8, 6))
+        self.assertTrue(out['inputs'][0].shape == (3, 10, 10))
+        self.assertTrue(len(out['data_samples']) == 2)
         self.assertIsInstance(out['inputs'], list)
         self.assertIsInstance(out['data_samples'], list)
 
