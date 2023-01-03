@@ -15,6 +15,9 @@ from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
+from mmdet.datasets.transforms.transforms import Pad
+
+Number = Union[int, float]
 
 
 @TRANSFORMS.register_module()
@@ -249,12 +252,15 @@ class LetterResize(MMDET_Resize):
             return
 
         # resize the gt_masks
-        gt_mask_height = results['gt_masks'].height * \
+        gt_mask_height = \
+            results['gt_masks'].height * \
             results['scale_factor'][0]
-        gt_mask_width = results['gt_masks'].width * \
+        gt_mask_width = \
+            results['gt_masks'].width * \
             results['scale_factor'][1]
         gt_masks = results['gt_masks'].resize(
-            (int(round(gt_mask_height)), int(round(gt_mask_width))))
+            (int(round(gt_mask_height)),
+             int(round(gt_mask_width))))
 
         # padding the gt_masks
         if len(gt_masks) == 0:
@@ -515,7 +521,8 @@ class YOLOv5RandomAffine(BaseTransform):
                                  0.5 + self.max_translate_ratio) * height
         translate_matrix = self._get_translation_matrix(trans_x, trans_y)
         warp_matrix = (
-            translate_matrix @ shear_matrix @ rotation_matrix @ scaling_matrix)
+                translate_matrix
+                @ shear_matrix @ rotation_matrix @ scaling_matrix)
         return warp_matrix, scaling_ratio
 
     @autocast_box_type()
@@ -675,3 +682,145 @@ class YOLOv5RandomAffine(BaseTransform):
         translation_matrix = np.array([[1, 0., x], [0., 1, y], [0., 0., 1.]],
                                       dtype=np.float32)
         return translation_matrix
+
+
+@TRANSFORMS.register_module()
+class DamoyoloResize(MMDET_Resize):
+    """Resize images & bbox & seg to the specified size.
+
+    This transform resizes the input image according to ``width`` and
+    ``height``. Bboxes, masks, and seg map are then resized
+    with the same parameters.
+
+    Required Keys:
+
+    - img
+    - gt_bboxes (BaseBoxes[torch.float32]) (optional)
+    - gt_masks (BitmapMasks | PolygonMasks) (optional)
+    - gt_seg_map (np.uint8) (optional)
+
+    Modified Keys:
+
+    - img
+    - img_shape
+    - gt_bboxes
+    - gt_masks
+    - gt_seg_map
+
+
+    Added Keys:
+
+    - scale
+    - scale_factor
+    - keep_ratio
+    - homography_matrix
+
+    Args:
+        width (int): width for resizing.
+        height (int): height for resizing.
+            Defaults to None.
+        pad_val (Number | dict[str, Number], optional): Padding value for if
+            the pad_mode is "constant".  If it is a single number, the value
+            to pad the image is the number and to pad the semantic
+            segmentation map is 255. If it is a dict, it should have the
+            following keys:
+
+            - img: The value to pad the image.
+            - seg: The value to pad the semantic segmentation map.
+            Defaults to dict(img=0, seg=255).
+        keep_ratio (bool): Whether to keep the aspect ratio when resizing the
+            image. Defaults to False.
+        clip_object_border (bool): Whether to clip the objects
+            outside the border of the image. In some dataset like MOT17, the gt
+            bboxes are allowed to cross the border of images. Therefore, we
+            don't need to clip the gt bboxes in these cases. Defaults to True.
+        backend (str): Image resize backend, choices are 'cv2' and 'pillow'.
+            These two backends generates slightly different results. Defaults
+            to 'cv2'.
+        interpolation (str): Interpolation method, accepted values are
+            "nearest", "bilinear", "bicubic", "area", "lanczos" for 'cv2'
+            backend, "nearest", "bilinear" for 'pillow' backend. Defaults
+            to 'bilinear'.
+    """
+
+    def __init__(self,
+                 width: int,
+                 height: int,
+                 pad_val: Union[Number, dict] = dict(img=0, seg=255),
+                 keep_ratio: bool = False,
+                 clip_object_border: bool = True,
+                 backend: str = 'cv2',
+                 interpolation: str = 'bilinear') -> None:
+        assert width is not None and height is not None, (
+            '`width` and'
+            '`height` can not be `None`')
+
+        self.width = width
+        self.height = height
+        self.scale = (width, height)
+
+        self.backend = backend
+        self.interpolation = interpolation
+        self.keep_ratio = keep_ratio
+        self.clip_object_border = clip_object_border
+
+        self.pad_val = pad_val
+
+    @autocast_box_type()
+    def transform(self, results: dict) -> dict:
+        """Transform function to resize images, bounding boxes and semantic
+        segmentation map.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+        Returns:
+            dict: Resized results, 'img', 'gt_bboxes', 'gt_seg_map',
+            'scale', 'scale_factor', 'height', 'width', and 'keep_ratio' keys
+            are updated in result dict.
+        """
+        img = results['img']
+        h, w = img.shape[:2]
+        if self.keep_ratio:
+            scale_factor = min(self.width / w, self.height / h)
+            results['scale_factor'] = (scale_factor, scale_factor)
+            real_w, real_h = int(w * float(scale_factor)), \
+                int(h * float(scale_factor))
+            cv2_interp_codes = {
+                'nearest': cv2.INTER_NEAREST,
+                'bilinear': cv2.INTER_LINEAR,
+                'bicubic': cv2.INTER_CUBIC,
+                'area': cv2.INTER_AREA,
+                'lanczos': cv2.INTER_LANCZOS4
+            }
+            cv2_interp = cv2_interp_codes[self.interpolation]
+            img = cv2.resize(results['img'], (real_w, real_h),
+                             interpolation=cv2_interp).astype(np.uint8)
+            # the w_scale and h_scale has minor difference
+            # a real fix should be done in the mmcv.imrescale in the future
+            results['img'] = img
+            results['img_shape'] = img.shape[:2]
+            results['keep_ratio'] = self.keep_ratio
+            results['scale'] = (real_w, real_h)
+        else:
+            results['scale'] = (self.width, self.height)
+            results['scale_factor'] = (self.width / w, self.height / h)
+            super()._resize_img(results)
+
+        self._resize_bboxes(results)
+        self._resize_masks(results)
+        self._resize_seg(results)
+        self._record_homography_matrix(results)
+        if self.keep_ratio:
+            self.pad_transform = Pad(size=results['batch_shape'][::-1],
+                                     pad_val=self.pad_val)
+            results = self.pad_transform(results)
+        return results
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(width={self.width}, height={self.height}, '
+        repr_str += f'keep_ratio={self.keep_ratio}, '
+        repr_str += f'clip_object_border={self.clip_object_border}), '
+        repr_str += f'backend={self.backend}), '
+        repr_str += f'interpolation={self.interpolation})'
+        return repr_str
