@@ -9,6 +9,7 @@ widen_factor = 1.0
 max_epochs = 300
 stage2_num_epochs = 20
 interval = 10
+num_classes = 80
 
 train_batch_size_per_gpu = 32
 train_num_workers = 10
@@ -61,7 +62,7 @@ model = dict(
         type='RTMDetHead',
         head_module=dict(
             type='RTMDetSepBNHeadModule',
-            num_classes=80,
+            num_classes=num_classes,
             in_channels=256,
             stacked_convs=2,
             feat_channels=256,
