@@ -140,7 +140,7 @@ train_pipeline = [
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
-    persistent_workers=True,
+    persistent_workers=persistent_workers,
     pin_memory=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     collate_fn=dict(type='yolov5_collate', use_multi_scale_training=True),
@@ -205,10 +205,7 @@ default_hooks = dict(
         min_lr_ratio=0.0,
         total_epochs=int(max_epochs * 1.2)),
     checkpoint=dict(
-        type='CheckpointHook',
-        interval=save_epoch_intervals,
-        save_best='auto',
-        max_keep_ckpts=3))
+        type='CheckpointHook', interval=1, save_best='auto', max_keep_ckpts=3))
 
 custom_hooks = [
     dict(

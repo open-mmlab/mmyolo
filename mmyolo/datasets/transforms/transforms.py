@@ -922,44 +922,49 @@ class PPYOLOERandomCrop(MMDET_RandomCrop):
                 results['gt_bboxes']) == 0:
             return results
 
-        img_shape = results['img'].shape
-        h, w = img_shape[:2]
-        gt_bbox = results['gt_bboxes']
+        orig_img_h, orig_img_w = results['img'].shape[:2]
+        gt_bboxes = results['gt_bboxes']
 
         thresholds = list(self.thresholds)
         if self.allow_no_crop:
             thresholds.append('no_crop')
         random.shuffle(thresholds)
 
-        # Determine the coordinates for cropping
         for thresh in thresholds:
+            # Determine the coordinates for cropping
             if thresh == 'no_crop':
                 return results
 
             found = False
             for i in range(self.num_attempts):
-                crop_h, crop_w = self._get_crop_size((h, w))
+                crop_h, crop_w = self._get_crop_size((orig_img_h, orig_img_w))
                 if self.aspect_ratio is None:
                     if crop_h / crop_w < 0.5 or crop_h / crop_w > 2.0:
                         continue
 
-                margin_h = max(img_shape[0] - crop_h, 0)
-                margin_w = max(img_shape[1] - crop_w, 0)
+                # get image crop_box
+                margin_h = max(orig_img_h - crop_h, 0)
+                margin_w = max(orig_img_w - crop_w, 0)
                 offset_h, offset_w = self._rand_offset((margin_h, margin_w))
                 crop_y1, crop_y2 = offset_h, offset_h + crop_h
                 crop_x1, crop_x2 = offset_w, offset_w + crop_w
 
                 crop_box = [crop_x1, crop_y1, crop_x2, crop_y2]
-                iou = self._iou_matrix(gt_bbox,
+                # Calculate the iou between gt_bboxes and crop_boxes
+                iou = self._iou_matrix(gt_bboxes,
                                        np.array([crop_box], dtype=np.float32))
+                # If the maximum value of the iou is less than thresh,
+                # the current crop_box is considered invalid.
                 if iou.max() < thresh:
                     continue
 
+                # If cover_all_box == True and the minimum value of
+                # the iou is less than thresh,
                 if self.cover_all_box and iou.min() < thresh:
                     continue
 
                 valid_inds = self._get_valid_inds(
-                    gt_bbox, np.array(crop_box, dtype=np.float32))
+                    gt_bboxes, np.array(crop_box, dtype=np.float32))
                 if valid_inds.size > 0:
                     found = True
                     break
