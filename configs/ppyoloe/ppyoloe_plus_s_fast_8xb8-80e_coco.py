@@ -16,6 +16,10 @@ train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
 
+# The pretrained model is geted and converted from official PPYOLOE.
+# https://github.com/PaddlePaddle/PaddleDetection/blob/release/2.5/configs/ppyoloe/README.md
+load_from = 'https://download.openmmlab.com/mmyolo/v0/ppyoloe/ppyoloe_pretrain/ppyoloe_plus_s_obj365_pretrained-bcfe8478.pth'  # noqa
+
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
 
@@ -231,6 +235,3 @@ train_cfg = dict(
     dynamic_intervals=[(max_epochs - 10, 1)])
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
-
-# TODO: add object365 pretrained model url. (s,m,l,x)
-load_from = 'https://download.openmmlab.com/mmyolo/v0/ppyoloe/ppyoloe_pretrain/ppyoloe_plus_s_obj365_pretrained-bcfe8478.pth'  # noqa
