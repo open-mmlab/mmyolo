@@ -409,9 +409,9 @@ class TestPPYOLOERandomDistort(unittest.TestCase):
             transform = PPYOLOERandomDistort(
                 hue_cfg=dict(min=-18, max=18, prob=1.5))
 
-        # test assertion for invalid distortion_num
+        # test assertion for invalid num_distort_func
         with self.assertRaises(AssertionError):
-            transform = PPYOLOERandomDistort(distortion_num=5)
+            transform = PPYOLOERandomDistort(num_distort_func=5)
 
         transform = PPYOLOERandomDistort()
         results = transform(copy.deepcopy(self.results))
