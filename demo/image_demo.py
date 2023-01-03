@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 import mmcv
 from mmdet.apis import inference_detector, init_detector
 from mmengine.logging import print_log
-from mmengine.utils import ProgressBar
+from mmengine.utils import ProgressBar, path
 
 from mmyolo.registry import VISUALIZERS
 from mmyolo.utils import register_all_modules, switch_to_deploy
@@ -60,8 +60,8 @@ def main():
     if args.deploy:
         switch_to_deploy(model)
 
-    if not os.path.exists(args.out_dir) and not args.show:
-        os.mkdir(args.out_dir)
+    if not args.show:
+        path.mkdir_or_exist(args.out_dir)
 
     # init visualizer
     visualizer = VISUALIZERS.build(model.cfg.visualizer)

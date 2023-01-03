@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from projects.easydeploy.model import ORTWrapper, TRTWrapper  # isort:skip
 import os
 import random
 from argparse import ArgumentParser
@@ -10,11 +9,13 @@ import numpy as np
 import torch
 from mmcv.transforms import Compose
 from mmdet.utils import get_test_pipeline_cfg
-from mmengine.config import Config
-from mmengine.utils import ProgressBar
+from mmengine.config import Config, ConfigDict
+from mmengine.utils import ProgressBar, path
 
 from mmyolo.utils import register_all_modules
 from mmyolo.utils.misc import get_file_list
+
+from projects.easydeploy.model import ORTWrapper, TRTWrapper  # isort:skip
 
 
 def parse_args():
@@ -76,13 +77,13 @@ def main():
     cfg = Config.fromfile(args.config)
 
     test_pipeline = get_test_pipeline_cfg(cfg)
-    test_pipeline[0].type = 'mmdet.LoadImageFromNDArray'
+    test_pipeline[0] = ConfigDict({'type': 'mmdet.LoadImageFromNDArray'})
     test_pipeline = Compose(test_pipeline)
 
     pre_pipeline = preprocess(cfg)
 
-    if not os.path.exists(args.out_dir) and not args.show:
-        os.mkdir(args.out_dir)
+    if not args.show:
+        path.mkdir_or_exist(args.out_dir)
 
     # get file list
     files, source_type = get_file_list(args.img)
