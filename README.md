@@ -129,9 +129,9 @@ For different parts from MMDetection, we have also prepared user guides and adva
 
 - Deployment Guides
 
-  - [Basic Deployment Guide](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#basic-deployment-guide)
+  - [Basic Deployment Guide](https://mmyolo.readthedocs.io/en/latest/deploy/index.html#basic-deployment-guide)
     - [Basic Deployment Guide](docs/en/deploy/basic_deployment_guide.md)
-  - [Deployment Tutorial](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#deployment-tutorial)
+  - [Deployment Tutorial](https://mmyolo.readthedocs.io/en/latest/deploy/index.html#deployment-tutorial)
     - [YOLOv5 Deployment](docs/en/deploy/yolov5_deployment.md)
 
 - Advanced Guides
