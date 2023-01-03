@@ -619,7 +619,7 @@ YOLOv5 是非解耦输出头，而其他大部分算法都是解耦输出头，�
 
         n = len(image_shapes)  # number of images
         batch_index = np.floor(np.arange(n) / self.batch_size).astype(
-            np.int)  # batch index
+            np.int64)  # batch index
         number_of_batches = batch_index[-1] + 1  # number of batches
 
         aspect_ratio = image_shapes[:, 1] / image_shapes[:, 0]  # aspect ratio
@@ -641,7 +641,7 @@ YOLOv5 是非解耦输出头，而其他大部分算法都是解耦输出头，�
 
         batch_shapes = np.ceil(
             np.array(shapes) * self.img_size / self.size_divisor +
-            self.pad).astype(np.int) * self.size_divisor
+            self.pad).astype(np.int64) * self.size_divisor
 
         for i, data_info in enumerate(data_list):
             data_info['batch_shape'] = batch_shapes[batch_index[i]]

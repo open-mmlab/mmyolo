@@ -222,7 +222,7 @@ labelme ./data/cat/images --output ./data/cat/labels --autosave --nodata
 
 ### 2.2 仅人工标注
 
-步骤和 【1.1.2 人工标注】 相同，只是这里是直接标注，没有预先生成的 label 。
+步骤和 【2.1.2 人工标注】 相同，只是这里是直接标注，没有预先生成的 label 。
 
 ## 3. 使用脚本转换成 COCO 数据集格式
 
@@ -395,8 +395,8 @@ anchors = [  # 此处已经根据数据集特点更新了 anchor，关于 anchor
 class_name = ('cat', )  # 根据 class_with_id.txt 类别信息，设置 class_name
 num_classes = len(class_name)
 metainfo = dict(
-    CLASSES=class_name,
-    PALETTE=[(220, 20, 60)]  # 画图时候的颜色，随便设置即可
+    classes=class_name,
+    palette=[(220, 20, 60)]  # 画图时候的颜色，随便设置即可
 )
 
 train_cfg = dict(
@@ -801,8 +801,8 @@ base_lr = _base_.base_lr / 8
 class_name = ('cat', )  # 根据 class_with_id.txt 类别信息，设置 class_name
 num_classes = len(class_name)
 metainfo = dict(
-    CLASSES=class_name,
-    PALETTE=[(220, 20, 60)]  # 画图时候的颜色，随便设置即可
+    classes=class_name,
+    palette=[(220, 20, 60)]  # 画图时候的颜色，随便设置即可
 )
 
 train_cfg = dict(

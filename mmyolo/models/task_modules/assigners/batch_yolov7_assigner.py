@@ -227,7 +227,8 @@ class BatchYOLOv7Assigner(nn.Module):
                 _mlvl_priors.append(priors)
 
                 _from_which_layer.append(
-                    torch.ones(size=(_mlvl_positive_info.shape[0], )) * i)
+                    _mlvl_positive_info.new_full(
+                        size=(_mlvl_positive_info.shape[0], ), fill_value=i))
 
                 # (n,85)
                 level_batch_idx, prior_ind, \
@@ -246,11 +247,12 @@ class BatchYOLOv7Assigner(nn.Module):
                     [pred_positive_cxcy, pred_positive_wh], dim=-1)
                 _mlvl_decoderd_bboxes.append(pred_positive_xywh)
 
+            if len(_mlvl_decoderd_bboxes) == 0:
+                continue
+
             # 1 calc pair_wise_iou_loss
             _mlvl_decoderd_bboxes = torch.cat(_mlvl_decoderd_bboxes, dim=0)
             num_pred_positive = _mlvl_decoderd_bboxes.shape[0]
-            if num_pred_positive == 0:
-                continue
 
             # scaled xywh
             batch_input_shape_wh = pred_results[0].new_tensor(

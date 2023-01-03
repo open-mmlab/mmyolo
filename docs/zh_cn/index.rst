@@ -56,6 +56,7 @@
 
    notes/faq.md
    notes/changelog.md
+   notes/compatibility.md
 
 .. toctree::
    :maxdepth: 2

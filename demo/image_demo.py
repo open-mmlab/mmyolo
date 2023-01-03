@@ -71,7 +71,7 @@ def main():
     files, source_type = get_file_list(args.img)
 
     # get model class name
-    dataset_classes = model.dataset_meta.get('CLASSES')
+    dataset_classes = model.dataset_meta.get('classes')
 
     # ready for labelme format if it is needed
     to_label_format = LabelmeFormat(classes=dataset_classes)
