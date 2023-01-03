@@ -1,19 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule, is_norm
-from mmdet.models.task_modules.prior_generators import anchor_inside_flags
 from mmdet.models.task_modules.samplers import PseudoSampler
-from mmdet.models.utils import images_to_levels, multi_apply, unmap
 from mmdet.structures.bbox import distance2bbox
 from mmdet.utils import (ConfigType, InstanceList, OptConfigType,
                          OptInstanceList, OptMultiConfig, reduce_mean)
-from mmengine.config import ConfigDict
 from mmengine.model import (BaseModule, bias_init_with_prob, constant_init,
                             normal_init)
-from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS, TASK_UTILS
@@ -309,22 +305,10 @@ class RTMDetHead(YOLOv5Head):
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.prior_generator.num_levels
 
-
         gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
         gt_labels = gt_info[:, :, :1]
         gt_bboxes = gt_info[:, :, 1:]  # xyxy
         pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
-
-        # if isinstance(batch_gt_instances, torch.Tensor):
-        #     batch_instance_list = []
-        #     for i in range(num_imgs):
-        #         single_batch_instance = \
-        #             batch_gt_instances[batch_gt_instances[:, 0] == i, :]
-        #         single_gt_instance = InstanceData(
-        #             bboxes=single_batch_instance[:, 2:],
-        #             labels=single_batch_instance[:, 1])
-        #         batch_instance_list.append(single_gt_instance)
-        #     batch_gt_instances = batch_instance_list
 
         device = cls_scores[0].device
 
@@ -351,30 +335,13 @@ class RTMDetHead(YOLOv5Head):
 
         assigned_result = self.assigner(flatten_bboxes.detach(),
                                         flatten_cls_scores.detach(),
-                                        self.flatten_anchors,
-                                        gt_labels, gt_bboxes, pad_bbox_flag)
+                                        self.flatten_anchors, gt_labels,
+                                        gt_bboxes, pad_bbox_flag)
 
-        labels_list = assigned_result['assigned_labels']
-        label_weights_list = assigned_result['assigned_labels_weights']
-        bbox_targets_list = assigned_result['assigned_bboxes']
-        assign_metrics_list = assigned_result['assign_metrics']
-
-        # batch_targes = multi_apply(self._get_targets_single,
-        #                            flatten_cls_scores.detach(),
-        #                            flatten_bboxes.detach(), batch_gt_instances,
-        #                            batch_img_metas)
-
-        # (labels_list, label_weights_list, bbox_targets_list,
-        #  assign_metrics_list) = batch_targes
-        # labels = torch.cat(labels_list, dim=0)
-        # label_weights = torch.cat(label_weights_list, dim=0)
-        # bbox_targets = torch.cat(bbox_targets_list, dim=0)
-        # assign_metrics = torch.cat(assign_metrics_list, dim=0)
-
-        labels = labels_list.reshape(-1)
-        label_weights =label_weights_list.reshape(-1)
-        bbox_targets = bbox_targets_list.reshape(-1, 4)
-        assign_metrics = assign_metrics_list.reshape(-1)
+        labels = assigned_result['assigned_labels'].reshape(-1)
+        label_weights = assigned_result['assigned_labels_weights'].reshape(-1)
+        bbox_targets = assigned_result['assigned_bboxes'].reshape(-1, 4)
+        assign_metrics = assigned_result['assign_metrics'].reshape(-1)
         cls_preds = flatten_cls_scores.reshape(-1, self.num_classes)
         bbox_preds = flatten_bboxes.reshape(-1, 4)
 
@@ -399,131 +366,6 @@ class RTMDetHead(YOLOv5Head):
             loss_bbox = bbox_preds.sum() * 0
 
         return dict(loss_cls=loss_cls, loss_bbox=loss_bbox)
-
-
-        # losses_bbox = []
-        # losses_cls = []
-        # num_poses = []
-
-        # for i in range(num_imgs):
-        #     (labels, label_weights, bbox_targets,
-        #      assign_metrics) = self._get_targets_single(
-        #          flatten_cls_scores[i].detach(), flatten_bboxes[i].detach(),
-        #          batch_gt_instances[i], batch_img_metas[i])
-
-        #     # FG cat_id: [0, num_classes -1], BG cat_id: num_classes
-        #     bg_class_ind = self.num_classes
-        #     pos_inds = ((labels >= 0)
-        #                 & (labels < bg_class_ind)).nonzero().squeeze(1)
-
-        #     loss_cls = self.loss_cls(
-        #         flatten_cls_scores[i], (labels, assign_metrics),
-        #         label_weights,
-        #         avg_factor=1)
-
-        #     if len(pos_inds) > 0:
-        #         loss_bbox = self.loss_bbox(
-        #             flatten_bboxes[i][pos_inds],
-        #             bbox_targets[pos_inds],
-        #             weight=assign_metrics[pos_inds],
-        #             avg_factor=1)
-        #     else:
-        #         loss_bbox = flatten_bboxes.sum() * 0
-
-        #     num_pos = assign_metrics.sum()
-        #     losses_bbox.append(loss_bbox)
-        #     losses_cls.append(loss_cls)
-        #     num_poses.append(num_pos)
-
-        # avg_factor = reduce_mean(sum(num_poses)).clamp_(min=1).item()
-        # losses_cls = list(map(lambda x: x / avg_factor, losses_cls))
-        # losses_bbox = list(map(lambda x: x / avg_factor, losses_bbox))
-
-        # return dict(loss_cls=losses_cls, loss_bbox=losses_bbox)
-
-    def _get_targets_single(self,
-                            cls_scores: Tensor,
-                            bbox_preds: Tensor,
-                            gt_instances: InstanceData,
-                            img_meta: dict,
-                            gt_instances_ignore: Optional[InstanceData] = None,
-                            unmap_outputs=True) -> tuple:
-        """Compute regression, classification targets for anchors in a single
-        image.
-
-        Args:
-            cls_scores (list(Tensor)): Box scores for each image.
-            bbox_preds (list(Tensor)): Box energies / deltas for each image.
-            flat_anchors (Tensor): Multi-level anchors of the image, which are
-                concatenated into a single tensor of shape (num_anchors ,4)
-            gt_instances (:obj:`InstanceData`): Ground truth of instance
-                annotations. It usually includes ``bboxes`` and ``labels``
-                attributes.
-            img_meta (dict): Meta information for current image.
-            gt_instances_ignore (:obj:`InstanceData`, optional): Instances
-                to be ignored during training. It includes ``bboxes`` attribute
-                data that is ignored during training and testing.
-                Defaults to None.
-            unmap_outputs (bool): Whether to map outputs back to the original
-                set of anchors. Defaults to True.
-
-        Returns:
-            tuple: N is the number of total anchors in the image.
-
-            - anchors (Tensor): All anchors in the image with shape (N, 4).
-            - labels (Tensor): Labels of all anchors in the image with shape
-              (N,).
-            - label_weights (Tensor): Label weights of all anchor in the
-              image with shape (N,).
-            - bbox_targets (Tensor): BBox targets of all anchors in the
-              image with shape (N, 4).
-            - norm_alignment_metrics (Tensor): Normalized alignment metrics
-              of all priors in the image with shape (N,).
-        """
-        # assign gt and sample anchors
-        anchors = self.flatten_anchors
-        pred_instances = InstanceData(
-            scores=cls_scores, bboxes=bbox_preds, priors=anchors)
-
-        assign_result = self.assigner.assign(pred_instances, gt_instances,
-                                             gt_instances_ignore)
-
-        sampling_result = self.sampler.sample(assign_result, pred_instances,
-                                              gt_instances)
-
-        num_valid_anchors = anchors.shape[0]
-        bbox_targets = torch.zeros_like(anchors)
-        labels = anchors.new_full((num_valid_anchors, ),
-                                  self.num_classes,
-                                  dtype=torch.long)
-        label_weights = anchors.new_zeros(num_valid_anchors, dtype=torch.float)
-        assign_metrics = anchors.new_zeros(
-            num_valid_anchors, dtype=torch.float)
-
-        pos_inds = sampling_result.pos_inds
-        neg_inds = sampling_result.neg_inds
-        if len(pos_inds) > 0:
-            # point-based
-            pos_bbox_targets = sampling_result.pos_gt_bboxes
-            bbox_targets[pos_inds, :] = pos_bbox_targets
-
-            labels[pos_inds] = sampling_result.pos_gt_labels
-            if self.train_cfg.pos_weight <= 0:
-                label_weights[pos_inds] = 1.0
-            else:
-                label_weights[pos_inds] = self.train_cfg.pos_weight
-        if len(neg_inds) > 0:
-            label_weights[neg_inds] = 1.0
-
-        class_assigned_gt_inds = torch.unique(
-            sampling_result.pos_assigned_gt_inds)
-        for gt_inds in class_assigned_gt_inds:
-            gt_class_inds = pos_inds[sampling_result.pos_assigned_gt_inds ==
-                                     gt_inds]
-            assign_metrics[gt_class_inds] = assign_result.max_overlaps[
-                gt_class_inds]
-
-        return labels, label_weights, bbox_targets, assign_metrics
 
     @staticmethod
     def gt_instances_preprocess(batch_gt_instances: Union[Tensor, Sequence],
