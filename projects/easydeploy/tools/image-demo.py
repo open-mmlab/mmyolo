@@ -91,8 +91,6 @@ def main():
     # start detector inference
     progress_bar = ProgressBar(len(files))
     for i, file in enumerate(files):
-        # result = inference_detector(model, file)
-
         bgr = mmcv.imread(file)
         rgb = mmcv.imconvert(bgr, 'bgr', 'rgb')
         data, samples = test_pipeline(dict(img=rgb, img_id=i)).values()
