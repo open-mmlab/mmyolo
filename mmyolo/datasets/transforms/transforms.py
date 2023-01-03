@@ -957,10 +957,12 @@ class PPYOLOERandomCrop(MMDET_RandomCrop):
                     continue
 
                 # If cover_all_box == True and the minimum value of
-                # the iou is less than thresh,
+                # the iou is less than thresh, the current crop_box
+                # is considered invalid.
                 if self.cover_all_box and iou.min() < thresh:
                     continue
 
+                # Get which gt_bboxes to keep after cropping.
                 valid_inds = self._get_valid_inds(
                     gt_bboxes, np.array(crop_box, dtype=np.float32))
                 if valid_inds.size > 0:

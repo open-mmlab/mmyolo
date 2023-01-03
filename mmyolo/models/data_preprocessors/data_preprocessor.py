@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from mmdet.models import BatchSyncRandomResize
 from mmdet.models.data_preprocessors import DetDataPreprocessor
 from mmengine import MessageHub, is_list_of
+from torch import Tensor
 
 from mmyolo.registry import MODELS
 
@@ -72,6 +73,18 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
     """
 
     def forward(self, data: dict, training: bool = False) -> dict:
+        """Perform normalization、padding and bgr2rgb conversion based on
+        ``BaseDataPreprocessor``. This class use batch_augments first, and then
+        normalize the image, which is different from the `DetDataPreprocessor`
+        .
+
+        Args:
+            data (dict): Data sampled from dataloader.
+            training (bool): Whether to enable training time augmentation.
+
+        Returns:
+            dict: Data in the same format as the model input.
+        """
         if not training:
             return super().forward(data, training)
 
@@ -165,10 +178,19 @@ class PPYOLOEBatchRandomResize(BatchSyncRandomResize):
             self.interp_mode_list = None
             self.interp_mode = interp_mode
 
-    def forward(self, inputs, data_samples):
+    def forward(self, inputs: list,
+                data_samples: list) -> Tuple[Tensor, Tensor]:
+        """Resize a batch of images and bboxes to shape ``self._input_size``.
+
+        The inputs and data_samples should be list, and
+        ``PPYOLOEBatchRandomResize`` must be used with
+        ``PPYOLOEDetDataPreprocessor`` and ``yolov5_collate`` with
+        ``use_ms_training == True``.
+        """
         assert isinstance(inputs, list),\
             'The type of inputs must be list. The possible reason for this ' \
-            'is that you are not using it with `PPYOLOEDetDataPreprocessor`.'
+            'is that you are not using it with `PPYOLOEDetDataPreprocessor` ' \
+            'and `yolov5_collate` with use_ms_training == True.'
         message_hub = MessageHub.get_current_instance()
         if (message_hub.get_info('iter') + 1) % self._interval == 0:
             # get current input size
