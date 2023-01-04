@@ -314,9 +314,10 @@ class RTMDetHead(YOLOv5Head):
         # If the shape does not equal, generate new one
         if featmap_sizes != self.featmap_sizes:
             self.featmap_sizes = featmap_sizes
-            self.multi_level_anchors = self.prior_generator.grid_priors(
+            mlvl_priors = self.prior_generator.grid_priors(
                 featmap_sizes, device=device, with_stride=True)
-            self.flatten_anchors = torch.cat(self.multi_level_anchors)
+            self.flatten_priors = torch.cat(mlvl_priors, dim=0)
+            self.mlvl_priors = [mlvl[:, :2] for mlvl in mlvl_priors]
 
         flatten_cls_scores = torch.cat([
             cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1,
@@ -328,13 +329,13 @@ class RTMDetHead(YOLOv5Head):
             bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
             for bbox_pred in bbox_preds
         ], 1)
-        flatten_bboxes = flatten_bboxes * self.flatten_anchors[..., -1, None]
-        flatten_bboxes = distance2bbox(self.flatten_anchors[..., :2],
+        flatten_bboxes = flatten_bboxes * self.flatten_priors[..., -1, None]
+        flatten_bboxes = distance2bbox(self.flatten_priors[..., :2],
                                        flatten_bboxes)
 
         assigned_result = self.assigner(flatten_bboxes.detach(),
                                         flatten_cls_scores.detach(),
-                                        self.flatten_anchors, gt_labels,
+                                        self.flatten_priors, gt_labels,
                                         gt_bboxes, pad_bbox_flag)
 
         labels = assigned_result['assigned_labels'].reshape(-1)
