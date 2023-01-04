@@ -152,7 +152,7 @@ class PPYOLOEHead(YOLOv6Head):
     Distribution focal loss is extra used in PPYOLOE, but not in YOLOv6.
 
     Args:
-        head_module (nn.Module): Base module used for PPYOLOEHead
+        head_module(ConfigType): Base module used for YOLOv5Head
         prior_generator(dict): Points generator feature maps in
             2D points-based detectors.
         bbox_coder (:obj:`ConfigDict` or dict): Config of bbox coder.
@@ -170,7 +170,7 @@ class PPYOLOEHead(YOLOv6Head):
     """
 
     def __init__(self,
-                 head_module: nn.Module,
+                 head_module: ConfigType,
                  prior_generator: ConfigType = dict(
                      type='mmdet.MlvlPointGenerator',
                      offset=0.5,
