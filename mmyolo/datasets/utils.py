@@ -32,7 +32,10 @@ def yolov5_collate(data_batch: Sequence,
 
         batch_imgs.append(inputs)
     if use_ms_training:
-        return {'inputs': batch_imgs, 'data_samples': batch_bboxes_labels}
+        return {
+            'inputs': batch_imgs,
+            'data_samples': torch.cat(batch_bboxes_labels, 0)
+        }
     else:
         return {
             'inputs': torch.stack(batch_imgs, 0),

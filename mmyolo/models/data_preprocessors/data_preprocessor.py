@@ -203,7 +203,6 @@ class PPYOLOEBatchRandomResize(BatchSyncRandomResize):
             outputs = []
             for i in range(len(inputs)):
                 _batch_input = inputs[i]
-                data_sample = data_samples[i]
                 h, w = _batch_input.shape[-2:]
                 scale_y = self._input_size[0] / h
                 scale_x = self._input_size[1] / w
@@ -218,18 +217,19 @@ class PPYOLOEBatchRandomResize(BatchSyncRandomResize):
                         mode=self.interp_mode,
                         align_corners=align_corners)
 
-                    # rescale bbox
-                    data_sample[:, 2] *= scale_x
-                    data_sample[:, 3] *= scale_y
-                    data_sample[:, 4] *= scale_x
-                    data_sample[:, 5] *= scale_y
+                    # rescale boxes
+                    indexes = data_samples[:, 0] == i
+                    data_samples[indexes, 2] *= scale_x
+                    data_samples[indexes, 3] *= scale_y
+                    data_samples[indexes, 4] *= scale_x
+                    data_samples[indexes, 5] *= scale_y
                 else:
                     _batch_input = _batch_input.unsqueeze(0)
 
                 outputs.append(_batch_input)
 
             # convert to Tensor
-            return torch.cat(outputs, dim=0), torch.cat(data_samples, dim=0)
+            return torch.cat(outputs, dim=0), data_samples
         else:
             raise NotImplementedError('Not implemented yet!')
 
