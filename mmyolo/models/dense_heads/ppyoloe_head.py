@@ -254,19 +254,19 @@ class PPYOLOEHead(YOLOv6Head):
             cls_score.shape[2:] for cls_score in cls_scores
         ]
         # If the shape does not equal, generate new one
-        if current_featmap_sizes != self.featmap_sizes:
-            self.featmap_sizes = current_featmap_sizes
+        if current_featmap_sizes != self.featmap_sizes_train:
+            self.featmap_sizes_train = current_featmap_sizes
 
-            mlvl_priors = self.prior_generator.grid_priors(
-                self.featmap_sizes,
+            mlvl_priors_with_stride = self.prior_generator.grid_priors(
+                self.featmap_sizes_train,
                 dtype=cls_scores[0].dtype,
                 device=cls_scores[0].device,
                 with_stride=True)
 
-            self.num_level_priors = [len(n) for n in mlvl_priors]
-            self.flatten_priors = torch.cat(mlvl_priors, dim=0)
-            self.stride_tensor = self.flatten_priors[..., [2]]
-            self.mlvl_priors = [mlvl[:, :2] for mlvl in mlvl_priors]
+            self.num_level_priors = [len(n) for n in mlvl_priors_with_stride]
+            self.flatten_priors_train = torch.cat(
+                mlvl_priors_with_stride, dim=0)
+            self.stride_tensor = self.flatten_priors_train[..., [2]]
 
         # gt info
         gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
@@ -295,19 +295,20 @@ class PPYOLOEHead(YOLOv6Head):
         flatten_cls_preds = torch.cat(flatten_cls_preds, dim=1)
         flatten_pred_bboxes = torch.cat(flatten_pred_bboxes, dim=1)
         flatten_pred_bboxes = self.bbox_coder.decode(
-            self.flatten_priors[..., :2], flatten_pred_bboxes,
+            self.flatten_priors_train[..., :2], flatten_pred_bboxes,
             self.stride_tensor[..., 0])
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if current_epoch < self.initial_epoch:
             assigned_result = self.initial_assigner(
-                flatten_pred_bboxes.detach(), self.flatten_priors,
+                flatten_pred_bboxes.detach(), self.flatten_priors_train,
                 self.num_level_priors, gt_labels, gt_bboxes, pad_bbox_flag)
         else:
             assigned_result = self.assigner(flatten_pred_bboxes.detach(),
                                             pred_scores.detach(),
-                                            self.flatten_priors, gt_labels,
-                                            gt_bboxes, pad_bbox_flag)
+                                            self.flatten_priors_train,
+                                            gt_labels, gt_bboxes,
+                                            pad_bbox_flag)
 
         assigned_bboxes = assigned_result['assigned_bboxes']
         assigned_scores = assigned_result['assigned_scores']
@@ -354,7 +355,7 @@ class PPYOLOEHead(YOLOv6Head):
                 flatten_dist_preds,
                 dist_mask).reshape([-1, 4, self.head_module.reg_max + 1])
             assigned_ltrb = self.bbox_coder.encode(
-                self.flatten_priors[..., :2] / self.stride_tensor,
+                self.flatten_priors_train[..., :2] / self.stride_tensor,
                 assigned_bboxes,
                 max_dis=self.head_module.reg_max,
                 eps=0.01)

@@ -10,7 +10,10 @@ widen_factor = 1.0
 train_batch_size_per_gpu = 20
 
 model = dict(
-    backbone=dict(deepen_factor=deepen_factor, widen_factor=widen_factor),
+    backbone=dict(
+        deepen_factor=deepen_factor,
+        widen_factor=widen_factor,
+        init_cfg=dict(checkpoint=checkpoint)),
     neck=dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,

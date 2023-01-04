@@ -730,12 +730,13 @@ class PPYOLOERandomDistort(BaseTransform):
         delta = random.uniform(self.hue_cfg['min'], self.hue_cfg['max'])
         u = np.cos(delta * np.pi)
         w = np.sin(delta * np.pi)
-        bt = np.array([[1.0, 0.0, 0.0], [0.0, u, -w], [0.0, w, u]])
-        tyiq = np.array([[0.114, 0.587, 0.299], [-0.321, -0.274, 0.596],
-                         [0.311, -0.523, 0.211]])
-        ityiq = np.array([[1.0, -1.107, 1.705], [1.0, -0.272, -0.647],
-                          [1.0, 0.956, 0.621]])
-        t = np.dot(np.dot(ityiq, bt), tyiq).T
+        delta_iq = np.array([[1.0, 0.0, 0.0], [0.0, u, -w], [0.0, w, u]])
+        rgb2yiq_matrix = np.array([[0.114, 0.587, 0.299],
+                                   [-0.321, -0.274, 0.596],
+                                   [0.311, -0.523, 0.211]])
+        yiq2rgb_matric = np.array([[1.0, -1.107, 1.705], [1.0, -0.272, -0.647],
+                                   [1.0, 0.956, 0.621]])
+        t = np.dot(np.dot(yiq2rgb_matric, delta_iq), rgb2yiq_matrix).T
         img = np.dot(img, t)
         results['img'] = img
         return results
