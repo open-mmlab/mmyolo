@@ -20,6 +20,7 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
     label assignment.
 
     Args:
+        num_classes (int): number of class
         soft_center_radius (float): Radius of the soft center prior.
             Defaults to 3.0.
         topk (int): Select top-k predictions to calculate dynamic k
@@ -31,7 +32,7 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
 
     def __init__(
         self,
-        num_classes: int = 80,
+        num_classes,
         soft_center_radius: float = 3.0,
         topk: int = 13,
         iou_weight: float = 3.0,

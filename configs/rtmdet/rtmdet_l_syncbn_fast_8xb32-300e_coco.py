@@ -83,6 +83,7 @@ model = dict(
     train_cfg=dict(
         assigner=dict(
             type='BatchDynamicSoftLabelAssigner',
+            num_classes=num_classes,
             topk=13,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D')),
         allowed_border=-1,
