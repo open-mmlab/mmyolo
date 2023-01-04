@@ -179,7 +179,7 @@ class PPYOLOEBatchRandomResize(BatchSyncRandomResize):
             self.interp_mode = interp_mode
 
     def forward(self, inputs: list,
-                data_samples: list) -> Tuple[Tensor, Tensor]:
+                data_samples: Tensor) -> Tuple[Tensor, Tensor]:
         """Resize a batch of images and bboxes to shape ``self._input_size``.
 
         The inputs and data_samples should be list, and
