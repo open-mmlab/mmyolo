@@ -176,7 +176,7 @@ def parse_labelme_to_coco(
             coco_json['categories'].append({
                 'id': class_id,
                 'name': class_name
-            }) 
+            })
 
     # filter incorrect image file
     img_file_list = [
