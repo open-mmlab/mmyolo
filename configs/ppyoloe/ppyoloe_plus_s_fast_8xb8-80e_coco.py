@@ -69,9 +69,7 @@ model = dict(
         max_per_img=300))
 
 test_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+    dict(type='LoadImageFromFile', backend_args={{_base_.backend_args}}),
     dict(
         type='mmdet.FixShapeResize',
         width=img_scale[1],

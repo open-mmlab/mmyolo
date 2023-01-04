@@ -31,4 +31,4 @@ resume = False
 #             './data/': 's3://openmmlab/datasets/detection/',
 #             'data/': 's3://openmmlab/datasets/detection/'
 #         }))
-file_client_args = dict(backend='disk')
+backend_args = dict(backend='local')
