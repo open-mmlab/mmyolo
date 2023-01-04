@@ -142,9 +142,9 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 - 算法部署
 
-  - [部署必备教程](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#部署必备教程)
+  - [部署必备教程](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/index.html#id1)
     - [部署必备教程](docs/zh_cn/deploy/basic_deployment_guide.md)
-  - [部署全流程说明](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#部署全流程说明)
+  - [部署全流程说明](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/index.html#id2)
     - [YOLOv5 部署全流程说明](docs/zh_cn/deploy/yolov5_deployment.md)
 
 - 进阶指南

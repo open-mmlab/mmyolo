@@ -124,7 +124,7 @@ jobs:
           name: Install mmyolo dependencies
           command: |
             docker exec mmyolo pip install -U openmim
-            docker exec mmyolo mim install 'mmengine >= 0.3.1'
+            docker exec mmyolo mim install -e /mmengine
             docker exec mmyolo mim install 'mmcv >= 2.0.0rc1'
             docker exec mmyolo pip install -e /mmdetection
             docker exec mmyolo pip install -r requirements/albu.txt
@@ -169,8 +169,8 @@ workflows:
             - lint
       - build_cpu:
           name: maximum_version_cpu
-          torch: 1.13.0
-          torchvision: 0.14.0
+          torch: 1.12.1
+          torchvision: 0.13.1
           python: 3.9.0
           requires:
             - minimum_version_cpu

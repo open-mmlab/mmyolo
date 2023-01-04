@@ -194,7 +194,7 @@ class RTMDetHead(YOLOv5Head):
     """RTMDet head.
 
     Args:
-        head_module(nn.Module): Base module used for RTMDetHead
+        head_module(ConfigType): Base module used for RTMDetHead
         prior_generator: Points generator feature maps in
             2D points-based detectors.
         bbox_coder (:obj:`ConfigDict` or dict): Config of bbox coder.
@@ -212,7 +212,7 @@ class RTMDetHead(YOLOv5Head):
 
     def __init__(
             self,
-            head_module: nn.Module,
+            head_module: ConfigType,
             prior_generator: ConfigType = dict(
                 type='mmdet.MlvlPointGenerator', offset=0, strides=[8, 16,
                                                                     32]),
