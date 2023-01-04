@@ -168,7 +168,7 @@ class RTMDetSepBNHeadModule(BaseModule):
 
         cls_scores = []
         bbox_preds = []
-        for idx, (x, stride) in enumerate(zip(feats, self.featmap_strides)):
+        for idx, x in enumerate(feats):
             cls_feat = x
             reg_feat = x
 
@@ -179,7 +179,6 @@ class RTMDetSepBNHeadModule(BaseModule):
             for reg_layer in self.reg_convs[idx]:
                 reg_feat = reg_layer(reg_feat)
 
-            # reg_dist = self.rtm_reg[idx](reg_feat) * stride
             reg_dist = self.rtm_reg[idx](reg_feat)
             cls_scores.append(cls_score)
             bbox_preds.append(reg_dist)
