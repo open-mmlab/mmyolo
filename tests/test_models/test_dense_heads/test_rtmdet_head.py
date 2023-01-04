@@ -71,6 +71,7 @@ class TestRTMDetHead(TestCase):
         }]
         train_cfg = dict(
             assigner=dict(
+                num_classes=80,
                 type='BatchDynamicSoftLabelAssigner',
                 topk=13,
                 iou_calculator=dict(type='mmdet.BboxOverlaps2D')),
