@@ -20,7 +20,7 @@ MMYOLO 实现配置：https://github.com/open-mmlab/mmyolo/blob/main/configs/yol
 
 YOLOv6 官方开源库地址：https://github.com/meituan/YOLOv6
 
-## 1 YLOLv6 2.0 算法原理和 MMYOLO 实现解析
+## 1 YOLOLv6 2.0 算法原理和 MMYOLO 实现解析
 
 YOLOv6 2.0 官方 release 地址：https://github.com/meituan/YOLOv6/releases/tag/0.2.0
 
