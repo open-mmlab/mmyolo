@@ -172,7 +172,7 @@ def parse_labelme_to_coco(
         categories_labels = list(all_classes_id.keys())
 
         # add class_ids and class_names to the categories list in coco_json
-        for class_name, class_id in all_classes_id.items():
+        for class_name, class_id in category_to_id.items():
             coco_json['categories'].append({
                 'id': class_id,
                 'name': class_name
