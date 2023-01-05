@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Sequence, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -129,7 +129,7 @@ class YOLOv6HeadModule(BaseModule):
             conv.bias.data.fill_(1.0)
             conv.weight.data.fill_(0.)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         """Forward features from the upstream network.
 
         Args:
@@ -143,10 +143,9 @@ class YOLOv6HeadModule(BaseModule):
         return multi_apply(self.forward_single, x, self.stems, self.cls_convs,
                            self.cls_preds, self.reg_convs, self.reg_preds)
 
-    def forward_single(self, x: Tensor, stem: nn.ModuleList,
-                       cls_conv: nn.ModuleList, cls_pred: nn.ModuleList,
-                       reg_conv: nn.ModuleList,
-                       reg_pred: nn.ModuleList) -> Tuple[Tensor, Tensor]:
+    def forward_single(self, x: Tensor, stem: nn.Module, cls_conv: nn.Module,
+                       cls_pred: nn.Module, reg_conv: nn.Module,
+                       reg_pred: nn.Module) -> Tuple[Tensor, Tensor]:
         """Forward feature of a single scale level."""
         y = stem(x)
         cls_x = y
@@ -160,13 +159,12 @@ class YOLOv6HeadModule(BaseModule):
         return cls_score, bbox_pred
 
 
-# Training mode is currently not supported
 @MODELS.register_module()
 class YOLOv6Head(YOLOv5Head):
     """YOLOv6Head head used in `YOLOv6 <https://arxiv.org/pdf/2209.02976>`_.
 
     Args:
-        head_module(nn.Module): Base module used for YOLOv6Head
+        head_module(ConfigType): Base module used for YOLOv6Head
         prior_generator(dict): Points generator feature maps
             in 2D points-based detectors.
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
@@ -182,7 +180,7 @@ class YOLOv6Head(YOLOv5Head):
     """
 
     def __init__(self,
-                 head_module: nn.Module,
+                 head_module: ConfigType,
                  prior_generator: ConfigType = dict(
                      type='mmdet.MlvlPointGenerator',
                      offset=0.5,
@@ -289,15 +287,16 @@ class YOLOv6Head(YOLOv5Head):
         if current_featmap_sizes != self.featmap_sizes:
             self.featmap_sizes = current_featmap_sizes
 
-            self.mlvl_priors = self.prior_generator.grid_priors(
+            mlvl_priors = self.prior_generator.grid_priors(
                 self.featmap_sizes,
                 dtype=cls_scores[0].dtype,
                 device=cls_scores[0].device,
                 with_stride=True)
 
-            self.num_level_priors = [len(n) for n in self.mlvl_priors]
-            self.flatten_priors = torch.cat(self.mlvl_priors, dim=0)
+            self.num_level_priors = [len(n) for n in mlvl_priors]
+            self.flatten_priors = torch.cat(mlvl_priors, dim=0)
             self.stride_tensor = self.flatten_priors[..., [2]]
+            self.mlvl_priors = [mlvl[:, :2] for mlvl in mlvl_priors]
 
         # gt info
         gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)

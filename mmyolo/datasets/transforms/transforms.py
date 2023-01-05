@@ -210,12 +210,8 @@ class LetterResize(MMDET_Resize):
         scale_factor = (ratio[1], ratio[0])  # mmcv scale factor is (w, h)
 
         if 'scale_factor' in results:
-            results['scale_factor'] = (results['scale_factor'][0] *
-                                       scale_factor[0],
-                                       results['scale_factor'][1] *
-                                       scale_factor[1])
-        else:
-            results['scale_factor'] = scale_factor
+            results['scale_factor_origin'] = results['scale_factor']
+        results['scale_factor'] = scale_factor
 
         # padding
         top_padding, left_padding = int(round(padding_h // 2 - 0.1)), int(
@@ -242,6 +238,9 @@ class LetterResize(MMDET_Resize):
 
         results['img'] = image
         results['img_shape'] = image.shape
+        if 'pad_param' in results:
+            results['pad_param_origin'] = results['pad_param'] * \
+                np.repeat(scale_factor, 2)
         results['pad_param'] = np.array(padding_list, dtype=np.float32)
 
     def _resize_masks(self, results: dict):
@@ -285,10 +284,23 @@ class LetterResize(MMDET_Resize):
         if len(results['pad_param']) != 4:
             return
         results['gt_bboxes'].translate_(
-            (results['pad_param'][2], results['pad_param'][1]))
+            (results['pad_param'][2], results['pad_param'][0]))
 
         if self.clip_object_border:
             results['gt_bboxes'].clip_(results['img_shape'])
+
+    def transform(self, results: dict) -> dict:
+        results = super().transform(results)
+        if 'scale_factor_origin' in results:
+            scale_factor_origin = results.pop('scale_factor_origin')
+            results['scale_factor'] = (results['scale_factor'][0] *
+                                       scale_factor_origin[0],
+                                       results['scale_factor'][1] *
+                                       scale_factor_origin[1])
+        if 'pad_param_origin' in results:
+            pad_param_origin = results.pop('pad_param_origin')
+            results['pad_param'] += pad_param_origin
+        return results
 
 
 # TODO: Check if it can be merged with mmdet.YOLOXHSVRandomAug
@@ -410,7 +422,7 @@ class YOLOv5RandomAffine(BaseTransform):
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
 
     Modified Keys:
 
