@@ -1,4 +1,4 @@
-_base_ = './ppyoloe_plus_s_fast_8xb8-80e_coco_paddle.py'
+_base_ = './ppyoloe_plus_s_fast_8xb8-80e_coco.py'
 
 # dataset settings
 dataset_type = 'PPYOLOECocoDataset'
