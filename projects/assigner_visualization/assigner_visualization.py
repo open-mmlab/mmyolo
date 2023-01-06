@@ -111,6 +111,7 @@ def main():
 
     # make output dir
     os.makedirs(args.output_dir, exist_ok=True)
+    print('Results will save to ', args.output_dir)
 
     # init visualization image number
     assert args.show_number > 0
