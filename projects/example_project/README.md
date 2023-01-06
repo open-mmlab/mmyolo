@@ -1,4 +1,4 @@
-# Dummy YOLO Wrapper
+# Dummy YOLOv5CSPDarknet Wrapper
 
 This is an example README for community `projects/`. We have provided detailed explanations for each field in the form of html comments, which are visible when you read the source of this README file. If you wish to submit your project to our main repository, then all the fields in this README are mandatory for others to understand what you have achieved in this implementation. For more details, read our [contribution guide](https://mmyolo.readthedocs.io/en/latest/community/contributing.html) or approach us in [Discussions](https://github.com/open-mmlab/mmyolo/discussions).
 
@@ -8,7 +8,7 @@ This is an example README for community `projects/`. We have provided detailed e
 Author: @xxx.
 This is an implementation of \[XXX\]. -->
 
-This project implements a dummy ResNet wrapper, which literally does nothing new but prints "hello world" during initialization.
+This project implements a dummy YOLOv5CSPDarknet wrapper, which literally does nothing new but prints "hello world" during initialization.
 
 ## Usage
 
@@ -19,7 +19,7 @@ This project implements a dummy ResNet wrapper, which literally does nothing new
 In MMYOLO's root directory, run the following command to train the model:
 
 ```bash
-python tools/train.py projects/example_project/configs/faster-rcnn_dummy-resnet_fpn_1x_coco.py
+python tools/train.py projects/example_project/configsconfigs/yolov5_s_dummy-backbone_v61_syncbn_8xb16-300e_coco.py
 ```
 
 ### Testing commands
@@ -65,7 +65,7 @@ A project does not necessarily have to be finished in a single PR, but it's esse
 
   - [ ] Finish the code
 
-    <!-- The code's design shall follow existing interfaces and convention. For example, each model component should be registered into `mmdet.registry.MODELS` and configurable via a config file. -->
+    <!-- The code's design shall follow existing interfaces and convention. For example, each model component should be registered into `mmyolo.registry.MODELS` and configurable via a config file. -->
 
   - [ ] Basic docstrings & proper citation
 
@@ -89,11 +89,11 @@ A project does not necessarily have to be finished in a single PR, but it's esse
 
   - [ ] Type hints and docstrings
 
-    <!-- Ideally *all* the methods should have [type hints](https://www.pythontutorial.net/python-basics/python-type-hints/) and [docstrings](https://google.github.io/styleguide/pyguide.html#381-docstrings). [Example](https://github.com/open-mmlab/mmyolo/blob/5b0d5b40d5c6cfda906db7464ca22cbd4396728a/mmdet/datasets/transforms/transforms.py#L41-L169) -->
+    <!-- Ideally *all* the methods should have [type hints](https://www.pythontutorial.net/python-basics/python-type-hints/) and [docstrings](https://google.github.io/styleguide/pyguide.html#381-docstrings). [Example](https://github.com/open-mmlab/mmyolo/blob/27487fd587398348d59eb8c40af740cabee6b7fe/mmyolo/models/layers/yolo_bricks.py#L32-L54) -->
 
   - [ ] Unit tests
 
-    <!-- Unit tests for each module are required. [Example](https://github.com/open-mmlab/mmyolo/blob/5b0d5b40d5c6cfda906db7464ca22cbd4396728a/tests/test_datasets/test_transforms/test_transforms.py#L35-L88) -->
+    <!-- Unit tests for each module are required. [Example](https://github.com/open-mmlab/mmyolo/blob/27487fd587398348d59eb8c40af740cabee6b7fe/tests/test_models/test_layers/test_yolo_bricks.py#L13-L34) -->
 
   - [ ] Code polishing
 
@@ -101,10 +101,10 @@ A project does not necessarily have to be finished in a single PR, but it's esse
 
   - [ ] Metafile.yml
 
-    <!-- It will be parsed by MIM and Inferencer. [Example](https://github.com/open-mmlab/mmyolo/blob/3.x/configs/faster_rcnn/metafile.yml) -->
+    <!-- It will be parsed by MIM and Inferencer. [Example](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/metafile.yml) -->
 
 - [ ] Move your modules into the core package following the codebase's file hierarchy structure.
 
-  <!-- In particular, you may have to refactor this README into a standard one. [Example](https://github.com/open-mmlab/MMYOLO/blob/3.x/configs/faster_rcnn/README.md) -->
+  <!-- In particular, you may have to refactor this README into a standard one. [Example](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/README.md) -->
 
 - [ ] Refactor your modules into the core package following the codebase's file hierarchy structure.
