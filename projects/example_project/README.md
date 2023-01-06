@@ -101,7 +101,7 @@ A project does not necessarily have to be finished in a single PR, but it's esse
 
   - [ ] Metafile.yml
 
-    <!-- It will be parsed by MIM and Inferencer. [Example](https://github.com/open-mmlab/mmyolo/blob/3.x/configs/faster_rcnn/metafile.yml) -->
+    <!-- It will be parsed by MIM and Inferencer. [Example](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/metafile.yml) -->
 
 - [ ] Move your modules into the core package following the codebase's file hierarchy structure.
 
