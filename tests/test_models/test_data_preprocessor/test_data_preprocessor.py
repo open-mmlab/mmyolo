@@ -104,10 +104,8 @@ class TestPPYOLOEDetDataPreprocessor(TestCase):
                 torch.randint(0, 256, (3, 10, 11)),
                 torch.randint(0, 256, (3, 10, 11))
             ],
-            'data_samples': [
-                torch.randint(0, 11, (18, 6)).float(),
-                torch.randint(0, 11, (18, 6)).float()
-            ]
+            'data_samples':
+            torch.randint(0, 11, (18, 6)).float(),
         }
         out_data = processor(data, training=True)
         batch_data_samples = out_data['data_samples']
