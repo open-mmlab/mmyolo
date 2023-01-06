@@ -127,7 +127,9 @@ python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py
 python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py -m pipeline
 ```
 
-![9041866c28ffef58c2597bc8cf6c272](https://user-images.githubusercontent.com/45811724/204810831-0fbc7f1c-0951-4be1-a11c-491cf0d194f6.png)
+<div align=center>
+<img src="https://user-images.githubusercontent.com/45811724/204810831-0fbc7f1c-0951-4be1-a11c-491cf0d194f6.png" alt="Image">
+</div>
 
 ### 可视化数据集分析
 
