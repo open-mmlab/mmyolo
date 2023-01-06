@@ -10,7 +10,7 @@ deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 80
 num_classes = 80
-save_epoch_intervals = 10
+save_epoch_intervals = 5
 train_batch_size_per_gpu = 8
 train_num_workers = 8
 val_batch_size_per_gpu = 1
@@ -209,7 +209,10 @@ default_hooks = dict(
         min_lr_ratio=0.0,
         total_epochs=int(max_epochs * 1.2)),
     checkpoint=dict(
-        type='CheckpointHook', interval=1, save_best='auto', max_keep_ckpts=3))
+        type='CheckpointHook',
+        interval=save_epoch_intervals,
+        save_best='auto',
+        max_keep_ckpts=3))
 
 custom_hooks = [
     dict(
@@ -231,7 +234,6 @@ test_evaluator = val_evaluator
 train_cfg = dict(
     type='EpochBasedTrainLoop',
     max_epochs=max_epochs,
-    val_interval=save_epoch_intervals,
-    dynamic_intervals=[(max_epochs - 10, 1)])
+    val_interval=save_epoch_intervals)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')

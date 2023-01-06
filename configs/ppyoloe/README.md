@@ -24,7 +24,8 @@ PP-YOLOE is an excellent single-stage anchor-free model based on PP-YOLOv2, surp
 **Note**:
 
 1. The above Box APs are all models with the best performance in COCO
-2. The gap between the above performance and the official release is about 0.3.
+2. The gap between the above performance and the official release is about 0.3. To speed up training in mmyolo, we use pytorch to implement the image resizing in `PPYOLOEBatchRandomResize` for multi-scale training, while official PPYOLOE use opencv. And `lanczos4` is not yet supported in `PPYOLOEBatchRandomResize`. The above two reasons lead to the gap. We will continue to experiment and address the gap in future releases.
+3. The mAP of the non-Plus version needs more verification, and we will update more details of the non-Plus version in future versions.
 
 ```latex
 @article{Xu2022PPYOLOEAE,

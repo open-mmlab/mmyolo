@@ -1,7 +1,7 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/sub_coco/'
+data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 num_last_epochs = 15
