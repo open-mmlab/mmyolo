@@ -19,7 +19,7 @@ This project implements a dummy YOLOv5CSPDarknet wrapper, which literally does n
 In MMYOLO's root directory, run the following command to train the model:
 
 ```bash
-python tools/train.py projects/example_project/configs/faster-rcnn_dummy-resnet_fpn_1x_coco.py
+python tools/train.py projects/example_project/configsconfigs/yolov5_s_dummy-backbone_v61_syncbn_8xb16-300e_coco.py
 ```
 
 ### Testing commands
