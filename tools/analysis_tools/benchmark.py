@@ -15,8 +15,6 @@ from mmengine.utils.dl_utils import set_multi_processing
 from mmyolo.registry import MODELS
 from mmyolo.utils import register_all_modules
 
-register_all_modules()
-
 
 # TODO: Refactoring and improving
 def parse_args():
@@ -29,28 +27,30 @@ def parse_args():
         default=1,
         help='number of repeat times of measurement for averaging the results')
     parser.add_argument(
-        '--max-iter', type=int, default=2000, help='num of max iter')
+        '--max-iter', type=int, default=5000, help='num of max iter')
     parser.add_argument(
         '--log-interval', type=int, default=50, help='interval of logging')
     parser.add_argument(
         '--work-dir',
         help='the directory to save the file containing '
-        'benchmark metrics')
+             'benchmark metrics')
+    parser.add_argument(
+        '--config-yaml-path', type=str, default='', help='A yaml file for benchmark')
     parser.add_argument(
         '--fuse-conv-bn',
         action='store_true',
         help='Whether to fuse conv and bn, this will slightly increase'
-        'the inference speed')
+             'the inference speed')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
         help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
+             'in xxx=yyy format will be merged into config file. If the value to '
+             'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+             'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+             'Note that the quotation marks are necessary and that no white space '
+             'is allowed.')
     parser.add_argument(
         '--launcher',
         choices=['none', 'pytorch', 'slurm', 'mpi'],
@@ -155,18 +155,19 @@ def repeat_measure_inference_speed(cfg,
     return fps_list[0]
 
 
-# TODO: refactoring
-def main():
-    args = parse_args()
-
-    # support auto regression test.
-    cfg = Config.fromfile(args.config)
-    if args.cfg_options is not None:
-        cfg.merge_from_dict(args.cfg_options)
+def run_benchmark(config_path, cfg_options, launcher, work_dir, checkpoint,
+                  max_iter,
+                  log_interval,
+                  fuse_conv_bn,
+                  repeat_num,
+                  log_file_name='benchmark.log'):
+    cfg = Config.fromfile(config_path)
+    if cfg_options is not None:
+        cfg.merge_from_dict(cfg_options)
 
     distributed = False
-    if args.launcher != 'none':
-        init_dist(args.launcher, **cfg.get('env_cfg', {}).get('dist_cfg', {}))
+    if launcher != 'none':
+        init_dist(launcher, **cfg.get('env_cfg', {}).get('dist_cfg', {}))
         distributed = True
         assert get_world_size(
         ) == 1, 'Inference benchmark does not allow distributed multi-GPU'
@@ -174,15 +175,48 @@ def main():
     cfg.distributed = distributed
 
     log_file = None
-    if args.work_dir:
-        log_file = os.path.join(args.work_dir, 'benchmark.log')
-        mkdir_or_exist(args.work_dir)
+    if work_dir:
+        log_file = os.path.join(work_dir, log_file_name)
+        mkdir_or_exist(work_dir)
 
     MMLogger.get_instance('mmyolo', log_file=log_file, log_level='INFO')
 
-    repeat_measure_inference_speed(cfg, args.checkpoint, args.max_iter,
-                                   args.log_interval, args.fuse_conv_bn,
-                                   args.repeat_num)
+    # get FPS
+    fps = repeat_measure_inference_speed(cfg,
+                                         checkpoint,
+                                         max_iter,
+                                         log_interval,
+                                         fuse_conv_bn,
+                                         repeat_num)
+    # get mAP
+
+    # get model training epoch
+
+    # get GFlops
+
+    # Model param
+
+    # Training Time
+
+    # Train GPU memory
+
+def main():
+    args = parse_args()
+
+    register_all_modules()
+
+    if args.config_yaml_path != '':
+        pass
+    else:
+        run_benchmark(args.config,
+                      args.cfg_options,
+                      args.launcher,
+                      args.work_dir,
+                      args.checkpoint,
+                      args.max_iter,
+                      args.log_interval,
+                      args.fuse_conv_bn,
+                      args.repeat_num)
 
 
 if __name__ == '__main__':
