@@ -105,6 +105,6 @@ A project does not necessarily have to be finished in a single PR, but it's esse
 
 - [ ] Move your modules into the core package following the codebase's file hierarchy structure.
 
-  <!-- In particular, you may have to refactor this README into a standard one. [Example](https://github.com/open-mmlab/MMYOLO/blob/3.x/configs/faster_rcnn/README.md) -->
+  <!-- In particular, you may have to refactor this README into a standard one. [Example](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/README.md) -->
 
 - [ ] Refactor your modules into the core package following the codebase's file hierarchy structure.
