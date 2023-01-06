@@ -18,7 +18,7 @@ model = dict(
     bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
 
 train_pipeline = [
-    dict(type='LoadImageFromFile', backend_args={{_base_.backend_args}}),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='Mosaic',
