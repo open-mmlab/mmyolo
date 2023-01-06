@@ -149,6 +149,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 - 进阶指南
 
+  - [模块组合](docs/zh_cn/advanced_guides/module_combination.md)
   - [数据流](docs/zh_cn/advanced_guides/data_flow.md)
   - [How to](docs/zh_cn/advanced_guides/how_to.md)
   - [插件](docs/zh_cn/advanced_guides/plugins.md)
@@ -167,7 +168,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [x] [RTMDet](configs/rtmdet)
 - [x] [YOLOv6](configs/yolov6)
 - [x] [YOLOv7](configs/yolov7)
-- [ ] [PPYOLOE](configs/ppyoloe)(仅推理)
+- [x] [PPYOLOE](configs/ppyoloe)
 
 </details>
 

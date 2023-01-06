@@ -152,7 +152,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 - [x] [RTMDet](configs/rtmdet)
 - [x] [YOLOv6](configs/yolov6)
 - [x] [YOLOv7](configs/yolov7)
-- [ ] [PPYOLOE](configs/ppyoloe)(Inference only)
+- [x] [PPYOLOE](configs/ppyoloe)
 
 </details>
 
