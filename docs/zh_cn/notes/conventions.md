@@ -1,20 +1,10 @@
-# MMYOLO 兼容性说明
+# 默认约定
 
-## MMYOLO v0.3.0
+如果你想把 MMYOLO 修改为自己的项目，请遵循下面的约定。
 
-### METAINFO 修改
+## 关于图片 shape 顺序的说明
 
-为了和 OpenMMLab 其他仓库统一，将 Dataset 里 `METAINFO` 的所有键从大写改为小写。
-
-| 在 v0.3.0 之前 | v0.3.0 及之后 |
-| :------------: | :-----------: |
-|    CLASSES     |    classes    |
-|    PALETTE     |    palette    |
-|  DATASET_TYPE  | dataset_type  |
-
-### 关于图片 shape 顺序的说明
-
-在 OpenMMLab 2.0 中， 为了与 OpenCV 的输入参数相一致，图片处理 pipeline 中关于图像 shape 的输入参数总是以 `(width, height)` 的顺序排列。
+在OpenMMLab 2.0中， 为了与 OpenCV 的输入参数相一致，图片处理 pipeline 中关于图像 shape 的输入参数总是以 `(width, height)` 的顺序排列。
 相反，为了计算方便，经过 pipeline 和 model 的字段的顺序是 `(height, width)`。具体来说在每个数据 pipeline 处理的结果中，字段和它们的值含义如下：
 
 - img_shape: (height, width)

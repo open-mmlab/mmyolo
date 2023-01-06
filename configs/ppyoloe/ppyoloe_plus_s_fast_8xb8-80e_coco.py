@@ -5,7 +5,7 @@ data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 # parameters that often need to be modified
-img_scale = (640, 640)  # height, width
+img_scale = (640, 640)  # width, height
 deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 80
@@ -160,8 +160,8 @@ test_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(
         type='mmdet.FixShapeResize',
-        width=img_scale[1],
-        height=img_scale[0],
+        width=img_scale[0],
+        height=img_scale[1],
         keep_ratio=False,
         interpolation='bicubic'),
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),

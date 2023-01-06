@@ -35,6 +35,7 @@ mosiac4_pipeline = [
         max_shear_degree=0.0,
         max_translate_ratio=0.1,  # change
         scaling_ratio_range=(0.5, 1.6),  # change
+        # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
         border_val=(114, 114, 114)),
 ]

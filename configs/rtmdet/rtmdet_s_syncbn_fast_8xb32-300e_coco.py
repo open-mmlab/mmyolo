@@ -34,6 +34,7 @@ train_pipeline = [
         pad_val=114.0),
     dict(
         type='mmdet.RandomResize',
+        # img_scale is (width, height)
         scale=(img_scale[0] * 2, img_scale[1] * 2),
         ratio_range=(0.5, 2.0),  # note
         resize_type='mmdet.Resize',
