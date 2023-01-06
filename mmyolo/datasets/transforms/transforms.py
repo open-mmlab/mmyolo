@@ -240,7 +240,7 @@ class LetterResize(MMDET_Resize):
         results['img_shape'] = image.shape
         if 'pad_param' in results:
             results['pad_param_origin'] = results['pad_param'] * \
-                np.repeat(scale_factor, 2)
+                np.repeat(ratio, 2)
         results['pad_param'] = np.array(padding_list, dtype=np.float32)
 
     def _resize_masks(self, results: dict):
@@ -250,9 +250,9 @@ class LetterResize(MMDET_Resize):
 
         # resize the gt_masks
         gt_mask_height = results['gt_masks'].height * \
-            results['scale_factor'][0]
-        gt_mask_width = results['gt_masks'].width * \
             results['scale_factor'][1]
+        gt_mask_width = results['gt_masks'].width * \
+            results['scale_factor'][0]
         gt_masks = results['gt_masks'].resize(
             (int(round(gt_mask_height)), int(round(gt_mask_width))))
 
