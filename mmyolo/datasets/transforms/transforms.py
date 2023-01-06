@@ -166,9 +166,9 @@ class LetterResize(MMDET_Resize):
 
         # Use batch_shape if a batch_shape policy is configured
         if 'batch_shape' in results:
-            scale = tuple(results['batch_shape'])
+            scale = tuple(results['batch_shape'])  # hw
         else:
-            scale = self.scale
+            scale = self.scale[::-1]  # wh -> hw
 
         image_shape = image.shape[:2]  # height, width
 
@@ -441,7 +441,7 @@ class YOLOv5RandomAffine(BaseTransform):
             scaling transform. Defaults to (0.5, 1.5).
         max_shear_degree (float): Maximum degrees of shear
             transform. Defaults to 2.
-        border (tuple[int]): Distance from height and width sides of input
+        border (tuple[int]): Distance from width and height sides of input
             image to adjust output shape. Only used in mosaic dataset.
             Defaults to (0, 0).
         border_val (tuple[int]): Border padding values of 3 channels.
@@ -529,8 +529,9 @@ class YOLOv5RandomAffine(BaseTransform):
             dict: The result dict.
         """
         img = results['img']
-        height = img.shape[0] + self.border[0] * 2
-        width = img.shape[1] + self.border[1] * 2
+        # self.border is wh format
+        height = img.shape[0] + self.border[1] * 2
+        width = img.shape[1] + self.border[0] * 2
 
         # Note: Different from YOLOX
         center_matrix = np.eye(3, dtype=np.float32)
