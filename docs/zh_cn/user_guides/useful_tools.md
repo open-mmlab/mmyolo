@@ -75,7 +75,7 @@ python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
 
 ### 可视化数据集
 
-```
+```shell
 python tools/analysis_tools/browse_dataset.py \
     ${CONFIG_FILE} \
     [-o, --output-dir ${OUTPUT_DIR}] \
