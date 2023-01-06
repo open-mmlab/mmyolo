@@ -160,7 +160,7 @@ train_dataloader = dict(
         ],
         # Use ignore_keys to avoid judging metainfo is
         # not equal in `ConcatDataset`.
-        ignore_keys='DATASET_TYPE'),
+        ignore_keys='dataset_type'),
     collate_fn=dict(type='yolov5_collate'))
 
 test_pipeline = [

@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Sequence, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -129,7 +129,7 @@ class YOLOv6HeadModule(BaseModule):
             conv.bias.data.fill_(1.0)
             conv.weight.data.fill_(0.)
 
-    def forward(self, x: Tensor) -> Tensor:
+    def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         """Forward features from the upstream network.
 
         Args:
@@ -143,10 +143,9 @@ class YOLOv6HeadModule(BaseModule):
         return multi_apply(self.forward_single, x, self.stems, self.cls_convs,
                            self.cls_preds, self.reg_convs, self.reg_preds)
 
-    def forward_single(self, x: Tensor, stem: nn.ModuleList,
-                       cls_conv: nn.ModuleList, cls_pred: nn.ModuleList,
-                       reg_conv: nn.ModuleList,
-                       reg_pred: nn.ModuleList) -> Tuple[Tensor, Tensor]:
+    def forward_single(self, x: Tensor, stem: nn.Module, cls_conv: nn.Module,
+                       cls_pred: nn.Module, reg_conv: nn.Module,
+                       reg_pred: nn.Module) -> Tuple[Tensor, Tensor]:
         """Forward feature of a single scale level."""
         y = stem(x)
         cls_x = y
@@ -160,18 +159,16 @@ class YOLOv6HeadModule(BaseModule):
         return cls_score, bbox_pred
 
 
-# Training mode is currently not supported
 @MODELS.register_module()
 class YOLOv6Head(YOLOv5Head):
     """YOLOv6Head head used in `YOLOv6 <https://arxiv.org/pdf/2209.02976>`_.
 
     Args:
-        head_module(nn.Module): Base module used for YOLOv6Head
+        head_module(ConfigType): Base module used for YOLOv6Head
         prior_generator(dict): Points generator feature maps
             in 2D points-based detectors.
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
         loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
-        loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
         train_cfg (:obj:`ConfigDict` or dict, optional): Training config of
             anchor head. Defaults to None.
         test_cfg (:obj:`ConfigDict` or dict, optional): Testing config of
@@ -182,7 +179,7 @@ class YOLOv6Head(YOLOv5Head):
     """
 
     def __init__(self,
-                 head_module: nn.Module,
+                 head_module: ConfigType,
                  prior_generator: ConfigType = dict(
                      type='mmdet.MlvlPointGenerator',
                      offset=0.5,
@@ -203,11 +200,6 @@ class YOLOv6Head(YOLOv5Head):
                      reduction='mean',
                      loss_weight=2.5,
                      return_iou=False),
-                 loss_obj: ConfigType = dict(
-                     type='mmdet.CrossEntropyLoss',
-                     use_sigmoid=True,
-                     reduction='sum',
-                     loss_weight=1.0),
                  train_cfg: OptConfigType = None,
                  test_cfg: OptConfigType = None,
                  init_cfg: OptMultiConfig = None):
@@ -217,13 +209,11 @@ class YOLOv6Head(YOLOv5Head):
             bbox_coder=bbox_coder,
             loss_cls=loss_cls,
             loss_bbox=loss_bbox,
-            loss_obj=loss_obj,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             init_cfg=init_cfg)
-
-        self.loss_bbox = MODELS.build(loss_bbox)
-        self.loss_cls = MODELS.build(loss_cls)
+        # yolov6 doesn't need loss_obj
+        self.loss_obj = None
 
     def special_init(self):
         """Since YOLO series algorithms will inherit from YOLOv5Head, but
@@ -238,10 +228,9 @@ class YOLOv6Head(YOLOv5Head):
             self.assigner = TASK_UTILS.build(self.train_cfg.assigner)
 
             # Add common attributes to reduce calculation
-            self.featmap_sizes = None
-            self.mlvl_priors = None
+            self.featmap_sizes_train = None
             self.num_level_priors = None
-            self.flatten_priors = None
+            self.flatten_priors_train = None
             self.stride_tensor = None
 
     def loss_by_feat(
@@ -286,18 +275,19 @@ class YOLOv6Head(YOLOv5Head):
             cls_score.shape[2:] for cls_score in cls_scores
         ]
         # If the shape does not equal, generate new one
-        if current_featmap_sizes != self.featmap_sizes:
-            self.featmap_sizes = current_featmap_sizes
+        if current_featmap_sizes != self.featmap_sizes_train:
+            self.featmap_sizes_train = current_featmap_sizes
 
-            self.mlvl_priors = self.prior_generator.grid_priors(
-                self.featmap_sizes,
+            mlvl_priors_with_stride = self.prior_generator.grid_priors(
+                self.featmap_sizes_train,
                 dtype=cls_scores[0].dtype,
                 device=cls_scores[0].device,
                 with_stride=True)
 
-            self.num_level_priors = [len(n) for n in self.mlvl_priors]
-            self.flatten_priors = torch.cat(self.mlvl_priors, dim=0)
-            self.stride_tensor = self.flatten_priors[..., [2]]
+            self.num_level_priors = [len(n) for n in mlvl_priors_with_stride]
+            self.flatten_priors_train = torch.cat(
+                mlvl_priors_with_stride, dim=0)
+            self.stride_tensor = self.flatten_priors_train[..., [2]]
 
         # gt info
         gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
@@ -320,19 +310,20 @@ class YOLOv6Head(YOLOv5Head):
         flatten_cls_preds = torch.cat(flatten_cls_preds, dim=1)
         flatten_pred_bboxes = torch.cat(flatten_pred_bboxes, dim=1)
         flatten_pred_bboxes = self.bbox_coder.decode(
-            self.flatten_priors[..., :2], flatten_pred_bboxes,
-            self.flatten_priors[..., 2])
+            self.flatten_priors_train[..., :2], flatten_pred_bboxes,
+            self.stride_tensor[:, 0])
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
         if current_epoch < self.initial_epoch:
             assigned_result = self.initial_assigner(
-                flatten_pred_bboxes.detach(), self.flatten_priors,
+                flatten_pred_bboxes.detach(), self.flatten_priors_train,
                 self.num_level_priors, gt_labels, gt_bboxes, pad_bbox_flag)
         else:
             assigned_result = self.assigner(flatten_pred_bboxes.detach(),
                                             pred_scores.detach(),
-                                            self.flatten_priors, gt_labels,
-                                            gt_bboxes, pad_bbox_flag)
+                                            self.flatten_priors_train,
+                                            gt_labels, gt_bboxes,
+                                            pad_bbox_flag)
 
         assigned_bboxes = assigned_result['assigned_bboxes']
         assigned_scores = assigned_result['assigned_scores']

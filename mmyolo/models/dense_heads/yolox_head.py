@@ -187,7 +187,7 @@ class YOLOXHead(YOLOv5Head):
     """YOLOXHead head used in `YOLOX <https://arxiv.org/abs/2107.08430>`_.
 
     Args:
-        head_module(nn.Module): Base module used for YOLOXHead
+        head_module(ConfigType): Base module used for YOLOXHead
         prior_generator: Points generator feature maps in
             2D points-based detectors.
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
@@ -204,7 +204,7 @@ class YOLOXHead(YOLOv5Head):
     """
 
     def __init__(self,
-                 head_module: nn.Module,
+                 head_module: ConfigType,
                  prior_generator: ConfigType = dict(
                      type='mmdet.MlvlPointGenerator',
                      offset=0,

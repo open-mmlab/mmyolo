@@ -47,6 +47,36 @@ class TestYOLOv5Collate(unittest.TestCase):
         self.assertTrue(out['inputs'].shape == (2, 3, 10, 10))
         self.assertTrue(out['data_samples'].shape == (8, 6))
 
+    def test_yolov5_collate_with_multi_scale(self):
+        rng = np.random.RandomState(0)
+
+        inputs = torch.randn((3, 10, 10))
+        data_samples = DetDataSample()
+        gt_instances = InstanceData()
+        bboxes = _rand_bboxes(rng, 4, 6, 8)
+        gt_instances.bboxes = HorizontalBoxes(bboxes, dtype=torch.float32)
+        labels = rng.randint(1, 2, size=len(bboxes))
+        gt_instances.labels = torch.LongTensor(labels)
+        data_samples.gt_instances = gt_instances
+
+        out = yolov5_collate([dict(inputs=inputs, data_samples=data_samples)],
+                             use_ms_training=True)
+        self.assertIsInstance(out, dict)
+        self.assertTrue(out['inputs'][0].shape == (3, 10, 10))
+        print(out['data_samples'].shape)
+        self.assertTrue(out['data_samples'].shape == (4, 6))
+        self.assertIsInstance(out['inputs'], list)
+        self.assertIsInstance(out['data_samples'], torch.Tensor)
+
+        out = yolov5_collate(
+            [dict(inputs=inputs, data_samples=data_samples)] * 2,
+            use_ms_training=True)
+        self.assertIsInstance(out, dict)
+        self.assertTrue(out['inputs'][0].shape == (3, 10, 10))
+        self.assertTrue(out['data_samples'].shape == (8, 6))
+        self.assertIsInstance(out['inputs'], list)
+        self.assertIsInstance(out['data_samples'], torch.Tensor)
+
 
 class TestBatchShapePolicy(unittest.TestCase):
 
