@@ -1,6 +1,6 @@
-# Dummy ResNet Wrapper
+# Dummy YOLO Wrapper
 
-This is an example README for community `projects/`. We have provided detailed explanations for each field in the form of html comments, which are visible when you read the source of this README file. If you wish to submit your project to our main repository, then all the fields in this README are mandatory for others to understand what you have achieved in this implementation. For more details, read our [contribution guide](https://mmdetection.readthedocs.io/en/3.x/notes/contribution_guide.html) or approach us in [Discussions](https://github.com/open-mmlab/mmdetection/discussions).
+This is an example README for community `projects/`. We have provided detailed explanations for each field in the form of html comments, which are visible when you read the source of this README file. If you wish to submit your project to our main repository, then all the fields in this README are mandatory for others to understand what you have achieved in this implementation. For more details, read our [contribution guide](https://mmyolo.readthedocs.io/en/latest/community/contributing.html) or approach us in [Discussions](https://github.com/open-mmlab/mmyolo/discussions).
 
 ## Description
 
@@ -16,7 +16,7 @@ This project implements a dummy ResNet wrapper, which literally does nothing new
 
 ### Training commands
 
-In MMDetection's root directory, run the following command to train the model:
+In MMYOLO's root directory, run the following command to train the model:
 
 ```bash
 python tools/train.py projects/example_project/configs/faster-rcnn_dummy-resnet_fpn_1x_coco.py
@@ -24,7 +24,7 @@ python tools/train.py projects/example_project/configs/faster-rcnn_dummy-resnet_
 
 ### Testing commands
 
-In MMDetection's root directory, run the following command to test the model:
+In MMYOLO's root directory, run the following command to test the model:
 
 ```bash
 python tools/test.py projects/example_project/configs/faster-rcnn_dummy-resnet_fpn_1x_coco.py ${CHECKPOINT_PATH}
@@ -32,7 +32,7 @@ python tools/test.py projects/example_project/configs/faster-rcnn_dummy-resnet_f
 
 ## Results
 
-<!-- List the results as usually done in other model's README. [Example](https://github.com/open-mmlab/mmdetection/blob/3.x/configs/faster_rcnn/README.md#results-and-models)
+<!-- List the results as usually done in other model's README. [Example](https://github.com/open-mmlab/mmyolo/blob/3.x/configs/faster_rcnn/README.md#results-and-models)
 You should claim whether this is based on the pre-trained weights, which are converted from the official release; or it's a reproduced result obtained from retraining the model in this project. -->
 
 |                                Method                                 |  Backbone   | Pretrained Model |  Training set  |   Test set   | #epoch | box AP |         Download         |
@@ -89,11 +89,11 @@ A project does not necessarily have to be finished in a single PR, but it's esse
 
   - [ ] Type hints and docstrings
 
-    <!-- Ideally *all* the methods should have [type hints](https://www.pythontutorial.net/python-basics/python-type-hints/) and [docstrings](https://google.github.io/styleguide/pyguide.html#381-docstrings). [Example](https://github.com/open-mmlab/mmdetection/blob/5b0d5b40d5c6cfda906db7464ca22cbd4396728a/mmdet/datasets/transforms/transforms.py#L41-L169) -->
+    <!-- Ideally *all* the methods should have [type hints](https://www.pythontutorial.net/python-basics/python-type-hints/) and [docstrings](https://google.github.io/styleguide/pyguide.html#381-docstrings). [Example](https://github.com/open-mmlab/mmyolo/blob/5b0d5b40d5c6cfda906db7464ca22cbd4396728a/mmdet/datasets/transforms/transforms.py#L41-L169) -->
 
   - [ ] Unit tests
 
-    <!-- Unit tests for each module are required. [Example](https://github.com/open-mmlab/mmdetection/blob/5b0d5b40d5c6cfda906db7464ca22cbd4396728a/tests/test_datasets/test_transforms/test_transforms.py#L35-L88) -->
+    <!-- Unit tests for each module are required. [Example](https://github.com/open-mmlab/mmyolo/blob/5b0d5b40d5c6cfda906db7464ca22cbd4396728a/tests/test_datasets/test_transforms/test_transforms.py#L35-L88) -->
 
   - [ ] Code polishing
 
@@ -101,10 +101,10 @@ A project does not necessarily have to be finished in a single PR, but it's esse
 
   - [ ] Metafile.yml
 
-    <!-- It will be parsed by MIM and Inferencer. [Example](https://github.com/open-mmlab/mmdetection/blob/3.x/configs/faster_rcnn/metafile.yml) -->
+    <!-- It will be parsed by MIM and Inferencer. [Example](https://github.com/open-mmlab/mmyolo/blob/3.x/configs/faster_rcnn/metafile.yml) -->
 
 - [ ] Move your modules into the core package following the codebase's file hierarchy structure.
 
-  <!-- In particular, you may have to refactor this README into a standard one. [Example](https://github.com/open-mmlab/mmdetection/blob/3.x/configs/faster_rcnn/README.md) -->
+  <!-- In particular, you may have to refactor this README into a standard one. [Example](https://github.com/open-mmlab/MMYOLO/blob/3.x/configs/faster_rcnn/README.md) -->
 
 - [ ] Refactor your modules into the core package following the codebase's file hierarchy structure.
