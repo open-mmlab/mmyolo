@@ -140,7 +140,7 @@ class RepVGGBlock(nn.Module):
             In PPYOLOE+ model backbone, `use_alpha` will be set to True.
             Default: False.
         use_bn_first (bool): Whether to use bn layer before conv.
-            In YOLOv6 and YLOv7, this will be set to True.
+            In YOLOv6 and YOLOv7, this will be set to True.
             In PPYOLOE, this will be set to False.
             Default: True.
         deploy (bool): Whether in deploy mode. Default: False

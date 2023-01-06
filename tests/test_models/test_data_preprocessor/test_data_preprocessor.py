@@ -3,8 +3,13 @@ from unittest import TestCase
 
 import torch
 from mmdet.structures import DetDataSample
+from mmengine import MessageHub
 
+from mmyolo.models import PPYOLOEBatchRandomResize, PPYOLOEDetDataPreprocessor
 from mmyolo.models.data_preprocessors import YOLOv5DetDataPreprocessor
+from mmyolo.utils import register_all_modules
+
+register_all_modules()
 
 
 class TestYOLOv5DetDataPreprocessor(TestCase):
@@ -68,4 +73,52 @@ class TestYOLOv5DetDataPreprocessor(TestCase):
         }
         # data_samples must be tensor
         with self.assertRaises(AssertionError):
+            processor(data, training=True)
+
+
+class TestPPYOLOEDetDataPreprocessor(TestCase):
+
+    def test_batch_random_resize(self):
+        processor = PPYOLOEDetDataPreprocessor(
+            pad_size_divisor=32,
+            batch_augments=[
+                dict(
+                    type='PPYOLOEBatchRandomResize',
+                    random_size_range=(320, 480),
+                    interval=1,
+                    size_divisor=32,
+                    random_interp=True,
+                    keep_ratio=False)
+            ],
+            mean=[0., 0., 0.],
+            std=[255., 255., 255.],
+            bgr_to_rgb=True)
+        self.assertTrue(
+            isinstance(processor.batch_augments[0], PPYOLOEBatchRandomResize))
+        message_hub = MessageHub.get_instance('test_batch_random_resize')
+        message_hub.update_info('iter', 0)
+
+        # test training
+        data = {
+            'inputs': [
+                torch.randint(0, 256, (3, 10, 11)),
+                torch.randint(0, 256, (3, 10, 11))
+            ],
+            'data_samples':
+            torch.randint(0, 11, (18, 6)).float(),
+        }
+        out_data = processor(data, training=True)
+        batch_data_samples = out_data['data_samples']
+        self.assertIn('img_metas', batch_data_samples)
+        self.assertIn('bboxes_labels', batch_data_samples)
+        self.assertIsInstance(batch_data_samples['bboxes_labels'],
+                              torch.Tensor)
+        self.assertIsInstance(batch_data_samples['img_metas'], list)
+
+        data = {
+            'inputs': [torch.randint(0, 256, (3, 11, 10))],
+            'data_samples': DetDataSample()
+        }
+        # data_samples must be list
+        with self.assertRaises(TypeError):
             processor(data, training=True)

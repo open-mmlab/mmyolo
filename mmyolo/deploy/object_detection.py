@@ -75,8 +75,18 @@ def _get_dataset_metainfo(model_cfg: Config):
 
 @MMYOLO_TASK.register_module(Task.OBJECT_DETECTION.value)
 class YOLOObjectDetection(ObjectDetection):
+    """YOLO Object Detection task."""
 
     def get_visualizer(self, name: str, save_dir: str):
+        """Get visualizer.
+
+        Args:
+            name (str): Name of visualizer.
+            save_dir (str): Directory to save visualization results.
+
+        Returns:
+            Visualizer: A visualizer instance.
+        """
         from mmdet.visualization import DetLocalVisualizer  # noqa: F401,F403
         metainfo = _get_dataset_metainfo(self.model_cfg)
         visualizer = super().get_visualizer(name, save_dir)

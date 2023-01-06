@@ -126,7 +126,7 @@ class CSPNeXtPAFPN(BaseYOLONeck):
                 conv_cfg=self.conv_cfg,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
-        elif idx == 2:
+        else:
             return nn.Sequential(
                 CSPLayer(
                     self.in_channels[idx - 1] * 2,

@@ -82,7 +82,7 @@ def test_yolov5_head_predict_by_feat(backend_type: Backend):
             backend_config=dict(type=backend_type.value),
             onnx_config=dict(output_names=output_names, input_shape=None),
             codebase_config=dict(
-                type='mmdet',
+                type='mmyolo',
                 task='ObjectDetection',
                 post_processing=dict(
                     score_threshold=0.05,
