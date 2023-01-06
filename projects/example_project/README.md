@@ -65,7 +65,7 @@ A project does not necessarily have to be finished in a single PR, but it's esse
 
   - [ ] Finish the code
 
-    <!-- The code's design shall follow existing interfaces and convention. For example, each model component should be registered into `mmdet.registry.MODELS` and configurable via a config file. -->
+    <!-- The code's design shall follow existing interfaces and convention. For example, each model component should be registered into `mmyolo.registry.MODELS` and configurable via a config file. -->
 
   - [ ] Basic docstrings & proper citation
 
