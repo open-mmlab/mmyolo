@@ -4,7 +4,7 @@ from typing import Optional, Sequence, Union
 import torch
 from mmdet.models.task_modules.coders import \
     DistancePointBBoxCoder as MMDET_DistancePointBBoxCoder
-from mmdet.structures.bbox import distance2bbox
+from mmdet.structures.bbox import bbox2distance, distance2bbox
 
 from mmyolo.registry import TASK_UTILS
 
@@ -51,3 +51,29 @@ class DistancePointBBoxCoder(MMDET_DistancePointBBoxCoder):
         pred_bboxes = pred_bboxes * stride[None, :, None]
 
         return distance2bbox(points, pred_bboxes, max_shape)
+
+    def encode(self,
+               points: torch.Tensor,
+               gt_bboxes: torch.Tensor,
+               max_dis: float = 16.,
+               eps: float = 0.01) -> torch.Tensor:
+        """Encode bounding box to distances. The rewrite is to support batch
+        operations.
+
+        Args:
+            points (Tensor): Shape (B, N, 2) or (N, 2), The format is [x, y].
+            gt_bboxes (Tensor or :obj:`BaseBoxes`): Shape (N, 4), The format
+                is "xyxy"
+            max_dis (float): Upper bound of the distance. Default to 16..
+            eps (float): a small value to ensure target < max_dis, instead <=.
+                Default 0.01.
+
+        Returns:
+            Tensor: Box transformation deltas. The shape is (N, 4) or
+             (B, N, 4).
+        """
+
+        assert points.size(-2) == gt_bboxes.size(-2)
+        assert points.size(-1) == 2
+        assert gt_bboxes.size(-1) == 4
+        return bbox2distance(points, gt_bboxes, max_dis, eps)

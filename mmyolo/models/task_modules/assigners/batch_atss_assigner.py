@@ -92,7 +92,7 @@ class BatchATSSAssigner(nn.Module):
         Args:
             pred_bboxes (Tensor): Predicted bounding boxes,
                 shape(batch_size, num_priors, 4)
-            priors (Tensor): Model priors, shape(num_priors, 4)
+            priors (Tensor): Model priors with stride, shape(num_priors, 4)
             num_level_priors (List): Number of bboxes in each level, len(3)
             gt_labels (Tensor): Ground truth label,
                 shape(batch_size, num_gt, 1)
