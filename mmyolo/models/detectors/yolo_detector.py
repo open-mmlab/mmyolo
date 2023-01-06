@@ -17,9 +17,9 @@ class YOLODetector(SingleStageDetector):
         neck (:obj:`ConfigDict` or dict): The neck config.
         bbox_head (:obj:`ConfigDict` or dict): The bbox head config.
         train_cfg (:obj:`ConfigDict` or dict, optional): The training config
-            of YOLOX. Defaults to None.
+            of YOLO. Defaults to None.
         test_cfg (:obj:`ConfigDict` or dict, optional): The testing config
-            of YOLOX. Defaults to None.
+            of YOLO. Defaults to None.
         data_preprocessor (:obj:`ConfigDict` or dict, optional): Config of
             :class:`DetDataPreprocessor` to process the input data.
             Defaults to None.
