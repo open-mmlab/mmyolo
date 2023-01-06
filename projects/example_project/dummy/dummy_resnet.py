@@ -6,7 +6,7 @@ from mmdet.registry import MODELS
 @MODELS.register_module()
 class DummyYOLOv5CSPDarknet(YOLOv5CSPDarknet):
     
-    """Implements a dummy ResNet wrapper for demonstration purpose.
+    """Implements a dummy YOLOv5CSPDarknet wrapper for demonstration purpose.
     Args:
         **kwargs: All the arguments are passed to the parent class.
     """
