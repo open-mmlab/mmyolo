@@ -100,7 +100,7 @@ model = dict(
         nms=dict(type='nms', iou_threshold=0.65)))
 
 pre_transform = [
-    dict(type='LoadImageFromFile', backend_args={{_base_.backend_args}}),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='LoadAnnotations', with_bbox=True)
 ]
 
