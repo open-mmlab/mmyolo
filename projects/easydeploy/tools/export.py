@@ -7,6 +7,7 @@ import onnx
 import torch
 from mmdet.apis import init_detector
 from mmengine.config import ConfigDict
+from mmengine.utils.path import mkdir_or_exist
 
 from mmyolo.utils import register_all_modules
 from projects.easydeploy.model import DeployModel
@@ -21,6 +22,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
+    parser.add_argument(
+        '--model-only', action='store_true', help='Export model only')
     parser.add_argument(
         '--work-dir', default='./work_dir', help='Path to save export model')
     parser.add_argument(
@@ -75,16 +78,19 @@ def main():
     args = parse_args()
     register_all_modules()
 
-    if not os.path.exists(args.work_dir):
-        os.mkdir(args.work_dir)
+    mkdir_or_exist(args.work_dir)
 
-    postprocess_cfg = ConfigDict(
-        pre_top_k=args.pre_topk,
-        keep_top_k=args.keep_topk,
-        iou_threshold=args.iou_threshold,
-        score_threshold=args.score_threshold,
-        backend=args.backend)
-
+    if args.model_only:
+        postprocess_cfg = None
+        output_names = None
+    else:
+        postprocess_cfg = ConfigDict(
+            pre_top_k=args.pre_topk,
+            keep_top_k=args.keep_topk,
+            iou_threshold=args.iou_threshold,
+            score_threshold=args.score_threshold,
+            backend=args.backend)
+        output_names = ['num_dets', 'boxes', 'scores', 'labels']
     baseModel = build_model_from_cfg(args.config, args.checkpoint, args.device)
 
     deploy_model = DeployModel(
@@ -104,7 +110,7 @@ def main():
             fake_input,
             f,
             input_names=['images'],
-            output_names=['num_det', 'det_boxes', 'det_scores', 'det_classes'],
+            output_names=output_names,
             opset_version=args.opset)
         f.seek(0)
         onnx_model = onnx.load(f)

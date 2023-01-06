@@ -5,7 +5,6 @@ import os
 import time
 
 import torch
-from mmdet.models import build_detector
 from mmengine import Config, DictAction
 from mmengine.dist import get_world_size, init_dist
 from mmengine.logging import MMLogger, print_log
@@ -13,6 +12,7 @@ from mmengine.runner import Runner, load_checkpoint
 from mmengine.utils import mkdir_or_exist
 from mmengine.utils.dl_utils import set_multi_processing
 
+from mmyolo.registry import MODELS
 from mmyolo.utils import register_all_modules
 
 register_all_modules()
@@ -82,7 +82,7 @@ def measure_inference_speed(cfg, checkpoint, max_iter, log_interval,
     data_loader = Runner.build_dataloader(dataloader_cfg)
 
     # build the model and load checkpoint
-    model = build_detector(cfg.model)
+    model = MODELS.build(cfg.model)
     load_checkpoint(model, checkpoint, map_location='cpu')
     model = model.cuda()
     model.eval()
