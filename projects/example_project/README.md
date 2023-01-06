@@ -19,7 +19,7 @@ This project implements a dummy YOLOv5CSPDarknet wrapper, which literally does n
 In MMYOLO's root directory, run the following command to train the model:
 
 ```bash
-python tools/train.py projects/example_project/configsconfigs/yolov5_s_dummy-backbone_v61_syncbn_8xb16-300e_coco.py
+python tools/train.py projects/example_project/configs/yolov5/yolov5_s_dummy-backbone_v61_syncbn_8xb16-300e_coco.py
 ```
 
 ### Testing commands
@@ -27,7 +27,7 @@ python tools/train.py projects/example_project/configsconfigs/yolov5_s_dummy-bac
 In MMYOLO's root directory, run the following command to test the model:
 
 ```bash
-python tools/test.py projects/example_project/configs/faster-rcnn_dummy-resnet_fpn_1x_coco.py ${CHECKPOINT_PATH}
+python tools/test.py projects/example_project/configs/yolov5_s_dummy-backbone_v61_syncbn_8xb16-300e_coco.py ${CHECKPOINT_PATH}
 ```
 
 ## Results
@@ -35,9 +35,9 @@ python tools/test.py projects/example_project/configs/faster-rcnn_dummy-resnet_f
 <!-- List the results as usually done in other model's README. [Example](https://github.com/open-mmlab/mmyolo/blob/3.x/configs/faster_rcnn/README.md#results-and-models)
 You should claim whether this is based on the pre-trained weights, which are converted from the official release; or it's a reproduced result obtained from retraining the model in this project. -->
 
-|                                Method                                 |  Backbone   | Pretrained Model |  Training set  |   Test set   | #epoch | box AP |         Download         |
-| :-------------------------------------------------------------------: | :---------: | :--------------: | :------------: | :----------: | :----: | :----: | :----------------------: |
-| [Faster R-CNN dummy](configs/faster-rcnn_dummy-resnet_fpn_1x_coco.py) | DummyResNet |        -         | COCO2017 Train | COCO2017 Val |   12   | 0.8853 | [model](<>) \| [log](<>) |
+|                          Method                          |       Backbone        | Pretrained Model |  Training set  |   Test set   | #epoch | box AP |    Download    |
+| :------------------------------------------------------: | :-------------------: | :--------------: | :------------: | :----------: | :----: | :----: | :------------: |
+| [YOLOv5 dummy](configs/yolov5_dummy-yolov5cspdarknet.py) | DummyYOLOv5CSPDarknet |        -         | COCO2017 Train | COCO2017 Val |   12   | 0.8853 | [model](<>) \\ |
 
 ## Citation
 

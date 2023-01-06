@@ -1,4 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .dummy_resnet import DummyResNet
+from .dummy_yolov5cspdarknet import DummyYOLOv5CSPDarknet
 
-__all__ = ['DummyResNet']
+__all__ = ['DummyYOLOv5CSPDarknet']

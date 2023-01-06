@@ -2,10 +2,11 @@
 from mmdet.models.backbones import ResNet
 from mmdet.registry import MODELS
 
+from mmyolo.models import YOLOv5CSPDarknet
+
 
 @MODELS.register_module()
 class DummyYOLOv5CSPDarknet(YOLOv5CSPDarknet):
-    
     """Implements a dummy YOLOv5CSPDarknet wrapper for demonstration purpose.
     Args:
         **kwargs: All the arguments are passed to the parent class.
