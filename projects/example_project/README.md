@@ -93,7 +93,7 @@ A project does not necessarily have to be finished in a single PR, but it's esse
 
   - [ ] Unit tests
 
-    <!-- Unit tests for each module are required. [Example](https://github.com/open-mmlab/mmyolo/blob/5b0d5b40d5c6cfda906db7464ca22cbd4396728a/tests/test_datasets/test_transforms/test_transforms.py#L35-L88) -->
+    <!-- Unit tests for each module are required. [Example](https://github.com/open-mmlab/mmyolo/blob/27487fd587398348d59eb8c40af740cabee6b7fe/tests/test_models/test_layers/test_yolo_bricks.py#L13-L34) -->
 
   - [ ] Code polishing
 
