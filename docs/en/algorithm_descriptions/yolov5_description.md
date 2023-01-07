@@ -4,12 +4,12 @@
 
 <div align=center >
 <img alt="YOLOv5-P5_structure_v3.4" src="https://user-images.githubusercontent.com/27466624/200000324-70ae078f-cea7-4189-8baa-440656797dad.jpg"/>
-Figure 1: YOLOv5-P5 model structure
+Figure 1: YOLOv5-l-P5 model structure
 </div>
 
 <div align=center >
-<img alt="YOLOv5-P6_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/200845705-c9f3300f-9847-4933-b79d-0efcf0286e16.jpg"/>
-Figure 2: YOLOv5-P6 model structure
+<img alt="YOLOv5-P6_structure_v1.1" src="https://user-images.githubusercontent.com/27466624/211143533-1725c1b2-6189-4c3a-a046-ad968e03cb9d.jpg"/>
+Figure 2: YOLOv5-l-P6 model structure
 </div>
 
 RangeKing@github provides the graph above. Thanks, RangeKing!

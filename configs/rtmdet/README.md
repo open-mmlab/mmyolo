@@ -14,6 +14,11 @@ In this paper, we aim to design an efficient real-time object detector that exce
 <img src="https://user-images.githubusercontent.com/12907710/208070055-7233a3d8-955f-486a-82da-b714b3c3bbd6.png"/>
 </div>
 
+<div align=center>
+<img src="https://user-images.githubusercontent.com/27466624/204126145-cb4ff4f1-fb16-455e-96b5-17620081023a.jpg"/>
+RTMDet-l model structure
+</div>
+
 ## Results and Models
 
 ## Object Detection
@@ -30,3 +35,16 @@ In this paper, we aim to design an efficient real-time object detector that exce
 
 1. The inference speed of RTMDet is measured on an NVIDIA 3090 GPU with TensorRT 8.4.3, cuDNN 8.2.0, FP16, batch size=1, and without NMS.
 2. For a fair comparison, the config of bbox postprocessing is changed to be consistent with YOLOv5/6/7 after [PR#9494](https://github.com/open-mmlab/mmdetection/pull/9494), bringing about 0.1~0.3% AP improvement.
+
+## Citation
+
+```latex
+@misc{lyu2022rtmdet,
+      title={RTMDet: An Empirical Study of Designing Real-Time Object Detectors},
+      author={Chengqi Lyu and Wenwei Zhang and Haian Huang and Yue Zhou and Yudong Wang and Yanyi Liu and Shilong Zhang and Kai Chen},
+      year={2022},
+      eprint={2212.07784},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+```
