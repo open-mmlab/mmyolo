@@ -1,5 +1,74 @@
 # 更新日志
 
+## v0.3.0 (8/1/2023)
+
+### 亮点
+
+1. 实现了 [RTMDet](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md) 的快速版本。RTMDet-s 8xA100 训练只需要 14 个小时。
+2. 支持 [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/dev/configs/ppyoloe/README.md) 训练。
+3. 支持 [YOLOv5](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov5/crowdhuman/yolov5_s-v61_8xb16-300e_ignore_crowdhuman.py) 的 `iscrowd` 属性训练。
+4. 支持 [YOLOv5 正样本分配结果可视化](https://github.com/open-mmlab/mmyolo/blob/dev/projects/assigner_visualization/README.md)
+
+### 新特性
+
+01. 新增 `crowdhuman` 数据集 (#368)
+02. EasyDeploy 中支持 PyTorch 模型的 TensorRT 推理的 (#377)
+03. 新增 `yolox` 结构图描述 (#402)
+04. 新增视频推理脚本 (#392)
+05. EasyDeploy 中支持 `YOLOv7` 部署 (#427)
+06. 支持从 CLI 中的特定检查点恢复训练 (#393)
+07. 将元信息字段设置为小写（#362、#412）
+08. 新增模块组合文档 (#349, #352, #345)
+09. 新增关于如何冻结 backbone 或 neck 权重的文档 (#418)
+10. 在 `how_to.md` 中添加不使用预训练权重的文档 (#404)
+11. 新增关于如何设置随机种子的文档 (#386)
+12. 将 `rtmdet_description.md` 文档翻译成英文 (#353)
+13. 新增 `yolov6_description.md` 文档 (#382, #372)
+
+### Bug 修复
+
+01. 修复设置 `--class-id-txt` 时输出注释文件中的错误 (#430)
+02. 修复 `YOLOv5` head 中的批量推理错误 (#413)
+03. 修复某些 head 的类型提示（#415、#416、#443）
+04. 修复 expected a non-empty list of Tensors (#376)
+05. 修复 `yolov7` 训练中的设备不一致错误（#397）
+06. 修复 `LetterResize` 中的 `scale_factor` 和 `pad_param` 值 (#387)
+07. 修复 readthedocs 的 docstring 图形渲染错误 (#400)
+08. 修复 `YOLOv6` 从训练到验证时的断言错误 (#378)
+09. 修复 `np.int` 和旧版 builder.py 导致的 CI 错误 (#389)
+10. 修复 mmdeploy 重写器 (#366)
+11. 修复 mmyolo 单元测试错误 (#351)
+12. 修复 `pad_param` 错误 (#354)
+13. 修复 head 推理两次的错误（#342）
+14. 修复自定义数据集训练 (#428)
+
+### 完善
+
+01. 更新 `useful_tools.md` (#384)
+02. 更新英文版 `custom_dataset.md` (#381)
+03. 从重写函数中删除上下文参数 (#395)
+04. 弃用 `np.bool` 类型别名 (#396)
+05. 为自定义数据集添加新的视频链接 (#365)
+06. 仅为模型导出 onnx (#361)
+07. 添加 mmyolo 回归测试 yml (#359)
+08. 更新 `article.md` 中的视频教程 (#350)
+09. 添加部署 demo (#343)
+10. 优化 debug 模式下大图的可视化效果(#346)
+11. 改进 `browse_dataset` 的参数并支持 `RepeatDataset` (#340, #338)
+
+### 视频
+
+1. 发布了 [基于 sahi 的大图推理](https://www.bilibili.com/video/BV1EK411R7Ws/)
+2. 发布了 [自定义数据集从标注到部署保姆级教程](https://www.bilibili.com/video/BV1RG4y137i5)
+
+### 贡献者
+
+总共 27 位开发者参与了本次版本
+
+谢谢 @RangeKing, @PeterH0323, @Nioolek, @triple-Mu, @matrixgame2018, @xin-li-67, @tang576225574, @kitecats, @Seperendity, @diplomatist,
+@vaew, @wzr-skn, @VoyagerXvoyagerx, @MambaWong, @tianleiSHI, @caj-github, @zhubochao, @lvhan028,
+@lyviva, @yuewangg, @wang-tf, @satuoqaq, @grimoire, @RunningLeon, @hanrui1sensetime, @RangiLyu, @hhaAndroid
+
 ## v0.2.0（1/12/2022)
 
 ### 亮点
