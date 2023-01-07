@@ -183,6 +183,8 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         <li>YOLOXCSPDarknet</li>
         <li>EfficientRep</li>
         <li>CSPNeXt</li>
+        <li>YOLOv7Backbone</li>
+        <li>PPYOLOECSPResNet</li>
       </ul>
       </td>
       <td>
@@ -191,6 +193,8 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         <li>YOLOv6RepPAFPN</li>
         <li>YOLOXPAFPN</li>
         <li>CSPNeXtPAFPN</li>
+        <li>YOLOv7PAFPN</li>
+        <li>PPYOLOECSPPAFPN</li>
       </ul>
       </td>
       <td>
