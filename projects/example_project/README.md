@@ -32,7 +32,7 @@ python tools/test.py projects/example_project/configs/yolov5_s_dummy-backbone_v6
 
 ## Results
 
-<!-- List the results as usually done in other model's README. [Example](https://github.com/open-mmlab/mmyolo/blob/3.x/configs/faster_rcnn/README.md#results-and-models)
+<!-- List the results as usually done in other model's README. [Example](https://github.com/open-mmlab/mmyolo/tree/main/configs/yolov5#results-and-models)
 You should claim whether this is based on the pre-trained weights, which are converted from the official release; or it's a reproduced result obtained from retraining the model in this project. -->
 
 |                          Method                          |       Backbone        | Pretrained Model |  Training set  |   Test set   | #epoch | box AP |    Download    |
