@@ -4,7 +4,7 @@
 
 ### Highlights
 
-1. Implement fast version of [RTMDet](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md). RTMDet-s 8xA100 training takes only 14 hours.
+1. Implement fast version of [RTMDet](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md). RTMDet-s 8xA100 training takes only 14 hours. The training speed is 2.6 times faster than the previous version.
 2. Support [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/dev/configs/ppyoloe/README.md) training
 3. Support `iscrowd` attribute training in [YOLOv5](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov5/crowdhuman/yolov5_s-v61_8xb16-300e_ignore_crowdhuman.py)
 4. Support [YOLOv5 assigner result visualization](https://github.com/open-mmlab/mmyolo/blob/dev/projects/assigner_visualization/README.md)
@@ -12,8 +12,8 @@
 ### New Features
 
 01. Add `crowdhuman` dataset (#368)
-02. Support PyTorch model forward for TensorRT inference (#377)
-03. Add `yolox` structure description (#402)
+02. Easydeploy support TensorRT inference (#377)
+03. Add `YOLOX` structure description (#402)
 04. Add a feature for the video demo (#392)
 05. Support `YOLOv7` easy deploy (#427)
 06. Add resume from specific checkpoint in CLI (#393)
@@ -30,14 +30,14 @@
 01. Fix bugs in the output annotation file when `--class-id-txt` is set (#430)
 02. Fix batch inference bug in `YOLOv5` head (#413)
 03. Fix typehint in some heads (#415, #416, #443)
-04. Fix RuntimeError of torch.cat() expected a non-empty list of Tensors (#376)
-05. Fix the device inconsistency error in `yolov7` training (#397)
+04. Fix RuntimeError of `torch.cat()` expected a non-empty list of Tensors (#376)
+05. Fix the device inconsistency error in `YOLOv7` training (#397)
 06. Fix the `scale_factor` and `pad_param` value in `LetterResize` (#387)
 07. Fix docstring graph rendering error of readthedocs (#400)
 08. Fix AssertionError when `YOLOv6` from training to val (#378)
 09. Fix CI error due to `np.int` and legacy builder.py (#389)
-10. Fix mmdeploy rewriter (#366)
-11. Fix mmyolo unittest scope bug (#351)
+10. Fix MMDeploy rewriter (#366)
+11. Fix MMYOLO unittest scope bug (#351)
 12. Fix `pad_param` error (#354)
 13. Fix twice head inference bug (#342)
 14. Fix customize dataset training (#428)
@@ -50,7 +50,7 @@
 04. deprecating `np.bool` type alias (#396)
 05. Add new video link for custom dataset (#365)
 06. Export onnx for model only (#361)
-07. Add mmyolo regression test yml (#359)
+07. Add MMYOLO regression test yml (#359)
 08. Update video tutorials in `article.md` (#350)
 09. Add deploy demo (#343)
 10. Optimize the vis results of large images in debug mode (#346)
