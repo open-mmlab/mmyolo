@@ -254,6 +254,9 @@ class BatchYOLOv7Assigner(nn.Module):
             _mlvl_decoderd_bboxes = torch.cat(_mlvl_decoderd_bboxes, dim=0)
             num_pred_positive = _mlvl_decoderd_bboxes.shape[0]
 
+            if num_pred_positive == 0:
+                continue
+
             # scaled xywh
             batch_input_shape_wh = pred_results[0].new_tensor(
                 batch_input_shape[::-1]).repeat((1, 2))
@@ -303,6 +306,9 @@ class BatchYOLOv7Assigner(nn.Module):
 
             # Select only topk matches per gt
             for gt_idx in range(num_gts):
+                print(num_gts, cost.shape, len(cost[gt_idx]), dynamic_ks[gt_idx].item())
+                # if gt_idx >= dynamic_ks.size(dim=0):
+                #     continue
                 _, pos_idx = torch.topk(
                     cost[gt_idx], k=dynamic_ks[gt_idx].item(), largest=False)
                 matching_matrix[gt_idx][pos_idx] = 1.0
