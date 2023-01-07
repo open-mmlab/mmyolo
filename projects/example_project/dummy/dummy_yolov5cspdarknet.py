@@ -1,8 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from mmdet.models.backbones import ResNet
-from mmdet.registry import MODELS
-
 from mmyolo.models import YOLOv5CSPDarknet
+from mmyolo.registry import MODELS
 
 
 @MODELS.register_module()
