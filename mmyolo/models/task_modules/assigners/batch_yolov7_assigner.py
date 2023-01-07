@@ -306,9 +306,6 @@ class BatchYOLOv7Assigner(nn.Module):
 
             # Select only topk matches per gt
             for gt_idx in range(num_gts):
-                print(num_gts, cost.shape, len(cost[gt_idx]), dynamic_ks[gt_idx].item())
-                # if gt_idx >= dynamic_ks.size(dim=0):
-                #     continue
                 _, pos_idx = torch.topk(
                     cost[gt_idx], k=dynamic_ks[gt_idx].item(), largest=False)
                 matching_matrix[gt_idx][pos_idx] = 1.0
