@@ -9,7 +9,7 @@ max_epochs = 400
 num_classes = 80
 
 # parameters that often need to be modified
-img_scale = (640, 640)  # height, width
+img_scale = (640, 640)  # width, height
 deepen_factor = 0.33
 widen_factor = 0.5
 affine_scale = 0.5
@@ -21,6 +21,9 @@ val_num_workers = 2
 
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
+
+# Base learning rate for optim_wrapper
+base_lr = 0.01
 
 # only on Val
 batch_shapes_cfg = dict(
@@ -114,6 +117,7 @@ train_pipeline = [
         max_rotate_degree=0.0,
         max_translate_ratio=0.1,
         scaling_ratio_range=(1 - affine_scale, 1 + affine_scale),
+        # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
         border_val=(114, 114, 114),
         max_shear_degree=0.0),
@@ -202,7 +206,7 @@ optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(
         type='SGD',
-        lr=0.01,
+        lr=base_lr,
         momentum=0.937,
         weight_decay=0.0005,
         nesterov=True,

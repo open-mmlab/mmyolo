@@ -50,6 +50,8 @@ Welcome to MMYOLO's documentation!
 
    notes/changelog.md
    notes/faq.md
+   notes/compatibility.md
+   notes/conventions.md
 
 .. toctree::
    :maxdepth: 2

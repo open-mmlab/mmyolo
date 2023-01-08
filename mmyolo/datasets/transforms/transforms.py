@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
-from typing import Tuple, Union
+from typing import List, Tuple, Union
 
 import cv2
 import mmcv
@@ -166,9 +166,9 @@ class LetterResize(MMDET_Resize):
 
         # Use batch_shape if a batch_shape policy is configured
         if 'batch_shape' in results:
-            scale = tuple(results['batch_shape'])
+            scale = tuple(results['batch_shape'])  # hw
         else:
-            scale = self.scale
+            scale = self.scale[::-1]  # wh -> hw
 
         image_shape = image.shape[:2]  # height, width
 
@@ -210,12 +210,8 @@ class LetterResize(MMDET_Resize):
         scale_factor = (ratio[1], ratio[0])  # mmcv scale factor is (w, h)
 
         if 'scale_factor' in results:
-            results['scale_factor'] = (results['scale_factor'][0] *
-                                       scale_factor[0],
-                                       results['scale_factor'][1] *
-                                       scale_factor[1])
-        else:
-            results['scale_factor'] = scale_factor
+            results['scale_factor_origin'] = results['scale_factor']
+        results['scale_factor'] = scale_factor
 
         # padding
         top_padding, left_padding = int(round(padding_h // 2 - 0.1)), int(
@@ -242,6 +238,9 @@ class LetterResize(MMDET_Resize):
 
         results['img'] = image
         results['img_shape'] = image.shape
+        if 'pad_param' in results:
+            results['pad_param_origin'] = results['pad_param'] * \
+                np.repeat(ratio, 2)
         results['pad_param'] = np.array(padding_list, dtype=np.float32)
 
     def _resize_masks(self, results: dict):
@@ -251,9 +250,9 @@ class LetterResize(MMDET_Resize):
 
         # resize the gt_masks
         gt_mask_height = results['gt_masks'].height * \
-            results['scale_factor'][0]
-        gt_mask_width = results['gt_masks'].width * \
             results['scale_factor'][1]
+        gt_mask_width = results['gt_masks'].width * \
+            results['scale_factor'][0]
         gt_masks = results['gt_masks'].resize(
             (int(round(gt_mask_height)), int(round(gt_mask_width))))
 
@@ -285,10 +284,23 @@ class LetterResize(MMDET_Resize):
         if len(results['pad_param']) != 4:
             return
         results['gt_bboxes'].translate_(
-            (results['pad_param'][2], results['pad_param'][1]))
+            (results['pad_param'][2], results['pad_param'][0]))
 
         if self.clip_object_border:
             results['gt_bboxes'].clip_(results['img_shape'])
+
+    def transform(self, results: dict) -> dict:
+        results = super().transform(results)
+        if 'scale_factor_origin' in results:
+            scale_factor_origin = results.pop('scale_factor_origin')
+            results['scale_factor'] = (results['scale_factor'][0] *
+                                       scale_factor_origin[0],
+                                       results['scale_factor'][1] *
+                                       scale_factor_origin[1])
+        if 'pad_param_origin' in results:
+            pad_param_origin = results.pop('pad_param_origin')
+            results['pad_param'] += pad_param_origin
+        return results
 
 
 # TODO: Check if it can be merged with mmdet.YOLOXHSVRandomAug
@@ -410,7 +422,7 @@ class YOLOv5RandomAffine(BaseTransform):
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
 
     Modified Keys:
 
@@ -429,7 +441,7 @@ class YOLOv5RandomAffine(BaseTransform):
             scaling transform. Defaults to (0.5, 1.5).
         max_shear_degree (float): Maximum degrees of shear
             transform. Defaults to 2.
-        border (tuple[int]): Distance from height and width sides of input
+        border (tuple[int]): Distance from width and height sides of input
             image to adjust output shape. Only used in mosaic dataset.
             Defaults to (0, 0).
         border_val (tuple[int]): Border padding values of 3 channels.
@@ -517,8 +529,9 @@ class YOLOv5RandomAffine(BaseTransform):
             dict: The result dict.
         """
         img = results['img']
-        height = img.shape[0] + self.border[0] * 2
-        width = img.shape[1] + self.border[1] * 2
+        # self.border is wh format
+        height = img.shape[0] + self.border[1] * 2
+        width = img.shape[1] + self.border[0] * 2
 
         # Note: Different from YOLOX
         center_matrix = np.eye(3, dtype=np.float32)
@@ -663,3 +676,397 @@ class YOLOv5RandomAffine(BaseTransform):
         translation_matrix = np.array([[1, 0., x], [0., 1, y], [0., 0., 1.]],
                                       dtype=np.float32)
         return translation_matrix
+
+
+@TRANSFORMS.register_module()
+class PPYOLOERandomDistort(BaseTransform):
+    """Random hue, saturation, contrast and brightness distortion.
+
+    Required Keys:
+
+    - img
+
+    Modified Keys:
+
+    - img (np.float32)
+
+    Args:
+        hue_cfg (dict): Hue settings. Defaults to dict(min=-18,
+            max=18, prob=0.5).
+        saturation_cfg (dict): Saturation settings. Defaults to dict(
+            min=0.5, max=1.5, prob=0.5).
+        contrast_cfg (dict): Contrast settings. Defaults to dict(
+            min=0.5, max=1.5, prob=0.5).
+        brightness_cfg (dict): Brightness settings. Defaults to dict(
+            min=0.5, max=1.5, prob=0.5).
+        num_distort_func (int): The number of distort function. Defaults
+            to 4.
+    """
+
+    def __init__(self,
+                 hue_cfg: dict = dict(min=-18, max=18, prob=0.5),
+                 saturation_cfg: dict = dict(min=0.5, max=1.5, prob=0.5),
+                 contrast_cfg: dict = dict(min=0.5, max=1.5, prob=0.5),
+                 brightness_cfg: dict = dict(min=0.5, max=1.5, prob=0.5),
+                 num_distort_func: int = 4):
+        self.hue_cfg = hue_cfg
+        self.saturation_cfg = saturation_cfg
+        self.contrast_cfg = contrast_cfg
+        self.brightness_cfg = brightness_cfg
+        self.num_distort_func = num_distort_func
+        assert 0 < self.num_distort_func <= 4,\
+            'num_distort_func must > 0 and <= 4'
+        for cfg in [
+                self.hue_cfg, self.saturation_cfg, self.contrast_cfg,
+                self.brightness_cfg
+        ]:
+            assert 0. <= cfg['prob'] <= 1., 'prob must >=0 and <=1'
+
+    def transform_hue(self, results):
+        """Transform hue randomly."""
+        if random.uniform(0., 1.) >= self.hue_cfg['prob']:
+            return results
+        img = results['img']
+        delta = random.uniform(self.hue_cfg['min'], self.hue_cfg['max'])
+        u = np.cos(delta * np.pi)
+        w = np.sin(delta * np.pi)
+        delta_iq = np.array([[1.0, 0.0, 0.0], [0.0, u, -w], [0.0, w, u]])
+        rgb2yiq_matrix = np.array([[0.114, 0.587, 0.299],
+                                   [-0.321, -0.274, 0.596],
+                                   [0.311, -0.523, 0.211]])
+        yiq2rgb_matric = np.array([[1.0, -1.107, 1.705], [1.0, -0.272, -0.647],
+                                   [1.0, 0.956, 0.621]])
+        t = np.dot(np.dot(yiq2rgb_matric, delta_iq), rgb2yiq_matrix).T
+        img = np.dot(img, t)
+        results['img'] = img
+        return results
+
+    def transform_saturation(self, results):
+        """Transform saturation randomly."""
+        if random.uniform(0., 1.) >= self.saturation_cfg['prob']:
+            return results
+        img = results['img']
+        delta = random.uniform(self.saturation_cfg['min'],
+                               self.saturation_cfg['max'])
+
+        # convert bgr img to gray img
+        gray = img * np.array([[[0.114, 0.587, 0.299]]], dtype=np.float32)
+        gray = gray.sum(axis=2, keepdims=True)
+        gray *= (1.0 - delta)
+        img *= delta
+        img += gray
+        results['img'] = img
+        return results
+
+    def transform_contrast(self, results):
+        """Transform contrast randomly."""
+        if random.uniform(0., 1.) >= self.contrast_cfg['prob']:
+            return results
+        img = results['img']
+        delta = random.uniform(self.contrast_cfg['min'],
+                               self.contrast_cfg['max'])
+        img *= delta
+        results['img'] = img
+        return results
+
+    def transform_brightness(self, results):
+        """Transform brightness randomly."""
+        if random.uniform(0., 1.) >= self.brightness_cfg['prob']:
+            return results
+        img = results['img']
+        delta = random.uniform(self.brightness_cfg['min'],
+                               self.brightness_cfg['max'])
+        img += delta
+        results['img'] = img
+        return results
+
+    def transform(self, results: dict) -> dict:
+        """The hue, saturation, contrast and brightness distortion function.
+
+        Args:
+            results (dict): The result dict.
+
+        Returns:
+            dict: The result dict.
+        """
+        results['img'] = results['img'].astype(np.float32)
+
+        functions = [
+            self.transform_brightness, self.transform_contrast,
+            self.transform_saturation, self.transform_hue
+        ]
+        distortions = random.permutation(functions)[:self.num_distort_func]
+        for func in distortions:
+            results = func(results)
+        return results
+
+
+@TRANSFORMS.register_module()
+class PPYOLOERandomCrop(BaseTransform):
+    """Random crop the img and bboxes. Different thresholds are used in PPYOLOE
+    to judge whether the clipped image meets the requirements. This
+    implementation is different from the implementation of RandomCrop in mmdet.
+
+    Required Keys:
+
+    - img
+    - gt_bboxes (BaseBoxes[torch.float32]) (optional)
+    - gt_bboxes_labels (np.int64) (optional)
+    - gt_ignore_flags (bool) (optional)
+
+    Modified Keys:
+
+    - img
+    - img_shape
+    - gt_bboxes (optional)
+    - gt_bboxes_labels (optional)
+    - gt_ignore_flags (optional)
+
+    Added Keys:
+    - pad_param (np.float32)
+
+    Args:
+        aspect_ratio (List[float]): Aspect ratio of cropped region. Default to
+             [.5, 2].
+        thresholds (List[float]): Iou thresholds for decide a valid bbox crop
+            in [min, max] format. Defaults to [.0, .1, .3, .5, .7, .9].
+        scaling (List[float]): Ratio between a cropped region and the original
+            image in [min, max] format. Default to [.3, 1.].
+        num_attempts (int): Number of tries for each threshold before
+            giving up. Default to 50.
+        allow_no_crop (bool): Allow return without actually cropping them.
+            Default to True.
+        cover_all_box (bool): Ensure all bboxes are covered in the final crop.
+            Default to False.
+    """
+
+    def __init__(self,
+                 aspect_ratio: List[float] = [.5, 2.],
+                 thresholds: List[float] = [.0, .1, .3, .5, .7, .9],
+                 scaling: List[float] = [.3, 1.],
+                 num_attempts: int = 50,
+                 allow_no_crop: bool = True,
+                 cover_all_box: bool = False):
+        self.aspect_ratio = aspect_ratio
+        self.thresholds = thresholds
+        self.scaling = scaling
+        self.num_attempts = num_attempts
+        self.allow_no_crop = allow_no_crop
+        self.cover_all_box = cover_all_box
+
+    def _crop_data(self, results: dict, crop_box: Tuple[int, int, int, int],
+                   valid_inds: np.ndarray) -> Union[dict, None]:
+        """Function to randomly crop images, bounding boxes, masks, semantic
+        segmentation maps.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+            crop_box (Tuple[int, int, int, int]): Expected absolute coordinates
+                for cropping, (x1, y1, x2, y2).
+            valid_inds (np.ndarray): The indexes of gt that needs to be
+                retained.
+
+        Returns:
+            results (Union[dict, None]): Randomly cropped results, 'img_shape'
+                key in result dict is updated according to crop size. None will
+                be returned when there is no valid bbox after cropping.
+        """
+        # crop the image
+        img = results['img']
+        crop_x1, crop_y1, crop_x2, crop_y2 = crop_box
+        img = img[crop_y1:crop_y2, crop_x1:crop_x2, ...]
+        results['img'] = img
+        img_shape = img.shape
+        results['img_shape'] = img.shape
+
+        # crop bboxes accordingly and clip to the image boundary
+        if results.get('gt_bboxes', None) is not None:
+            bboxes = results['gt_bboxes']
+            bboxes.translate_([-crop_x1, -crop_y1])
+            bboxes.clip_(img_shape[:2])
+
+            results['gt_bboxes'] = bboxes[valid_inds]
+
+            if results.get('gt_ignore_flags', None) is not None:
+                results['gt_ignore_flags'] = \
+                    results['gt_ignore_flags'][valid_inds]
+
+            if results.get('gt_bboxes_labels', None) is not None:
+                results['gt_bboxes_labels'] = \
+                    results['gt_bboxes_labels'][valid_inds]
+
+            if results.get('gt_masks', None) is not None:
+                results['gt_masks'] = results['gt_masks'][
+                    valid_inds.nonzero()[0]].crop(
+                        np.asarray([crop_x1, crop_y1, crop_x2, crop_y2]))
+
+        # crop semantic seg
+        if results.get('gt_seg_map', None) is not None:
+            results['gt_seg_map'] = results['gt_seg_map'][crop_y1:crop_y2,
+                                                          crop_x1:crop_x2]
+
+        return results
+
+    @autocast_box_type()
+    def transform(self, results: dict) -> Union[dict, None]:
+        """The random crop transform function.
+
+        Args:
+            results (dict): The result dict.
+
+        Returns:
+            dict: The result dict.
+        """
+        if results.get('gt_bboxes', None) is None or len(
+                results['gt_bboxes']) == 0:
+            return results
+
+        orig_img_h, orig_img_w = results['img'].shape[:2]
+        gt_bboxes = results['gt_bboxes']
+
+        thresholds = list(self.thresholds)
+        if self.allow_no_crop:
+            thresholds.append('no_crop')
+        random.shuffle(thresholds)
+
+        for thresh in thresholds:
+            # Determine the coordinates for cropping
+            if thresh == 'no_crop':
+                return results
+
+            found = False
+            for i in range(self.num_attempts):
+                crop_h, crop_w = self._get_crop_size((orig_img_h, orig_img_w))
+                if self.aspect_ratio is None:
+                    if crop_h / crop_w < 0.5 or crop_h / crop_w > 2.0:
+                        continue
+
+                # get image crop_box
+                margin_h = max(orig_img_h - crop_h, 0)
+                margin_w = max(orig_img_w - crop_w, 0)
+                offset_h, offset_w = self._rand_offset((margin_h, margin_w))
+                crop_y1, crop_y2 = offset_h, offset_h + crop_h
+                crop_x1, crop_x2 = offset_w, offset_w + crop_w
+
+                crop_box = [crop_x1, crop_y1, crop_x2, crop_y2]
+                # Calculate the iou between gt_bboxes and crop_boxes
+                iou = self._iou_matrix(gt_bboxes,
+                                       np.array([crop_box], dtype=np.float32))
+                # If the maximum value of the iou is less than thresh,
+                # the current crop_box is considered invalid.
+                if iou.max() < thresh:
+                    continue
+
+                # If cover_all_box == True and the minimum value of
+                # the iou is less than thresh, the current crop_box
+                # is considered invalid.
+                if self.cover_all_box and iou.min() < thresh:
+                    continue
+
+                # Get which gt_bboxes to keep after cropping.
+                valid_inds = self._get_valid_inds(
+                    gt_bboxes, np.array(crop_box, dtype=np.float32))
+                if valid_inds.size > 0:
+                    found = True
+                    break
+
+            if found:
+                results = self._crop_data(results, crop_box, valid_inds)
+                return results
+        return results
+
+    @cache_randomness
+    def _rand_offset(self, margin: Tuple[int, int]) -> Tuple[int, int]:
+        """Randomly generate crop offset.
+
+        Args:
+            margin (Tuple[int, int]): The upper bound for the offset generated
+                randomly.
+
+        Returns:
+            Tuple[int, int]: The random offset for the crop.
+        """
+        margin_h, margin_w = margin
+        offset_h = np.random.randint(0, margin_h + 1)
+        offset_w = np.random.randint(0, margin_w + 1)
+
+        return (offset_h, offset_w)
+
+    @cache_randomness
+    def _get_crop_size(self, image_size: Tuple[int, int]) -> Tuple[int, int]:
+        """Randomly generates the crop size based on `image_size`.
+
+        Args:
+            image_size (Tuple[int, int]): (h, w).
+
+        Returns:
+            crop_size (Tuple[int, int]): (crop_h, crop_w) in absolute pixels.
+        """
+        h, w = image_size
+        scale = random.uniform(*self.scaling)
+        if self.aspect_ratio is not None:
+            min_ar, max_ar = self.aspect_ratio
+            aspect_ratio = random.uniform(
+                max(min_ar, scale**2), min(max_ar, scale**-2))
+            h_scale = scale / np.sqrt(aspect_ratio)
+            w_scale = scale * np.sqrt(aspect_ratio)
+        else:
+            h_scale = random.uniform(*self.scaling)
+            w_scale = random.uniform(*self.scaling)
+        crop_h = h * h_scale
+        crop_w = w * w_scale
+        return int(crop_h), int(crop_w)
+
+    def _iou_matrix(self,
+                    gt_bbox: HorizontalBoxes,
+                    crop_bbox: np.ndarray,
+                    eps: float = 1e-10) -> np.ndarray:
+        """Calculate iou between gt and image crop box.
+
+        Args:
+            gt_bbox (HorizontalBoxes): Ground truth bounding boxes.
+            crop_bbox (np.ndarray): Image crop coordinates in
+                [x1, y1, x2, y2] format.
+            eps (float): Default to 1e-10.
+        Return:
+            (np.ndarray): IoU.
+        """
+        gt_bbox = gt_bbox.tensor.numpy()
+        lefttop = np.maximum(gt_bbox[:, np.newaxis, :2], crop_bbox[:, :2])
+        rightbottom = np.minimum(gt_bbox[:, np.newaxis, 2:], crop_bbox[:, 2:])
+
+        overlap = np.prod(
+            rightbottom - lefttop,
+            axis=2) * (lefttop < rightbottom).all(axis=2)
+        area_gt_bbox = np.prod(gt_bbox[:, 2:] - crop_bbox[:, :2], axis=1)
+        area_crop_bbox = np.prod(gt_bbox[:, 2:] - crop_bbox[:, :2], axis=1)
+        area_o = (area_gt_bbox[:, np.newaxis] + area_crop_bbox - overlap)
+        return overlap / (area_o + eps)
+
+    def _get_valid_inds(self, gt_bbox: HorizontalBoxes,
+                        img_crop_bbox: np.ndarray) -> np.ndarray:
+        """Get which Bboxes to keep at the current cropping coordinates.
+
+        Args:
+            gt_bbox (HorizontalBoxes): Ground truth bounding boxes.
+            img_crop_bbox (np.ndarray): Image crop coordinates in
+                [x1, y1, x2, y2] format.
+
+        Returns:
+            (np.ndarray): Valid indexes.
+        """
+        cropped_box = gt_bbox.tensor.numpy().copy()
+        gt_bbox = gt_bbox.tensor.numpy().copy()
+
+        cropped_box[:, :2] = np.maximum(gt_bbox[:, :2], img_crop_bbox[:2])
+        cropped_box[:, 2:] = np.minimum(gt_bbox[:, 2:], img_crop_bbox[2:])
+        cropped_box[:, :2] -= img_crop_bbox[:2]
+        cropped_box[:, 2:] -= img_crop_bbox[:2]
+
+        centers = (gt_bbox[:, :2] + gt_bbox[:, 2:]) / 2
+        valid = np.logical_and(img_crop_bbox[:2] <= centers,
+                               centers < img_crop_bbox[2:]).all(axis=1)
+        valid = np.logical_and(
+            valid, (cropped_box[:, :2] < cropped_box[:, 2:]).all(axis=1))
+
+        return np.where(valid)[0]

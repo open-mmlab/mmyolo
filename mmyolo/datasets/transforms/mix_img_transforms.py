@@ -221,7 +221,7 @@ class Mosaic(BaseMixImageTransform):
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
     - mix_results (List[dict])
 
     Modified Keys:
@@ -234,7 +234,7 @@ class Mosaic(BaseMixImageTransform):
 
     Args:
         img_scale (Sequence[int]): Image size after mosaic pipeline of single
-            image. The shape order should be (height, width).
+            image. The shape order should be (width, height).
             Defaults to (640, 640).
         center_ratio_range (Sequence[float]): Center ratio range of mosaic
             output. Defaults to (0.5, 1.5).
@@ -317,22 +317,22 @@ class Mosaic(BaseMixImageTransform):
         mosaic_bboxes = []
         mosaic_bboxes_labels = []
         mosaic_ignore_flags = []
+        # self.img_scale is wh format
+        img_scale_w, img_scale_h = self.img_scale
+
         if len(results['img'].shape) == 3:
             mosaic_img = np.full(
-                (int(self.img_scale[0] * 2), int(self.img_scale[1] * 2), 3),
+                (int(img_scale_h * 2), int(img_scale_w * 2), 3),
                 self.pad_val,
                 dtype=results['img'].dtype)
         else:
-            mosaic_img = np.full(
-                (int(self.img_scale[0] * 2), int(self.img_scale[1] * 2)),
-                self.pad_val,
-                dtype=results['img'].dtype)
+            mosaic_img = np.full((int(img_scale_h * 2), int(img_scale_w * 2)),
+                                 self.pad_val,
+                                 dtype=results['img'].dtype)
 
         # mosaic center x, y
-        center_x = int(
-            random.uniform(*self.center_ratio_range) * self.img_scale[1])
-        center_y = int(
-            random.uniform(*self.center_ratio_range) * self.img_scale[0])
+        center_x = int(random.uniform(*self.center_ratio_range) * img_scale_w)
+        center_y = int(random.uniform(*self.center_ratio_range) * img_scale_h)
         center_position = (center_x, center_y)
 
         loc_strs = ('top_left', 'top_right', 'bottom_left', 'bottom_right')
@@ -345,8 +345,7 @@ class Mosaic(BaseMixImageTransform):
             img_i = results_patch['img']
             h_i, w_i = img_i.shape[:2]
             # keep_ratio resize
-            scale_ratio_i = min(self.img_scale[0] / h_i,
-                                self.img_scale[1] / w_i)
+            scale_ratio_i = min(img_scale_h / h_i, img_scale_w / w_i)
             img_i = mmcv.imresize(
                 img_i, (int(w_i * scale_ratio_i), int(h_i * scale_ratio_i)))
 
@@ -377,11 +376,11 @@ class Mosaic(BaseMixImageTransform):
         mosaic_ignore_flags = np.concatenate(mosaic_ignore_flags, 0)
 
         if self.bbox_clip_border:
-            mosaic_bboxes.clip_([2 * self.img_scale[0], 2 * self.img_scale[1]])
+            mosaic_bboxes.clip_([2 * img_scale_h, 2 * img_scale_w])
         else:
             # remove outside bboxes
             inside_inds = mosaic_bboxes.is_inside(
-                [2 * self.img_scale[0], 2 * self.img_scale[1]]).numpy()
+                [2 * img_scale_h, 2 * img_scale_w]).numpy()
             mosaic_bboxes = mosaic_bboxes[inside_inds]
             mosaic_bboxes_labels = mosaic_bboxes_labels[inside_inds]
             mosaic_ignore_flags = mosaic_ignore_flags[inside_inds]
@@ -427,7 +426,7 @@ class Mosaic(BaseMixImageTransform):
             x1, y1, x2, y2 = center_position_xy[0], \
                              max(center_position_xy[1] - img_shape_wh[1], 0), \
                              min(center_position_xy[0] + img_shape_wh[0],
-                                 self.img_scale[1] * 2), \
+                                 self.img_scale[0] * 2), \
                              center_position_xy[1]
             crop_coord = 0, img_shape_wh[1] - (y2 - y1), min(
                 img_shape_wh[0], x2 - x1), img_shape_wh[1]
@@ -437,7 +436,7 @@ class Mosaic(BaseMixImageTransform):
             x1, y1, x2, y2 = max(center_position_xy[0] - img_shape_wh[0], 0), \
                              center_position_xy[1], \
                              center_position_xy[0], \
-                             min(self.img_scale[0] * 2, center_position_xy[1] +
+                             min(self.img_scale[1] * 2, center_position_xy[1] +
                                  img_shape_wh[1])
             crop_coord = img_shape_wh[0] - (x2 - x1), 0, img_shape_wh[0], min(
                 y2 - y1, img_shape_wh[1])
@@ -447,8 +446,8 @@ class Mosaic(BaseMixImageTransform):
             x1, y1, x2, y2 = center_position_xy[0], \
                              center_position_xy[1], \
                              min(center_position_xy[0] + img_shape_wh[0],
-                                 self.img_scale[1] * 2), \
-                             min(self.img_scale[0] * 2, center_position_xy[1] +
+                                 self.img_scale[0] * 2), \
+                             min(self.img_scale[1] * 2, center_position_xy[1] +
                                  img_shape_wh[1])
             crop_coord = 0, 0, min(img_shape_wh[0],
                                    x2 - x1), min(y2 - y1, img_shape_wh[1])
@@ -473,6 +472,8 @@ class Mosaic9(BaseMixImageTransform):
     one output image. The output image is composed of the parts from each sub-
     image.
 
+    .. code:: text
+
                 +-------------------------------+------------+
                 | pad           |      pad      |            |
                 |    +----------+               |            |
@@ -493,18 +494,18 @@ class Mosaic9(BaseMixImageTransform):
                 |    pad    |            |        pad        |
                 +-----------+------------+-------------------+
 
-    The mosaic transform steps are as follows:
+     The mosaic transform steps are as follows:
 
-        1. Get the center image according to the index, and randomly
-           sample another 8 images from the custom dataset.
-        2. Randomly offset the image after Mosaic
+         1. Get the center image according to the index, and randomly
+            sample another 8 images from the custom dataset.
+         2. Randomly offset the image after Mosaic
 
     Required Keys:
 
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
     - mix_results (List[dict])
 
     Modified Keys:
@@ -517,7 +518,7 @@ class Mosaic9(BaseMixImageTransform):
 
     Args:
         img_scale (Sequence[int]): Image size after mosaic pipeline of single
-            image. The shape order should be (height, width).
+            image. The shape order should be (width, height).
             Defaults to (640, 640).
         bbox_clip_border (bool, optional): Whether to clip the objects outside
             the border of the image. In some dataset like MOT17, the gt bboxes
@@ -603,7 +604,7 @@ class Mosaic9(BaseMixImageTransform):
         mosaic_bboxes_labels = []
         mosaic_ignore_flags = []
 
-        img_scale_h, img_scale_w = self.img_scale
+        img_scale_w, img_scale_h = self.img_scale
 
         if len(results['img'].shape) == 3:
             mosaic_img = np.full(
@@ -689,7 +690,7 @@ class Mosaic9(BaseMixImageTransform):
         assert loc in ('center', 'top', 'top_right', 'right', 'bottom_right',
                        'bottom', 'bottom_left', 'left', 'top_left')
 
-        img_scale_h, img_scale_w = self.img_scale
+        img_scale_w, img_scale_h = self.img_scale
 
         self._current_img_shape = img_shape_hw
         current_img_h, current_img_w = self._current_img_shape
@@ -776,7 +777,7 @@ class YOLOv5MixUp(BaseMixImageTransform):
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
     - mix_results (List[dict])
 
 
@@ -917,7 +918,7 @@ class YOLOXMixUp(BaseMixImageTransform):
     - img
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
-    - gt_ignore_flags (np.bool) (optional)
+    - gt_ignore_flags (bool) (optional)
     - mix_results (List[dict])
 
 
@@ -932,7 +933,7 @@ class YOLOXMixUp(BaseMixImageTransform):
 
     Args:
         img_scale (Sequence[int]): Image output size after mixup pipeline.
-            The shape order should be (height, width). Defaults to (640, 640).
+            The shape order should be (width, height). Defaults to (640, 640).
         ratio_range (Sequence[float]): Scale ratio of mixup image.
             Defaults to (0.5, 1.5).
         flip_ratio (float): Horizontal flip ratio of mixup image.
@@ -1023,15 +1024,15 @@ class YOLOXMixUp(BaseMixImageTransform):
         is_filp = random.uniform(0, 1) > self.flip_ratio
 
         if len(retrieve_img.shape) == 3:
-            out_img = np.ones((self.img_scale[0], self.img_scale[1], 3),
+            out_img = np.ones((self.img_scale[1], self.img_scale[0], 3),
                               dtype=retrieve_img.dtype) * self.pad_val
         else:
             out_img = np.ones(
-                self.img_scale, dtype=retrieve_img.dtype) * self.pad_val
+                self.img_scale[::-1], dtype=retrieve_img.dtype) * self.pad_val
 
         # 1. keep_ratio resize
-        scale_ratio = min(self.img_scale[0] / retrieve_img.shape[0],
-                          self.img_scale[1] / retrieve_img.shape[1])
+        scale_ratio = min(self.img_scale[1] / retrieve_img.shape[0],
+                          self.img_scale[0] / retrieve_img.shape[1])
         retrieve_img = mmcv.imresize(
             retrieve_img, (int(retrieve_img.shape[1] * scale_ratio),
                            int(retrieve_img.shape[0] * scale_ratio)))

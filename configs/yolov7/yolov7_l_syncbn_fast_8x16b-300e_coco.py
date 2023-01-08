@@ -5,7 +5,7 @@ data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 # parameters that often need to be modified
-img_scale = (640, 640)  # height, width
+img_scale = (640, 640)  # width, height
 max_epochs = 300
 save_epoch_intervals = 10
 train_batch_size_per_gpu = 16
@@ -67,7 +67,7 @@ model = dict(
         type='YOLOv7Head',
         head_module=dict(
             type='YOLOv7HeadModule',
-            num_classes=80,
+            num_classes=num_classes,
             in_channels=[256, 512, 1024],
             featmap_strides=strides,
             num_base_priors=3),
@@ -123,6 +123,7 @@ mosiac4_pipeline = [
         max_shear_degree=0.0,
         max_translate_ratio=0.2,  # note
         scaling_ratio_range=(0.1, 2.0),  # note
+        # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
         border_val=(114, 114, 114)),
 ]
@@ -139,6 +140,7 @@ mosiac9_pipeline = [
         max_shear_degree=0.0,
         max_translate_ratio=0.2,  # note
         scaling_ratio_range=(0.1, 2.0),  # note
+        # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
         border_val=(114, 114, 114)),
 ]

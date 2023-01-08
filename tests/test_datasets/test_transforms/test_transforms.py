@@ -13,6 +13,8 @@ from mmyolo.datasets.transforms import (LetterResize, LoadAnnotations,
                                         YOLOv5HSVRandomAug,
                                         YOLOv5KeepRatioResize,
                                         YOLOv5RandomAffine)
+from mmyolo.datasets.transforms.transforms import (PPYOLOERandomCrop,
+                                                   PPYOLOERandomDistort)
 
 
 class TestLetterResize(unittest.TestCase):
@@ -122,6 +124,46 @@ class TestLetterResize(unittest.TestCase):
                     width=input_w))
             results = transform(data_info)
             self.assertEqual(results['img_shape'], (640, 640, 3))
+
+        # TODO: Testing the existence of multiple scale_factor and pad_param
+        transform = [
+            YOLOv5KeepRatioResize(scale=(32, 32)),
+            LetterResize(scale=(64, 68), pad_val=dict(img=144))
+        ]
+        for _ in range(5):
+            input_h, input_w = np.random.randint(100, 700), np.random.randint(
+                100, 700)
+            output_h, output_w = np.random.randint(100,
+                                                   700), np.random.randint(
+                                                       100, 700)
+            data_info = dict(
+                img=np.random.random((input_h, input_w, 3)),
+                gt_bboxes=np.array([[0, 0, 5, 5]], dtype=np.float32),
+                batch_shape=np.array([output_h, output_w], dtype=np.int64))
+            for t in transform:
+                data_info = t(data_info)
+            # because of the "math.round" operation,
+            # it is unable to strictly restore the original input shape
+            # we just validate the correctness of scale_factor and pad_param
+            self.assertIn('scale_factor', data_info)
+            self.assertIn('pad_param', data_info)
+            pad_param = data_info['pad_param'].reshape(-1, 2).sum(
+                1)  # (top, b, l, r) -> (h, w)
+            scale_factor = np.asarray(
+                data_info['scale_factor'])[::-1]  # (w, h) -> (h, w)
+            scale_factor_keepratio = np.min(
+                np.asarray((32, 32)) / (input_h, input_w))
+            validate_shape = np.floor(
+                np.asarray((input_h, input_w)) * scale_factor_keepratio + 0.5)
+            scale_factor_keepratio = np.floor(scale_factor_keepratio *
+                                              input_h + 0.5) / input_h
+            scale_factor_letter = (output_h, output_w) / validate_shape
+            scale_factor_letter = (
+                scale_factor_letter -
+                (pad_param / validate_shape))[np.argmin(scale_factor_letter)]
+            self.assertTrue(data_info['img_shape'][:2] == (output_h, output_w))
+            self.assertTrue((scale_factor == (scale_factor_keepratio *
+                                              scale_factor_letter)).all())
 
 
 class TestYOLOv5KeepRatioResize(unittest.TestCase):
@@ -308,6 +350,103 @@ class TestYOLOv5RandomAffine(unittest.TestCase):
         results['gt_bboxes'] = HorizontalBoxes(results['gt_bboxes'])
 
         transform = YOLOv5RandomAffine()
+        results = transform(copy.deepcopy(results))
+        self.assertTrue(results['img'].shape[:2] == (224, 224))
+        self.assertTrue(results['gt_bboxes_labels'].shape[0] ==
+                        results['gt_bboxes'].shape[0])
+        self.assertTrue(results['gt_bboxes_labels'].dtype == np.int64)
+        self.assertTrue(results['gt_bboxes'].dtype == torch.float32)
+        self.assertTrue(results['gt_ignore_flags'].dtype == bool)
+
+
+class TestPPYOLOERandomCrop(unittest.TestCase):
+
+    def setUp(self):
+        """Setup the data info which are used in every test method.
+
+        TestCase calls functions in this order: setUp() -> testMethod() ->
+        tearDown() -> cleanUp()
+        """
+        self.results = {
+            'img':
+            np.random.random((224, 224, 3)),
+            'img_shape': (224, 224),
+            'gt_bboxes_labels':
+            np.array([1, 2, 3], dtype=np.int64),
+            'gt_bboxes':
+            np.array([[10, 10, 20, 20], [20, 20, 40, 40], [40, 40, 80, 80]],
+                     dtype=np.float32),
+            'gt_ignore_flags':
+            np.array([0, 0, 1], dtype=bool),
+        }
+
+    def test_transform(self):
+        transform = PPYOLOERandomCrop()
+        results = transform(copy.deepcopy(self.results))
+        self.assertTrue(results['gt_bboxes_labels'].shape[0] ==
+                        results['gt_bboxes'].shape[0])
+        self.assertTrue(results['gt_bboxes_labels'].dtype == np.int64)
+        self.assertTrue(results['gt_bboxes'].dtype == np.float32)
+        self.assertTrue(results['gt_ignore_flags'].dtype == bool)
+
+    def test_transform_with_boxlist(self):
+        results = copy.deepcopy(self.results)
+        results['gt_bboxes'] = HorizontalBoxes(results['gt_bboxes'])
+
+        transform = PPYOLOERandomCrop()
+        results = transform(copy.deepcopy(results))
+        self.assertTrue(results['gt_bboxes_labels'].shape[0] ==
+                        results['gt_bboxes'].shape[0])
+        self.assertTrue(results['gt_bboxes_labels'].dtype == np.int64)
+        self.assertTrue(results['gt_bboxes'].dtype == torch.float32)
+        self.assertTrue(results['gt_ignore_flags'].dtype == bool)
+
+
+class TestPPYOLOERandomDistort(unittest.TestCase):
+
+    def setUp(self):
+        """Setup the data info which are used in every test method.
+
+        TestCase calls functions in this order: setUp() -> testMethod() ->
+        tearDown() -> cleanUp()
+        """
+        self.results = {
+            'img':
+            np.random.random((224, 224, 3)),
+            'img_shape': (224, 224),
+            'gt_bboxes_labels':
+            np.array([1, 2, 3], dtype=np.int64),
+            'gt_bboxes':
+            np.array([[10, 10, 20, 20], [20, 20, 40, 40], [40, 40, 80, 80]],
+                     dtype=np.float32),
+            'gt_ignore_flags':
+            np.array([0, 0, 1], dtype=bool),
+        }
+
+    def test_transform(self):
+        # test assertion for invalid prob
+        with self.assertRaises(AssertionError):
+            transform = PPYOLOERandomDistort(
+                hue_cfg=dict(min=-18, max=18, prob=1.5))
+
+        # test assertion for invalid num_distort_func
+        with self.assertRaises(AssertionError):
+            transform = PPYOLOERandomDistort(num_distort_func=5)
+
+        transform = PPYOLOERandomDistort()
+        results = transform(copy.deepcopy(self.results))
+        self.assertTrue(results['img'].shape[:2] == (224, 224))
+        self.assertTrue(results['gt_bboxes_labels'].shape[0] ==
+                        results['gt_bboxes'].shape[0])
+        self.assertTrue(results['gt_bboxes_labels'].dtype == np.int64)
+        self.assertTrue(results['gt_bboxes'].dtype == np.float32)
+        self.assertTrue(results['gt_ignore_flags'].dtype == bool)
+
+    def test_transform_with_boxlist(self):
+        results = copy.deepcopy(self.results)
+        results['gt_bboxes'] = HorizontalBoxes(results['gt_bboxes'])
+
+        transform = PPYOLOERandomDistort()
         results = transform(copy.deepcopy(results))
         self.assertTrue(results['img'].shape[:2] == (224, 224))
         self.assertTrue(results['gt_bboxes_labels'].shape[0] ==

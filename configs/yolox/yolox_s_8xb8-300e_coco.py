@@ -3,7 +3,7 @@ _base_ = '../_base_/default_runtime.py'
 data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
-img_scale = (640, 640)  # height, width
+img_scale = (640, 640)  # width, height
 deepen_factor = 0.33
 widen_factor = 0.5
 
@@ -100,9 +100,7 @@ model = dict(
         nms=dict(type='nms', iou_threshold=0.65)))
 
 pre_transform = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True)
 ]
 
@@ -116,6 +114,7 @@ train_pipeline_stage1 = [
     dict(
         type='mmdet.RandomAffine',
         scaling_ratio_range=(0.1, 2),
+        # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2)),
     dict(
         type='YOLOXMixUp',
@@ -168,9 +167,7 @@ train_dataloader = dict(
         pipeline=train_pipeline_stage1))
 
 test_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
     dict(
         type='mmdet.Pad',

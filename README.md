@@ -71,14 +71,32 @@ And the figure of P6 model is in [model_design.md](docs/en/algorithm_description
 
 ## What's New
 
-💎 **v0.2.0** was released on 1/12/2022:
+### Highlight
 
-1. Support [YOLOv7](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov7) P5 and P6 model
-2. Support [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov6/README.md) ML model
-3. Support [Grad-Based CAM and Grad-Free CAM](https://github.com/open-mmlab/mmyolo/blob/dev/demo/boxam_vis_demo.py)
-4. Support [large image inference](https://github.com/open-mmlab/mmyolo/blob/dev/demo/large_image_demo.py) based on sahi
-5. Add [easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README.md) project under the projects folder
-6. Add [custom dataset guide](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/user_guides/custom_dataset.md)
+We are excited to announce our latest work on real-time object recognition tasks, **RTMDet**, a family of fully convolutional single-stage detectors. RTMDet not only achieves the best parameter-accuracy trade-off on object detection from tiny to extra-large model sizes but also obtains new state-of-the-art performance on instance segmentation and rotated object detection tasks. Details can be found in the [technical report](https://arxiv.org/abs/2212.07784). Pre-trained models are [here](configs/rtmdet).
+
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/rtmdet-an-empirical-study-of-designing-real/real-time-instance-segmentation-on-mscoco)](https://paperswithcode.com/sota/real-time-instance-segmentation-on-mscoco?p=rtmdet-an-empirical-study-of-designing-real)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/rtmdet-an-empirical-study-of-designing-real/object-detection-in-aerial-images-on-dota-1)](https://paperswithcode.com/sota/object-detection-in-aerial-images-on-dota-1?p=rtmdet-an-empirical-study-of-designing-real)
+[![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/rtmdet-an-empirical-study-of-designing-real/object-detection-in-aerial-images-on-hrsc2016)](https://paperswithcode.com/sota/object-detection-in-aerial-images-on-hrsc2016?p=rtmdet-an-empirical-study-of-designing-real)
+
+| Task                     | Dataset | AP                                   | FPS(TRT FP16 BS1 3090) |
+| ------------------------ | ------- | ------------------------------------ | ---------------------- |
+| Object Detection         | COCO    | 52.8                                 | 322                    |
+| Instance Segmentation    | COCO    | 44.6                                 | 188                    |
+| Rotated Object Detection | DOTA    | 78.9(single-scale)/81.3(multi-scale) | 121                    |
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/12907710/208044554-1e8de6b5-48d8-44e4-a7b5-75076c7ebb71.png"/>
+</div>
+
+MMYOLO currently only implements the object detection algorithm, but it has a significant training acceleration compared to the MMDeteciton version. The training speed is 2.6 times faster than the previous version.
+
+💎 **v0.3.0** was released on 8/1/2023:
+
+1. Implement fast version of [RTMDet](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md). RTMDet-s 8xA100 training takes only 14 hours. The training speed is 2.6 times faster than the previous version.
+2. Support [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/dev/configs/ppyoloe/README.md) training
+3. Support `iscrowd` attribute training in [YOLOv5](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov5/crowdhuman/yolov5_s-v61_8xb16-300e_ignore_crowdhuman.py)
+4. Support [YOLOv5 assigner result visualization](https://github.com/open-mmlab/mmyolo/blob/dev/projects/assigner_visualization/README.md)
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
@@ -92,7 +110,7 @@ conda activate open-mmlab
 pip install openmim
 mim install "mmengine>=0.3.1"
 mim install "mmcv>=2.0.0rc1,<2.1.0"
-mim install "mmdet>=3.0.0rc3,<3.1.0"
+mim install "mmdet>=3.0.0rc5,<3.1.0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
@@ -114,11 +132,11 @@ For different parts from MMDetection, we have also prepared user guides and adva
   - [Train & Test](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#train-test)
     - [Learn about Configs with YOLOv5](docs/en/user_guides/config.md)
   - [From getting started to deployment](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#get-started-to-deployment)
+    - [Custom Dataset](docs/en/user_guides/custom_dataset.md)
     - [From getting started to deployment with YOLOv5](docs/en/user_guides/yolov5_tutorial.md)
   - [Useful Tools](https://mmdetection.readthedocs.io/en/latest/user_guides/index.html#useful-tools)
     - [Visualization](docs/en/user_guides/visualization.md)
     - [Useful Tools](docs/en/user_guides/useful_tools.md)
-    - [Custom Dataset](docs/en/user_guides/custom_dataset.md)
 
 - Algorithm description
 
@@ -129,9 +147,9 @@ For different parts from MMDetection, we have also prepared user guides and adva
 
 - Deployment Guides
 
-  - [Basic Deployment Guide](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#basic-deployment-guide)
+  - [Basic Deployment Guide](https://mmyolo.readthedocs.io/en/latest/deploy/index.html#basic-deployment-guide)
     - [Basic Deployment Guide](docs/en/deploy/basic_deployment_guide.md)
-  - [Deployment Tutorial](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#deployment-tutorial)
+  - [Deployment Tutorial](https://mmyolo.readthedocs.io/en/latest/deploy/index.html#deployment-tutorial)
     - [YOLOv5 Deployment](docs/en/deploy/yolov5_deployment.md)
 
 - Advanced Guides
@@ -152,7 +170,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 - [x] [RTMDet](configs/rtmdet)
 - [x] [YOLOv6](configs/yolov6)
 - [x] [YOLOv7](configs/yolov7)
-- [ ] [PPYOLOE](configs/ppyoloe)(Inference only)
+- [x] [PPYOLOE](configs/ppyoloe)
 
 </details>
 
@@ -183,6 +201,8 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         <li>YOLOXCSPDarknet</li>
         <li>EfficientRep</li>
         <li>CSPNeXt</li>
+        <li>YOLOv7Backbone</li>
+        <li>PPYOLOECSPResNet</li>
       </ul>
       </td>
       <td>
@@ -191,6 +211,8 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         <li>YOLOv6RepPAFPN</li>
         <li>YOLOXPAFPN</li>
         <li>CSPNeXtPAFPN</li>
+        <li>YOLOv7PAFPN</li>
+        <li>PPYOLOECSPPAFPN</li>
       </ul>
       </td>
       <td>

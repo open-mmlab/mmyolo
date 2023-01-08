@@ -171,6 +171,13 @@ def parse_labelme_to_coco(
         category_to_id = all_classes_id
         categories_labels = list(all_classes_id.keys())
 
+        # add class_ids and class_names to the categories list in coco_json
+        for class_name, class_id in category_to_id.items():
+            coco_json['categories'].append({
+                'id': class_id,
+                'name': class_name
+            })
+
     # filter incorrect image file
     img_file_list = [
         img_file for img_file in Path(image_dir).iterdir()
@@ -274,8 +281,16 @@ def convert_labelme_to_coco(image_dir: str,
         assert len(txt_lines) > 0
 
         for txt_line in txt_lines:
-            v, k = txt_line.split(' ')
-            all_classes_id.update({k: v})
+            class_info = txt_line.split(' ')
+            if len(class_info) != 2:
+                raise ValueError('Error parse "class_id_txt" file '
+                                 f'{class_id_txt},  please check if some of '
+                                 'the class names is blank, like "1  " -> '
+                                 '"1 blank", or class name has space between'
+                                 ' words, like "1 Big house" -> "1 '
+                                 'Big-house".')
+            v, k = class_info
+            all_classes_id.update({k: int(v)})
     else:
         all_classes_id = None
 

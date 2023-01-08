@@ -12,7 +12,7 @@ conda install pytorch torchvision -c pytorch
 pip install -U openmim
 mim install "mmengine>=0.3.1"
 mim install "mmcv>=2.0.0rc1,<2.1.0"
-mim install "mmdet>=3.0.0rc3,<3.1.0"
+mim install "mmdet>=3.0.0rc5,<3.1.0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
@@ -53,8 +53,8 @@ train_batch_size_per_gpu = 4
 train_num_workers = 2
 
 metainfo = {
-    'CLASSES': ('balloon', ),
-    'PALETTE': [
+    'classes': ('balloon', ),
+    'palette': [
         (220, 20, 60),
     ]
 }

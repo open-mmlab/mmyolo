@@ -33,6 +33,7 @@ mosaic_affine_pipeline = [
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
         scaling_ratio_range=(1 - affine_scale, 1 + affine_scale),
+        # img_scale is (width, height)
         border=(-_base_.img_scale[0] // 2, -_base_.img_scale[1] // 2),
         border_val=(114, 114, 114))
 ]

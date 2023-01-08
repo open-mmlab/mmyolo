@@ -60,6 +60,7 @@ def efficient_nms(*args, **kwargs):
 
 
 class TRTEfficientNMSop(torch.autograd.Function):
+    """Efficient NMS op for TensorRT."""
 
     @staticmethod
     def forward(
@@ -74,6 +75,7 @@ class TRTEfficientNMSop(torch.autograd.Function):
         score_activation=0,
         score_threshold=0.25,
     ):
+        """Forward function of TRTEfficientNMSop."""
         batch_size, num_boxes, num_classes = scores.shape
         num_det = torch.randint(
             0, max_output_boxes, (batch_size, 1), dtype=torch.int32)
@@ -94,6 +96,7 @@ class TRTEfficientNMSop(torch.autograd.Function):
                  plugin_version='1',
                  score_activation=0,
                  score_threshold=0.25):
+        """Symbolic function of TRTEfficientNMSop."""
         out = g.op(
             'TRT::EfficientNMS_TRT',
             boxes,

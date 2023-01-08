@@ -6,6 +6,16 @@
 
 YOLOv5 is a family of object detection architectures and models pretrained on the COCO dataset, and represents Ultralytics open-source research into future vision AI methods, incorporating lessons learned and best practices evolved over thousands of hours of research and development.
 
+<div align=center>
+<img src="https://user-images.githubusercontent.com/27466624/200000324-70ae078f-cea7-4189-8baa-440656797dad.jpg"/>
+YOLOv5-l-P5 model structure
+</div>
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/27466624/211143533-1725c1b2-6189-4c3a-a046-ad968e03cb9d.jpg"/>
+YOLOv5-l-P6 model structure
+</div>
+
 ## Results and models
 
 ### COCO
@@ -47,6 +57,21 @@ In the official YOLOv5 code, the `random_perspective` data augmentation in COCO 
 3. Official YOLOv5 use COCO metric, while training VOC dataset.
 4. We converted the VOC test dataset to COCO format offline, while reproducing mAP result as shown above. We will support to use COCO metric while training VOC dataset in later version.
 5. Hyperparameter reference from `https://wandb.ai/glenn-jocher/YOLOv5_VOC_official`.
+
+### CrowdHuman
+
+Since the `iscrowd` annotation of the COCO dataset is not equivalent to `ignore`, we use the CrowdHuman dataset to verify that the YOLOv5 ignore logic is correct.
+
+| Backbone | size | SyncBN | AMP | Mem (GB) | ignore_iof_thr | box AP50(CrowDHuman Metric) |  MR  |  JI   |                                                              Config                                                               | Download |
+| :------: | :--: | :----: | :-: | :------: | :------------: | :-------------------------: | :--: | :---: | :-------------------------------------------------------------------------------------------------------------------------------: | :------: |
+| YOLOv5-s | 640  |  Yes   | Yes |   2.6    |       -1       |            85.79            | 48.7 | 75.33 |  [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/crowdhuman/yolov5_s-v61_fast_8xb16-300e_crowdhuman.py)  |          |
+| YOLOv5-s | 640  |  Yes   | Yes |   2.6    |      0.5       |            86.17            | 48.8 | 75.87 | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolov5/crowdhuman/yolov5_s-v61_8xb16-300e_ignore_crowdhuman.py) |          |
+
+**Note**:
+
+1. `ignore_iof_thr` is -1 indicating that the ignore tag is not considered. We adjusted with `ignore_iof_thr` thresholds of 0.5, 0.8, 0.9, and the results show that 0.5 has the best performance.
+2. The above table shows the performance of the model with the best performance on the validation set. The best performing models are around 160+ epoch which means that there is no need to train so many epochs.
+3. This is a very simple implementation that simply replaces COCO's anchor with the `tools/analysis_tools/optimize_anchors.py` script. We'll adjust other parameters later to improve performance.
 
 ## Citation
 

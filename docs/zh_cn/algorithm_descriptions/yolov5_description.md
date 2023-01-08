@@ -4,12 +4,12 @@
 
 <div align=center >
 <img alt="YOLOv5-P5_structure_v3.4" src="https://user-images.githubusercontent.com/27466624/200000324-70ae078f-cea7-4189-8baa-440656797dad.jpg"/>
-图 1：YOLOv5-P5 模型结构
+图 1：YOLOv5-l-P5 模型结构
 </div>
 
 <div align=center >
-<img alt="YOLOv5-P6_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/200845705-c9f3300f-9847-4933-b79d-0efcf0286e16.jpg"/>
-图 2：YOLOv5-P6 模型结构
+<img alt="YOLOv5-P6_structure_v1.1" src="https://user-images.githubusercontent.com/27466624/211143533-1725c1b2-6189-4c3a-a046-ad968e03cb9d.jpg"/>
+图 2：YOLOv5-l-P6 模型结构
 </div>
 
 以上结构图由 RangeKing@github 绘制。
@@ -619,7 +619,7 @@ YOLOv5 是非解耦输出头，而其他大部分算法都是解耦输出头，�
 
         n = len(image_shapes)  # number of images
         batch_index = np.floor(np.arange(n) / self.batch_size).astype(
-            np.int)  # batch index
+            np.int64)  # batch index
         number_of_batches = batch_index[-1] + 1  # number of batches
 
         aspect_ratio = image_shapes[:, 1] / image_shapes[:, 0]  # aspect ratio
@@ -641,7 +641,7 @@ YOLOv5 是非解耦输出头，而其他大部分算法都是解耦输出头，�
 
         batch_shapes = np.ceil(
             np.array(shapes) * self.img_size / self.size_divisor +
-            self.pad).astype(np.int) * self.size_divisor
+            self.pad).astype(np.int64) * self.size_divisor
 
         for i, data_info in enumerate(data_list):
             data_info['batch_shape'] = batch_shapes[batch_index[i]]

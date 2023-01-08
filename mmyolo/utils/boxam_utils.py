@@ -12,12 +12,13 @@ import torch.nn as nn
 import torchvision
 from mmcv.transforms import Compose
 from mmdet.evaluation import get_classes
-from mmdet.models import build_detector
 from mmdet.utils import ConfigType
 from mmengine.config import Config
 from mmengine.runner import load_checkpoint
 from mmengine.structures import InstanceData
 from torch import Tensor
+
+from mmyolo.registry import MODELS
 
 try:
     from pytorch_grad_cam import (AblationCAM, AblationLayer,
@@ -71,27 +72,30 @@ def init_detector(
     # grad based method requires train_cfg
     # config.model.train_cfg = None
 
-    model = build_detector(config.model)
+    model = MODELS.build(config.model)
     if checkpoint is not None:
         checkpoint = load_checkpoint(model, checkpoint, map_location='cpu')
         # Weights converted from elsewhere may not have meta fields.
         checkpoint_meta = checkpoint.get('meta', {})
         # save the dataset_meta in the model for convenience
         if 'dataset_meta' in checkpoint_meta:
-            # mmdet 3.x
-            model.dataset_meta = checkpoint_meta['dataset_meta']
+            # mmdet 3.x, all keys should be lowercase
+            model.dataset_meta = {
+                k.lower(): v
+                for k, v in checkpoint_meta['dataset_meta'].items()
+            }
         elif 'CLASSES' in checkpoint_meta:
             # < mmdet 3.x
             classes = checkpoint_meta['CLASSES']
-            model.dataset_meta = {'CLASSES': classes, 'PALETTE': palette}
+            model.dataset_meta = {'classes': classes, 'palette': palette}
         else:
             warnings.simplefilter('once')
             warnings.warn(
                 'dataset_meta or class names are not saved in the '
                 'checkpoint\'s meta data, use COCO classes by default.')
             model.dataset_meta = {
-                'CLASSES': get_classes('coco'),
-                'PALETTE': palette
+                'classes': get_classes('coco'),
+                'palette': palette
             }
 
     model.cfg = config  # save the config in the model for convenience
@@ -253,7 +257,7 @@ class BoxAMDetectorVisualizer:
             if self.is_need_grad:
                 self.cam.activations_and_grads.release()
 
-        self.classes = model.detector.dataset_meta['CLASSES']
+        self.classes = model.detector.dataset_meta['classes']
         self.COLORS = np.random.uniform(0, 255, size=(len(self.classes), 3))
 
     def switch_activations_and_grads(self, model) -> None:

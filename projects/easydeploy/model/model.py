@@ -9,7 +9,7 @@ from mmengine.config import ConfigDict
 from torch import Tensor
 
 from mmyolo.models import RepVGGBlock
-from mmyolo.models.dense_heads import RTMDetHead, YOLOv5Head
+from mmyolo.models.dense_heads import RTMDetHead, YOLOv5Head, YOLOv7Head
 from ..backbone import DeployFocus, GConvFocus, NcnnFocus
 from ..bbox_code import rtmdet_bbox_decoder, yolov5_bbox_decoder
 from ..nms import batched_nms, efficient_nms, onnx_nms
@@ -22,23 +22,19 @@ class DeployModel(nn.Module):
                  postprocess_cfg: Optional[ConfigDict] = None):
         super().__init__()
         self.baseModel = baseModel
-        self.baseHead = baseModel.bbox_head
-        self.__init_sub_attributes()
-        detector_type = type(self.baseHead)
         if postprocess_cfg is None:
-            pre_top_k = 1000
-            keep_top_k = 100
-            iou_threshold = 0.65
-            score_threshold = 0.25
-            backend = 1
+            self.with_postprocess = False
         else:
-            pre_top_k = postprocess_cfg.get('pre_top_k', 1000)
-            keep_top_k = postprocess_cfg.get('keep_top_k', 100)
-            iou_threshold = postprocess_cfg.get('iou_threshold', 0.65)
-            score_threshold = postprocess_cfg.get('score_threshold', 0.25)
-            backend = postprocess_cfg.get('backend', 1)
+            self.with_postprocess = True
+            self.baseHead = baseModel.bbox_head
+            self.__init_sub_attributes()
+            self.detector_type = type(self.baseHead)
+            self.pre_top_k = postprocess_cfg.get('pre_top_k', 1000)
+            self.keep_top_k = postprocess_cfg.get('keep_top_k', 100)
+            self.iou_threshold = postprocess_cfg.get('iou_threshold', 0.65)
+            self.score_threshold = postprocess_cfg.get('score_threshold', 0.25)
+            self.backend = postprocess_cfg.get('backend', 1)
         self.__switch_deploy()
-        self.__dict__.update(locals())
 
     def __init_sub_attributes(self):
         self.bbox_decoder = self.baseHead.bbox_coder.decode
@@ -72,7 +68,7 @@ class DeployModel(nn.Module):
         device = cls_scores[0].device
 
         nms_func = self.select_nms()
-        if self.detector_type is YOLOv5Head:
+        if self.detector_type in (YOLOv5Head, YOLOv7Head):
             bbox_decoder = yolov5_bbox_decoder
         elif self.detector_type is RTMDetHead:
             bbox_decoder = rtmdet_bbox_decoder
@@ -134,11 +130,13 @@ class DeployModel(nn.Module):
             nms_func = batched_nms
         else:
             raise NotImplementedError
-        if type(self.baseHead) is YOLOv5Head:
+        if type(self.baseHead) in (YOLOv5Head, YOLOv7Head):
             nms_func = partial(nms_func, box_coding=1)
         return nms_func
 
     def forward(self, inputs: Tensor):
         neck_outputs = self.baseModel(inputs)
-        outputs = self.pred_by_feat(*neck_outputs)
-        return outputs
+        if self.with_postprocess:
+            return self.pred_by_feat(*neck_outputs)
+        else:
+            return neck_outputs
