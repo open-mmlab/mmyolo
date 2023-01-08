@@ -97,6 +97,7 @@ MMYOLO 中目前仅仅实现了目标检测算法，但是相比 MMDeteciton 版
 2. 支持 [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/dev/configs/ppyoloe/README.md) 训练。
 3. 支持 [YOLOv5](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov5/crowdhuman/yolov5_s-v61_8xb16-300e_ignore_crowdhuman.py) 的 `iscrowd` 属性训练。
 4. 支持 [YOLOv5 正样本分配结果可视化](https://github.com/open-mmlab/mmyolo/blob/dev/projects/assigner_visualization/README.md)
+5. 新增 [YOLOv6 原理和实现全解析文档](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/algorithm_descriptions/yolov6_description.md)
 
 同时我们也推出了解读视频：
 

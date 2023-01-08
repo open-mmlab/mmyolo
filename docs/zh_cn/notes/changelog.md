@@ -8,6 +8,7 @@
 2. 支持 [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/dev/configs/ppyoloe/README.md) 训练。
 3. 支持 [YOLOv5](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov5/crowdhuman/yolov5_s-v61_8xb16-300e_ignore_crowdhuman.py) 的 `iscrowd` 属性训练。
 4. 支持 [YOLOv5 正样本分配结果可视化](https://github.com/open-mmlab/mmyolo/blob/dev/projects/assigner_visualization/README.md)
+5. 新增 [YOLOv6 原理和实现全解析文档](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/algorithm_descriptions/yolov6_description.md)
 
 ### 新特性
 
@@ -23,7 +24,6 @@
 10. 在 `how_to.md` 中添加不使用预训练权重的文档 (#404)
 11. 新增关于如何设置随机种子的文档 (#386)
 12. 将 `rtmdet_description.md` 文档翻译成英文 (#353)
-13. 新增 `yolov6_description.md` 文档 (#382, #372)
 
 ### Bug 修复
 
