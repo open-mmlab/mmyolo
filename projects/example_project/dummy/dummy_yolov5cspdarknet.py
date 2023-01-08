@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 
-from mmyolo.registry import MODELS
 from mmyolo.models import YOLOv5CSPDarknet
+from mmyolo.registry import MODELS
 
 
 @MODELS.register_module()
