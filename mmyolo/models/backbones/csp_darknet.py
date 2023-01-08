@@ -8,6 +8,7 @@ from mmdet.models.backbones.csp_darknet import CSPLayer, Focus
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
+from .. import CSPLayerWithTwoConv
 from ..layers import SPPFBottleneck
 from ..utils import make_divisible, make_round
 from .base_backbone import BaseBackbone
@@ -61,14 +62,25 @@ class YOLOv5CSPDarknet(BaseBackbone):
     # From left to right:
     # in_channels, out_channels, num_blocks, add_identity, use_spp
     arch_settings = {
-        'P5': [[64, 128, 3, True, False], [128, 256, 6, True, False],
-               [256, 512, 9, True, False], [512, 1024, 3, True, True]],
-        'P6': [[64, 128, 3, True, False], [128, 256, 6, True, False],
-               [256, 512, 9, True, False], [512, 768, 3, True, False],
-               [768, 1024, 3, True, True]]
+        'YOLOv5': {
+            'stem_setting': [6, 2, 2],  # kernel_size, stride, padding
+            'csp_layer_type': CSPLayer,
+            'P5': [[64, 128, 3, True, False], [128, 256, 6, True, False],
+                   [256, 512, 9, True, False], [512, 1024, 3, True, True]],
+            'P6': [[64, 128, 3, True, False], [128, 256, 6, True, False],
+                   [256, 512, 9, True, False], [512, 768, 3, True, False],
+                   [768, 1024, 3, True, True]]
+        },
+        'YOLOv8': {
+            'stem_setting': [3, 2, 0],  # kernel_size, stride, padding
+            'csp_layer_type': CSPLayerWithTwoConv,
+            'P5': [[64, 128, 3, True, False], [128, 256, 6, True, False],
+                   [256, 512, 6, True, False], [512, 1024, 3, True, True]],
+        }
     }
 
     def __init__(self,
+                 model_type: str = 'YOLOv5',
                  arch: str = 'P5',
                  plugins: Union[dict, List[dict]] = None,
                  deepen_factor: float = 1.0,
@@ -82,7 +94,7 @@ class YOLOv5CSPDarknet(BaseBackbone):
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None):
         super().__init__(
-            self.arch_settings[arch],
+            self.arch_settings[model_type][arch],
             deepen_factor,
             widen_factor,
             input_channels=input_channels,
@@ -93,15 +105,19 @@ class YOLOv5CSPDarknet(BaseBackbone):
             act_cfg=act_cfg,
             norm_eval=norm_eval,
             init_cfg=init_cfg)
+        self.stem_setting = self.arch_settings[model_type]['stem_setting']
+        self.csp_layer_type = self.arch_settings[model_type]['csp_layer_type']
 
     def build_stem_layer(self) -> nn.Module:
         """Build a stem layer."""
+        kernel_size, stride, padding = self.stem_setting
+
         return ConvModule(
             self.input_channels,
             make_divisible(self.arch_setting[0][0], self.widen_factor),
-            kernel_size=6,
-            stride=2,
-            padding=2,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
 
@@ -127,7 +143,7 @@ class YOLOv5CSPDarknet(BaseBackbone):
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
         stage.append(conv_layer)
-        csp_layer = CSPLayer(
+        csp_layer = self.csp_layer_type(
             out_channels,
             out_channels,
             num_blocks=num_blocks,
