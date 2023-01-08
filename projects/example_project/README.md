@@ -35,9 +35,9 @@ python tools/test.py projects/example_project/configs/yolov5_s_dummy-backbone_v6
 <!-- List the results as usually done in other model's README. [Example](https://github.com/open-mmlab/mmyolo/tree/main/configs/yolov5#results-and-models)
 You should claim whether this is based on the pre-trained weights, which are converted from the official release; or it's a reproduced result obtained from retraining the model in this project. -->
 
-|                                    Method                                     |       Backbone        | Pretrained Model |  Training set  |   Test set   | #epoch | box AP |           Download           |
-| :---------------------------------------------------------------------------: | :-------------------: | :--------------: | :------------: | :----------: | :----: | :----: |:----------------------------:|
-| [YOLOv5 dummy](configs/yolov5_s_dummy-backbone_v61_syncbn_8xb16-300e_coco.py) | DummyYOLOv5CSPDarknet |        -         | COCO2017 Train | COCO2017 Val |   12   | 0.8853 | [model](<>) &#124; [log](<>) |
+|                                    Method                                     |       Backbone        | Pretrained Model |  Training set  |   Test set   | #epoch | box AP |         Download         |
+| :---------------------------------------------------------------------------: | :-------------------: | :--------------: | :------------: | :----------: | :----: | :----: | :----------------------: |
+| [YOLOv5 dummy](configs/yolov5_s_dummy-backbone_v61_syncbn_8xb16-300e_coco.py) | DummyYOLOv5CSPDarknet |        -         | COCO2017 Train | COCO2017 Val |   12   | 0.8853 | [model](<>) \| [log](<>) |
 
 ## Citation
 
