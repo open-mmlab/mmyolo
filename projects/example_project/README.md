@@ -37,20 +37,51 @@ You should claim whether this is based on the pre-trained weights, which are con
 
 |                                    Method                                     |       Backbone        | Pretrained Model |  Training set  |   Test set   | #epoch | box AP |         Download         |
 | :---------------------------------------------------------------------------: | :-------------------: | :--------------: | :------------: | :----------: | :----: | :----: | :----------------------: |
-| [YOLOv5 dummy](configs/yolov5_s_dummy-backbone_v61_syncbn_8xb16-300e_coco.py) | DummyYOLOv5CSPDarknet |        -         | COCO2017 Train | COCO2017 Val |   12   | 0.8853 | [model](<>) \| [log](<>) |
+| [YOLOv5 dummy](configs/yolov5_s_dummy-backbone_v61_syncbn_8xb16-300e_coco.py) | DummyYOLOv5CSPDarknet |        -         | COCO2017 Train | COCO2017 Val |  300   |  37.7  | [model](<>) \| [log](<>) |
 
 ## Citation
 
 <!-- You may remove this section if not applicable. -->
 
 ```latex
-@article{Ren_2017,
-   title={Faster R-CNN: Towards Real-Time Object Detection with Region Proposal Networks},
-   journal={IEEE Transactions on Pattern Analysis and Machine Intelligence},
-   publisher={Institute of Electrical and Electronics Engineers (IEEE)},
-   author={Ren, Shaoqing and He, Kaiming and Girshick, Ross and Sun, Jian},
-   year={2017},
-   month={Jun},
+@software{glenn_jocher_2022_7002879,
+  author       = {Glenn Jocher and
+                  Ayush Chaurasia and
+                  Alex Stoken and
+                  Jirka Borovec and
+                  NanoCode012 and
+                  Yonghye Kwon and
+                  TaoXie and
+                  Kalen Michael and
+                  Jiacong Fang and
+                  imyhxy and
+                  Lorna and
+                  Colin Wong and
+                  曾逸夫(Zeng Yifu) and
+                  Abhiram V and
+                  Diego Montes and
+                  Zhiqiang Wang and
+                  Cristi Fati and
+                  Jebastin Nadar and
+                  Laughing and
+                  UnglvKitDe and
+                  tkianai and
+                  yxNONG and
+                  Piotr Skalski and
+                  Adam Hogan and
+                  Max Strobel and
+                  Mrinal Jain and
+                  Lorenzo Mammana and
+                  xylieong},
+  title        = {{ultralytics/yolov5: v6.2 - YOLOv5 Classification
+                   Models, Apple M1, Reproducibility, ClearML and
+                   Deci.ai integrations}},
+  month        = aug,
+  year         = 2022,
+  publisher    = {Zenodo},
+  version      = {v6.2},
+  doi          = {10.5281/zenodo.7002879},
+  url          = {https://doi.org/10.5281/zenodo.7002879}
 }
 ```
 

@@ -46,7 +46,7 @@
 
 01. 更新 `useful_tools.md` (#384)
 02. 更新英文版 `custom_dataset.md` (#381)
-03. 从重写函数中删除上下文参数 (#395)
+03. 重写函数删除上下文参数 (#395)
 04. 弃用 `np.bool` 类型别名 (#396)
 05. 为自定义数据集添加新的视频链接 (#365)
 06. 仅为模型导出 onnx (#361)
@@ -63,10 +63,10 @@
 
 ### 贡献者
 
-总共 27 位开发者参与了本次版本
+总共 28 位开发者参与了本次版本
 
 谢谢 @RangeKing, @PeterH0323, @Nioolek, @triple-Mu, @matrixgame2018, @xin-li-67, @tang576225574, @kitecats, @Seperendity, @diplomatist,
-@vaew, @wzr-skn, @VoyagerXvoyagerx, @MambaWong, @tianleiSHI, @caj-github, @zhubochao, @lvhan028,
+@vaew, @wzr-skn, @VoyagerXvoyagerx, @MambaWong, @tianleiSHI, @caj-github, @zhubochao, @lvhan028, @dsghaonan,
 @lyviva, @yuewangg, @wang-tf, @satuoqaq, @grimoire, @RunningLeon, @hanrui1sensetime, @RangiLyu, @hhaAndroid
 
 ## v0.2.0（1/12/2022)
