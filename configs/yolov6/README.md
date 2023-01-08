@@ -12,6 +12,16 @@ For years, YOLO series have been de facto industry-level standard for efficient 
 <img src="https://github.com/meituan/YOLOv6/raw/main/assets/speed_comparision_v2.png"/>
 </div>
 
+<div align=center >
+<img alt="YOLOv6-s" src="https://user-images.githubusercontent.com/58845482/209790152-21c29d42-30cc-4c48-a723-39b198286c4d.png"/>
+YOLOv6-s model structure
+</div>
+
+<div align=center >
+<img alt="YOLOv6-l" src="https://user-images.githubusercontent.com/58845482/209787949-d57691c0-a2ea-4a0a-829f-e8a64ac29c7e.png"/>
+YOLOv6-l model structure
+</div>
+
 ## Results and models
 
 ### COCO
