@@ -8,8 +8,7 @@ from mmdet.models.backbones.csp_darknet import CSPLayer, Focus
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
-from .. import CSPLayerWithTwoConv
-from ..layers import SPPFBottleneck
+from ..layers import SPPFBottleneck, CSPLayerWithTwoConv
 from ..utils import make_divisible, make_round
 from .base_backbone import BaseBackbone
 
@@ -93,6 +92,8 @@ class YOLOv5CSPDarknet(BaseBackbone):
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None):
+        self.stem_setting = self.arch_settings[model_type]['stem_setting']
+        self.csp_layer_type = self.arch_settings[model_type]['csp_layer_type']
         super().__init__(
             self.arch_settings[model_type][arch],
             deepen_factor,
@@ -105,8 +106,6 @@ class YOLOv5CSPDarknet(BaseBackbone):
             act_cfg=act_cfg,
             norm_eval=norm_eval,
             init_cfg=init_cfg)
-        self.stem_setting = self.arch_settings[model_type]['stem_setting']
-        self.csp_layer_type = self.arch_settings[model_type]['csp_layer_type']
 
     def build_stem_layer(self) -> nn.Module:
         """Build a stem layer."""
