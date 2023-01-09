@@ -99,7 +99,7 @@ jobs:
         type: string
       cuda:
         type: enum
-        enum: ["10.1", "10.2", "11.1","11.0"]
+        enum: ["10.1", "10.2", "11.1", "11.0"]
       cudnn:
         type: integer
         default: 7
@@ -151,8 +151,7 @@ workflows:
 
   pr_stage_test:
     when:
-      not:
-        << pipeline.parameters.lint_only >>
+      not: << pipeline.parameters.lint_only >>
     jobs:
       - lint:
           name: lint
@@ -164,7 +163,7 @@ workflows:
           name: minimum_version_cpu
           torch: 1.8.0
           torchvision: 0.9.0
-          python: 3.8.0  # The lowest python 3.6.x version available on CircleCI images
+          python: 3.8.0 # The lowest python 3.7.x version available on CircleCI images
           requires:
             - lint
       - build_cpu:
@@ -188,8 +187,7 @@ workflows:
             - hold
   merge_stage_test:
     when:
-      not:
-        << pipeline.parameters.lint_only >>
+      not: << pipeline.parameters.lint_only >>
     jobs:
       - build_cuda:
           name: minimum_version_gpu
