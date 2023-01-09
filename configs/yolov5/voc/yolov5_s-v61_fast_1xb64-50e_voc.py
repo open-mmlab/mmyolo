@@ -6,7 +6,7 @@ dataset_type = 'YOLOv5VOCDataset'
 
 # parameters that often need to be modified
 num_classes = 20
-img_scale = (512, 512)
+img_scale = (512, 512)  # width, height
 max_epochs = 50
 train_batch_size_per_gpu = 64
 train_num_workers = 8
@@ -62,6 +62,7 @@ with_mosiac_pipeline = [
         max_translate_ratio=0.04591,
         max_shear_degree=0.0,
         scaling_ratio_range=(1 - affine_scale, 1 + affine_scale),
+        # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
         border_val=(114, 114, 114)),
     dict(
@@ -80,6 +81,7 @@ with_mosiac_pipeline = [
                 max_translate_ratio=0.04591,
                 max_shear_degree=0.0,
                 scaling_ratio_range=(1 - affine_scale, 1 + affine_scale),
+                # img_scale is (width, height)
                 border=(-img_scale[0] // 2, -img_scale[1] // 2),
                 border_val=(114, 114, 114))
         ])
@@ -164,9 +166,7 @@ train_dataloader = dict(
     collate_fn=dict(type='yolov5_collate'))
 
 test_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',

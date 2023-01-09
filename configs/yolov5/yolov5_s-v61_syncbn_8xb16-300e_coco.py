@@ -6,7 +6,7 @@ dataset_type = 'YOLOv5CocoDataset'
 
 # parameters that often need to be modified
 num_classes = 80
-img_scale = (640, 640)  # height, width
+img_scale = (640, 640)  # width, height
 deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 300
@@ -129,6 +129,7 @@ train_pipeline = [
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
         scaling_ratio_range=(0.5, 1.5),
+        # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
         border_val=(114, 114, 114)),
     dict(

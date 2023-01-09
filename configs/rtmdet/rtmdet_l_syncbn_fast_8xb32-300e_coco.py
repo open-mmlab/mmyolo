@@ -3,7 +3,7 @@ _base_ = '../_base_/default_runtime.py'
 data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
-img_scale = (640, 640)  # height, width
+img_scale = (640, 640)  # width, height
 deepen_factor = 1.0
 widen_factor = 1.0
 max_epochs = 300
@@ -108,6 +108,7 @@ train_pipeline = [
         pad_val=114.0),
     dict(
         type='mmdet.RandomResize',
+        # img_scale is (width, height)
         scale=(img_scale[0] * 2, img_scale[1] * 2),
         ratio_range=(0.1, 2.0),
         resize_type='mmdet.Resize',

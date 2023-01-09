@@ -18,9 +18,7 @@ model = dict(
     bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
 
 train_pipeline = [
-    dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='Mosaic',
@@ -31,7 +29,8 @@ train_pipeline = [
         pad_val=114.0),
     dict(
         type='mmdet.RandomResize',
-        scale=(1280, 1280),
+        # img_scale is (width, height)
+        scale=(img_scale[0] * 2, img_scale[1] * 2),
         ratio_range=(0.5, 2.0),
         resize_type='mmdet.Resize',
         keep_ratio=True),
