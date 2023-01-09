@@ -6,7 +6,8 @@ Compatible MMEngine, MMCV and MMDetection versions are shown as below. Please in
 
 | MMYOLO version |   MMDetection version    |     MMEngine version     |      MMCV version       |
 | :------------: | :----------------------: | :----------------------: | :---------------------: |
-|      main      | mmdet>=3.0.0rc3, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|      main      | mmdet>=3.0.0rc5, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|     0.3.0      | mmdet>=3.0.0rc5, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
 |     0.2.0      | mmdet>=3.0.0rc3, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
 |     0.1.3      | mmdet>=3.0.0rc3, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
 |     0.1.2      | mmdet>=3.0.0rc2, \<3.1.0 | mmengine>=0.3.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
@@ -54,7 +55,7 @@ conda install pytorch torchvision cpuonly -c pytorch
 pip install -U openmim
 mim install "mmengine>=0.3.1"
 mim install "mmcv>=2.0.0rc1,<2.1.0"
-mim install "mmdet>=3.0.0rc3,<3.1.0"
+mim install "mmdet>=3.0.0rc5,<3.1.0"
 ```
 
 **Note:**
@@ -213,7 +214,7 @@ thus we only need to install MMEngine, MMCV, MMDetection, and MMYOLO with the fo
 !pip3 install openmim
 !mim install "mmengine==0.1.0"
 !mim install "mmcv>=2.0.0rc1,<2.1.0"
-!mim install "mmdet>=3.0.0.rc1"
+!mim install "mmdet>=3.0.0rc5,<3.1.0"
 ```
 
 **Step 2.** Install MMYOLO from the source.

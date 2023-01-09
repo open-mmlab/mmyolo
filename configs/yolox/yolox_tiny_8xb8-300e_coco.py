@@ -29,6 +29,7 @@ train_pipeline_stage1 = [
     dict(
         type='mmdet.RandomAffine',
         scaling_ratio_range=(0.5, 1.5),  # note
+        # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2)),
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),

@@ -1,19 +1,15 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
 from mmcv.cnn import ConvModule, is_norm
-from mmdet.models.task_modules.prior_generators import anchor_inside_flags
 from mmdet.models.task_modules.samplers import PseudoSampler
-from mmdet.models.utils import images_to_levels, multi_apply, unmap
 from mmdet.structures.bbox import distance2bbox
 from mmdet.utils import (ConfigType, InstanceList, OptConfigType,
                          OptInstanceList, OptMultiConfig, reduce_mean)
-from mmengine.config import ConfigDict
 from mmengine.model import (BaseModule, bias_init_with_prob, constant_init,
                             normal_init)
-from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS, TASK_UTILS
@@ -172,7 +168,7 @@ class RTMDetSepBNHeadModule(BaseModule):
 
         cls_scores = []
         bbox_preds = []
-        for idx, (x, stride) in enumerate(zip(feats, self.featmap_strides)):
+        for idx, x in enumerate(feats):
             cls_feat = x
             reg_feat = x
 
@@ -183,7 +179,7 @@ class RTMDetSepBNHeadModule(BaseModule):
             for reg_layer in self.reg_convs[idx]:
                 reg_feat = reg_layer(reg_feat)
 
-            reg_dist = self.rtm_reg[idx](reg_feat) * stride
+            reg_dist = self.rtm_reg[idx](reg_feat)
             cls_scores.append(cls_score)
             bbox_preds.append(reg_dist)
         return tuple(cls_scores), tuple(bbox_preds)
@@ -210,28 +206,28 @@ class RTMDetHead(YOLOv5Head):
             Defaults to None.
     """
 
-    def __init__(
-            self,
-            head_module: ConfigType,
-            prior_generator: ConfigType = dict(
-                type='mmdet.MlvlPointGenerator', offset=0, strides=[8, 16,
-                                                                    32]),
-            bbox_coder: ConfigType = dict(type='mmdet.DistancePointBBoxCoder'),
-            loss_cls: ConfigType = dict(
-                type='mmdet.QualityFocalLoss',
-                use_sigmoid=True,
-                beta=2.0,
-                loss_weight=1.0),
-            loss_bbox: ConfigType = dict(
-                type='mmdet.GIoULoss', loss_weight=2.0),
-            loss_obj: ConfigType = dict(
-                type='mmdet.CrossEntropyLoss',
-                use_sigmoid=True,
-                reduction='sum',
-                loss_weight=1.0),
-            train_cfg: OptConfigType = None,
-            test_cfg: OptConfigType = None,
-            init_cfg: OptMultiConfig = None):
+    def __init__(self,
+                 head_module: ConfigType,
+                 prior_generator: ConfigType = dict(
+                     type='mmdet.MlvlPointGenerator',
+                     offset=0,
+                     strides=[8, 16, 32]),
+                 bbox_coder: ConfigType = dict(type='DistancePointBBoxCoder'),
+                 loss_cls: ConfigType = dict(
+                     type='mmdet.QualityFocalLoss',
+                     use_sigmoid=True,
+                     beta=2.0,
+                     loss_weight=1.0),
+                 loss_bbox: ConfigType = dict(
+                     type='mmdet.GIoULoss', loss_weight=2.0),
+                 loss_obj: ConfigType = dict(
+                     type='mmdet.CrossEntropyLoss',
+                     use_sigmoid=True,
+                     reduction='sum',
+                     loss_weight=1.0),
+                 train_cfg: OptConfigType = None,
+                 test_cfg: OptConfigType = None,
+                 init_cfg: OptMultiConfig = None):
 
         super().__init__(
             head_module=head_module,
@@ -264,6 +260,9 @@ class RTMDetHead(YOLOv5Head):
             else:
                 self.sampler = PseudoSampler(context=self)
 
+            self.featmap_sizes_train = None
+            self.flatten_priors_train = None
+
     def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         """Forward features from the upstream network.
 
@@ -275,116 +274,6 @@ class RTMDetHead(YOLOv5Head):
             predictions, and objectnesses.
         """
         return self.head_module(x)
-
-    def predict_by_feat(self,
-                        cls_scores: List[Tensor],
-                        bbox_preds: List[Tensor],
-                        batch_img_metas: Optional[List[dict]] = None,
-                        cfg: Optional[ConfigDict] = None,
-                        rescale: bool = True,
-                        with_nms: bool = True) -> List[InstanceData]:
-        """Transform a batch of output features extracted from the head into
-        bbox results.
-
-        Args:
-            cls_scores (list[Tensor]): Classification scores for all
-                scale levels, each is a 4D-tensor, has shape
-                (batch_size, num_priors * num_classes, H, W).
-            bbox_preds (list[Tensor]): Box energies / deltas for all
-                scale levels, each is a 4D-tensor, has shape
-                (batch_size, num_priors * 4, H, W).
-            batch_img_metas (list[dict], Optional): Batch image meta info.
-                Defaults to None.
-            cfg (ConfigDict, optional): Test / postprocessing
-                configuration, if None, test_cfg would be used.
-                Defaults to None.
-            rescale (bool): If True, return boxes in original image space.
-                Defaults to False.
-            with_nms (bool): If True, do nms before return boxes.
-                Defaults to True.
-
-        Returns:
-            list[:obj:`InstanceData`]: Object detection results of each image
-            after the post process. Each item usually contains following keys.
-
-                - scores (Tensor): Classification scores, has a shape
-                  (num_instance, )
-                - labels (Tensor): Labels of bboxes, has a shape
-                  (num_instances, ).
-                - bboxes (Tensor): Has a shape (num_instances, 4),
-                  the last dimension 4 arrange as (x1, y1, x2, y2).
-        """
-        return super(YOLOv5Head, self).predict_by_feat(
-            cls_scores,
-            bbox_preds,
-            None,
-            batch_img_metas=batch_img_metas,
-            cfg=cfg,
-            rescale=rescale,
-            with_nms=with_nms)
-
-    def loss_by_feat_single(self, cls_score: Tensor, bbox_pred: Tensor,
-                            labels: Tensor, label_weights: Tensor,
-                            bbox_targets: Tensor, assign_metrics: Tensor,
-                            stride: List[int]) -> list:
-        """Compute loss of a single scale level.
-
-        Args:
-            cls_score (Tensor): Box scores for each scale level
-                Has shape (N, num_anchors * num_classes, H, W).
-            bbox_pred (Tensor): Decoded bboxes for each scale
-                level with shape (N, num_anchors * 4, H, W).
-            labels (Tensor): Labels of each anchors with shape
-                (N, num_total_anchors).
-            label_weights (Tensor): Label weights of each anchor with shape
-                (N, num_total_anchors).
-            bbox_targets (Tensor): BBox regression targets of each anchor with
-                shape (N, num_total_anchors, 4).
-            assign_metrics (Tensor): Assign metrics with shape
-                (N, num_total_anchors).
-            stride (List[int]): Downsample stride of the feature map.
-
-        Returns:
-            dict[str, Tensor]: A dictionary of loss components.
-        """
-        assert stride[0] == stride[1], 'h stride is not equal to w stride!'
-        cls_score = cls_score.permute(0, 2, 3, 1).reshape(
-            -1, self.cls_out_channels).contiguous()
-        bbox_pred = bbox_pred.reshape(-1, 4)
-        bbox_targets = bbox_targets.reshape(-1, 4)
-        labels = labels.reshape(-1)
-        assign_metrics = assign_metrics.reshape(-1)
-        label_weights = label_weights.reshape(-1)
-        targets = (labels, assign_metrics)
-
-        loss_cls = self.loss_cls(
-            cls_score, targets, label_weights, avg_factor=1.0)
-
-        # FG cat_id: [0, num_classes -1], BG cat_id: num_classes
-        bg_class_ind = self.num_classes
-        pos_inds = ((labels >= 0)
-                    & (labels < bg_class_ind)).nonzero().squeeze(1)
-
-        if len(pos_inds) > 0:
-            pos_bbox_targets = bbox_targets[pos_inds]
-            pos_bbox_pred = bbox_pred[pos_inds]
-
-            pos_decode_bbox_pred = pos_bbox_pred
-            pos_decode_bbox_targets = pos_bbox_targets
-
-            # regression loss
-            pos_bbox_weight = assign_metrics[pos_inds]
-
-            loss_bbox = self.loss_bbox(
-                pos_decode_bbox_pred,
-                pos_decode_bbox_targets,
-                weight=pos_bbox_weight,
-                avg_factor=1.0)
-        else:
-            loss_bbox = bbox_pred.sum() * 0
-            pos_bbox_weight = bbox_targets.new_tensor(0.)
-
-        return loss_cls, loss_bbox, assign_metrics.sum(), pos_bbox_weight.sum()
 
     def loss_by_feat(
             self,
@@ -418,286 +307,132 @@ class RTMDetHead(YOLOv5Head):
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.prior_generator.num_levels
 
+        gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
+        gt_labels = gt_info[:, :, :1]
+        gt_bboxes = gt_info[:, :, 1:]  # xyxy
+        pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
+
         device = cls_scores[0].device
-        anchor_list, valid_flag_list = self.get_anchors(
-            featmap_sizes, batch_img_metas, device=device)
+
+        # If the shape does not equal, generate new one
+        if featmap_sizes != self.featmap_sizes_train:
+            self.featmap_sizes_train = featmap_sizes
+            mlvl_priors_with_stride = self.prior_generator.grid_priors(
+                featmap_sizes, device=device, with_stride=True)
+            self.flatten_priors_train = torch.cat(
+                mlvl_priors_with_stride, dim=0)
+
         flatten_cls_scores = torch.cat([
             cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1,
                                                   self.cls_out_channels)
             for cls_score in cls_scores
+        ], 1).contiguous()
+
+        flatten_bboxes = torch.cat([
+            bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
+            for bbox_pred in bbox_preds
         ], 1)
-        decoded_bboxes = []
-        for anchor, bbox_pred in zip(anchor_list[0], bbox_preds):
-            anchor = anchor.reshape(-1, 4)
-            bbox_pred = bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
-            bbox_pred = distance2bbox(anchor, bbox_pred)
-            decoded_bboxes.append(bbox_pred)
+        flatten_bboxes = flatten_bboxes * self.flatten_priors_train[..., -1,
+                                                                    None]
+        flatten_bboxes = distance2bbox(self.flatten_priors_train[..., :2],
+                                       flatten_bboxes)
 
-        flatten_bboxes = torch.cat(decoded_bboxes, 1)
+        assigned_result = self.assigner(flatten_bboxes.detach(),
+                                        flatten_cls_scores.detach(),
+                                        self.flatten_priors_train, gt_labels,
+                                        gt_bboxes, pad_bbox_flag)
 
-        cls_reg_targets = self.get_targets(
-            flatten_cls_scores,
-            flatten_bboxes,
-            anchor_list,
-            valid_flag_list,
-            batch_gt_instances,
-            batch_img_metas,
-            batch_gt_instances_ignore=batch_gt_instances_ignore)
-        (anchor_list, labels_list, label_weights_list, bbox_targets_list,
-         assign_metrics_list) = cls_reg_targets
+        labels = assigned_result['assigned_labels'].reshape(-1)
+        label_weights = assigned_result['assigned_labels_weights'].reshape(-1)
+        bbox_targets = assigned_result['assigned_bboxes'].reshape(-1, 4)
+        assign_metrics = assigned_result['assign_metrics'].reshape(-1)
+        cls_preds = flatten_cls_scores.reshape(-1, self.num_classes)
+        bbox_preds = flatten_bboxes.reshape(-1, 4)
 
-        losses_cls, losses_bbox,\
-            cls_avg_factors, bbox_avg_factors = multi_apply(
-                self.loss_by_feat_single,
-                cls_scores,
-                decoded_bboxes,
-                labels_list,
-                label_weights_list,
-                bbox_targets_list,
-                assign_metrics_list,
-                self.prior_generator.strides)
+        # FG cat_id: [0, num_classes -1], BG cat_id: num_classes
+        bg_class_ind = self.num_classes
+        pos_inds = ((labels >= 0)
+                    & (labels < bg_class_ind)).nonzero().squeeze(1)
+        avg_factor = reduce_mean(assign_metrics.sum()).clamp_(min=1).item()
 
-        cls_avg_factor = reduce_mean(sum(cls_avg_factors)).clamp_(min=1).item()
-        losses_cls = list(map(lambda x: x / cls_avg_factor, losses_cls))
+        loss_cls = self.loss_cls(
+            cls_preds, (labels, assign_metrics),
+            label_weights,
+            avg_factor=avg_factor)
 
-        bbox_avg_factor = reduce_mean(
-            sum(bbox_avg_factors)).clamp_(min=1).item()
-        losses_bbox = list(map(lambda x: x / bbox_avg_factor, losses_bbox))
-        return dict(loss_cls=losses_cls, loss_bbox=losses_bbox)
-
-    def get_targets(self,
-                    cls_scores: Tensor,
-                    bbox_preds: Tensor,
-                    anchor_list: List[List[Tensor]],
-                    valid_flag_list: List[List[Tensor]],
-                    batch_gt_instances: InstanceList,
-                    batch_img_metas: List[dict],
-                    batch_gt_instances_ignore: OptInstanceList = None,
-                    unmap_outputs=True) -> Union[tuple, None]:
-        """Compute regression and classification targets for anchors in
-        multiple images.
-
-        Args:
-            cls_scores (Tensor): Classification predictions of images,
-                a 3D-Tensor with shape [num_imgs, num_priors, num_classes].
-            bbox_preds (Tensor): Decoded bboxes predictions of one image,
-                a 3D-Tensor with shape [num_imgs, num_priors, 4] in [tl_x,
-                tl_y, br_x, br_y] format.
-            anchor_list (list[list[Tensor]]): Multi level anchors of each
-                image. The outer list indicates images, and the inner list
-                corresponds to feature levels of the image. Each element of
-                the inner list is a tensor of shape (num_anchors, 4).
-            valid_flag_list (list[list[Tensor]]): Multi level valid flags of
-                each image. The outer list indicates images, and the inner list
-                corresponds to feature levels of the image. Each element of
-                the inner list is a tensor of shape (num_anchors, )
-            batch_gt_instances (list[:obj:`InstanceData`]): Batch of
-                gt_instance.  It usually includes ``bboxes`` and ``labels``
-                attributes.
-            batch_img_metas (list[dict]): Meta information of each image, e.g.,
-                image size, scaling factor, etc.
-            batch_gt_instances_ignore (list[:obj:`InstanceData`], Optional):
-                Batch of gt_instances_ignore. It includes ``bboxes`` attribute
-                data that is ignored during training and testing.
-                Defaults to None.
-            unmap_outputs (bool): Whether to map outputs back to the original
-                set of anchors. Defaults to True.
-
-        Returns:
-            tuple: a tuple containing learning targets.
-
-            - anchors_list (list[list[Tensor]]): Anchors of each level.
-            - labels_list (list[Tensor]): Labels of each level.
-            - label_weights_list (list[Tensor]): Label weights of each
-              level.
-            - bbox_targets_list (list[Tensor]): BBox targets of each level.
-            - assign_metrics_list (list[Tensor]): alignment metrics of each
-              level.
-        """
-        num_imgs = len(batch_img_metas)
-        assert len(anchor_list) == len(valid_flag_list) == num_imgs
-
-        # anchor number of multi levels
-        num_level_anchors = [anchors.size(0) for anchors in anchor_list[0]]
-
-        # concat all level anchors and flags to a single tensor
-        for i in range(num_imgs):
-            assert len(anchor_list[i]) == len(valid_flag_list[i])
-            anchor_list[i] = torch.cat(anchor_list[i])
-            valid_flag_list[i] = torch.cat(valid_flag_list[i])
-
-        # compute targets for each image
-        if batch_gt_instances_ignore is None:
-            batch_gt_instances_ignore = [None] * num_imgs
-        # anchor_list: list(b * [-1, 4])
-        (all_anchors, all_labels, all_label_weights, all_bbox_targets,
-         all_assign_metrics) = multi_apply(
-             self._get_targets_single,
-             cls_scores.detach(),
-             bbox_preds.detach(),
-             anchor_list,
-             valid_flag_list,
-             batch_gt_instances,
-             batch_img_metas,
-             batch_gt_instances_ignore,
-             unmap_outputs=unmap_outputs)
-        # no valid anchors
-        if any([labels is None for labels in all_labels]):
-            return None
-
-        # split targets to a list w.r.t. multiple levels
-        anchors_list = images_to_levels(all_anchors, num_level_anchors)
-        labels_list = images_to_levels(all_labels, num_level_anchors)
-        label_weights_list = images_to_levels(all_label_weights,
-                                              num_level_anchors)
-        bbox_targets_list = images_to_levels(all_bbox_targets,
-                                             num_level_anchors)
-        assign_metrics_list = images_to_levels(all_assign_metrics,
-                                               num_level_anchors)
-
-        return (anchors_list, labels_list, label_weights_list,
-                bbox_targets_list, assign_metrics_list)
-
-    def _get_targets_single(self,
-                            cls_scores: Tensor,
-                            bbox_preds: Tensor,
-                            flat_anchors: Tensor,
-                            valid_flags: Tensor,
-                            gt_instances: InstanceData,
-                            img_meta: dict,
-                            gt_instances_ignore: Optional[InstanceData] = None,
-                            unmap_outputs=True) -> tuple:
-        """Compute regression, classification targets for anchors in a single
-        image.
-
-        Args:
-            cls_scores (list(Tensor)): Box scores for each image.
-            bbox_preds (list(Tensor)): Box energies / deltas for each image.
-            flat_anchors (Tensor): Multi-level anchors of the image, which are
-                concatenated into a single tensor of shape (num_anchors ,4)
-            valid_flags (Tensor): Multi level valid flags of the image,
-                which are concatenated into a single tensor of
-                    shape (num_anchors,).
-            gt_instances (:obj:`InstanceData`): Ground truth of instance
-                annotations. It usually includes ``bboxes`` and ``labels``
-                attributes.
-            img_meta (dict): Meta information for current image.
-            gt_instances_ignore (:obj:`InstanceData`, optional): Instances
-                to be ignored during training. It includes ``bboxes`` attribute
-                data that is ignored during training and testing.
-                Defaults to None.
-            unmap_outputs (bool): Whether to map outputs back to the original
-                set of anchors. Defaults to True.
-
-        Returns:
-            tuple: N is the number of total anchors in the image.
-
-            - anchors (Tensor): All anchors in the image with shape (N, 4).
-            - labels (Tensor): Labels of all anchors in the image with shape
-              (N,).
-            - label_weights (Tensor): Label weights of all anchor in the
-              image with shape (N,).
-            - bbox_targets (Tensor): BBox targets of all anchors in the
-              image with shape (N, 4).
-            - norm_alignment_metrics (Tensor): Normalized alignment metrics
-              of all priors in the image with shape (N,).
-        """
-        inside_flags = anchor_inside_flags(flat_anchors, valid_flags,
-                                           img_meta['img_shape'][:2],
-                                           self.train_cfg.allowed_border)
-        if not inside_flags.any():
-            return (None, ) * 7
-        # assign gt and sample anchors
-        anchors = flat_anchors[inside_flags, :]
-
-        pred_instances = InstanceData(
-            scores=cls_scores[inside_flags, :],
-            bboxes=bbox_preds[inside_flags, :],
-            priors=anchors)
-
-        assign_result = self.assigner.assign(pred_instances, gt_instances,
-                                             gt_instances_ignore)
-
-        sampling_result = self.sampler.sample(assign_result, pred_instances,
-                                              gt_instances)
-
-        num_valid_anchors = anchors.shape[0]
-        bbox_targets = torch.zeros_like(anchors)
-        labels = anchors.new_full((num_valid_anchors, ),
-                                  self.num_classes,
-                                  dtype=torch.long)
-        label_weights = anchors.new_zeros(num_valid_anchors, dtype=torch.float)
-        assign_metrics = anchors.new_zeros(
-            num_valid_anchors, dtype=torch.float)
-
-        pos_inds = sampling_result.pos_inds
-        neg_inds = sampling_result.neg_inds
         if len(pos_inds) > 0:
-            # point-based
-            pos_bbox_targets = sampling_result.pos_gt_bboxes
-            bbox_targets[pos_inds, :] = pos_bbox_targets
+            loss_bbox = self.loss_bbox(
+                bbox_preds[pos_inds],
+                bbox_targets[pos_inds],
+                weight=assign_metrics[pos_inds],
+                avg_factor=avg_factor)
+        else:
+            loss_bbox = bbox_preds.sum() * 0
 
-            labels[pos_inds] = sampling_result.pos_gt_labels
-            if self.train_cfg.pos_weight <= 0:
-                label_weights[pos_inds] = 1.0
-            else:
-                label_weights[pos_inds] = self.train_cfg.pos_weight
-        if len(neg_inds) > 0:
-            label_weights[neg_inds] = 1.0
+        return dict(loss_cls=loss_cls, loss_bbox=loss_bbox)
 
-        class_assigned_gt_inds = torch.unique(
-            sampling_result.pos_assigned_gt_inds)
-        for gt_inds in class_assigned_gt_inds:
-            gt_class_inds = pos_inds[sampling_result.pos_assigned_gt_inds ==
-                                     gt_inds]
-            assign_metrics[gt_class_inds] = assign_result.max_overlaps[
-                gt_class_inds]
+    @staticmethod
+    def gt_instances_preprocess(batch_gt_instances: Union[Tensor, Sequence],
+                                batch_size: int) -> Tensor:
+        """Split batch_gt_instances with batch size, from [all_gt_bboxes, 6]
+        to.
 
-        # map up to original set of anchors
-        if unmap_outputs:
-            num_total_anchors = flat_anchors.size(0)
-            anchors = unmap(anchors, num_total_anchors, inside_flags)
-            labels = unmap(
-                labels, num_total_anchors, inside_flags, fill=self.num_classes)
-            label_weights = unmap(label_weights, num_total_anchors,
-                                  inside_flags)
-            bbox_targets = unmap(bbox_targets, num_total_anchors, inside_flags)
-            assign_metrics = unmap(assign_metrics, num_total_anchors,
-                                   inside_flags)
-        return anchors, labels, label_weights, bbox_targets, assign_metrics
-
-    def get_anchors(self,
-                    featmap_sizes: List[tuple],
-                    batch_img_metas: List[dict],
-                    device: Union[torch.device, str] = 'cuda') \
-            -> Tuple[List[List[Tensor]], List[List[Tensor]]]:
-        """Get anchors according to feature map sizes.
+        [batch_size, number_gt, 5]. If some shape of single batch smaller than
+        gt bbox len, then using [-1., 0., 0., 0., 0.] to fill.
 
         Args:
-            featmap_sizes (list[tuple]): Multi-level feature map sizes.
-            batch_img_metas (list[dict]): Image meta info.
-            device (torch.device or str): Device for returned tensors.
-                Defaults to cuda.
+            batch_gt_instances (Sequence[Tensor]): Ground truth
+                instances for whole batch, shape [all_gt_bboxes, 6]
+            batch_size (int): Batch size.
 
         Returns:
-            tuple:
-
-            - anchor_list (list[list[Tensor]]): Anchors of each image.
-            - valid_flag_list (list[list[Tensor]]): Valid flags of each
-              image.
+            Tensor: batch gt instances data, shape [batch_size, number_gt, 5]
         """
-        num_imgs = len(batch_img_metas)
+        if isinstance(batch_gt_instances, Sequence):
+            max_gt_bbox_len = max(
+                [len(gt_instances) for gt_instances in batch_gt_instances])
+            # fill [-1., 0., 0., 0., 0.] if some shape of
+            # single batch not equal max_gt_bbox_len
+            batch_instance_list = []
+            for index, gt_instance in enumerate(batch_gt_instances):
+                bboxes = gt_instance.bboxes
+                labels = gt_instance.labels
+                batch_instance_list.append(
+                    torch.cat((labels[:, None], bboxes), dim=-1))
 
-        # since feature map sizes of all images are the same, we only compute
-        # anchors for one time
-        multi_level_anchors = self.prior_generator.grid_priors(
-            featmap_sizes, device=device, with_stride=True)
-        anchor_list = [multi_level_anchors for _ in range(num_imgs)]
+                if bboxes.shape[0] >= max_gt_bbox_len:
+                    continue
 
-        # for each image, we compute valid flags of multi level anchors
-        valid_flag_list = []
-        for img_id, img_meta in enumerate(batch_img_metas):
-            multi_level_flags = self.prior_generator.valid_flags(
-                featmap_sizes, img_meta['pad_shape'], device)
-            valid_flag_list.append(multi_level_flags)
-        return anchor_list, valid_flag_list
+                fill_tensor = bboxes.new_full(
+                    [max_gt_bbox_len - bboxes.shape[0], 5], 0)
+                fill_tensor[:, 0] = -1.
+                batch_instance_list[index] = torch.cat(
+                    (batch_instance_list[-1], fill_tensor), dim=0)
+
+            return torch.stack(batch_instance_list)
+        else:
+            # faster version
+            # sqlit batch gt instance [all_gt_bboxes, 6] ->
+            # [batch_size, number_gt_each_batch, 5]
+            batch_instance_list = []
+            max_gt_bbox_len = 0
+            for i in range(batch_size):
+                single_batch_instance = \
+                    batch_gt_instances[batch_gt_instances[:, 0] == i, :]
+                single_batch_instance = single_batch_instance[:, 1:]
+                batch_instance_list.append(single_batch_instance)
+                if len(single_batch_instance) > max_gt_bbox_len:
+                    max_gt_bbox_len = len(single_batch_instance)
+
+            # fill [-1., 0., 0., 0., 0.] if some shape of
+            # single batch not equal max_gt_bbox_len
+            for index, gt_instance in enumerate(batch_instance_list):
+                if gt_instance.shape[0] >= max_gt_bbox_len:
+                    continue
+                fill_tensor = batch_gt_instances.new_full(
+                    [max_gt_bbox_len - gt_instance.shape[0], 5], 0)
+                fill_tensor[:, 0] = -1.
+                batch_instance_list[index] = torch.cat(
+                    (batch_instance_list[index], fill_tensor), dim=0)
+
+            return torch.stack(batch_instance_list)

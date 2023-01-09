@@ -4,3 +4,4 @@ Import:
   - configs/yolox/metafile.yml
   - configs/rtmdet/metafile.yml
   - configs/yolov7/metafile.yml
+  - configs/ppyoloe/metafile.yml

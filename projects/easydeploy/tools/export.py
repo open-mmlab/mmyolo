@@ -7,6 +7,7 @@ import onnx
 import torch
 from mmdet.apis import init_detector
 from mmengine.config import ConfigDict
+from mmengine.utils.path import mkdir_or_exist
 
 from mmyolo.utils import register_all_modules
 from projects.easydeploy.model import DeployModel
@@ -77,8 +78,7 @@ def main():
     args = parse_args()
     register_all_modules()
 
-    if not os.path.exists(args.work_dir):
-        os.mkdir(args.work_dir)
+    mkdir_or_exist(args.work_dir)
 
     if args.model_only:
         postprocess_cfg = None

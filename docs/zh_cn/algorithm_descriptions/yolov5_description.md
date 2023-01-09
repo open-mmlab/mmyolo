@@ -4,12 +4,12 @@
 
 <div align=center >
 <img alt="YOLOv5-P5_structure_v3.4" src="https://user-images.githubusercontent.com/27466624/200000324-70ae078f-cea7-4189-8baa-440656797dad.jpg"/>
-图 1：YOLOv5-P5 模型结构
+图 1：YOLOv5-l-P5 模型结构
 </div>
 
 <div align=center >
-<img alt="YOLOv5-P6_structure_v1.0" src="https://user-images.githubusercontent.com/27466624/200845705-c9f3300f-9847-4933-b79d-0efcf0286e16.jpg"/>
-图 2：YOLOv5-P6 模型结构
+<img alt="YOLOv5-P6_structure_v1.1" src="https://user-images.githubusercontent.com/27466624/211143533-1725c1b2-6189-4c3a-a046-ad968e03cb9d.jpg"/>
+图 2：YOLOv5-l-P6 模型结构
 </div>
 
 以上结构图由 RangeKing@github 绘制。
