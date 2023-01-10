@@ -7,7 +7,7 @@ checkpoint = 'https://download.openmmlab.com/mmyolo/v0/ppyoloe/ppyoloe_pretrain/
 deepen_factor = 0.67
 widen_factor = 0.75
 
-train_batch_size_per_gpu = 2
+train_batch_size_per_gpu = 28
 
 model = dict(
     backbone=dict(
