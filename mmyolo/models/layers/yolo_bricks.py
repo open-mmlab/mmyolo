@@ -4,8 +4,7 @@ from typing import Optional, Sequence, Tuple, Union
 import numpy as np
 import torch
 import torch.nn as nn
-from mmcv.cnn import ConvModule, MaxPool2d, build_norm_layer
-from mmdet.models.layers.csp_layer import DarknetBottleneck
+from mmcv.cnn import ConvModule, MaxPool2d, build_norm_layer, DepthwiseSeparableConvModule
 from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmengine.model import BaseModule
 from mmengine.utils import digit_version
@@ -1364,6 +1363,79 @@ class RepStageBlock(nn.Module):
         return x
 
 
+class DarknetBottleneck(BaseModule):
+    """The basic bottleneck block used in Darknet.
+
+    Each ResBlock consists of two ConvModules and the input is added to the
+    final output. Each ConvModule is composed of Conv, BN, and LeakyReLU.
+    The first convLayer has filter size of 1x1 and the second one has the
+    filter size of 3x3.
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        out_channels (int): The output channels of this Module.
+        expansion (int): The kernel size of the convolution. Default: 0.5
+        add_identity (bool): Whether to add identity to the out.
+            Default: True
+        use_depthwise (bool): Whether to use depthwise separable convolution.
+            Default: False
+        conv_cfg (dict): Config dict for convolution layer. Default: None,
+            which means using conv2d.
+        norm_cfg (dict): Config dict for normalization layer.
+            Default: dict(type='BN').
+        act_cfg (dict): Config dict for activation layer.
+            Default: dict(type='Swish').
+    """
+
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 expansion=0.5,
+                 kernel_size=(1, 3),
+                 padding=(0, 1),
+                 add_identity=True,
+                 use_depthwise=False,
+                 conv_cfg=None,
+                 norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+                 act_cfg=dict(type='Swish'),
+                 init_cfg=None):
+        super().__init__(init_cfg)
+        hidden_channels = int(out_channels * expansion)
+        conv = DepthwiseSeparableConvModule if use_depthwise else ConvModule
+
+        assert len(kernel_size) == 2
+
+        self.conv1 = ConvModule(
+            in_channels,
+            hidden_channels,
+            kernel_size[0],
+            padding=padding[0],
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+        self.conv2 = conv(
+            hidden_channels,
+            out_channels,
+            kernel_size[1],
+            stride=1,
+            padding=padding[1],
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+        self.add_identity = \
+            add_identity and in_channels == out_channels
+
+    def forward(self, x):
+        identity = x
+        out = self.conv1(x)
+        out = self.conv2(out)
+
+        if self.add_identity:
+            return out + identity
+        else:
+            return out
+
+
 class CSPLayerWithTwoConv(BaseModule):
     """Cross Stage Partial Layer with 2 convolutions.
 
@@ -1415,17 +1487,19 @@ class CSPLayerWithTwoConv(BaseModule):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
-        self.blocks = nn.Sequential(*[
+        self.blocks = nn.ModuleList(
             DarknetBottleneck(
                 self.mid_channels,
                 self.mid_channels,
-                1,
-                add_identity,  # shortcut
+                expansion=1,
+                kernel_size=(3, 3),
+                padding=(1, 1),
+                add_identity=add_identity,  # shortcut
                 use_depthwise=False,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
                 act_cfg=act_cfg) for _ in range(num_blocks)
-        ])
+        )
 
     def forward(self, x: Tensor) -> Tensor:
         x_main = self.main_conv(x)

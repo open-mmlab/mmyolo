@@ -71,7 +71,7 @@ class YOLOv5CSPDarknet(BaseBackbone):
                    [768, 1024, 3, True, True]]
         },
         'YOLOv8': {
-            'stem_setting': [3, 2, 0],  # kernel_size, stride, padding
+            'stem_setting': [3, 2, 1],  # kernel_size, stride, padding
             'csp_layer_type': CSPLayerWithTwoConv,
             'P5': [[64, 128, 3, True, False], [128, 256, 6, True, False],
                    [256, 512, 6, True, False], [512, 1024, 3, True, True]],
