@@ -2,9 +2,19 @@
 
 ## 0 简介
 
-以上结构图 xxx 绘制。
+<div align=center >
+<img alt="YOLOv6-S" src="https://user-images.githubusercontent.com/58845482/209790152-21c29d42-30cc-4c48-a723-39b198286c4d.png"/>
+图 1：YOLOv6-S 模型结构
+</div>
 
-YOLOv6 有一系列适用于各种工业场景的模型，包括N/T/S/M/L，考虑到模型的大小，其架构有所不同，以获得更好的精度-速度权衡。 此外，还引入了一些 "Bag-of-freebies "方法来进一步提高性能，如自我渐变和更多的训练周期。 在工业部署方面，我们采用QAT与信道蒸馏和图形优化来追求极端的性能（后续支持）。
+<div align=center >
+<img alt="YOLOv6-L" src="https://user-images.githubusercontent.com/58845482/209787949-d57691c0-a2ea-4a0a-829f-e8a64ac29c7e.png"/>
+图 2：YOLOv6-L 模型结构
+</div>
+
+以上结构图由 wzr-skn@github 绘制。
+
+YOLOv6 提出了一系列适用于各种工业场景的模型，包括 N/T/S/M/L，考虑到模型的大小，其架构有所不同，以获得更好的精度-速度权衡。本算法专注于检测的精度和推理效率，并在网络结构、训练策略等算法层面进行了多项改进和优化。
 
 简单来说 YOLOv6 开源库的主要特点为：
 
@@ -20,7 +30,7 @@ MMYOLO 实现配置：https://github.com/open-mmlab/mmyolo/blob/main/configs/yol
 
 YOLOv6 官方开源库地址：https://github.com/meituan/YOLOv6
 
-## 1 YLOLv6 2.0 算法原理和 MMYOLO 实现解析
+## 1 YOLOv6 2.0 算法原理和 MMYOLO 实现解析
 
 YOLOv6 2.0 官方 release 地址：https://github.com/meituan/YOLOv6/releases/tag/0.2.0
 
@@ -57,11 +67,34 @@ YOLOv6 目标检测算法中使用的数据增强与 YOLOv5 基本一致，唯�
 
 ### 1.2 网络结构
 
+YOLOv6 N/T/S 模型的网络结构由 `EfficientRep` + `Rep-PAN` + `Efficient decoupled Head` 构成，M/L 模型的网络结构则由 `CSPBep` + `CSPRepPAFPN` +  `Efficient decoupled Head` 构成。其中，Backbone 和 Neck 部分的结构与 YOLOv5 较为相似，但不同的是其采用了重参数化结构 `RepVGG Block` 替换掉了原本的 `ConvModule`，在此基础上，将 `CSPLayer` 改进为了多个 `RepVGG` 堆叠的 `RepStageBlock`（N/T/S 模型）或 `BepC3StageBlock`（M/L 模型）；Head 部分则参考了 FCOS 和 YOLOX 的检测头，将回归与分类分支解耦成两个分支进行预测。YOLOv6-S 和 YOLOv6-L 整体结构分别如图 1 和图 2 所示。
+
 #### 1.2.1 Backbone
+
+已有研究表明，多分支的网络结构通常比单分支网络性能更加优异，例如 YOLOv5 的 `CSPDarknet`，但是这种结构会导致并行度降低进而增加推理延时；相反，类似于 `VGG` 的单分支网络则具有并行度高、内存占用小的优点，因此推理效率更高。而 `RepVGG` 则同时具备上述两种结构的优点，在训练时可解耦成多分支拓扑结构提升模型精度，实际部署时可等效融合为单个 3×3 卷积提升推理速度，`RepVGG` 示意图如下。因此，YOLOv6 基于 `RepVGG` 重参数化结构设计了高效的骨干网络 `EfficientRep` 和 `CSPBep`，其可以充分利用硬件算力，提升模型表征能力的同时降低推理延时。
+
+<img src="https://user-images.githubusercontent.com/58845482/209788313-05e3870b-9b25-4dbb-89c8-7c9502c84577.png" alt="image" style="zoom: 40%;" />
+
+在 N/T/S 模型中，YOLOv6 使用了 `EfficientRep` 作为骨干网络，其包含 1 个 `Stem Layer` 和 4 个 `Stage Layer`，具体细节如下：
+
+- `Stem Layer` 中采用 stride=2 的 `RepVGGBlock` 替换了 stride=2 的 6×6 `ConvModule`。
+- `Stage Layer` 结构与 YOLOv5 基本相似，将每个 `Stage layer` 的 1 个 `ConvModule` 和 1 个 `CSPLayer` 分别替换为 1 个 `RepVGGBlock` 和 1 个 `RepStageBlock`，如上图 Details 部分所示。其中，第一个 `RepVGGBlock` 会做下采样和 `Channel` 维度变换，而每个 `RepStageBlock` 则由 n 个 `RepVGGBlock` 组成。此外，仍然在第 4 个 `Stage Layer` 最后增加 `SPPF` 模块后输出。
+
+在 M/L 模型中，由于模型容量进一步增大，直接使用多个 `RepVGGBlock` 堆叠的 `RepStageBlock` 结构计算量和参数量呈现指数增长。因此，为了权衡计算负担和模型精度，在 M/L 模型中使用了 `CSPBep` 骨干网络，其采用 `BepC3StageBlock` 替换了小模型中的 `RepStageBlock` 。如下图所示，`BepC3StageBlock` 由 3 个 1×1 的 `ConvModule` 和多个子块（每个子块由两个 `RepVGGBlock` 残差连接）组成。
+
+<img src="https://user-images.githubusercontent.com/58845482/208235469-a85865a5-5d15-435d-bb74-0be6f56dd03f.png" alt="image" style="zoom: 67%;" />
 
 #### 1.2.2 Neck
 
+Neck 部分结构仍然在 YOLOv5 基础上进行了模块的改动，同样采用 `RepStageBlock` 或 `BepC3StageBlock` 对原本的 `CSPLayer` 进行了替换，需要注意的是，Neck 中 `Down Sample` 部分仍然使用了 stride=2 的 3×3 `ConvModule`，而不是像 Backbone 一样替换为 `RepVGGBlock`。
+
 #### 1.2.3 Head
+
+不同于传统的 YOLO 系列检测头，YOLOv6 参考了 FCOS 和 YOLOX 中的做法，将分类和回归分支解耦成两个分支进行预测并且去掉了 obj 分支。同时，采用了 hybrid-channel 策略构建了更高效的解耦检测头，将中间 3×3 的 `ConvModule` 减少为 1 个，在维持精度的同时进一步减少了模型耗费，降低了推理延时。此外，需要说明的是，YOLOv6 在 Backobone 和 Neck 部分使用的激活函数是 `ReLU`，而在 Head 部分则使用的是 `SiLU`。
+
+由于 YOLOv6 是解耦输出，分类和 bbox 检测通过不同卷积完成。以 COCO 80 类为例：
+
+- P5 模型在输入为 640x640 分辨率情况下，其 Head 模块输出的 shape 分别为 `(B,4,80,80)`, `(B,80,80,80)`, `(B,4,40,40)`, `(B,80,40,40)`, `(B,4,20,20)`, `(B,80,20,20)`。
 
 ### 1.3 正负样本匹配策略
 

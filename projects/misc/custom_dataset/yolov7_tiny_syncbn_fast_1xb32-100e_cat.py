@@ -1,20 +1,19 @@
-_base_ = '../yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
+_base_ = '../yolov7/yolov7_tiny_syncbn_fast_8x16b-300e_coco.py'
 
 max_epochs = 100
 data_root = './data/cat/'
-# data_root = '/root/workspace/mmyolo/data/cat/'  # Docker
 
-work_dir = './work_dirs/yolov5_s-v61_syncbn_fast_1xb32-100e_cat'
+work_dir = './work_dirs/yolov7_tiny_syncbn_fast_1xb32-100e_cat'
 
-load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa
+load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov7/yolov7_tiny_syncbn_fast_8x16b-300e_coco/yolov7_tiny_syncbn_fast_8x16b-300e_coco_20221126_102719-0ee5bbdf.pth'  # noqa
 
 train_batch_size_per_gpu = 32
-train_num_workers = 4
+train_num_workers = 4  # train_num_workers = nGPU x 4
 
 save_epoch_intervals = 2
 
 # base_lr_default * (your_bs / default_bs)
-base_lr = _base_.base_lr / 4
+base_lr = 0.01 / 4
 
 anchors = [
     [(68, 69), (154, 91), (143, 162)],  # P3/8
@@ -27,7 +26,10 @@ num_classes = len(class_name)
 metainfo = dict(classes=class_name, palette=[(220, 20, 60)])
 
 train_cfg = dict(
-    max_epochs=max_epochs, val_begin=20, val_interval=save_epoch_intervals)
+    max_epochs=max_epochs,
+    val_begin=20,
+    val_interval=save_epoch_intervals,
+    dynamic_intervals=[(max_epochs - 10, 1)])
 
 model = dict(
     bbox_head=dict(
@@ -70,7 +72,7 @@ default_hooks = dict(
     checkpoint=dict(
         type='CheckpointHook',
         interval=save_epoch_intervals,
-        max_keep_ckpts=5,
+        max_keep_ckpts=2,
         save_best='auto'),
     param_scheduler=dict(max_epochs=max_epochs),
     logger=dict(type='LoggerHook', interval=10))

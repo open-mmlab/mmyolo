@@ -69,7 +69,7 @@ class TestMosaic(unittest.TestCase):
             transform = Mosaic(use_cached=True, max_cached_images=1)
 
         transform = Mosaic(
-            img_scale=(10, 12), pre_transform=self.pre_transform)
+            img_scale=(12, 10), pre_transform=self.pre_transform)
         results = transform(copy.deepcopy(self.results))
         self.assertTrue(results['img'].shape[:2] == (20, 24))
         self.assertTrue(results['gt_bboxes_labels'].shape[0] ==
@@ -83,7 +83,7 @@ class TestMosaic(unittest.TestCase):
         self.results['gt_bboxes_labels'] = np.empty((0, ), dtype=np.int64)
         self.results['gt_ignore_flags'] = np.empty((0, ), dtype=bool)
         transform = Mosaic(
-            img_scale=(10, 12), pre_transform=self.pre_transform)
+            img_scale=(12, 10), pre_transform=self.pre_transform)
         results = transform(copy.deepcopy(self.results))
         self.assertIsInstance(results, dict)
         self.assertTrue(results['img'].shape[:2] == (20, 24))
@@ -96,7 +96,7 @@ class TestMosaic(unittest.TestCase):
 
     def test_transform_with_box_list(self):
         transform = Mosaic(
-            img_scale=(10, 12), pre_transform=self.pre_transform)
+            img_scale=(12, 10), pre_transform=self.pre_transform)
         results = copy.deepcopy(self.results)
         results['gt_bboxes'] = HorizontalBoxes(results['gt_bboxes'])
         results = transform(results)
@@ -162,7 +162,7 @@ class TestMosaic9(unittest.TestCase):
             transform = Mosaic9(use_cached=True, max_cached_images=1)
 
         transform = Mosaic9(
-            img_scale=(10, 12), pre_transform=self.pre_transform)
+            img_scale=(12, 10), pre_transform=self.pre_transform)
         results = transform(copy.deepcopy(self.results))
         self.assertTrue(results['img'].shape[:2] == (20, 24))
         self.assertTrue(results['gt_bboxes_labels'].shape[0] ==
@@ -176,7 +176,7 @@ class TestMosaic9(unittest.TestCase):
         self.results['gt_bboxes_labels'] = np.empty((0, ), dtype=np.int64)
         self.results['gt_ignore_flags'] = np.empty((0, ), dtype=bool)
         transform = Mosaic9(
-            img_scale=(10, 12), pre_transform=self.pre_transform)
+            img_scale=(12, 10), pre_transform=self.pre_transform)
         results = transform(copy.deepcopy(self.results))
         self.assertIsInstance(results, dict)
         self.assertTrue(results['img'].shape[:2] == (20, 24))
@@ -189,7 +189,7 @@ class TestMosaic9(unittest.TestCase):
 
     def test_transform_with_box_list(self):
         transform = Mosaic9(
-            img_scale=(10, 12), pre_transform=self.pre_transform)
+            img_scale=(12, 10), pre_transform=self.pre_transform)
         results = copy.deepcopy(self.results)
         results['gt_bboxes'] = HorizontalBoxes(results['gt_bboxes'])
         results = transform(results)

@@ -1,18 +1,8 @@
-# Compatibility of MMYOLO
+# Conventions
 
-## MMYOLO 0.3.0
+Please check the following conventions if you would like to modify MMYOLO as your own project.
 
-### METAINFO modification
-
-To unify with other OpenMMLab repositories, change all keys of `METAINFO` in Dataset from upper case to lower case.
-
-| Before v0.3.0 | after v0.3.0 |
-| :-----------: | :----------: |
-|    CLASSES    |   classes    |
-|    PALETTE    |   palette    |
-| DATASET_TYPE  | dataset_type |
-
-### About the order of image shape
+## About the order of image shape
 
 In OpenMMLab 2.0, to be consistent with the input argument of OpenCV, the argument about image shape in the data transformation pipeline is always in the `(width, height)` order. On the contrary, for computation convenience, the order of the field going through the data pipeline and the model is `(height, width)`. Specifically, in the results processed by each data transform pipeline, the fields and their value meaning is as below:
 

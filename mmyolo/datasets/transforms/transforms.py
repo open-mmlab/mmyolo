@@ -9,7 +9,6 @@ import torch
 from mmcv.transforms import BaseTransform
 from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
-from mmdet.datasets.transforms import RandomCrop as MMDET_RandomCrop
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
@@ -167,9 +166,9 @@ class LetterResize(MMDET_Resize):
 
         # Use batch_shape if a batch_shape policy is configured
         if 'batch_shape' in results:
-            scale = tuple(results['batch_shape'])
+            scale = tuple(results['batch_shape'])  # hw
         else:
-            scale = self.scale
+            scale = self.scale[::-1]  # wh -> hw
 
         image_shape = image.shape[:2]  # height, width
 
@@ -241,7 +240,7 @@ class LetterResize(MMDET_Resize):
         results['img_shape'] = image.shape
         if 'pad_param' in results:
             results['pad_param_origin'] = results['pad_param'] * \
-                np.repeat(scale_factor, 2)
+                np.repeat(ratio, 2)
         results['pad_param'] = np.array(padding_list, dtype=np.float32)
 
     def _resize_masks(self, results: dict):
@@ -251,9 +250,9 @@ class LetterResize(MMDET_Resize):
 
         # resize the gt_masks
         gt_mask_height = results['gt_masks'].height * \
-            results['scale_factor'][0]
-        gt_mask_width = results['gt_masks'].width * \
             results['scale_factor'][1]
+        gt_mask_width = results['gt_masks'].width * \
+            results['scale_factor'][0]
         gt_masks = results['gt_masks'].resize(
             (int(round(gt_mask_height)), int(round(gt_mask_width))))
 
@@ -442,7 +441,7 @@ class YOLOv5RandomAffine(BaseTransform):
             scaling transform. Defaults to (0.5, 1.5).
         max_shear_degree (float): Maximum degrees of shear
             transform. Defaults to 2.
-        border (tuple[int]): Distance from height and width sides of input
+        border (tuple[int]): Distance from width and height sides of input
             image to adjust output shape. Only used in mosaic dataset.
             Defaults to (0, 0).
         border_val (tuple[int]): Border padding values of 3 channels.
@@ -530,8 +529,9 @@ class YOLOv5RandomAffine(BaseTransform):
             dict: The result dict.
         """
         img = results['img']
-        height = img.shape[0] + self.border[0] * 2
-        width = img.shape[1] + self.border[1] * 2
+        # self.border is wh format
+        height = img.shape[0] + self.border[1] * 2
+        width = img.shape[1] + self.border[0] * 2
 
         # Note: Different from YOLOX
         center_matrix = np.eye(3, dtype=np.float32)
@@ -802,7 +802,7 @@ class PPYOLOERandomDistort(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class PPYOLOERandomCrop(MMDET_RandomCrop):
+class PPYOLOERandomCrop(BaseTransform):
     """Random crop the img and bboxes. Different thresholds are used in PPYOLOE
     to judge whether the clipped image meets the requirements. This
     implementation is different from the implementation of RandomCrop in mmdet.
@@ -974,6 +974,23 @@ class PPYOLOERandomCrop(MMDET_RandomCrop):
                 results = self._crop_data(results, crop_box, valid_inds)
                 return results
         return results
+
+    @cache_randomness
+    def _rand_offset(self, margin: Tuple[int, int]) -> Tuple[int, int]:
+        """Randomly generate crop offset.
+
+        Args:
+            margin (Tuple[int, int]): The upper bound for the offset generated
+                randomly.
+
+        Returns:
+            Tuple[int, int]: The random offset for the crop.
+        """
+        margin_h, margin_w = margin
+        offset_h = np.random.randint(0, margin_h + 1)
+        offset_w = np.random.randint(0, margin_w + 1)
+
+        return (offset_h, offset_w)
 
     @cache_randomness
     def _get_crop_size(self, image_size: Tuple[int, int]) -> Tuple[int, int]:
