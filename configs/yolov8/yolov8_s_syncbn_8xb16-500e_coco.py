@@ -22,14 +22,6 @@ persistent_workers = True
 # Base learning rate for optim_wrapper
 base_lr = 0.01
 
-# only on Val
-batch_shapes_cfg = dict(
-    type='BatchShapePolicy',
-    batch_size=val_batch_size_per_gpu,
-    img_size=img_scale[0],
-    size_divisor=32,
-    extra_pad_ratio=0.5)
-
 strides = [8, 16, 32]
 num_det_layers = 3
 
@@ -40,7 +32,7 @@ env_cfg = dict(cudnn_benchmark=True)
 model = dict(
     type='YOLODetector',
     data_preprocessor=dict(
-        type='mmdet.DetDataPreprocessor',
+        type='YOLOv5DetDataPreprocessor',
         mean=[0., 0., 0.],
         std=[255., 255., 255.],
         bgr_to_rgb=True),
@@ -178,7 +170,7 @@ val_dataloader = dict(
         data_prefix=dict(img='val2017/'),
         ann_file='annotations/instances_val2017.json',
         pipeline=test_pipeline,
-        batch_shapes_cfg=batch_shapes_cfg))
+        batch_shapes_cfg=None))
 
 test_dataloader = val_dataloader
 

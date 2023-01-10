@@ -17,6 +17,21 @@ from .yolov5_head import YOLOv5Head
 from ..utils import make_divisible
 
 
+class DFL(nn.Module):
+    # DFL module
+    def __init__(self, c1=16):
+        super().__init__()
+        self.conv = nn.Conv2d(c1, 1, 1, bias=False).requires_grad_(False)
+        x = torch.arange(c1, dtype=torch.float)
+        self.conv.weight.data[:] = nn.Parameter(x.view(1, c1, 1, 1))
+        self.c1 = c1
+
+    def forward(self, x):
+        b, c, a = x.shape  # batch, channels, anchors
+        return self.conv(x.view(b, 4, self.c1, a).transpose(2, 1).softmax(1)).view(b, 4, a)
+        # return self.conv(x.view(b, self.c1, 4, a).softmax(1)).view(b, 4, a)
+
+
 @MODELS.register_module()
 class YOLOv8HeadModule(BaseModule):
     """YOLOv8HeadModule head module used in `YOLOv8`.
@@ -147,6 +162,8 @@ class YOLOv8HeadModule(BaseModule):
             [1, self.reg_max, 1, 1])
         self.register_buffer('proj', proj, persistent=False)
 
+        self.dfl = DFL(self.reg_max) if self.reg_max > 1 else nn.Identity()
+
     def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         """Forward features from the upstream network.
 
@@ -166,9 +183,11 @@ class YOLOv8HeadModule(BaseModule):
         cls_logit = cls_pred(x)
         bbox_dist_preds = reg_pred(x)
         # TODO: Test whether use matmul instead of conv can speed up training.
-        bbox_dist_preds = bbox_dist_preds.reshape(
-            [-1, 4, self.reg_max, h*w]).permute(0, 2, 3, 1)
-        bbox_preds = F.conv2d(F.softmax(bbox_dist_preds, dim=1), self.proj)
+        # bbox_dist_preds = bbox_dist_preds.reshape(
+        #     [-1, 4, self.reg_max, h*w]).permute(0, 2, 3, 1)
+        bbox_dist_preds = bbox_dist_preds.reshape([b, -1, h * w])
+        bbox_preds = self.dfl(bbox_dist_preds).reshape([b, -1, h, w])
+        # bbox_preds = F.conv2d(F.softmax(bbox_dist_preds, dim=1), self.proj)
         return cls_logit, bbox_preds
 
 
