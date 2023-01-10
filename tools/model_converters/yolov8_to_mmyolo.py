@@ -62,8 +62,8 @@ def convert(src, dst):
             new_key = new_key.replace('.m.', '.blocks.')
             new_key = new_key.replace('.cv', '.conv')
         elif 'bbox_head.head_module' in new_key:
-            new_key = new_key.replace('.cv2', '.cls_preds')
-            new_key = new_key.replace('.cv3', '.reg_preds')
+            new_key = new_key.replace('.cv2', '.reg_preds')
+            new_key = new_key.replace('.cv3', '.cls_preds')
         elif 'backbone.stage4.2' in new_key:
             new_key = new_key.replace('.cv', '.conv')
         else:

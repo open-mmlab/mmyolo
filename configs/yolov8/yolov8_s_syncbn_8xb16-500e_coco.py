@@ -87,7 +87,7 @@ model = dict(
         multi_label=True,
         nms_pre=30000,
         score_thr=0.001,
-        nms=dict(type='nms', iou_threshold=0.65),
+        nms=dict(type='nms', iou_threshold=0.7),
         max_per_img=300))
 
 albu_train_transforms = [
