@@ -12,8 +12,9 @@ from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS
-from ..utils import make_divisible
 from .yolov5_head import YOLOv5Head
+from ..utils import make_divisible
+
 
 @MODELS.register_module()
 class YOLOv8HeadModule(BaseModule):
@@ -138,7 +139,7 @@ class YOLOv8HeadModule(BaseModule):
                     kernel_size=1)
             ))
 
-            # self.dfl = DFL(self.reg_max) if self.reg_max > 1 else nn.Identity()
+        self.dfl = YOLOv8DistributionFocalLoss(self.reg_max) if self.reg_max > 1 else nn.Identity()
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         assert len(x) == self.num_levels
@@ -227,3 +228,19 @@ class YOLOv8Head(YOLOv5Head):
             batch_img_metas: Sequence[dict],
             batch_gt_instances_ignore: OptInstanceList = None) -> dict:
         raise NotImplementedError('Not implemented yet !')
+
+
+class YOLOv8DistributionFocalLoss(nn.Module):
+    def __init__(self, in_channel=16):
+        super().__init__()
+        self.in_channel = in_channel
+
+        self.conv = nn.Conv2d(self.in_channel, 1, 1, bias=False).requires_grad_(False)
+        weight_data = torch.arange(self.in_channel, dtype=torch.float)
+        self.conv.weight.data[:] = nn.Parameter(weight_data.view(1, self.in_channel, 1, 1))
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        batch, _, anchors = x.shape
+        return self.conv(
+            x.view(batch, 4, self.in_channel, anchors).transpose(2, 1).softmax(1)
+        ).view(batch, 4, anchors)
