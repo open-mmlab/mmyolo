@@ -78,11 +78,11 @@ class YOLOv8PAFPN(YOLOv5PAFPN):
             nn.Module: The top down layer.
         """
         return CSPLayerWithTwoConv(
-                make_divisible(self.in_channels[idx - 1] * 2,
+                make_divisible(self.in_channels[idx - 1] * 3,
                                self.widen_factor),
                 make_divisible(self.in_channels[idx - 1], self.widen_factor),
                 num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
-                add_identity=True,
+                add_identity=False,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
 
@@ -96,9 +96,9 @@ class YOLOv8PAFPN(YOLOv5PAFPN):
             nn.Module: The bottom up layer.
         """
         return CSPLayerWithTwoConv(
-            make_divisible(self.in_channels[idx] * 2, self.widen_factor),
+            make_divisible(self.in_channels[idx] * 3, self.widen_factor),
             make_divisible(self.in_channels[idx + 1], self.widen_factor),
             num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
-            add_identity=True,
+            add_identity=False,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
