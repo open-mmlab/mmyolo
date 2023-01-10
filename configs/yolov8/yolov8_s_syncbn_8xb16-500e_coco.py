@@ -61,14 +61,28 @@ model = dict(
         norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
         act_cfg=dict(type='SiLU', inplace=True)),
     bbox_head=dict(
-        type='YOLOv5Head',
+        type='YOLOv8Head',
         head_module=dict(
-            type='YOLOv5HeadModule',
+            type='YOLOv8HeadModule',
             num_classes=num_classes,
             in_channels=[256, 512, 1024],
             widen_factor=widen_factor,
-            featmap_strides=strides,
-            num_base_priors=3)),
+            norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
+            act_cfg=dict(type='SiLU', inplace=True),
+            featmap_strides=[8, 16, 32]),
+        loss_bbox=dict(
+            type='IoULoss',
+            iou_mode='giou',
+            bbox_format='xyxy',
+            reduction='mean',
+            loss_weight=2.5,
+            return_iou=False),
+        # Since the dflloss is implemented differently in the official
+        # and mmdet, we're going to divide loss_weight by 4.
+        loss_dfl=dict(
+            type='mmdet.DistributionFocalLoss',
+            reduction='mean',
+            loss_weight=0.5 / 4)),
     test_cfg=dict(
         multi_label=True,
         nms_pre=30000,
