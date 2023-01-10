@@ -62,6 +62,9 @@ class YOLOv8HeadModule(BaseModule):
         self.act_cfg = act_cfg
         self.in_channels = in_channels
         self.reg_max = reg_max  # DFL channels (ch[0] // 16 to scale 4/8/12/16/20 for n/s/m/l/x)
+        self.number_of_output = self.num_classes + self.reg_max * 4  # number of outputs per anchor
+        self.stride = torch.zeros(self.num_levels)
+        self.shape = None
 
         in_channels = []
         for channel in self.in_channels:
@@ -143,20 +146,54 @@ class YOLOv8HeadModule(BaseModule):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         assert len(x) == self.num_levels
-        return multi_apply(self.forward_single, x, self.cls_preds, self.reg_preds)
+        # return multi_apply(self.forward_single, x, self.cls_preds, self.reg_preds)
+        pred_out = multi_apply(self.forward_single, x, self.cls_preds, self.reg_preds)[0]
+
+        shape = x[0].shape  # BCHW
+        if self.training:
+            return pred_out
+        elif self.shape != shape:
+            self.anchors, self.strides = (x.transpose(0, 1) for x in self.make_anchors(pred_out, self.stride, 0.5))
+            self.shape = shape
+
+        box, cls = torch.cat([xi.view(shape[0], self.number_of_output, -1) for xi in pred_out], 2).split((self.reg_max * 4, self.num_classes), 1)
+        dbox = self.dist2bbox(self.dfl(box), self.anchors.unsqueeze(0), xywh=True, dim=1) * self.strides
+        # y = torch.cat((dbox, cls.sigmoid()), 1)
+        return [cls.sigmoid(), dbox]
+
+    @staticmethod
+    def make_anchors(feats, strides, grid_cell_offset=0.5):
+        """Generate anchors from features."""
+        anchor_points, stride_tensor = [], []
+        assert feats is not None
+        dtype, device = feats[0].dtype, feats[0].device
+        for i, stride in enumerate(strides):
+            _, h, w = feats[i].shape
+            sx = torch.arange(end=w, device=device, dtype=dtype) + grid_cell_offset  # shift x
+            sy = torch.arange(end=h, device=device, dtype=dtype) + grid_cell_offset  # shift y
+            sy, sx = torch.meshgrid(sy, sx)
+            anchor_points.append(torch.stack((sx, sy), -1).view(-1, 2))
+            stride_tensor.append(torch.full((h * w, 1), stride, dtype=dtype, device=device))
+        return torch.cat(anchor_points), torch.cat(stride_tensor)
+
+    @staticmethod
+    def dist2bbox(distance, anchor_points, xywh=True, dim=-1):
+        """Transform distance(ltrb) to box(xywh or xyxy)."""
+        lt, rb = torch.split(distance, 2, dim)
+        x1y1 = anchor_points - lt
+        x2y2 = anchor_points + rb
+        if xywh:
+            c_xy = (x1y1 + x2y2) / 2
+            wh = x2y2 - x1y1
+            return torch.cat((c_xy, wh), dim)  # xywh bbox
+        return torch.cat((x1y1, x2y2), dim)  # xyxy bbox
 
     def forward_single(self, x: torch.Tensor, cls_pred: nn.ModuleList, reg_pred: nn.ModuleList) -> torch.Tensor:
         """Forward feature of a single scale level."""
-        y = stem(x)
-        cls_x = y
-        reg_x = y
-        cls_feat = cls_conv(cls_x)
-        reg_feat = reg_conv(reg_x)
-
-        cls_score = cls_pred(cls_feat)
-        bbox_pred = reg_pred(reg_feat)
-
-        return cls_score, bbox_pred
+        cls_pred_out = cls_pred(x)
+        bbox_pred_out = reg_pred(x)
+        return torch.cat((cls_pred_out, bbox_pred_out), 1)
+        # return cls_pred_out, bbox_pred_out
 
 
 # TODO Training mode is currently not supported
