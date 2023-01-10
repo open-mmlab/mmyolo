@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Sequence, Union
+from typing import Sequence, Union, Tuple, List
 
 import torch
 import torch.nn as nn
@@ -10,6 +10,7 @@ from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
 from mmengine.model import BaseModule, bias_init_with_prob
 from mmengine.structures import InstanceData
 from torch import Tensor
+import torch.nn.functional as F
 
 from mmyolo.registry import MODELS
 from .yolov5_head import YOLOv5Head
@@ -97,7 +98,7 @@ class YOLOv8HeadModule(BaseModule):
         reg_out_channels = max(self.in_channels[0], self.num_classes)
 
         for i in range(self.num_levels):
-            self.cls_preds.append(nn.Sequential(
+            self.reg_preds.append(nn.Sequential(
                 ConvModule(
                     in_channels=self.in_channels[i],
                     out_channels=cls_out_channels,
@@ -119,7 +120,7 @@ class YOLOv8HeadModule(BaseModule):
                     out_channels=4 * self.reg_max,
                     kernel_size=1)
             ))
-            self.reg_preds.append(nn.Sequential(
+            self.cls_preds.append(nn.Sequential(
                 ConvModule(
                     in_channels=self.in_channels[i],
                     out_channels=reg_out_channels,
@@ -142,58 +143,33 @@ class YOLOv8HeadModule(BaseModule):
                     kernel_size=1)
             ))
 
-        self.dfl = YOLOv8DistributionFocalLoss(self.reg_max) if self.reg_max > 1 else nn.Identity()
+        proj = torch.linspace(0, self.reg_max, self.reg_max).view(
+            [1, self.reg_max, 1, 1])
+        self.register_buffer('proj', proj, persistent=False)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
+        """Forward features from the upstream network.
+
+        Args:
+            x (Tuple[Tensor]): Features from the upstream network, each is
+                a 4D-tensor.
+        Returns:
+            Tuple[List]: A tuple of multi-level classification scores, bbox
+            predictions, and objectnesses.
+        """
         assert len(x) == self.num_levels
-        # return multi_apply(self.forward_single, x, self.cls_preds, self.reg_preds)
-        pred_out = multi_apply(self.forward_single, x, self.cls_preds, self.reg_preds)[0]
+        return multi_apply(self.forward_single, x, self.cls_preds, self.reg_preds)
 
-        shape = x[0].shape  # BCHW
-        if self.training:
-            return pred_out
-        elif self.shape != shape:
-            self.anchors, self.strides = (x.transpose(0, 1) for x in self.make_anchors(pred_out, self.stride, 0.5))
-            self.shape = shape
-
-        box, cls = torch.cat([xi.view(shape[0], self.number_of_output, -1) for xi in pred_out], 2).split((self.reg_max * 4, self.num_classes), 1)
-        dbox = self.dist2bbox(self.dfl(box), self.anchors.unsqueeze(0), xywh=True, dim=1) * self.strides
-        # y = torch.cat((dbox, cls.sigmoid()), 1)
-        return [cls.sigmoid(), dbox]
-
-    @staticmethod
-    def make_anchors(feats, strides, grid_cell_offset=0.5):
-        """Generate anchors from features."""
-        anchor_points, stride_tensor = [], []
-        assert feats is not None
-        dtype, device = feats[0].dtype, feats[0].device
-        for i, stride in enumerate(strides):
-            _, h, w = feats[i].shape
-            sx = torch.arange(end=w, device=device, dtype=dtype) + grid_cell_offset  # shift x
-            sy = torch.arange(end=h, device=device, dtype=dtype) + grid_cell_offset  # shift y
-            sy, sx = torch.meshgrid(sy, sx)
-            anchor_points.append(torch.stack((sx, sy), -1).view(-1, 2))
-            stride_tensor.append(torch.full((h * w, 1), stride, dtype=dtype, device=device))
-        return torch.cat(anchor_points), torch.cat(stride_tensor)
-
-    @staticmethod
-    def dist2bbox(distance, anchor_points, xywh=True, dim=-1):
-        """Transform distance(ltrb) to box(xywh or xyxy)."""
-        lt, rb = torch.split(distance, 2, dim)
-        x1y1 = anchor_points - lt
-        x2y2 = anchor_points + rb
-        if xywh:
-            c_xy = (x1y1 + x2y2) / 2
-            wh = x2y2 - x1y1
-            return torch.cat((c_xy, wh), dim)  # xywh bbox
-        return torch.cat((x1y1, x2y2), dim)  # xyxy bbox
-
-    def forward_single(self, x: torch.Tensor, cls_pred: nn.ModuleList, reg_pred: nn.ModuleList) -> torch.Tensor:
+    def forward_single(self, x: torch.Tensor, cls_pred: nn.ModuleList, reg_pred: nn.ModuleList) -> Tuple:
         """Forward feature of a single scale level."""
-        cls_pred_out = cls_pred(x)
-        bbox_pred_out = reg_pred(x)
-        return torch.cat((cls_pred_out, bbox_pred_out), 1)
-        # return cls_pred_out, bbox_pred_out
+        b, _, h, w = x.shape
+        cls_logit = cls_pred(x)
+        bbox_dist_preds = reg_pred(x)
+        # TODO: Test whether use matmul instead of conv can speed up training.
+        bbox_dist_preds = bbox_dist_preds.reshape(
+            [-1, 4, self.reg_max, h*w]).permute(0, 2, 3, 1)
+        bbox_preds = F.conv2d(F.softmax(bbox_dist_preds, dim=1), self.proj)
+        return cls_logit, bbox_preds
 
 
 # TODO Training mode is currently not supported
