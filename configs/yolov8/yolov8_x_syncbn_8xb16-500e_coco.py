@@ -14,5 +14,5 @@ model = dict(
         in_channels=[256, 512, 512],
         out_channels=[256, 512, 512]),
     bbox_head=dict(
-        head_module=dict(widen_factor=widen_factor,
-                         in_channels=[256, 512, 512])))
+        head_module=dict(
+            widen_factor=widen_factor, in_channels=[256, 512, 512])))
