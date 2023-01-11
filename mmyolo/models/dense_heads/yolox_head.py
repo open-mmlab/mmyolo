@@ -30,7 +30,7 @@ class YOLOXHeadModule(BaseModule):
         in_channels (Union[int, Sequence]): Number of channels in the input
             feature map.
         widen_factor (float): Width multiplier, multiply number of
-            channels in each layer by this amount. Default: 1.0.
+            channels in each layer by this amount. Defaults to 1.0.
         num_base_priors (int): The number of priors (points) at a point
             on the feature grid
         stacked_convs (int): Number of stacking convs of the head.
