@@ -35,7 +35,6 @@ from typing import Tuple
 
 import numpy as np
 import torch
-from mmyolo.registry import DATASETS
 from mmdet.structures.bbox import (bbox_cxcywh_to_xyxy, bbox_overlaps,
                                    bbox_xyxy_to_cxcywh)
 from mmdet.utils import replace_cfg_vals, update_data_root
@@ -46,6 +45,7 @@ from mmengine.utils import ProgressBar
 from scipy.optimize import differential_evolution
 from torch import Tensor
 
+from mmyolo.registry import DATASETS
 from mmyolo.utils import register_all_modules
 
 try:
