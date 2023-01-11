@@ -159,8 +159,9 @@ class YOLOv8CSPDarknet(BaseBackbone):
     """CSP-Darknet backbone used in YOLOv8.
 
     Args:
-        arch (str): Architecture of CSP-Darknet, from {P5-n-s, P5-m, P5-x-l}.
-            Defaults to P5-n-s.
+        arch (str): Architecture of CSP-Darknet, from {P5}.
+            Defaults to P5.
+        out_channels (int): Final layer output channel. Defaults to 1024.
         plugins (list[dict]): List of plugins for stages, each dict contains:
             - cfg (dict, required): Cfg dict to build plugin.
             - stages (tuple[bool], optional): Stages to apply plugin, length
@@ -201,12 +202,13 @@ class YOLOv8CSPDarknet(BaseBackbone):
     # From left to right:
     # in_channels, out_channels, num_blocks, add_identity, use_spp
     arch_settings = {
-        'P5-n-s': [[64, 128, 3, True, False], [128, 256, 6, True, False],
-                   [256, 512, 6, True, False], [512, 1024, 3, True, True]],
+        'P5': [[64, 128, 3, True, False], [128, 256, 6, True, False],
+               [256, 512, 6, True, False], [512, 1024, 3, True, True]],
     }
 
     def __init__(self,
-                 arch: str = 'P5-n-s',
+                 arch: str = 'P5',
+                 out_channels: int = 1024,
                  plugins: Union[dict, List[dict]] = None,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
@@ -218,6 +220,7 @@ class YOLOv8CSPDarknet(BaseBackbone):
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None):
+        self.arch_settings[arch][-1][1] = out_channels
         super().__init__(
             self.arch_settings[arch],
             deepen_factor,

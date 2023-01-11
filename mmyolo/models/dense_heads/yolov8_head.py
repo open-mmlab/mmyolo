@@ -17,8 +17,17 @@ from .yolov5_head import YOLOv5Head
 
 
 class YOLOv8DistributionFocalLoss(nn.Module):
+    r"""Distribution Focal Loss (DFL) is a variant of `Generalized Focal Loss:
+    Learning Qualified and Distributed Bounding Boxes for Dense Object
+    Detection <https://arxiv.org/abs/2006.04388>`_.
 
-    def __init__(self, in_channel=16):
+    Base on https://github.com/ultralytics/ultralytics/blob/c0c0c138c12699807ff9446f942cb3bd325d670b/ultralytics/nn/modules.py#L84 # noqa
+
+    Args:
+        in_channel (int): input channel.
+    """
+
+    def __init__(self, in_channel: int = 16):
         super().__init__()
         self.in_channel = in_channel
         self.conv = nn.Conv2d(
@@ -27,12 +36,13 @@ class YOLOv8DistributionFocalLoss(nn.Module):
         self.conv.weight.data[:] = nn.Parameter(
             conv_weight_data.view(1, in_channel, 1, 1))
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward calculate."""
         batch, _, anchors = x.shape
-        return self.conv(
-            x.view(batch, 4, self.in_channel,
-                   anchors).transpose(2,
-                                      1).softmax(1)).view(batch, 4, anchors)
+        x = x.view(batch, 4, self.in_channel, anchors)
+        x = x.transpose(2, 1).softmax(1)
+        x = self.conv(x).view(batch, 4, anchors)
+        return x
 
 
 @MODELS.register_module()
@@ -72,7 +82,6 @@ class YOLOv8HeadModule(BaseModule):
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  init_cfg: OptMultiConfig = None):
         super().__init__(init_cfg=init_cfg)
-
         self.num_classes = num_classes
         self.featmap_strides = featmap_strides
         self.num_levels = len(self.featmap_strides)
