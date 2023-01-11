@@ -10,26 +10,23 @@ from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
 from mmengine.model import BaseModule, bias_init_with_prob
 from mmengine.structures import InstanceData
 from torch import Tensor
-import torch.nn.functional as F
 
 from mmyolo.registry import MODELS
 from .yolov5_head import YOLOv5Head
 from ..utils import make_divisible
 
 
-class DFL(nn.Module):
-    # DFL module
-    def __init__(self, c1=16):
+class YOLOv8DistributionFocalLoss(nn.Module):
+    def __init__(self, in_channel=16):
         super().__init__()
-        self.conv = nn.Conv2d(c1, 1, 1, bias=False).requires_grad_(False)
-        x = torch.arange(c1, dtype=torch.float)
-        self.conv.weight.data[:] = nn.Parameter(x.view(1, c1, 1, 1))
-        self.c1 = c1
+        self.in_channel = in_channel
+        self.conv = nn.Conv2d(in_channel, 1, 1, bias=False).requires_grad_(False)
+        conv_weight_data = torch.arange(in_channel, dtype=torch.float)
+        self.conv.weight.data[:] = nn.Parameter(conv_weight_data.view(1, in_channel, 1, 1))
 
     def forward(self, x):
-        b, c, a = x.shape  # batch, channels, anchors
-        return self.conv(x.view(b, 4, self.c1, a).transpose(2, 1).softmax(1)).view(b, 4, a)
-        # return self.conv(x.view(b, self.c1, 4, a).softmax(1)).view(b, 4, a)
+        batch, _, anchors = x.shape
+        return self.conv(x.view(batch, 4, self.in_channel, anchors).transpose(2, 1).softmax(1)).view(batch, 4, anchors)
 
 
 @MODELS.register_module()
@@ -109,51 +106,51 @@ class YOLOv8HeadModule(BaseModule):
         self.cls_preds = nn.ModuleList()
         self.reg_preds = nn.ModuleList()
 
-        cls_out_channels = max((16, self.in_channels[0] // 4, self.reg_max * 4))
-        reg_out_channels = max(self.in_channels[0], self.num_classes)
+        reg_out_channels = max((16, self.in_channels[0] // 4, self.reg_max * 4))
+        cls_out_channels = max(self.in_channels[0], self.num_classes)
 
         for i in range(self.num_levels):
             self.reg_preds.append(nn.Sequential(
                 ConvModule(
                     in_channels=self.in_channels[i],
-                    out_channels=cls_out_channels,
+                    out_channels=reg_out_channels,
                     kernel_size=3,
                     stride=1,
                     padding=1,
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg),
                 ConvModule(
-                    in_channels=cls_out_channels,
-                    out_channels=cls_out_channels,
+                    in_channels=reg_out_channels,
+                    out_channels=reg_out_channels,
                     kernel_size=3,
                     stride=1,
                     padding=1,
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg),
                 nn.Conv2d(
-                    in_channels=cls_out_channels,
+                    in_channels=reg_out_channels,
                     out_channels=4 * self.reg_max,
                     kernel_size=1)
             ))
             self.cls_preds.append(nn.Sequential(
                 ConvModule(
                     in_channels=self.in_channels[i],
-                    out_channels=reg_out_channels,
+                    out_channels=cls_out_channels,
                     kernel_size=3,
                     stride=1,
                     padding=1,
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg),
                 ConvModule(
-                    in_channels=reg_out_channels,
-                    out_channels=reg_out_channels,
+                    in_channels=cls_out_channels,
+                    out_channels=cls_out_channels,
                     kernel_size=3,
                     stride=1,
                     padding=1,
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg),
                 nn.Conv2d(
-                    in_channels=reg_out_channels,
+                    in_channels=cls_out_channels,
                     out_channels=self.num_classes,
                     kernel_size=1)
             ))
@@ -162,7 +159,7 @@ class YOLOv8HeadModule(BaseModule):
             [1, self.reg_max, 1, 1])
         self.register_buffer('proj', proj, persistent=False)
 
-        self.dfl = DFL(self.reg_max) if self.reg_max > 1 else nn.Identity()
+        self.dfl = YOLOv8DistributionFocalLoss(self.reg_max) if self.reg_max > 1 else nn.Identity()
 
     def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         """Forward features from the upstream network.
@@ -194,7 +191,7 @@ class YOLOv8HeadModule(BaseModule):
 # TODO Training mode is currently not supported
 @MODELS.register_module()
 class YOLOv8Head(YOLOv5Head):
-    """YOLOv8Head head used in `YOLOv8.
+    """YOLOv8Head head used in `YOLOv8`.
 
     Args:
         head_module(nn.Module): Base module used for YOLOv6Head
@@ -260,19 +257,3 @@ class YOLOv8Head(YOLOv5Head):
             batch_img_metas: Sequence[dict],
             batch_gt_instances_ignore: OptInstanceList = None) -> dict:
         raise NotImplementedError('Not implemented yet !')
-
-
-class YOLOv8DistributionFocalLoss(nn.Module):
-    def __init__(self, in_channel=16):
-        super().__init__()
-        self.in_channel = in_channel
-
-        self.conv = nn.Conv2d(self.in_channel, 1, 1, bias=False).requires_grad_(False)
-        weight_data = torch.arange(self.in_channel, dtype=torch.float)
-        self.conv.weight.data[:] = nn.Parameter(weight_data.view(1, self.in_channel, 1, 1))
-
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        batch, _, anchors = x.shape
-        return self.conv(
-            x.view(batch, 4, self.in_channel, anchors).transpose(2, 1).softmax(1)
-        ).view(batch, 4, anchors)
