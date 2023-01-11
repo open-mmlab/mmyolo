@@ -32,7 +32,8 @@ class YOLOv8HeadModule(BaseModule):
             on the feature grid.
         featmap_strides (Sequence[int]): Downsample factor of each feature map.
              Defaults to [8, 16, 32].
-            None, otherwise False. Defaults to "auto".
+        reg_max (int): Max value of integral set :math: ``{0, ..., reg_max-1}``
+            in QFL setting. Defaults to 16.
         norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
             layer. Defaults to dict(type='BN', momentum=0.03, eps=0.001).
         act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
@@ -181,12 +182,14 @@ class YOLOv8Head(YOLOv5Head):
     """YOLOv8Head head used in `YOLOv8`.
 
     Args:
-        head_module(nn.Module): Base module used for YOLOv6Head
+        head_module(:obj:`ConfigDict` or dict): Base module used for YOLOv8Head
         prior_generator(dict): Points generator feature maps
             in 2D points-based detectors.
+        bbox_coder (:obj:`ConfigDict` or dict): Config of bbox coder.
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
         loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
-        loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
+        loss_dfl (:obj:`ConfigDict` or dict): Config of Distribution Focal
+            Loss.
         train_cfg (:obj:`ConfigDict` or dict, optional): Training config of
             anchor head. Defaults to None.
         test_cfg (:obj:`ConfigDict` or dict, optional): Testing config of
@@ -197,7 +200,7 @@ class YOLOv8Head(YOLOv5Head):
     """
 
     def __init__(self,
-                 head_module: nn.Module,
+                 head_module: ConfigType,
                  prior_generator: ConfigType = dict(
                      type='mmdet.MlvlPointGenerator',
                      offset=0.5,

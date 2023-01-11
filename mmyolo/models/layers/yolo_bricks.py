@@ -1371,8 +1371,8 @@ class DarknetBottleneck(MMDET_DarknetBottleneck):
 
     Each ResBlock consists of two ConvModules and the input is added to the
     final output. Each ConvModule is composed of Conv, BN, and LeakyReLU.
-    The first convLayer has filter size of 1x1 and the second one has the
-    filter size of 3x3.
+    The first convLayer has filter size of k1Xk1 and the second one has the
+    filter size of k2Xk2.
 
     Note:
     This DarknetBottleneck is little different from MMDet's, we can
@@ -1388,30 +1388,30 @@ class DarknetBottleneck(MMDET_DarknetBottleneck):
         padding (Sequence[int]): The padding size of the convolution.
             Defaults to (0, 1).
         add_identity (bool): Whether to add identity to the out.
-            Default: True
+            Defaults to True
         use_depthwise (bool): Whether to use depthwise separable convolution.
-            Default: False
+            Defaults to False
         conv_cfg (dict): Config dict for convolution layer. Default: None,
             which means using conv2d.
         norm_cfg (dict): Config dict for normalization layer.
-            Default: dict(type='BN').
+            Defaults to dict(type='BN').
         act_cfg (dict): Config dict for activation layer.
-            Default: dict(type='Swish').
+            Defaults to dict(type='Swish').
     """
 
-    def __init__(
-            self,
-            in_channels: int,
-            out_channels: int,
-            expansion: float = 0.5,
-            kernel_size: Sequence[int] = (1, 3),
-            padding: Sequence[int] = (0, 1),
-            add_identity: bool = True,
-            use_depthwise: bool = False,
-            conv_cfg: OptConfigType = None,  # no use
-            norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
-            act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-            init_cfg: OptMultiConfig = None) -> None:
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 expansion: float = 0.5,
+                 kernel_size: Sequence[int] = (1, 3),
+                 padding: Sequence[int] = (0, 1),
+                 add_identity: bool = True,
+                 use_depthwise: bool = False,
+                 conv_cfg: OptConfigType = None,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 init_cfg: OptMultiConfig = None) -> None:
         super().__init__(in_channels, out_channels, init_cfg=init_cfg)
         hidden_channels = int(out_channels * expansion)
         conv = DepthwiseSeparableConvModule if use_depthwise else ConvModule
@@ -1446,7 +1446,7 @@ class CSPLayerWithTwoConv(BaseModule):
         out_channels (int): The output channels of the CSP layer.
         expand_ratio (float): Ratio to adjust the number of channels of the
             hidden layer. Defaults to 0.5.
-        num_blocks (int): Number of blocks. Default: 1
+        num_blocks (int): Number of blocks. Defaults to 1
         add_identity (bool): Whether to add identity in blocks.
             Defaults to True.
         conv_cfg (dict, optional): Config dict for convolution layer.
@@ -1467,7 +1467,7 @@ class CSPLayerWithTwoConv(BaseModule):
             expand_ratio: float = 0.5,
             num_blocks: int = 1,
             add_identity: bool = True,  # shortcut
-            conv_cfg: OptConfigType = None,  # no use
+            conv_cfg: OptConfigType = None,
             norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg: ConfigType = dict(type='SiLU', inplace=True),
             init_cfg: OptMultiConfig = None) -> None:

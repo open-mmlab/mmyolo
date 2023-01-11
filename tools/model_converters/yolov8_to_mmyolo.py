@@ -80,7 +80,7 @@ def main():
     parser = argparse.ArgumentParser(description='Convert model keys')
     parser.add_argument(
         '--src', default='yolov8s.pt', help='src YOLOv8 model path')
-    parser.add_argument('--dst', default='mmyolov8s.pt', help='save path')
+    parser.add_argument('--dst', default='mmyolov8s.pth', help='save path')
     args = parser.parse_args()
     convert(args.src, args.dst)
 
