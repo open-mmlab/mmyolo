@@ -202,9 +202,10 @@ class YOLOv8CSPDarknet(BaseBackbone):
     """
     # From left to right:
     # in_channels, out_channels, num_blocks, add_identity, use_spp
+    # the final out_channels will be set according to the param.
     arch_settings = {
         'P5': [[64, 128, 3, True, False], [128, 256, 6, True, False],
-               [256, 512, 6, True, False], [512, 1024, 3, True, True]],
+               [256, 512, 6, True, False], [512, None, 3, True, True]],
     }
 
     def __init__(self,

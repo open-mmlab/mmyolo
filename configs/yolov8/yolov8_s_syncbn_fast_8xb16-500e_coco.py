@@ -18,6 +18,8 @@ persistent_workers = True
 strides = [8, 16, 32]
 num_det_layers = 3
 
+last_stage_out_channels = 1024
+
 # single-scale training is recommended to
 # be turned on, which can speed up training.
 env_cfg = dict(cudnn_benchmark=True)
@@ -32,7 +34,7 @@ model = dict(
     backbone=dict(
         type='YOLOv8CSPDarknet',
         arch='P5',
-        last_stage_out_channels=1024,
+        last_stage_out_channels=last_stage_out_channels,
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
@@ -41,8 +43,8 @@ model = dict(
         type='YOLOv8PAFPN',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        in_channels=[256, 512, 1024],
-        out_channels=[256, 512, 1024],
+        in_channels=[256, 512, last_stage_out_channels],
+        out_channels=[256, 512, last_stage_out_channels],
         num_csp_blocks=3,
         norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
         act_cfg=dict(type='SiLU', inplace=True)),
@@ -51,7 +53,7 @@ model = dict(
         head_module=dict(
             type='YOLOv8HeadModule',
             num_classes=num_classes,
-            in_channels=[256, 512, 1024],
+            in_channels=[256, 512, last_stage_out_channels],
             widen_factor=widen_factor,
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg=dict(type='SiLU', inplace=True),
