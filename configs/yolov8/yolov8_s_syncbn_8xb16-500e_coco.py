@@ -15,9 +15,6 @@ val_num_workers = 2
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
 
-# Base learning rate for optim_wrapper
-base_lr = 0.01
-
 strides = [8, 16, 32]
 num_det_layers = 3
 
@@ -35,7 +32,7 @@ model = dict(
     backbone=dict(
         type='YOLOv8CSPDarknet',
         arch='P5',
-        out_channels=1024,
+        last_stage_out_channels=1024,
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),

@@ -161,7 +161,7 @@ class YOLOv8CSPDarknet(BaseBackbone):
     Args:
         arch (str): Architecture of CSP-Darknet, from {P5}.
             Defaults to P5.
-        out_channels (int): Final layer output channel. Defaults to 1024.
+        last_stage_out_channels (int): Final layer output channel. Defaults to 1024.
         plugins (list[dict]): List of plugins for stages, each dict contains:
             - cfg (dict, required): Cfg dict to build plugin.
             - stages (tuple[bool], optional): Stages to apply plugin, length
@@ -208,7 +208,7 @@ class YOLOv8CSPDarknet(BaseBackbone):
 
     def __init__(self,
                  arch: str = 'P5',
-                 out_channels: int = 1024,
+                 last_stage_out_channels: int = 1024,
                  plugins: Union[dict, List[dict]] = None,
                  deepen_factor: float = 1.0,
                  widen_factor: float = 1.0,
@@ -220,7 +220,7 @@ class YOLOv8CSPDarknet(BaseBackbone):
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None):
-        self.arch_settings[arch][-1][1] = out_channels
+        self.arch_settings[arch][-1][1] = last_stage_out_channels
         super().__init__(
             self.arch_settings[arch],
             deepen_factor,

@@ -5,7 +5,7 @@ widen_factor = 0.75
 
 model = dict(
     backbone=dict(
-        out_channels=768,
+        last_stage_out_channels=768,
         deepen_factor=deepen_factor,
         widen_factor=widen_factor),
     neck=dict(
