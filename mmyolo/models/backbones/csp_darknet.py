@@ -16,12 +16,10 @@ from .base_backbone import BaseBackbone
 @MODELS.register_module()
 class YOLOv5CSPDarknet(BaseBackbone):
     """CSP-Darknet backbone used in YOLOv5.
-
     Args:
         arch (str): Architecture of CSP-Darknet, from {P5, P6}.
             Defaults to P5.
         plugins (list[dict]): List of plugins for stages, each dict contains:
-
             - cfg (dict, required): Cfg dict to build plugin.
             - stages (tuple[bool], optional): Stages to apply plugin, length
               should be same as 'num_stages'.
@@ -43,7 +41,6 @@ class YOLOv5CSPDarknet(BaseBackbone):
             and its variants only. Defaults to False.
         init_cfg (Union[dict,list[dict]], optional): Initialization config
             dict. Defaults to None.
-
     Example:
         >>> from mmyolo.models import YOLOv5CSPDarknet
         >>> import torch
@@ -61,25 +58,14 @@ class YOLOv5CSPDarknet(BaseBackbone):
     # From left to right:
     # in_channels, out_channels, num_blocks, add_identity, use_spp
     arch_settings = {
-        'YOLOv5': {
-            'stem_setting': [6, 2, 2],  # kernel_size, stride, padding
-            'csp_layer_type': CSPLayer,
-            'P5': [[64, 128, 3, True, False], [128, 256, 6, True, False],
-                   [256, 512, 9, True, False], [512, 1024, 3, True, True]],
-            'P6': [[64, 128, 3, True, False], [128, 256, 6, True, False],
-                   [256, 512, 9, True, False], [512, 768, 3, True, False],
-                   [768, 1024, 3, True, True]]
-        },
-        'YOLOv8': {
-            'stem_setting': [3, 2, 1],  # kernel_size, stride, padding
-            'csp_layer_type': CSPLayerWithTwoConv,
-            'P5': [[64, 128, 3, True, False], [128, 256, 6, True, False],
-                   [256, 512, 6, True, False], [512, 1024, 3, True, True]],
-        }
+        'P5': [[64, 128, 3, True, False], [128, 256, 6, True, False],
+               [256, 512, 9, True, False], [512, 1024, 3, True, True]],
+        'P6': [[64, 128, 3, True, False], [128, 256, 6, True, False],
+               [256, 512, 9, True, False], [512, 768, 3, True, False],
+               [768, 1024, 3, True, True]]
     }
 
     def __init__(self,
-                 model_type: str = 'YOLOv5',
                  arch: str = 'P5',
                  plugins: Union[dict, List[dict]] = None,
                  deepen_factor: float = 1.0,
@@ -92,10 +78,8 @@ class YOLOv5CSPDarknet(BaseBackbone):
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
                  norm_eval: bool = False,
                  init_cfg: OptMultiConfig = None):
-        self.stem_setting = self.arch_settings[model_type]['stem_setting']
-        self.csp_layer_type = self.arch_settings[model_type]['csp_layer_type']
         super().__init__(
-            self.arch_settings[model_type][arch],
+            self.arch_settings[arch],
             deepen_factor,
             widen_factor,
             input_channels=input_channels,
@@ -109,20 +93,17 @@ class YOLOv5CSPDarknet(BaseBackbone):
 
     def build_stem_layer(self) -> nn.Module:
         """Build a stem layer."""
-        kernel_size, stride, padding = self.stem_setting
-
         return ConvModule(
             self.input_channels,
             make_divisible(self.arch_setting[0][0], self.widen_factor),
-            kernel_size=kernel_size,
-            stride=stride,
-            padding=padding,
+            kernel_size=6,
+            stride=2,
+            padding=2,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
 
     def build_stage_layer(self, stage_idx: int, setting: list) -> list:
         """Build a stage layer.
-
         Args:
             stage_idx (int): The index of a stage layer.
             setting (list): The architecture setting of a stage layer.
@@ -142,7 +123,7 @@ class YOLOv5CSPDarknet(BaseBackbone):
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
         stage.append(conv_layer)
-        csp_layer = self.csp_layer_type(
+        csp_layer = CSPLayer(
             out_channels,
             out_channels,
             num_blocks=num_blocks,
@@ -170,6 +151,135 @@ class YOLOv5CSPDarknet(BaseBackbone):
                     m.reset_parameters()
         else:
             super().init_weights()
+
+
+@MODELS.register_module()
+class YOLOv8CSPDarknet(BaseBackbone):
+    """CSP-Darknet backbone used in YOLOv8.
+
+    Args:
+        arch (str): Architecture of CSP-Darknet, from {P5-n-s, P5-m, P5-x-l}.
+            Defaults to P5-n-s.
+        plugins (list[dict]): List of plugins for stages, each dict contains:
+            - cfg (dict, required): Cfg dict to build plugin.
+            - stages (tuple[bool], optional): Stages to apply plugin, length
+              should be same as 'num_stages'.
+        deepen_factor (float): Depth multiplier, multiply number of
+            blocks in CSP layer by this amount. Defaults to 1.0.
+        widen_factor (float): Width multiplier, multiply number of
+            channels in each layer by this amount. Defaults to 1.0.
+        input_channels (int): Number of input image channels. Defaults to: 3.
+        out_indices (Tuple[int]): Output from which stages.
+            Defaults to (2, 3, 4).
+        frozen_stages (int): Stages to be frozen (stop grad and set eval
+            mode). -1 means not freezing any parameters. Defaults to -1.
+        norm_cfg (dict): Dictionary to construct and config norm layer.
+            Defaults to dict(type='BN', requires_grad=True).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='SiLU', inplace=True).
+        norm_eval (bool): Whether to set norm layers to eval mode, namely,
+            freeze running stats (mean and var). Note: Effect on Batch Norm
+            and its variants only. Defaults to False.
+        init_cfg (Union[dict,list[dict]], optional): Initialization config
+            dict. Defaults to None.
+
+    Example:
+        >>> from mmyolo.models import YOLOv8CSPDarknet
+        >>> import torch
+        >>> model = YOLOv8CSPDarknet()
+        >>> model.eval()
+        >>> inputs = torch.rand(1, 3, 416, 416)
+        >>> level_outputs = model(inputs)
+        >>> for level_out in level_outputs:
+        ...     print(tuple(level_out.shape))
+        ...
+        (1, 256, 52, 52)
+        (1, 512, 26, 26)
+        (1, 1024, 13, 13)
+    """
+    # From left to right:
+    # in_channels, out_channels, num_blocks, add_identity, use_spp
+    arch_settings = {
+        'P5-n-s': [[64, 128, 3, True, False], [128, 256, 6, True, False],
+                   [256, 512, 6, True, False], [512, 1024, 3, True, True]],
+    }
+
+    def __init__(self,
+                 arch: str = 'P5-n-s',
+                 plugins: Union[dict, List[dict]] = None,
+                 deepen_factor: float = 1.0,
+                 widen_factor: float = 1.0,
+                 input_channels: int = 3,
+                 out_indices: Tuple[int] = (2, 3, 4),
+                 frozen_stages: int = -1,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 norm_eval: bool = False,
+                 init_cfg: OptMultiConfig = None):
+        super().__init__(
+            self.arch_settings[arch],
+            deepen_factor,
+            widen_factor,
+            input_channels=input_channels,
+            out_indices=out_indices,
+            plugins=plugins,
+            frozen_stages=frozen_stages,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg,
+            norm_eval=norm_eval,
+            init_cfg=init_cfg)
+
+    def build_stem_layer(self) -> nn.Module:
+        """Build a stem layer."""
+        return ConvModule(
+            self.input_channels,
+            make_divisible(self.arch_setting[0][0], self.widen_factor),
+            kernel_size=3,
+            stride=2,
+            padding=1,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg)
+
+    def build_stage_layer(self, stage_idx: int, setting: list) -> list:
+        """Build a stage layer.
+
+        Args:
+            stage_idx (int): The index of a stage layer.
+            setting (list): The architecture setting of a stage layer.
+        """
+        in_channels, out_channels, num_blocks, add_identity, use_spp = setting
+
+        in_channels = make_divisible(in_channels, self.widen_factor)
+        out_channels = make_divisible(out_channels, self.widen_factor)
+        num_blocks = make_round(num_blocks, self.deepen_factor)
+        stage = []
+        conv_layer = ConvModule(
+            in_channels,
+            out_channels,
+            kernel_size=3,
+            stride=2,
+            padding=1,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg)
+        stage.append(conv_layer)
+        csp_layer = CSPLayerWithTwoConv(
+            out_channels,
+            out_channels,
+            num_blocks=num_blocks,
+            add_identity=add_identity,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg)
+        stage.append(csp_layer)
+        if use_spp:
+            spp = SPPFBottleneck(
+                out_channels,
+                out_channels,
+                kernel_sizes=5,
+                norm_cfg=self.norm_cfg,
+                act_cfg=self.act_cfg)
+            stage.append(spp)
+        return stage
 
 
 @MODELS.register_module()

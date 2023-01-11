@@ -37,8 +37,8 @@ model = dict(
         std=[255., 255., 255.],
         bgr_to_rgb=True),
     backbone=dict(
-        type='YOLOv5CSPDarknet',
-        model_type='YOLOv8',
+        type='YOLOv8CSPDarknet',
+        arch='P5-n-s',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
