@@ -9,9 +9,11 @@ from mmengine.config import ConfigDict
 from torch import Tensor
 
 from mmyolo.models import RepVGGBlock
-from mmyolo.models.dense_heads import RTMDetHead, YOLOv5Head, YOLOv7Head
+from mmyolo.models.dense_heads import (RTMDetHead, YOLOv5Head, YOLOv7Head,
+                                       YOLOXHead)
 from ..backbone import DeployFocus, GConvFocus, NcnnFocus
-from ..bbox_code import rtmdet_bbox_decoder, yolov5_bbox_decoder
+from ..bbox_code import (rtmdet_bbox_decoder, yolov5_bbox_decoder,
+                         yolox_bbox_decoder)
 from ..nms import batched_nms, efficient_nms, onnx_nms
 
 
@@ -72,6 +74,8 @@ class DeployModel(nn.Module):
             bbox_decoder = yolov5_bbox_decoder
         elif self.detector_type is RTMDetHead:
             bbox_decoder = rtmdet_bbox_decoder
+        elif self.detector_type is YOLOXHead:
+            bbox_decoder = yolox_bbox_decoder
         else:
             bbox_decoder = self.bbox_decoder
 
@@ -130,8 +134,9 @@ class DeployModel(nn.Module):
             nms_func = batched_nms
         else:
             raise NotImplementedError
-        if type(self.baseHead) in (YOLOv5Head, YOLOv7Head):
+        if type(self.baseHead) in (YOLOv5Head, YOLOv7Head, YOLOXHead):
             nms_func = partial(nms_func, box_coding=1)
+
         return nms_func
 
     def forward(self, inputs: Tensor):
