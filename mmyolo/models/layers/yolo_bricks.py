@@ -1493,7 +1493,7 @@ class CSPLayerWithTwoConv(BaseModule):
                 act_cfg=act_cfg) for _ in range(num_blocks))
 
     def forward(self, x: Tensor) -> Tensor:
-        """Forward process. """
+        """Forward process."""
         x_main = self.main_conv(x)
         x_main = list(x_main.split((self.mid_channels, self.mid_channels), 1))
         x_main.extend(blocks(x_main[-1]) for blocks in self.blocks)
