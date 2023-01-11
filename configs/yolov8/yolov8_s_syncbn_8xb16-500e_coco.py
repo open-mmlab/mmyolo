@@ -9,10 +9,6 @@ num_classes = 80
 img_scale = (640, 640)  # height, width
 deepen_factor = 0.33
 widen_factor = 0.5
-max_epochs = 500
-save_epoch_intervals = 10
-train_batch_size_per_gpu = 16
-train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
 
@@ -62,85 +58,13 @@ model = dict(
             widen_factor=widen_factor,
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg=dict(type='SiLU', inplace=True),
-            featmap_strides=[8, 16, 32]),
-        loss_bbox=dict(
-            type='IoULoss',
-            iou_mode='giou',
-            bbox_format='xyxy',
-            reduction='mean',
-            loss_weight=2.5,
-            return_iou=False),
-        # Since the dflloss is implemented differently in the official
-        # and mmdet, we're going to divide loss_weight by 4.
-        loss_dfl=dict(
-            type='mmdet.DistributionFocalLoss',
-            reduction='mean',
-            loss_weight=0.5 / 4)),
+            featmap_strides=[8, 16, 32])),
     test_cfg=dict(
         multi_label=True,
         nms_pre=30000,
         score_thr=0.001,
         nms=dict(type='nms', iou_threshold=0.7),
         max_per_img=300))
-
-albu_train_transforms = [
-    dict(type='Blur', p=0.01),
-    dict(type='MedianBlur', p=0.01),
-    dict(type='ToGray', p=0.01),
-    dict(type='CLAHE', p=0.01)
-]
-
-pre_transform = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='LoadAnnotations', with_bbox=True)
-]
-
-train_pipeline = [
-    *pre_transform,
-    dict(
-        type='Mosaic',
-        img_scale=img_scale,
-        pad_val=114.0,
-        pre_transform=pre_transform),
-    dict(
-        type='YOLOv5RandomAffine',
-        max_rotate_degree=0.0,
-        max_shear_degree=0.0,
-        scaling_ratio_range=(0.5, 1.5),
-        border=(-img_scale[0] // 2, -img_scale[1] // 2),
-        border_val=(114, 114, 114)),
-    dict(
-        type='mmdet.Albu',
-        transforms=albu_train_transforms,
-        bbox_params=dict(
-            type='BboxParams',
-            format='pascal_voc',
-            label_fields=['gt_bboxes_labels', 'gt_ignore_flags']),
-        keymap={
-            'img': 'image',
-            'gt_bboxes': 'bboxes'
-        }),
-    dict(type='YOLOv5HSVRandomAug'),
-    dict(type='mmdet.RandomFlip', prob=0.5),
-    dict(
-        type='mmdet.PackDetInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
-                   'flip_direction'))
-]
-
-train_dataloader = dict(
-    batch_size=train_batch_size_per_gpu,
-    num_workers=train_num_workers,
-    persistent_workers=persistent_workers,
-    pin_memory=True,
-    sampler=dict(type='DefaultSampler', shuffle=True),
-    dataset=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file='annotations/instances_train2017.json',
-        data_prefix=dict(img='train2017/'),
-        filter_cfg=dict(filter_empty_gt=False, min_size=32),
-        pipeline=train_pipeline))
 
 test_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
@@ -175,40 +99,6 @@ val_dataloader = dict(
 
 test_dataloader = val_dataloader
 
-param_scheduler = None
-optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(
-        type='SGD',
-        lr=base_lr,
-        momentum=0.937,
-        weight_decay=0.0005,
-        nesterov=True,
-        batch_size_per_gpu=train_batch_size_per_gpu),
-    constructor='YOLOv5OptimizerConstructor')
-
-default_hooks = dict(
-    param_scheduler=dict(
-        type='YOLOv5ParamSchedulerHook',
-        scheduler_type='linear',
-        lr_factor=0.01,
-        max_epochs=max_epochs),
-    checkpoint=dict(
-        type='CheckpointHook',
-        interval=save_epoch_intervals,
-        save_best='auto',
-        max_keep_ckpts=3))
-
-custom_hooks = [
-    dict(
-        type='EMAHook',
-        ema_type='ExpMomentumEMA',
-        momentum=0.0001,
-        update_buffers=True,
-        strict_load=False,
-        priority=49)
-]
-
 val_evaluator = dict(
     type='mmdet.CocoMetric',
     proposal_nums=(100, 1, 10),
@@ -216,9 +106,5 @@ val_evaluator = dict(
     metric='bbox')
 test_evaluator = val_evaluator
 
-train_cfg = dict(
-    type='EpochBasedTrainLoop',
-    max_epochs=max_epochs,
-    val_interval=save_epoch_intervals)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
