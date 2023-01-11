@@ -171,6 +171,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 - [x] [YOLOv6](configs/yolov6)
 - [x] [YOLOv7](configs/yolov7)
 - [x] [PPYOLOE](configs/ppyoloe)
+- [ ] [YOLOv8](configs/yolov8) (Inference only)
 
 </details>
 

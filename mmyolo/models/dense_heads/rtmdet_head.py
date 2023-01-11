@@ -26,7 +26,7 @@ class RTMDetSepBNHeadModule(BaseModule):
         in_channels (int): Number of channels in the input feature map.
         widen_factor (float): Width multiplier, multiply number of
             channels in each layer by this amount. Defaults to 1.0.
-        num_base_priors:int: The number of priors (points) at a point
+        num_base_priors (int): The number of priors (points) at a point
             on the feature grid.  Defaults to 1.
         feat_channels (int): Number of hidden channels. Used in child classes.
             Defaults to 256

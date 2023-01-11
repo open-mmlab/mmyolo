@@ -42,8 +42,8 @@ class YOLOv5HeadModule(BaseModule):
         in_channels (Union[int, Sequence]): Number of channels in the input
             feature map.
         widen_factor (float): Width multiplier, multiply number of
-            channels in each layer by this amount. Default: 1.0.
-        num_base_priors:int: The number of priors (points) at a point
+            channels in each layer by this amount. Defaults to 1.0.
+        num_base_priors (int): The number of priors (points) at a point
             on the feature grid.
         featmap_strides (Sequence[int]): Downsample factor of each feature map.
              Defaults to (8, 16, 32).
