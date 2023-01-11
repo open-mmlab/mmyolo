@@ -20,8 +20,7 @@ class TestYOLOv8PAFPN(TestCase):
             torch.rand(1, in_channels[i], feat_sizes[i], feat_sizes[i])
             for i in range(len(in_channels))
         ]
-        neck = YOLOv8PAFPN(
-            in_channels=in_channels, out_channels=out_channels)
+        neck = YOLOv8PAFPN(in_channels=in_channels, out_channels=out_channels)
         outs = neck(feats)
         assert len(outs) == len(feats)
         for i in range(len(feats)):
