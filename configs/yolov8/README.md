@@ -6,6 +6,11 @@
 
 Ultralytics YOLOv8, developed by Ultralytics, is a cutting-edge, state-of-the-art (SOTA) model that builds upon the success of previous YOLO versions and introduces new features and improvements to further boost performance and flexibility. YOLOv8 is designed to be fast, accurate, and easy to use, making it an excellent choice for a wide range of object detection, image segmentation and image classification tasks.
 
+<div align=center>
+<img src="https://user-images.githubusercontent.com/27466624/211802113-cc34e639-bea5-4e5c-9c0e-32cd071cfeb2.jpg"/>
+YOLOv8-P5 model structure
+</div>
+
 ## Results and models
 
 ### COCO
