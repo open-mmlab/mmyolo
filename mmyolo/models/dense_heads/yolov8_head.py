@@ -80,8 +80,10 @@ class YOLOv8HeadModule(BaseModule):
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
         self.in_channels = in_channels
-        self.reg_max = reg_max  # DFL channels (ch[0] // 16 to scale 4/8/12/16/20 for n/s/m/l/x) # noqa
-        self.number_of_output = self.num_classes + self.reg_max * 4  # number of outputs per anchor # noqa
+        # DFL channels (ch[0] // 16 to scale 4/8/12/16/20 for n/s/m/l/x)
+        self.reg_max = reg_max
+        # number of outputs per anchor
+        self.number_of_output = self.num_classes + self.reg_max * 4
         self.stride = torch.zeros(self.num_levels)
         self.shape = None
 
