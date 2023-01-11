@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .base_backbone import BaseBackbone
-from .csp_darknet import YOLOv5CSPDarknet, YOLOXCSPDarknet, YOLOv8CSPDarknet
+from .csp_darknet import YOLOv5CSPDarknet, YOLOv8CSPDarknet, YOLOXCSPDarknet
 from .csp_resnet import PPYOLOECSPResNet
 from .cspnext import CSPNeXt
 from .efficient_rep import YOLOv6CSPBep, YOLOv6EfficientRep

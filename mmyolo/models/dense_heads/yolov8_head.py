@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Sequence, Union, Tuple, List
+from typing import List, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
@@ -12,21 +12,27 @@ from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS
-from .yolov5_head import YOLOv5Head
 from ..utils import make_divisible
+from .yolov5_head import YOLOv5Head
 
 
 class YOLOv8DistributionFocalLoss(nn.Module):
+
     def __init__(self, in_channel=16):
         super().__init__()
         self.in_channel = in_channel
-        self.conv = nn.Conv2d(in_channel, 1, 1, bias=False).requires_grad_(False)
+        self.conv = nn.Conv2d(
+            in_channel, 1, 1, bias=False).requires_grad_(False)
         conv_weight_data = torch.arange(in_channel, dtype=torch.float)
-        self.conv.weight.data[:] = nn.Parameter(conv_weight_data.view(1, in_channel, 1, 1))
+        self.conv.weight.data[:] = nn.Parameter(
+            conv_weight_data.view(1, in_channel, 1, 1))
 
     def forward(self, x):
         batch, _, anchors = x.shape
-        return self.conv(x.view(batch, 4, self.in_channel, anchors).transpose(2, 1).softmax(1)).view(batch, 4, anchors)
+        return self.conv(
+            x.view(batch, 4, self.in_channel,
+                   anchors).transpose(2,
+                                      1).softmax(1)).view(batch, 4, anchors)
 
 
 @MODELS.register_module()
@@ -106,60 +112,62 @@ class YOLOv8HeadModule(BaseModule):
         self.cls_preds = nn.ModuleList()
         self.reg_preds = nn.ModuleList()
 
-        reg_out_channels = max((16, self.in_channels[0] // 4, self.reg_max * 4))
+        reg_out_channels = max(
+            (16, self.in_channels[0] // 4, self.reg_max * 4))
         cls_out_channels = max(self.in_channels[0], self.num_classes)
 
         for i in range(self.num_levels):
-            self.reg_preds.append(nn.Sequential(
-                ConvModule(
-                    in_channels=self.in_channels[i],
-                    out_channels=reg_out_channels,
-                    kernel_size=3,
-                    stride=1,
-                    padding=1,
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg),
-                ConvModule(
-                    in_channels=reg_out_channels,
-                    out_channels=reg_out_channels,
-                    kernel_size=3,
-                    stride=1,
-                    padding=1,
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg),
-                nn.Conv2d(
-                    in_channels=reg_out_channels,
-                    out_channels=4 * self.reg_max,
-                    kernel_size=1)
-            ))
-            self.cls_preds.append(nn.Sequential(
-                ConvModule(
-                    in_channels=self.in_channels[i],
-                    out_channels=cls_out_channels,
-                    kernel_size=3,
-                    stride=1,
-                    padding=1,
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg),
-                ConvModule(
-                    in_channels=cls_out_channels,
-                    out_channels=cls_out_channels,
-                    kernel_size=3,
-                    stride=1,
-                    padding=1,
-                    norm_cfg=self.norm_cfg,
-                    act_cfg=self.act_cfg),
-                nn.Conv2d(
-                    in_channels=cls_out_channels,
-                    out_channels=self.num_classes,
-                    kernel_size=1)
-            ))
+            self.reg_preds.append(
+                nn.Sequential(
+                    ConvModule(
+                        in_channels=self.in_channels[i],
+                        out_channels=reg_out_channels,
+                        kernel_size=3,
+                        stride=1,
+                        padding=1,
+                        norm_cfg=self.norm_cfg,
+                        act_cfg=self.act_cfg),
+                    ConvModule(
+                        in_channels=reg_out_channels,
+                        out_channels=reg_out_channels,
+                        kernel_size=3,
+                        stride=1,
+                        padding=1,
+                        norm_cfg=self.norm_cfg,
+                        act_cfg=self.act_cfg),
+                    nn.Conv2d(
+                        in_channels=reg_out_channels,
+                        out_channels=4 * self.reg_max,
+                        kernel_size=1)))
+            self.cls_preds.append(
+                nn.Sequential(
+                    ConvModule(
+                        in_channels=self.in_channels[i],
+                        out_channels=cls_out_channels,
+                        kernel_size=3,
+                        stride=1,
+                        padding=1,
+                        norm_cfg=self.norm_cfg,
+                        act_cfg=self.act_cfg),
+                    ConvModule(
+                        in_channels=cls_out_channels,
+                        out_channels=cls_out_channels,
+                        kernel_size=3,
+                        stride=1,
+                        padding=1,
+                        norm_cfg=self.norm_cfg,
+                        act_cfg=self.act_cfg),
+                    nn.Conv2d(
+                        in_channels=cls_out_channels,
+                        out_channels=self.num_classes,
+                        kernel_size=1)))
 
-        proj = torch.linspace(0, self.reg_max, self.reg_max).view(
-            [1, self.reg_max, 1, 1])
+        proj = torch.linspace(0, self.reg_max,
+                              self.reg_max).view([1, self.reg_max, 1, 1])
         self.register_buffer('proj', proj, persistent=False)
 
-        self.dfl = YOLOv8DistributionFocalLoss(self.reg_max) if self.reg_max > 1 else nn.Identity()
+        self.dfl = YOLOv8DistributionFocalLoss(
+            self.reg_max) if self.reg_max > 1 else nn.Identity()
 
     def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         """Forward features from the upstream network.
@@ -172,9 +180,11 @@ class YOLOv8HeadModule(BaseModule):
             predictions, and objectnesses.
         """
         assert len(x) == self.num_levels
-        return multi_apply(self.forward_single, x, self.cls_preds, self.reg_preds)
+        return multi_apply(self.forward_single, x, self.cls_preds,
+                           self.reg_preds)
 
-    def forward_single(self, x: torch.Tensor, cls_pred: nn.ModuleList, reg_pred: nn.ModuleList) -> Tuple:
+    def forward_single(self, x: torch.Tensor, cls_pred: nn.ModuleList,
+                       reg_pred: nn.ModuleList) -> Tuple:
         """Forward feature of a single scale level."""
         b, _, h, w = x.shape
         cls_logit = cls_pred(x)

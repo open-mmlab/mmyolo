@@ -8,9 +8,10 @@ from mmdet.models.backbones.csp_darknet import CSPLayer
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
-from .yolov5_pafpn import YOLOv5PAFPN
 from .. import CSPLayerWithTwoConv
 from ..utils import make_divisible, make_round
+from .yolov5_pafpn import YOLOv5PAFPN
+
 # from .base_yolo_neck import BaseYOLONeck
 
 
@@ -78,13 +79,12 @@ class YOLOv8PAFPN(YOLOv5PAFPN):
             nn.Module: The top down layer.
         """
         return CSPLayerWithTwoConv(
-                make_divisible(self.in_channels[idx - 1] * 3,
-                               self.widen_factor),
-                make_divisible(self.in_channels[idx - 1], self.widen_factor),
-                num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
-                add_identity=False,
-                norm_cfg=self.norm_cfg,
-                act_cfg=self.act_cfg)
+            make_divisible(self.in_channels[idx - 1] * 3, self.widen_factor),
+            make_divisible(self.in_channels[idx - 1], self.widen_factor),
+            num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
+            add_identity=False,
+            norm_cfg=self.norm_cfg,
+            act_cfg=self.act_cfg)
 
     def build_bottom_up_layer(self, idx: int) -> nn.Module:
         """build bottom up layer.

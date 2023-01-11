@@ -4,7 +4,8 @@ from typing import Optional, Sequence, Tuple, Union
 import numpy as np
 import torch
 import torch.nn as nn
-from mmcv.cnn import ConvModule, MaxPool2d, build_norm_layer, DepthwiseSeparableConvModule
+from mmcv.cnn import (ConvModule, DepthwiseSeparableConvModule, MaxPool2d,
+                      build_norm_layer)
 from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmengine.model import BaseModule
 from mmengine.utils import digit_version
@@ -1458,17 +1459,17 @@ class CSPLayerWithTwoConv(BaseModule):
             Defaults to None.
     """
 
-    def __init__(self,
-                 in_channels: int,
-                 out_channels: int,
-                 expand_ratio: float = 0.5,
-                 num_blocks: int = 1,
-                 add_identity: bool = True,  # shortcut
-                 conv_cfg: OptConfigType = None,  # no use
-                 norm_cfg: ConfigType = dict(
-                     type='BN', momentum=0.03, eps=0.001),
-                 act_cfg: ConfigType = dict(type='Swish'),
-                 init_cfg: OptMultiConfig = None) -> None:
+    def __init__(
+            self,
+            in_channels: int,
+            out_channels: int,
+            expand_ratio: float = 0.5,
+            num_blocks: int = 1,
+            add_identity: bool = True,  # shortcut
+            conv_cfg: OptConfigType = None,  # no use
+            norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
+            act_cfg: ConfigType = dict(type='Swish'),
+            init_cfg: OptMultiConfig = None) -> None:
         super().__init__(init_cfg=init_cfg)
 
         self.mid_channels = int(out_channels * expand_ratio)
@@ -1498,8 +1499,7 @@ class CSPLayerWithTwoConv(BaseModule):
                 use_depthwise=False,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
-                act_cfg=act_cfg) for _ in range(num_blocks)
-        )
+                act_cfg=act_cfg) for _ in range(num_blocks))
 
     def forward(self, x: Tensor) -> Tensor:
         x_main = self.main_conv(x)

@@ -8,7 +8,7 @@ from mmdet.models.backbones.csp_darknet import CSPLayer, Focus
 from mmdet.utils import ConfigType, OptMultiConfig
 
 from mmyolo.registry import MODELS
-from ..layers import SPPFBottleneck, CSPLayerWithTwoConv
+from ..layers import CSPLayerWithTwoConv, SPPFBottleneck
 from ..utils import make_divisible, make_round
 from .base_backbone import BaseBackbone
 
@@ -104,6 +104,7 @@ class YOLOv5CSPDarknet(BaseBackbone):
 
     def build_stage_layer(self, stage_idx: int, setting: list) -> list:
         """Build a stage layer.
+
         Args:
             stage_idx (int): The index of a stage layer.
             setting (list): The architecture setting of a stage layer.
