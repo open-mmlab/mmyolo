@@ -1,35 +1,24 @@
-_base_ = './yolov8_s_syncbn_8xb16-500e_coco.py'
+_base_ = './yolov8_m_syncbn_8xb16-500e_coco.py'
 
 deepen_factor = 1.00
 widen_factor = 1.00
-
-max_epochs = 300
 
 model = dict(
     type='YOLODetector',
     backbone=dict(
         type='YOLOv8CSPDarknet',
         arch='P5',
-        out_channels=768,
+        out_channels=512,
         deepen_factor=deepen_factor,
         widen_factor=widen_factor),
     neck=dict(
         type='YOLOv8PAFPN',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        in_channels=[256, 512, 768],
-        out_channels=[256, 512, 768]),
+        in_channels=[256, 512, 512],
+        out_channels=[256, 512, 512]),
     bbox_head=dict(
         type='YOLOv8Head',
         head_module=dict(type='YOLOv8HeadModule',
                          widen_factor=widen_factor,
-                         in_channels=[256, 512, 768])))
-
-default_hooks = dict(
-    param_scheduler=dict(
-        type='YOLOv5ParamSchedulerHook',
-        max_epochs=max_epochs))
-
-train_cfg = dict(
-    type='EpochBasedTrainLoop',
-    max_epochs=max_epochs)
+                         in_channels=[256, 512, 512])))
