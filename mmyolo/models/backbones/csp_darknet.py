@@ -161,7 +161,8 @@ class YOLOv8CSPDarknet(BaseBackbone):
     Args:
         arch (str): Architecture of CSP-Darknet, from {P5}.
             Defaults to P5.
-        last_stage_out_channels (int): Final layer output channel. Defaults to 1024.
+        last_stage_out_channels (int): Final layer output channel.
+            Defaults to 1024.
         plugins (list[dict]): List of plugins for stages, each dict contains:
             - cfg (dict, required): Cfg dict to build plugin.
             - stages (tuple[bool], optional): Stages to apply plugin, length

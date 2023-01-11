@@ -3,6 +3,7 @@ from typing import List, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from mmcv.cnn import ConvModule
 from mmdet.models.utils import multi_apply
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
@@ -14,35 +15,6 @@ from torch import Tensor
 from mmyolo.registry import MODELS
 from ..utils import make_divisible
 from .yolov5_head import YOLOv5Head
-
-
-class YOLOv8DistributionFocalLoss(nn.Module):
-    r"""Distribution Focal Loss (DFL) is a variant of `Generalized Focal Loss:
-    Learning Qualified and Distributed Bounding Boxes for Dense Object
-    Detection <https://arxiv.org/abs/2006.04388>`_.
-
-    Base on https://github.com/ultralytics/ultralytics/blob/c0c0c138c12699807ff9446f942cb3bd325d670b/ultralytics/nn/modules.py#L84 # noqa
-
-    Args:
-        in_channel (int): input channel.
-    """
-
-    def __init__(self, in_channel: int = 16):
-        super().__init__()
-        self.in_channel = in_channel
-        self.conv = nn.Conv2d(
-            in_channel, 1, 1, bias=False).requires_grad_(False)
-        conv_weight_data = torch.arange(in_channel, dtype=torch.float)
-        self.conv.weight.data[:] = nn.Parameter(
-            conv_weight_data.view(1, in_channel, 1, 1))
-
-    def forward(self, x: Tensor) -> Tensor:
-        """Forward calculate."""
-        batch, _, anchors = x.shape
-        x = x.view(batch, 4, self.in_channel, anchors)
-        x = x.transpose(2, 1).softmax(1)
-        x = self.conv(x).view(batch, 4, anchors)
-        return x
 
 
 @MODELS.register_module()
@@ -89,9 +61,7 @@ class YOLOv8HeadModule(BaseModule):
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
         self.in_channels = in_channels
-        # DFL channels (ch[0] // 16 to scale 4/8/12/16/20 for n/s/m/l/x)
         self.reg_max = reg_max
-        # number of outputs per anchor
         self.number_of_output = self.num_classes + self.reg_max * 4
         self.stride = torch.zeros(self.num_levels)
         self.shape = None
@@ -173,12 +143,9 @@ class YOLOv8HeadModule(BaseModule):
                         out_channels=self.num_classes,
                         kernel_size=1)))
 
-        proj = torch.linspace(0, self.reg_max,
+        proj = torch.linspace(0, self.reg_max - 1,
                               self.reg_max).view([1, self.reg_max, 1, 1])
         self.register_buffer('proj', proj, persistent=False)
-
-        self.dfl = YOLOv8DistributionFocalLoss(
-            self.reg_max) if self.reg_max > 1 else nn.Identity()
 
     def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         """Forward features from the upstream network.
@@ -188,7 +155,7 @@ class YOLOv8HeadModule(BaseModule):
                 a 4D-tensor.
         Returns:
             Tuple[List]: A tuple of multi-level classification scores, bbox
-            predictions, and objectnesses.
+            predictions
         """
         assert len(x) == self.num_levels
         return multi_apply(self.forward_single, x, self.cls_preds,
@@ -200,12 +167,14 @@ class YOLOv8HeadModule(BaseModule):
         b, _, h, w = x.shape
         cls_logit = cls_pred(x)
         bbox_dist_preds = reg_pred(x)
-        # TODO: Test whether use matmul instead of conv can speed up training.
-        # bbox_dist_preds = bbox_dist_preds.reshape(
-        #     [-1, 4, self.reg_max, h*w]).permute(0, 2, 3, 1)
-        bbox_dist_preds = bbox_dist_preds.reshape([b, -1, h * w])
-        bbox_preds = self.dfl(bbox_dist_preds).reshape([b, -1, h, w])
-        # bbox_preds = F.conv2d(F.softmax(bbox_dist_preds, dim=1), self.proj)
+        if self.reg_max > 1:
+            bbox_dist_preds = bbox_dist_preds.reshape(
+                [-1, 4, self.reg_max, h * w]).permute(0, 2, 3, 1)
+            # TODO: Test whether use matmul instead of conv can
+            #  speed up training.
+            bbox_preds = F.conv2d(F.softmax(bbox_dist_preds, dim=1), self.proj)
+        else:
+            bbox_preds = bbox_dist_preds
         return cls_logit, bbox_preds
 
 
