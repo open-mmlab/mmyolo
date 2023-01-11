@@ -80,6 +80,17 @@ test_pipeline = [
                    'scale_factor', 'pad_param'))
 ]
 
+# only on Val
+# you can turn on `batch_shapes_cfg`,
+# we tested YOLOv8-m will get 0.02 higher than not using it.
+batch_shapes_cfg = None
+# batch_shapes_cfg = dict(
+#     type='BatchShapePolicy',
+#     batch_size=val_batch_size_per_gpu,
+#     img_size=img_scale[0],
+#     size_divisor=32,
+#     extra_pad_ratio=0.5)
+
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
@@ -94,7 +105,7 @@ val_dataloader = dict(
         data_prefix=dict(img='val2017/'),
         ann_file='annotations/instances_val2017.json',
         pipeline=test_pipeline,
-        batch_shapes_cfg=None))
+        batch_shapes_cfg=batch_shapes_cfg))
 
 test_dataloader = val_dataloader
 
