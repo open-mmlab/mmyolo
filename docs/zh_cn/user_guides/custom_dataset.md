@@ -1160,7 +1160,7 @@ docker load < /path/to/mmyolo-deploy.tar
 ### 11.2 使用 `projects/easydeploy` 进行部署
 
 ```{SeeAlso}
-详见[部署文档](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README_zh-CN.md)
+详见[部署文档](https://github.com/open-mmlab/mmyolo/blob/main/projects/easydeploy/README_zh-CN.md)
 ```
 
 TODO: 下个版本会完善这个部分...
