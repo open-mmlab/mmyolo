@@ -1435,16 +1435,16 @@ class CSPLayerWithTwoConv(BaseModule):
         in_channels (int): The input channels of the CSP layer.
         out_channels (int): The output channels of the CSP layer.
         expand_ratio (float): Ratio to adjust the number of channels of the
-            hidden layer. Default: 0.5
+            hidden layer. Defaults to 0.5.
         num_blocks (int): Number of blocks. Default: 1
         add_identity (bool): Whether to add identity in blocks.
-            Default: True
+            Defaults to True.
         conv_cfg (dict, optional): Config dict for convolution layer.
-            Default: None, which means using conv2d.
+            Defaults to None, which means using conv2d.
         norm_cfg (dict): Config dict for normalization layer.
-            Default: dict(type='BN')
+            Defaults to dict(type='BN').
         act_cfg (dict): Config dict for activation layer.
-            Default: dict(type='Swish')
+            Defaults to dict(type='SiLU', inplace=True).
         init_cfg (:obj:`ConfigDict` or dict or list[dict] or
             list[:obj:`ConfigDict`], optional): Initialization config dict.
             Defaults to None.
@@ -1459,7 +1459,7 @@ class CSPLayerWithTwoConv(BaseModule):
             add_identity: bool = True,  # shortcut
             conv_cfg: OptConfigType = None,  # no use
             norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
-            act_cfg: ConfigType = dict(type='Swish'),
+            act_cfg: ConfigType = dict(type='SiLU', inplace=True),
             init_cfg: OptMultiConfig = None) -> None:
         super().__init__(init_cfg=init_cfg)
 
