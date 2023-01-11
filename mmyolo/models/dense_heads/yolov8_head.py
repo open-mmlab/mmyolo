@@ -62,9 +62,6 @@ class YOLOv8HeadModule(BaseModule):
         self.act_cfg = act_cfg
         self.in_channels = in_channels
         self.reg_max = reg_max
-        self.number_of_output = self.num_classes + self.reg_max * 4
-        self.stride = torch.zeros(self.num_levels)
-        self.shape = None
 
         in_channels = []
         for channel in self.in_channels:
