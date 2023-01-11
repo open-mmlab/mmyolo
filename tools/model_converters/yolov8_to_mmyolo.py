@@ -31,23 +31,15 @@ convert_dict_s = {
 
 
 def convert(src, dst):
-    """Convert keys in pretrained YOLOv5 models to mmyolo style."""
+    """Convert keys in pretrained YOLOv8 models to mmyolo style."""
     convert_dict = convert_dict_s
 
-    # if src.endswith('6.pt'):
-    #     convert_dict = convert_dict_p6
-    #     is_p6_model = True
-    #     print('Converting P6 model')
-    # else:
-    #     convert_dict = convert_dict_p5
-    #     is_p6_model = False
-    #     print('Converting P5 model')
     try:
         yolov8_model = torch.load(src)['model']
         blobs = yolov8_model.state_dict()
     except ModuleNotFoundError:
         raise RuntimeError(
-            'This script must be placed under the ultralytics/yolov5 repo,'
+            'This script must be placed under the ultralytics repo,'
             ' because loading the official pretrained model need'
             ' `model.py` to build model.'
             'Also need to install hydra-core>=1.2.0 and thop>=0.1.1')
@@ -79,11 +71,11 @@ def convert(src, dst):
     torch.save(checkpoint, dst)
 
 
-# Note: This script must be placed under the yolov5 repo to run.
+# Note: This script must be placed under the YOLOv8 repo to run.
 def main():
     parser = argparse.ArgumentParser(description='Convert model keys')
     parser.add_argument(
-        '--src', default='yolov8s.pt', help='src yolov8 model path')
+        '--src', default='yolov8s.pt', help='src YOLOv8 model path')
     parser.add_argument('--dst', default='mmyolov8s.pt', help='save path')
     args = parser.parse_args()
     convert(args.src, args.dst)
