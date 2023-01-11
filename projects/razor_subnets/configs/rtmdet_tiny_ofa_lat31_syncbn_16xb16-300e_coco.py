@@ -4,7 +4,7 @@ _base_ = [
 ]
 
 custom_imports = dict(imports=['mmrazor.models'], allow_failed_imports=False)
-checkpoint_file = '/mnt/lustre/sunyue1/autolink/workspace-547/0802_mmrazor/.base/mmyolo/work-dirs/ofa_mobilenet_subnet_8xb256_in1k_note8_lat@31ms_top1@72.8_finetune@25.py_20221214_0939-981a8b2a.pth'
+checkpoint_file = 'https://openmmlab-share.oss-cn-hangzhou.aliyuncs.com/mmrazor/v1/ofa/ofa_mobilenet_subnet_8xb256_in1k_note8_lat%4031ms_top1%4072.8_finetune%4025.py_20221214_0939-981a8b2a.pth'
 deepen_factor = 0.167
 widen_factor = 1.0
 channels = [40, 112, 160]
@@ -14,7 +14,7 @@ img_scale = (960, 960)
 nas_backbone = dict(
     _delete_=True,
     type='mmrazor.sub_model',
-    fix_subnet='configs/razor_subnets/OFA_SUBNET_NOTE8_LAT31.yaml',
+    fix_subnet='projects/razor_subnets/mutable_cfg/OFA_SUBNET_NOTE8_LAT31.yaml',
     cfg=dict(
         type='mmrazor.AttentiveMobileNetV3',
         arch_setting=_base_.arch_setting,
