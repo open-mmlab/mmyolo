@@ -16,6 +16,7 @@ warnings.filterwarnings(action='ignore', category=torch.jit.TracerWarning)
 warnings.filterwarnings(action='ignore', category=torch.jit.ScriptWarning)
 warnings.filterwarnings(action='ignore', category=UserWarning)
 warnings.filterwarnings(action='ignore', category=FutureWarning)
+warnings.filterwarnings(action='ignore', category=ResourceWarning)
 
 
 def parse_args():
