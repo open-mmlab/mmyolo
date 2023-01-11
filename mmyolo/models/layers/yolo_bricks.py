@@ -1379,9 +1379,9 @@ class DarknetBottleneck(MMDET_DarknetBottleneck):
         out_channels (int): The output channels of this Module.
         expansion (float): The kernel size for hidden channel.
             Defaults to 0.5.
-        kernel_size (Sequence[int, int]): The kernel size of the convolution.
+        kernel_size (Sequence[int]): The kernel size of the convolution.
             Defaults to (1, 3).
-        padding (Sequence[int, int]): The padding size of the convolution.
+        padding (Sequence[int]): The padding size of the convolution.
             Defaults to (0, 1).
         add_identity (bool): Whether to add identity to the out.
             Default: True
@@ -1400,8 +1400,8 @@ class DarknetBottleneck(MMDET_DarknetBottleneck):
             in_channels: int,
             out_channels: int,
             expansion: float = 0.5,
-            kernel_size: Sequence[int, int] = (1, 3),
-            padding: Sequence[int, int] = (0, 1),
+            kernel_size: Sequence[int] = (1, 3),
+            padding: Sequence[int] = (0, 1),
             add_identity: bool = True,
             use_depthwise: bool = False,
             conv_cfg: OptConfigType = None,  # no use
