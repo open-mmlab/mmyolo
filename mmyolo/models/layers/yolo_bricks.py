@@ -6,6 +6,8 @@ import torch
 import torch.nn as nn
 from mmcv.cnn import (ConvModule, DepthwiseSeparableConvModule, MaxPool2d,
                       build_norm_layer)
+from mmdet.models.layers.csp_layer import \
+    DarknetBottleneck as MMDET_DarknetBottleneck
 from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from mmengine.model import BaseModule
 from mmengine.utils import digit_version
@@ -1364,7 +1366,7 @@ class RepStageBlock(nn.Module):
         return x
 
 
-class DarknetBottleneck(BaseModule):
+class DarknetBottleneck(MMDET_DarknetBottleneck):
     """The basic bottleneck block used in Darknet.
 
     Each ResBlock consists of two ConvModules and the input is added to the
@@ -1400,10 +1402,9 @@ class DarknetBottleneck(BaseModule):
                  norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
                  act_cfg=dict(type='Swish'),
                  init_cfg=None):
-        super().__init__(init_cfg)
+        super().__init__(in_channels, out_channels, init_cfg=init_cfg)
         hidden_channels = int(out_channels * expansion)
         conv = DepthwiseSeparableConvModule if use_depthwise else ConvModule
-
         assert len(kernel_size) == 2
 
         self.conv1 = ConvModule(
@@ -1425,16 +1426,6 @@ class DarknetBottleneck(BaseModule):
             act_cfg=act_cfg)
         self.add_identity = \
             add_identity and in_channels == out_channels
-
-    def forward(self, x):
-        identity = x
-        out = self.conv1(x)
-        out = self.conv2(out)
-
-        if self.add_identity:
-            return out + identity
-        else:
-            return out
 
 
 class CSPLayerWithTwoConv(BaseModule):
@@ -1495,7 +1486,7 @@ class CSPLayerWithTwoConv(BaseModule):
                 expansion=1,
                 kernel_size=(3, 3),
                 padding=(1, 1),
-                add_identity=add_identity,  # shortcut
+                add_identity=add_identity,
                 use_depthwise=False,
                 conv_cfg=conv_cfg,
                 norm_cfg=norm_cfg,
