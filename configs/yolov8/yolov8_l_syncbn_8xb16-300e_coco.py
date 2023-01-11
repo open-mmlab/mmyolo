@@ -21,7 +21,9 @@ model = dict(
         out_channels=[256, 512, 768]),
     bbox_head=dict(
         type='YOLOv8Head',
-        head_module=dict(type='YOLOv8HeadModule', widen_factor=widen_factor)))
+        head_module=dict(type='YOLOv8HeadModule',
+                         widen_factor=widen_factor,
+                         in_channels=[256, 512, 768])))
 
 default_hooks = dict(
     param_scheduler=dict(
