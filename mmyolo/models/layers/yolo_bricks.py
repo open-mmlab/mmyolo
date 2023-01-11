@@ -1411,7 +1411,7 @@ class DarknetBottleneck(MMDET_DarknetBottleneck):
         super().__init__(in_channels, out_channels, init_cfg=init_cfg)
         hidden_channels = int(out_channels * expansion)
         conv = DepthwiseSeparableConvModule if use_depthwise else ConvModule
-        assert len(kernel_size) == 2
+        assert isinstance(kernel_size, Sequence) and len(kernel_size) == 2
 
         self.conv1 = ConvModule(
             in_channels,
