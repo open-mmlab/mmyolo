@@ -1374,6 +1374,10 @@ class DarknetBottleneck(MMDET_DarknetBottleneck):
     The first convLayer has filter size of 1x1 and the second one has the
     filter size of 3x3.
 
+    Note:
+    This DarknetBottleneck is little different from MMDet's, we can
+    change the kernel size and padding for each conv.
+
     Args:
         in_channels (int): The input channels of this Module.
         out_channels (int): The output channels of this Module.
