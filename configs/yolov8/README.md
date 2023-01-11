@@ -15,8 +15,8 @@ Ultralytics YOLOv8, developed by Ultralytics, is a cutting-edge, state-of-the-ar
 | YOLOv8-n |  P5  | 640  | Yes |    x     |  37.3  | [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov8/yolov8_n_syncbn_8xb16-500e_coco.py) | [model](x) \| [log](x) |
 | YOLOv8-s |  P5  | 640  | Yes |    x     |  44.9  | [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov8/yolov8_s_syncbn_8xb16-500e_coco.py) | [model](x) \| [log](x) |
 | YOLOv8-m |  P5  | 640  | Yes |    x     |  50.3  | [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov8/yolov8_m_syncbn_8xb16-500e_coco.py) | [model](x) \| [log](x) |
-| YOLOv8-l |  P5  | 640  | Yes |    x     |  52.9  | [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov8/yolov8_l_syncbn_8xb16-300e_coco.py) | [model](x) \| [log](x) |
-| YOLOv8-x |  P5  | 640  | Yes |    x     |  53.8  | [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov8/yolov8_x_syncbn_8xb16-300e_coco.py) | [model](x) \| [log](x) |
+| YOLOv8-l |  P5  | 640  | Yes |    x     |  52.9  | [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov8/yolov8_l_syncbn_8xb16-500e_coco.py) | [model](x) \| [log](x) |
+| YOLOv8-x |  P5  | 640  | Yes |    x     |  53.8  | [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov8/yolov8_x_syncbn_8xb16-500e_coco.py) | [model](x) \| [log](x) |
 
 **Note**: The above AP is the result of the test after using the official weight conversion. We provide the [yolov8_to_mmyolo](https://github.com/open-mmlab/mmyolo/tree/dev/tools/model_converters/yolov8_to_mmyolo.py) script for you to convert YOLOv8 weights to MMYOLO.
 
