@@ -1,0 +1,40 @@
+backbone.layers.0.0:
+  chosen: shuffle_7x7
+backbone.layers.0.1:
+  chosen: shuffle_3x3
+backbone.layers.0.2:
+  chosen: shuffle_7x7
+backbone.layers.0.3:
+  chosen: shuffle_3x3
+backbone.layers.1.0:
+  chosen: shuffle_xception
+backbone.layers.1.1:
+  chosen: shuffle_5x5
+backbone.layers.1.2:
+  chosen: shuffle_5x5
+backbone.layers.1.3:
+  chosen: shuffle_3x3
+backbone.layers.2.0:
+  chosen: shuffle_3x3
+backbone.layers.2.1:
+  chosen: shuffle_5x5
+backbone.layers.2.2:
+  chosen: shuffle_3x3
+backbone.layers.2.3:
+  chosen: shuffle_5x5
+backbone.layers.2.4:
+  chosen: shuffle_3x3
+backbone.layers.2.5:
+  chosen: shuffle_xception
+backbone.layers.2.6:
+  chosen: shuffle_5x5
+backbone.layers.2.7:
+  chosen: shuffle_7x7
+backbone.layers.3.0:
+  chosen: shuffle_7x7
+backbone.layers.3.1:
+  chosen: shuffle_3x3
+backbone.layers.3.2:
+  chosen: shuffle_5x5
+backbone.layers.3.3:
+  chosen: shuffle_xception

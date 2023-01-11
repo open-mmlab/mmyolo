@@ -1,0 +1,116 @@
+backbone.first_channels:
+  chosen: 16
+backbone.last_channels:
+  chosen: 1280
+backbone.layers.1.0.expand_ratio:
+  chosen: 1
+backbone.layers.1.0.kernel_size:
+  chosen: 3
+backbone.layers.1.depth:
+  chosen: 1
+backbone.layers.1.out_channels:
+  chosen: 16
+backbone.layers.2.0.expand_ratio:
+  chosen: 3
+backbone.layers.2.0.kernel_size:
+  chosen: 5
+backbone.layers.2.1.expand_ratio:
+  chosen: 3
+backbone.layers.2.1.kernel_size:
+  chosen: 3
+backbone.layers.2.2.expand_ratio:
+  chosen: 3
+backbone.layers.2.2.kernel_size:
+  chosen: 3
+backbone.layers.2.3.expand_ratio:
+  chosen: 3
+backbone.layers.2.3.kernel_size:
+  chosen: 3
+backbone.layers.2.depth:
+  chosen: 2
+backbone.layers.2.out_channels:
+  chosen: 24
+backbone.layers.3.0.expand_ratio:
+  chosen: 4
+backbone.layers.3.0.kernel_size:
+  chosen: 5
+backbone.layers.3.1.expand_ratio:
+  chosen: 3
+backbone.layers.3.1.kernel_size:
+  chosen: 5
+backbone.layers.3.2.expand_ratio:
+  chosen: 3
+backbone.layers.3.2.kernel_size:
+  chosen: 3
+backbone.layers.3.3.expand_ratio:
+  chosen: 3
+backbone.layers.3.3.kernel_size:
+  chosen: 3
+backbone.layers.3.depth:
+  chosen: 2
+backbone.layers.3.out_channels:
+  chosen: 40
+backbone.layers.4.0.expand_ratio:
+  chosen: 4
+backbone.layers.4.0.kernel_size:
+  chosen: 3
+backbone.layers.4.1.expand_ratio:
+  chosen: 4
+backbone.layers.4.1.kernel_size:
+  chosen: 3
+backbone.layers.4.2.expand_ratio:
+  chosen: 4
+backbone.layers.4.2.kernel_size:
+  chosen: 5
+backbone.layers.4.3.expand_ratio:
+  chosen: 4
+backbone.layers.4.3.kernel_size:
+  chosen: 3
+backbone.layers.4.depth:
+  chosen: 3
+backbone.layers.4.out_channels:
+  chosen: 80
+backbone.layers.5.0.expand_ratio:
+  chosen: 4
+backbone.layers.5.0.kernel_size:
+  chosen: 3
+backbone.layers.5.1.expand_ratio:
+  chosen: 3
+backbone.layers.5.1.kernel_size:
+  chosen: 5
+backbone.layers.5.2.expand_ratio:
+  chosen: 4
+backbone.layers.5.2.kernel_size:
+  chosen: 7
+backbone.layers.5.3.expand_ratio:
+  chosen: 3
+backbone.layers.5.3.kernel_size:
+  chosen: 3
+backbone.layers.5.depth:
+  chosen: 3
+backbone.layers.5.out_channels:
+  chosen: 112
+backbone.layers.6.0.expand_ratio:
+  chosen: 6
+backbone.layers.6.0.kernel_size:
+  chosen: 3
+backbone.layers.6.1.expand_ratio:
+  chosen: 3
+backbone.layers.6.1.kernel_size:
+  chosen: 3
+backbone.layers.6.2.expand_ratio:
+  chosen: 3
+backbone.layers.6.2.kernel_size:
+  chosen: 5
+backbone.layers.6.3.expand_ratio:
+  chosen: 3
+backbone.layers.6.3.kernel_size:
+  chosen: 5
+backbone.layers.6.depth:
+  chosen: 4
+backbone.layers.6.out_channels:
+  chosen: 160
+input_shape:
+  chosen:
+  - 152
+  - 152
