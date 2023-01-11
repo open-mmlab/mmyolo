@@ -1,4 +1,4 @@
-_base_ = './yolov8_s_syncbn_8xb16-500e_coco.py'
+_base_ = './yolov8_s_syncbn_fast_8xb16-500e_coco.py'
 
 deepen_factor = 0.67
 widen_factor = 0.75
