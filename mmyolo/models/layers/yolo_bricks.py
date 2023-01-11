@@ -1377,7 +1377,12 @@ class DarknetBottleneck(MMDET_DarknetBottleneck):
     Args:
         in_channels (int): The input channels of this Module.
         out_channels (int): The output channels of this Module.
-        expansion (int): The kernel size of the convolution. Default: 0.5
+        expansion (float): The kernel size for hidden channel.
+            Defaults to 0.5.
+        kernel_size (Sequence[int, int]): The kernel size of the convolution.
+            Defaults to (1, 3).
+        padding (Sequence[int, int]): The padding size of the convolution.
+            Defaults to (0, 1).
         add_identity (bool): Whether to add identity to the out.
             Default: True
         use_depthwise (bool): Whether to use depthwise separable convolution.
@@ -1390,18 +1395,19 @@ class DarknetBottleneck(MMDET_DarknetBottleneck):
             Default: dict(type='Swish').
     """
 
-    def __init__(self,
-                 in_channels,
-                 out_channels,
-                 expansion=0.5,
-                 kernel_size=(1, 3),
-                 padding=(0, 1),
-                 add_identity=True,
-                 use_depthwise=False,
-                 conv_cfg=None,
-                 norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
-                 act_cfg=dict(type='Swish'),
-                 init_cfg=None):
+    def __init__(
+            self,
+            in_channels: int,
+            out_channels: int,
+            expansion: float = 0.5,
+            kernel_size: Sequence[int, int] = (1, 3),
+            padding: Sequence[int, int] = (0, 1),
+            add_identity: bool = True,
+            use_depthwise: bool = False,
+            conv_cfg: OptConfigType = None,  # no use
+            norm_cfg: ConfigType = dict(type='BN', momentum=0.03, eps=0.001),
+            act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+            init_cfg: OptMultiConfig = None) -> None:
         super().__init__(in_channels, out_channels, init_cfg=init_cfg)
         hidden_channels = int(out_channels * expansion)
         conv = DepthwiseSeparableConvModule if use_depthwise else ConvModule
