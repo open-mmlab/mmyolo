@@ -12,6 +12,7 @@ from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
 from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import Tensor
+from mmengine.dist import get_dist_info
 
 from mmyolo.registry import MODELS, TASK_UTILS
 from ..utils import make_divisible
@@ -430,11 +431,11 @@ class YOLOv8Head(YOLOv5Head):
         else:
             loss_bbox = flatten_pred_bboxes.sum() * 0
             loss_dfl = flatten_pred_bboxes.sum() * 0
-
+        _, world_size = get_dist_info()
         return dict(
-            loss_cls=loss_cls * num_imgs,
-            loss_bbox=loss_bbox * num_imgs,
-            loss_dfl=loss_dfl * num_imgs)
+            loss_cls=loss_cls * num_imgs * world_size,
+            loss_bbox=loss_bbox * num_imgs * world_size,
+            loss_dfl=loss_dfl * num_imgs * world_size)
 
     @staticmethod
     def gt_instances_preprocess(batch_gt_instances: Union[Tensor, Sequence],
