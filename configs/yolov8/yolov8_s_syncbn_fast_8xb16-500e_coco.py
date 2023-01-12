@@ -10,8 +10,8 @@ img_scale = (640, 640)  # height, width
 deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 500
-save_epoch_intervals = 5
-train_batch_size_per_gpu = 8
+save_epoch_intervals = 10
+train_batch_size_per_gpu = 16
 train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
@@ -23,6 +23,10 @@ strides = [8, 16, 32]
 num_det_layers = 3
 
 last_stage_out_channels = 1024
+
+# Base learning rate for optim_wrapper
+base_lr = 0.01
+lr_factor = 0.01
 
 # single-scale training is recommended to
 # be turned on, which can speed up training.
@@ -79,6 +83,82 @@ model = dict(
         nms=dict(type='nms', iou_threshold=0.7),
         max_per_img=300))
 
+albu_train_transform = [
+    dict(type='Blur', p=0.01),
+    dict(type='MedianBlur', p=0.01),
+    dict(type='ToGray', p=0.01),
+    dict(type='CLAHE', p=0.01)
+]
+
+pre_transform = [
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadAnnotations', with_bbox=True)
+]
+
+last_transform = [
+    dict(
+        type='YOLOv5RandomAffine',
+        max_rotate_degree=0.0,
+        max_shear_degree=0.0,
+        scaling_ratio_range=(0.5, 1.5),
+        # img_scale is (width, height)
+        border=(-img_scale[0] // 2, -img_scale[1] // 2),
+        border_val=(114, 114, 114)),
+    dict(
+        type='mmdet.Albu',
+        transforms=albu_train_transform,
+        bbox_params=dict(
+            type='BboxParams',
+            format='pascal_voc',
+            label_fields=['gt_bboxes_labels', 'gt_ignore_flags']),
+        keymap={
+            'img': 'image',
+            'gt_bboxes': 'bboxes'
+        }),
+    dict(type='YOLOv5HSVRandomAug'),
+    dict(type='mmdet.RandomFlip', prob=0.5),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
+                   'flip_direction'))
+]
+train_pipeline = [
+    *pre_transform,
+    dict(
+        type='Mosaic',
+        img_scale=img_scale,
+        pad_val=114.0,
+        pre_transform=pre_transform),
+    *last_transform
+]
+
+train_pipeline_stage2 = [
+    *pre_transform,
+    dict(type='YOLOv5KeepRatioResize', scale=img_scale),
+    dict(
+        type='LetterResize',
+        scale=img_scale,
+        allow_scale_up=True,
+        pad_val=dict(img=114.0)),
+    *last_transform
+]
+
+train_dataloader = dict(
+    batch_size=train_batch_size_per_gpu,
+    num_workers=train_num_workers,
+    persistent_workers=persistent_workers,
+    pin_memory=True,
+    sampler=dict(type='DefaultSampler', shuffle=True),
+    collate_fn=dict(type='yolov5_collate'),
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_root,
+        ann_file='annotations/instances_train2017.json',
+        data_prefix=dict(img='train2017/'),
+        filter_cfg=dict(filter_empty_gt=False, min_size=32),
+        pipeline=train_pipeline))
+
+
 test_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
@@ -123,6 +203,44 @@ val_dataloader = dict(
 
 test_dataloader = val_dataloader
 
+param_scheduler = None
+optim_wrapper = dict(
+    type='OptimWrapper',
+    optimizer=dict(
+        type='SGD',
+        lr=base_lr,
+        momentum=0.937,
+        weight_decay=0.0005,
+        nesterov=True,
+        batch_size_per_gpu=train_batch_size_per_gpu),
+    constructor='YOLOv5OptimizerConstructor')
+
+default_hooks = dict(
+    param_scheduler=dict(
+        type='YOLOv5ParamSchedulerHook',
+        scheduler_type='linear',
+        lr_factor=lr_factor,
+        max_epochs=max_epochs),
+    checkpoint=dict(
+        type='CheckpointHook',
+        interval=save_epoch_intervals,
+        save_best='auto',
+        max_keep_ckpts=2))
+
+custom_hooks = [
+    dict(
+        type='EMAHook',
+        ema_type='ExpMomentumEMA',
+        momentum=0.0001,
+        update_buffers=True,
+        strict_load=False,
+        priority=49),
+    dict(
+        type='mmdet.PipelineSwitchHook',
+        switch_epoch=max_epochs - 10,
+        switch_pipeline=train_pipeline_stage2)
+]
+
 val_evaluator = dict(
     type='mmdet.CocoMetric',
     proposal_nums=(100, 1, 10),
@@ -130,5 +248,12 @@ val_evaluator = dict(
     metric='bbox')
 test_evaluator = val_evaluator
 
+train_cfg = dict(
+    type='EpochBasedTrainLoop',
+    max_epochs=max_epochs,
+    val_interval=save_epoch_intervals,
+    dynamic_intervals=[(max_epochs - 10, 1)])
+
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
+

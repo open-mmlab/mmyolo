@@ -1,0 +1,80 @@
+Collections:
+  - Name: YOLOv8
+    Metadata:
+      Training Data: COCO
+      Training Techniques:
+        - SGD with Nesterov
+        - Weight Decay
+        - AMP
+        - Synchronize BN
+      Training Resources: 8x A100 GPUs
+      Architecture:
+        - CSPDarkNet
+        - PAFPN
+        - Decoupled Head
+    README: configs/yolov8/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmyolo/blob/v0.0.1/mmyolo/models/detectors/yolo_detector.py#L12
+      Version: v0.0.1
+
+Models:
+  - Name: yolov8_n_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_n_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB):
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP:
+    Weights:
+  - Name: yolov8_s_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_s_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB):
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP:
+    Weights:
+  - Name: yolov8_m_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_m_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB):
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP:
+    Weights:
+  - Name: yolov8_l_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_l_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB):
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP:
+    Weights:
+  - Name: yolov8_x_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_x_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB):
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP:
+    Weights:
