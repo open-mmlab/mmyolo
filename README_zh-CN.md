@@ -65,7 +65,7 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 <img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="基类-P5"/>
   图为 RangeKing@GitHub 提供，非常感谢！
 
-P6 模型图详见 [model_design.md](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/yolov5_description.html)。
+P6 模型图详见 [model_design.md](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/algorithm_descriptions/model_design.md)。
 
 </details>
 
@@ -116,7 +116,7 @@ MMYOLO 中目前仅仅实现了目标检测算法，但是相比 MMDeteciton 版
 
 ## 安装
 
-MMYOLO 依赖 PyTorch, MMCV, MMEngine 和 MMDetection，以下是安装的简要步骤。 更详细的安装指南请参考[安装文档](https://mmyolo.readthedocs.io/zh_CN/latest/get_started.html)。
+MMYOLO 依赖 PyTorch, MMCV, MMEngine 和 MMDetection，以下是安装的简要步骤。 更详细的安装指南请参考[安装文档](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/get_started.md)。
 
 ```shell
 conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
