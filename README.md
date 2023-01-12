@@ -171,7 +171,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 - [x] [YOLOv6](configs/yolov6)
 - [x] [YOLOv7](configs/yolov7)
 - [x] [PPYOLOE](configs/ppyoloe)
-- [ ] [YOLOv8](configs/yolov8) (Inference only)
+- [x] [YOLOv8](configs/yolov8)
 
 </details>
 
@@ -199,6 +199,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
       <td>
       <ul>
         <li>YOLOv5CSPDarknet</li>
+        <li>YOLOv8CSPDarknet</li>
         <li>YOLOXCSPDarknet</li>
         <li>EfficientRep</li>
         <li>CSPNeXt</li>
@@ -209,6 +210,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
       <td>
       <ul>
         <li>YOLOv5PAFPN</li>
+        <li>YOLOv8PAFPN</li>
         <li>YOLOv6RepPAFPN</li>
         <li>YOLOXPAFPN</li>
         <li>CSPNeXtPAFPN</li>
