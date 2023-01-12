@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import math
 from typing import List, Sequence, Tuple, Union
 
 import torch
@@ -8,7 +9,7 @@ from mmcv.cnn import ConvModule
 from mmdet.models.utils import multi_apply
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
                          OptMultiConfig)
-from mmengine.model import BaseModule, bias_init_with_prob
+from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import Tensor
 
@@ -72,18 +73,15 @@ class YOLOv8HeadModule(BaseModule):
 
         self._init_layers()
 
-    def init_weights(self):
-        """Initialize weights of the head."""
-        # Use prior in model initialization to improve stability
+    def init_weights(self, prior_prob=0.01):
+        """Initialize the weight and bias of PPYOLOE head."""
         super().init_weights()
-
-        for m in self.modules():
-            if isinstance(m, torch.nn.Conv2d):
-                m.reset_parameters()
-
-        bias_init = bias_init_with_prob(0.01)
-        for conv_cls in self.cls_preds:
-            conv_cls.bias.data.fill_(bias_init)
+        for a, b, s in zip(self.reg_preds, self.cls_preds,
+                           self.featmap_strides):
+            a[-1].bias.data[:] = 1.0  # box
+            # cls (.01 objects, 80 classes, 640 img)
+            b[-1].bias.data[:self.num_classes] = math.log(
+                5 / self.num_classes / (640 / s)**2)
 
     def _init_layers(self):
         """initialize conv layers in YOLOv8 head."""
