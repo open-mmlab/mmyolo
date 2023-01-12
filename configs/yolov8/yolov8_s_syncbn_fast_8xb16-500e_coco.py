@@ -63,9 +63,19 @@ model = dict(
             num_classes=num_classes,
             in_channels=[256, 512, last_stage_out_channels],
             widen_factor=widen_factor,
+            reg_max=16,
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg=dict(type='SiLU', inplace=True),
             featmap_strides=[8, 16, 32])),
+    # TODO: add head loss
+    train_cfg=dict(
+        assigner=dict(
+            type='BatchTaskAlignedAssigner',
+            num_classes=num_classes,
+            topk=13,
+            alpha=1,
+            beta=6,
+            eps=1e-9)),
     test_cfg=dict(
         multi_label=True,
         nms_pre=30000,
