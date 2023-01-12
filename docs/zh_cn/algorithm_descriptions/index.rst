@@ -16,3 +16,4 @@
    yolov5_description.md
    yolov6_description.md
    rtmdet_description.md
+   yolov8_description.md
