@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from mmdet.datasets import BaseDetDataset, CocoDataset
 
@@ -63,3 +63,46 @@ class YOLOv5CocoDataset(BatchShapePolicyDataset, CocoDataset):
     `mmyolo/datasets/utils.py#BatchShapePolicy` for details
     """
     pass
+
+
+@DATASETS.register_module()
+class PPYOLOECocoDataset(YOLOv5CocoDataset):
+
+    def filter_data(self) -> List[dict]:
+        """Filter annotations according to filter_cfg.
+
+        Returns:
+            List[dict]: Filtered results.
+        """
+
+        pass
+        # 过滤宽或高小于1e-5的
+        eps = 1e-5
+        for i in self.data_list:
+            instances = i['instances']
+            filter_instances = []
+            for instance in instances:
+                bbox = instance['bbox']
+                x1, y1, x2, y2 = bbox
+                if (x2 - x1 > eps) and (y2 - y1 > eps):
+                    filter_instances.append(instance)
+                else:
+                    print('filter', x1, y1, x2, y2)
+            i['instances'] = filter_instances
+
+        filter_data_list = []
+        # 过滤没有gt的图
+        for i in self.data_list:
+            instances = i['instances']
+            ignore_flag_list = [k['ignore_flag'] for k in instances]
+            # 没有gtbbox的图过滤掉
+            if len(instances) == 0:
+                print('filter no gt img', i['img_id'], self.test_mode)
+                continue
+            # 如果一个图里的gt_bbox都ignore，也过滤
+            if sum(ignore_flag_list) == len(instances):
+                print('filter all bboxes are ignore img', i['img_id'])
+                continue
+            filter_data_list.append(i)
+
+        return filter_data_list
