@@ -4,20 +4,19 @@ _base_ = [
 ]
 
 custom_imports = dict(imports=['mmrazor.models'], allow_failed_imports=False)
-checkpoint_file = 'https://download.openmmlab.com/mmrazor/v1/bignas/attentive_mobilenet_subnet_8xb256_in1k_flops-0.93G_acc-80.81_20221229_200440-73d92cc6.pth'
+checkpoint_file = 'https://download.openmmlab.com/mmrazor/v1/bignas/attentive_mobilenet_subnet_8xb256_in1k_flops-0.93G_acc-80.81_20221229_200440-73d92cc6.pth'  # noqa
+fix_subnet = 'https://download.openmmlab.com/mmrazor/v1/bignas/ATTENTIVE_SUBNET_A6.yaml'  # noqa
 deepen_factor = 1.2
 widen_factor = 1
 channels = [40, 128, 224]
 mid_channels = [40, 128, 224]
 
-train_dataloader = dict(
-    batch_size=16
-)
+train_dataloader = dict(batch_size=16)
 
 nas_backbone = dict(
     _delete_=True,
     type='mmrazor.sub_model',
-    fix_subnet='projects/razor_subnets/mutable_cfg/ATTENTIVE_SUBNET_A6.yaml',
+    fix_subnet=fix_subnet,
     cfg=dict(
         type='mmrazor.AttentiveMobileNetV3',
         out_indices=(2, 4, 6),
@@ -45,4 +44,4 @@ model = dict(
     bbox_head=dict(
         head_module=dict(in_channels=mid_channels, widen_factor=widen_factor)))
 
-find_unused_parameters=True
+find_unused_parameters = True

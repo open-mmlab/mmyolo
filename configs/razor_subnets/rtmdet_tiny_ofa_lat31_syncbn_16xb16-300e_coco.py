@@ -4,7 +4,8 @@ _base_ = [
 ]
 
 custom_imports = dict(imports=['mmrazor.models'], allow_failed_imports=False)
-checkpoint_file = 'https://openmmlab-share.oss-cn-hangzhou.aliyuncs.com/mmrazor/v1/ofa/ofa_mobilenet_subnet_8xb256_in1k_note8_lat%4031ms_top1%4072.8_finetune%4025.py_20221214_0939-981a8b2a.pth'
+checkpoint_file = 'https://openmmlab-share.oss-cn-hangzhou.aliyuncs.com/mmrazor/v1/ofa/ofa_mobilenet_subnet_8xb256_in1k_note8_lat%4031ms_top1%4072.8_finetune%4025.py_20221214_0939-981a8b2a.pth'  # noqa
+fix_subnet = 'https://openmmlab-share.oss-cn-hangzhou.aliyuncs.com/mmrazor/v1/ofa/rtmdet/OFA_SUBNET_NOTE8_LAT31.yaml'  # noqa
 deepen_factor = 0.167
 widen_factor = 1.0
 channels = [40, 112, 160]
@@ -14,7 +15,7 @@ img_scale = (960, 960)
 nas_backbone = dict(
     _delete_=True,
     type='mmrazor.sub_model',
-    fix_subnet='projects/razor_subnets/mutable_cfg/OFA_SUBNET_NOTE8_LAT31.yaml',
+    fix_subnet=fix_subnet,
     cfg=dict(
         type='mmrazor.AttentiveMobileNetV3',
         arch_setting=_base_.arch_setting,
@@ -86,8 +87,7 @@ train_pipeline_stage2 = [
 ]
 
 train_dataloader = dict(
-    batch_size=train_batch_size_per_gpu,
-    dataset=dict(pipeline=train_pipeline))
+    batch_size=train_batch_size_per_gpu, dataset=dict(pipeline=train_pipeline))
 
 custom_hooks = [
     dict(
@@ -118,13 +118,10 @@ test_pipeline = [
                    'scale_factor', 'pad_param'))
 ]
 
-batch_shapes_cfg = dict(
-    img_size=img_scale[0])
+batch_shapes_cfg = dict(img_size=img_scale[0])
 
 val_dataloader = dict(
-    dataset=dict(
-        batch_shapes_cfg=batch_shapes_cfg,
-        pipeline=test_pipeline))
+    dataset=dict(batch_shapes_cfg=batch_shapes_cfg, pipeline=test_pipeline))
 
 test_dataloader = val_dataloader
 
@@ -142,5 +139,4 @@ custom_hooks = [
         switch_pipeline=train_pipeline_stage2)
 ]
 
-find_unused_parameters=True
-
+find_unused_parameters = True

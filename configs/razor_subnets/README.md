@@ -20,18 +20,13 @@ This is an implementation of MMrazor Searchable Backbone Application, we provide
 ### Training commands
 In MMyolo's root directory, run the following command to train the model:
 ```bash
-python tools/train.py projects/razor_subnets/configs/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py
-```
-
-For multi-gpu training, run:
-```bash
-python -m torch.distributed.launch --nnodes=1 --node_rank=0 --nproc_per_node=${NUM_GPUS} --master_port=29506 --master_addr="127.0.0.1" tools/train.py projects/razor_subnets/configs/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py
+CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh configs/razor_subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py
 ```
 
 ### Testing commands
 In MMyolo's root directory, run the following command to test the model:
 ```bash
-python tools/test.py projects/razor_subnets/configs/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py ${CHECKPOINT_PATH}
+CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_test.sh configs/razor_subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py ${CHECKPOINT_PATH}
 ```
 
 
@@ -40,11 +35,10 @@ Here we provide the baseline version of Yolo Series with NAS backbone.
 
 |    Model    | size | box AP | Params(M) | FLOPS(G) |                      Config                        |                                                                                                                                                                 Download                                                                                                                                                                 |
 | :---------: | :--: | :----: | :-------: | :------------------: | :-------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| yolov5_s_spos_shufflenetv2 | 640  |  37.9  |    7.04    |   7.03   | [config](./configs/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_tiny_syncbn_fast_8xb32-300e_coco/rtmdet_tiny_syncbn_fast_8xb32-300e_coco_20230102_140117-dbb1dc83.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_tiny_syncbn_fast_8xb32-300e_coco/rtmdet_tiny_syncbn_fast_8xb32-300e_coco_20230102_140117.log.json) |
-| yolov6_l_attentive_a6   | 640  |  44.5  |   18.38   |  8.49   | [config](./configs/yolov6_l_attentivenas_a6_d12_syncbn_fast_16xb16-300e_coco.py) |       [model](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_m_syncbn_fast_8xb32-300e_coco/rtmdet_m_syncbn_fast_8xb32-300e_coco_20230102_135952-40af4fe8.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_m_syncbn_fast_8xb32-300e_coco/rtmdet_m_syncbn_fast_8xb32-300e_coco_20230102_135952.log.json)       |
-| rtmdet_tiny_ofa_lat31   | 960  |  41.1  |   3.91    |   6.09   | [config](./configs/rtmdet_tiny_ofa_lat31_syncbn_16xb16-300e_coco.py) |       [model](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco/rtmdet_s_syncbn_fast_8xb32-300e_coco_20221230_182329-0a8c901a.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco/rtmdet_s_syncbn_fast_8xb32-300e_coco_20221230_182329.log.json)       |
+| yolov5_s_spos_shufflenetv2 | 640  |  37.9  |    7.04    |   7.03   | [config](./yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py) | [model](https://openmmlab-share.oss-cn-hangzhou.aliyuncs.com/mmrazor/v1/spos/yolov5/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco_20230109_155302-777fd6f1.pth) \| [log](https://openmmlab-share.oss-cn-hangzhou.aliyuncs.com/mmrazor/v1/spos/yolov5/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco_20230109_155302-777fd6f1.json) |
+| yolov6_l_attentive_a6   | 640  |  44.5  |   18.38   |  8.49   | [config](./yolov6_l_attentivenas_a6_d12_syncbn_fast_16xb16-300e_coco.py) |       [model](https://openmmlab-share.oss-cn-hangzhou.aliyuncs.com/mmrazor/v1/attentivenas/yolov6/yolov6_l_attentivenas_a6_d12_syncbn_fast_16xb16-300e_coco_20230108_174944-4970f0b7.pth) \| [log](https://openmmlab-share.oss-cn-hangzhou.aliyuncs.com/mmrazor/v1/attentivenas/yolov6/yolov6_l_attentivenas_a6_d12_syncbn_fast_16xb16-300e_coco_20230108_174944-4970f0b7.json)       |
+| rtmdet_tiny_ofa_lat31   | 960  |  41.1  |   3.91    |   6.09   | [config](./rtmdet_tiny_ofa_lat31_syncbn_16xb16-300e_coco.py) |       [model](https://openmmlab-share.oss-cn-hangzhou.aliyuncs.com/mmrazor/v1/ofa/rtmdet/rtmdet_tiny_ofa_lat31_syncbn_16xb16-300e_coco_20230108_222141-24ff87dex.pth) \| [log](https://openmmlab-share.oss-cn-hangzhou.aliyuncs.com/mmrazor/v1/ofa/rtmdet/rtmdet_tiny_ofa_lat31_syncbn_16xb16-300e_coco_20230108_222141-24ff87de.json)       |
 
 **Note**:
 
 1. For a fair comparison, the config of training setting is consistent with the original model configuration, bringing about 0.2~0.5% AP improvement.
-
