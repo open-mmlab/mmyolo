@@ -12,7 +12,7 @@ from mmengine.model import BaseModule, bias_init_with_prob
 from mmengine.structures import InstanceData
 from torch import Tensor
 
-from mmyolo.registry import MODELS
+from mmyolo.registry import MODELS, TASK_UTILS
 from ..utils import make_divisible
 from .yolov5_head import YOLOv5Head
 
@@ -234,6 +234,9 @@ class YOLOv8Head(YOLOv5Head):
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             init_cfg=init_cfg)
+        self.loss_dfl = MODELS.build(loss_dfl)
+        # yolov8 doesn't need loss_obj
+        self.loss_obj = None
 
     def special_init(self):
         """Since YOLO series algorithms will inherit from YOLOv5Head, but
@@ -241,7 +244,14 @@ class YOLOv8Head(YOLOv5Head):
 
         The special_init function is designed to deal with this situation.
         """
-        pass
+        if self.train_cfg:
+            self.assigner = TASK_UTILS.build(self.train_cfg.assigner)
+
+            # Add common attributes to reduce calculation
+            self.featmap_sizes_train = None
+            self.num_level_priors = None
+            self.flatten_priors_train = None
+            self.stride_tensor = None
 
     def loss_by_feat(
             self,
@@ -275,7 +285,33 @@ class YOLOv8Head(YOLOv5Head):
         Returns:
             dict[str, Tensor]: A dictionary of losses.
         """
-        num_imgs = len(batch_img_metas)
+
+        o_preds = torch.load('/data/gulingrui/code/ultralytics/feats.pth')
+        o_targets, o_pred_distri, o_pred_bboxes, o_pred_scores = torch.load(
+            '/data/gulingrui/code/ultralytics/inputs.pth')
+        o_loss = torch.load('/data/gulingrui/code/ultralytics/loss.pth')
+        print(o_loss)
+
+        # 准备数据
+        cls_scores = [i[:, -80:] for i in o_preds]
+        # (16, 64, h, w) -> (16, 64, h*w) -> (16, h*w, 64) -> (16, h*w, 4, 16)
+        bbox_dist_preds = [
+            i[:, :64].view(16, 64, -1).permute(0, 2,
+                                               1).view(16, -1, 4,
+                                                       16).permute(0, 3, 1, 2)
+            for i in o_preds
+        ]
+        # -> (16, 16, h*w, 4)
+        assert bbox_dist_preds[0].shape[-1] == 4 and bbox_dist_preds[0].shape[
+            1] == 16
+        bbox_preds = []
+        for i in bbox_dist_preds:
+            tempres = F.conv2d(
+                F.softmax(i.float(), dim=1), self.head_module.proj)
+            bbox_preds.append(tempres)
+
+        # num_imgs = len(batch_img_metas)
+        num_imgs = 16
 
         current_featmap_sizes = [
             cls_score.shape[2:] for cls_score in cls_scores
@@ -296,7 +332,9 @@ class YOLOv8Head(YOLOv5Head):
             self.stride_tensor = self.flatten_priors_train[..., [2]]
 
         # gt info
-        gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
+        # gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
+        # 使用加载的
+        gt_info = o_targets
         gt_labels = gt_info[:, :, :1]
         gt_bboxes = gt_info[:, :, 1:]  # xyxy
         pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
@@ -313,8 +351,9 @@ class YOLOv8Head(YOLOv5Head):
         ]
         # (bs, reg_max+1, n, 4) -> (bs, n, 4, reg_max+1)
         flatten_pred_dists = [
-            bbox_pred_org.permute(0, 2, 3, 1).reshape(
-                num_imgs, -1, (self.head_module.reg_max + 1) * 4)
+            bbox_pred_org.permute(0, 2, 3,
+                                  1).reshape(num_imgs, -1,
+                                             self.head_module.reg_max * 4)
             for bbox_pred_org in bbox_dist_preds
         ]
 
@@ -325,6 +364,11 @@ class YOLOv8Head(YOLOv5Head):
             self.flatten_priors_train[..., :2], flatten_pred_bboxes,
             self.stride_tensor[..., 0])
         pred_scores = torch.sigmoid(flatten_cls_preds)
+
+        o_1, o_2, o_3, o_4, o_5, o_6 = torch.load(
+            '/data/gulingrui/code/ultralytics/assigner.pth')
+        o_assigned_bboxes, o_assigned_scores, o_fg_mask_pre_prior = torch.load(
+            '/data/gulingrui/code/ultralytics/assignerres.pth')
 
         assigned_result = self.assigner(flatten_pred_bboxes.detach(),
                                         pred_scores.detach(),
@@ -361,10 +405,8 @@ class YOLOv8Head(YOLOv5Head):
             bbox_weight = torch.masked_select(
                 assigned_scores.sum(-1), fg_mask_pre_prior).unsqueeze(-1)
             loss_bbox = self.loss_bbox(
-                pred_bboxes_pos,
-                assigned_bboxes_pos,
-                weight=bbox_weight,
-                avg_factor=assigned_scores_sum)
+                pred_bboxes_pos, assigned_bboxes_pos,
+                weight=bbox_weight) / assigned_scores_sum
 
             # dfl loss
             dist_mask = fg_mask_pre_prior.unsqueeze(-1).repeat(
@@ -390,3 +432,69 @@ class YOLOv8Head(YOLOv5Head):
             loss_dfl = flatten_pred_bboxes.sum() * 0
 
         return dict(loss_cls=loss_cls, loss_bbox=loss_bbox, loss_dfl=loss_dfl)
+
+    @staticmethod
+    def gt_instances_preprocess(batch_gt_instances: Union[Tensor, Sequence],
+                                batch_size: int) -> Tensor:
+        """Split batch_gt_instances with batch size, from [all_gt_bboxes, 6]
+        to.
+
+        [batch_size, number_gt, 5]. If some shape of single batch smaller than
+        gt bbox len, then using [-1., 0., 0., 0., 0.] to fill.
+
+        Args:
+            batch_gt_instances (Sequence[Tensor]): Ground truth
+                instances for whole batch, shape [all_gt_bboxes, 6]
+            batch_size (int): Batch size.
+
+        Returns:
+            Tensor: batch gt instances data, shape [batch_size, number_gt, 5]
+        """
+        if isinstance(batch_gt_instances, Sequence):
+            max_gt_bbox_len = max(
+                [len(gt_instances) for gt_instances in batch_gt_instances])
+            # fill [-1., 0., 0., 0., 0.] if some shape of
+            # single batch not equal max_gt_bbox_len
+            batch_instance_list = []
+            for index, gt_instance in enumerate(batch_gt_instances):
+                bboxes = gt_instance.bboxes
+                labels = gt_instance.labels
+                batch_instance_list.append(
+                    torch.cat((labels[:, None], bboxes), dim=-1))
+
+                if bboxes.shape[0] >= max_gt_bbox_len:
+                    continue
+
+                fill_tensor = bboxes.new_full(
+                    [max_gt_bbox_len - bboxes.shape[0], 5], 0)
+                fill_tensor[:, 0] = -1.
+                batch_instance_list[index] = torch.cat(
+                    (batch_instance_list[-1], fill_tensor), dim=0)
+
+            return torch.stack(batch_instance_list)
+        else:
+            # faster version
+            # sqlit batch gt instance [all_gt_bboxes, 6] ->
+            # [batch_size, number_gt_each_batch, 5]
+            batch_instance_list = []
+            max_gt_bbox_len = 0
+            for i in range(batch_size):
+                single_batch_instance = \
+                    batch_gt_instances[batch_gt_instances[:, 0] == i, :]
+                single_batch_instance = single_batch_instance[:, 1:]
+                batch_instance_list.append(single_batch_instance)
+                if len(single_batch_instance) > max_gt_bbox_len:
+                    max_gt_bbox_len = len(single_batch_instance)
+
+            # fill [-1., 0., 0., 0., 0.] if some shape of
+            # single batch not equal max_gt_bbox_len
+            for index, gt_instance in enumerate(batch_instance_list):
+                if gt_instance.shape[0] >= max_gt_bbox_len:
+                    continue
+                fill_tensor = batch_gt_instances.new_full(
+                    [max_gt_bbox_len - gt_instance.shape[0], 5], 0)
+                fill_tensor[:, 0] = -1.
+                batch_instance_list[index] = torch.cat(
+                    (batch_instance_list[index], fill_tensor), dim=0)
+
+            return torch.stack(batch_instance_list)
