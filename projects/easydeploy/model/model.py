@@ -11,7 +11,8 @@ from torch import Tensor
 from mmyolo.models import RepVGGBlock
 from mmyolo.models.dense_heads import (RTMDetHead, YOLOv5Head, YOLOv7Head,
                                        YOLOXHead)
-from ..backbone import DeployFocus, GConvFocus, NcnnFocus
+from mmyolo.models.layers import CSPLayerWithTwoConv
+from ..backbone import DeployC2f, DeployFocus, GConvFocus, NcnnFocus
 from ..bbox_code import (rtmdet_bbox_decoder, yolov5_bbox_decoder,
                          yolox_bbox_decoder)
 from ..nms import batched_nms, efficient_nms, onnx_nms
@@ -49,7 +50,7 @@ class DeployModel(nn.Module):
         for layer in self.baseModel.modules():
             if isinstance(layer, RepVGGBlock):
                 layer.switch_to_deploy()
-            if isinstance(layer, Focus):
+            elif isinstance(layer, Focus):
                 # onnxruntime tensorrt8 tensorrt7
                 if self.backend in (1, 2, 3):
                     self.baseModel.backbone.stem = DeployFocus(layer)
@@ -59,6 +60,8 @@ class DeployModel(nn.Module):
                 # switch focus to group conv
                 else:
                     self.baseModel.backbone.stem = GConvFocus(layer)
+            elif isinstance(layer, CSPLayerWithTwoConv):
+                setattr(layer, '__class__', DeployC2f)
 
     def pred_by_feat(self,
                      cls_scores: List[Tensor],
