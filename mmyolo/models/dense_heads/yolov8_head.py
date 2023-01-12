@@ -177,7 +177,6 @@ class YOLOv8HeadModule(BaseModule):
             return cls_logit, bbox_preds
 
 
-# TODO Training mode is currently not supported
 @MODELS.register_module()
 class YOLOv8Head(YOLOv5Head):
     """YOLOv8Head head used in `YOLOv8`.
@@ -369,10 +368,10 @@ class YOLOv8Head(YOLOv5Head):
             self.stride_tensor[..., 0])
         pred_scores = torch.sigmoid(flatten_cls_preds)
 
-        o_1, o_2, o_3, o_4, o_5, o_6 = torch.load(
-            '/data/gulingrui/code/ultralytics/assigner.pth')
-        o_assigned_bboxes, o_assigned_scores, o_fg_mask_pre_prior = torch.load(
-            '/data/gulingrui/code/ultralytics/assignerres.pth')
+        # o_1, o_2, o_3, o_4, o_5, o_6 = torch.load(
+        #     '/data/gulingrui/code/ultralytics/assigner.pth')
+        # o_assigned_bboxes, o_assigned_scores, o_fg_mask_pre_prior = torch.load(
+        #     '/data/gulingrui/code/ultralytics/assignerres.pth')
 
         assigned_result = self.assigner(flatten_pred_bboxes.detach(),
                                         pred_scores.detach(),
@@ -383,9 +382,6 @@ class YOLOv8Head(YOLOv5Head):
         assigned_scores = assigned_result['assigned_scores']
         fg_mask_pre_prior = assigned_result['fg_mask_pre_prior']
 
-        # # cls loss
-        # with torch.cuda.amp.autocast(enabled=False):
-        #     loss_cls = self.loss_cls(flatten_cls_preds, assigned_scores)
         assigned_scores_sum = assigned_scores.sum()
 
         loss_cls = self.loss_cls(flatten_cls_preds, assigned_scores).sum()
@@ -414,7 +410,7 @@ class YOLOv8Head(YOLOv5Head):
 
             # dfl loss
             dist_mask = fg_mask_pre_prior.unsqueeze(-1).repeat(
-                [1, 1, (self.head_module.reg_max) * 4])
+                [1, 1, self.head_module.reg_max * 4])
 
             pred_dist_pos = torch.masked_select(
                 flatten_dist_preds,

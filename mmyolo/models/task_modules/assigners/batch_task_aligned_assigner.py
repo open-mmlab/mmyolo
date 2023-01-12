@@ -93,7 +93,7 @@ class BatchTaskAlignedAssigner(nn.Module):
                  alpha: float = 1.0,
                  beta: float = 6.0,
                  eps: float = 1e-7,
-                 use_ciou: bool = True):
+                 use_ciou: bool = False):
         super().__init__()
         self.num_classes = num_classes
         self.topk = topk

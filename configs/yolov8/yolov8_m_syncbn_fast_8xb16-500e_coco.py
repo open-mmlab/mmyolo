@@ -69,10 +69,6 @@ last_transform = [
                    'flip_direction'))
 ]
 
-train_pipeline = [
-    *pre_transform,
-    *mosaic_affine_transform,
-    *last_transform
-]
+train_pipeline = [*pre_transform, *mosaic_affine_transform, *last_transform]
 
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline))

@@ -82,15 +82,17 @@ model = dict(
             reduction='sum',
             loss_weight=7.5,
             return_iou=False),
+        # Since the dfloss is implemented differently in the official
+        # and mmdet, we're going to divide loss_weight by 4.
         loss_dfl=dict(
             type='mmdet.DistributionFocalLoss',
             reduction='mean',
             loss_weight=1.5 / 4)),
-    # TODO: add head loss
     train_cfg=dict(
         assigner=dict(
             type='BatchTaskAlignedAssigner',
             num_classes=num_classes,
+            use_ciou=True,
             topk=10,
             alpha=0.5,
             beta=6.0,
