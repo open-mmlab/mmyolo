@@ -26,7 +26,7 @@ model = dict(
 <details open>
 <summary><b>支持的插件</b></summary>
 
-1. [CBAM](https://github.com/open-mmlab/mmyolo/blob/dev/mmyolo/models/plugins/cbam.py#L84)
+1. [CBAM](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/plugins/cbam.py#L86)
 2. [GeneralizedAttention](https://github.com/open-mmlab/mmcv/blob/2.x/mmcv/cnn/bricks/generalized_attention.py#L13)
 3. [NonLocal2d](https://github.com/open-mmlab/mmcv/blob/2.x/mmcv/cnn/bricks/non_local.py#L250)
 4. [ContextBlock](https://github.com/open-mmlab/mmcv/blob/2.x/mmcv/cnn/bricks/context_block.py#L18)

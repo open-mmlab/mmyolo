@@ -19,7 +19,7 @@
   <div>&nbsp;</div>
 
 [![PyPI](https://img.shields.io/pypi/v/mmyolo)](https://pypi.org/project/mmyolo)
-[![docs](https://img.shields.io/badge/docs-latest-blue)](https://mmyolo.readthedocs.io/en/latest/)
+[![docs](https://img.shields.io/badge/docs-latest-blue)](https://mmyolo.readthedocs.io/zh_CN/latest/)
 [![deploy](https://github.com/open-mmlab/mmyolo/workflows/deploy/badge.svg)](https://github.com/open-mmlab/mmyolo/actions)
 [![codecov](https://codecov.io/gh/open-mmlab/mmyolo/branch/master/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmyolo)
 [![license](https://img.shields.io/github/license/open-mmlab/mmyolo.svg)](https://github.com/open-mmlab/mmyolo/blob/master/LICENSE)
@@ -29,7 +29,7 @@
 [📘使用文档](https://mmyolo.readthedocs.io/zh_CN/latest/) |
 [🛠️安装教程](https://mmyolo.readthedocs.io/zh_CN/latest/get_started.html) |
 [👀模型库](https://mmyolo.readthedocs.io/zh_CN/latest/model_zoo.html) |
-[🆕更新日志](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html) |
+[🆕更新日志](https://mmyolo.readthedocs.io/zh_CN/latest/notes/changelog.html) |
 [🤔报告问题](https://github.com/open-mmlab/mmyolo/issues/new/choose)
 
 </div>
@@ -65,7 +65,7 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 <img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="基类-P5"/>
   图为 RangeKing@GitHub 提供，非常感谢！
 
-P6 模型图详见 [model_design.md](docs/zh_CN/algorithm_descriptions/model_design.md)。
+P6 模型图详见 [model_design.md](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/algorithm_descriptions/model_design.md)。
 
 </details>
 
@@ -93,11 +93,11 @@ MMYOLO 中目前仅仅实现了目标检测算法，但是相比 MMDeteciton 版
 
 💎 **v0.3.0** 版本已经在 2023.1.8 发布：
 
-1. 实现了 [RTMDet](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md) 的快速版本。RTMDet-s 8xA100 训练只需要 14 个小时，训练速度相比原先版本提升 2.6 倍。
-2. 支持 [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/dev/configs/ppyoloe/README.md) 训练。
-3. 支持 [YOLOv5](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov5/crowdhuman/yolov5_s-v61_8xb16-300e_ignore_crowdhuman.py) 的 `iscrowd` 属性训练。
-4. 支持 [YOLOv5 正样本分配结果可视化](https://github.com/open-mmlab/mmyolo/blob/dev/projects/assigner_visualization/README.md)
-5. 新增 [YOLOv6 原理和实现全解析文档](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/algorithm_descriptions/yolov6_description.md)
+1. 实现了 [RTMDet](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/README.md) 的快速版本。RTMDet-s 8xA100 训练只需要 14 个小时，训练速度相比原先版本提升 2.6 倍。
+2. 支持 [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/main/configs/ppyoloe/README.md) 训练。
+3. 支持 [YOLOv5](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/crowdhuman/yolov5_s-v61_8xb16-300e_ignore_crowdhuman.py) 的 `iscrowd` 属性训练。
+4. 支持 [YOLOv5 正样本分配结果可视化](https://github.com/open-mmlab/mmyolo/blob/main/projects/assigner_visualization/README.md)
+5. 新增 [YOLOv6 原理和实现全解析文档](https://github.com/open-mmlab/mmyolo/blob/main/docs/zh_cn/algorithm_descriptions/yolov6_description.md)
 
 同时我们也推出了解读视频：
 
@@ -110,13 +110,13 @@ MMYOLO 中目前仅仅实现了目标检测算法，但是相比 MMDeteciton 版
 | 🌟  |          工程文件结构简析          |   [![Link](http://i2.hdslb.com/bfs/archive/41030efb84d0cada06d5451c1e6e9bccc0cdb5a3.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1LP4y117jS)[![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1LP4y117jS)](https://www.bilibili.com/video/BV1LP4y117jS)    |                                                                                [工程文件结构简析文档](https://zhuanlan.zhihu.com/p/584807195)                                                                                 |
 | 🌟  |         10分钟换遍主干网络         |  [![Link](http://i0.hdslb.com/bfs/archive/c51f1aef7c605856777249a7b4478f44bd69f3bd.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1JG4y1d7GC)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1JG4y1d7GC)](https://www.bilibili.com/video/BV1JG4y1d7GC)   |     [10分钟换遍主干网络文档](https://zhuanlan.zhihu.com/p/585641598)<br>[10分钟换遍主干网络.ipynb](https://github.com/open-mmlab/OpenMMLabCourse/blob/main/codes/MMYOLO_tutorials/[实用类第二期]10分钟换遍主干网络.ipynb)     |
 | 🌟  |        基于 sahi 的大图推理        | [![Link](https://i0.hdslb.com/bfs/archive/62c41f508dbcf63a4c721738171612d2d7069ac2.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1EK411R7Ws/)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1EK411R7Ws)](https://www.bilibili.com/video/BV1EK411R7Ws/) |                                   [10分钟轻松掌握大图推理.ipynb](https://github.com/open-mmlab/OpenMMLabCourse/blob/main/codes/MMYOLO_tutorials/[工具类第二期]10分钟轻松掌握大图推理.ipynb)                                   |
-| 🌟  | 自定义数据集从标注到部署保姆级教程 |  [![Link](https://i2.hdslb.com/bfs/archive/13f566c89a18c9c881713b63ec14da952d4c0b14.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1RG4y137i5)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1RG4y137i5)](https://www.bilibili.com/video/BV1JG4y1d7GC)  |                                                 [自定义数据集从标注到部署保姆级教程](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/user_guides/custom_dataset.md)                                                  |
+| 🌟  | 自定义数据集从标注到部署保姆级教程 |  [![Link](https://i2.hdslb.com/bfs/archive/13f566c89a18c9c881713b63ec14da952d4c0b14.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1RG4y137i5)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1RG4y137i5)](https://www.bilibili.com/video/BV1JG4y1d7GC)  |                                                       [自定义数据集从标注到部署保姆级教程](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/custom_dataset.html)                                                        |
 
 发布历史和更新细节请参考 [更新日志](https://mmyolo.readthedocs.io/zh_CN/latest/notes/changelog.html)
 
 ## 安装
 
-MMYOLO 依赖 PyTorch, MMCV, MMEngine 和 MMDetection，以下是安装的简要步骤。 更详细的安装指南请参考[安装文档](docs/zh_cn/get_started.md)。
+MMYOLO 依赖 PyTorch, MMCV, MMEngine 和 MMDetection，以下是安装的简要步骤。 更详细的安装指南请参考[安装文档](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/get_started.md)。
 
 ```shell
 conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
@@ -143,43 +143,43 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 - 用户指南
 
-  - [训练 & 测试](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#训练-测试)
-    - [学习 YOLOv5 配置文件](docs/zh_cn/user_guides/config.md)
+  - [训练 & 测试](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html)
+    - [学习 YOLOv5 配置文件](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/config.html)
   - [从入门到部署全流程](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#从入门到部署全流程)
-    - [自定义数据集](docs/zh_cn/user_guides/custom_dataset.md)
-    - [YOLOv5 从入门到部署全流程](docs/zh_cn/user_guides/yolov5_tutorial.md)
+    - [自定义数据集](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/custom_dataset.html)
+    - [YOLOv5 从入门到部署全流程](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/yolov5_tutorial.html)
   - [实用工具](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#实用工具)
-    - [可视化教程](docs/zh_cn/user_guides/visualization.md)
-    - [实用工具](docs/zh_cn/user_guides/useful_tools.md)
+    - [可视化教程](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/visualization.html)
+    - [实用工具](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html)
 
 - 算法描述
 
   - [必备基础](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#基础内容)
-    - [模型设计相关说明](docs/zh_cn/algorithm_descriptions/model_design.md)
+    - [模型设计相关说明](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/model_design.html)
   - [算法原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#算法原理和实现全解析)
-    - [YOLOv5 原理和实现全解析](docs/zh_cn/algorithm_descriptions/yolov5_description.md)
-    - [YOLOv6 原理和实现全解析](docs/zh_cn/algorithm_descriptions/yolov6_description.md)
-    - [RTMDet 原理和实现全解析](docs/zh_cn/algorithm_descriptions/rtmdet_description.md)
+    - [YOLOv5 原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/yolov5_description.html)
+    - [YOLOv6 原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/yolov6_description.html)
+    - [RTMDet 原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/rtmdet_description.html)
 
 - 算法部署
 
   - [部署必备教程](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/index.html#id1)
-    - [部署必备教程](docs/zh_cn/deploy/basic_deployment_guide.md)
+    - [部署必备教程](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/basic_deployment_guide.html)
   - [部署全流程说明](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/index.html#id2)
-    - [YOLOv5 部署全流程说明](docs/zh_cn/deploy/yolov5_deployment.md)
+    - [YOLOv5 部署全流程说明](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/yolov5_deployment.html)
 
 - 进阶指南
 
-  - [模块组合](docs/zh_cn/advanced_guides/module_combination.md)
-  - [数据流](docs/zh_cn/advanced_guides/data_flow.md)
-  - [How to](docs/zh_cn/advanced_guides/how_to.md)
-  - [插件](docs/zh_cn/advanced_guides/plugins.md)
+  - [模块组合](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/module_combination.html)
+  - [数据流](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/data_flow.html)
+  - [How to](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/how_to.html)
+  - [插件](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/plugins.html)
 
-- [解读文章和资源汇总](docs/zh_cn/article.md)
+- [解读文章和资源汇总](https://mmyolo.readthedocs.io/zh_CN/latest/article.html)
 
 ## 基准测试和模型库
 
-测试结果和模型可以在 [模型库](docs/zh_cn/model_zoo.md) 中找到。
+测试结果和模型可以在 [模型库](https://mmyolo.readthedocs.io/zh_CN/latest//model_zoo.html) 中找到。
 
 <details open>
 <summary><b>支持的算法</b></summary>
@@ -254,7 +254,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 ## 常见问题
 
-请参考 [FAQ](docs/zh_cn/notes/faq.md) 了解其他用户的常见问题。
+请参考 [FAQ](https://mmyolo.readthedocs.io/zh_CN/latest/notes/faq.html) 了解其他用户的常见问题。
 
 ## 贡献指南
 

@@ -65,7 +65,7 @@ The master branch works with **PyTorch 1.6+**.
 <img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="BaseModule-P5"/>
   The figure above is contributed by RangeKing@GitHub, thank you very much!
 
-And the figure of P6 model is in [model_design.md](docs/en/algorithm_descriptions/model_design.md).
+And the figure of P6 model is in [model_design.md](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/algorithm_descriptions/model_design.md).
 
 </details>
 
@@ -93,16 +93,16 @@ MMYOLO currently only implements the object detection algorithm, but it has a si
 
 💎 **v0.3.0** was released on 8/1/2023:
 
-1. Implement fast version of [RTMDet](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md). RTMDet-s 8xA100 training takes only 14 hours. The training speed is 2.6 times faster than the previous version.
-2. Support [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/dev/configs/ppyoloe/README.md) training
-3. Support `iscrowd` attribute training in [YOLOv5](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov5/crowdhuman/yolov5_s-v61_8xb16-300e_ignore_crowdhuman.py)
-4. Support [YOLOv5 assigner result visualization](https://github.com/open-mmlab/mmyolo/blob/dev/projects/assigner_visualization/README.md)
+1. Implement fast version of [RTMDet](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/README.md). RTMDet-s 8xA100 training takes only 14 hours. The training speed is 2.6 times faster than the previous version.
+2. Support [PPYOLOE](https://github.com/open-mmlab/mmyolo/blob/main/configs/ppyoloe/README.md) training
+3. Support `iscrowd` attribute training in [YOLOv5](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/crowdhuman/yolov5_s-v61_8xb16-300e_ignore_crowdhuman.py)
+4. Support [YOLOv5 assigner result visualization](https://github.com/open-mmlab/mmyolo/blob/main/projects/assigner_visualization/README.md)
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
 ## Installation
 
-MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps for installation. Please refer to the [Install Guide](docs/en/get_started.md) for more detailed instructions.
+MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps for installation. Please refer to the [Install Guide](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/get_started.md) for more detailed instructions.
 
 ```shell
 conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
@@ -130,37 +130,37 @@ For different parts from MMDetection, we have also prepared user guides and adva
 - User Guides
 
   - [Train & Test](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#train-test)
-    - [Learn about Configs with YOLOv5](docs/en/user_guides/config.md)
+    - [Learn about Configs with YOLOv5](https://mmyolo.readthedocs.io/en/latest/user_guides/config.html)
   - [From getting started to deployment](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#get-started-to-deployment)
-    - [Custom Dataset](docs/en/user_guides/custom_dataset.md)
-    - [From getting started to deployment with YOLOv5](docs/en/user_guides/yolov5_tutorial.md)
+    - [Custom Dataset](https://mmyolo.readthedocs.io/en/latest/user_guides/custom_dataset.html)
+    - [From getting started to deployment with YOLOv5](https://mmyolo.readthedocs.io/en/latest/user_guides/yolov5_tutorial.html)
   - [Useful Tools](https://mmdetection.readthedocs.io/en/latest/user_guides/index.html#useful-tools)
-    - [Visualization](docs/en/user_guides/visualization.md)
-    - [Useful Tools](docs/en/user_guides/useful_tools.md)
+    - [Visualization](https://mmyolo.readthedocs.io/en/latest/user_guides/visualization.html)
+    - [Useful Tools](https://mmyolo.readthedocs.io/en/latest/user_guides/useful_tools.html)
 
 - Algorithm description
 
   - [Essential Basics](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#essential-basics)
-    - [Model design-related instructions](docs/en/algorithm_descriptions/model_design.md)
+    - [Model design-related instructions](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/model_design.html)
   - [Algorithm principles and implementation](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#algorithm-principles-and-implementation)
-    - [Algorithm principles and implementation with YOLOv5](docs/en/algorithm_descriptions/yolov5_description.md)
+    - [Algorithm principles and implementation with YOLOv5](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/yolov5_description.html)
 
 - Deployment Guides
 
   - [Basic Deployment Guide](https://mmyolo.readthedocs.io/en/latest/deploy/index.html#basic-deployment-guide)
-    - [Basic Deployment Guide](docs/en/deploy/basic_deployment_guide.md)
+    - [Basic Deployment Guide](https://mmyolo.readthedocs.io/en/latest/deploy/basic_deployment_guide.html)
   - [Deployment Tutorial](https://mmyolo.readthedocs.io/en/latest/deploy/index.html#deployment-tutorial)
-    - [YOLOv5 Deployment](docs/en/deploy/yolov5_deployment.md)
+    - [YOLOv5 Deployment](https://mmyolo.readthedocs.io/en/latest/deploy/yolov5_deployment.html)
 
 - Advanced Guides
 
-  - [Data flow](docs/en/advanced_guides/data_flow.md)
-  - [How to](docs/en/advanced_guides/how_to.md)
-  - [Plugins](docs/en/advanced_guides/plugins.md)
+  - [Data flow](https://mmyolo.readthedocs.io/en/latest/advanced_guides/data_flow.html)
+  - [How to](https://mmyolo.readthedocs.io/en/latest/advanced_guides/how_to.html)
+  - [Plugins](https://mmyolo.readthedocs.io/en/latest/advanced_guides/plugins.html)
 
 ## Overview of Benchmark and Model Zoo
 
-Results and models are available in the [model zoo](docs/en/model_zoo.md).
+Results and models are available in the [model zoo](https://mmyolo.readthedocs.io/en/latest/model_zoo.html).
 
 <details open>
 <summary><b>Supported Algorithms</b></summary>
@@ -235,7 +235,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 
 ## FAQ
 
-Please refer to the [FAQ](docs/en/notes/faq.md) for frequently asked questions.
+Please refer to the [FAQ](https://mmyolo.readthedocs.io/en/latest/notes/faq.html) for frequently asked questions.
 
 ## Contributing
 
