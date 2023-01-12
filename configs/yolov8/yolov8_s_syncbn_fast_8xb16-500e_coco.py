@@ -224,6 +224,7 @@ test_dataloader = val_dataloader
 param_scheduler = None
 optim_wrapper = dict(
     type='OptimWrapper',
+    clip_grad=dict(max_norm=10.0),
     optimizer=dict(
         type='SGD',
         lr=base_lr,
