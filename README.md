@@ -65,7 +65,7 @@ The master branch works with **PyTorch 1.6+**.
 <img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="BaseModule-P5"/>
   The figure above is contributed by RangeKing@GitHub, thank you very much!
 
-And the figure of P6 model is in [model_design.md](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/yolov5_description.html).
+And the figure of P6 model is in [model_design.md](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/algorithm_descriptions/model_design.md).
 
 </details>
 
@@ -102,7 +102,7 @@ For release history and update details, please refer to [changelog](https://mmyo
 
 ## Installation
 
-MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps for installation. Please refer to the [Install Guide](https://mmyolo.readthedocs.io/en/latest/get_started.html) for more detailed instructions.
+MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps for installation. Please refer to the [Install Guide](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/get_started.md) for more detailed instructions.
 
 ```shell
 conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
