@@ -66,7 +66,26 @@ model = dict(
             reg_max=16,
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg=dict(type='SiLU', inplace=True),
-            featmap_strides=[8, 16, 32])),
+            featmap_strides=[8, 16, 32]),
+        prior_generator=dict(
+            type='mmdet.MlvlPointGenerator', offset=0.5, strides=[8, 16, 32]),
+        bbox_coder=dict(type='DistancePointBBoxCoder'),
+        loss_cls=dict(
+            type='mmdet.CrossEntropyLoss',
+            use_sigmoid=True,
+            reduction='none',
+            loss_weight=0.5),
+        loss_bbox=dict(
+            type='IoULoss',
+            iou_mode='ciou',
+            bbox_format='xyxy',
+            reduction='sum',
+            loss_weight=7.5,
+            return_iou=False),
+        loss_dfl=dict(
+            type='mmdet.DistributionFocalLoss',
+            reduction='mean',
+            loss_weight=1.5 / 4)),
     # TODO: add head loss
     train_cfg=dict(
         assigner=dict(
@@ -128,8 +147,7 @@ train_pipeline = [
         type='Mosaic',
         img_scale=img_scale,
         pad_val=114.0,
-        pre_transform=pre_transform),
-    *last_transform
+        pre_transform=pre_transform), *last_transform
 ]
 
 train_pipeline_stage2 = [
@@ -139,8 +157,7 @@ train_pipeline_stage2 = [
         type='LetterResize',
         scale=img_scale,
         allow_scale_up=True,
-        pad_val=dict(img=114.0)),
-    *last_transform
+        pad_val=dict(img=114.0)), *last_transform
 ]
 
 train_dataloader = dict(
@@ -157,7 +174,6 @@ train_dataloader = dict(
         data_prefix=dict(img='train2017/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline))
-
 
 test_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
@@ -256,4 +272,3 @@ train_cfg = dict(
 
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
-

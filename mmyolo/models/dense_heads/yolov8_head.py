@@ -173,7 +173,10 @@ class YOLOv8HeadModule(BaseModule):
             bbox_preds = F.conv2d(F.softmax(bbox_dist_preds, dim=1), self.proj)
         else:
             bbox_preds = bbox_dist_preds
-        return cls_logit, bbox_preds
+        if self.training:
+            return cls_logit, bbox_preds, bbox_dist_preds
+        else:
+            return cls_logit, bbox_preds
 
 
 # TODO Training mode is currently not supported
@@ -286,32 +289,35 @@ class YOLOv8Head(YOLOv5Head):
             dict[str, Tensor]: A dictionary of losses.
         """
 
-        o_preds = torch.load('/data/gulingrui/code/ultralytics/feats.pth')
-        o_targets, o_pred_distri, o_pred_bboxes, o_pred_scores = torch.load(
-            '/data/gulingrui/code/ultralytics/inputs.pth')
-        o_loss = torch.load('/data/gulingrui/code/ultralytics/loss.pth')
-        print(o_loss)
+        # 进行结果对齐时候使用
+        # o_preds = torch.load('/data/gulingrui/code/ultralytics/feats.pth')
+        # o_targets, o_pred_distri, o_pred_bboxes, o_pred_scores = torch.load(
+        #     '/data/gulingrui/code/ultralytics/inputs.pth')
+        # o_loss = torch.load('/data/gulingrui/code/ultralytics/loss.pth')
+        # print(o_loss)
+        #
+        # # 准备数据
+        # cls_scores = [i[:, -80:] for i in o_preds]
+        # # (16, 64, h, w) -> (16, 64, h*w) -> (16, h*w, 64)
+        # -> (16, h*w, 4, 16)
+        # bbox_dist_preds = [
+        #     i[:, :64].view(16, 64, -1).permute(0, 2,
+        #     1).view(16, -1, 4,
+        #     16).permute(0, 3, 1, 2)
+        #     for i in o_preds
+        # ]
+        # # -> (16, 16, h*w, 4)
+        # assert bbox_dist_preds[
+        # 0].shape[-1] == 4 and bbox_dist_preds[0].shape[
+        #     1] == 16
+        # bbox_preds = []
+        # for i in bbox_dist_preds:
+        #     tempres = F.conv2d(
+        #         F.softmax(i.float(), dim=1), self.head_module.proj)
+        #     bbox_preds.append(tempres)
 
-        # 准备数据
-        cls_scores = [i[:, -80:] for i in o_preds]
-        # (16, 64, h, w) -> (16, 64, h*w) -> (16, h*w, 64) -> (16, h*w, 4, 16)
-        bbox_dist_preds = [
-            i[:, :64].view(16, 64, -1).permute(0, 2,
-                                               1).view(16, -1, 4,
-                                                       16).permute(0, 3, 1, 2)
-            for i in o_preds
-        ]
-        # -> (16, 16, h*w, 4)
-        assert bbox_dist_preds[0].shape[-1] == 4 and bbox_dist_preds[0].shape[
-            1] == 16
-        bbox_preds = []
-        for i in bbox_dist_preds:
-            tempres = F.conv2d(
-                F.softmax(i.float(), dim=1), self.head_module.proj)
-            bbox_preds.append(tempres)
-
-        # num_imgs = len(batch_img_metas)
-        num_imgs = 16
+        num_imgs = len(batch_img_metas)
+        # num_imgs = 16
 
         current_featmap_sizes = [
             cls_score.shape[2:] for cls_score in cls_scores
@@ -332,9 +338,9 @@ class YOLOv8Head(YOLOv5Head):
             self.stride_tensor = self.flatten_priors_train[..., [2]]
 
         # gt info
-        # gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
-        # 使用加载的
-        gt_info = o_targets
+        gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
+        # 对齐时候使用
+        # gt_info = o_targets
         gt_labels = gt_info[:, :, :1]
         gt_bboxes = gt_info[:, :, 1:]  # xyxy
         pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
@@ -431,7 +437,10 @@ class YOLOv8Head(YOLOv5Head):
             loss_bbox = flatten_pred_bboxes.sum() * 0
             loss_dfl = flatten_pred_bboxes.sum() * 0
 
-        return dict(loss_cls=loss_cls, loss_bbox=loss_bbox, loss_dfl=loss_dfl)
+        return dict(
+            loss_cls=loss_cls * num_imgs,
+            loss_bbox=loss_bbox * num_imgs,
+            loss_dfl=loss_dfl * num_imgs)
 
     @staticmethod
     def gt_instances_preprocess(batch_gt_instances: Union[Tensor, Sequence],

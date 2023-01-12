@@ -27,7 +27,8 @@ model = YOLOv8Head(
                 topk=10,
                 alpha=0.5,
                 beta=6.0,
-                eps=1e-9))))
+                eps=1e-9,
+                use_ciou=True))))
 model.cuda()
 
 model.loss_by_feat(None, None, None, None, None, None)
