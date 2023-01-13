@@ -4,7 +4,6 @@ from typing import List, Sequence, Tuple, Union
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from mmcv.cnn import ConvModule
 from mmdet.models.utils import multi_apply
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
@@ -540,10 +539,12 @@ class YOLOv8Head(YOLOv5Head):
         loss_cls *= 0.5
         loss_dfl *= 1.5
 
+        _, world_size = get_dist_info()
+
         return dict(
-            loss_cls=loss_cls * bs,
-            loss_bbox=loss_bbox * bs,
-            loss_dfl=loss_dfl * bs)
+            loss_cls=loss_cls * bs * world_size,
+            loss_bbox=loss_bbox * bs * world_size,
+            loss_dfl=loss_dfl * bs * world_size)
 
     def preprocess(self, batch_gt_instances, batch_size):
         # 只支持fast version
@@ -637,16 +638,17 @@ class YOLOv8Head(YOLOv5Head):
 
     def loss(self, x: Tuple[Tensor], batch_data_samples: Union[list,
                                                                dict]) -> dict:
-        if isinstance(batch_data_samples, list):
-            losses = super().loss(x, batch_data_samples)
-        else:
-            outs = self(x)
-            # Fast version
-            loss_inputs = outs + (batch_data_samples['bboxes_labels'],
-                                  batch_data_samples['img_metas'])
-            losses = self.loss_by_feat(*loss_inputs)
-            losses_v8 = self.loss_by_feat_v8(*loss_inputs)
-            print('mmyolo', losses)
-            print('v8', losses_v8)
+        # if isinstance(batch_data_samples, list):
+        #     losses = super().loss(x, batch_data_samples)
+        # else:
+        assert not isinstance(batch_data_samples, list)
+        outs = self(x)
+        # Fast version
+        loss_inputs = outs + (batch_data_samples['bboxes_labels'],
+                              batch_data_samples['img_metas'])
+        # losses = self.loss_by_feat(*loss_inputs)
+        losses = self.loss_by_feat_v8(*loss_inputs)
+        # print('mmyolo', losses)
+        # print('v8', losses_v8)
 
         return losses
