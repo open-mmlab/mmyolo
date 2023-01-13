@@ -364,9 +364,8 @@ class YOLOv8Head(YOLOv5Head):
         ]
         # (bs, reg_max+1, n, 4) -> (bs, n, 4, reg_max+1)
         flatten_pred_dists = [
-            bbox_pred_org.permute(0, 2, 3,
-                                  1).reshape(num_imgs, -1,
-                                             self.head_module.reg_max * 4)
+            bbox_pred_org.reshape(num_imgs, -1,
+                                  self.head_module.reg_max * 4)
             for bbox_pred_org in bbox_dist_preds
         ]
 
@@ -420,12 +419,7 @@ class YOLOv8Head(YOLOv5Head):
                 weight=bbox_weight) / assigned_scores_sum
 
             # dfl loss
-            dist_mask = fg_mask_pre_prior.unsqueeze(-1).repeat(
-                [1, 1, self.head_module.reg_max * 4])
-
-            pred_dist_pos = torch.masked_select(
-                flatten_dist_preds,
-                dist_mask).reshape([-1, 4, self.head_module.reg_max])
+            pred_dist_pos = flatten_dist_preds[fg_mask_pre_prior]
             assigned_ltrb = self.bbox_coder.encode(
                 self.flatten_priors_train[..., :2] / self.stride_tensor,
                 assigned_bboxes,
@@ -649,9 +643,10 @@ class YOLOv8Head(YOLOv5Head):
         # Fast version
         loss_inputs = outs + (batch_data_samples['bboxes_labels'],
                               batch_data_samples['img_metas'])
-        # losses = self.loss_by_feat(*loss_inputs)
-        losses = self.loss_by_feat_v8(*loss_inputs)
+        losses = self.loss_by_feat(*loss_inputs)
+        # losses_v8 = self.loss_by_feat_v8(*loss_inputs)
+        # print('=======================================')
         # print('mmyolo', losses)
         # print('v8', losses_v8)
-
+        # print('=======================================')
         return losses
