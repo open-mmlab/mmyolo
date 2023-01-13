@@ -484,8 +484,11 @@ class YOLOv8Head(YOLOv5Head):
             pred_scores_list.append(cls_score1)
         pred_distri_list = []
         for pred_d in bbox_dist_preds:
+            # [bs, hw, 4, regmax]
+            pred_d1 = pred_d
+
             # (bs, reg_max, hw, 4) -> (bs, hw, 4, 16)
-            pred_d1 = pred_d.permute(0, 2, 3, 1)
+            # pred_d1 = pred_d.permute(0, 2, 3, 1)
             assert pred_d1.shape[-1] == 16 and pred_d1.shape[-2] == 4
             # (bs, hw, 4, 16) -> (bs, hw, 64)
             pred_d2 = pred_d1.view(bs, -1, 4 * self.head_module.reg_max)
