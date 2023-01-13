@@ -118,15 +118,6 @@ pre_transform = [
 
 last_transform = [
     dict(
-        type='YOLOv5RandomAffine',
-        max_rotate_degree=0.0,
-        max_shear_degree=0.0,
-        scaling_ratio_range=(0.5, 1.5),
-        max_aspect_ratio=100,
-        # img_scale is (width, height)
-        border=(-img_scale[0] // 2, -img_scale[1] // 2),
-        border_val=(114, 114, 114)),
-    dict(
         type='mmdet.Albu',
         transforms=albu_train_transform,
         bbox_params=dict(
@@ -150,7 +141,17 @@ train_pipeline = [
         type='Mosaic',
         img_scale=img_scale,
         pad_val=114.0,
-        pre_transform=pre_transform), *last_transform
+        pre_transform=pre_transform),
+    dict(
+        type='YOLOv5RandomAffine',
+        max_rotate_degree=0.0,
+        max_shear_degree=0.0,
+        scaling_ratio_range=(0.5, 1.5),
+        max_aspect_ratio=100,
+        # img_scale is (width, height)
+        border=(-img_scale[0] // 2, -img_scale[1] // 2),
+        border_val=(114, 114, 114)),
+    *last_transform
 ]
 
 train_pipeline_stage2 = [
@@ -160,7 +161,14 @@ train_pipeline_stage2 = [
         type='LetterResize',
         scale=img_scale,
         allow_scale_up=True,
-        pad_val=dict(img=114.0)), *last_transform
+        pad_val=dict(img=114.0)),
+    dict(
+        type='YOLOv5RandomAffine',
+        max_rotate_degree=0.0,
+        max_shear_degree=0.0,
+        scaling_ratio_range=(0.5, 1.5),
+        max_aspect_ratio=100,
+        border_val=(114, 114, 114)), *last_transform
 ]
 
 train_dataloader = dict(

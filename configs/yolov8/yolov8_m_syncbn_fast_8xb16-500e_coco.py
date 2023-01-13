@@ -28,6 +28,7 @@ model = dict(
 
 pre_transform = _base_.pre_transform
 albu_train_transform = _base_.albu_train_transform
+last_transform = _base_.last_transform
 
 mosaic_affine_transform = [
     dict(
@@ -46,30 +47,44 @@ mosaic_affine_transform = [
         border_val=(114, 114, 114))
 ]
 
-last_transform = [
+train_pipeline = [
+    *pre_transform, *mosaic_affine_transform,
     dict(
         type='YOLOv5MixUp',
         prob=mixup_ratio,
         pre_transform=[*pre_transform, *mosaic_affine_transform]),
-    dict(
-        type='mmdet.Albu',
-        transforms=albu_train_transform,
-        bbox_params=dict(
-            type='BboxParams',
-            format='pascal_voc',
-            label_fields=['gt_bboxes_labels', 'gt_ignore_flags']),
-        keymap={
-            'img': 'image',
-            'gt_bboxes': 'bboxes'
-        }),
-    dict(type='YOLOv5HSVRandomAug'),
-    dict(type='mmdet.RandomFlip', prob=0.5),
-    dict(
-        type='mmdet.PackDetInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
-                   'flip_direction'))
+    *last_transform
 ]
 
-train_pipeline = [*pre_transform, *mosaic_affine_transform, *last_transform]
-
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
+
+train_pipeline_stage2 = [
+    *pre_transform,
+    dict(type='YOLOv5KeepRatioResize', scale=img_scale),
+    dict(
+        type='LetterResize',
+        scale=img_scale,
+        allow_scale_up=True,
+        pad_val=dict(img=114.0)),
+    dict(
+        type='YOLOv5RandomAffine',
+        max_rotate_degree=0.0,
+        max_shear_degree=0.0,
+        scaling_ratio_range=(1 - affine_scale, 1 + affine_scale),
+        max_aspect_ratio=100,
+        border_val=(114, 114, 114)), *last_transform
+]
+
+custom_hooks = [
+    dict(
+        type='EMAHook',
+        ema_type='ExpMomentumEMA',
+        momentum=0.0001,
+        update_buffers=True,
+        strict_load=False,
+        priority=49),
+    dict(
+        type='mmdet.PipelineSwitchHook',
+        switch_epoch=_base_.max_epochs - 10,
+        switch_pipeline=train_pipeline_stage2)
+]
