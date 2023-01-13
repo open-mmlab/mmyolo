@@ -9,13 +9,14 @@ from mmcv.cnn import ConvModule
 from mmdet.models.utils import multi_apply
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
                          OptMultiConfig)
+from mmengine.dist import get_dist_info
 from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import Tensor
-from mmengine.dist import get_dist_info
 
 from mmyolo.registry import MODELS, TASK_UTILS
 from ..utils import make_divisible
+from .v8_utils import BboxLoss, TaskAlignedAssigner, dist2bbox, make_anchors
 from .yolov5_head import YOLOv5Head
 
 
@@ -239,6 +240,14 @@ class YOLOv8Head(YOLOv5Head):
         # yolov8 doesn't need loss_obj
         self.loss_obj = None
 
+        self.v8_assigner = TaskAlignedAssigner(
+            topk=10, num_classes=self.num_classes, alpha=0.5, beta=6.0)
+        self.bce = nn.BCEWithLogitsLoss(reduction='none')
+        self.bbox_loss = BboxLoss(
+            self.head_module.reg_max - 1, use_dfl=True).cuda()
+        self.proj = torch.arange(
+            self.head_module.reg_max, dtype=torch.float, device='cuda')
+
     def special_init(self):
         """Since YOLO series algorithms will inherit from YOLOv5Head, but
         different algorithms have special initialization process.
@@ -371,7 +380,8 @@ class YOLOv8Head(YOLOv5Head):
 
         # o_1, o_2, o_3, o_4, o_5, o_6 = torch.load(
         #     '/data/gulingrui/code/ultralytics/assigner.pth')
-        # o_assigned_bboxes, o_assigned_scores, o_fg_mask_pre_prior = torch.load(
+        # o_assigned_bboxes, o_assigned_scores, o_fg_mask_pre_prior
+        # = torch.load(
         #     '/data/gulingrui/code/ultralytics/assignerres.pth')
 
         assigned_result = self.assigner(flatten_pred_bboxes.detach(),
@@ -436,6 +446,118 @@ class YOLOv8Head(YOLOv5Head):
             loss_cls=loss_cls * num_imgs * world_size,
             loss_bbox=loss_bbox * num_imgs * world_size,
             loss_dfl=loss_dfl * num_imgs * world_size)
+
+    def loss_by_feat_v8(
+            self,
+            cls_scores: Sequence[Tensor],
+            bbox_preds: Sequence[Tensor],
+            bbox_dist_preds: Sequence[Tensor],
+            batch_gt_instances: Sequence[InstanceData],
+            batch_img_metas: Sequence[dict],
+            batch_gt_instances_ignore: OptInstanceList = None) -> dict:
+
+        # 1111 torch.Size([8, 80, 60, 60])
+        # 2222 torch.Size([8, 1, 3600, 4])
+        # 3333 torch.Size([8, 17, 3600, 4])
+
+        # v8
+        # pred_scores [16, 8400, 80]
+        # pred_bboxes [16, 8400, 4]
+        # pred_distri [16, 8400, 64]
+        # view 用的是view(b, a, 4, c // 4), 16在后
+
+        # mmyolo 下面的转成上面的
+        # cls_scores [(bs, 80, 80, 80), (bs, 80, 40, 40), (bs, 80, 20, 20)]
+        # bbox_preds [(8, 1, 6400, 4), ]
+        # bbox_dist_preds [(8, 16, 3600, 4), ]
+        # bbox_dist_preds (bs, reg_max, n, 4)
+
+        bs = cls_scores[0].shape[0]
+        # device = cls_scores[0].device
+        pred_scores_list = []
+        for cls_score in cls_scores:
+            # (bs, num_classes, 80, 80)
+            # -> (bs, num_classes, 6400)
+            # -> (bs, 6400, num_classes)
+            cls_score1 = cls_score.view(bs, self.num_classes,
+                                        -1).permute(0, 2, 1)
+            pred_scores_list.append(cls_score1)
+        pred_distri_list = []
+        for pred_d in bbox_dist_preds:
+            # (bs, reg_max, hw, 4) -> (bs, hw, 4, 16)
+            pred_d1 = pred_d.permute(0, 2, 3, 1)
+            assert pred_d1.shape[-1] == 16 and pred_d1.shape[-2] == 4
+            # (bs, hw, 4, 16) -> (bs, hw, 64)
+            pred_d2 = pred_d1.view(bs, -1, 4 * self.head_module.reg_max)
+            pred_distri_list.append(pred_d2)
+
+        pred_scores = torch.cat(pred_scores_list, dim=1)
+        pred_distri = torch.cat(pred_distri_list, dim=1)
+        assert pred_distri.shape[1] == 8400 and pred_scores.shape[1] == 8400
+
+        dtype = pred_scores.dtype
+        batch_size = pred_scores.shape[0]
+        # imgsz = torch.tensor(cls_scores[0].shape[2:], device=device, dtype=dtype) * self.self.head_module.featmap_strides[0]  # image size (h,w)   # noqa
+        anchor_points, stride_tensor = make_anchors(
+            cls_scores, self.head_module.featmap_strides, 0.5)
+
+        # targets
+        # targets = torch.cat((batch["batch_idx"].view(-1, 1),
+        # batch["cls"].view(-1, 1), batch["bboxes"]), 1)
+        targets = self.preprocess(batch_gt_instances, batch_size)
+        gt_labels, gt_bboxes = targets.split((1, 4), 2)  # cls, xyxy
+        mask_gt = gt_bboxes.sum(2, keepdim=True).gt_(0)
+
+        # pboxes
+        pred_bboxes = self.bbox_decode(anchor_points,
+                                       pred_distri)  # xyxy, (b, h*w, 4)
+
+        _, target_bboxes, target_scores, fg_mask, _ = self.v8_assigner(
+            pred_scores.detach().sigmoid(),
+            (pred_bboxes.detach() * stride_tensor).type(gt_bboxes.dtype),
+            anchor_points * stride_tensor, gt_labels, gt_bboxes, mask_gt)
+
+        target_bboxes /= stride_tensor
+        target_scores_sum = target_scores.sum()
+
+        # cls loss
+        loss_cls = self.bce(
+            pred_scores,
+            target_scores.to(dtype)).sum() / target_scores_sum  # BCE
+
+        # bbox loss
+        if fg_mask.sum():
+            loss_bbox, loss_dfl = self.bbox_loss(pred_distri, pred_bboxes,
+                                                 anchor_points, target_bboxes,
+                                                 target_scores,
+                                                 target_scores_sum, fg_mask)
+        else:
+            loss_bbox = pred_scores.sum() * 0
+            loss_dfl = pred_scores.sum() * 0
+
+        loss_bbox *= 7.5
+        loss_cls *= 0.5
+        loss_dfl *= 1.5
+
+        return dict(
+            loss_cls=loss_cls * bs,
+            loss_bbox=loss_bbox * bs,
+            loss_dfl=loss_dfl * bs)
+
+    def preprocess(self, batch_gt_instances, batch_size):
+        # 只支持fast version
+        assert isinstance(batch_gt_instances, Tensor)
+        i = batch_gt_instances[:, 0]  # image index
+        _, counts = i.unique(return_counts=True)
+        out = torch.zeros(batch_size, counts.max(), 5, device='cuda')
+        for j in range(batch_size):
+            matches = i == j
+            n = matches.sum()
+            if n:
+                out[j, :n] = batch_gt_instances[matches, 1:]
+            # 不需要mul
+            # out[..., 1:5] = xywh2xyxy(out[..., 1:5].mul_(scale_tensor))
+        return out
 
     @staticmethod
     def gt_instances_preprocess(batch_gt_instances: Union[Tensor, Sequence],
@@ -502,3 +624,28 @@ class YOLOv8Head(YOLOv5Head):
                     (batch_instance_list[index], fill_tensor), dim=0)
 
             return torch.stack(batch_instance_list)
+
+    def bbox_decode(self, anchor_points, pred_dist):
+        # if self.use_dfl:
+        b, a, c = pred_dist.shape  # batch, anchors, channels
+        pred_dist = pred_dist.view(b, a, 4, c // 4).softmax(3).matmul(
+            self.proj.type(pred_dist.dtype))
+        # pred_dist = pred_dist.view(b, a, c // 4, 4).transpose(2,3).softmax(3).matmul(self.proj.type(pred_dist.dtype))     # noqa
+        # pred_dist = (pred_dist.view(b, a, c // 4, 4).softmax(2) * self.proj.type(pred_dist.dtype).view(1, 1, -1, 1)).sum(2)  # noqa
+        return dist2bbox(pred_dist, anchor_points, xywh=False)
+
+    def loss(self, x: Tuple[Tensor], batch_data_samples: Union[list,
+                                                               dict]) -> dict:
+        if isinstance(batch_data_samples, list):
+            losses = super().loss(x, batch_data_samples)
+        else:
+            outs = self(x)
+            # Fast version
+            loss_inputs = outs + (batch_data_samples['bboxes_labels'],
+                                  batch_data_samples['img_metas'])
+            losses = self.loss_by_feat(*loss_inputs)
+            losses_v8 = self.loss_by_feat_v8(*loss_inputs)
+            print('mmyolo', losses)
+            print('v8', losses_v8)
+
+        return losses
