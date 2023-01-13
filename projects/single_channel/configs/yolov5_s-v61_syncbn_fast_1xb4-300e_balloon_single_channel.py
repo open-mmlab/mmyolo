@@ -1,7 +1,5 @@
 _base_ = '../../../configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 
-visualizer = dict(vis_backends=[dict(type='LocalVisBackend'), dict(type='WandbVisBackend')])
-
 data_root = '../../../projects/single_channel/data/balloon/'
 
 train_batch_size_per_gpu = 4
