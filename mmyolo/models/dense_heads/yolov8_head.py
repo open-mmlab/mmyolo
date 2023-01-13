@@ -141,8 +141,8 @@ class YOLOv8HeadModule(BaseModule):
                         out_channels=self.num_classes,
                         kernel_size=1)))
 
-        proj = torch.linspace(0, self.reg_max - 1,
-                              self.reg_max).view([1, self.reg_max, 1, 1])
+        # proj = torch.linspace(0, self.reg_max - 1, self.reg_max)
+        proj = torch.arange(self.reg_max, dtype=torch.float)
         self.register_buffer('proj', proj, persistent=False)
 
     def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
@@ -167,10 +167,11 @@ class YOLOv8HeadModule(BaseModule):
         bbox_dist_preds = reg_pred(x)
         if self.reg_max > 1:
             bbox_dist_preds = bbox_dist_preds.reshape(
-                [-1, 4, self.reg_max, h * w]).permute(0, 2, 3, 1)
+                [-1, 4, self.reg_max, h * w]).permute(0, 3, 1, 2)
             # TODO: Test whether use matmul instead of conv can
             #  speed up training.
-            bbox_preds = F.conv2d(F.softmax(bbox_dist_preds, dim=1), self.proj)
+            bbox_preds = bbox_dist_preds.softmax(3).matmul(self.proj)
+            bbox_preds = bbox_preds.transpose(1, 2).reshape(b, -1, h, w)
         else:
             bbox_preds = bbox_dist_preds
         if self.training:
