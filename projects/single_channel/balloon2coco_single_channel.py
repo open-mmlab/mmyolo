@@ -53,6 +53,8 @@ def convert_balloon_to_coco(ann_file, out_file, image_prefix):
 if __name__ == '__main__':
 
     convert_balloon_to_coco('projects/single_channel/data/balloon/train/via_region_data.json',
-                            'projects/single_channel/data/balloon/train.json', 'projects/single_channel/data/balloon/train/')
+                            'projects/single_channel/data/balloon/train.json', 'projects/single_channel/data/balloon'
+                                                                               '/train/')
     convert_balloon_to_coco('projects/single_channel/data/balloon/val/via_region_data.json',
-                            'projects/single_channel/data/balloon/val.json', 'projects/single_channel/data/balloon/val/')
+                            'projects/single_channel/data/balloon/val.json', 'projects/single_channel/data/balloon'
+                                                                             '/val/')
