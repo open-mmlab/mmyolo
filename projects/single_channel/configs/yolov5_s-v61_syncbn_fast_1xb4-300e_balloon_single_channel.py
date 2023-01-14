@@ -6,7 +6,7 @@ train_batch_size_per_gpu = 4
 train_num_workers = 2
 
 metainfo = {
-    'classes': ('balloon',),
+    'classes': ('balloon', ),
     'palette': [
         (220, 20, 60),
     ]
