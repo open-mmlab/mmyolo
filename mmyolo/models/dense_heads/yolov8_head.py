@@ -341,7 +341,7 @@ class YOLOv8Head(YOLOv5Head):
         assigned_scores = assigned_result['assigned_scores']
         fg_mask_pre_prior = assigned_result['fg_mask_pre_prior']
 
-        assigned_scores_sum = assigned_scores.sum()
+        assigned_scores_sum = assigned_scores.sum().clamp(min=1)
 
         loss_cls = self.loss_cls(flatten_cls_preds, assigned_scores).sum()
         loss_cls /= assigned_scores_sum
@@ -434,6 +434,8 @@ class YOLOv8Head(YOLOv5Head):
             # sqlit batch gt instance [all_gt_bboxes, 6] ->
             # [batch_size, number_gt_each_batch, 5]
             assert isinstance(batch_gt_instances, Tensor)
+            if batch_gt_instances.shape[0] == 0:
+                return batch_gt_instances.new_zeros((batch_size, 0, 5))
             i = batch_gt_instances[:, 0]  # image index
             _, counts = i.unique(return_counts=True)
             out = batch_gt_instances.new_zeros((batch_size, counts.max(), 5))
