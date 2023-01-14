@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import math
 from typing import Optional, Tuple
 
 import torch
@@ -6,10 +7,62 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
-from mmyolo.models.losses import IoULoss
 from mmyolo.registry import TASK_UTILS
 from .utils import (select_candidates_in_gts, select_highest_overlaps,
                     yolov6_iou_calculator)
+
+
+# TODO: refactor
+def bbox_iou(box1,
+             box2,
+             xywh=True,
+             GIoU=False,
+             DIoU=False,
+             CIoU=False,
+             eps=1e-7):
+    # Returns Intersection over Union (IoU) of box1(1,4) to box2(n,4)
+
+    # Get the coordinates of bounding boxes
+    if xywh:  # transform from xywh to xyxy
+        (x1, y1, w1, h1), (x2, y2, w2, h2) = box1.chunk(4,
+                                                        -1), box2.chunk(4, -1)
+        w1_, h1_, w2_, h2_ = w1 / 2, h1 / 2, w2 / 2, h2 / 2
+        b1_x1, b1_x2, b1_y1, b1_y2 = x1 - w1_, x1 + w1_, y1 - h1_, y1 + h1_
+        b2_x1, b2_x2, b2_y1, b2_y2 = x2 - w2_, x2 + w2_, y2 - h2_, y2 + h2_
+    else:  # x1, y1, x2, y2 = box1
+        b1_x1, b1_y1, b1_x2, b1_y2 = box1.chunk(4, -1)
+        b2_x1, b2_y1, b2_x2, b2_y2 = box2.chunk(4, -1)
+        w1, h1 = b1_x2 - b1_x1, b1_y2 - b1_y1 + eps
+        w2, h2 = b2_x2 - b2_x1, b2_y2 - b2_y1 + eps
+
+    # Intersection area
+    inter = (b1_x2.minimum(b2_x2) - b1_x1.maximum(b2_x1)).clamp(0) * \
+            (b1_y2.minimum(b2_y2) - b1_y1.maximum(b2_y1)).clamp(0)
+
+    # Union Area
+    union = w1 * h1 + w2 * h2 - inter + eps
+
+    # IoU
+    iou = inter / union
+    if CIoU or DIoU or GIoU:
+        cw = b1_x2.maximum(b2_x2) - b1_x1.minimum(
+            b2_x1)  # convex (smallest enclosing box) width
+        ch = b1_y2.maximum(b2_y2) - b1_y1.minimum(b2_y1)  # convex height
+        if CIoU or DIoU:  # Distance or Complete IoU https://arxiv.org/abs/1911.08287v1  # noqa
+            c2 = cw**2 + ch**2 + eps  # convex diagonal squared
+            rho2 = ((b2_x1 + b2_x2 - b1_x1 - b1_x2)**2 +
+                    (b2_y1 + b2_y2 - b1_y1 - b1_y2)**2) / 4  # center dist ** 2
+            if CIoU:  # https://github.com/Zzh-tju/DIoU-SSD-pytorch/blob/master/utils/box/box_utils.py#L47   # noqa
+                v = (4 / math.pi**2) * (torch.atan(w2 / h2) -
+                                        torch.atan(w1 / h1)).pow(2)
+                with torch.no_grad():
+                    alpha = v / (v - iou + (1 + eps))
+                return iou - (rho2 / c2 + v * alpha)  # CIoU
+            return iou - rho2 / c2  # DIoU
+        c_area = cw * ch + eps  # convex area
+        return iou - (c_area - union
+                      ) / c_area  # GIoU https://arxiv.org/pdf/1902.09630.pdf
+    return iou  # IoU
 
 
 @TASK_UTILS.register_module()
@@ -49,15 +102,6 @@ class BatchTaskAlignedAssigner(nn.Module):
         self.beta = beta
         self.eps = eps
         self.use_ciou = use_ciou
-        # TODO: need to replace the yolov6_iou_calculator function
-        if self.use_ciou:
-            iou_calculator = IoULoss(
-                iou_mode='ciou', bbox_format='xyxy', return_iou=True)[1]
-            # only need iou results
-            self.iou_calculator = lambda a, b: iou_calculator(a, b)[1]
-        else:
-            # reverse
-            self.iou_calculator = lambda a, b: yolov6_iou_calculator(b, a)
 
     @torch.no_grad()
     def forward(
@@ -223,16 +267,16 @@ class BatchTaskAlignedAssigner(nn.Module):
         idx[0] = torch.arange(end=batch_size).view(-1, 1).repeat(1, num_gt)
         idx[1] = gt_labels.squeeze(-1)
         bbox_scores = pred_scores[idx[0], idx[1]]
+        # TODO: need to replace the yolov6_iou_calculator function
+        if self.use_ciou:
+            overlaps = bbox_iou(
+                gt_bboxes.unsqueeze(2),
+                pred_bboxes.unsqueeze(1),
+                xywh=False,
+                CIoU=True).squeeze(3).clamp(0)
+        else:
+            overlaps = yolov6_iou_calculator(gt_bboxes, pred_bboxes)
 
-        overlaps = self.iou_calculator(gt_bboxes, pred_bboxes)
-        # if self.use_ciou:
-        #     overlaps = bbox_iou(
-        #         gt_bboxes.unsqueeze(2),
-        #         pred_bboxes.unsqueeze(1),
-        #         xywh=False,
-        #         CIoU=True).squeeze(3).clamp(0)
-        # else:
-        #     overlaps = yolov6_iou_calculator(gt_bboxes, pred_bboxes)
         alignment_metrics = bbox_scores.pow(self.alpha) * overlaps.pow(
             self.beta)
 

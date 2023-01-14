@@ -165,8 +165,6 @@ class YOLOv8HeadModule(BaseModule):
         if self.reg_max > 1:
             bbox_dist_preds = bbox_dist_preds.reshape(
                 [-1, 4, self.reg_max, h * w]).permute(0, 3, 1, 2)
-            # TODO: Test whether use matmul instead of conv can
-            #  speed up training.
             bbox_preds = bbox_dist_preds.softmax(3).matmul(self.proj)
             bbox_preds = bbox_preds.transpose(1, 2).reshape(b, -1, h, w)
         else:
@@ -235,7 +233,7 @@ class YOLOv8Head(YOLOv5Head):
             test_cfg=test_cfg,
             init_cfg=init_cfg)
         self.loss_dfl = MODELS.build(loss_dfl)
-        # yolov8 doesn't need loss_obj
+        # YOLOv8 doesn't need loss_obj
         self.loss_obj = None
 
     def special_init(self):
@@ -333,12 +331,11 @@ class YOLOv8Head(YOLOv5Head):
         flatten_pred_bboxes = self.bbox_coder.decode(
             self.flatten_priors_train[..., :2], flatten_pred_bboxes,
             self.stride_tensor[..., 0])
-        pred_scores = torch.sigmoid(flatten_cls_preds)
 
-        assigned_result = self.assigner(flatten_pred_bboxes.detach(),
-                                        pred_scores.detach(),
-                                        self.flatten_priors_train, gt_labels,
-                                        gt_bboxes, pad_bbox_flag)
+        assigned_result = self.assigner(
+            (flatten_pred_bboxes.detach()).type(gt_bboxes.dtype),
+            flatten_cls_preds.detach().sigmoid(), self.flatten_priors_train,
+            gt_labels, gt_bboxes, pad_bbox_flag)
 
         assigned_bboxes = assigned_result['assigned_bboxes']
         assigned_scores = assigned_result['assigned_scores']
@@ -436,25 +433,13 @@ class YOLOv8Head(YOLOv5Head):
             # faster version
             # sqlit batch gt instance [all_gt_bboxes, 6] ->
             # [batch_size, number_gt_each_batch, 5]
-            batch_instance_list = []
-            max_gt_bbox_len = 0
-            for i in range(batch_size):
-                single_batch_instance = \
-                    batch_gt_instances[batch_gt_instances[:, 0] == i, :]
-                single_batch_instance = single_batch_instance[:, 1:]
-                batch_instance_list.append(single_batch_instance)
-                if len(single_batch_instance) > max_gt_bbox_len:
-                    max_gt_bbox_len = len(single_batch_instance)
-
-            # fill [-1., 0., 0., 0., 0.] if some shape of
-            # single batch not equal max_gt_bbox_len
-            for index, gt_instance in enumerate(batch_instance_list):
-                if gt_instance.shape[0] >= max_gt_bbox_len:
-                    continue
-                fill_tensor = batch_gt_instances.new_full(
-                    [max_gt_bbox_len - gt_instance.shape[0], 5], 0)
-                fill_tensor[:, 0] = -1.
-                batch_instance_list[index] = torch.cat(
-                    (batch_instance_list[index], fill_tensor), dim=0)
-
-            return torch.stack(batch_instance_list)
+            assert isinstance(batch_gt_instances, Tensor)
+            i = batch_gt_instances[:, 0]  # image index
+            _, counts = i.unique(return_counts=True)
+            out = batch_gt_instances.new_zeros((batch_size, counts.max(), 5))
+            for j in range(batch_size):
+                matches = i == j
+                n = matches.sum()
+                if n:
+                    out[j, :n] = batch_gt_instances[matches, 1:]
+            return out
