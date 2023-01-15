@@ -1,6 +1,6 @@
+import argparse
 import imghdr
 import os
-import argparse
 from typing import List
 
 from PIL import Image
@@ -9,10 +9,10 @@ from PIL import Image
 def parse_args():
     parser = argparse.ArgumentParser(description='data_path')
     parser.add_argument(
-        "--path",
+        '--path',
         type=str,
-        default="projects/single_channel/data/balloon",
-        help="Original dataset path")
+        default='projects/single_channel/data/balloon',
+        help='Original dataset path')
     return parser.parse_args()
 
 
@@ -43,5 +43,5 @@ def main():
         L_img.save(save_path + '/' + file)
 
 
-if (__name__ == "__main__"):
+if (__name__ == '__main__'):
     main()
