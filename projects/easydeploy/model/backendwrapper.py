@@ -17,7 +17,7 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 
 class TRTWrapper(torch.nn.Module):
-    dtypeMapping = {}
+    dtype_mapping = {}
 
     def __init__(self, weight: Union[str, Path],
                  device: Optional[torch.device]):
