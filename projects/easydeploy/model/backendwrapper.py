@@ -89,7 +89,7 @@ class TRTWrapper(torch.nn.Module):
         for i, name in enumerate(self.output_names):
             i += self.num_inputs
             assert self.model.get_binding_name(i) == name
-            dtype = self.dtypeMapping[self.model.get_binding_dtype(i)]
+            dtype = self.dtype_mapping[self.model.get_binding_dtype(i)]
             shape = tuple(self.model.get_binding_shape(i))
             outputs_info.append(Binding(name, dtype, shape))
         self.inputs_info = inputs_info
