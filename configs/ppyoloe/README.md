@@ -10,6 +10,11 @@ PP-YOLOE is an excellent single-stage anchor-free model based on PP-YOLOv2, surp
 <img src="https://github.com/PaddlePaddle/PaddleDetection/blob/release/2.5/docs/images/ppyoloe_plus_map_fps.png" width="600" />
 </div>
 
+<div align=center>
+<img src="https://user-images.githubusercontent.com/71306851/212522535-6f30fa6a-6042-434f-a375-93f0c34e4d32.png"/>
+PPYOLOE-PLUS-l model structure
+</div>
+
 ## Results and models
 
 ### PPYOLOE+ COCO
