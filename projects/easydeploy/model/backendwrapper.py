@@ -36,7 +36,7 @@ class TRTWrapper(torch.nn.Module):
         self.__init_bindings()
 
     def __update_mapping(self):
-        self.dtypeMapping.update({
+        self.dtype_mapping.update({
             trt.bool: torch.bool,
             trt.int8: torch.int8,
             trt.int32: torch.int32,
