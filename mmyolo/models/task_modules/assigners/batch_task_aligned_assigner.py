@@ -33,6 +33,8 @@ class BatchTaskAlignedAssigner(nn.Module):
         beta (float): Hyper-parameters related to alignment_metrics.
             Defaults to 6.
         eps (float): Eps to avoid log(0). Default set to 1e-9
+        use_ciou (bool): Whether to use ciou while calculating iou.
+            Defaults to False.
     """
 
     def __init__(self,
