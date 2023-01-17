@@ -79,14 +79,14 @@ YOLOv8 算法的核心特性和改动可以归结为如下：
 </div>
 
 - 去掉了 Neck 模块中的 2 个卷积连接层
-- Backbone 中 C2f 的block 数从 3-6-9-3 改成了 3-6-6-3
+- Backbone 中 C2f 的 block 数从 3-6-9-3 改成了 3-6-6-3
 - 查看 N/S/M/L/X 等不同大小模型，可以发现 N/S 和 L/X 两组模型只是改了缩放系数，但是 S/M/L 等骨干网络的通道数设置不一样，没有遵循同一套缩放系数。如此设计的原因应该是同一套缩放系数下的通道设置不是最优设计，YOLOv7 网络设计时也没有遵循一套缩放系数作用于所有模型
 
 Head 部分变化最大，从原先的耦合头变成了解耦头，并且从 YOLOv5 的 Anchor-Based 变成了 Anchor-Free。其结构如下所示：
 
 <div align=center >
 <img alt="head" src="https://user-images.githubusercontent.com/17425982/212009547-189e14aa-6f93-4af0-8446-adf604a46b95.png"/>
-图 5：YOLOv8 Head 结果
+图 5：YOLOv8 Head 结构
 </div>
 
 可以看出，不再有之前的 objectness 分支，只有解耦的分类和回归分支，并且其回归分支使用了 Distribution Focal Loss 中提出的积分形式表示法。
@@ -98,7 +98,7 @@ Loss 计算过程包括 2 个部分： 正负样本分配策略和 Loss 计算�
 TaskAlignedAssigner 的匹配策略简单总结为： 根据分类与回归的分数加权的分数选择正样本。
 
 ```{math}
-t=s^\alpha+u^\beta  \\
+t=s^\alpha+u^\beta
 ```
 
 s 是标注类别对应的预测分值，u 是预测框和 gt 框的 iou，两者相乘就可以衡量对齐程度。
