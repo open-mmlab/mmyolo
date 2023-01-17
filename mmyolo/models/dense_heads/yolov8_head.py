@@ -319,7 +319,7 @@ class YOLOv8Head(YOLOv5Head):
             bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
             for bbox_pred in bbox_preds
         ]
-        # (bs, n, 4, reg_max+1)
+        # (bs, n, 4 * reg_max)
         flatten_pred_dists = [
             bbox_pred_org.reshape(num_imgs, -1, self.head_module.reg_max * 4)
             for bbox_pred_org in bbox_dist_preds
