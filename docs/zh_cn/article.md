@@ -8,6 +8,7 @@
 
 - [社区协作，简洁易用，快来开箱新一代 YOLO 系列开源库](https://zhuanlan.zhihu.com/p/575615805)
 - [MMYOLO 社区倾情贡献，RTMDet 原理社区开发者解读来啦！](https://zhuanlan.zhihu.com/p/569777684)
+- [YOLOv8 深度详解！一文看懂，快速上手](https://zhuanlan.zhihu.com/p/598566644)
 - [玩转 MMYOLO 基础类第一期： 配置文件太复杂？继承用法看不懂？配置全解读来了](https://zhuanlan.zhihu.com/p/577715188)
 - [玩转 MMYOLO 工具类第一期： 特征图可视化](https://zhuanlan.zhihu.com/p/578141381?)
 - [玩转 MMYOLO 实用类第二期：源码阅读和调试「必备」技巧文档](https://zhuanlan.zhihu.com/p/580885852)
@@ -62,6 +63,7 @@
 ## 文章
 
 - [MMDetection 3.0：目标检测新基准与前沿](https://zhuanlan.zhihu.com/p/575246786)
+- [目标检测、实例分割、旋转框样样精通！详解高性能检测算法 RTMDet](https://zhuanlan.zhihu.com/p/598846422)
 - [MMDetection 支持数据增强神器 Simple Copy Paste 全过程](https://zhuanlan.zhihu.com/p/559940982)
 
 ## 知乎问答和资源
