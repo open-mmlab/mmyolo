@@ -9,13 +9,13 @@ Figure 1：YOLOv8-P5
 
 RangeKing@github provides the graph above. Thanks, RangeKing!
 
-YOLOv8 is the next major update from YOLOv5, open sourced by ultralytics on 2023.1.10, and now supports image classification, object detection and instance segmentation tasks.
+YOLOv8 is the next major update from YOLOv5, open sourced by Ultralytics on 2023.1.10, and now supports image classification, object detection and instance segmentation tasks.
 
 <div align=center >
 <img alt="YOLOv8-logo" src="https://user-images.githubusercontent.com/17425982/212823787-44031e62-e374-4851-8267-4e56e299473a.png"/>
 Figure 2：YOLOv8-logo
 </div>
-According to the official description, Ultralytics YOLOv8 is the latest version of the YOLO object detection and image segmentation model developed by Ultralytics. **YOLOv8 is a cutting-edge, state-of-the-art (SOTA) model that builds upon the success of previous YOLO versions and introduces new features and improvements to further boost performance and flexibility**.These include a new backbone network, a new anchor-free detection head, and a new loss function. YOLOv8 is also highly efficient and can be run on a variety of hardware platforms, from CPUs to GPUs.
+According to the official description, Ultralytics YOLOv8 is the latest version of the YOLO object detection and image segmentation model developed by Ultralytics. YOLOv8 is a cutting-edge, state-of-the-art (SOTA) model that builds upon the success of previous YOLO versions and introduces new features and improvements to further boost performance and flexibility. These include a new backbone network, a new anchor-free detection head, and a new loss function. YOLOv8 is also highly efficient and can be run on a variety of hardware platforms, from CPUs to GPUs.
 
 However, instead of naming the open source library YOLOv8, ultralytics uses the word ultralytics directly because ultralytics positions the library as an algorithmic framework rather than a specific algorithm, with a major focus on scalability. It is expected that the library can be used not only for the YOLO model family, but also for non-YOLO models and various tasks such as classification segmentation pose estimation.
 
@@ -26,9 +26,9 @@ Overall, YOLOv8 is a powerful and flexible tool for object detection and image s
 Figure 3：YOLOv8-performance
 </div>
 
-yolov8 official open source address: https://github.com/ultralytics/ultralytics
+YOLOv8 official open source address: [this](https://github.com/ultralytics/ultralytics)
 
-MMYOLO open source address for yolov8: https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/
+MMYOLO open source address for YOLOv8: [this](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/)
 
 The following table shows the official results of mAP, number of parameters and FLOPs tested on the COCO Val 2017 dataset. It is evident that YOLOv8 has significantly improved precision compared to YOLOv5. However, the number of parameters and FLOPs of the N/S/M models have significantly increased. Additionally, it can be observed that the inference speed of YOLOv8 is slower in comparison to most of the YOLOv5 models.
 
@@ -130,6 +130,7 @@ The intensity of data augmentation required for different scale models varies, t
 <img alt="head" src="https://user-images.githubusercontent.com/17425982/212815840-063524e1-d754-46b1-9efc-61d17c03fd0e.png"/>
 Figure 8：results
 </div>
+
 The above visualization result can be obtained by running the [browse_dataset](https://github.com/open-mmlab/mmyolo/blob/dev/tools/analysis_tools/browse_dataset.py) script.
 
 As the data augmentation process utilized in YOLOv8 is similar to YOLOv5, we will not delve into the specifics within this article. For a more in-depth understanding of each data transformation, we recommend reviewing the [YOLOv5 algorithm analysis document](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/yolov5_description.html#id2) in MMYOLO.
@@ -201,7 +202,7 @@ test_pipeline = [
     dict(
         type='LoadImageFromFile',
         file_client_args=_base_.file_client_args),
-    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # 这里将 LetterResize 修改成 mmdet.Resize
+    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # change
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
         type='mmdet.PackDetInputs',
@@ -235,5 +236,6 @@ This article delves into the intricacies of the YOLOv8 algorithm, offering a com
 
 In summary, YOLOv8 is a highly efficient algorithm that incorporates image classification, Anchor-Free object detection, and instance segmentation. Its detection component incorporates numerous state-of-the-art YOLO algorithms to achieve new levels of performance.
 
-MMYOLO open source address for yolov8: https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/
-MMYOLO Algorithm Analysis Tutorial address is: https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/yolov5_description.html
+MMYOLO open source address for YOLOV8 [this](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/)
+
+MMYOLO Algorithm Analysis Tutorial address is [yolov5_description](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/yolov5_description.html)
