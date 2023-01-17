@@ -25,21 +25,21 @@ YOLOv8 是 ultralytics 公司在 2023 年 1月 10 号开源的 YOLOv5 的下一�
 
 下表为官方在 COCO Val 2017 数据集上测试的 mAP、参数量和 FLOPs 结果。可以看出 YOLOv8 相比 YOLOv5 精度提升非常多，但是 N/S/M 模型相应的参数量和 FLOPs 都增加了不少，从上图也可以看出相比 YOLOV5 大部分模型推理速度变慢了。
 
-| **模型** | **YOLOv5**  | **params**\*\*(M)\*\* | **FLOPs**\*\*@640 (B)\*\* | **YOLOv8**  | **params**\*\*(M)\*\* | **FLOPs**\*\*@640 (B)\*\* |
-| -------- | ----------- | --------------------- | ------------------------- | ----------- | --------------------- | ------------------------- |
-| n        | 28.0(300e)  | 1.9                   | 4.5                       | 37.3 (500e) | 3.2                   | 8.7                       |
-| s        | 37.4 (300e) | 7.2                   | 16.5                      | 44.9 (500e) | 11.2                  | 28.6                      |
-| m        | 45.4 (300e) | 21.2                  | 49.0                      | 50.2 (500e) | 25.9                  | 78.9                      |
-| l        | 49.0 (300e) | 46.5                  | 109.1                     | 52.9 (500e) | 43.7                  | 165.2                     |
-| x        | 50.7 (300e) | 86.7                  | 205.7                     | 53.9 (500e) | 68.2                  | 257.8                     |
+| **模型** | **YOLOv5**  | **params(M)** | **FLOPs@640 (B)** | **YOLOv8**  | **params(M)** | **FLOPs@640 (B)** |
+| -------- | ----------- | ------------- | ----------------- | ----------- | ------------- | ----------------- |
+| n        | 28.0(300e)  | 1.9           | 4.5               | 37.3 (500e) | 3.2           | 8.7               |
+| s        | 37.4 (300e) | 7.2           | 16.5              | 44.9 (500e) | 11.2          | 28.6              |
+| m        | 45.4 (300e) | 21.2          | 49.0              | 50.2 (500e) | 25.9          | 78.9              |
+| l        | 49.0 (300e) | 46.5          | 109.1             | 52.9 (500e) | 43.7          | 165.2             |
+| x        | 50.7 (300e) | 86.7          | 205.7             | 53.9 (500e) | 68.2          | 257.8             |
 
-额外提一句，现在各个 YOLO 系列改进算法都在 COCO 上面有明显性能提升，但是在自定义数据集上面的泛化性还没有得到广泛验证，至今依然听到不少关于 YOLOv5 泛化性能较优异的说法。对各系列 YOLO 泛化性验证也是 MMYOLO 中一个特别关心和重点发力的方向。
+额外提一句，现在各个 YOLO 系列改进算法都在 COCO 上面有明显性能提升，但是在自定义数据集上面的泛化性还没有得到广泛验证，至今依然听到不少关于 YOLOv5 泛化性能较优异的说法。**对各系列 YOLO 泛化性验证也是 MMYOLO 中一个特别关心和重点发力的方向。**
 
 阅读本文前，如果你对 YOLOv5、YOLOv6 和 RTMDet 不熟悉，可以先看下如下文档：
 
-1. YOLOv5 原理和实现全解析 https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/yolov5_description.html
-2. YOLOv6 原理和实现全解析 https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/yolov6_description.html
-3. RTMDet 原理和实现全解析 https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/rtmdet_description.html
+1. [YOLOv5 原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/yolov5_description.html)
+2. [YOLOv6 原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/yolov6_description.html)
+3. [RTMDet 原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/rtmdet_description.html)
 
 ## 1 YOLOv8 概述
 
@@ -129,7 +129,7 @@ Loss 计算包括 2 个分支： **分类和回归分支，没有了之前的 ob
 图 7：results
 </div>
 
-上述效果可以运行 https://github.com/open-mmlab/mmyolo/blob/dev/tools/analysis_tools/browse_dataset.py 脚本得到。由于每个 pipeline 都是比较常规的操作，本文不再赘述。如果想了解每个 pipeline 的细节，可以查看 MMYOLO 中 YOLOv5 的算法解析文档 https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/yolov5_description.html#id2
+上述效果可以运行 [browse_dataset](https://github.com/open-mmlab/mmyolo/blob/dev/tools/analysis_tools/browse_dataset.py) 脚本得到。由于每个 pipeline 都是比较常规的操作，本文不再赘述。如果想了解每个 pipeline 的细节，可以查看 MMYOLO 中 [YOLOv5 的算法解析文档](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/yolov5_description.html#id2) 。
 
 ## 5 训练策略
 
@@ -188,7 +188,7 @@ YOLOv8 输出特征图尺度为 80x80、40x40 和 20x20 的三个特征图。Hea
 
 MMYOLO 中提供了一套完善的特征图可视化工具，可以帮助用户可视化特征的分布情况。 为了和官方性能对齐，此处依然采用官方权重进行可视化。
 
-以 YOLOv8-s 模型为例，第一步需要下载官方权重，然后将该权重通过 https://github.com/open-mmlab/mmyolo/blob/dev/tools/model_converters/yolov8_to_mmyolo.py 脚本将去转换到 MMYOLO 中，注意必须要将脚本置于官方仓库下才能正确运行，假设得到的权重名字为 mmyolov8s.pth。
+以 YOLOv8-s 模型为例，第一步需要下载官方权重，然后将该权重通过 [yolov8_to_mmyolo](https://github.com/open-mmlab/mmyolo/blob/dev/tools/model_converters/yolov8_to_mmyolo.py) 脚本将去转换到 MMYOLO 中，注意必须要将脚本置于官方仓库下才能正确运行，假设得到的权重名字为 mmyolov8s.pth。
 
 假设想可视化 backbone 输出的 3 个特征图效果，则只需要
 
@@ -228,7 +228,7 @@ python demo/featmap_vis_demo.py demo/demo.jpg configs/yolov8/yolov8_s_syncbn_fas
 ```
 
 <div align=center >
-<img alt="head" src="https://user-images.githubusercontent.com/17425982/212816458-a4e4600a-5f50-49c6-864b-0254a2720f3c.pngg"/>
+<img alt="head" src="https://user-images.githubusercontent.com/17425982/212816458-a4e4600a-5f50-49c6-864b-0254a2720f3c.png"/>
 图 10：featmap
 </div>
 
@@ -240,4 +240,5 @@ python demo/featmap_vis_demo.py demo/demo.jpg configs/yolov8/yolov8_s_syncbn_fas
 简单来说 YOLOv8 是一个包括了图像分类、Anchor-Free 物体检测和实例分割的高效算法，检测部分设计参考了目前大量优异的最新的 YOLO 改进算法，实现了新的 SOTA。不仅如此还推出了一个全新的框架。不过这个框架还处于早期阶段，还需要不断完善。
 
 MMYOLO 开源地址： https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md
+
 MMYOLO 算法解析教程：https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#id2
