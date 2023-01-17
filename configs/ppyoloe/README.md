@@ -11,7 +11,7 @@ PP-YOLOE is an excellent single-stage anchor-free model based on PP-YOLOv2, surp
 </div>
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/71306851/212537563-33308049-76e9-4cbf-96e4-43b3a1d78b2f.png"/>
+<img src="https://user-images.githubusercontent.com/71306851/212814840-9867ae5b-5c2c-46f0-ab20-443f678406ec.png"/>
 PPYOLOE-PLUS-l model structure
 </div>
 
