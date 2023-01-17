@@ -101,10 +101,10 @@ TaskAlignedAssigner 的匹配策略简单总结为： 根据分类与回归的�
 t=s^\alpha+u^\beta
 ```
 
-s 是标注类别对应的预测分值，u 是预测框和 gt 框的 iou，两者相乘就可以衡量对齐程度。
+`s` 是标注类别对应的预测分值，`u` 是预测框和 gt 框的 iou，两者相乘就可以衡量对齐程度。
 
-1. 对于每一个 GT，对所有的预测框基于 GT 类别对应分类分数，预测框与 GT 的 IoU  的加权得到一个关联分类以及回归的对齐分数 alignment_metrics
-2. 对于每一个 GT，直接基于 alignment_metrics 对齐分数选取 topK 大的作为正样本
+1. 对于每一个 GT，对所有的预测框基于 GT 类别对应分类分数，预测框与 GT 的 IoU  的加权得到一个关联分类以及回归的对齐分数 `alignment_metrics`
+2. 对于每一个 GT，直接基于 `alignment_metrics` 对齐分数选取 topK 大的作为正样本
 
 Loss 计算包括 2 个分支： **分类和回归分支，没有了之前的 objectness 分支**。
 
@@ -167,7 +167,7 @@ YOLOv8 的推理过程和 YOLOv5 几乎一样，唯一差别在于前面需要�
 
 **(2) 维度变换**
 
-YOLOv8 输出特征图尺度为 80x80、40x40 和 20x20 的三个特征图。Head 部分输出分类和回归共 6 个尺度的特征图。
+YOLOv8 输出特征图尺度为 `80x80`、`40x40` 和 `20x20` 的三个特征图。Head 部分输出分类和回归共 6 个尺度的特征图。
 将 3 个不同尺度的类别预测分支、bbox 预测分支进行拼接，并进行维度变换。为了后续方便处理，会将原先的通道维度置换到最后，类别预测分支 和 bbox 预测分支 shape 分别为 (b, 80x80+40x40+20x20, 80)=(b,8400,80)，(b,8400,4)。
 
 **(3) 解码还原到原图尺度**
@@ -176,7 +176,7 @@ YOLOv8 输出特征图尺度为 80x80、40x40 和 20x20 的三个特征图。Hea
 
 **(4) 阈值过滤**
 
-遍历 batch 中的每张图，采用 score_thr 进行阈值过滤。在这过程中还需要考虑 **multi_label 和 nms_pre，确保过滤后的检测框数目不会多于 nms_pre。**
+遍历 batch 中的每张图，采用 `score_thr` 进行阈值过滤。在这过程中还需要考虑 **multi_label 和 nms_pre，确保过滤后的检测框数目不会多于 nms_pre。**
 
 **(5) 还原到原图尺度和 nms**
 
@@ -192,12 +192,12 @@ MMYOLO 中提供了一套完善的特征图可视化工具，可以帮助用户�
 
 假设想可视化 backbone 输出的 3 个特征图效果，则只需要
 
-```Python
+```bash
 cd mmyolo
 python demo/featmap_vis_demo.py demo/demo.jpg configs/yolov8/yolov8_s_syncbn_fast_8xb16-500e_coco.py mmyolov8s.pth --channel-reductio squeeze_mean
 ```
 
-需要特别注意，为了确保特征图和图片叠加显示能对齐效果，需要先将原先的 test_pipeline 替换为如下：
+需要特别注意，为了确保特征图和图片叠加显示能对齐效果，需要先将原先的 `test_pipeline` 替换为如下：
 
 ```Python
 test_pipeline = [
@@ -222,7 +222,7 @@ test_pipeline = [
 
 我们也可以可视化 Neck 层的 3 个输出层特征图：
 
-```Python
+```bash
 cd mmyolo
 python demo/featmap_vis_demo.py demo/demo.jpg configs/yolov8/yolov8_s_syncbn_fast_8xb16-500e_coco.py mmyolov8s.pth --channel-reductio squeeze_mean --target-layers neck
 ```

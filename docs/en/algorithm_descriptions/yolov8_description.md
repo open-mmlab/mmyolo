@@ -103,10 +103,10 @@ The matching strategy of TaskAlignedAssigner can be summarized as follows: posit
 t=s^\alpha+u^\beta
 ```
 
-s is the prediction score corresponding to the ground truth category, u is the IoU of the prediction bounding box and the gt bounding box.
+`s` is the prediction score corresponding to the ground truth category, `u` is the IoU of the prediction bounding box and the gt bounding box.
 
-1. For each ground truth, the task-aligned assigner calculates the alignment metric  for each anchor by taking the weighted product of two values: the predicted classification score of the corresponding class, and the Intersection over Union (IoU) between the predicted bounding box and the Ground Truth bounding box.
-2. For each Ground Truth, the larger top-k samples are selected as positive based on the alignment_metrics values directly.
+1. For each ground truth, the task-aligned assigner calculates the `alignment metric` for each anchor by taking the weighted product of two values: the predicted classification score of the corresponding class, and the Intersection over Union (IoU) between the predicted bounding box and the Ground Truth bounding box.
+2. For each Ground Truth, the larger top-k samples are selected as positive based on the `alignment_metrics` values directly.
 
 The loss calculation consists of 2 parts: the classification and regression, without the objectness loss in the previous model.
 
@@ -167,17 +167,17 @@ The inference and post-processing process is:
 Integrate the probability of the distance between the center and the boundary of the box into the mathematical expectation of the distances.
 
 **(2) Dimensional transformation**
-YOLOv8 outputs three feature maps with 80x80, 40x40 and 20x20 scales. A total of 6 classification and regression different scales of  feature map are output by the head module.
+YOLOv8 outputs three feature maps with `80x80`, `40x40` and `20x20` scales. A total of 6 classification and regression different scales of  feature map are output by the head module.
 The 3 different scales of category prediction branch and bbox prediction branch are combined and dimensionally transformed. For the convenience of subsequent processing, the original channel dimensions are transposed to the end, and the category prediction branch and bbox prediction branch shapes are (b, 80x80+40x40+20x20, 80)=(b,8400,80), (b,8400,4), respectively.
 
 **(3) Scale Restroation**
 The classification prediction branch utilizes sigmoid calculations, whereas the bbox prediction branch requires decoding to xyxy format and conversion to the original scale of the input images.
 
 **(4) Thresholding**
-Iterate through each graph in the batch and use score_thr to perform thresholding. In this process, we also need to consider multi_label and nms_pre to ensure that the number of detected bboxs after filtering is no more than nms_pre.
+Iterate through each graph in the batch and use `score_thr` to perform thresholding. In this process, we also need to consider multi_label and nms_pre to ensure that the number of detected bboxs after filtering is no more than nms_pre.
 
 **(5) Reduction to the original image scale and NMS**
-Reusing the parameters for preprocessing, the remaining bboxs are first resized to the original image scale and then NMS is performed. The final number of bboxes cannot be more than max_per_img.
+Reusing the parameters for preprocessing, the remaining bboxs are first resized to the original image scale and then NMS is performed. The final number of bboxes cannot be more than `max_per_img`.
 
 Special Note: **The Batch shape inference strategy, which is present in YOLOv5, is currently not activated in YOLOv8. By performing a quick test in MMYOLO, it can be observed that activating the Batch shape strategy can result in an approximate AP increase of around 0.1% to 0.2%.**
 
@@ -189,12 +189,12 @@ Take the YOLOv8-s model as an example. The first step is to download the officia
 
 Assuming that you want to visualize the effect of the 3 feature maps output by backbone and the weights are named 'mmyolov8s.pth'. Run the following command:
 
-```Python
+```bash
 cd mmyolo
 python demo/featmap_vis_demo.py demo/demo.jpg configs/yolov8/yolov8_s_syncbn_fast_8xb16-500e_coco.py mmyolov8s.pth --channel-reductio squeeze_mean
 ```
 
-In particular, to ensure that the feature map and image are shown aligned, the original test_pipeline configuration needs to be replaced with the following:
+In particular, to ensure that the feature map and image are shown aligned, the original `test_pipeline` configuration needs to be replaced with the following:
 
 ```Python
 test_pipeline = [
@@ -217,7 +217,7 @@ Figure 10：featmap
 From the above figure, we can see that the different output feature maps are mainly responsible for predicting objects at different scales.
 We can also visualize the 3 output feature maps of the neck layer.
 
-```Python
+```bash
 cd mmyolo
 python demo/featmap_vis_demo.py demo/demo.jpg configs/yolov8/yolov8_s_syncbn_fast_8xb16-500e_coco.py mmyolov8s.pth --channel-reductio squeeze_mean --target-layers neck
 ```
