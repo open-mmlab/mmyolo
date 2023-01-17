@@ -4,8 +4,8 @@
 
 ### Highlights
 
-1. Implemented [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) object detection model, and supports model deployment for [projects/easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy)
-2. Added Chinese and English versions of [Algorithm principles and implementation with YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/algorithm_descriptions/yolov8_description.md)
+1. Implemented [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) object detection model, and supports model deployment in [projects/easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy)
+2. Added Chinese and English versions of [Algorithm principles and implementation with YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/algorithm_descriptions/yolov8_description.md)
 
 ### New Features
 
