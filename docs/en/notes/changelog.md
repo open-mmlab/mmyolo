@@ -22,7 +22,7 @@
 
 A total of 9 developers contributed to this release.
 
-Thank VoyagerXvoyagerx, @tianleiSHI, @RangeKing, @PeterH0323, @Nioolek, @triple-Mu, @lyviva, @Zheng-LinXiao, @hhaAndroid
+Thank @VoyagerXvoyagerx, @tianleiSHI, @RangeKing, @PeterH0323, @Nioolek, @triple-Mu, @lyviva, @Zheng-LinXiao, @hhaAndroid
 
 ## v0.3.0 (8/1/2023)
 
