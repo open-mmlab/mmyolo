@@ -40,7 +40,7 @@ English | [简体中文](README_zh-CN.md)
 
 </div>
 
-## 💡 What's New
+##  🥳 🚀 What's New
 
 💎 **v0.4.0** was released on 18/1/2023:
 
