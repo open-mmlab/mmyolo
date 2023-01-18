@@ -63,6 +63,14 @@
 1. 实现了 [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) 目标检测模型，并通过 [projects/easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy) 支持了模型部署
 2. 新增了中英文版本的 [YOLOv8 原理和实现全解析文档](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/algorithm_descriptions/yolov8_description.md)
 
+我们提供了实用的**脚本命令速查表**
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/27466624/213104312-3580c783-2423-442f-b5f6-79204a06adb5.png">
+</div>
+
+你可以点击[链接](https://pan.baidu.com/s/1QEaqT7YayUdEvh1an0gjHg?pwd=yolo)，下载高清版 PDF 文件。
+
 同时我们也推出了解读视频：
 
 |     |                内容                |                                                                                                                                                                                                      视频                                                                                                                                                                                                       |                                                                                                                                                                 课程中的代码                                                                                                                                                                 |
