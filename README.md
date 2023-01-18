@@ -1,5 +1,5 @@
 <div align="center">
-  <img width="100%" src="https://user-images.githubusercontent.com/27466624/213130448-1f8529fd-2247-4ac4-851c-acd0148a49b9.png"/>
+  <img src="resources/mmyolo-logo.png" width="600"/>
   <div>&nbsp;</div>
   <div align="center">
     <b><font size="5">OpenMMLab website</font></b>
@@ -41,6 +41,10 @@ English | [简体中文](README_zh-CN.md)
 </div>
 
 ## 🥳 🚀 What's New
+
+<div align="center">
+  <img width="100%" src="https://user-images.githubusercontent.com/27466624/213130448-1f8529fd-2247-4ac4-851c-acd0148a49b9.png"/>
+</div>
 
 💎 **v0.4.0** was released on 18/1/2023:
 
