@@ -546,7 +546,7 @@ python ./tools/train.py \
 - `randomness.seed=2023`, set the random seed to 2023.
 - `randomness.diff_rank_seed=True`, set different seeds according to global rank. Defaults to False.
 - `randomness.deterministic=True`, set the deterministic option for cuDNN backend, i.e., set `torch.backends.cudnn.deterministic` to True and `torch.backends.cudnn.benchmark` to False. Defaults to False. See https://pytorch.org/docs/stable/notes/randomness.html for more details.
-  
+
 ## Training on a single channel image dataset
 
 ### Data set preparation
