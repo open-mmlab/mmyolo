@@ -297,7 +297,7 @@ MMYOLO 是一款由来自不同高校和企业的研发人员共同参与贡献�
   <a href="https://github.com/open-mmlab/mmyolo/graphs/contributors"><img src="https://contrib.rocks/image?repo=open-mmlab/mmyolo"/></a>
 </div>
 
-## ✏️ 引用 [🔝](#-table-of-contents)
+## 🖊️ 引用 [🔝](#-table-of-contents)
 
 如果你觉得本项目对你的研究工作有所帮助，请参考如下 bibtex 引用 MMYOLO
 

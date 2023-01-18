@@ -271,7 +271,7 @@ We wish that the toolbox and benchmark could serve the growing research communit
   <a href="https://github.com/open-mmlab/mmyolo/graphs/contributors"><img src="https://contrib.rocks/image?repo=open-mmlab/mmyolo"/></a>
 </div>
 
-## ✏️ Citation [🔝](#-table-of-contents)
+## 🖊️ Citation [🔝](#-table-of-contents)
 
 If you find this project useful in your research, please consider citing:
 
