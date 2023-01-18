@@ -12,11 +12,13 @@
 1. 新增 YOLOv8 和 PPYOLOE 模型结构图 (#459, #471)
 2. 调整最低支持 Python 版本从 3.6 升级为 3.7 (#449)
 3. TensorRT-8 中新增新的 YOLOX decoder 写法 (#450)
+4. 新增学习率可视化曲线脚本 (#479)
 
 ### Bug 修复
 
 1. 修复 `optimize_anchors.py` 脚本导入错误问题 (#452)
 2. 修复 `get_started.md` 中安装步骤错误问题 (#474)
+3. 修改使用 `RTMDet` P6 模型时候 neck 报错问题 (#480)
 
 ### 视频
 

@@ -12,11 +12,13 @@
 1. Added YOLOv8 and PPYOLOE model structure diagrams (#459, #471)
 2. Adjust the minimum supported Python version from 3.6 to 3.7 (#449)
 3. Added a new YOLOX decoder in TensorRT-8 (#450)
+4. Add a tool for scheduler visualization (#479)
 
 ### Bug Fixes
 
 1. Fix `optimize_anchors.py` script import error (#452)
 2. Fix the wrong installation steps in `get_started.md` (#474)
+3. Fix the neck error when using the `RTMDet` P6 model (#480)
 
 ### Contributors
 
