@@ -18,7 +18,7 @@
 
 1. 修复 `optimize_anchors.py` 脚本导入错误问题 (#452)
 2. 修复 `get_started.md` 中安装步骤错误问题 (#474)
-3. 修改使用 `RTMDet` P6 模型时候 neck 报错问题 (#480)
+3. 修复使用 `RTMDet` P6 模型时候 neck 报错问题 (#480)
 
 ### 视频
 
