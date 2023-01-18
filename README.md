@@ -42,8 +42,8 @@ English | [简体中文](README_zh-CN.md)
 
 ## 📄 Table of Contents
 
-- [🥳 🚀 What's New](#---whats-new)
-  - [✨ Highlight](#--highlight)
+- [🥳 🚀 What's New](#--whats-new-)
+  - [✨ Highlight](#-highlight-)
 - [📖 Introduction](#-introduction)
 - [🛠️ Installation](#️🛠-installation)
 - [👨‍🏫 Tutorial](#-tutorial)
