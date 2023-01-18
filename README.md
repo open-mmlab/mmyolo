@@ -51,7 +51,7 @@ English | [简体中文](README_zh-CN.md)
 - [❓ FAQ](#-faq-)
 - [🙌 Contributing](#-contributing-)
 - [🤝 Acknowledgement](#-acknowledgement-)
-- [✏️ Citation](#️%EF%B8%8F-citation-)
+- [🖊️ Citation](#️-citation-)
 - [🎫 License](#-license-)
 - [🏗️ Projects in OpenMMLab](#%EF%B8%8F-projects-in-openmmlab-)
 
