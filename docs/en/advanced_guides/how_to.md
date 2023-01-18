@@ -546,3 +546,125 @@ python ./tools/train.py \
 - `randomness.seed=2023`, set the random seed to 2023.
 - `randomness.diff_rank_seed=True`, set different seeds according to global rank. Defaults to False.
 - `randomness.deterministic=True`, set the deterministic option for cuDNN backend, i.e., set `torch.backends.cudnn.deterministic` to True and `torch.backends.cudnn.benchmark` to False. Defaults to False. See https://pytorch.org/docs/stable/notes/randomness.html for more details.
+  
+## Training on a single channel image dataset
+
+### Data set preparation
+
+Take the ballon dataset as an example, if you are using a custom grayscale image dataset, you can skip this step. The processing training of the custom dataset can be found in[Annotation-to-deployment workflow for custom dataset](../user_guides/custom_dataset.md)。
+
+```shell
+python tools/misc/download_dataset.py --dataset-name balloon --save-dir projects/single_channel/data --unzip
+python projects/single_channel/balloon2coco_single_channel.py
+#--save-dir Example dataset storage path
+```
+
+Run the following command to replace the dataset image with a single channel image.
+
+```shell
+python projects/single_channel/single_channel.py --path projects/single_channel/data/balloon
+```
+
+Image single channel conversion sample code:
+
+```shell
+import argparse
+import imghdr
+import os
+from typing import List
+
+from PIL import Image
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='data_path')
+    parser.add_argument(
+        '--path',
+        type=str,
+        default='projects/single_channel/data/balloon',
+        help='Original dataset path')
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    path = args.path + '/train/'
+    save_path = path
+    file_list: List[str] = os.listdir(path)
+    # Grayscale conversion of each imager
+    for file in file_list:
+        if imghdr.what(path + '/' + file) != 'jpeg':
+            continue
+        o_img = Image.open(path + '/' + file)
+        L_img = o_img.convert('L')
+        L_img.save(save_path + '/' + file)
+        args = parse_args()
+
+    path = args.path + '/val/'
+    save_path = path
+    file_list: List[str] = os.listdir(path)
+    # Grayscale conversion of each imager
+    for file in file_list:
+        if imghdr.what(path + '/' + file) != 'jpeg':
+            continue
+        o_img = Image.open(path + '/' + file)
+        L_img = o_img.convert('L')
+        L_img.save(save_path + '/' + file)
+
+
+if (__name__ == '__main__'):
+    main()
+```
+
+### Create a new profile and train
+
+Take `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` as `base` configuration, add `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon_single_ channel.py` file.
+
+```shell
+_base_ = '../../../configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
+
+data_root = '../../../projects/single_channel/data/balloon/'
+
+train_batch_size_per_gpu = 4
+train_num_workers = 2
+
+metainfo = {
+    'classes': ('balloon', ),
+    'palette': [
+        (220, 20, 60),
+    ]
+}
+
+train_dataloader = dict(
+    batch_size=train_batch_size_per_gpu,
+    num_workers=train_num_workers,
+    dataset=dict(
+        data_root=data_root,
+        metainfo=metainfo,
+        data_prefix=dict(img='train/'),
+        ann_file='train.json'))
+
+val_dataloader = dict(
+    dataset=dict(
+        data_root=data_root,
+        metainfo=metainfo,
+        data_prefix=dict(img='val/'),
+        ann_file='val.json'))
+
+test_dataloader = val_dataloader
+
+val_evaluator = dict(ann_file=data_root + 'val.json')
+
+test_evaluator = val_evaluator
+
+model = dict(bbox_head=dict(head_module=dict(num_classes=1)))
+
+default_hooks = dict(logger=dict(interval=1))
+```
+
+Training test results.
+
+<img src="https://raw.githubusercontent.com/landhill/mmyolo/main/resources/single_channel_test.jpg"/>
+
+The left figure shows the actual label and the right figure shows the target detection result.

@@ -552,3 +552,125 @@ python ./tools/train.py \
 - `randomness.diff_rank_seed=True`，根据 rank 来设置不同的种子，`diff_rank_seed` 默认为 False。
 
 - `randomness.deterministic=True`，把 cuDNN 后端确定性选项设置为 True，即把`torch.backends.cudnn.deterministic` 设为 True，把 `torch.backends.cudnn.benchmark` 设为False。`deterministic` 默认为 False。更多细节见 https://pytorch.org/docs/stable/notes/randomness.html。
+
+## 在一个单通道图像数据集上进行训练
+
+### 数据集预处理
+
+以ballon数据集为例,如果你使用的是自定义灰度图像数据集，你可以跳过这一步。自定义数据集的处理训练可参照[自定义数据集 标注+训练+测试+部署 全流程](../user_guides/custom_dataset.md)。
+
+```shell
+python tools/misc/download_dataset.py --dataset-name balloon --save-dir projects/single_channel/data --unzip
+python projects/single_channel/balloon2coco_single_channel.py
+#--save-dir 示例数据集存储路径
+```
+
+运行下面的命令，将数据集图片替换为单通道图片。
+
+```shell
+python projects/single_channel/single_channel.py --path projects/single_channel/data/balloon
+```
+
+图像单通道转换示例代码:
+
+```shell
+import argparse
+import imghdr
+import os
+from typing import List
+
+from PIL import Image
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='data_path')
+    parser.add_argument(
+        '--path',
+        type=str,
+        default='projects/single_channel/data/balloon',
+        help='Original dataset path')
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+
+    path = args.path + '/train/'
+    save_path = path
+    file_list: List[str] = os.listdir(path)
+    # Grayscale conversion of each imager
+    for file in file_list:
+        if imghdr.what(path + '/' + file) != 'jpeg':
+            continue
+        o_img = Image.open(path + '/' + file)
+        L_img = o_img.convert('L')
+        L_img.save(save_path + '/' + file)
+        args = parse_args()
+
+    path = args.path + '/val/'
+    save_path = path
+    file_list: List[str] = os.listdir(path)
+    # Grayscale conversion of each imager
+    for file in file_list:
+        if imghdr.what(path + '/' + file) != 'jpeg':
+            continue
+        o_img = Image.open(path + '/' + file)
+        L_img = o_img.convert('L')
+        L_img.save(save_path + '/' + file)
+
+
+if (__name__ == '__main__'):
+    main()
+```
+
+### 新建配置文件并训练
+
+以`configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py`为`base`配置，新增 `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon_single_channel.py`文件。
+
+```shell
+_base_ = '../../../configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
+
+data_root = '../../../projects/single_channel/data/balloon/'
+
+train_batch_size_per_gpu = 4
+train_num_workers = 2
+
+metainfo = {
+    'classes': ('balloon', ),
+    'palette': [
+        (220, 20, 60),
+    ]
+}
+
+train_dataloader = dict(
+    batch_size=train_batch_size_per_gpu,
+    num_workers=train_num_workers,
+    dataset=dict(
+        data_root=data_root,
+        metainfo=metainfo,
+        data_prefix=dict(img='train/'),
+        ann_file='train.json'))
+
+val_dataloader = dict(
+    dataset=dict(
+        data_root=data_root,
+        metainfo=metainfo,
+        data_prefix=dict(img='val/'),
+        ann_file='val.json'))
+
+test_dataloader = val_dataloader
+
+val_evaluator = dict(ann_file=data_root + 'val.json')
+
+test_evaluator = val_evaluator
+
+model = dict(bbox_head=dict(head_module=dict(num_classes=1)))
+
+default_hooks = dict(logger=dict(interval=1))
+```
+
+训练测试结果：
+
+<img src="https://raw.githubusercontent.com/landhill/mmyolo/main/resources/single_channel_test.jpg"/>
+
+左图是实际标签，右图是目标检测结果。
