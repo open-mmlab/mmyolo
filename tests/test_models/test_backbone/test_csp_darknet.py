@@ -6,7 +6,8 @@ import torch
 from parameterized import parameterized
 from torch.nn.modules.batchnorm import _BatchNorm
 
-from mmyolo.models.backbones import YOLOv5CSPDarknet, YOLOXCSPDarknet
+from mmyolo.models.backbones import (YOLOv5CSPDarknet, YOLOv8CSPDarknet,
+                                     YOLOXCSPDarknet)
 from mmyolo.utils import register_all_modules
 from .utils import check_norm_state, is_norm
 
@@ -15,7 +16,8 @@ register_all_modules()
 
 class TestCSPDarknet(TestCase):
 
-    @parameterized.expand([(YOLOv5CSPDarknet, ), (YOLOXCSPDarknet, )])
+    @parameterized.expand([(YOLOv5CSPDarknet, ), (YOLOXCSPDarknet, ),
+                           (YOLOv8CSPDarknet, )])
     def test_init(self, module_class):
         # out_indices in range(len(arch_setting) + 1)
         with pytest.raises(AssertionError):
@@ -25,7 +27,8 @@ class TestCSPDarknet(TestCase):
             # frozen_stages must in range(-1, len(arch_setting) + 1)
             module_class(frozen_stages=6)
 
-    @parameterized.expand([(YOLOv5CSPDarknet, ), (YOLOXCSPDarknet, )])
+    @parameterized.expand([(YOLOv5CSPDarknet, ), (YOLOXCSPDarknet, ),
+                           (YOLOv8CSPDarknet, )])
     def test_forward(self, module_class):
         # Test CSPDarknet with first stage frozen
         frozen_stages = 1

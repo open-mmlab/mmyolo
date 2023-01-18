@@ -191,7 +191,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [x] [YOLOv6](configs/yolov6)
 - [x] [YOLOv7](configs/yolov7)
 - [x] [PPYOLOE](configs/ppyoloe)
-- [ ] [YOLOv8](configs/yolov8)（仅推理）
+- [x] [YOLOv8](configs/yolov8)
 
 </details>
 
@@ -219,6 +219,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
       <td>
       <ul>
         <li>YOLOv5CSPDarknet</li>
+        <li>YOLOv8CSPDarknet</li>
         <li>YOLOXCSPDarknet</li>
         <li>EfficientRep</li>
         <li>CSPNeXt</li>
@@ -229,6 +230,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
       <td>
       <ul>
         <li>YOLOv5PAFPN</li>
+        <li>YOLOv8PAFPN</li>
         <li>YOLOv6RepPAFPN</li>
         <li>YOLOXPAFPN</li>
         <li>CSPNeXtPAFPN</li>

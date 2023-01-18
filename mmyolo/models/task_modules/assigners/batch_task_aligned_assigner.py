@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 
+from mmyolo.models.losses import bbox_overlaps
 from mmyolo.registry import TASK_UTILS
 from .utils import (select_candidates_in_gts, select_highest_overlaps,
                     yolov6_iou_calculator)
@@ -32,6 +33,8 @@ class BatchTaskAlignedAssigner(nn.Module):
         beta (float): Hyper-parameters related to alignment_metrics.
             Defaults to 6.
         eps (float): Eps to avoid log(0). Default set to 1e-9
+        use_ciou (bool): Whether to use ciou while calculating iou.
+            Defaults to False.
     """
 
     def __init__(self,
@@ -39,13 +42,15 @@ class BatchTaskAlignedAssigner(nn.Module):
                  topk: int = 13,
                  alpha: float = 1.0,
                  beta: float = 6.0,
-                 eps: float = 1e-7):
+                 eps: float = 1e-7,
+                 use_ciou: bool = False):
         super().__init__()
         self.num_classes = num_classes
         self.topk = topk
         self.alpha = alpha
         self.beta = beta
         self.eps = eps
+        self.use_ciou = use_ciou
 
     @torch.no_grad()
     def forward(
@@ -211,8 +216,16 @@ class BatchTaskAlignedAssigner(nn.Module):
         idx[0] = torch.arange(end=batch_size).view(-1, 1).repeat(1, num_gt)
         idx[1] = gt_labels.squeeze(-1)
         bbox_scores = pred_scores[idx[0], idx[1]]
+        # TODO: need to replace the yolov6_iou_calculator function
+        if self.use_ciou:
+            overlaps = bbox_overlaps(
+                pred_bboxes.unsqueeze(1),
+                gt_bboxes.unsqueeze(2),
+                iou_mode='ciou',
+                bbox_format='xyxy').clamp(0)
+        else:
+            overlaps = yolov6_iou_calculator(gt_bboxes, pred_bboxes)
 
-        overlaps = yolov6_iou_calculator(gt_bboxes, pred_bboxes)
         alignment_metrics = bbox_scores.pow(self.alpha) * overlaps.pow(
             self.beta)
 
