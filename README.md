@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="resources/mmyolo-logo.png" width="600"/>
+  <img width="100%" src="https://user-images.githubusercontent.com/27466624/213130448-1f8529fd-2247-4ac4-851c-acd0148a49b9.png"/>
   <div>&nbsp;</div>
   <div align="center">
     <b><font size="5">OpenMMLab website</font></b>
@@ -40,11 +40,22 @@ English | [简体中文](README_zh-CN.md)
 
 </div>
 
-## 🥳 🚀 What's New
+## 📄 Table of Contents
 
-<div align="center">
-  <img width="100%" src="https://user-images.githubusercontent.com/27466624/213130448-1f8529fd-2247-4ac4-851c-acd0148a49b9.png"/>
-</div>
+- [🥳 🚀 What's New](#🥳-🚀-whats-new)
+  - [✨ Highlight](#✨-highlight)
+- [📖 Introduction](#-introduction)
+- [🛠️ Installation](#️🛠️-installation)
+- [👨‍🏫 Tutorial](#👨‍🏫-tutorial)
+- [📊 Overview of Benchmark and Model Zoo](#📊-overview-of-benchmark-and-model-zoo)
+- [❓ FAQ](#❓-faq)
+- [🙌 Contributing](#🙌-contributing)
+- [🤝 Acknowledgement](#🤝-acknowledgement)
+- [✏️ Citation](#️✏️-citation)
+- [🎫 License](#🎫-license)
+- [🏗️ Projects in OpenMMLab](#️🏗️-projects-in-openmmlab)
+
+## 🥳 🚀 What's New
 
 💎 **v0.4.0** was released on 18/1/2023:
 
@@ -102,7 +113,7 @@ And the figure of P6 model is in [model_design.md](docs/en/algorithm_description
 
 </details>
 
-## ⚡️ Installation
+## 🛠️ Installation
 
 MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps for installation. Please refer to the [Install Guide](docs/en/get_started.md) for more detailed instructions.
 
@@ -245,7 +256,9 @@ Please refer to the [FAQ](docs/en/notes/faq.md) for frequently asked questions.
 
 We appreciate all contributions to improving MMYOLO. Ongoing projects can be found in our [GitHub Projects](https://github.com/open-mmlab/mmyolo/projects). Welcome community users to participate in these projects. Please refer to [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the contributing guideline.
 
-<a href="https://github.com/open-mmlab/mmyolo/graphs/contributors"><img src="https://contrib.rocks/image?repo=open-mmlab/mmyolo"/></a>
+<div align="center">
+  <a href="https://github.com/open-mmlab/mmyolo/graphs/contributors"><img src="https://contrib.rocks/image?repo=open-mmlab/mmyolo"/></a>
+</div>
 
 ## 🤝 Acknowledgement
 
