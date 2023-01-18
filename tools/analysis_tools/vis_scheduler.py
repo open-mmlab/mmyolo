@@ -12,6 +12,8 @@ python tools/analysis_tools/vis_scheduler.py \
     --dataset-size 118287 \
     --ngpus 8 \
     --out-dir ./output
+```
+Modified from: https://github.com/open-mmlab/mmclassification/blob/1.x/tools/visualizations/vis_scheduler.py # noqa
 """
 import argparse
 import json
