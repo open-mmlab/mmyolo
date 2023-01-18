@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="resources/mmyolo-logo.png" width="600"/>
+  <img src="https://user-images.githubusercontent.com/27466624/213130448-1f8529fd-2247-4ac4-851c-acd0148a49b9.png" img width="100%"/>
   <div>&nbsp;</div>
   <div align="center">
     <b><font size="5">OpenMMLab website</font></b>
@@ -40,7 +40,7 @@ English | [简体中文](README_zh-CN.md)
 
 </div>
 
-##  🥳 🚀 What's New
+## 🥳 🚀 What's New
 
 💎 **v0.4.0** was released on 18/1/2023:
 
@@ -241,18 +241,16 @@ Please refer to the [FAQ](docs/en/notes/faq.md) for frequently asked questions.
 
 We appreciate all contributions to improving MMYOLO. Ongoing projects can be found in our [GitHub Projects](https://github.com/open-mmlab/mmyolo/projects). Welcome community users to participate in these projects. Please refer to [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the contributing guideline.
 
-<div align=center>
-<img src="https://contrib.rocks/image?repo=open-mmlab/mmyolo"/>
-</div>
+<a href="https://github.com/open-mmlab/mmyolo/graphs/contributors"><img src="https://contrib.rocks/image?repo=open-mmlab/mmyolo"/></a>
 
 ## 🤝 Acknowledgement
 
 MMYOLO is an open source project that is contributed by researchers and engineers from various colleges and companies. We appreciate all the contributors who implement their methods or add new features, as well as users who give valuable feedback.
-We wish that the toolbox and benchmark could serve the growing research community by providing a flexible toolkit to reimplement existing methods and develop their own new detectors.
+We wish that the toolbox and benchmark could serve the growing research community by providing a flexible toolkit to re-implement existing methods and develop their own new detectors.
 
 ## ✏️ Citation
 
-If you find this project useful in your research, please consider cite:
+If you find this project useful in your research, please consider citing:
 
 ```latex
 @misc{mmyolo2022,
