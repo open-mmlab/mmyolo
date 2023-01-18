@@ -135,6 +135,7 @@ class ParamRecordHook(Hook):
         if self.by_epoch:
             self.progress.update(self.task_id, advance=1)
 
+    # TODO: Support multiple schedulers
     def after_train_iter(self, runner, batch_idx, data_batch, outputs):
         if not self.by_epoch:
             self.progress.update(self.task_id, advance=1)
