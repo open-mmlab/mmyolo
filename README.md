@@ -220,6 +220,9 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
         <li>CSPNeXt</li>
         <li>YOLOv7Backbone</li>
         <li>PPYOLOECSPResNet</li>
+        <li>mmdet backbone</li>
+        <li>mmcls backbone</li>
+        <li>timm</li>
       </ul>
       </td>
       <td>
@@ -236,6 +239,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
       <td>
         <ul>
           <li>IoULoss</li>
+          <li>mmdet loss</li>
         </ul>
       </td>
       <td>

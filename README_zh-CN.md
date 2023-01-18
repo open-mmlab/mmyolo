@@ -247,6 +247,9 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
         <li>CSPNeXt</li>
         <li>YOLOv7Backbone</li>
         <li>PPYOLOECSPResNet</li>
+        <li>mmdet backbone</li>
+        <li>mmcls backbone</li>
+        <li>timm</li>
       </ul>
       </td>
       <td>
@@ -263,6 +266,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
       <td>
         <ul>
           <li>IoULoss</li>
+          <li>mmdet loss</li>
         </ul>
       </td>
       <td>
