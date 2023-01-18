@@ -241,6 +241,10 @@ Please refer to the [FAQ](docs/en/notes/faq.md) for frequently asked questions.
 
 We appreciate all contributions to improving MMYOLO. Ongoing projects can be found in our [GitHub Projects](https://github.com/open-mmlab/mmyolo/projects). Welcome community users to participate in these projects. Please refer to [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the contributing guideline.
 
+<div align=center>
+<img src="https://contrib.rocks/image?repo=open-mmlab/mmyolo"/>
+</div>
+
 ## 🤝 Acknowledgement
 
 MMYOLO is an open source project that is contributed by researchers and engineers from various colleges and companies. We appreciate all the contributors who implement their methods or add new features, as well as users who give valuable feedback.
