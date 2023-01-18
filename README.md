@@ -98,7 +98,7 @@ And the figure of P6 model is in [model_design.md](docs/en/algorithm_description
 
 </details>
 
-## 📲 Installation
+## ⚡️ Installation
 
 MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps for installation. Please refer to the [Install Guide](docs/en/get_started.md) for more detailed instructions.
 
