@@ -44,7 +44,7 @@ English | [简体中文](README_zh-CN.md)
 
 - [🥳 🚀 What's New](#🥳-🚀-whats-new)
   - [✨ Highlight](#✨-highlight)
-- [📖 Introduction](#-introduction)
+- [📖 Introduction](#📖-introduction)
 - [🛠️ Installation](#️🛠️-installation)
 - [👨‍🏫 Tutorial](#👨‍🏫-tutorial)
 - [📊 Overview of Benchmark and Model Zoo](#📊-overview-of-benchmark-and-model-zoo)
@@ -55,7 +55,7 @@ English | [简体中文](README_zh-CN.md)
 - [🎫 License](#🎫-license)
 - [🏗️ Projects in OpenMMLab](#️🏗️-projects-in-openmmlab)
 
-## 🥳 🚀 What's New
+## 🥳 🚀 What's New [🔝](#-table-of-contents)
 
 💎 **v0.4.0** was released on 18/1/2023:
 
@@ -64,7 +64,7 @@ English | [简体中文](README_zh-CN.md)
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
-### ✨ Highlight
+### ✨ Highlight [🔝](#-table-of-contents)
 
 We are excited to announce our latest work on real-time object recognition tasks, **RTMDet**, a family of fully convolutional single-stage detectors. RTMDet not only achieves the best parameter-accuracy trade-off on object detection from tiny to extra-large model sizes but also obtains new state-of-the-art performance on instance segmentation and rotated object detection tasks. Details can be found in the [technical report](https://arxiv.org/abs/2212.07784). Pre-trained models are [here](configs/rtmdet).
 
@@ -84,7 +84,7 @@ We are excited to announce our latest work on real-time object recognition tasks
 
 MMYOLO currently only implements the object detection algorithm, but it has a significant training acceleration compared to the MMDeteciton version. The training speed is 2.6 times faster than the previous version.
 
-## 📖 Introduction
+## 📖 Introduction [🔝](#-table-of-contents)
 
 MMYOLO is an open source toolbox for YOLO series algorithms based on PyTorch and [MMDetection](https://github.com/open-mmlab/mmdetection). It is a part of the [OpenMMLab](https://openmmlab.com/) project.
 
@@ -113,7 +113,7 @@ And the figure of P6 model is in [model_design.md](docs/en/algorithm_description
 
 </details>
 
-## 🛠️ Installation
+## 🛠️ Installation [🔝](#-table-of-contents)
 
 MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps for installation. Please refer to the [Install Guide](docs/en/get_started.md) for more detailed instructions.
 
@@ -132,7 +132,7 @@ pip install -r requirements/albu.txt
 mim install -v -e .
 ```
 
-## 👨‍🏫 Tutorial
+## 👨‍🏫 Tutorial [🔝](#-table-of-contents)
 
 MMYOLO is based on MMDetection and adopts the same code structure and design approach. To get better use of this, please read [MMDetection Overview](https://mmdetection.readthedocs.io/en/latest/get_started.html) for the first understanding of MMDetection.
 
@@ -157,6 +157,8 @@ For different parts from MMDetection, we have also prepared user guides and adva
     - [Model design-related instructions](docs/en/algorithm_descriptions/model_design.md)
   - [Algorithm principles and implementation](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#algorithm-principles-and-implementation)
     - [Algorithm principles and implementation with YOLOv5](docs/en/algorithm_descriptions/yolov5_description.md)
+    - [Algorithm principles and implementation with RTMDet](docs/en/algorithm_descriptions/rtmdet_description.md)
+    - [Algorithm principles and implementation with YOLOv8](docs/en/algorithm_descriptions/yolov8_description.md)
 
 - Deployment Guides
 
@@ -171,7 +173,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
   - [How to](docs/en/advanced_guides/how_to.md)
   - [Plugins](docs/en/advanced_guides/plugins.md)
 
-## 📊 Overview of Benchmark and Model Zoo
+## 📊 Overview of Benchmark and Model Zoo [🔝](#-table-of-contents)
 
 Results and models are available in the [model zoo](docs/en/model_zoo.md).
 
@@ -248,11 +250,11 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 
 </details>
 
-## ❓ FAQ
+## ❓ FAQ [🔝](#-table-of-contents)
 
 Please refer to the [FAQ](docs/en/notes/faq.md) for frequently asked questions.
 
-## 🙌 Contributing
+## 🙌 Contributing [🔝](#-table-of-contents)
 
 We appreciate all contributions to improving MMYOLO. Ongoing projects can be found in our [GitHub Projects](https://github.com/open-mmlab/mmyolo/projects). Welcome community users to participate in these projects. Please refer to [CONTRIBUTING.md](.github/CONTRIBUTING.md) for the contributing guideline.
 
@@ -260,12 +262,12 @@ We appreciate all contributions to improving MMYOLO. Ongoing projects can be fou
   <a href="https://github.com/open-mmlab/mmyolo/graphs/contributors"><img src="https://contrib.rocks/image?repo=open-mmlab/mmyolo"/></a>
 </div>
 
-## 🤝 Acknowledgement
+## 🤝 Acknowledgement [🔝](#-table-of-contents)
 
 MMYOLO is an open source project that is contributed by researchers and engineers from various colleges and companies. We appreciate all the contributors who implement their methods or add new features, as well as users who give valuable feedback.
 We wish that the toolbox and benchmark could serve the growing research community by providing a flexible toolkit to re-implement existing methods and develop their own new detectors.
 
-## ✏️ Citation
+## ✏️ Citation [🔝](#-table-of-contents)
 
 If you find this project useful in your research, please consider citing:
 
@@ -278,11 +280,11 @@ If you find this project useful in your research, please consider citing:
 }
 ```
 
-## 🎫 License
+## 🎫 License [🔝](#-table-of-contents)
 
 This project is released under the [GPL 3.0 license](LICENSE).
 
-## 🏗️ Projects in OpenMMLab
+## 🏗️ Projects in OpenMMLab [🔝](#-table-of-contents)
 
 - [MMEngine](https://github.com/open-mmlab/mmengine): OpenMMLab foundational library for training deep learning models.
 - [MMCV](https://github.com/open-mmlab/mmcv): OpenMMLab foundational library for computer vision.
