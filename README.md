@@ -42,11 +42,11 @@ English | [简体中文](README_zh-CN.md)
 
 ## 📄 Table of Contents
 
-- [🥳 🚀 What's New](#🥳-🚀-whats-new)
-  - [✨ Highlight](#✨-highlight)
-- [📖 Introduction](#📖-introduction)
-- [🛠️ Installation](#️🛠️-installation)
-- [👨‍🏫 Tutorial](#👨‍🏫-tutorial)
+- [🥳 🚀 What's New](#-whats-new)
+  - [✨ Highlight](#-highlight)
+- [📖 Introduction](#-introduction)
+- [🛠️ Installation](#️🛠-installation)
+- [👨‍🏫 Tutorial](#-tutorial)
 - [📊 Overview of Benchmark and Model Zoo](#📊-overview-of-benchmark-and-model-zoo)
 - [❓ FAQ](#❓-faq)
 - [🙌 Contributing](#🙌-contributing)
