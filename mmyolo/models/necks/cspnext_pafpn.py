@@ -90,7 +90,7 @@ class CSPNeXtPAFPN(BaseYOLONeck):
         Returns:
             nn.Module: The reduce layer.
         """
-        if idx == 2:
+        if idx == len(self.in_channels) - 1:
             layer = self.conv(
                 self.in_channels[idx],
                 self.in_channels[idx - 1],
