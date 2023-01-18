@@ -243,7 +243,7 @@ python tools/analysis_tools/vis_scheduler.py \
 
 ## Dataset Conversion
 
-The folder `tools/data_converters` currently contains `ballon2coco.py` and `yolo2coco.py` two dataset conversion tools.
+The folder `tools/data_converters` currently contains `ballon2coco.py`, `yolo2coco.py`, and `labelme2coco.py` - three dataset conversion tools.
 
 - `ballon2coco.py` converts the `balloon` dataset (this small dataset is for starters only) to COCO format.
 
