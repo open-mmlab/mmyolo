@@ -32,7 +32,7 @@ In the official YOLOv8 code, the [bbox annotation](https://github.com/ultralytic
 
 1. We use 8x A100 for training, and the single-GPU batch size is 16. This is different from the official code, but has no effect on performance.
 2. The performance is unstable and may fluctuate by about 0.3 mAP and the highest performance weight in `COCO` training in `YOLOv8` may not be the last epoch. The performance shown above is the best model.
-3. We provide a script for [official weight transfer to MMYOLO](https://github.com/open-mmlab/mmyolo/tree/dev/tools/model_converters/yolov8_to_mmyolo.py)
+3. We provide [scripts](https://github.com/open-mmlab/mmyolo/tree/dev/tools/model_converters/yolov8_to_mmyolo.py) to convert official weights to MMYOLO.
 4. `SyncBN` means use SyncBN, `AMP` indicates training with mixed precision.
 
 ## Citation
