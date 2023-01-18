@@ -1,5 +1,31 @@
 # Changelog
 
+## v0.4.0 (18/1/2023)
+
+### Highlights
+
+1. Implemented [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) object detection model, and supports model deployment in [projects/easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy)
+2. Added Chinese and English versions of [Algorithm principles and implementation with YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/algorithm_descriptions/yolov8_description.md)
+
+### New Features
+
+1. Added YOLOv8 and PPYOLOE model structure diagrams (#459, #471)
+2. Adjust the minimum supported Python version from 3.6 to 3.7 (#449)
+3. Added a new YOLOX decoder in TensorRT-8 (#450)
+4. Add a tool for scheduler visualization (#479)
+
+### Bug Fixes
+
+1. Fix `optimize_anchors.py` script import error (#452)
+2. Fix the wrong installation steps in `get_started.md` (#474)
+3. Fix the neck error when using the `RTMDet` P6 model (#480)
+
+### Contributors
+
+A total of 9 developers contributed to this release.
+
+Thank @VoyagerXvoyagerx, @tianleiSHI, @RangeKing, @PeterH0323, @Nioolek, @triple-Mu, @lyviva, @Zheng-LinXiao, @hhaAndroid
+
 ## v0.3.0 (8/1/2023)
 
 ### Highlights

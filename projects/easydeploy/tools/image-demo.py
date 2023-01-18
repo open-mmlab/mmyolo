@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+from projects.easydeploy.model import ORTWrapper, TRTWrapper  # isort:skip
 import os
 import random
 from argparse import ArgumentParser
@@ -14,8 +15,6 @@ from mmengine.utils import ProgressBar, path
 
 from mmyolo.utils import register_all_modules
 from mmyolo.utils.misc import get_file_list
-
-from projects.easydeploy.model import ORTWrapper, TRTWrapper  # isort:skip
 
 
 def parse_args():

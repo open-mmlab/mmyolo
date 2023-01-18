@@ -16,7 +16,7 @@ Compatible MMEngine, MMCV and MMDetection versions are shown as below. Please in
 
 In this section, we demonstrate how to prepare an environment with PyTorch.
 
-MMDetection works on Linux, Windows, and macOS. It requires Python 3.6+, CUDA 9.2+, and PyTorch 1.7+.
+MMDetection works on Linux, Windows, and macOS. It requires Python 3.7+, CUDA 9.2+, and PyTorch 1.7+.
 
 ```{note}
 If you are experienced with PyTorch and have already installed it, just skip this part and jump to the [next section](#installation). Otherwise, you can follow these steps for the preparation.
@@ -212,7 +212,7 @@ thus we only need to install MMEngine, MMCV, MMDetection, and MMYOLO with the fo
 
 ```shell
 !pip3 install openmim
-!mim install "mmengine==0.1.0"
+!mim install "mmengine>=0.3.1"
 !mim install "mmcv>=2.0.0rc1,<2.1.0"
 !mim install "mmdet>=3.0.0rc5,<3.1.0"
 ```
