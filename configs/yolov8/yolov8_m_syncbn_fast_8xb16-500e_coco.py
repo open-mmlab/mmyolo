@@ -36,6 +36,7 @@ mosaic_affine_transform = [
         img_scale=img_scale,
         pad_val=114.0,
         pre_transform=pre_transform),
+    dict(type='YOLOv5CopyPaste', prob=0.1),
     dict(
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,

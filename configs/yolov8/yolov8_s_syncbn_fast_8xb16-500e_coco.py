@@ -1,7 +1,7 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/coco/'
+data_root = 'data/sub_coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 # parameters that often need to be modified
@@ -11,10 +11,10 @@ deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 500
 save_epoch_intervals = 10
-train_batch_size_per_gpu = 16
-train_num_workers = 8
+train_batch_size_per_gpu = 2
+train_num_workers = 1
 val_batch_size_per_gpu = 1
-val_num_workers = 2
+val_num_workers = 1
 
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
@@ -113,7 +113,7 @@ albu_train_transform = [
 
 pre_transform = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='LoadAnnotations', with_bbox=True)
+    dict(type='LoadAnnotations', with_bbox=True, with_mask=True)
 ]
 
 last_transform = [

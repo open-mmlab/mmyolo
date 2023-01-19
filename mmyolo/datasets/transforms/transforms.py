@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
+from copy import deepcopy
 from typing import List, Tuple, Union
 
 import cv2
@@ -408,6 +409,53 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         results['gt_bboxes_labels'] = np.array(
             gt_bboxes_labels, dtype=np.int64)
 
+    def _process_masks(self, results: dict) -> list:
+        """Process gt_masks and filter invalid polygons.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+
+        Returns:
+            list: Processed gt_masks.
+        """
+        gt_masks = []
+        gt_ignore_flags = []
+        for instance in results.get('instances', []):
+            if instance['ignore_flag'] == 0:
+                gt_mask = instance['mask']
+                # If the annotation of segmentation mask is invalid,
+                # ignore the whole instance.
+                if isinstance(gt_mask, list):
+                    gt_mask = [
+                        np.array(polygon) for polygon in gt_mask
+                        if len(polygon) % 2 == 0 and len(polygon) >= 6
+                    ]
+                    if len(gt_mask) == 0:
+                        # ignore this instance and set gt_mask to a fake mask
+                        instance['ignore_flag'] = 1
+                        gt_mask = [np.zeros(6)]
+                elif not self.poly2mask:
+                    # `PolygonMasks` requires a ploygon of format
+                    # List[np.array],
+                    # other formats are invalid.
+                    instance['ignore_flag'] = 1
+                    gt_mask = [np.zeros(6)]
+                elif isinstance(gt_mask, dict) and \
+                        not (gt_mask.get('counts') is not None and
+                             gt_mask.get('size') is not None and
+                             isinstance(gt_mask['counts'], (list, str))):
+                    # if gt_mask is a dict, it should include `counts`
+                    # and `size`,
+                    # so that `BitmapMasks` can uncompressed RLE
+                    instance['ignore_flag'] = 1
+                    gt_mask = [np.zeros(6)]
+                gt_masks.append(gt_mask)
+                # re-process gt_ignore_flags
+                gt_ignore_flags.append(instance['ignore_flag'])
+            results['gt_ignore_flags'] = np.array(
+                gt_ignore_flags, dtype=np.bool)
+        return gt_masks
+
 
 @TRANSFORMS.register_module()
 class YOLOv5RandomAffine(BaseTransform):
@@ -571,8 +619,8 @@ class YOLOv5RandomAffine(BaseTransform):
             results['gt_ignore_flags'] = results['gt_ignore_flags'][
                 valid_index]
 
-            if 'gt_masks' in results:
-                raise NotImplementedError('RandomAffine only supports bbox.')
+            # if 'gt_masks' in results:
+            #     raise NotImplementedError('RandomAffine only supports bbox.')
         return results
 
     def filter_gt_bboxes(self, origin_bboxes: HorizontalBoxes,
@@ -1070,3 +1118,123 @@ class PPYOLOERandomCrop(BaseTransform):
             valid, (cropped_box[:, :2] < cropped_box[:, 2:]).all(axis=1))
 
         return np.where(valid)[0]
+
+
+@TRANSFORMS.register_module()
+class YOLOv5CopyPaste(BaseTransform):
+
+    def __init__(self, prob=0.5):
+        self.prob = prob
+
+    @autocast_box_type()
+    def transform(self, results: dict) -> Union[dict, None]:
+        # debug
+        print(111)
+        try:
+            torch.save(results, 'copypaste.pth')
+        except Exception as e:
+            print(e)
+        print(151515, results.get('gt_masks', []))
+        if len(results.get('gt_masks', [])) == 0:
+            return results
+        print(222)
+
+        gt_masks = results['gt_masks']
+        gt_bboxes = results['gt_bboxes']
+        gt_bboxes_labels = results['gt_bboxes_labels']
+        # h, w = results['img_shape']
+        img = results['img']
+        # dtype = img.dtype
+        # img_new = np.zeros(img.shape, dtype=dtype)
+
+        # calculate ioa
+        # gt_masks_flip = gt_masks.flip(flip_direction='horizontal')
+        gt_bboxes_flip = deepcopy(gt_bboxes)
+        gt_bboxes_flip.flip_(img.shape)
+        print(333)
+
+        ioa = self.bbox_ioa(gt_bboxes_flip, gt_bboxes)
+        # 待验证numpy和torch的不同
+        indexes = torch.nonzero((ioa < 0.3).all(1))[0]
+        n = len(indexes)
+        # valid_inds = np.array([j for j in random.sample(list(indexes),
+        # k=round(self.prob*n))])
+        print(303030, indexes, round(self.prob * n))
+        valid_inds = random.choice(
+            indexes, size=round(self.prob * n), replace=False)
+        if len(valid_inds) == 0:
+            return results
+        # prepare labels
+        print(313131, valid_inds)
+        gt_bboxes_labels = np.concatenate(
+            (gt_bboxes_labels, gt_bboxes_labels[valid_inds]), axis=0)
+        print(444)
+
+        # prepare bboxes
+        copypaste_bboxes = gt_bboxes_flip[valid_inds]
+        gt_bboxes = gt_bboxes.cat([gt_bboxes, copypaste_bboxes])
+        print(555, valid_inds)
+
+        # prepare images
+        copypaste_gt_masks = gt_masks[valid_inds]
+        print(515151)
+        copypaste_gt_masks_flip = copypaste_gt_masks.flip()
+        print(525252)
+        copypaste_mask = [gt_mask for gt_mask in copypaste_gt_masks.masks]
+        print(535353)
+        if len(copypaste_mask) == 0:
+            return results
+        print(666)
+
+        copypaste_mask = np.sum(copypaste_mask, axis=0) > 0
+        copypaste_mask_flip = mmcv.imflip(
+            copypaste_mask, direction='horizontal')
+        copypaste_img = mmcv.imflip(img, direction='horizontal')
+        img[copypaste_mask_flip] = copypaste_img[copypaste_mask_flip]
+
+        # prepare masks
+        gt_masks = copypaste_gt_masks.cat(
+            [copypaste_gt_masks, copypaste_gt_masks_flip])
+        print(777)
+
+        if 'gt_ignore_flags' in results:
+            # prepare gt_ignore_flags
+            gt_ignore_flags = results['gt_ignore_flags']
+            gt_ignore_flags = np.concatenate(
+                [gt_ignore_flags, gt_ignore_flags[valid_inds]], axis=0)
+            results['gt_ignore_flags'] = gt_ignore_flags
+
+        results['img'] = img
+        results['gt_bboxes'] = gt_bboxes
+        results['gt_bboxes_labels'] = gt_bboxes_labels
+        results['gt_masks'] = gt_masks
+        print(888)
+
+        # debug
+        mmcv.imwrite(img, 'copypaste.jpg')
+        raise NotImplementedError
+
+        return results
+
+    @staticmethod
+    def bbox_ioa(gt_bboxes_flip, gt_bboxes, eps=1e-7):
+        gt_bboxes_flip = gt_bboxes_flip.tensor
+        gt_bboxes = gt_bboxes.tensor
+
+        # Get the coordinates of bounding boxes
+        b1_x1, b1_y1, b1_x2, b1_y2 = gt_bboxes_flip.T
+        b2_x1, b2_y1, b2_x2, b2_y2 = gt_bboxes.T
+
+        # Intersection area
+        inter_area = (torch.minimum(b1_x2[:, None],
+                                    b2_x2) - torch.maximum(b1_x1[:, None],
+                                                           b2_x1)).clip(0) * \
+                     (torch.minimum(b1_y2[:, None],
+                                    b2_y2) - torch.maximum(b1_y1[:, None],
+                                                           b2_y1)).clip(0)
+
+        # box2 area
+        box2_area = (b2_x2 - b2_x1) * (b2_y2 - b2_y1) + eps
+
+        # Intersection over box2 area
+        return inter_area / box2_area

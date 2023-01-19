@@ -14,7 +14,8 @@ from mmyolo.datasets.transforms import (LetterResize, LoadAnnotations,
                                         YOLOv5KeepRatioResize,
                                         YOLOv5RandomAffine)
 from mmyolo.datasets.transforms.transforms import (PPYOLOERandomCrop,
-                                                   PPYOLOERandomDistort)
+                                                   PPYOLOERandomDistort,
+                                                   YOLOv5CopyPaste)
 
 
 class TestLetterResize(unittest.TestCase):
@@ -454,3 +455,23 @@ class TestPPYOLOERandomDistort(unittest.TestCase):
         self.assertTrue(results['gt_bboxes_labels'].dtype == np.int64)
         self.assertTrue(results['gt_bboxes'].dtype == torch.float32)
         self.assertTrue(results['gt_ignore_flags'].dtype == bool)
+
+
+class TestYOLOv5CopyPaste(unittest.TestCase):
+
+    def setUp(self):
+        """Set up the data info which are used in every test method.
+
+        TestCase calls functions in this order: setUp() -> testMethod() ->
+        tearDown() -> cleanUp()
+        """
+        rng = np.random.RandomState(0)
+        self.data_info = dict(
+            img=np.random.random((300, 400, 3)),
+            gt_bboxes=np.array([[0, 0, 150, 150]], dtype=np.float32),
+            batch_shape=np.array([192, 672], dtype=np.int64),
+            gt_masks=BitmapMasks(rng.rand(1, 300, 400), height=300, width=400))
+
+    def test_transform(self):
+        transform = YOLOv5CopyPaste(prob=1.0)
+        transform(copy.deepcopy(self.data_info))
