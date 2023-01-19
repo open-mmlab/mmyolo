@@ -1128,6 +1128,7 @@ class YOLOv5CopyPaste(BaseTransform):
 
     @autocast_box_type()
     def transform(self, results: dict) -> Union[dict, None]:
+        # TODO mosaic里面加上对gt_masks的处理
         # debug
         print(111)
         try:
