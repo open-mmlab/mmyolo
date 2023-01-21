@@ -3,13 +3,13 @@
 #include <iostream>
 
 /**
- * Function expected by DeepStream for decoding the TinyYOLOv2 output.
+ * Function expected by DeepStream for decoding the MMYOLO output.
  *
  * C-linkage [extern "C"] was written to prevent name-mangling. This function must return true after
  * adding all bounding boxes to the objectList vector.
  *
  * @param [outputLayersInfo] std::vector of NvDsInferLayerInfo objects with information about the output layer.
- * @param [networkInfo] NvDsInferNetworkInfo object with information about the TinyYOLOv2 network.
+ * @param [networkInfo] NvDsInferNetworkInfo object with information about the MMYOLO network.
  * @param [detectionParams] NvDsInferParseDetectionParams with information about some config params.
  * @param [objectList] std::vector of NvDsInferParseObjectInfo objects to which bounding box information must
  * be stored.
