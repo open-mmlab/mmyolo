@@ -287,6 +287,17 @@ class YOLOv8CSPDarknet(BaseBackbone):
             stage.append(spp)
         return stage
 
+    def init_weights(self):
+        """Initialize the parameters."""
+        if self.init_cfg is None:
+            for m in self.modules():
+                if isinstance(m, torch.nn.Conv2d):
+                    # In order to be consistent with the source code,
+                    # reset the Conv2d initialization parameters
+                    m.reset_parameters()
+        else:
+            super().init_weights()
+
 
 @MODELS.register_module()
 class YOLOXCSPDarknet(BaseBackbone):
