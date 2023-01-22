@@ -22,6 +22,10 @@ def parse_args():
         default=False,
         help='enable automatic-mixed-precision training')
     parser.add_argument(
+        '--auto-scale-lr',
+        action='store_true',
+        help='enable automatically scaling LR.')
+    parser.add_argument(
         '--resume',
         nargs='?',
         type=str,
@@ -90,6 +94,18 @@ def main():
                 f'`OptimWrapper` but got {optim_wrapper}.')
             cfg.optim_wrapper.type = 'AmpOptimWrapper'
             cfg.optim_wrapper.loss_scale = 'dynamic'
+
+    # enable automatically scaling LR
+    if args.auto_scale_lr:
+        if 'auto_scale_lr' in cfg and \
+                'enable' in cfg.auto_scale_lr and \
+                'base_batch_size' in cfg.auto_scale_lr:
+            cfg.auto_scale_lr.enable = True
+        else:
+            raise RuntimeError('Can not find "auto_scale_lr" or '
+                               '"auto_scale_lr.enable" or '
+                               '"auto_scale_lr.base_batch_size" in your'
+                               ' configuration file.')
 
     # resume is determined in this priority: resume from > auto_resume
     if args.resume == 'auto':
