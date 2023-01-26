@@ -557,7 +557,9 @@ python ./tools/train.py \
 
 ### 数据集预处理
 
-以ballon数据集为例,如果你使用的是自定义灰度图像数据集，你可以跳过这一步。自定义数据集的处理训练可参照[自定义数据集 标注+训练+测试+部署 全流程](../user_guides/custom_dataset.md)。
+以ballon数据集为例,如果你使用的是自定义灰度图像数据集，你可以跳过这一步。
+
+自定义数据集的处理训练可参照[自定义数据集 标注+训练+测试+部署 全流程](../user_guides/custom_dataset.md)。
 
 ```shell
 python tools/misc/download_dataset.py --dataset-name balloon --save-dir projects/single_channel/data --unzip
@@ -573,7 +575,7 @@ python projects/single_channel/single_channel.py --path projects/single_channel/
 
 图像单通道转换示例代码:
 
-```shell
+```python
 import argparse
 import imghdr
 import os
@@ -625,9 +627,9 @@ if (__name__ == '__main__'):
 
 ### 新建配置文件并训练
 
-以`configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py`为`base`配置，新增 `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon_single_channel.py`文件。
+以 `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py`为 `base` 配置，新增 `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon_single_channel.py` 文件。
 
-```shell
+```python
 _base_ = '../../../configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 
 data_root = '../../../projects/single_channel/data/balloon/'

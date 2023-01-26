@@ -551,7 +551,9 @@ python ./tools/train.py \
 
 ### Data set preparation
 
-Take the ballon dataset as an example, if you are using a custom grayscale image dataset, you can skip this step. The processing training of the custom dataset can be found in[Annotation-to-deployment workflow for custom dataset](../user_guides/custom_dataset.md)。
+Take the ballon dataset as an example, if you are using a custom grayscale image dataset, you can skip this step. 
+
+The processing training of the custom dataset can be found in [Annotation-to-deployment workflow for custom dataset](../user_guides/custom_dataset.md)。
 
 ```shell
 python tools/misc/download_dataset.py --dataset-name balloon --save-dir projects/single_channel/data --unzip
@@ -567,7 +569,7 @@ python projects/single_channel/single_channel.py --path projects/single_channel/
 
 Image single channel conversion sample code:
 
-```shell
+```python
 import argparse
 import imghdr
 import os
@@ -621,7 +623,7 @@ if (__name__ == '__main__'):
 
 Take `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` as `base` configuration, add `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon_single_ channel.py` file.
 
-```shell
+```python
 _base_ = '../../../configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 
 data_root = '../../../projects/single_channel/data/balloon/'
