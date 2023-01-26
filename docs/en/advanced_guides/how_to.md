@@ -551,7 +551,7 @@ python ./tools/train.py \
 
 ### Data set preparation
 
-Take the ballon dataset as an example, if you are using a custom grayscale image dataset, you can skip this step. 
+Take the ballon dataset as an example, if you are using a custom grayscale image dataset, you can skip this step.
 
 The processing training of the custom dataset can be found in [Annotation-to-deployment workflow for custom dataset](../user_guides/custom_dataset.md)。
 
