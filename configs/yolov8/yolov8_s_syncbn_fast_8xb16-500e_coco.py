@@ -12,12 +12,12 @@ widen_factor = 0.5
 max_epochs = 500
 save_epoch_intervals = 10
 train_batch_size_per_gpu = 2
-train_num_workers = 1
+train_num_workers = 0
 val_batch_size_per_gpu = 1
-val_num_workers = 1
+val_num_workers = 0
 
 # persistent_workers must be False if num_workers is 0.
-persistent_workers = True
+persistent_workers = False
 
 strides = [8, 16, 32]
 num_det_layers = 3

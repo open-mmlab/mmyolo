@@ -1128,64 +1128,40 @@ class YOLOv5CopyPaste(BaseTransform):
 
     @autocast_box_type()
     def transform(self, results: dict) -> Union[dict, None]:
-        # TODO mosaic里面加上对gt_masks的处理
-        # debug
-        print(111)
-        try:
-            torch.save(results, 'copypaste.pth')
-        except Exception as e:
-            print(e)
-        print(151515, results.get('gt_masks', []))
         if len(results.get('gt_masks', [])) == 0:
             return results
-        print(222)
-
+        assert 'gt_masks' in results,\
+            'Using copypaste must make sure loading masks.'
         gt_masks = results['gt_masks']
         gt_bboxes = results['gt_bboxes']
         gt_bboxes_labels = results['gt_bboxes_labels']
-        # h, w = results['img_shape']
         img = results['img']
-        # dtype = img.dtype
-        # img_new = np.zeros(img.shape, dtype=dtype)
 
         # calculate ioa
-        # gt_masks_flip = gt_masks.flip(flip_direction='horizontal')
         gt_bboxes_flip = deepcopy(gt_bboxes)
         gt_bboxes_flip.flip_(img.shape)
-        print(333)
 
         ioa = self.bbox_ioa(gt_bboxes_flip, gt_bboxes)
-        # 待验证numpy和torch的不同
-        indexes = torch.nonzero((ioa < 0.3).all(1))[0]
+        indexes = torch.nonzero((ioa < 0.3).all(1))[:, 0]
         n = len(indexes)
-        # valid_inds = np.array([j for j in random.sample(list(indexes),
-        # k=round(self.prob*n))])
-        print(303030, indexes, round(self.prob * n))
         valid_inds = random.choice(
             indexes, size=round(self.prob * n), replace=False)
         if len(valid_inds) == 0:
             return results
         # prepare labels
-        print(313131, valid_inds)
         gt_bboxes_labels = np.concatenate(
             (gt_bboxes_labels, gt_bboxes_labels[valid_inds]), axis=0)
-        print(444)
 
         # prepare bboxes
         copypaste_bboxes = gt_bboxes_flip[valid_inds]
         gt_bboxes = gt_bboxes.cat([gt_bboxes, copypaste_bboxes])
-        print(555, valid_inds)
 
         # prepare images
         copypaste_gt_masks = gt_masks[valid_inds]
-        print(515151)
         copypaste_gt_masks_flip = copypaste_gt_masks.flip()
-        print(525252)
         copypaste_mask = [gt_mask for gt_mask in copypaste_gt_masks.masks]
-        print(535353)
         if len(copypaste_mask) == 0:
             return results
-        print(666)
 
         copypaste_mask = np.sum(copypaste_mask, axis=0) > 0
         copypaste_mask_flip = mmcv.imflip(
@@ -1196,7 +1172,6 @@ class YOLOv5CopyPaste(BaseTransform):
         # prepare masks
         gt_masks = copypaste_gt_masks.cat(
             [copypaste_gt_masks, copypaste_gt_masks_flip])
-        print(777)
 
         if 'gt_ignore_flags' in results:
             # prepare gt_ignore_flags
@@ -1209,11 +1184,10 @@ class YOLOv5CopyPaste(BaseTransform):
         results['gt_bboxes'] = gt_bboxes
         results['gt_bboxes_labels'] = gt_bboxes_labels
         results['gt_masks'] = gt_masks
-        print(888)
 
         # debug
-        mmcv.imwrite(img, 'copypaste.jpg')
-        raise NotImplementedError
+        # mmcv.imwrite(img, 'copypaste.jpg')
+        # raise NotImplementedError
 
         return results
 

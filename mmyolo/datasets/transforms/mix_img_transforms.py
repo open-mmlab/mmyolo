@@ -317,6 +317,8 @@ class Mosaic(BaseMixImageTransform):
         mosaic_bboxes = []
         mosaic_bboxes_labels = []
         mosaic_ignore_flags = []
+        if 'gt_masks' in results:
+            mosaic_masks = []
         # self.img_scale is wh format
         img_scale_w, img_scale_h = self.img_scale
 
@@ -367,6 +369,18 @@ class Mosaic(BaseMixImageTransform):
             padh = y1_p - y1_c
             gt_bboxes_i.rescale_([scale_ratio_i, scale_ratio_i])
             gt_bboxes_i.translate_([padw, padh])
+            if 'gt_masks' in results_patch:
+                gt_masks_i = results_patch['gt_masks']
+                gt_masks_i = gt_masks_i.resize(
+                    (int(h_i * scale_ratio_i), int(w_i * scale_ratio_i)
+                     )  # resize masks
+                ).crop(np.array([x1_c, y1_c, x2_c, y2_c])).expand(
+                    2 * img_scale_h,
+                    2 * img_scale_w,
+                    y1_p,
+                    x1_p  # pad to output size
+                )
+                mosaic_masks.append(gt_masks_i)
             mosaic_bboxes.append(gt_bboxes_i)
             mosaic_bboxes_labels.append(gt_bboxes_labels_i)
             mosaic_ignore_flags.append(gt_ignore_flags_i)
@@ -374,6 +388,10 @@ class Mosaic(BaseMixImageTransform):
         mosaic_bboxes = mosaic_bboxes[0].cat(mosaic_bboxes, 0)
         mosaic_bboxes_labels = np.concatenate(mosaic_bboxes_labels, 0)
         mosaic_ignore_flags = np.concatenate(mosaic_ignore_flags, 0)
+
+        if 'gt_masks' in results:
+            mosaic_masks = mosaic_masks[0].cat(mosaic_masks)
+            results['gt_masks'] = mosaic_masks
 
         if self.bbox_clip_border:
             mosaic_bboxes.clip_([2 * img_scale_h, 2 * img_scale_w])
@@ -384,6 +402,9 @@ class Mosaic(BaseMixImageTransform):
             mosaic_bboxes = mosaic_bboxes[inside_inds]
             mosaic_bboxes_labels = mosaic_bboxes_labels[inside_inds]
             mosaic_ignore_flags = mosaic_ignore_flags[inside_inds]
+            print('!!!', len(results['gt_masks']), inside_inds)
+            if 'gt_masks' in results:
+                results['gt_masks'] = results['gt_masks'][inside_inds]
 
         results['img'] = mosaic_img
         results['img_shape'] = mosaic_img.shape
@@ -876,6 +897,10 @@ class YOLOv5MixUp(BaseMixImageTransform):
             (results['gt_bboxes_labels'], retrieve_gt_bboxes_labels), axis=0)
         mixup_gt_ignore_flags = np.concatenate(
             (results['gt_ignore_flags'], retrieve_gt_ignore_flags), axis=0)
+        if 'gt_masks' in results:
+            mixup_gt_masks = results['gt_masks'].cat(
+                [results['gt_masks'], retrieve_results['gt_masks']])
+            results['gt_masks'] = mixup_gt_masks
 
         results['img'] = mixup_img.astype(np.uint8)
         results['img_shape'] = mixup_img.shape
