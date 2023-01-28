@@ -1170,8 +1170,7 @@ class YOLOv5CopyPaste(BaseTransform):
         img[copypaste_mask_flip] = copypaste_img[copypaste_mask_flip]
 
         # prepare masks
-        gt_masks = copypaste_gt_masks.cat(
-            [copypaste_gt_masks, copypaste_gt_masks_flip])
+        gt_masks = copypaste_gt_masks.cat([gt_masks, copypaste_gt_masks_flip])
 
         if 'gt_ignore_flags' in results:
             # prepare gt_ignore_flags
