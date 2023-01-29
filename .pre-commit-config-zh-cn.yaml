@@ -4,7 +4,7 @@ repos:
     rev: 5.0.4
     hooks:
       - id: flake8
-  - repo: https://github.com/zhouzaida/isort
+  - repo: https://gitee.com/zhouzaida/mirrors-isort
     rev: 5.12.1
     hooks:
       - id: isort
