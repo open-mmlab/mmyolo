@@ -27,7 +27,6 @@ model = dict(
             in_channels=[256, 512, last_stage_out_channels])))
 
 pre_transform = _base_.pre_transform
-albu_train_transform = _base_.albu_train_transform
 last_transform = _base_.last_transform
 
 mosaic_affine_transform = [

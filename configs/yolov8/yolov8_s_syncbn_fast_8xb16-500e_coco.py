@@ -1,7 +1,7 @@
 _base_ = '../_base_/default_runtime.py'
 
 # dataset settings
-data_root = 'data/sub_coco/'
+data_root = 'data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 # parameters that often need to be modified
@@ -11,13 +11,13 @@ deepen_factor = 0.33
 widen_factor = 0.5
 max_epochs = 500
 save_epoch_intervals = 10
-train_batch_size_per_gpu = 2
-train_num_workers = 0
+train_batch_size_per_gpu = 16
+train_num_workers = 8
 val_batch_size_per_gpu = 1
-val_num_workers = 0
+val_num_workers = 2
 
 # persistent_workers must be False if num_workers is 0.
-persistent_workers = False
+persistent_workers = True
 
 strides = [8, 16, 32]
 num_det_layers = 3

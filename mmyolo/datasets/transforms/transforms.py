@@ -13,6 +13,7 @@ from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
+from mmdet.structures.mask import BitmapMasks
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
@@ -510,6 +511,7 @@ class YOLOv5RandomAffine(BaseTransform):
                  bbox_clip_border: bool = True,
                  min_bbox_size: int = 2,
                  min_area_ratio: float = 0.1,
+                 min_area_ratio_with_mask: float = 0.01,
                  max_aspect_ratio: int = 20):
         assert 0 <= max_translate_ratio <= 1
         assert scaling_ratio_range[0] <= scaling_ratio_range[1]
@@ -524,6 +526,7 @@ class YOLOv5RandomAffine(BaseTransform):
         self.min_bbox_size = min_bbox_size
         self.min_bbox_size = min_bbox_size
         self.min_area_ratio = min_area_ratio
+        self.min_area_ratio_with_mask = min_area_ratio_with_mask
         self.max_aspect_ratio = max_aspect_ratio
 
     @cache_randomness
@@ -601,30 +604,54 @@ class YOLOv5RandomAffine(BaseTransform):
         bboxes = results['gt_bboxes']
         num_bboxes = len(bboxes)
         if num_bboxes:
+            use_masks = 'gt_masks' in results
             orig_bboxes = bboxes.clone()
+            if use_masks:
+                gt_masks = results['gt_masks']
+                masks = gt_masks.masks
+                dtype = masks.dtype
+                masks1 = cv2.warpPerspective(
+                    masks.transpose((1, 2, 0)),
+                    warp_matrix,
+                    dsize=(width, height),
+                    borderValue=0)
+                gt_masks = BitmapMasks(
+                    masks1.reshape(height, width, -1).transpose(
+                        (2, 0, 1)).astype(dtype), height, width)
+                bboxes = gt_masks.get_bboxes(dst_type='hbox')
+                valid_index = self.filter_gt_bboxes(
+                    orig_bboxes, bboxes, self.min_area_ratio).numpy()
+                results['gt_masks'] = gt_masks[valid_index]
 
-            bboxes.project_(warp_matrix)
-            if self.bbox_clip_border:
-                bboxes.clip_([height, width])
+                # torch.save([masks, masks1, warp_matrix, width, height],
+                # 'copypaste.pth')
+                # print('save')
+                # results['gt_masks'] = gt_masks
+            else:
+                bboxes.project_(warp_matrix)
+                if self.bbox_clip_border:
+                    bboxes.clip_([height, width])
 
-            # filter bboxes
-            orig_bboxes.rescale_([scaling_ratio, scaling_ratio])
+                # filter bboxes
+                orig_bboxes.rescale_([scaling_ratio, scaling_ratio])
 
-            # Be careful: valid_index must convert to numpy,
-            # otherwise it will raise out of bounds when len(valid_index)=1
-            valid_index = self.filter_gt_bboxes(orig_bboxes, bboxes).numpy()
+                # Be careful: valid_index must convert to numpy,
+                # otherwise it will raise out of bounds when len(valid_index)=1
+                valid_index = self.filter_gt_bboxes(
+                    orig_bboxes, bboxes, self.min_area_ratio).numpy()
             results['gt_bboxes'] = bboxes[valid_index]
             results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
                 valid_index]
             results['gt_ignore_flags'] = results['gt_ignore_flags'][
                 valid_index]
 
-            # if 'gt_masks' in results:
-            #     raise NotImplementedError('RandomAffine only supports bbox.')
+        assert len(results['gt_masks']) == len(results['gt_bboxes'])
+
         return results
 
     def filter_gt_bboxes(self, origin_bboxes: HorizontalBoxes,
-                         wrapped_bboxes: HorizontalBoxes) -> torch.Tensor:
+                         wrapped_bboxes: HorizontalBoxes,
+                         min_area_ratio: float) -> torch.Tensor:
         """Filter gt bboxes.
 
         Args:
@@ -644,7 +671,7 @@ class YOLOv5RandomAffine(BaseTransform):
         wh_valid_idx = (wrapped_w > self.min_bbox_size) & \
                        (wrapped_h > self.min_bbox_size)
         area_valid_idx = wrapped_w * wrapped_h / (origin_w * origin_h +
-                                                  1e-16) > self.min_area_ratio
+                                                  1e-16) > min_area_ratio
         aspect_ratio_valid_idx = aspect_ratio < self.max_aspect_ratio
         return wh_valid_idx & area_valid_idx & aspect_ratio_valid_idx
 
