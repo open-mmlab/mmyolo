@@ -36,7 +36,7 @@ mosaic_affine_transform = [
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
-        max_aspect_ratio=100,
+        max_aspect_ratio=100.,
         scaling_ratio_range=(1 - affine_scale, 1 + affine_scale),
         # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2),

@@ -479,6 +479,7 @@ class YOLOv5RandomAffine(BaseTransform):
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
     - gt_ignore_flags (bool) (optional)
+    - gt_masks (BitmapMasks) (optional)
 
     Modified Keys:
 
@@ -487,6 +488,7 @@ class YOLOv5RandomAffine(BaseTransform):
     - gt_bboxes (optional)
     - gt_bboxes_labels (optional)
     - gt_ignore_flags (optional)
+    - gt_masks (BitmapMasks) (optional)
 
     Args:
         max_rotate_degree (float): Maximum degrees of rotation transform.
@@ -506,6 +508,19 @@ class YOLOv5RandomAffine(BaseTransform):
             the border of the image. In some dataset like MOT17, the gt bboxes
             are allowed to cross the border of images. Therefore, we don't
             need to clip the gt bboxes in these cases. Defaults to True.
+        min_bbox_size (float): Minimum size of bounding box after transform.
+            Size smaller than `min_bbox_size` will be considered invalid.
+            Defaults to 2.
+        min_area_ratio (float): Minimum ratio of area after transform.
+            Ratio smaller than `min_area_ratio` will be considered invalid.
+            Defaults to 0.1.
+        min_area_ratio_with_mask (float): Minimum ratio of area after transform
+            while using masks. Ratio smaller than `min_area_ratio` will be
+            considered invalid.
+            Defaults to 0.01.
+        max_aspect_ratio (float): Minimum ratio of aspect after transform.
+            Ratio largeer than `min_area_ratio` will be considered invalid.
+            Defaults to 20.
     """
 
     def __init__(self,
@@ -519,7 +534,7 @@ class YOLOv5RandomAffine(BaseTransform):
                  min_bbox_size: int = 2,
                  min_area_ratio: float = 0.1,
                  min_area_ratio_with_mask: float = 0.01,
-                 max_aspect_ratio: int = 20):
+                 max_aspect_ratio: float = 20.):
         assert 0 <= max_translate_ratio <= 1
         assert scaling_ratio_range[0] <= scaling_ratio_range[1]
         assert scaling_ratio_range[0] > 0
@@ -530,7 +545,6 @@ class YOLOv5RandomAffine(BaseTransform):
         self.border = border
         self.border_val = border_val
         self.bbox_clip_border = bbox_clip_border
-        self.min_bbox_size = min_bbox_size
         self.min_bbox_size = min_bbox_size
         self.min_area_ratio = min_area_ratio
         self.min_area_ratio_with_mask = min_area_ratio_with_mask
@@ -614,26 +628,25 @@ class YOLOv5RandomAffine(BaseTransform):
             use_masks = 'gt_masks' in results
             orig_bboxes = bboxes.clone()
             if use_masks:
+                # If the dataset has annotations of mask,
+                # the mask will be used to adjust bbox.
+                # TODO: Test speed between BitmapMasks and PolygonMasks
                 gt_masks = results['gt_masks']
                 masks = gt_masks.masks
                 dtype = masks.dtype
-                masks1 = cv2.warpPerspective(
+                masks = cv2.warpPerspective(
                     masks.transpose((1, 2, 0)),
                     warp_matrix,
                     dsize=(width, height),
                     borderValue=0)
                 gt_masks = BitmapMasks(
-                    masks1.reshape(height, width, -1).transpose(
+                    masks.reshape(height, width, -1).transpose(
                         (2, 0, 1)).astype(dtype), height, width)
                 bboxes = gt_masks.get_bboxes(dst_type='hbox')
                 valid_index = self.filter_gt_bboxes(
-                    orig_bboxes, bboxes, self.min_area_ratio).numpy()
+                    orig_bboxes, bboxes,
+                    self.min_area_ratio_with_mask).numpy()
                 results['gt_masks'] = gt_masks[valid_index]
-
-                # torch.save([masks, masks1, warp_matrix, width, height],
-                # 'copypaste.pth')
-                # print('save')
-                # results['gt_masks'] = gt_masks
             else:
                 bboxes.project_(warp_matrix)
                 if self.bbox_clip_border:
@@ -919,7 +932,7 @@ class PPYOLOERandomCrop(BaseTransform):
     Args:
         aspect_ratio (List[float]): Aspect ratio of cropped region. Default to
              [.5, 2].
-        thresholds (List[float]): Iou thresholds for decide a valid bbox crop
+        thresholds (List[float]): Iou thresholds for deciding a valid bbox crop
             in [min, max] format. Defaults to [.0, .1, .3, .5, .7, .9].
         scaling (List[float]): Ratio between a cropped region and the original
             image in [min, max] format. Default to [.3, 1.].
@@ -1175,16 +1188,49 @@ class PPYOLOERandomCrop(BaseTransform):
 
 @TRANSFORMS.register_module()
 class YOLOv5CopyPaste(BaseTransform):
+    """Copy-Paste used in YOLOv5 and YOLOv8.
 
-    def __init__(self, prob=0.5):
+    This transform randomly copy some objects in the image to the mirror
+    position of the image.
+
+    Required Keys:
+
+    - img (np.uint8)
+    - gt_bboxes (BaseBoxes[torch.float32])
+    - gt_bboxes_labels (np.int64)
+    - gt_ignore_flags (bool) (optional)
+    - gt_masks (BitmapMasks) (optional)
+
+    Modified Keys:
+
+    - img
+    - gt_bboxes
+    - gt_bboxes_labels (np.int64)
+    - gt_ignore_flags (optional)
+    - gt_masks (optional)
+
+    Args:
+        ioa_thresh (float): Ioa thresholds for deciding valid bbox.
+        prob (float): Probability of choosing objects.
+            Defaults to 0.5.
+    """
+
+    def __init__(self, ioa_thresh: float = 0.3, prob: float = 0.5):
+        self.ioa_thresh = ioa_thresh
         self.prob = prob
 
     @autocast_box_type()
     def transform(self, results: dict) -> Union[dict, None]:
+        """The YOLOv5 and YOLOv8 Copy-Paste transform function.
+
+        Args:
+            results (dict): The result dict.
+
+        Returns:
+            dict: The result dict.
+        """
         if len(results.get('gt_masks', [])) == 0:
             return results
-        assert 'gt_masks' in results,\
-            'Using copypaste must make sure loading masks.'
         gt_masks = results['gt_masks']
         gt_bboxes = results['gt_bboxes']
         gt_bboxes_labels = results['gt_bboxes_labels']
@@ -1195,7 +1241,7 @@ class YOLOv5CopyPaste(BaseTransform):
         gt_bboxes_flip.flip_(img.shape)
 
         ioa = self.bbox_ioa(gt_bboxes_flip, gt_bboxes)
-        indexes = torch.nonzero((ioa < 0.3).all(1))[:, 0]
+        indexes = torch.nonzero((ioa < self.ioa_thresh).all(1))[:, 0]
         n = len(indexes)
         valid_inds = random.choice(
             indexes, size=round(self.prob * n), replace=False)
@@ -1216,6 +1262,7 @@ class YOLOv5CopyPaste(BaseTransform):
         if len(copypaste_mask) == 0:
             return results
 
+        # copy objects, and paste to the mirror position of the image
         copypaste_mask = np.sum(copypaste_mask, axis=0) > 0
         copypaste_mask_flip = mmcv.imflip(
             copypaste_mask, direction='horizontal')
@@ -1237,14 +1284,22 @@ class YOLOv5CopyPaste(BaseTransform):
         results['gt_bboxes_labels'] = gt_bboxes_labels
         results['gt_masks'] = gt_masks
 
-        # debug
-        # mmcv.imwrite(img, 'copypaste.jpg')
-        # raise NotImplementedError
-
         return results
 
     @staticmethod
-    def bbox_ioa(gt_bboxes_flip, gt_bboxes, eps=1e-7):
+    def bbox_ioa(gt_bboxes_flip: HorizontalBoxes,
+                 gt_bboxes: HorizontalBoxes,
+                 eps: float = 1e-7):
+        """Calculate ioa between gt_bboxes_flip and gt_bboxes.
+
+        Args:
+            gt_bboxes_flip (HorizontalBoxes): Flipped ground truth
+                bounding boxes.
+            gt_bboxes (HorizontalBoxes): Ground truth bounding boxes.
+            eps (float): Default to 1e-10.
+        Return:
+            (Tensor): Ioa.
+        """
         gt_bboxes_flip = gt_bboxes_flip.tensor
         gt_bboxes = gt_bboxes.tensor
 
