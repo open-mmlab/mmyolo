@@ -358,6 +358,13 @@ class YOLOv5HSVRandomAug(BaseTransform):
         results['img'] = cv2.cvtColor(im_hsv, cv2.COLOR_HSV2BGR)
         return results
 
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(hue_delta={self.hue_delta}, '
+        repr_str += f'saturation_delta={self.saturation_delta}, '
+        repr_str += f'value_delta={self.value_delta})'
+        return repr_str
+
 
 # TODO: can be accelerated
 @TRANSFORMS.register_module()
@@ -875,6 +882,15 @@ class PPYOLOERandomDistort(BaseTransform):
             results = func(results)
         return results
 
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(hue_cfg={self.hue_cfg}, '
+        repr_str += f'saturation_cfg={self.saturation_cfg}, '
+        repr_str += f'contrast_cfg={self.contrast_cfg}, '
+        repr_str += f'brightness_cfg={self.brightness_cfg}, '
+        repr_str += f'num_distort_func={self.num_distort_func})'
+        return repr_str
+
 
 @TRANSFORMS.register_module()
 class PPYOLOERandomCrop(BaseTransform):
@@ -1146,6 +1162,16 @@ class PPYOLOERandomCrop(BaseTransform):
 
         return np.where(valid)[0]
 
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(aspect_ratio={self.aspect_ratio}, '
+        repr_str += f'thresholds={self.thresholds}, '
+        repr_str += f'scaling={self.scaling}, '
+        repr_str += f'num_attempts={self.num_attempts}, '
+        repr_str += f'allow_no_crop={self.allow_no_crop}, '
+        repr_str += f'cover_all_box={self.cover_all_box})'
+        return repr_str
+
 
 @TRANSFORMS.register_module()
 class YOLOv5CopyPaste(BaseTransform):
@@ -1239,3 +1265,8 @@ class YOLOv5CopyPaste(BaseTransform):
 
         # Intersection over box2 area
         return inter_area / box2_area
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(prob={self.prob})'
+        return repr_str
