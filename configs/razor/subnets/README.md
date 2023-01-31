@@ -25,7 +25,7 @@ This is an implementation of MMRAZOR Searchable Backbone Application, we provide
 In MMYOLO's root directory, run the following command to train the model:
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh configs/razor_subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py
+CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh configs/razor/subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py
 ```
 
 ### Testing commands
@@ -33,7 +33,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh configs/razor_subn
 In MMYOLO's root directory, run the following command to test the model:
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_test.sh configs/razor_subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py ${CHECKPOINT_PATH}
+CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_test.sh configs/razor/subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py ${CHECKPOINT_PATH}
 ```
 
 ## Results and Models
@@ -42,9 +42,9 @@ Here we provide the baseline version of Yolo Series with NAS backbone.
 
 |           Model            | size | box AP | Params(M) | FLOPS(G) |                                                                   Config                                                                   |                                                                           Download                                                                            |
 | :------------------------: | :--: | :----: | :-------: | :------: | :----------------------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| yolov5_s_spos_shufflenetv2 | 640  |  37.9  |   7.04    |   7.03   |     [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/razor_subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py)     |         [model](https://download.openmmlab.com/mmrazor/v1/spos/yolov5/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco_20230109_155302-777fd6f1.pth)         |
-|  yolov6_l_attentivenas_a6  | 640  |  44.5  |   18.38   |   8.49   | [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/razor_subnets/yolov6_l_attentivenas_a6_d12_syncbn_fast_16xb16-300e_coco.py) | [model](https://download.openmmlab.com/mmrazor/v1/attentivenas/yolov6/yolov6_l_attentivenas_a6_d12_syncbn_fast_16xb16-300e_coco_20230108_174944-4970f0b7.pth) |
-|   rtmdet_tiny_ofa_lat31    | 960  |  41.1  |   3.91    |   6.09   |       [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/razor_subnets/rtmdet_tiny_ofa_lat31_syncbn_16xb16-300e_coco.py)       |           [model](https://download.openmmlab.com/mmrazor/v1/ofa/rtmdet/rtmdet_tiny_ofa_lat31_syncbn_16xb16-300e_coco_20230108_222141-24ff87dex.pth)           |
+| yolov5_s_spos_shufflenetv2 | 640  |  37.9  |   7.04    |   7.03   |     [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/razor/subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py)     |         [model](https://download.openmmlab.com/mmrazor/v1/spos/yolov5/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco_20230109_155302-777fd6f1.pth)         |
+|  yolov6_l_attentivenas_a6  | 640  |  44.5  |   18.38   |   8.49   | [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/razor/subnets/yolov6_l_attentivenas_a6_d12_syncbn_fast_16xb16-300e_coco.py) | [model](https://download.openmmlab.com/mmrazor/v1/attentivenas/yolov6/yolov6_l_attentivenas_a6_d12_syncbn_fast_16xb16-300e_coco_20230108_174944-4970f0b7.pth) |
+|   rtmdet_tiny_ofa_lat31    | 960  |  41.1  |   3.91    |   6.09   |       [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/razor/subnets/rtmdet_tiny_ofa_lat31_syncbn_16xb16-300e_coco.py)       |           [model](https://download.openmmlab.com/mmrazor/v1/ofa/rtmdet/rtmdet_tiny_ofa_lat31_syncbn_16xb16-300e_coco_20230108_222141-24ff87dex.pth)           |
 
 **Note**:
 
