@@ -1,6 +1,6 @@
 _base_ = [
     'mmrazor::_base_/nas_backbones/spos_shufflenet_supernet.py',
-    '../yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
+    '../../yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 ]
 
 checkpoint_file = 'https://download.openmmlab.com/mmrazor/v1/spos/spos_shufflenetv2_subnet_8xb128_in1k_flops_0.33M_acc_73.87_20211222-1f0a0b4d_v3.pth'  # noqa

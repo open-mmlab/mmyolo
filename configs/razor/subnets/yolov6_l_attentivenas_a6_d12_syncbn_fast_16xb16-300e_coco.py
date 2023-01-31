@@ -1,7 +1,6 @@
 _base_ = [
     'mmrazor::_base_/nas_backbones/attentive_mobilenetv3_supernet.py',
-    # 'mmyolo::yolov6/yolov6_l_syncbn_fast_8xb32-300e_coco.py'
-    '../yolov6/yolov6_l_syncbn_fast_8xb32-300e_coco.py'
+    '../../yolov6/yolov6_l_syncbn_fast_8xb32-300e_coco.py'
 ]
 
 checkpoint_file = 'https://download.openmmlab.com/mmrazor/v1/bignas/attentive_mobilenet_subnet_8xb256_in1k_flops-0.93G_acc-80.81_20221229_200440-73d92cc6.pth'  # noqa
