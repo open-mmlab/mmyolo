@@ -1,46 +1,12 @@
-_base_ = '../_base_/default_runtime.py'
+_base_ = ['../_base_/default_runtime.py', '_hyps_/low_hyp_coco.py']
 
-# dataset settings
-data_root = 'data/coco/'
-dataset_type = 'YOLOv5CocoDataset'
-
-# parameters that often need to be modified
-num_classes = 80
-img_scale = (640, 640)  # width, height
-deepen_factor = 0.33
-widen_factor = 0.5
-max_epochs = 300
-save_epoch_intervals = 10
-train_batch_size_per_gpu = 16
-train_num_workers = 8
-val_batch_size_per_gpu = 1
-val_num_workers = 2
-
-# persistent_workers must be False if num_workers is 0.
-persistent_workers = True
-
-# Base learning rate for optim_wrapper
-base_lr = 0.01
-
-# only on Val
-batch_shapes_cfg = dict(
-    type='BatchShapePolicy',
-    batch_size=val_batch_size_per_gpu,
-    img_size=img_scale[0],
-    size_divisor=32,
-    extra_pad_ratio=0.5)
-
-anchors = [
-    [(10, 13), (16, 30), (33, 23)],  # P3/8
-    [(30, 61), (62, 45), (59, 119)],  # P4/16
-    [(116, 90), (156, 198), (373, 326)]  # P5/32
-]
 strides = [8, 16, 32]
 num_det_layers = 3
-
-# single-scale training is recommended to
-# be turned on, which can speed up training.
-env_cfg = dict(cudnn_benchmark=True)
+deepen_factor = _base_.model_hyp.deepen_factor
+widen_factor = _base_.model_hyp.widen_factor
+num_classes = _base_.data_hyp.num_classes
+anchors = _base_.model_hyp.anchors
+img_scale = _base_.data_hyp.img_scale
 
 model = dict(
     type='YOLODetector',
@@ -95,7 +61,7 @@ model = dict(
             type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
             reduction='mean',
-            loss_weight=1.0 * ((img_scale[0] / 640)**2 * 3 / num_det_layers)),
+            loss_weight=1.0 * ((img_scale[0] / 640) ** 2 * 3 / num_det_layers)),
         prior_match_thr=4.,
         obj_level_weights=[4., 1., 0.4]),
     test_cfg=dict(
@@ -152,16 +118,16 @@ train_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=train_batch_size_per_gpu,
-    num_workers=train_num_workers,
-    persistent_workers=persistent_workers,
+    batch_size=_base_.data_hyp.train_batch_size_per_gpu,
+    num_workers=_base_.data_hyp.train_num_workers,
+    persistent_workers=_base_.data_hyp.persistent_workers,
     pin_memory=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
-        type=dataset_type,
-        data_root=data_root,
-        ann_file='annotations/instances_train2017.json',
-        data_prefix=dict(img='train2017/'),
+        type=_base_.data_hyp.dataset_type,
+        data_root=_base_.data_hyp.data_root,
+        ann_file=_base_.data_hyp.ann_file,
+        data_prefix=dict(img=_base_.data_hyp.data_prefix),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline))
 
@@ -181,15 +147,15 @@ test_pipeline = [
 ]
 
 val_dataloader = dict(
-    batch_size=val_batch_size_per_gpu,
-    num_workers=val_num_workers,
-    persistent_workers=persistent_workers,
+    batch_size=_base_.data_hyp.val_batch_size_per_gpu,
+    num_workers=_base_.data_hyp.val_num_workers,
+    persistent_workers=_base_.data_hyp.persistent_workers,
     pin_memory=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
-        type=dataset_type,
-        data_root=data_root,
+        type=_base_.data_hyp.dataset_type,
+        data_root=_base_.data_hyp.data_root,
         test_mode=True,
         data_prefix=dict(img='val2017/'),
         ann_file='annotations/instances_val2017.json',
