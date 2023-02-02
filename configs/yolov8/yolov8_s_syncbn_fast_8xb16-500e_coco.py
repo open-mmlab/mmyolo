@@ -113,7 +113,7 @@ albu_train_transform = [
 
 pre_transform = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='LoadAnnotations', with_bbox=True, with_mask=True)
+    dict(type='LoadAnnotations', with_bbox=True)
 ]
 
 last_transform = [

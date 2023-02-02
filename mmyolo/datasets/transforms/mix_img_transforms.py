@@ -314,6 +314,8 @@ class Mosaic(BaseMixImageTransform):
             results (dict): Updated result dict.
         """
         assert 'mix_results' in results
+        assert len(results['gt_masks']) == len(results['gt_bboxes']) == len(
+            results['gt_bboxes_labels'])
         mosaic_bboxes = []
         mosaic_bboxes_labels = []
         mosaic_ignore_flags = []
@@ -364,6 +366,8 @@ class Mosaic(BaseMixImageTransform):
             gt_bboxes_i = results_patch['gt_bboxes']
             gt_bboxes_labels_i = results_patch['gt_bboxes_labels']
             gt_ignore_flags_i = results_patch['gt_ignore_flags']
+            assert len(gt_bboxes_i) == len(gt_bboxes_labels_i) == len(
+                gt_ignore_flags_i)
 
             padw = x1_p - x1_c
             padh = y1_p - y1_c
@@ -381,6 +385,8 @@ class Mosaic(BaseMixImageTransform):
                     x1_p  # pad to output size
                 )
                 mosaic_masks.append(gt_masks_i)
+                assert len(gt_masks_i) == len(gt_bboxes_i) == len(
+                    gt_ignore_flags_i) == len(gt_bboxes_labels_i)
             mosaic_bboxes.append(gt_bboxes_i)
             mosaic_bboxes_labels.append(gt_bboxes_labels_i)
             mosaic_ignore_flags.append(gt_ignore_flags_i)
@@ -411,6 +417,8 @@ class Mosaic(BaseMixImageTransform):
         results['gt_bboxes'] = mosaic_bboxes
         results['gt_bboxes_labels'] = mosaic_bboxes_labels
         results['gt_ignore_flags'] = mosaic_ignore_flags
+        assert len(results['gt_masks']) == len(results['gt_bboxes']) == len(
+            results['gt_bboxes_labels'])
         return results
 
     def _mosaic_combine(

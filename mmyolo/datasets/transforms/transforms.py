@@ -13,7 +13,7 @@ from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
-from mmdet.structures.mask import BitmapMasks
+from mmdet.structures.mask import BitmapMasks, PolygonMasks
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
@@ -242,7 +242,7 @@ class LetterResize(MMDET_Resize):
         results['img_shape'] = image.shape
         if 'pad_param' in results:
             results['pad_param_origin'] = results['pad_param'] * \
-                np.repeat(ratio, 2)
+                                          np.repeat(ratio, 2)
         results['pad_param'] = np.array(padding_list, dtype=np.float32)
 
     def _resize_masks(self, results: dict):
@@ -251,12 +251,10 @@ class LetterResize(MMDET_Resize):
             return
 
         # resize the gt_masks
-        gt_mask_height = results['gt_masks'].height * \
-            results['scale_factor'][1]
-        gt_mask_width = results['gt_masks'].width * \
-            results['scale_factor'][0]
+        gt_mask_h = results['gt_masks'].height * results['scale_factor'][1]
+        gt_mask_w = results['gt_masks'].width * results['scale_factor'][0]
         gt_masks = results['gt_masks'].resize(
-            (int(round(gt_mask_height)), int(round(gt_mask_width))))
+            (int(round(gt_mask_h)), int(round(gt_mask_w))))
 
         # padding the gt_masks
         if len(gt_masks) == 0:
@@ -366,6 +364,77 @@ class YOLOv5HSVRandomAug(BaseTransform):
         return repr_str
 
 
+# TODO: need del this class
+class PolygonMasksTemp(PolygonMasks):
+
+    def expand(self, expanded_h, expanded_w, top, left):
+        if len(self.masks) == 0:
+            expanded_masks = PolygonMasksTemp([], expanded_h, expanded_w)
+        else:
+            cropped_masks = []
+            for poly_per_obj in self.masks:
+                cropped_poly_per_obj = []
+                for p in poly_per_obj:
+                    # pycocotools will clip the boundary
+                    p = p.copy()
+                    p[0::2] += left
+                    p[1::2] += top
+                    cropped_poly_per_obj.append(p)
+                cropped_masks.append(cropped_poly_per_obj)
+            expanded_masks = PolygonMasksTemp(cropped_masks, expanded_h,
+                                              expanded_w)
+
+        return expanded_masks
+
+    def resize(self, out_shape, interpolation=None):
+        """see :func:`BaseInstanceMasks.resize`"""
+        if len(self.masks) == 0:
+            resized_masks = PolygonMasksTemp([], *out_shape)
+        else:
+            h_scale = out_shape[0] / self.height
+            w_scale = out_shape[1] / self.width
+            resized_masks = []
+            for poly_per_obj in self.masks:
+                resized_poly = []
+                for p in poly_per_obj:
+                    p = p.copy()
+                    p[0::2] = p[0::2] * w_scale
+                    p[1::2] = p[1::2] * h_scale
+                    resized_poly.append(p)
+                resized_masks.append(resized_poly)
+            resized_masks = PolygonMasksTemp(resized_masks, *out_shape)
+        return resized_masks
+
+    def crop(self, bbox):
+        """see :func:`BaseInstanceMasks.crop`"""
+        assert isinstance(bbox, np.ndarray)
+        assert bbox.ndim == 1
+
+        # clip the boundary
+        bbox = bbox.copy()
+        bbox[0::2] = np.clip(bbox[0::2], 0, self.width)
+        bbox[1::2] = np.clip(bbox[1::2], 0, self.height)
+        x1, y1, x2, y2 = bbox
+        w = np.maximum(x2 - x1, 1)
+        h = np.maximum(y2 - y1, 1)
+
+        if len(self.masks) == 0:
+            cropped_masks = PolygonMasksTemp([], h, w)
+        else:
+            cropped_masks = []
+            for poly_per_obj in self.masks:
+                cropped_poly_per_obj = []
+                for p in poly_per_obj:
+                    # pycocotools will clip the boundary
+                    p = p.copy()
+                    p[0::2] = p[0::2] - bbox[0]
+                    p[1::2] = p[1::2] - bbox[1]
+                    cropped_poly_per_obj.append(p)
+                cropped_masks.append(cropped_poly_per_obj)
+            cropped_masks = PolygonMasksTemp(cropped_masks, h, w)
+        return cropped_masks
+
+
 # TODO: can be accelerated
 @TRANSFORMS.register_module()
 class LoadAnnotations(MMDET_LoadAnnotations):
@@ -373,49 +442,26 @@ class LoadAnnotations(MMDET_LoadAnnotations):
     time being, in order to speed up the pipeline, it can be excluded in
     advance."""
 
-    def _load_bboxes(self, results: dict):
-        """Private function to load bounding box annotations.
+    def __init__(self,
+                 mask2bbox: bool = False,
+                 poly2mask: bool = False,
+                 **kwargs) -> None:
+        super().__init__(poly2mask=poly2mask, **kwargs)
+        self.mask2bbox = mask2bbox
 
-        Note: BBoxes with ignore_flag of 1 is not considered.
-
-        Args:
-            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
-
-        Returns:
-            dict: The dict contains loaded bounding box annotations.
-        """
-        gt_bboxes = []
-        gt_ignore_flags = []
-        for instance in results.get('instances', []):
-            if instance['ignore_flag'] == 0:
-                gt_bboxes.append(instance['bbox'])
-                gt_ignore_flags.append(instance['ignore_flag'])
-        results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=bool)
-
-        if self.box_type is None:
-            results['gt_bboxes'] = np.array(
-                gt_bboxes, dtype=np.float32).reshape((-1, 4))
-        else:
-            _, box_type_cls = get_box_type(self.box_type)
-            results['gt_bboxes'] = box_type_cls(gt_bboxes, dtype=torch.float32)
-
-    def _load_labels(self, results: dict):
-        """Private function to load label annotations.
-
-        Note: BBoxes with ignore_flag of 1 is not considered.
-
-        Args:
-            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
-
-        Returns:
-            dict: The dict contains loaded label annotations.
-        """
-        gt_bboxes_labels = []
-        for instance in results.get('instances', []):
-            if instance['ignore_flag'] == 0:
-                gt_bboxes_labels.append(instance['bbox_label'])
-        results['gt_bboxes_labels'] = np.array(
-            gt_bboxes_labels, dtype=np.int64)
+    def transform(self, results: dict) -> dict:
+        results = super().transform(results)
+        if self.mask2bbox:
+            if 'gt_masks' in results:
+                gt_bboxes_labels = results['gt_bboxes_labels']
+                gt_masks = results['gt_masks']
+                gt_bboxes = gt_masks.get_bboxes(dst_type='hbox')
+                assert len(gt_bboxes) == len(gt_masks) == len(gt_bboxes_labels)
+                results['gt_bboxes'] = gt_bboxes
+            else:
+                # TODO： 加注释
+                print('这里要加注释')
+        return results
 
     def _process_masks(self, results: dict) -> list:
         """Process gt_masks and filter invalid polygons.
@@ -463,6 +509,67 @@ class LoadAnnotations(MMDET_LoadAnnotations):
             results['gt_ignore_flags'] = np.array(
                 gt_ignore_flags, dtype=np.bool)
         return gt_masks
+
+    def _load_bboxes(self, results: dict):
+        """Private function to load bounding box annotations.
+
+        Note: BBoxes with ignore_flag of 1 is not considered.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+
+        Returns:
+            dict: The dict contains loaded bounding box annotations.
+        """
+        gt_bboxes = []
+        gt_ignore_flags = []
+        for instance in results.get('instances', []):
+            if instance['ignore_flag'] == 0:
+                gt_bboxes.append(instance['bbox'])
+                gt_ignore_flags.append(instance['ignore_flag'])
+        results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=bool)
+
+        if self.box_type is None:
+            results['gt_bboxes'] = np.array(
+                gt_bboxes, dtype=np.float32).reshape((-1, 4))
+        else:
+            _, box_type_cls = get_box_type(self.box_type)
+            results['gt_bboxes'] = box_type_cls(gt_bboxes, dtype=torch.float32)
+
+    def _load_labels(self, results: dict):
+        """Private function to load label annotations.
+
+        Note: BBoxes with ignore_flag of 1 is not considered.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+
+        Returns:
+            dict: The dict contains loaded label annotations.
+        """
+        gt_bboxes_labels = []
+        for instance in results.get('instances', []):
+            if instance['ignore_flag'] == 0:
+                gt_bboxes_labels.append(instance['bbox_label'])
+        results['gt_bboxes_labels'] = np.array(
+            gt_bboxes_labels, dtype=np.int64)
+
+    def _load_masks(self, results: dict) -> None:
+        """Private function to load mask annotations.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+        """
+        h, w = results['ori_shape']
+        gt_masks = self._process_masks(results)
+        if self.poly2mask:
+            gt_masks = BitmapMasks(
+                [self._poly2mask(mask, h, w) for mask in gt_masks], h, w)
+        else:
+            # fake polygon masks will be ignored in `PackDetInputs`
+            # 这里对齐的时候用temp类别
+            gt_masks = PolygonMasksTemp([mask for mask in gt_masks], h, w)
+        results['gt_masks'] = gt_masks
 
 
 @TRANSFORMS.register_module()
@@ -514,10 +621,6 @@ class YOLOv5RandomAffine(BaseTransform):
         min_area_ratio (float): Minimum ratio of area after transform.
             Ratio smaller than `min_area_ratio` will be considered invalid.
             Defaults to 0.1.
-        min_area_ratio_with_mask (float): Minimum ratio of area after transform
-            while using masks. Ratio smaller than `min_area_ratio` will be
-            considered invalid.
-            Defaults to 0.01.
         max_aspect_ratio (float): Minimum ratio of aspect after transform.
             Ratio largeer than `min_area_ratio` will be considered invalid.
             Defaults to 20.
@@ -533,7 +636,7 @@ class YOLOv5RandomAffine(BaseTransform):
                  bbox_clip_border: bool = True,
                  min_bbox_size: int = 2,
                  min_area_ratio: float = 0.1,
-                 min_area_ratio_with_mask: float = 0.01,
+                 use_mask_refine: bool = False,
                  max_aspect_ratio: float = 20.):
         assert 0 <= max_translate_ratio <= 1
         assert scaling_ratio_range[0] <= scaling_ratio_range[1]
@@ -547,7 +650,7 @@ class YOLOv5RandomAffine(BaseTransform):
         self.bbox_clip_border = bbox_clip_border
         self.min_bbox_size = min_bbox_size
         self.min_area_ratio = min_area_ratio
-        self.min_area_ratio_with_mask = min_area_ratio_with_mask
+        self.use_mask_regine = use_mask_refine
         self.max_aspect_ratio = max_aspect_ratio
 
     @cache_randomness
@@ -600,6 +703,8 @@ class YOLOv5RandomAffine(BaseTransform):
         Returns:
             dict: The result dict.
         """
+        assert len(results['gt_masks']) == len(results['gt_bboxes']) == len(
+            results['gt_bboxes_labels'])
         img = results['img']
         # self.border is wh format
         height = img.shape[0] + self.border[1] * 2
@@ -621,31 +726,87 @@ class YOLOv5RandomAffine(BaseTransform):
             borderValue=self.border_val)
         results['img'] = img
         results['img_shape'] = img.shape
+        img_h, img_w = img.shape[:2]
 
         bboxes = results['gt_bboxes']
         num_bboxes = len(bboxes)
         if num_bboxes:
-            use_masks = 'gt_masks' in results
+            if self.use_mask_regine and ('gt_masks' not in results):
+                # TODO: 加注释
+                print('aaa')
+
             orig_bboxes = bboxes.clone()
-            if use_masks:
+            if self.use_mask_regine and 'gt_masks' in results:
                 # If the dataset has annotations of mask,
                 # the mask will be used to adjust bbox.
-                # TODO: Test speed between BitmapMasks and PolygonMasks
                 gt_masks = results['gt_masks']
-                masks = gt_masks.masks
-                dtype = masks.dtype
-                masks = cv2.warpPerspective(
-                    masks.transpose((1, 2, 0)),
-                    warp_matrix,
-                    dsize=(width, height),
-                    borderValue=0)
-                gt_masks = BitmapMasks(
-                    masks.reshape(height, width, -1).transpose(
-                        (2, 0, 1)).astype(dtype), height, width)
+                if isinstance(gt_masks, BitmapMasks):
+                    masks = gt_masks.masks
+                    dtype = masks.dtype
+                    masks = cv2.warpPerspective(
+                        masks.transpose((1, 2, 0)),
+                        warp_matrix,
+                        dsize=(width, height),
+                        borderValue=0)
+                    gt_masks = BitmapMasks(
+                        masks.reshape(height, width, -1).transpose(
+                            (2, 0, 1)).astype(dtype), height, width)
+
+                elif isinstance(gt_masks, PolygonMasks):
+                    gt_masks_resample = self.resample_masks(gt_masks)
+                    masks = gt_masks_resample.masks
+
+                    new_masks = []
+                    for poly_per_obj in masks:
+                        cropped_poly_per_obj = []
+                        for p in poly_per_obj:
+                            p1 = p.reshape((-1, 2))
+                            p2 = np.concatenate(
+                                (p1, np.ones((len(p1), 1), dtype=p.dtype)),
+                                axis=-1)
+                            p3 = p2 @ warp_matrix.T
+                            p4 = p3[:, :2] / p3[:, 2:3]
+
+                            # filter point outside image
+                            x, y = p4.T
+                            valid_ind_point = (x >= 0) & (y >=
+                                                          0) & (x <= img_w) & (
+                                                              y <= img_h)
+                            x, y, = x[valid_ind_point], y[valid_ind_point]
+
+                            # 这边确定当前单个mask是否有效即可
+                            if any(x):
+                                # 这里不用决定gt_bboxes，放到外面来决定
+                                cropped_poly_per_obj.append(
+                                    p4[valid_ind_point].reshape(-1))
+                                # valid_p.append(True)
+                            # else:
+                            #     cropped_poly_per_obj.append(
+                            #     np.zeros_like(p4, shape=(0, 2)))
+                            #     # valid_p.append(False)
+                        # 这边要确认当前gt是否有效了
+                        # 如果crop这里里面有结果，就证明有效
+                        if not cropped_poly_per_obj:
+                            # 这里如果mask都被认为是无效，添加个zeros。这里添加的zeros在filter_gt_bboxes里会被过滤掉
+                            #
+                            cropped_poly_per_obj = [
+                                np.zeros(2, dtype=poly_per_obj[0].dtype)
+                            ]
+                        new_masks.append(cropped_poly_per_obj)
+
+                    # 无论有没有有效数据，都可以直接获取
+                    gt_masks = PolygonMasksTemp(new_masks, gt_masks.height,
+                                                gt_masks.width)
+
+                else:
+                    msg = '`gt_masks` does not support type' \
+                          ' of %s in YOLOv5RandomAffine' \
+                          '.' % gt_masks.__class__.__name__
+                    raise NotImplementedError(msg)
+                # 这里用mask生成bboxes
                 bboxes = gt_masks.get_bboxes(dst_type='hbox')
-                valid_index = self.filter_gt_bboxes(
-                    orig_bboxes, bboxes,
-                    self.min_area_ratio_with_mask).numpy()
+                valid_index = self.filter_gt_bboxes(orig_bboxes,
+                                                    bboxes).numpy()
                 results['gt_masks'] = gt_masks[valid_index]
             else:
                 bboxes.project_(warp_matrix)
@@ -657,21 +818,39 @@ class YOLOv5RandomAffine(BaseTransform):
 
                 # Be careful: valid_index must convert to numpy,
                 # otherwise it will raise out of bounds when len(valid_index)=1
-                valid_index = self.filter_gt_bboxes(
-                    orig_bboxes, bboxes, self.min_area_ratio).numpy()
+                valid_index = self.filter_gt_bboxes(orig_bboxes,
+                                                    bboxes).numpy()
+
             results['gt_bboxes'] = bboxes[valid_index]
             results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
                 valid_index]
             results['gt_ignore_flags'] = results['gt_ignore_flags'][
                 valid_index]
 
-        assert len(results['gt_masks']) == len(results['gt_bboxes'])
+        assert len(results['gt_masks']) == len(results['gt_bboxes']) == len(
+            results['gt_bboxes_labels'])
 
         return results
 
+    def resample_masks(self, gt_masks: PolygonMasksTemp, resample_num=1000):
+        masks = gt_masks.masks
+        new_masks = []
+        for poly_per_obj in masks:
+            cropped_poly_per_obj = []
+            for p in poly_per_obj:
+                p = p.reshape((-1, 2))  # wh
+                p = np.concatenate((p, p[0:1, :]), axis=0)
+                x = np.linspace(0, len(p) - 1, resample_num)
+                xp = np.arange(len(p))
+                p = np.concatenate([
+                    np.interp(x, xp, p[:, i]) for i in range(2)
+                ]).reshape(2, -1).T.reshape(-1)
+                cropped_poly_per_obj.append(p)
+            new_masks.append(cropped_poly_per_obj)
+        return PolygonMasksTemp(new_masks, gt_masks.height, gt_masks.width)
+
     def filter_gt_bboxes(self, origin_bboxes: HorizontalBoxes,
-                         wrapped_bboxes: HorizontalBoxes,
-                         min_area_ratio: float) -> torch.Tensor:
+                         wrapped_bboxes: HorizontalBoxes) -> torch.Tensor:
         """Filter gt bboxes.
 
         Args:
@@ -691,7 +870,7 @@ class YOLOv5RandomAffine(BaseTransform):
         wh_valid_idx = (wrapped_w > self.min_bbox_size) & \
                        (wrapped_h > self.min_bbox_size)
         area_valid_idx = wrapped_w * wrapped_h / (origin_w * origin_h +
-                                                  1e-16) > min_area_ratio
+                                                  1e-16) > self.min_area_ratio
         aspect_ratio_valid_idx = aspect_ratio < self.max_aspect_ratio
         return wh_valid_idx & area_valid_idx & aspect_ratio_valid_idx
 
@@ -809,7 +988,7 @@ class PPYOLOERandomDistort(BaseTransform):
         self.contrast_cfg = contrast_cfg
         self.brightness_cfg = brightness_cfg
         self.num_distort_func = num_distort_func
-        assert 0 < self.num_distort_func <= 4,\
+        assert 0 < self.num_distort_func <= 4, \
             'num_distort_func must > 0 and <= 4'
         for cfg in [
                 self.hue_cfg, self.saturation_cfg, self.contrast_cfg,
