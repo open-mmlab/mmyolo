@@ -1,6 +1,6 @@
 _base_ = '../_base_/default_runtime.py'
 
-# -------------------Frequently modified parameters-----------------------
+# ========================Frequently modified parameters======================
 # -----data related-----
 data_root = 'data/coco/'  # Root path of data
 # Path of train annotation file
@@ -40,7 +40,7 @@ model_test_cfg = dict(
     nms=dict(type='nms', iou_threshold=0.65),  # NMS type and threshold
     max_per_img=300)  # Max number of detections of each image
 
-# -------------------Possible modified parameters-----------------------
+# ========================Possible modified parameters========================
 # -----data related-----
 img_scale = (640, 640)  # width, height
 # Dataset type, this will be used to define the dataset
@@ -88,7 +88,7 @@ max_keep_ckpts = 3
 # be turned on, which can speed up training.
 env_cfg = dict(cudnn_benchmark=True)
 
-# -------------------------------------------------------------------
+# ==========================================================================================
 model = dict(
     type='YOLODetector',
     data_preprocessor=dict(
