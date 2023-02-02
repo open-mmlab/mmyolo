@@ -72,19 +72,20 @@ num_det_layers = 3  # The number of model output scales
 norm_cfg = dict(type='BN', momentum=0.03, eps=0.001)
 
 # -----train val related-----
-affine_scale = 0.5
+affine_scale = 0.5  # YOLOv5RandomAffine scaling ratio
 loss_cls_weight = 0.5
 loss_bbox_weight = 0.05
 loss_obj_weight = 1.0
 prior_match_thr = 4.  # Priori box matching threshold
-obj_level_weights = [4., 1., 0.4]  # The obj loss weights of the three outputs
+obj_level_weights = [4., 1.,
+                     0.4]  # The obj loss weights of the three output layers
 lr_factor = 0.01  # Learning rate scaling factor
 weight_decay = 0.0005
 # Save model checkpoint and validation intervals
 save_epoch_intervals = 10
 # The maximum checkpoints to keep.
 max_keep_ckpts = 3
-# single-scale training is recommended to
+# Single-scale training is recommended to
 # be turned on, which can speed up training.
 env_cfg = dict(cudnn_benchmark=True)
 
