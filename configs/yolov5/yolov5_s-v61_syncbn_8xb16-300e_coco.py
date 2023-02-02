@@ -2,19 +2,24 @@ _base_ = '../_base_/default_runtime.py'
 
 # -------------------Frequently modified parameters-----------------------
 # -----data related-----
-data_root = 'data/coco/'
+data_root = 'data/coco/'  # Root path of data
+# Path of train annotation file
 train_ann_file = 'annotations/instances_train2017.json'
-train_data_prefix = 'train2017/'
+train_data_prefix = 'train2017/'  # Prefix of train image path
+# Path of val annotation file
 val_ann_file = 'annotations/instances_val2017.json'
-val_data_prefix = 'val2017/'
+val_data_prefix = 'val2017/'  # Prefix of val image path
 
-num_classes = 80
+num_classes = 80  # Number of classes for classification
+# Batch size of a single GPU during training
 train_batch_size_per_gpu = 16
+# Worker to pre-fetch data for each single GPU during training
 train_num_workers = 8
-# persistent_workers must be False if num_workers is 0.
+# persistent_workers must be False if num_workers is 0
 persistent_workers = True
 
 # -----model related-----
+# Basic size of multi-scale prior box
 anchors = [
     [(10, 13), (16, 30), (33, 23)],  # P3/8
     [(30, 61), (62, 45), (59, 119)],  # P4/16
@@ -22,51 +27,63 @@ anchors = [
 ]
 
 # -----train val related-----
-# Base learning rate for optim_wrapper
+# Base learning rate for optim_wrapper. Corresponding to 8xb16=64 bs
 base_lr = 0.01
-max_epochs = 300
+max_epochs = 300  # Maximum training epochs
 
 model_test_cfg = dict(
+    # The config of multi-label for multi-class prediction.
     multi_label=True,
+    # The number of boxes before NMS
     nms_pre=30000,
-    score_thr=0.001,
-    nms=dict(type='nms', iou_threshold=0.65),
-    max_per_img=300)
+    score_thr=0.001,  # Threshold to filter out boxes.
+    nms=dict(type='nms', iou_threshold=0.65),  # NMS type and threshold
+    max_per_img=300)  # Max number of detections of each image
 
 # -------------------Possible modified parameters-----------------------
 # -----data related-----
 img_scale = (640, 640)  # width, height
+# Dataset type, this will be used to define the dataset
 dataset_type = 'YOLOv5CocoDataset'
+# Batch size of a single GPU during validation
 val_batch_size_per_gpu = 1
+# Worker to pre-fetch data for each single GPU during validation
 val_num_workers = 2
 
-# only on Val
+# Config of batch shapes. Only on val.
+# It means not used if batch_shapes_cfg is None.
 batch_shapes_cfg = dict(
     type='BatchShapePolicy',
     batch_size=val_batch_size_per_gpu,
     img_size=img_scale[0],
+    # The image scale of padding should be divided by pad_size_divisor
     size_divisor=32,
+    # Additional paddings for pixel scale
     extra_pad_ratio=0.5)
 
 # -----model related-----
+# The scaling factor that controls the depth of the network structure
 deepen_factor = 0.33
+# The scaling factor that controls the width of the network structure
 widen_factor = 0.5
+# Strides of multi-scale prior box
 strides = [8, 16, 32]
-num_det_layers = 3
+num_det_layers = 3  # The number of model output scales
 norm_cfg = dict(type='BN', momentum=0.03, eps=0.001)
 
+# -----train val related-----
+affine_scale = 0.5
 loss_cls_weight = 0.5
 loss_bbox_weight = 0.05
 loss_obj_weight = 1.0
-prior_match_thr = 4.
-obj_level_weights = [4., 1., 0.4]
-lr_factor = 0.01
+prior_match_thr = 4.  # Priori box matching threshold
+obj_level_weights = [4., 1., 0.4]  # The obj loss weights of the three outputs
+lr_factor = 0.01  # Learning rate scaling factor
 weight_decay = 0.0005
-max_keep_ckpts = 3
-affine_scale = 0.5
-
-# -----train val related-----
+# Save model checkpoint and validation intervals
 save_epoch_intervals = 10
+# The maximum checkpoints to keep.
+max_keep_ckpts = 3
 # single-scale training is recommended to
 # be turned on, which can speed up training.
 env_cfg = dict(cudnn_benchmark=True)
