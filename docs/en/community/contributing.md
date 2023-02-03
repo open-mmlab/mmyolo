@@ -37,7 +37,7 @@ Then, you can clone the repositories to local:
 git clone git@github.com:{username}/mmyolo.git
 ```
 
-After that, you should get into the project folder  and add official repository as the upstream repository.
+After that, you should get into the project folder and add official repository as the upstream repository.
 
 ```bash
 cd mmyolo
@@ -145,7 +145,7 @@ This will allow you to use the `git push` command to push code directly next tim
 
 (2) Modify the PR description according to the guidelines so that other developers can better understand your changes(note the button *base* on the left side of the PR branch which is needed to modified to dev branch)
 
-<img src="https://user-images.githubusercontent.com/27466624/204303311-84456397-ee41-44f9-945c-85ce415da235.png" width="1200">
+![204303311-84456397-ee41-44f9-945c-85ce415da235](/Users/buluwasior/Desktop/204303311-84456397-ee41-44f9-945c-85ce415da235.png)
 
 Find more details about Pull Request description in [pull request guidelines](#pr-specs).
 
