@@ -143,7 +143,10 @@ This will allow you to use the `git push` command to push code directly next tim
 
 <img src="https://user-images.githubusercontent.com/27466624/204302289-d1e54901-8f27-4934-923f-fda800ff9851.png" width="1200">
 
-(2) Modify the PR description according to the guidelines so that other developers can better understand your changes(note the button *base* on the left side of the PR branch which is needed to modified to dev branch)
+(2) Modify the PR description according to the guidelines so that other developers can better understand your changes.
+```{note}
+The *base* branch should be modified to *dev* branch.
+```
 
 ![204303311-84456397-ee41-44f9-945c-85ce415da235](https://user-images.githubusercontent.com/62822224/216594960-a2292b9d-2b7c-4861-b4c5-362a9458b194.png)
 

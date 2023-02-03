@@ -145,7 +145,11 @@ git push -u origin {branch_name}
 (1) 在 GitHub 的 Pull request 界面创建拉取请求
 <img src="https://user-images.githubusercontent.com/27466624/204302289-d1e54901-8f27-4934-923f-fda800ff9851.png" width="1200">
 
-(2) 根据指引修改 PR 描述，以便于其他开发者更好地理解你的修改（注意在PR branch左侧的base需要修改为dev分支）
+(2) 根据指引修改 PR 描述，以便于其他开发者更好地理解你的修改
+
+```{note}
+注意在PR branch左侧的base需要修改为dev分支
+```
 
 ![204303311-84456397-ee41-44f9-945c-85ce415da235](https://user-images.githubusercontent.com/62822224/216594960-a2292b9d-2b7c-4861-b4c5-362a9458b194.png)
 
