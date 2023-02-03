@@ -147,7 +147,7 @@ git push -u origin {branch_name}
 
 (2) 根据指引修改 PR 描述，以便于其他开发者更好地理解你的修改（注意在PR branch左侧的base需要修改为dev分支）
 
-![204303311-84456397-ee41-44f9-945c-85ce415da235](https://i.imgur.com/OFJSlfC.jpg)
+![204303311-84456397-ee41-44f9-945c-85ce415da235](https://user-images.githubusercontent.com/62822224/216594960-a2292b9d-2b7c-4861-b4c5-362a9458b194.png)
 
 描述规范详见[拉取请求规范](#拉取请求规范)
 
