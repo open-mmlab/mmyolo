@@ -19,8 +19,8 @@ num_classes = 1
 train_batch_size_per_gpu = 4
 train_num_workers = 2
 log_interval = 1
-# =================================================================
 
+# =======================Unmodified in most cases==================
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,

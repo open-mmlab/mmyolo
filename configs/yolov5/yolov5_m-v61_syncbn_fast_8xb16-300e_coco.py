@@ -8,8 +8,8 @@ affine_scale = 0.9
 loss_cls_weight = 0.3
 loss_obj_weight = 0.7
 mixup_prob = 0.1
-# =================================================================
 
+# =======================Unmodified in most cases==================
 num_classes = _base_.num_classes
 num_det_layers = _base_.num_det_layers
 img_scale = _base_.img_scale

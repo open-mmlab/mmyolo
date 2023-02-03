@@ -25,8 +25,8 @@ loss_obj_weight = 1.0
 # The obj loss weights of the three output layers
 obj_level_weights = [4.0, 1.0, 0.25, 0.06]
 affine_scale = 0.5  # YOLOv5RandomAffine scaling ratio
-# =================================================================
 
+# =======================Unmodified in most cases==================
 model = dict(
     backbone=dict(arch='P6', out_indices=(2, 3, 4, 5)),
     neck=dict(

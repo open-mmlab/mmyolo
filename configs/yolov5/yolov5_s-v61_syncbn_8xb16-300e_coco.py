@@ -89,7 +89,7 @@ max_keep_ckpts = 3
 # be turned on, which can speed up training.
 env_cfg = dict(cudnn_benchmark=True)
 
-# ==========================================================================================
+# ===============================Unmodified in most cases====================
 model = dict(
     type='YOLODetector',
     data_preprocessor=dict(
