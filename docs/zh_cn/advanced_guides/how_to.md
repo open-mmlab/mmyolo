@@ -564,12 +564,14 @@ CUDA_VISIBLE_DEVICES=5 python ./tools/train.py ${CONFIG}
 如果设置`CUDA_VISIBLE_DEVICES`为-1或者一个大于GPU最大编号的数，比如8，将会使用CPU进行训练或者推理。
 
 如果你想使用其中几张卡并行训练，可以使用如下命令：
+
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 ./tools/dist_train.sh ${CONFIG} ${GPU_NUM}
 ```
+
 这里`GPU_NUM` 为4。另外如果在一台机器上多个任务同时多卡训练，需要设置不同的端口，比如以下命令：
+
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh ${CONFIG} 4
 CUDA_VISIBLE_DEVICES=4,5,6,7 PORT=29500 ./tools/dist_train.sh ${CONFIG} 4
 ```
-
