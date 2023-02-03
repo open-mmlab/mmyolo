@@ -148,7 +148,7 @@ git push -u origin {branch_name}
 (2) 根据指引修改 PR 描述，以便于其他开发者更好地理解你的修改
 
 ```{note}
-注意在PR branch左侧的base需要修改为dev分支
+注意在 PR branch 左侧的 base 需要修改为 dev 分支
 ```
 
 ![204303311-84456397-ee41-44f9-945c-85ce415da235](https://user-images.githubusercontent.com/62822224/216594960-a2292b9d-2b7c-4861-b4c5-362a9458b194.png)
