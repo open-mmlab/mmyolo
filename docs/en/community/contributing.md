@@ -148,7 +148,7 @@ This will allow you to use the `git push` command to push code directly next tim
 The *base* branch should be modified to *dev* branch.
 ```
 
-![204303311-84456397-ee41-44f9-945c-85ce415da235](https://user-images.githubusercontent.com/62822224/216594960-a2292b9d-2b7c-4861-b4c5-362a9458b194.png)
+<img src="https://user-images.githubusercontent.com/62822224/216594960-a2292b9d-2b7c-4861-b4c5-362a9458b194.png" width="1200">
 
 Find more details about Pull Request description in [pull request guidelines](#pr-specs).
 
