@@ -145,7 +145,7 @@ This will allow you to use the `git push` command to push code directly next tim
 
 (2) Modify the PR description according to the guidelines so that other developers can better understand your changes(note the button *base* on the left side of the PR branch which is needed to modified to dev branch)
 
-![204303311-84456397-ee41-44f9-945c-85ce415da235](/Users/buluwasior/Desktop/204303311-84456397-ee41-44f9-945c-85ce415da235.png)
+![204303311-84456397-ee41-44f9-945c-85ce415da235](https://i.imgur.com/1CmhbOQ.jpg)
 
 Find more details about Pull Request description in [pull request guidelines](#pr-specs).
 
