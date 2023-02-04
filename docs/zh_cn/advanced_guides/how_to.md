@@ -553,9 +553,9 @@ python ./tools/train.py \
 
 - `randomness.deterministic=True`，把 cuDNN 后端确定性选项设置为 True，即把`torch.backends.cudnn.deterministic` 设为 True，把 `torch.backends.cudnn.benchmark` 设为False。`deterministic` 默认为 False。更多细节见 https://pytorch.org/docs/stable/notes/randomness.html。
 
-## 指定特定GPU训练或推理
+## 指定特定 GPU 训练或推理
 
-如果你有多张GPU，比如8张，其编号分别为`0, 1, 2, 3, 4, 5, 6, 7`，使用单卡训练或推理时会默认使用卡0。如果想指定其他卡进行训练或推理，可以使用以下命令：
+如果你有多张 GPU，比如 8 张，其编号分别为`0, 1, 2, 3, 4, 5, 6, 7`，使用单卡训练或推理时会默认使用卡 0。如果想指定其他卡进行训练或推理，可以使用以下命令：
 
 ```shell
 CUDA_VISIBLE_DEVICES=5 python ./tools/train.py ${CONFIG} #train
@@ -570,7 +570,7 @@ CUDA_VISIBLE_DEVICES=5 python ./tools/test.py ${CONFIG} ${CHECKPOINT_FILE} #test
 CUDA_VISIBLE_DEVICES=0,1,2,3 ./tools/dist_train.sh ${CONFIG} ${GPU_NUM}
 ```
 
-这里`GPU_NUM` 为4。另外如果在一台机器上多个任务同时多卡训练，需要设置不同的端口，比如以下命令：
+这里`GPU_NUM` 为 4。另外如果在一台机器上多个任务同时多卡训练，需要设置不同的端口，比如以下命令：
 
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh ${CONFIG} 4
