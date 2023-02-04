@@ -559,10 +559,10 @@ python ./tools/train.py \
 
 ```shell
 CUDA_VISIBLE_DEVICES=5 python ./tools/train.py ${CONFIG} #train
-CUDA_VISIBLE_DEVICES=5 python ./tools/train.py ${CONFIG} ${CHECKPOINT_FILE} #test
+CUDA_VISIBLE_DEVICES=5 python ./tools/test.py ${CONFIG} ${CHECKPOINT_FILE} #test
 ```
 
-如果设置`CUDA_VISIBLE_DEVICES`为 -1或者一个大于 GPU 最大编号的数，比如 8，将会使用 CPU 进行训练或者推理。
+如果设置`CUDA_VISIBLE_DEVICES`为 -1 或者一个大于 GPU 最大编号的数，比如 8，将会使用 CPU 进行训练或者推理。
 
 如果你想使用其中几张卡并行训练，可以使用如下命令：
 
