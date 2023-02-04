@@ -1,6 +1,6 @@
 _base_ = '../_base_/default_runtime.py'
 
-data_root = 'data/coco/'
+data_root = '/data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 img_scale = (640, 640)  # width, height
@@ -29,15 +29,17 @@ model = dict(
     # TODO: Waiting for mmengine support
     use_syncbn=False,
     data_preprocessor=dict(
-        type='mmdet.DetDataPreprocessor',
+        type='YOLOv5DetDataPreprocessor',
         pad_size_divisor=32,
         batch_augments=[
             dict(
                 type='mmdet.BatchSyncRandomResize',
                 random_size_range=(480, 800),
                 size_divisor=32,
-                interval=10)
-        ]),
+                interval=10)],
+        mean=[103.53, 116.28, 123.675],
+        std=[57.375, 57.12, 58.395],
+        bgr_to_rgb=False),
     backbone=dict(
         type='YOLOXCSPDarknet',
         deepen_factor=deepen_factor,
@@ -157,6 +159,7 @@ train_dataloader = dict(
     num_workers=train_num_workers,
     persistent_workers=True,
     pin_memory=True,
+    collate_fn=dict(type='yolov5_collate'),
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
