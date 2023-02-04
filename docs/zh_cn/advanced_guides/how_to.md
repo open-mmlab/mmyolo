@@ -570,7 +570,7 @@ CUDA_VISIBLE_DEVICES=5 python ./tools/test.py ${CONFIG} ${CHECKPOINT_FILE} #test
 CUDA_VISIBLE_DEVICES=0,1,2,3 ./tools/dist_train.sh ${CONFIG} ${GPU_NUM}
 ```
 
-这里`GPU_NUM` 为 4。另外如果在一台机器上多个任务同时多卡训练，需要设置不同的端口，比如以下命令：
+这里 `GPU_NUM` 为 4。另外如果在一台机器上多个任务同时多卡训练，需要设置不同的端口，比如以下命令：
 
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh ${CONFIG} 4
