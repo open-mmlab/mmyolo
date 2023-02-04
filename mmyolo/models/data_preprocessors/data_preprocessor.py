@@ -32,29 +32,26 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
         """
         if not training:
             return super().forward(data, training)
-        assert isinstance(data['data_samples'], torch.Tensor), \
-            '"data_samples" should be a tensor, but got ' \
-            f'{type(data["data_samples"])}. The possible reason for this ' \
-            'is that you are not using it with ' \
-            '"mmyolo.datasets.utils.yolov5_collate". Please refer to ' \
-            '"configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py".'
 
-        inputs = data['inputs'].to(self.device, non_blocking=True)
+        data = self.cast_data(data)
+        inputs, data_samples = data['inputs'], data['data_samples']
+        assert isinstance(data['data_samples'], dict)
 
+        # TODO: Supports multi-scale training
         if self._channel_conversion and inputs.shape[1] == 3:
             inputs = inputs[:, [2, 1, 0], ...]
-
         if self._enable_normalize:
             inputs = (inputs - self.mean) / self.std
-
-        data_samples = data['data_samples'].to(self.device, non_blocking=True)
 
         if self.batch_augments is not None:
             for batch_aug in self.batch_augments:
                 inputs, data_samples = batch_aug(inputs, data_samples)
 
         img_metas = [{'batch_input_shape': inputs.shape[2:]}] * len(inputs)
-        data_samples = {'bboxes_labels': data_samples, 'img_metas': img_metas}
+        data_samples = {
+            'bboxes_labels': data_samples['bboxes_labels'],
+            'img_metas': img_metas
+        }
 
         return {'inputs': inputs, 'data_samples': data_samples}
 
