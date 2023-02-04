@@ -12,6 +12,7 @@ from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
+from mmrotate.structures.bbox.rotated_boxes import RotatedBoxes
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
@@ -565,6 +566,10 @@ class YOLOv5RandomAffine(BaseTransform):
             # Be careful: valid_index must convert to numpy,
             # otherwise it will raise out of bounds when len(valid_index)=1
             valid_index = self.filter_gt_bboxes(orig_bboxes, bboxes).numpy()
+
+            valid_index_2 = bboxes.is_inside([height, width]).numpy()
+            valid_index = valid_index & valid_index_2
+
             results['gt_bboxes'] = bboxes[valid_index]
             results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
                 valid_index]
@@ -1070,3 +1075,15 @@ class PPYOLOERandomCrop(BaseTransform):
             valid, (cropped_box[:, :2] < cropped_box[:, 2:]).all(axis=1))
 
         return np.where(valid)[0]
+
+
+@TRANSFORMS.register_module()
+class RegAngle(BaseTransform):
+
+    def __init__(self, angle_version='le90') -> None:
+        super().__init__()
+
+    def transform(self, results: dict) -> dict:
+        results['gt_bboxes'] = RotatedBoxes(
+            results['gt_bboxes'].regularize_boxes('le90'))
+        return results
