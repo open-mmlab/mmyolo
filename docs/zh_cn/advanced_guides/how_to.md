@@ -555,13 +555,14 @@ python ./tools/train.py \
 
 ## 指定特定GPU训练或推理
 
-如果你有多张GPU，比如8张，其编号分别为0, 1, 2, 3, 4, 5, 6, 7，使用单卡训练或推理时会默认使用卡0。如果想指定其他卡进行训练或推理，可以使用以下命令：
+如果你有多张GPU，比如8张，其编号分别为`0, 1, 2, 3, 4, 5, 6, 7`，使用单卡训练或推理时会默认使用卡0。如果想指定其他卡进行训练或推理，可以使用以下命令：
 
 ```shell
-CUDA_VISIBLE_DEVICES=5 python ./tools/train.py ${CONFIG}
+CUDA_VISIBLE_DEVICES=5 python ./tools/train.py ${CONFIG} #train
+CUDA_VISIBLE_DEVICES=5 python ./tools/train.py ${CONFIG} ${CHECKPOINT_FILE} #test
 ```
 
-如果设置`CUDA_VISIBLE_DEVICES`为-1或者一个大于GPU最大编号的数，比如8，将会使用CPU进行训练或者推理。
+如果设置`CUDA_VISIBLE_DEVICES`为 -1或者一个大于 GPU 最大编号的数，比如 8，将会使用 CPU 进行训练或者推理。
 
 如果你想使用其中几张卡并行训练，可以使用如下命令：
 
@@ -573,5 +574,5 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 ./tools/dist_train.sh ${CONFIG} ${GPU_NUM}
 
 ```shell
 CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh ${CONFIG} 4
-CUDA_VISIBLE_DEVICES=4,5,6,7 PORT=29500 ./tools/dist_train.sh ${CONFIG} 4
+CUDA_VISIBLE_DEVICES=4,5,6,7 PORT=29501 ./tools/dist_train.sh ${CONFIG} 4
 ```
