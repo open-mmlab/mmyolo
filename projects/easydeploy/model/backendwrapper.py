@@ -17,6 +17,7 @@ warnings.filterwarnings(action='ignore', category=DeprecationWarning)
 
 
 class TRTWrapper(torch.nn.Module):
+    dtype_mapping = {}
 
     def __init__(self, weight: Union[str, Path],
                  device: Optional[torch.device]):
@@ -30,8 +31,18 @@ class TRTWrapper(torch.nn.Module):
         self.weight = weight
         self.device = device
         self.stream = torch.cuda.Stream(device=device)
+        self.__update_mapping()
         self.__init_engine()
         self.__init_bindings()
+
+    def __update_mapping(self):
+        self.dtype_mapping.update({
+            trt.bool: torch.bool,
+            trt.int8: torch.int8,
+            trt.int32: torch.int32,
+            trt.float16: torch.float16,
+            trt.float32: torch.float32
+        })
 
     def __init_engine(self):
         logger = trt.Logger(trt.Logger.ERROR)
@@ -71,14 +82,14 @@ class TRTWrapper(torch.nn.Module):
 
         for i, name in enumerate(self.input_names):
             assert self.model.get_binding_name(i) == name
-            dtype = self.torch_dtype_from_trt(self.model.get_binding_dtype(i))
+            dtype = self.dtype_mapping[self.model.get_binding_dtype(i)]
             shape = tuple(self.model.get_binding_shape(i))
             inputs_info.append(Binding(name, dtype, shape))
 
         for i, name in enumerate(self.output_names):
             i += self.num_inputs
             assert self.model.get_binding_name(i) == name
-            dtype = self.torch_dtype_from_trt(self.model.get_binding_dtype(i))
+            dtype = self.dtype_mapping[self.model.get_binding_dtype(i)]
             shape = tuple(self.model.get_binding_shape(i))
             outputs_info.append(Binding(name, dtype, shape))
         self.inputs_info = inputs_info
@@ -124,28 +135,6 @@ class TRTWrapper(torch.nn.Module):
         self.stream.synchronize()
 
         return tuple(outputs)
-
-    @staticmethod
-    def torch_dtype_from_trt(dtype: trt.DataType) -> torch.dtype:
-        """Convert TensorRT data types to PyTorch data types.
-
-        Args:
-            dtype (TRTDataType): A TensorRT data type.
-        Returns:
-            The equivalent PyTorch data type.
-        """
-        if dtype == trt.int8:
-            return torch.int8
-        elif trt.__version__ >= '7.0' and dtype == trt.bool:
-            return torch.bool
-        elif dtype == trt.int32:
-            return torch.int32
-        elif dtype == trt.float16:
-            return torch.float16
-        elif dtype == trt.float32:
-            return torch.float32
-        else:
-            raise TypeError(f'{dtype} is not supported by torch')
 
 
 class ORTWrapper(torch.nn.Module):

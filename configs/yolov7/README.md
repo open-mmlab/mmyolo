@@ -12,6 +12,11 @@ YOLOv7 surpasses all known object detectors in both speed and accuracy in the ra
 <img src="https://user-images.githubusercontent.com/17425982/204231759-cc5c77a9-38c6-4a41-85be-eb97e4b2bcbb.png"/>
 </div>
 
+<div align=center>
+<img alt="YOLOv7-l" src="https://user-images.githubusercontent.com/68552295/216335336-963bd03a-71f3-4556-97af-18b20d69e065.png" width = 95.5%/>
+YOLOv7-l-P5 model structure
+</div>
+
 ## Results and models
 
 ### COCO

@@ -50,10 +50,10 @@ def bbox_overlaps(pred: torch.Tensor,
         pred = HorizontalBoxes.cxcywh_to_xyxy(pred)
         target = HorizontalBoxes.cxcywh_to_xyxy(target)
 
-    bbox1_x1, bbox1_y1 = pred[:, 0], pred[:, 1]
-    bbox1_x2, bbox1_y2 = pred[:, 2], pred[:, 3]
-    bbox2_x1, bbox2_y1 = target[:, 0], target[:, 1]
-    bbox2_x2, bbox2_y2 = target[:, 2], target[:, 3]
+    bbox1_x1, bbox1_y1 = pred[..., 0], pred[..., 1]
+    bbox1_x2, bbox1_y2 = pred[..., 2], pred[..., 3]
+    bbox2_x1, bbox2_y1 = target[..., 0], target[..., 1]
+    bbox2_x2, bbox2_y2 = target[..., 2], target[..., 3]
 
     # Overlap
     overlap = (torch.min(bbox1_x2, bbox2_x2) -
@@ -73,12 +73,12 @@ def bbox_overlaps(pred: torch.Tensor,
     ious = overlap / union
 
     # enclose area
-    enclose_x1y1 = torch.min(pred[:, :2], target[:, :2])
-    enclose_x2y2 = torch.max(pred[:, 2:], target[:, 2:])
+    enclose_x1y1 = torch.min(pred[..., :2], target[..., :2])
+    enclose_x2y2 = torch.max(pred[..., 2:], target[..., 2:])
     enclose_wh = (enclose_x2y2 - enclose_x1y1).clamp(min=0)
 
-    enclose_w = enclose_wh[:, 0]  # cw
-    enclose_h = enclose_wh[:, 1]  # ch
+    enclose_w = enclose_wh[..., 0]  # cw
+    enclose_h = enclose_wh[..., 1]  # ch
 
     if iou_mode == 'ciou':
         # CIoU = IoU - ( (ρ^2(b_pred,b_gt) / c^2) + (alpha x v) )

@@ -4,10 +4,19 @@
 
 ## MMYOLO 解读文章和资源
 
+### 脚本命令速查表
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/27466624/213104312-3580c783-2423-442f-b5f6-79204a06adb5.png">
+</div>
+
+你可以点击[链接](https://pan.baidu.com/s/1QEaqT7YayUdEvh1an0gjHg?pwd=yolo)，下载高清版 PDF 文件。
+
 ### 文章
 
 - [社区协作，简洁易用，快来开箱新一代 YOLO 系列开源库](https://zhuanlan.zhihu.com/p/575615805)
 - [MMYOLO 社区倾情贡献，RTMDet 原理社区开发者解读来啦！](https://zhuanlan.zhihu.com/p/569777684)
+- [YOLOv8 深度详解！一文看懂，快速上手](https://zhuanlan.zhihu.com/p/598566644)
 - [玩转 MMYOLO 基础类第一期： 配置文件太复杂？继承用法看不懂？配置全解读来了](https://zhuanlan.zhihu.com/p/577715188)
 - [玩转 MMYOLO 工具类第一期： 特征图可视化](https://zhuanlan.zhihu.com/p/578141381?)
 - [玩转 MMYOLO 实用类第二期：源码阅读和调试「必备」技巧文档](https://zhuanlan.zhihu.com/p/580885852)
@@ -38,7 +47,8 @@
 | :---: | :--------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | 第1讲 |     源码阅读和调试「必备」技巧     | [![Link](https://i2.hdslb.com/bfs/archive/790d2422c879ff20488910da1c4422b667ea6af7.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1N14y1V7mB)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1N14y1V7mB)](https://www.bilibili.com/video/BV1N14y1V7mB) |                                                                       [源码阅读和调试「必备」技巧文档](https://zhuanlan.zhihu.com/p/580885852)                                                                        |
 | 第2讲 |         10分钟换遍主干网络         | [![Link](https://i0.hdslb.com/bfs/archive/c51f1aef7c605856777249a7b4478f44bd69f3bd.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1JG4y1d7GC)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1JG4y1d7GC)](https://www.bilibili.com/video/BV1JG4y1d7GC) | [10分钟换遍主干网络文档](https://zhuanlan.zhihu.com/p/585641598)<br>[10分钟换遍主干网络.ipynb](https://github.com/open-mmlab/OpenMMLabCourse/blob/main/codes/MMYOLO_tutorials/[实用类第二期]10分钟换遍主干网络.ipynb) |
-| 第3讲 | 自定义数据集从标注到部署保姆级教程 | [![Link](https://i2.hdslb.com/bfs/archive/13f566c89a18c9c881713b63ec14da952d4c0b14.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1RG4y137i5)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1RG4y137i5)](https://www.bilibili.com/video/BV1JG4y1d7GC) |                                             [自定义数据集从标注到部署保姆级教程](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/user_guides/custom_dataset.md)                                              |
+| 第3讲 | 自定义数据集从标注到部署保姆级教程 | [![Link](https://i2.hdslb.com/bfs/archive/13f566c89a18c9c881713b63ec14da952d4c0b14.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1RG4y137i5)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1RG4y137i5)](https://www.bilibili.com/video/BV1RG4y137i5) |                                             [自定义数据集从标注到部署保姆级教程](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/user_guides/custom_dataset.md)                                              |
+| 第4讲 |      顶会第一步 · 模块自定义       | [![Link](http://i2.hdslb.com/bfs/archive/5b23d41ac57466824eaf185ef806ef734414e93b.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1yd4y1j7VD)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1yd4y1j7VD)](https://www.bilibili.com/video/BV1yd4y1j7VD)  |                                [顶会第一步·模块自定义.ipynb](https://github.com/open-mmlab/OpenMMLabCourse/blob/main/codes/MMYOLO_tutorials/[实用类第四期]顶会第一步·模块自定义.ipynb)                                |
 
 #### 源码解读类
 
@@ -62,6 +72,7 @@
 ## 文章
 
 - [MMDetection 3.0：目标检测新基准与前沿](https://zhuanlan.zhihu.com/p/575246786)
+- [目标检测、实例分割、旋转框样样精通！详解高性能检测算法 RTMDet](https://zhuanlan.zhihu.com/p/598846422)
 - [MMDetection 支持数据增强神器 Simple Copy Paste 全过程](https://zhuanlan.zhihu.com/p/559940982)
 
 ## 知乎问答和资源
