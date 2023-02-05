@@ -12,6 +12,7 @@ from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
+from mmrotate.structures.bbox.rotated_boxes import RotatedBoxes
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
@@ -1070,3 +1071,16 @@ class PPYOLOERandomCrop(BaseTransform):
             valid, (cropped_box[:, :2] < cropped_box[:, 2:]).all(axis=1))
 
         return np.where(valid)[0]
+
+
+@TRANSFORMS.register_module()
+class RegularizeRotatedBox(BaseTransform):
+
+    def __init__(self, angle_version='le90') -> None:
+        self.angle_version = angle_version
+
+    def transform(self, results: dict) -> dict:
+        assert isinstance(results['gt_bboxes'], RotatedBoxes)
+        results['gt_bboxes'] = RotatedBoxes(
+            results['gt_bboxes'].regularize_boxes('le90'))
+        return results
