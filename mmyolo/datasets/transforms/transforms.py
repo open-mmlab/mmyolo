@@ -446,21 +446,27 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                  mask2bbox: bool = False,
                  poly2mask: bool = False,
                  **kwargs) -> None:
-        super().__init__(poly2mask=poly2mask, **kwargs)
         self.mask2bbox = mask2bbox
+        super().__init__(poly2mask=poly2mask, **kwargs)
+        if self.mask2bbox:
+            print('将使用mask信息来生成bbox信息。')
+            assert self.with_mask, '使用mask2bbox要求with_mask==True.'
 
     def transform(self, results: dict) -> dict:
-        results = super().transform(results)
+        if self.with_bbox and not self.mask2bbox:
+            self._load_bboxes(results)
+        if self.with_label:
+            self._load_labels(results)
+        if self.with_mask:
+            self._load_masks(results)
+        if self.with_seg:
+            self._load_seg_map(results)
         if self.mask2bbox:
-            if 'gt_masks' in results:
-                gt_bboxes_labels = results['gt_bboxes_labels']
-                gt_masks = results['gt_masks']
-                gt_bboxes = gt_masks.get_bboxes(dst_type='hbox')
-                assert len(gt_bboxes) == len(gt_masks) == len(gt_bboxes_labels)
-                results['gt_bboxes'] = gt_bboxes
-            else:
-                # TODO： 加注释
-                print('这里要加注释')
+            assert 'gt_masks' in results
+            gt_masks = results['gt_masks']
+            gt_bboxes = gt_masks.get_bboxes(dst_type='hbox')
+            results['gt_bboxes'] = gt_bboxes
+
         return results
 
     def _process_masks(self, results: dict) -> list:
@@ -486,23 +492,14 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                     ]
                     if len(gt_mask) == 0:
                         # ignore this instance and set gt_mask to a fake mask
-                        instance['ignore_flag'] = 1
-                        gt_mask = [np.zeros(6)]
+                        continue
                 elif not self.poly2mask:
-                    # `PolygonMasks` requires a ploygon of format
-                    # List[np.array],
-                    # other formats are invalid.
-                    instance['ignore_flag'] = 1
-                    gt_mask = [np.zeros(6)]
+                    continue
                 elif isinstance(gt_mask, dict) and \
                         not (gt_mask.get('counts') is not None and
                              gt_mask.get('size') is not None and
                              isinstance(gt_mask['counts'], (list, str))):
-                    # if gt_mask is a dict, it should include `counts`
-                    # and `size`,
-                    # so that `BitmapMasks` can uncompressed RLE
-                    instance['ignore_flag'] = 1
-                    gt_mask = [np.zeros(6)]
+                    continue
                 gt_masks.append(gt_mask)
                 # re-process gt_ignore_flags
                 gt_ignore_flags.append(instance['ignore_flag'])
@@ -703,8 +700,6 @@ class YOLOv5RandomAffine(BaseTransform):
         Returns:
             dict: The result dict.
         """
-        assert len(results['gt_masks']) == len(results['gt_bboxes']) == len(
-            results['gt_bboxes_labels'])
         img = results['img']
         # self.border is wh format
         height = img.shape[0] + self.border[1] * 2
@@ -740,69 +735,11 @@ class YOLOv5RandomAffine(BaseTransform):
                 # If the dataset has annotations of mask,
                 # the mask will be used to adjust bbox.
                 gt_masks = results['gt_masks']
-                if isinstance(gt_masks, BitmapMasks):
-                    masks = gt_masks.masks
-                    dtype = masks.dtype
-                    masks = cv2.warpPerspective(
-                        masks.transpose((1, 2, 0)),
-                        warp_matrix,
-                        dsize=(width, height),
-                        borderValue=0)
-                    gt_masks = BitmapMasks(
-                        masks.reshape(height, width, -1).transpose(
-                            (2, 0, 1)).astype(dtype), height, width)
 
-                elif isinstance(gt_masks, PolygonMasks):
-                    gt_masks_resample = self.resample_masks(gt_masks)
-                    masks = gt_masks_resample.masks
+                gt_masks_resample = self.resample_masks(gt_masks)
+                gt_masks = self.warp_mask(gt_masks_resample, warp_matrix,
+                                          img_h, img_w)
 
-                    new_masks = []
-                    for poly_per_obj in masks:
-                        cropped_poly_per_obj = []
-                        for p in poly_per_obj:
-                            p1 = p.reshape((-1, 2))
-                            p2 = np.concatenate(
-                                (p1, np.ones((len(p1), 1), dtype=p.dtype)),
-                                axis=-1)
-                            p3 = p2 @ warp_matrix.T
-                            p4 = p3[:, :2] / p3[:, 2:3]
-
-                            # filter point outside image
-                            x, y = p4.T
-                            valid_ind_point = (x >= 0) & (y >=
-                                                          0) & (x <= img_w) & (
-                                                              y <= img_h)
-                            x, y, = x[valid_ind_point], y[valid_ind_point]
-
-                            # 这边确定当前单个mask是否有效即可
-                            if any(x):
-                                # 这里不用决定gt_bboxes，放到外面来决定
-                                cropped_poly_per_obj.append(
-                                    p4[valid_ind_point].reshape(-1))
-                                # valid_p.append(True)
-                            # else:
-                            #     cropped_poly_per_obj.append(
-                            #     np.zeros_like(p4, shape=(0, 2)))
-                            #     # valid_p.append(False)
-                        # 这边要确认当前gt是否有效了
-                        # 如果crop这里里面有结果，就证明有效
-                        if not cropped_poly_per_obj:
-                            # 这里如果mask都被认为是无效，添加个zeros。这里添加的zeros在filter_gt_bboxes里会被过滤掉
-                            #
-                            cropped_poly_per_obj = [
-                                np.zeros(2, dtype=poly_per_obj[0].dtype)
-                            ]
-                        new_masks.append(cropped_poly_per_obj)
-
-                    # 无论有没有有效数据，都可以直接获取
-                    gt_masks = PolygonMasksTemp(new_masks, gt_masks.height,
-                                                gt_masks.width)
-
-                else:
-                    msg = '`gt_masks` does not support type' \
-                          ' of %s in YOLOv5RandomAffine' \
-                          '.' % gt_masks.__class__.__name__
-                    raise NotImplementedError(msg)
                 # 这里用mask生成bboxes
                 bboxes = gt_masks.get_bboxes(dst_type='hbox')
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
@@ -827,10 +764,46 @@ class YOLOv5RandomAffine(BaseTransform):
             results['gt_ignore_flags'] = results['gt_ignore_flags'][
                 valid_index]
 
-        assert len(results['gt_masks']) == len(results['gt_bboxes']) == len(
-            results['gt_bboxes_labels'])
-
         return results
+
+    def get_point_vaild_index(self, p, warp_matrix, img_w, img_h):
+        p1 = p.reshape((-1, 2))
+        p2 = np.concatenate((p1, np.ones((len(p1), 1), dtype=p.dtype)),
+                            axis=-1)
+        p3 = p2 @ warp_matrix.T
+        p4 = p3[:, :2] / p3[:, 2:3]
+
+        # filter point outside image
+        x, y = p4.T
+        valid_ind_point = (x >= 0) & (y >= 0) & (x <= img_w) & (y <= img_h)
+        return valid_ind_point, p4[valid_ind_point]
+
+    def warp_mask(self, gt_masks, warp_matrix, img_w, img_h):
+        masks = gt_masks.masks
+
+        new_masks = []
+        for poly_per_obj in masks:
+            cropped_poly_per_obj = []
+            for p in poly_per_obj:
+                valid_ind_point, valid_point = self.get_point_vaild_index(
+                    p, warp_matrix, img_w, img_h)
+
+                # 这边确定当前单个mask是否有效即可
+                if any(valid_ind_point):
+                    # 这里不用决定gt_bboxes，放到外面来决定
+                    cropped_poly_per_obj.append(valid_point.reshape(-1))
+            # 这边要确认当前gt是否有效了
+            # 如果crop这里里面有结果，就证明有效
+            if not cropped_poly_per_obj:
+                # 这里如果mask都被认为是无效，添加个zeros。这里添加的zeros在filter_gt_bboxes里会被过滤掉
+                cropped_poly_per_obj = [
+                    np.zeros(6, dtype=poly_per_obj[0].dtype)
+                ]
+            new_masks.append(cropped_poly_per_obj)
+
+        # 无论有没有有效数据，都可以直接获取
+        gt_masks = PolygonMasksTemp(new_masks, gt_masks.height, gt_masks.width)
+        return gt_masks
 
     def resample_masks(self, gt_masks: PolygonMasksTemp, resample_num=1000):
         masks = gt_masks.masks
@@ -1437,12 +1410,12 @@ class YOLOv5CopyPaste(BaseTransform):
         # prepare images
         copypaste_gt_masks = gt_masks[valid_inds]
         copypaste_gt_masks_flip = copypaste_gt_masks.flip()
-        copypaste_mask = [gt_mask for gt_mask in copypaste_gt_masks.masks]
-        if len(copypaste_mask) == 0:
-            return results
-
+        # convert poly format to bitmap format
+        # example: poly: [[array(0.0, 0.0, 10.0, 0.0, 10.0, 10.0, 0.0, 10.0]]
+        #  -> bitmap: a mask with shape equal to (1, img_h, img_w)
+        copypaste_gt_masks_bitmap = copypaste_gt_masks.to_ndarray()
         # copy objects, and paste to the mirror position of the image
-        copypaste_mask = np.sum(copypaste_mask, axis=0) > 0
+        copypaste_mask = np.sum(copypaste_gt_masks_bitmap.masks, axis=0) > 0
         copypaste_mask_flip = mmcv.imflip(
             copypaste_mask, direction='horizontal')
         copypaste_img = mmcv.imflip(img, direction='horizontal')
@@ -1502,5 +1475,6 @@ class YOLOv5CopyPaste(BaseTransform):
 
     def __repr__(self) -> str:
         repr_str = self.__class__.__name__
-        repr_str += f'(prob={self.prob})'
+        repr_str += f'(ioa_thresh={self.ioa_thresh},'
+        repr_str += f'prob={self.prob})'
         return repr_str

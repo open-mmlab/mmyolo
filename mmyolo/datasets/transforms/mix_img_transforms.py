@@ -319,8 +319,8 @@ class Mosaic(BaseMixImageTransform):
         mosaic_bboxes = []
         mosaic_bboxes_labels = []
         mosaic_ignore_flags = []
-        if 'gt_masks' in results:
-            mosaic_masks = []
+        mosaic_masks = []
+        with_mask = True if 'gt_masks' in results else False
         # self.img_scale is wh format
         img_scale_w, img_scale_h = self.img_scale
 
@@ -366,59 +366,51 @@ class Mosaic(BaseMixImageTransform):
             gt_bboxes_i = results_patch['gt_bboxes']
             gt_bboxes_labels_i = results_patch['gt_bboxes_labels']
             gt_ignore_flags_i = results_patch['gt_ignore_flags']
-            assert len(gt_bboxes_i) == len(gt_bboxes_labels_i) == len(
-                gt_ignore_flags_i)
 
             padw = x1_p - x1_c
             padh = y1_p - y1_c
             gt_bboxes_i.rescale_([scale_ratio_i, scale_ratio_i])
             gt_bboxes_i.translate_([padw, padh])
-            if 'gt_masks' in results_patch:
-                gt_masks_i = results_patch['gt_masks']
-                gt_masks_i = gt_masks_i.resize(
-                    (int(h_i * scale_ratio_i), int(w_i * scale_ratio_i)
-                     )  # resize masks
-                ).crop(np.array([x1_c, y1_c, x2_c, y2_c])).expand(
-                    2 * img_scale_h,
-                    2 * img_scale_w,
-                    y1_p,
-                    x1_p  # pad to output size
-                )
-                mosaic_masks.append(gt_masks_i)
-                assert len(gt_masks_i) == len(gt_bboxes_i) == len(
-                    gt_ignore_flags_i) == len(gt_bboxes_labels_i)
             mosaic_bboxes.append(gt_bboxes_i)
             mosaic_bboxes_labels.append(gt_bboxes_labels_i)
             mosaic_ignore_flags.append(gt_ignore_flags_i)
+            if with_mask and results_patch.get('gt_masks', None) is not None:
+                gt_masks_i = results_patch['gt_masks']
+                gt_masks_i = gt_masks_i.rescale(float(scale_ratio_i))
+                gt_masks_i = gt_masks_i.translate(
+                    out_shape=(int(self.img_scale[0] * 2),
+                               int(self.img_scale[1] * 2)),
+                    offset=padw,
+                    direction='horizontal')
+                gt_masks_i = gt_masks_i.translate(
+                    out_shape=(int(self.img_scale[0] * 2),
+                               int(self.img_scale[1] * 2)),
+                    offset=padh,
+                    direction='vertical')
+                mosaic_masks.append(gt_masks_i)
 
         mosaic_bboxes = mosaic_bboxes[0].cat(mosaic_bboxes, 0)
         mosaic_bboxes_labels = np.concatenate(mosaic_bboxes_labels, 0)
         mosaic_ignore_flags = np.concatenate(mosaic_ignore_flags, 0)
 
-        if 'gt_masks' in results:
-            mosaic_masks = mosaic_masks[0].cat(mosaic_masks)
-            results['gt_masks'] = mosaic_masks
-
         if self.bbox_clip_border:
             mosaic_bboxes.clip_([2 * img_scale_h, 2 * img_scale_w])
-        else:
-            # remove outside bboxes
-            inside_inds = mosaic_bboxes.is_inside(
-                [2 * img_scale_h, 2 * img_scale_w]).numpy()
-            mosaic_bboxes = mosaic_bboxes[inside_inds]
-            mosaic_bboxes_labels = mosaic_bboxes_labels[inside_inds]
-            mosaic_ignore_flags = mosaic_ignore_flags[inside_inds]
-            print('!!!', len(results['gt_masks']), inside_inds)
-            if 'gt_masks' in results:
-                results['gt_masks'] = results['gt_masks'][inside_inds]
+        # remove outside bboxes
+        inside_inds = mosaic_bboxes.is_inside(
+            [2 * self.img_scale[1], 2 * self.img_scale[0]]).numpy()
+        mosaic_bboxes = mosaic_bboxes[inside_inds]
+        mosaic_bboxes_labels = mosaic_bboxes_labels[inside_inds]
+        mosaic_ignore_flags = mosaic_ignore_flags[inside_inds]
 
         results['img'] = mosaic_img
         results['img_shape'] = mosaic_img.shape
         results['gt_bboxes'] = mosaic_bboxes
         results['gt_bboxes_labels'] = mosaic_bboxes_labels
         results['gt_ignore_flags'] = mosaic_ignore_flags
-        assert len(results['gt_masks']) == len(results['gt_bboxes']) == len(
-            results['gt_bboxes_labels'])
+
+        if with_mask:
+            mosaic_masks = mosaic_masks[0].cat(mosaic_masks)
+            results['gt_masks'] = mosaic_masks[inside_inds]
         return results
 
     def _mosaic_combine(
