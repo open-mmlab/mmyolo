@@ -503,8 +503,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                 gt_masks.append(gt_mask)
                 # re-process gt_ignore_flags
                 gt_ignore_flags.append(instance['ignore_flag'])
-            results['gt_ignore_flags'] = np.array(
-                gt_ignore_flags, dtype=np.bool)
+        results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=np.bool)
         return gt_masks
 
     def _load_bboxes(self, results: dict):
