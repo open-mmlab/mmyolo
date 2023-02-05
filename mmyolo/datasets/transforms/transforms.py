@@ -1414,7 +1414,7 @@ class YOLOv5CopyPaste(BaseTransform):
         #  -> bitmap: a mask with shape equal to (1, img_h, img_w)
         copypaste_gt_masks_bitmap = copypaste_gt_masks.to_ndarray()
         # copy objects, and paste to the mirror position of the image
-        copypaste_mask = np.sum(copypaste_gt_masks_bitmap.masks, axis=0) > 0
+        copypaste_mask = np.sum(copypaste_gt_masks_bitmap, axis=0) > 0
         copypaste_mask_flip = mmcv.imflip(
             copypaste_mask, direction='horizontal')
         copypaste_img = mmcv.imflip(img, direction='horizontal')
