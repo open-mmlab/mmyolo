@@ -1,10 +1,15 @@
 _base_ = './yolov5_s-p6-v62_syncbn_fast_8xb16-300e_coco.py'
 
+# ========================modified parameters======================
 deepen_factor = 0.67
 widen_factor = 0.75
-lr_factor = 0.1  # lrf=0.1
+lr_factor = 0.1
 affine_scale = 0.9
+loss_cls_weight = 0.3
+loss_obj_weight = 0.7
+mixup_prob = 0.1
 
+# =======================Unmodified in most cases==================
 num_classes = _base_.num_classes
 num_det_layers = _base_.num_det_layers
 img_scale = _base_.img_scale
@@ -20,9 +25,9 @@ model = dict(
     ),
     bbox_head=dict(
         head_module=dict(widen_factor=widen_factor),
-        loss_cls=dict(loss_weight=0.3 *
+        loss_cls=dict(loss_weight=loss_cls_weight *
                       (num_classes / 80 * 3 / num_det_layers)),
-        loss_obj=dict(loss_weight=0.7 *
+        loss_obj=dict(loss_weight=loss_obj_weight *
                       ((img_scale[0] / 640)**2 * 3 / num_det_layers))))
 
 pre_transform = _base_.pre_transform
@@ -49,7 +54,7 @@ train_pipeline = [
     *pre_transform, *mosaic_affine_pipeline,
     dict(
         type='YOLOv5MixUp',
-        prob=0.1,
+        prob=mixup_prob,
         pre_transform=[*pre_transform, *mosaic_affine_pipeline]),
     dict(
         type='mmdet.Albu',
@@ -71,5 +76,4 @@ train_pipeline = [
 ]
 
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
-
 default_hooks = dict(param_scheduler=dict(lr_factor=lr_factor))

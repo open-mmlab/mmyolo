@@ -175,7 +175,7 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
 
         # The PALETTE in the dataset_meta is required
         assert self.dataset_meta is not None
-        palette = self.dataset_meta['PALETTE']
+        palette = self.dataset_meta['palette']
         x = ((grid_x_inds + offset) * stride).long()
         y = ((grid_y_inds + offset) * stride).long()
         center = torch.stack((x, y), dim=-1)

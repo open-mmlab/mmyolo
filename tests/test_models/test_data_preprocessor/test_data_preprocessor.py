@@ -55,7 +55,9 @@ class TestYOLOv5DetDataPreprocessor(TestCase):
         # test training
         data = {
             'inputs': torch.randint(0, 256, (2, 3, 10, 11)),
-            'data_samples': torch.randint(0, 11, (18, 6)),
+            'data_samples': {
+                'bboxes_labels': torch.randint(0, 11, (18, 6))
+            },
         }
         out_data = processor(data, training=True)
         batch_inputs, batch_data_samples = out_data['inputs'], out_data[
@@ -71,7 +73,7 @@ class TestYOLOv5DetDataPreprocessor(TestCase):
             'inputs': [torch.randint(0, 256, (3, 11, 10))],
             'data_samples': [DetDataSample()]
         }
-        # data_samples must be tensor
+        # data_samples must be dict
         with self.assertRaises(AssertionError):
             processor(data, training=True)
 
@@ -104,8 +106,9 @@ class TestPPYOLOEDetDataPreprocessor(TestCase):
                 torch.randint(0, 256, (3, 10, 11)),
                 torch.randint(0, 256, (3, 10, 11))
             ],
-            'data_samples':
-            torch.randint(0, 11, (18, 6)).float(),
+            'data_samples': {
+                'bboxes_labels': torch.randint(0, 11, (18, 6)).float()
+            },
         }
         out_data = processor(data, training=True)
         batch_data_samples = out_data['data_samples']
@@ -120,5 +123,5 @@ class TestPPYOLOEDetDataPreprocessor(TestCase):
             'data_samples': DetDataSample()
         }
         # data_samples must be list
-        with self.assertRaises(TypeError):
+        with self.assertRaises(AssertionError):
             processor(data, training=True)
