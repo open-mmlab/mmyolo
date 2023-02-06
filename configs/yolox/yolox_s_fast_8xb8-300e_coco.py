@@ -1,6 +1,6 @@
 _base_ = '../_base_/default_runtime.py'
 
-data_root = '/data/coco/'
+data_root = './data/coco/'
 dataset_type = 'YOLOv5CocoDataset'
 
 img_scale = (640, 640)  # width, height
@@ -12,6 +12,8 @@ train_batch_size_per_gpu = 8
 train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
+
+persistent_workers=True
 
 max_epochs = 300
 num_last_epochs = 15
@@ -33,13 +35,10 @@ model = dict(
         pad_size_divisor=32,
         batch_augments=[
             dict(
-                type='mmdet.BatchSyncRandomResize',
+                type='BatchSyncRandomResize',
                 random_size_range=(480, 800),
                 size_divisor=32,
-                interval=10)],
-        mean=[103.53, 116.28, 123.675],
-        std=[57.375, 57.12, 58.395],
-        bgr_to_rgb=False),
+                interval=10)]),
     backbone=dict(
         type='YOLOXCSPDarknet',
         deepen_factor=deepen_factor,
@@ -157,7 +156,7 @@ train_pipeline_stage2 = [
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
-    persistent_workers=True,
+    persistent_workers=persistent_workers,
     pin_memory=True,
     collate_fn=dict(type='yolov5_collate'),
     sampler=dict(type='DefaultSampler', shuffle=True),
@@ -186,7 +185,7 @@ test_pipeline = [
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
-    persistent_workers=True,
+    persistent_workers=persistent_workers,
     pin_memory=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),

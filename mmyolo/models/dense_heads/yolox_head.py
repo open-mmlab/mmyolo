@@ -297,8 +297,12 @@ class YOLOXHead(YOLOv5Head):
         if batch_gt_instances_ignore is None:
             batch_gt_instances_ignore = [None] * num_imgs
             
-        batch_gt_instances = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
-
+        if isinstance(batch_gt_instances, torch.Tensor):
+            batch_gt_instances_ = InstanceData()
+            batch_gt_instances_.bboxes = batch_gt_instances[:, 2:]
+            batch_gt_instances_.labels = batch_gt_instances[:, 1]
+            batch_gt_instances = batch_gt_instances_
+                
         featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
         mlvl_priors = self.prior_generator.grid_priors(
             featmap_sizes,
