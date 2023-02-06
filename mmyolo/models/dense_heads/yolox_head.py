@@ -296,7 +296,9 @@ class YOLOXHead(YOLOv5Head):
         num_imgs = len(batch_img_metas)
         if batch_gt_instances_ignore is None:
             batch_gt_instances_ignore = [None] * num_imgs
-
+        
+        batch_gt_instances = self.gt_instances_preprocess(batch_gt_instances, len(batch_img_metas))
+        
         featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
         mlvl_priors = self.prior_generator.grid_priors(
             featmap_sizes,
@@ -484,3 +486,31 @@ class YOLOXHead(YOLOv5Head):
         bbox_aux_target[:,
                         2:] = torch.log(gt_cxcywh[:, 2:] / priors[:, 2:] + eps)
         return bbox_aux_target
+
+    @staticmethod
+    def gt_instances_preprocess(batch_gt_instances: Union[Tensor, Sequence],
+                                batch_size: int) -> List[InstanceData]:
+        """Split batch_gt_instances with batch size.
+        
+        Args:
+            batch_gt_instances (Sequence[Tensor]): Ground truth
+                instances for whole batch, shape [all_gt_bboxes, 6]
+            batch_size (int): Batch size.
+
+        Returns:
+            List: batch gt instances data, shape [batch_size, InstanceData]
+        """
+        # faster version
+        # sqlit batch gt instance [all_gt_bboxes, 6] ->
+        # [batch_size, number_gt_each_batch, 5]
+        batch_instance_list = []
+        max_gt_bbox_len = 0
+        for i in range(batch_size):
+            batch_gt_instance_ = InstanceData()
+            single_batch_instance = \
+                batch_gt_instances[batch_gt_instances[:, 0] == i, :]
+            batch_gt_instance_.bboxes = single_batch_instance[:, 2:]
+            batch_gt_instance_.labels = single_batch_instance[:, 1]
+            batch_instance_list.append(batch_gt_instance_)
+
+        return batch_instance_list
