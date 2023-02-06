@@ -28,12 +28,12 @@ submission_dir = './work_dirs/rtm_dota/submission_convert3'
 env_cfg = dict(cudnn_benchmark=True)
 
 # only on Val
-# batch_shapes_cfg = dict(
-#     type='BatchShapePolicy',
-#     batch_size=val_batch_size_per_gpu,
-#     img_size=img_scale[0],
-#     size_divisor=32,
-#     extra_pad_ratio=0.5)
+batch_shapes_cfg = dict(
+    type='BatchShapePolicy',
+    batch_size=val_batch_size_per_gpu,
+    img_size=img_scale[0],
+    size_divisor=32,
+    extra_pad_ratio=0.5)
 
 model = dict(
     type='YOLODetector',
@@ -108,7 +108,8 @@ model = dict(
     test_cfg=dict(
         multi_label=True,
         decode_with_angle=True,
-        nms_pre=2000,
+        nms_pre=6000,
+        min_bbox_size=0,
         score_thr=0.05,
         nms=dict(type='nms_rotated', iou_threshold=0.1),
         max_per_img=2000),
@@ -230,6 +231,7 @@ test_dataloader = dict(
         data_prefix=dict(img_path='test/images/'),
         img_shape=(1024, 1024),
         test_mode=True,
+        batch_shapes_cfg=batch_shapes_cfg,
         pipeline=test_pipeline))
 test_evaluator = dict(
     type='mmrotate.DOTAMetric',
