@@ -1,12 +1,14 @@
 _base_ = './yolov8_s_syncbn_fast_8xb16-500e_coco.py'
 
+# ========================modified parameters======================
 deepen_factor = 0.67
 widen_factor = 0.75
 last_stage_out_channels = 768
 
 affine_scale = 0.9
-mixup_ratio = 0.1
+mixup_prob = 0.1
 
+# =======================Unmodified in most cases==================
 num_classes = _base_.num_classes
 num_det_layers = _base_.num_det_layers
 img_scale = _base_.img_scale
@@ -30,7 +32,7 @@ pre_transform = _base_.pre_transform
 albu_train_transform = _base_.albu_train_transform
 last_transform = _base_.last_transform
 
-mosaic_affine_transform = [
+mosaic_affine_pipeline = [
     dict(
         type='Mosaic',
         img_scale=img_scale,
@@ -47,12 +49,13 @@ mosaic_affine_transform = [
         border_val=(114, 114, 114))
 ]
 
+# enable mixup
 train_pipeline = [
-    *pre_transform, *mosaic_affine_transform,
+    *pre_transform, *mosaic_affine_pipeline,
     dict(
         type='YOLOv5MixUp',
-        prob=mixup_ratio,
-        pre_transform=[*pre_transform, *mosaic_affine_transform]),
+        prob=mixup_prob,
+        pre_transform=[*pre_transform, *mosaic_affine_pipeline]),
     *last_transform
 ]
 
@@ -85,6 +88,6 @@ custom_hooks = [
         priority=49),
     dict(
         type='mmdet.PipelineSwitchHook',
-        switch_epoch=_base_.max_epochs - 10,
+        switch_epoch=_base_.max_epochs - _base_.close_mosaic_epochs,
         switch_pipeline=train_pipeline_stage2)
 ]
