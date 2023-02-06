@@ -95,18 +95,18 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
 
         data = self.cast_data(data)
         inputs, data_samples = data['inputs'], data['data_samples']
+        assert isinstance(data['data_samples'], dict)
 
         # Process data.
         batch_inputs = []
-        for _batch_input, data_sample in zip(inputs, data_samples):
+        for _input in inputs:
             # channel transform
             if self._channel_conversion:
-                _batch_input = _batch_input[[2, 1, 0], ...]
+                _input = _input[[2, 1, 0], ...]
             # Convert to float after channel conversion to ensure
             # efficiency
-            _batch_input = _batch_input.float()
-
-            batch_inputs.append(_batch_input)
+            _input = _input.float()
+            batch_inputs.append(_input)
 
         # Batch random resize image.
         if self.batch_augments is not None:
@@ -117,7 +117,10 @@ class PPYOLOEDetDataPreprocessor(DetDataPreprocessor):
             inputs = (inputs - self.mean) / self.std
 
         img_metas = [{'batch_input_shape': inputs.shape[2:]}] * len(inputs)
-        data_samples = {'bboxes_labels': data_samples, 'img_metas': img_metas}
+        data_samples = {
+            'bboxes_labels': data_samples['bboxes_labels'],
+            'img_metas': img_metas
+        }
 
         return {'inputs': inputs, 'data_samples': data_samples}
 
@@ -176,7 +179,7 @@ class PPYOLOEBatchRandomResize(BatchSyncRandomResize):
             self.interp_mode = interp_mode
 
     def forward(self, inputs: list,
-                data_samples: Tensor) -> Tuple[Tensor, Tensor]:
+                data_samples: dict) -> Tuple[Tensor, Tensor]:
         """Resize a batch of images and bboxes to shape ``self._input_size``.
 
         The inputs and data_samples should be list, and
@@ -188,6 +191,9 @@ class PPYOLOEBatchRandomResize(BatchSyncRandomResize):
             'The type of inputs must be list. The possible reason for this ' \
             'is that you are not using it with `PPYOLOEDetDataPreprocessor` ' \
             'and `yolov5_collate` with use_ms_training == True.'
+
+        bboxes_labels = data_samples['bboxes_labels']
+
         message_hub = MessageHub.get_current_instance()
         if (message_hub.get_info('iter') + 1) % self._interval == 0:
             # get current input size
@@ -215,11 +221,13 @@ class PPYOLOEBatchRandomResize(BatchSyncRandomResize):
                         align_corners=align_corners)
 
                     # rescale boxes
-                    indexes = data_samples[:, 0] == i
-                    data_samples[indexes, 2] *= scale_x
-                    data_samples[indexes, 3] *= scale_y
-                    data_samples[indexes, 4] *= scale_x
-                    data_samples[indexes, 5] *= scale_y
+                    indexes = bboxes_labels[:, 0] == i
+                    bboxes_labels[indexes, 2] *= scale_x
+                    bboxes_labels[indexes, 3] *= scale_y
+                    bboxes_labels[indexes, 4] *= scale_x
+                    bboxes_labels[indexes, 5] *= scale_y
+
+                    data_samples['bboxes_labels'] = bboxes_labels
                 else:
                     _batch_input = _batch_input.unsqueeze(0)
 
