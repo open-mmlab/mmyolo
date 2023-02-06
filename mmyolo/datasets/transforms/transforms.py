@@ -11,8 +11,7 @@ from mmcv.transforms import BaseTransform
 from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
-from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
-                                   get_box_type)
+from mmdet.structures.bbox import HorizontalBoxes, autocast_box_type
 from mmdet.structures.mask import BitmapMasks, PolygonMasks
 from numpy import random
 
@@ -453,102 +452,34 @@ class LoadAnnotations(MMDET_LoadAnnotations):
             assert self.with_mask, '使用mask2bbox要求with_mask==True.'
 
     def transform(self, results: dict) -> dict:
-        if self.with_bbox and not self.mask2bbox:
-            self._load_bboxes(results)
-        if self.with_label:
-            self._load_labels(results)
-        if self.with_mask:
-            self._load_masks(results)
-        if self.with_seg:
-            self._load_seg_map(results)
         if self.mask2bbox:
+            # 不需要加载bbox
+            if self.with_label:
+                self._load_labels(results)
+            # 如果mask2bbox为True，那一定需要load_masks
+            self._load_masks(results)
+            if self.with_seg:
+                self._load_seg_map(results)
             assert 'gt_masks' in results
-            gt_masks = results['gt_masks']
-            gt_bboxes = gt_masks.get_bboxes(dst_type='hbox')
+            gt_bboxes = results['gt_masks'].get_bboxes(dst_type='hbox')
             results['gt_bboxes'] = gt_bboxes
+        else:
+            results = super().transform(results)
+
+        # filter invalid
+        if 'gt_ignore_flags' in results:
+            gt_ignore_flags = results['gt_ignore_flags']
+            valid_indexes = (gt_ignore_flags == 0)
+            if 'gt_bboxes' in results:
+                results['gt_bboxes'] = results['gt_bboxes'][valid_indexes]
+            if 'gt_bboxes_labels' in results:
+                results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
+                    valid_indexes]
+            if 'gt_masks' in results:
+                results['gt_masks'] = results['gt_masks'][valid_indexes]
+            results['gt_ignore_flags'] = gt_ignore_flags[valid_indexes]
 
         return results
-
-    def _process_masks(self, results: dict) -> list:
-        """Process gt_masks and filter invalid polygons.
-
-        Args:
-            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
-
-        Returns:
-            list: Processed gt_masks.
-        """
-        gt_masks = []
-        gt_ignore_flags = []
-        for instance in results.get('instances', []):
-            if instance['ignore_flag'] == 0:
-                gt_mask = instance['mask']
-                # If the annotation of segmentation mask is invalid,
-                # ignore the whole instance.
-                if isinstance(gt_mask, list):
-                    gt_mask = [
-                        np.array(polygon) for polygon in gt_mask
-                        if len(polygon) % 2 == 0 and len(polygon) >= 6
-                    ]
-                    if len(gt_mask) == 0:
-                        # ignore this instance and set gt_mask to a fake mask
-                        continue
-                elif not self.poly2mask:
-                    continue
-                elif isinstance(gt_mask, dict) and \
-                        not (gt_mask.get('counts') is not None and
-                             gt_mask.get('size') is not None and
-                             isinstance(gt_mask['counts'], (list, str))):
-                    continue
-                gt_masks.append(gt_mask)
-                # re-process gt_ignore_flags
-                gt_ignore_flags.append(instance['ignore_flag'])
-        results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=np.bool)
-        return gt_masks
-
-    def _load_bboxes(self, results: dict):
-        """Private function to load bounding box annotations.
-
-        Note: BBoxes with ignore_flag of 1 is not considered.
-
-        Args:
-            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
-
-        Returns:
-            dict: The dict contains loaded bounding box annotations.
-        """
-        gt_bboxes = []
-        gt_ignore_flags = []
-        for instance in results.get('instances', []):
-            if instance['ignore_flag'] == 0:
-                gt_bboxes.append(instance['bbox'])
-                gt_ignore_flags.append(instance['ignore_flag'])
-        results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=bool)
-
-        if self.box_type is None:
-            results['gt_bboxes'] = np.array(
-                gt_bboxes, dtype=np.float32).reshape((-1, 4))
-        else:
-            _, box_type_cls = get_box_type(self.box_type)
-            results['gt_bboxes'] = box_type_cls(gt_bboxes, dtype=torch.float32)
-
-    def _load_labels(self, results: dict):
-        """Private function to load label annotations.
-
-        Note: BBoxes with ignore_flag of 1 is not considered.
-
-        Args:
-            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
-
-        Returns:
-            dict: The dict contains loaded label annotations.
-        """
-        gt_bboxes_labels = []
-        for instance in results.get('instances', []):
-            if instance['ignore_flag'] == 0:
-                gt_bboxes_labels.append(instance['bbox_label'])
-        results['gt_bboxes_labels'] = np.array(
-            gt_bboxes_labels, dtype=np.int64)
 
     def _load_masks(self, results: dict) -> None:
         """Private function to load mask annotations.
