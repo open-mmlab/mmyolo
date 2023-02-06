@@ -363,77 +363,6 @@ class YOLOv5HSVRandomAug(BaseTransform):
         return repr_str
 
 
-# TODO: need del this class
-class PolygonMasksTemp(PolygonMasks):
-
-    def expand(self, expanded_h, expanded_w, top, left):
-        if len(self.masks) == 0:
-            expanded_masks = PolygonMasksTemp([], expanded_h, expanded_w)
-        else:
-            cropped_masks = []
-            for poly_per_obj in self.masks:
-                cropped_poly_per_obj = []
-                for p in poly_per_obj:
-                    # pycocotools will clip the boundary
-                    p = p.copy()
-                    p[0::2] += left
-                    p[1::2] += top
-                    cropped_poly_per_obj.append(p)
-                cropped_masks.append(cropped_poly_per_obj)
-            expanded_masks = PolygonMasksTemp(cropped_masks, expanded_h,
-                                              expanded_w)
-
-        return expanded_masks
-
-    def resize(self, out_shape, interpolation=None):
-        """see :func:`BaseInstanceMasks.resize`"""
-        if len(self.masks) == 0:
-            resized_masks = PolygonMasksTemp([], *out_shape)
-        else:
-            h_scale = out_shape[0] / self.height
-            w_scale = out_shape[1] / self.width
-            resized_masks = []
-            for poly_per_obj in self.masks:
-                resized_poly = []
-                for p in poly_per_obj:
-                    p = p.copy()
-                    p[0::2] = p[0::2] * w_scale
-                    p[1::2] = p[1::2] * h_scale
-                    resized_poly.append(p)
-                resized_masks.append(resized_poly)
-            resized_masks = PolygonMasksTemp(resized_masks, *out_shape)
-        return resized_masks
-
-    def crop(self, bbox):
-        """see :func:`BaseInstanceMasks.crop`"""
-        assert isinstance(bbox, np.ndarray)
-        assert bbox.ndim == 1
-
-        # clip the boundary
-        bbox = bbox.copy()
-        bbox[0::2] = np.clip(bbox[0::2], 0, self.width)
-        bbox[1::2] = np.clip(bbox[1::2], 0, self.height)
-        x1, y1, x2, y2 = bbox
-        w = np.maximum(x2 - x1, 1)
-        h = np.maximum(y2 - y1, 1)
-
-        if len(self.masks) == 0:
-            cropped_masks = PolygonMasksTemp([], h, w)
-        else:
-            cropped_masks = []
-            for poly_per_obj in self.masks:
-                cropped_poly_per_obj = []
-                for p in poly_per_obj:
-                    # pycocotools will clip the boundary
-                    p = p.copy()
-                    p[0::2] = p[0::2] - bbox[0]
-                    p[1::2] = p[1::2] - bbox[1]
-                    cropped_poly_per_obj.append(p)
-                cropped_masks.append(cropped_poly_per_obj)
-            cropped_masks = PolygonMasksTemp(cropped_masks, h, w)
-        return cropped_masks
-
-
 # TODO: can be accelerated
 @TRANSFORMS.register_module()
 class LoadAnnotations(MMDET_LoadAnnotations):
@@ -495,7 +424,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         else:
             # fake polygon masks will be ignored in `PackDetInputs`
             # 这里对齐的时候用temp类别
-            gt_masks = PolygonMasksTemp([mask for mask in gt_masks], h, w)
+            gt_masks = PolygonMasks([mask for mask in gt_masks], h, w)
         results['gt_masks'] = gt_masks
 
 
@@ -732,10 +661,10 @@ class YOLOv5RandomAffine(BaseTransform):
             new_masks.append(cropped_poly_per_obj)
 
         # 无论有没有有效数据，都可以直接获取
-        gt_masks = PolygonMasksTemp(new_masks, gt_masks.height, gt_masks.width)
+        gt_masks = PolygonMasks(new_masks, gt_masks.height, gt_masks.width)
         return gt_masks
 
-    def resample_masks(self, gt_masks: PolygonMasksTemp, resample_num=1000):
+    def resample_masks(self, gt_masks: PolygonMasks, resample_num=1000):
         masks = gt_masks.masks
         new_masks = []
         for poly_per_obj in masks:
@@ -750,7 +679,7 @@ class YOLOv5RandomAffine(BaseTransform):
                 ]).reshape(2, -1).T.reshape(-1)
                 cropped_poly_per_obj.append(p)
             new_masks.append(cropped_poly_per_obj)
-        return PolygonMasksTemp(new_masks, gt_masks.height, gt_masks.width)
+        return PolygonMasks(new_masks, gt_masks.height, gt_masks.width)
 
     def filter_gt_bboxes(self, origin_bboxes: HorizontalBoxes,
                          wrapped_bboxes: HorizontalBoxes) -> torch.Tensor:

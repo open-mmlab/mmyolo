@@ -314,6 +314,7 @@ class Mosaic(BaseMixImageTransform):
             results (dict): Updated result dict.
         """
         assert 'mix_results' in results
+        # TODO: 对齐之后要删除
         assert len(results['gt_masks']) == len(results['gt_bboxes']) == len(
             results['gt_bboxes_labels'])
         mosaic_bboxes = []
@@ -395,12 +396,19 @@ class Mosaic(BaseMixImageTransform):
 
         if self.bbox_clip_border:
             mosaic_bboxes.clip_([2 * img_scale_h, 2 * img_scale_w])
-        # remove outside bboxes
-        inside_inds = mosaic_bboxes.is_inside(
-            [2 * self.img_scale[1], 2 * self.img_scale[0]]).numpy()
-        mosaic_bboxes = mosaic_bboxes[inside_inds]
-        mosaic_bboxes_labels = mosaic_bboxes_labels[inside_inds]
-        mosaic_ignore_flags = mosaic_ignore_flags[inside_inds]
+            if with_mask:
+                mosaic_masks = mosaic_masks[0].cat(mosaic_masks)
+                results['gt_masks'] = mosaic_masks
+        else:
+            # remove outside bboxes
+            inside_inds = mosaic_bboxes.is_inside(
+                [2 * img_scale_h, 2 * img_scale_w]).numpy()
+            mosaic_bboxes = mosaic_bboxes[inside_inds]
+            mosaic_bboxes_labels = mosaic_bboxes_labels[inside_inds]
+            mosaic_ignore_flags = mosaic_ignore_flags[inside_inds]
+            if with_mask:
+                mosaic_masks = mosaic_masks[0].cat(mosaic_masks)[inside_inds]
+                results['gt_masks'] = mosaic_masks
 
         results['img'] = mosaic_img
         results['img_shape'] = mosaic_img.shape
@@ -408,9 +416,6 @@ class Mosaic(BaseMixImageTransform):
         results['gt_bboxes_labels'] = mosaic_bboxes_labels
         results['gt_ignore_flags'] = mosaic_ignore_flags
 
-        if with_mask:
-            mosaic_masks = mosaic_masks[0].cat(mosaic_masks)
-            results['gt_masks'] = mosaic_masks[inside_inds]
         return results
 
     def _mosaic_combine(
