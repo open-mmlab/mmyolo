@@ -71,6 +71,11 @@ norm_cfg = dict(type='BN', momentum=0.03, eps=0.001)  # Normalization config
 
 # -----train val related-----
 affine_scale = 0.5  # YOLOv5RandomAffine scaling ratio
+# YOLOv5RandomAffine aspect ratio of width and height thres to filter bboxes
+max_aspect_ratio = 100
+tal_topk = 10  # Number of bbox selected in each level
+tal_alpha = 0.5  # A Hyper-parameter related to alignment_metrics
+tal_beta = 6.0  # A Hyper-parameter related to alignment_metrics
 # TODO: Automatically scale loss_weight based on number of detection layers
 loss_cls_weight = 0.5
 loss_bbox_weight = 7.5
@@ -150,9 +155,9 @@ model = dict(
             type='BatchTaskAlignedAssigner',
             num_classes=num_classes,
             use_ciou=True,
-            topk=10,
-            alpha=0.5,
-            beta=6.0,
+            topk=tal_topk,
+            alpha=tal_alpha,
+            beta=tal_beta,
             eps=1e-9)),
     test_cfg=model_test_cfg)
 
@@ -200,7 +205,7 @@ train_pipeline = [
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
         scaling_ratio_range=(1 - affine_scale, 1 + affine_scale),
-        max_aspect_ratio=100,
+        max_aspect_ratio=max_aspect_ratio,
         # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
         border_val=(114, 114, 114)),
@@ -220,7 +225,7 @@ train_pipeline_stage2 = [
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
         scaling_ratio_range=(1 - affine_scale, 1 + affine_scale),
-        max_aspect_ratio=100,
+        max_aspect_ratio=max_aspect_ratio,
         border_val=(114, 114, 114)), *last_transform
 ]
 
