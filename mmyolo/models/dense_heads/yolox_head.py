@@ -501,8 +501,7 @@ class YOLOXHead(YOLOv5Head):
             List: batch gt instances data, shape [batch_size, InstanceData]
         """
         # faster version
-        # sqlit batch gt instance [all_gt_bboxes, 6] ->
-        # [batch_size, number_gt_each_batch, 5]
+        # sqlit batch gt instance [all_gt_bboxes, 6] -> [InstanceData]
         batch_instance_list = []
         max_gt_bbox_len = 0
         for i in range(batch_size):
