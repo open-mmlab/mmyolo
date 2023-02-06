@@ -71,6 +71,7 @@ norm_cfg = dict(type='BN', momentum=0.03, eps=0.001)  # Normalization config
 
 # -----train val related-----
 affine_scale = 0.5  # YOLOv5RandomAffine scaling ratio
+# TODO: Automatically scale loss_weight based on number of detection layers
 loss_cls_weight = 0.5
 loss_bbox_weight = 7.5
 # Since the dfloss is implemented differently in the official
@@ -132,14 +133,13 @@ model = dict(
             type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
             reduction='none',
-            loss_weight=loss_cls_weight *
-            (num_classes / 80 * 3 / num_det_layers)),
+            loss_weight=loss_cls_weight),
         loss_bbox=dict(
             type='IoULoss',
             iou_mode='ciou',
             bbox_format='xyxy',
             reduction='sum',
-            loss_weight=loss_bbox_weight * (3 / num_det_layers),
+            loss_weight=loss_bbox_weight,
             return_iou=False),
         loss_dfl=dict(
             type='mmdet.DistributionFocalLoss',
