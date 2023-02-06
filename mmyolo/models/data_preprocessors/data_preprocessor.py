@@ -1,15 +1,19 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import random
-from typing import List, Tuple, Union
+from typing import List, Mapping, Sequence, Tuple, Union
 
 import torch
 import torch.nn.functional as F
 from mmdet.models import BatchSyncRandomResize
 from mmdet.models.data_preprocessors import DetDataPreprocessor
 from mmengine import MessageHub, is_list_of
+from mmengine.structures import BaseDataElement
 from torch import Tensor
 
 from mmyolo.registry import MODELS
+
+CastData = Union[tuple, dict, BaseDataElement, torch.Tensor, list, bytes, str,
+                 None]
 
 
 @MODELS.register_module()
@@ -18,6 +22,30 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
 
     Note: It must be used together with `mmyolo.datasets.utils.yolov5_collate`
     """
+
+    # TODO: Can be deleted after mmdet support
+    def cast_data(self, data: CastData) -> CastData:
+        """Copying data to the target device.
+
+        Args:
+            data (dict): Data returned by ``DataLoader``.
+
+        Returns:
+            CollatedResult: Inputs and data sample at target device.
+        """
+        if isinstance(data, Mapping):
+            return {key: self.cast_data(data[key]) for key in data}
+        elif isinstance(data, (str, bytes)) or data is None:
+            return data
+        elif isinstance(data, tuple) and hasattr(data, '_fields'):
+            # namedtuple
+            return type(data)(*(self.cast_data(sample) for sample in data))  # type: ignore  # noqa: E501  # yapf:disable
+        elif isinstance(data, Sequence):
+            return type(data)(self.cast_data(sample) for sample in data)  # type: ignore  # noqa: E501  # yapf:disable
+        elif isinstance(data, (torch.Tensor, BaseDataElement)):
+            return data.to(self.device, non_blocking=True)
+        else:
+            return data
 
     def forward(self, data: dict, training: bool = False) -> dict:
         """Perform normalization, padding and bgr2rgb conversion based on
