@@ -39,9 +39,10 @@
 git clone git@github.com:{username}/mmyolo.git
 ```
 
-添加原代码库为上游代码库
+进入项目并添加原代码库为上游代码库
 
 ```bash
+cd mmyolo
 git remote add upstream git@github.com:open-mmlab/mmyolo
 ```
 
@@ -146,7 +147,11 @@ git push -u origin {branch_name}
 
 (2) 根据指引修改 PR 描述，以便于其他开发者更好地理解你的修改
 
-<img src="https://user-images.githubusercontent.com/27466624/204303311-84456397-ee41-44f9-945c-85ce415da235.png" width="1200">
+```{note}
+注意在 PR branch 左侧的 base 需要修改为 dev 分支
+```
+
+<img src="https://user-images.githubusercontent.com/62822224/216594960-a2292b9d-2b7c-4861-b4c5-362a9458b194.png" width="1200">
 
 描述规范详见[拉取请求规范](#拉取请求规范)
 
