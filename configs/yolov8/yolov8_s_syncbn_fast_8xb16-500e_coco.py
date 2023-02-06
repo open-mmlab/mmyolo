@@ -156,7 +156,7 @@ model = dict(
             eps=1e-9)),
     test_cfg=model_test_cfg)
 
-albu_train_transforms = [
+albu_train_transform = [
     dict(type='Blur', p=0.01),
     dict(type='MedianBlur', p=0.01),
     dict(type='ToGray', p=0.01),
@@ -171,7 +171,7 @@ pre_transform = [
 last_transform = [
     dict(
         type='mmdet.Albu',
-        transforms=albu_train_transforms,
+        transforms=albu_train_transform,
         bbox_params=dict(
             type='BboxParams',
             format='pascal_voc',
