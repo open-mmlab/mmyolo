@@ -1082,5 +1082,5 @@ class RegularizeRotatedBox(BaseTransform):
     def transform(self, results: dict) -> dict:
         assert isinstance(results['gt_bboxes'], RotatedBoxes)
         results['gt_bboxes'] = RotatedBoxes(
-            results['gt_bboxes'].regularize_boxes('le90'))
+            results['gt_bboxes'].regularize_boxes(self.angle_version))
         return results
