@@ -22,7 +22,7 @@ from .rtmdet_head import RTMDetHead, RTMDetSepBNHeadModule
 
 @MODELS.register_module()
 class RotatedRTMDetSepBNHeadModule(RTMDetSepBNHeadModule):
-    """Detection Head of RTMDet.
+    """Detection Head of RTMDet-R.
 
     Args:
         num_classes (int): Number of categories excluding the background
@@ -41,6 +41,8 @@ class RotatedRTMDetSepBNHeadModule(RTMDetSepBNHeadModule):
         share_conv (bool): Whether to share conv layers between stages.
             Defaults to True.
         pred_kernel_size (int): Kernel size of ``nn.Conv2d``. Defaults to 1.
+        angle_out_dim: (int): Encoded length of angle, will passed by head.
+            Defaults to 1.
         conv_cfg (:obj:`ConfigDict` or dict, optional): Config dict for
             convolution layer. Defaults to None.
         norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
@@ -119,6 +121,9 @@ class RotatedRTMDetSepBNHeadModule(RTMDetSepBNHeadModule):
             - bbox_preds (list[Tensor]): Box energies / deltas for all scale
               levels, each is a 4D-tensor, the channels number is
               num_base_priors * 4.
+            - angle_preds (list[Tensor]): Angle prediction for all scale
+              levels, each is a 4D-tensor, the channels number is
+              num_base_priors * angle_out_dim.
         """
 
         cls_scores = []
@@ -146,7 +151,7 @@ class RotatedRTMDetSepBNHeadModule(RTMDetSepBNHeadModule):
 
 @MODELS.register_module()
 class RotatedRTMDetHead(RTMDetHead):
-    """RTMDet head.
+    """RTMDet-R head.
 
     Args:
         head_module(ConfigType): Base module used for RTMDetHead
@@ -156,6 +161,11 @@ class RotatedRTMDetHead(RTMDetHead):
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
         loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
         loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
+        angle_version (str): Angle representations. Defaults to 'le90'.
+        use_hbbox_loss (bool): If true, use horizontal bbox loss and
+            loss_angle should not be None. Default to False.
+        angle_coder (:obj:`ConfigDict` or dict): Config of angle coder.
+        loss_angle (:obj:`ConfigDict` or dict, optional): Config of angle loss.
         train_cfg (:obj:`ConfigDict` or dict, optional): Training config of
             anchor head. Defaults to None.
         test_cfg (:obj:`ConfigDict` or dict, optional): Testing config of
@@ -185,8 +195,8 @@ class RotatedRTMDetHead(RTMDetHead):
                 use_sigmoid=True,
                 reduction='sum',
                 loss_weight=1.0),
-            use_hbbox_loss: bool = False,
             angle_version: str = 'le90',
+            use_hbbox_loss: bool = False,
             angle_coder: ConfigType = dict(type='mmrotate.PseudoAngleCoder'),
             loss_angle: OptConfigType = None,
             train_cfg: OptConfigType = None,
@@ -231,6 +241,8 @@ class RotatedRTMDetHead(RTMDetHead):
             bbox_preds (list[Tensor]): Box energies / deltas for all
                 scale levels, each is a 4D-tensor, has shape
                 (batch_size, num_priors * 4, H, W).
+            angle_preds (list[Tensor]): Box angle for each scale level
+                with shape (N, num_points * angle_dim, H, W)
             objectnesses (list[Tensor], Optional): Score factor for
                 all scale level, each is a 4D-tensor, has shape
                 (batch_size, 1, H, W).
@@ -356,7 +368,7 @@ class RotatedRTMDetHead(RTMDetHead):
 
             if scores.shape[0] == 0:
                 empty_results = InstanceData()
-                empty_results.bboxes = bboxes
+                empty_results.bboxes = RotatedBoxes(bboxes)
                 empty_results.scores = scores[:, 0]
                 empty_results.labels = scores[:, 0].int()
                 results_list.append(empty_results)
@@ -397,8 +409,6 @@ class RotatedRTMDetHead(RTMDetHead):
                 rescale=False,
                 with_nms=with_nms,
                 img_meta=img_meta)
-            # results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
-            # results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
 
             results_list.append(results)
         return results_list
@@ -419,6 +429,8 @@ class RotatedRTMDetHead(RTMDetHead):
             bbox_preds (list[Tensor]): Decoded box for each scale
                 level with shape (N, num_anchors * 4, H, W) in
                 [tl_x, tl_y, br_x, br_y] format.
+            angle_preds (list[Tensor]): Angle prediction for each scale
+                level with shape (N, num_anchors * angle_out_dim, H, W).
             batch_gt_instances (list[:obj:`InstanceData`]): Batch of
                 gt_instance.  It usually includes ``bboxes`` and ``labels``
                 attributes.
@@ -540,19 +552,19 @@ class RotatedRTMDetHead(RTMDetHead):
     @staticmethod
     def gt_instances_preprocess(batch_gt_instances: Union[Tensor, Sequence],
                                 batch_size: int) -> Tensor:
-        """Split batch_gt_instances with batch size, from [all_gt_bboxes, 6]
+        """Split batch_gt_instances with batch size, from [all_gt_bboxes, 7]
         to.
 
-        [batch_size, number_gt, 5]. If some shape of single batch smaller than
-        gt bbox len, then using [-1., 0., 0., 0., 0.] to fill.
+        [batch_size, number_gt, 6]. If some shape of single batch smaller than
+        gt bbox len, then using [-1., 0., 0., 0., 0., 0.] to fill.
 
         Args:
             batch_gt_instances (Sequence[Tensor]): Ground truth
-                instances for whole batch, shape [all_gt_bboxes, 6]
+                instances for whole batch, shape [all_gt_bboxes, 7]
             batch_size (int): Batch size.
 
         Returns:
-            Tensor: batch gt instances data, shape [batch_size, number_gt, 5]
+            Tensor: batch gt instances data, shape [batch_size, number_gt, 6]
         """
         if isinstance(batch_gt_instances, Sequence):
             max_gt_bbox_len = max(
@@ -590,7 +602,7 @@ class RotatedRTMDetHead(RTMDetHead):
                 if len(single_batch_instance) > max_gt_bbox_len:
                     max_gt_bbox_len = len(single_batch_instance)
 
-            # fill [-1., 0., 0., 0., 0.] if some shape of
+            # fill [-1., 0., 0., 0., 0., 0.] if some shape of
             # single batch not equal max_gt_bbox_len
             for index, gt_instance in enumerate(batch_instance_list):
                 if gt_instance.shape[0] >= max_gt_bbox_len:

@@ -1,16 +1,15 @@
 _base_ = '../../_base_/default_runtime.py'
 
-data_root = '/datasets/hrsc/'
-dataset_type = 'YOLOv5HRSCDataset'
+data_root = '/datasets/dota_mmrotate_ss/'
+dataset_type = 'YOLOv5DOTADataset'
 checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-tiny_imagenet_600e.pth'  # noqa
 
-img_scale = (800, 800)  # width, height
-deepen_factor = 0.167
-widen_factor = 0.375
-max_epochs = 300
-stage2_num_epochs = 20
-interval = 10
-num_classes = 1
+img_scale = (1024, 1024)  # width, height
+deepen_factor = 1.0
+widen_factor = 1.0
+max_epochs = 36
+interval = 12
+num_classes = 15
 angle_version = 'le90'
 
 train_batch_size_per_gpu = 8
@@ -20,7 +19,9 @@ val_num_workers = 8
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
 strides = [8, 16, 32]
-base_lr = 0.001
+base_lr = 0.004 / 16
+
+submission_dir = './work_dirs/rtm_dota/submission'
 
 # single-scale training is recommended to
 # be turned on, which can speed up training.
@@ -83,7 +84,6 @@ model = dict(
             type='mmdet.MlvlPointGenerator', offset=0, strides=strides),
         bbox_coder=dict(
             type='DistanceAnglePointCoder', angle_version=angle_version),
-        # bbox_coder=dict(type='DistancePointBBoxCoder'),
         loss_cls=dict(
             type='mmdet.QualityFocalLoss',
             use_sigmoid=True,
@@ -108,9 +108,10 @@ model = dict(
         multi_label=True,
         decode_with_angle=True,
         nms_pre=30000,
-        score_thr=0.001,
+        min_bbox_size=0,
+        score_thr=0.05,
         nms=dict(type='nms_rotated', iou_threshold=0.1),
-        max_per_img=300),
+        max_per_img=2000),
 )
 
 train_pipeline = [
@@ -119,62 +120,28 @@ train_pipeline = [
     dict(
         type='mmrotate.ConvertBoxType',
         box_type_mapping=dict(gt_bboxes='rbox')),
+    dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
     dict(
-        type='Mosaic',
-        img_scale=img_scale,
-        use_cached=True,
-        max_cached_images=20,  # note
-        random_pop=False,  # note
-        pad_val=114.0),
+        type='mmdet.RandomFlip',
+        prob=0.75,
+        direction=['horizontal', 'vertical', 'diagonal']),
     dict(
-        type='mmdet.RandomResize',
-        # img_scale is (width, height)
-        scale=(img_scale[0] * 2, img_scale[1] * 2),
-        ratio_range=(0.5, 2.0),
-        resize_type='mmdet.Resize',
-        keep_ratio=True),
-    dict(type='mmdet.RandomCrop', crop_size=img_scale),
-    dict(type='mmdet.YOLOXHSVRandomAug'),
-    dict(type='mmdet.RandomFlip', prob=0.5),
-    dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
-    dict(
-        type='YOLOv5MixUp',
-        use_cached=True,
-        random_pop=False,
-        max_cached_images=10,
-        prob=0.5),
-    dict(type='RegularizeRotatedBox', angle_version=angle_version),
-    dict(type='mmdet.PackDetInputs')
-]
-
-train_pipeline_stage2 = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='LoadAnnotations', with_bbox=True, box_type='qbox'),
-    dict(
-        type='mmrotate.ConvertBoxType',
-        box_type_mapping=dict(gt_bboxes='rbox')),
-    dict(
-        type='mmdet.RandomResize',
-        scale=img_scale,
-        ratio_range=(0.5, 2.0),  # note
-        resize_type='mmdet.Resize',
-        keep_ratio=True),
-    dict(type='mmdet.RandomCrop', crop_size=img_scale),
-    dict(type='mmdet.YOLOXHSVRandomAug'),
-    dict(type='mmdet.RandomFlip', prob=0.5),
+        type='mmrotate.RandomRotate',
+        prob=0.5,
+        angle_range=180,
+        rotate_type='mmrotate.Rotate',
+        rect_obj_labels=[9, 11]),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(type='RegularizeRotatedBox', angle_version=angle_version),
     dict(type='mmdet.PackDetInputs')
 ]
 
-test_pipeline = [
+val_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='YOLOv5KeepRatioResize', scale=img_scale),
+    dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
     dict(
-        type='LetterResize',
-        scale=img_scale,
-        allow_scale_up=False,
-        pad_val=dict(img=114)),
+        type='mmdet.Pad', size=(1024, 1024),
+        pad_val=dict(img=(114, 114, 114))),
     dict(
         type='LoadAnnotations',
         with_bbox=True,
@@ -186,7 +153,19 @@ test_pipeline = [
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor', 'pad_param'))
+                   'scale_factor'))
+]
+
+test_pipeline = [
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
+    dict(
+        type='mmdet.Pad', size=(1024, 1024),
+        pad_val=dict(img=(114, 114, 114))),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor'))
 ]
 
 train_dataloader = dict(
@@ -199,8 +178,9 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='ImageSets/trainval.txt',
-        data_prefix=dict(sub_data_root='FullDataSet/'),
+        ann_file='trainval/annfiles/',
+        data_prefix=dict(img_path='trainval/images/'),
+        img_shape=(1024, 1024),
         filter_cfg=dict(filter_empty_gt=True),
         pipeline=train_pipeline))
 
@@ -214,17 +194,40 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='ImageSets/test.txt',
-        data_prefix=dict(sub_data_root='FullDataSet/'),
+        ann_file='trainval/annfiles/',
+        data_prefix=dict(img_path='trainval/images/'),
+        img_shape=(1024, 1024),
         test_mode=True,
         batch_shapes_cfg=batch_shapes_cfg,
-        pipeline=test_pipeline))
+        pipeline=val_pipeline))
 
-test_dataloader = val_dataloader
-
-# Reduce evaluation time
 val_evaluator = dict(type='mmrotate.DOTAMetric', metric='mAP')
+
+# Inference on val dataset
+test_dataloader = val_dataloader
 test_evaluator = val_evaluator
+
+# Inference on test dataset and format the output results
+# for submission. Note: the test set has no annotation.
+# test_dataloader = dict(
+#     batch_size=val_batch_size_per_gpu,
+#     num_workers=val_num_workers,
+#     persistent_workers=True,
+#     drop_last=False,
+#     sampler=dict(type='DefaultSampler', shuffle=False),
+#     dataset=dict(
+#         type=dataset_type,
+#         data_root=data_root,
+#         data_prefix=dict(img_path='test/images/'),
+#         img_shape=(1024, 1024),
+#         test_mode=True,
+#         batch_shapes_cfg=batch_shapes_cfg,
+#         pipeline=test_pipeline))
+# test_evaluator = dict(
+#     type='mmrotate.DOTAMetric',
+#     format_only=True,
+#     merge_patches=True,
+#     outfile_prefix=submission_dir)
 
 # optimizer
 optim_wrapper = dict(
@@ -267,20 +270,13 @@ custom_hooks = [
         momentum=0.0002,
         update_buffers=True,
         strict_load=False,
-        priority=49),
-    dict(
-        type='mmdet.PipelineSwitchHook',
-        switch_epoch=max_epochs - stage2_num_epochs,
-        switch_pipeline=train_pipeline_stage2)
+        priority=49)
 ]
 
 train_cfg = dict(
-    type='EpochBasedTrainLoop',
-    max_epochs=max_epochs,
-    val_interval=interval,
-    dynamic_intervals=[(max_epochs - stage2_num_epochs, 1)])
+    type='EpochBasedTrainLoop', max_epochs=max_epochs, val_interval=interval)
 
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
-visualizer = dict(type='mmrotate.RotLocalVisualizer', )
+visualizer = dict(type='mmrotate.RotLocalVisualizer')

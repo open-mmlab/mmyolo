@@ -10,10 +10,10 @@ from mmyolo.registry import TASK_UTILS
 
 @TASK_UTILS.register_module()
 class DistanceAnglePointCoder(MMROTATE_DistanceAnglePointCoder):
-    """Distance Point BBox coder.
+    """Distance Angle Point BBox coder.
 
-    This coder encodes gt bboxes (x1, y1, x2, y2) into (top, bottom, left,
-    right) and decode it back to the original.
+    This coder encodes gt bboxes (x, y, w, h, theta) into (top, bottom, left,
+    right, theta) and decode it back to the original.
     """
 
     def decode(
@@ -29,9 +29,8 @@ class DistanceAnglePointCoder(MMROTATE_DistanceAnglePointCoder):
         Args:
             points (Tensor): Shape (B, N, 2) or (N, 2).
             pred_bboxes (Tensor): Distance from the given point to 4
-                boundaries (left, top, right, bottom). Shape (B, N, 5)
-                or (N, 5)
-            stride (Tensor): Featmap stride.
+                boundaries and angle (left, top, right, bottom, angle).
+                Shape (B, N, 5) or (N, 5)
             max_shape (Sequence[int] or torch.Tensor or Sequence[
                 Sequence[int]],optional): Maximum bounds for boxes, specifies
                 (H, W, C) or (H, W). If priors shape is (B, N, 4), then
@@ -47,7 +46,11 @@ class DistanceAnglePointCoder(MMROTATE_DistanceAnglePointCoder):
         if self.clip_border is False:
             max_shape = None
 
-        pred_bboxes[..., :4] = pred_bboxes[..., :4] * stride[None, :, None]
+        if pred_bboxes.dim() == 2:
+            stride = stride[:, None]
+        else:
+            stride = stride[None, :, None]
+        pred_bboxes[..., :4] = pred_bboxes[..., :4] * stride
 
         return self.distance2obb(points, pred_bboxes, max_shape,
                                  self.angle_version)
@@ -57,20 +60,17 @@ class DistanceAnglePointCoder(MMROTATE_DistanceAnglePointCoder):
                gt_bboxes: torch.Tensor,
                max_dis: float = 16.,
                eps: float = 0.01) -> torch.Tensor:
-        """Encode bounding box to distances. The rewrite is to support batch
-        operations.
+        """Encode bounding box to distances.
 
         Args:
-            points (Tensor): Shape (B, N, 2) or (N, 2), The format is [x, y].
-            gt_bboxes (Tensor or :obj:`BaseBoxes`): Shape (N, 4), The format
-                is "xyxy"
-            max_dis (float): Upper bound of the distance. Default to 16..
+            points (Tensor): Shape (N, 2), The format is [x, y].
+            gt_bboxes (Tensor): Shape (N, 5), The format is "xywha"
+            max_dis (float): Upper bound of the distance. Default None.
             eps (float): a small value to ensure target < max_dis, instead <=.
-                Default 0.01.
+                Default 0.1.
 
         Returns:
-            Tensor: Box transformation deltas. The shape is (N, 4) or
-             (B, N, 4).
+            Tensor: Box transformation deltas. The shape is (N, 5).
         """
 
         assert points.size(-2) == gt_bboxes.size(-2)
