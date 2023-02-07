@@ -7,7 +7,7 @@ from ..registry import DATASETS
 
 @DATASETS.register_module()
 class YOLOv5DOTADataset(BatchShapePolicyDataset, DOTADataset):
-    """Dataset for YOLOv5 HRSC Dataset.
+    """Dataset for YOLOv5 DOTA Dataset.
 
     We only add `BatchShapePolicy` function compared with DOTADataset. See
     `mmyolo/datasets/utils.py#BatchShapePolicy` for details
