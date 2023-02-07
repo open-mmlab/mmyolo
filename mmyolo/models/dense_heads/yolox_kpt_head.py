@@ -13,6 +13,7 @@ from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
 from mmengine.model import BaseModule, bias_init_with_prob
 from mmengine.structures import InstanceData
 from torch import Tensor
+from mmengine.config import ConfigDict
 
 from mmyolo.registry import MODELS, TASK_UTILS
 from .yolov5_head import YOLOv5Head
@@ -105,6 +106,7 @@ class YOLOXKptHeadModule(BaseModule):
         self.multi_level_conv_cls = nn.ModuleList()
         self.multi_level_conv_reg = nn.ModuleList()
         self.multi_level_conv_obj = nn.ModuleList()
+        # kpt related layers
         self.multi_level_conv_kpt = nn.ModuleList()
         self.multi_level_conv_vis = nn.ModuleList()
         for _ in self.featmap_strides:
@@ -121,7 +123,12 @@ class YOLOXKptHeadModule(BaseModule):
             self.multi_level_conv_vis.append(conv_vis)
 
     def _build_kpt_stacked_convs(self) -> nn.Sequential:
-        """Initialize conv layers of a single level head."""
+        """Initialize conv layers of kpt head.
+        
+        Kpt head convs are usually different from cls and reg head convs.
+        It's deeper.
+
+        """
         conv = DepthwiseSeparableConvModule \
             if self.use_depthwise else ConvModule
         stacked_convs = []
@@ -142,7 +149,7 @@ class YOLOXKptHeadModule(BaseModule):
                     norm_cfg=self.norm_cfg,
                     act_cfg=self.act_cfg))
         return nn.Sequential(*stacked_convs)
-    
+
     def _build_stacked_convs(self) -> nn.Sequential:
         """Initialize conv layers of a single level head."""
         conv = DepthwiseSeparableConvModule \
@@ -201,28 +208,31 @@ class YOLOXKptHeadModule(BaseModule):
 
         return multi_apply(self.forward_single, x, self.multi_level_cls_convs,
                            self.multi_level_reg_convs,
+                           self.multi_level_kpt_convs,
                            self.multi_level_conv_cls,
                            self.multi_level_conv_reg,
                            self.multi_level_conv_obj,
-                           self.multi_level_kpt_convs,
-                           self.multi_level_conv_kpt)
+                           self.multi_level_conv_kpt,
+                           self.multi_level_conv_vis)
 
-    def forward_single(self, x: Tensor, cls_convs: nn.Module,
-                       reg_convs: nn.Module, conv_cls: nn.Module,
-                       conv_reg: nn.Module,
-                       conv_obj: nn.Module,
-                       kpt_convs: nn.Module,
-                       conv_vis: nn.Module) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
+    def forward_single(self, x: Tensor,
+                       cls_convs: nn.Module, reg_convs: nn.Module, kpt_convs: nn.Module,
+                       conv_cls: nn.Module, conv_reg: nn.Module, conv_obj: nn.Module,
+                       conv_kpt: nn.Module, conv_vis: nn.Module) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         """Forward feature of a single scale level."""
 
         cls_feat = cls_convs(x)
         reg_feat = reg_convs(x)
+        kpt_feat = kpt_convs(x)
 
         cls_score = conv_cls(cls_feat)
         bbox_pred = conv_reg(reg_feat)
         objectness = conv_obj(reg_feat)
 
-        return cls_score, bbox_pred, objectness
+        kpt_pred = conv_kpt(kpt_feat)
+        vis_pred = conv_vis(kpt_feat)
+
+        return cls_score, bbox_pred, objectness, kpt_pred, vis_pred
 
 
 @MODELS.register_module()
@@ -303,11 +313,18 @@ class YOLOXKptHead(YOLOv5Head):
     def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         return self.head_module(x)
 
+    def predict_by_feat(self, cls_scores: List[Tensor], bbox_preds: List[Tensor], objectnesses: Optional[List[Tensor]] = None, 
+                        kpt_preds: Optional[List[Tensor]] = None, vis_preds: Optional[List[Tensor]] = None,
+                        batch_img_metas: Optional[List[dict]] = None, cfg: Optional[ConfigDict] = None, rescale: bool = True, with_nms: bool = True) -> List[InstanceData]:
+        return super().predict_by_feat(cls_scores, bbox_preds, objectnesses, batch_img_metas, cfg, rescale, with_nms)
+
     def loss_by_feat(
             self,
             cls_scores: Sequence[Tensor],
             bbox_preds: Sequence[Tensor],
             objectnesses: Sequence[Tensor],
+            kpt_preds: Sequence[Tensor],
+            vis_preds: Sequence[Tensor],
             batch_gt_instances: Sequence[InstanceData],
             batch_img_metas: Sequence[dict],
             batch_gt_instances_ignore: OptInstanceList = None) -> dict:

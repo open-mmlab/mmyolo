@@ -1,4 +1,3 @@
-
 /opt/conda/bin/conda init bash
 pip install -i http://devops.io:3141/root/pypi/+simple --trusted-host devops.io -U openmim
 mim install -i http://devops.io:3141/root/pypi/+simple --trusted-host devops.io "mmengine>=0.3.1"

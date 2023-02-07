@@ -63,6 +63,7 @@ model = dict(
             num_keypoints=17,
             in_channels=256,
             feat_channels=256,
+            kpt_stacked_convs=4,
             widen_factor=widen_factor,
             stacked_convs=2,
             featmap_strides=(8, 16, 32),
