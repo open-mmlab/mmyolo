@@ -297,8 +297,8 @@ class YOLOXHead(YOLOv5Head):
         if batch_gt_instances_ignore is None:
             batch_gt_instances_ignore = [None] * num_imgs
 
-        batch_gt_instances = self.gt_instances_preprocess(batch_gt_instances, 
-                                                          len(batch_img_metas))
+        batch_gt_instances = self.gt_instances_preprocess(
+            batch_gt_instances, len(batch_img_metas))
 
         featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
         mlvl_priors = self.prior_generator.grid_priors(

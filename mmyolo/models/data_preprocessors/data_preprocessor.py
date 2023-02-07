@@ -30,11 +30,11 @@ class YOLOXBatchSyncRandomResize(BatchSyncRandomResize):
             Defaults to 32.
     """
 
-    def forward(self, inputs: Tensor, 
+    def forward(self, inputs: Tensor,
                 data_samples: dict) -> Tensor and dict:
         """resize a batch of images and bboxes to shape ``self._input_size``"""
         h, w = inputs.shape[-2:]
-        inputs=inputs.float()
+        inputs = inputs.float()
         assert isinstance(data_samples, dict)
 
         if self._input_size is None:
