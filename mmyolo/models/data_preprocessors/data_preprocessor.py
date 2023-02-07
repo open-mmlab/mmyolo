@@ -47,7 +47,7 @@ class BatchSyncRandomResize(nn.Module):
 
     def forward(
         self, inputs: Tensor, data_samples: dict
-    ) -> Tuple[Tensor, List[DetDataSample]]:
+    ) -> Tuple[Tensor, dict]:
         """resize a batch of images and bboxes to shape ``self._input_size``"""
         h, w = inputs.shape[-2:]
         inputs=inputs.float()
