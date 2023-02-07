@@ -158,13 +158,13 @@ train_dataloader = dict(
 
 test_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
         type='mmdet.FixShapeResize',
         width=img_scale[0],
         height=img_scale[1],
         keep_ratio=False,
         interpolation='bicubic'),
-    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
