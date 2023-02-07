@@ -13,7 +13,7 @@ train_num_workers = 8
 val_batch_size_per_gpu = 1
 val_num_workers = 2
 
-persistent_workers = False
+persistent_workers = True
 
 max_epochs = 300
 num_last_epochs = 15
@@ -35,7 +35,7 @@ model = dict(
         pad_size_divisor=32,
         batch_augments=[
             dict(
-                type='BatchSyncRandomResize',
+                type='YOLOXBatchSyncRandomResize',
                 random_size_range=(480, 800),
                 size_divisor=32,
                 interval=10)

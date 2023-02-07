@@ -265,7 +265,7 @@ class YOLOXHead(YOLOv5Head):
             cls_scores: Sequence[Tensor],
             bbox_preds: Sequence[Tensor],
             objectnesses: Sequence[Tensor],
-            batch_gt_instances: Sequence[InstanceData],
+            batch_gt_instances: Tensor,
             batch_img_metas: Sequence[dict],
             batch_gt_instances_ignore: OptInstanceList = None) -> dict:
         """Calculate the loss based on the features extracted by the detection
@@ -488,23 +488,20 @@ class YOLOXHead(YOLOv5Head):
         return bbox_aux_target
 
     @staticmethod
-    def gt_instances_preprocess(batch_gt_instances: Union[Tensor, Sequence],
+    def gt_instances_preprocess(batch_gt_instances: Tensor,
                                 batch_size: int) -> List[InstanceData]:
         """Split batch_gt_instances with batch size.
         
         Args:
-            batch_gt_instances (Sequence[Tensor]): Ground truth
-                instances for whole batch, shape [all_gt_bboxes, 6]
+            batch_gt_instances (Tensor): Ground truth
+                a 2D-Tensor for whole batch, shape [all_gt_bboxes, 6]
             batch_size (int): Batch size.
 
         Returns:
             List: batch gt instances data, shape [batch_size, InstanceData]
         """
         # faster version
-        # sqlit batch gt instance [all_gt_bboxes, 6] ->
-        # [batch_size, number_gt_each_batch, 5]
         batch_instance_list = []
-        max_gt_bbox_len = 0
         for i in range(batch_size):
             batch_gt_instance_ = InstanceData()
             single_batch_instance = \
