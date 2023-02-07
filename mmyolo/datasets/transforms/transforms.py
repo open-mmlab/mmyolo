@@ -471,15 +471,15 @@ class YOLOv5RandomAffine(BaseTransform):
             the border of the image. In some dataset like MOT17, the gt bboxes
             are allowed to cross the border of images. Therefore, we don't
             need to clip the gt bboxes in these cases. Defaults to True.
-        min_bbox_size (float): Minimum size of bounding box after transform.
-            Size smaller than `min_bbox_size` will be considered invalid.
-            Defaults to 2.
-        min_area_ratio (float): Minimum ratio of area after transform.
-            Ratio smaller than `min_area_ratio` will be considered invalid.
-            Defaults to 0.1.
-        max_aspect_ratio (float): Minimum ratio of aspect after transform.
-            Ratio largeer than `min_area_ratio` will be considered invalid.
-            Defaults to 20.
+        min_bbox_size (float): Width and height threshold to filter bboxes.
+            If the height or width of a box is smaller than this value, it
+            will be removed. Defaults to 2.
+        min_area_ratio (float): Threshold of area ratio between
+            original bboxes and wrapped bboxes. If smaller than this value,
+            the box will be removed. Defaults to 0.1.
+        max_aspect_ratio (float): Aspect ratio of width and height
+            threshold to filter bboxes. If max(h/w, w/h) larger than this
+            value, the box will be removed. Defaults to 20.
     """
 
     def __init__(self,

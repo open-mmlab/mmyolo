@@ -69,7 +69,7 @@ widen_factor = 0.5
 # Strides of multi-scale prior box
 strides = [8, 16, 32]
 num_det_layers = 3  # The number of model output scales
-norm_cfg = dict(type='BN', momentum=0.03, eps=0.001)
+norm_cfg = dict(type='BN', momentum=0.03, eps=0.001)  # Normalization config
 
 # -----train val related-----
 affine_scale = 0.5  # YOLOv5RandomAffine scaling ratio
