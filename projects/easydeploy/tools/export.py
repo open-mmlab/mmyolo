@@ -75,6 +75,7 @@ def build_model_from_cfg(config_path, checkpoint_path, device):
     return model
 
 
+@torch.no_grad()
 def main():
     args = parse_args()
     register_all_modules()
