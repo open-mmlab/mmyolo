@@ -146,7 +146,8 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
             assigned_labels=assigned_labels,
             assigned_labels_weights=assigned_labels_weights,
             assigned_bboxes=assigned_bboxes,
-            assign_metrics=assign_metrics)
+            assign_metrics=assign_metrics,
+            matched_gt_inds=matched_gt_inds)
 
     def dynamic_k_matching(self, cost_matrix: Tensor, pairwise_ious: Tensor,
                            pad_bbox_flag: int) -> Tuple[Tensor, Tensor]:

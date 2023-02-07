@@ -284,7 +284,11 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                                           retained_gt_inds)
 
                 # draw title
-                base_prior = self.priors_size[feat_ind][prior_ind]
+                # TODO: need a more sophisticated way to do this
+                if self.priors_size is not None:
+                    base_prior = self.priors_size[feat_ind][prior_ind]
+                else:
+                    base_prior = [0, 0, 0, 0]
                 prior_size = (base_prior[2] - base_prior[0],
                               base_prior[3] - base_prior[1])
                 pos = np.array((20, 20))
