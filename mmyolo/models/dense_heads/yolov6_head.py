@@ -413,7 +413,7 @@ class YOLOv6Head(YOLOv5Head):
 
             # sqlit batch gt instance [all_gt_bboxes, 6] ->
             # [batch_size, max_gt_bbox_len, 5]
-            if len(batch_gt_instances):
+            if len(batch_gt_instances) > 0:
                 gt_images_indexes = batch_gt_instances[:, 0]
                 max_gt_bbox_len = gt_images_indexes.unique(
                     return_counts=True)[1].max()
