@@ -364,6 +364,10 @@ class LoadAnnotations(MMDET_LoadAnnotations):
     time being, in order to speed up the pipeline, it can be excluded in
     advance."""
 
+    def __init__(self, with_mask: bool = False, poly2mask: bool = True, box_type: str = 'hbox', **kwargs) -> None:
+        super().__init__(with_mask, poly2mask, box_type, **kwargs)
+        self.with_keypoints = kwargs.get('with_keypoints', False)
+
     def _load_bboxes(self, results: dict):
         """Private function to load bounding box annotations.
 
@@ -407,6 +411,26 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                 gt_bboxes_labels.append(instance['bbox_label'])
         results['gt_bboxes_labels'] = np.array(
             gt_bboxes_labels, dtype=np.int64)
+    
+    def _load_kps(self, results: dict) -> None:
+        gt_keypoints = []
+        for instance in results.get('instances', []):
+            if instance['ignore_flag'] == 0:
+                if "keypoints" not in instance:
+                    continue
+                gt_keypoints.append(instance['keypoints'])
+        results['gt_keypoints'] = np.array(gt_keypoints, np.float32).reshape(
+            (len(gt_keypoints), -1, 3))
+        
+    
+    def transform(self, results: dict) -> dict:
+        super().transform(results)
+        if self.with_keypoints:
+            self._load_kps(results)
+        return results
+    
+    def __repr__(self) -> str:
+        return super().__repr__() + f', with_keypoints={self.with_keypoints}'
 
 
 @TRANSFORMS.register_module()

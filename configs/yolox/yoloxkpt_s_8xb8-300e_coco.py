@@ -1,7 +1,8 @@
 _base_ = '../_base_/default_runtime.py'
 
 data_root = 'data/coco/'
-dataset_type = 'YOLOv5CocoDataset'
+# dataset_type = 'YOLOv5CocoDataset'
+dataset_type = 'YOLOv5PoseCocoDataset'
 
 img_scale = (640, 640)  # width, height
 deepen_factor = 0.33
@@ -103,13 +104,13 @@ model = dict(
 
 pre_transform = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='LoadAnnotations', with_bbox=True)
+    dict(type='LoadAnnotations', with_bbox=True, with_keypoints=True)
 ]
 
 train_pipeline_stage1 = [
     *pre_transform,
     dict(
-        type='Mosaic',
+        type='MosaicKeypoints',
         img_scale=img_scale,
         pad_val=114.0,
         pre_transform=pre_transform),
@@ -133,7 +134,7 @@ train_pipeline_stage1 = [
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
-                   'flip_direction'))
+                   'flip_direction', 'gt_keypoints'))
 ]
 
 train_pipeline_stage2 = [
@@ -195,7 +196,8 @@ val_dataloader = dict(
         ann_file='annotations/person_keypoints_val2017_mini.json',
         data_prefix=dict(img='val2017/'),
         test_mode=True,
-        pipeline=test_pipeline))
+        pipeline=test_pipeline,
+        ))
 test_dataloader = val_dataloader
 
 # Reduce evaluation time

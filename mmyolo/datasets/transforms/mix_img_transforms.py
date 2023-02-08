@@ -1120,3 +1120,8 @@ class YOLOXMixUp(BaseMixImageTransform):
         repr_str += f'max_refetch={self.max_refetch}, '
         repr_str += f'bbox_clip_border={self.bbox_clip_border})'
         return repr_str
+
+
+@TRANSFORMS.register_module()
+class MosaicKeypoints(Mosaic):
+    pass
