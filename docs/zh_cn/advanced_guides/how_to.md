@@ -553,25 +553,19 @@ python ./tools/train.py \
 
 - `randomness.deterministic=True`，把 cuDNN 后端确定性选项设置为 True，即把`torch.backends.cudnn.deterministic` 设为 True，把 `torch.backends.cudnn.benchmark` 设为False。`deterministic` 默认为 False。更多细节见 https://pytorch.org/docs/stable/notes/randomness.html。
 
-## 在一个单通道图像数据集上进行训练
+## 在单通道图像数据集上训练示例
 
 ### 数据集预处理
 
-以ballon数据集为例,如果你使用的是自定义灰度图像数据集，你可以跳过这一步。
+本节以 `cat` 数据集为例，如果你使用的是自定义灰度图像数据集，你可以跳过这一步。
 
 自定义数据集的处理训练可参照[自定义数据集 标注+训练+测试+部署 全流程](../user_guides/custom_dataset.md)。
 
 ```shell
-python tools/misc/download_dataset.py --dataset-name balloon --save-dir projects/single_channel/data --unzip
-python projects/single_channel/balloon2coco_single_channel.py
-#--save-dir 示例数据集存储路径
+python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat --unzip --delete
 ```
 
-运行下面的命令，将数据集图片替换为单通道图片。
-
-```shell
-python projects/single_channel/single_channel.py --path projects/single_channel/data/balloon
-```
+`cat` 是一个 3 通道彩色图片数据集，为了方便演示，你可以运行下面的代码和命令，将数据集图片替换为单通道图片，方便后续验证。
 
 图像单通道转换示例代码:
 
@@ -586,18 +580,14 @@ from PIL import Image
 
 def parse_args():
     parser = argparse.ArgumentParser(description='data_path')
-    parser.add_argument(
-        '--path',
-        type=str,
-        default='projects/single_channel/data/balloon',
-        help='Original dataset path')
+    parser.add_argument('--path', type=str, help='Original dataset path')
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
 
-    path = args.path + '/train/'
+    path = args.path + '/images/'
     save_path = path
     file_list: List[str] = os.listdir(path)
     # Grayscale conversion of each imager
@@ -609,70 +599,48 @@ def main():
         L_img.save(save_path + '/' + file)
         args = parse_args()
 
-    path = args.path + '/val/'
-    save_path = path
-    file_list: List[str] = os.listdir(path)
-    # Grayscale conversion of each imager
-    for file in file_list:
-        if imghdr.what(path + '/' + file) != 'jpeg':
-            continue
-        o_img = Image.open(path + '/' + file)
-        L_img = o_img.convert('L')
-        L_img.save(save_path + '/' + file)
-
 
 if (__name__ == '__main__'):
     main()
 ```
 
+将上述脚本命名为 `cvt_single_channel.py`, 运行命令为：
+
+```shell
+python cvt_single_channel.py  --path data/cat
+```
+
 ### 新建配置文件并训练
 
-以 `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py`为 `base` 配置，新增 `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon_single_channel.py` 文件。
+以 `projects/misc/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`为 `base` 配置,将其复制到`configs/yolov5`目录下，在同级配置路径下新增 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat_single_channel.py` 文件。
 
 ```python
-_base_ = '../../../configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
+_base_ = 'yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py'
 
-data_root = '../../../projects/single_channel/data/balloon/'
-
-train_batch_size_per_gpu = 4
-train_num_workers = 2
-
-metainfo = {
-    'classes': ('balloon', ),
-    'palette': [
-        (220, 20, 60),
-    ]
-}
-
-train_dataloader = dict(
-    batch_size=train_batch_size_per_gpu,
-    num_workers=train_num_workers,
-    dataset=dict(
-        data_root=data_root,
-        metainfo=metainfo,
-        data_prefix=dict(img='train/'),
-        ann_file='train.json'))
-
-val_dataloader = dict(
-    dataset=dict(
-        data_root=data_root,
-        metainfo=metainfo,
-        data_prefix=dict(img='val/'),
-        ann_file='val.json'))
-
-test_dataloader = val_dataloader
-
-val_evaluator = dict(ann_file=data_root + 'val.json')
-
-test_evaluator = val_evaluator
-
-model = dict(bbox_head=dict(head_module=dict(num_classes=1)))
-
-default_hooks = dict(logger=dict(interval=1))
+max_epochs = 150
+data_root = './data/cat/'
 ```
 
 训练测试结果：
 
-<img src="https://raw.githubusercontent.com/landhill/mmyolo/main/resources/single_channel_test.jpg"/>
+<img src="https://raw.githubusercontent.com/landhill/mmyolo/main/resources/cat_single_channel_test.jpeg"/>
 
 左图是实际标签，右图是目标检测结果。
+
+```shell
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.780
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.947
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.847
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.780
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.765
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.833
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.843
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.843
+bbox_mAP_copypaste: 0.780 0.947 0.847 -1.000 -1.000 0.780
+Epoch(val) [100][116/116]  coco/bbox_mAP: 0.7800  coco/bbox_mAP_50: 0.9470  coco/bbox_mAP_75: 0.8470  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 
+0.7800
+```

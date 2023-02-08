@@ -547,11 +547,11 @@ python ./tools/train.py \
 - `randomness.diff_rank_seed=True`, set different seeds according to global rank. Defaults to False.
 - `randomness.deterministic=True`, set the deterministic option for cuDNN backend, i.e., set `torch.backends.cudnn.deterministic` to True and `torch.backends.cudnn.benchmark` to False. Defaults to False. See https://pytorch.org/docs/stable/notes/randomness.html for more details.
 
-## Training on a single channel image dataset
+## Training example on a single-channel image dataset
 
 ### Data set preparation
 
-Take the ballon dataset as an example, if you are using a custom grayscale image dataset, you can skip this step.
+This section uses the `cat` dataset as an example. If you are using a custom grayscale image dataset, you can skip this step.
 
 The processing training of the custom dataset can be found in [Annotation-to-deployment workflow for custom dataset](../user_guides/custom_dataset.md)。
 
@@ -561,11 +561,7 @@ python projects/single_channel/balloon2coco_single_channel.py
 #--save-dir Example dataset storage path
 ```
 
-Run the following command to replace the dataset image with a single channel image.
-
-```shell
-python projects/single_channel/single_channel.py --path projects/single_channel/data/balloon
-```
+`cat` is a 3-channel color image dataset. For demonstration purposes, you can run the following code and commands to replace the dataset images with single-channel images for subsequent verification.
 
 Image single channel conversion sample code:
 
@@ -580,18 +576,14 @@ from PIL import Image
 
 def parse_args():
     parser = argparse.ArgumentParser(description='data_path')
-    parser.add_argument(
-        '--path',
-        type=str,
-        default='projects/single_channel/data/balloon',
-        help='Original dataset path')
+    parser.add_argument('--path', type=str, help='Original dataset path')
     return parser.parse_args()
 
 
 def main():
     args = parse_args()
 
-    path = args.path + '/train/'
+    path = args.path + '/images/'
     save_path = path
     file_list: List[str] = os.listdir(path)
     # Grayscale conversion of each imager
@@ -603,70 +595,48 @@ def main():
         L_img.save(save_path + '/' + file)
         args = parse_args()
 
-    path = args.path + '/val/'
-    save_path = path
-    file_list: List[str] = os.listdir(path)
-    # Grayscale conversion of each imager
-    for file in file_list:
-        if imghdr.what(path + '/' + file) != 'jpeg':
-            continue
-        o_img = Image.open(path + '/' + file)
-        L_img = o_img.convert('L')
-        L_img.save(save_path + '/' + file)
-
 
 if (__name__ == '__main__'):
     main()
 ```
 
-### Create a new profile and train
+Name the above script as `cvt_single_channel.py`, and run the command as:
 
-Take `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` as `base` configuration, add `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon_single_ channel.py` file.
-
-```python
-_base_ = '../../../configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
-
-data_root = '../../../projects/single_channel/data/balloon/'
-
-train_batch_size_per_gpu = 4
-train_num_workers = 2
-
-metainfo = {
-    'classes': ('balloon', ),
-    'palette': [
-        (220, 20, 60),
-    ]
-}
-
-train_dataloader = dict(
-    batch_size=train_batch_size_per_gpu,
-    num_workers=train_num_workers,
-    dataset=dict(
-        data_root=data_root,
-        metainfo=metainfo,
-        data_prefix=dict(img='train/'),
-        ann_file='train.json'))
-
-val_dataloader = dict(
-    dataset=dict(
-        data_root=data_root,
-        metainfo=metainfo,
-        data_prefix=dict(img='val/'),
-        ann_file='val.json'))
-
-test_dataloader = val_dataloader
-
-val_evaluator = dict(ann_file=data_root + 'val.json')
-
-test_evaluator = val_evaluator
-
-model = dict(bbox_head=dict(head_module=dict(num_classes=1)))
-
-default_hooks = dict(logger=dict(interval=1))
+```shell
+python cvt_single_channel.py  --path data/cat
 ```
 
-Training test results.
+### Create a new profile and train
 
-<img src="https://raw.githubusercontent.com/landhill/mmyolo/main/resources/single_channel_test.jpg"/>
+Take `projects/misc/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` as the `base` configuration, copy it to the `configs/yolov5` directory, and add `yolov5_s-v61_syncbn_fast_1xb32-100e_cat_single_channel.py` file.
+
+```python
+_base_ = 'yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py'
+
+max_epochs = 150
+data_root = './data/cat/'
+```
+
+Results of model training:
+
+<img src="https://raw.githubusercontent.com/landhill/mmyolo/main/resources/cat_single_channel_test.jpeg"/>
 
 The left figure shows the actual label and the right figure shows the target detection result.
+
+```shell
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.780
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.947
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.847
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.780
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.765
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.833
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.843
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.843
+bbox_mAP_copypaste: 0.780 0.947 0.847 -1.000 -1.000 0.780
+Epoch(val) [100][116/116]  coco/bbox_mAP: 0.7800  coco/bbox_mAP_50: 0.9470  coco/bbox_mAP_75: 0.8470  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 
+0.7800
+```
