@@ -613,7 +613,7 @@ Take `projects/misc/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` a
 ```python
 _base_ = 'yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py'
 
-max_epochs = 150
+max_epochs = 100
 data_root = './data/cat/'
 ```
 
