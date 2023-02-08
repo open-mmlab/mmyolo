@@ -1,14 +1,22 @@
 _base_ = './yolov7_l_syncbn_fast_8x16b-300e_coco.py'
 
 # ========================modified parameters========================
-loss_cls_weight = 0.5
-loss_obj_weight = 1.0
+
+# -----model related-----
 # Data augmentation
 max_translate_ratio = 0.1  # YOLOv5RandomAffine
 scaling_ratio_range = (0.5, 1.6)  # YOLOv5RandomAffine
 mixup_prob = 0.05  # YOLOv5MixUp
-# ===============================Unmodified in most cases====================
+randchoice_mosaic_prob = [0.8, 0.2]
+mixup_alpha = 8.0,  # YOLOv5MixUp
+mixup_beta = 8.0  # YOLOv5MixUp
 
+# -----train val related-----
+loss_cls_weight = 0.5
+loss_obj_weight = 1.0
+
+lr_factor = 0.01  # Learning rate scaling factor
+# ===============================Unmodified in most cases====================
 num_classes = _base_.num_classes
 num_det_layers = _base_.num_det_layers
 img_scale = _base_.img_scale
@@ -67,15 +75,15 @@ mosiac9_pipeline = [
 randchoice_mosaic_pipeline = dict(
     type='RandomChoice',
     transforms=[mosiac4_pipeline, mosiac9_pipeline],
-    prob=[0.8, 0.2])
+    prob=randchoice_mosaic_prob)
 
 train_pipeline = [
     *pre_transform,
     randchoice_mosaic_pipeline,
     dict(
         type='YOLOv5MixUp',
-        alpha=8.0,
-        beta=8.0,
+        alpha=mixup_alpha,
+        beta=mixup_beta,
         prob=mixup_prob,  # change
         pre_transform=[*pre_transform, randchoice_mosaic_pipeline]),
     dict(type='YOLOv5HSVRandomAug'),
@@ -87,4 +95,4 @@ train_pipeline = [
 ]
 
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
-default_hooks = dict(param_scheduler=dict(lr_factor=0.01))
+default_hooks = dict(param_scheduler=dict(lr_factor=lr_factor))

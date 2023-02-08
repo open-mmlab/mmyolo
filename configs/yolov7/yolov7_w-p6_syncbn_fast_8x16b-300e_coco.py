@@ -3,9 +3,13 @@ _base_ = './yolov7_l_syncbn_fast_8x16b-300e_coco.py'
 # ========================modified parameters========================
 # -----data related-----
 img_scale = (1280, 1280)  # height, width
-num_classes = 80
-# only on Val
-batch_shapes_cfg = dict(img_size=img_scale[0], size_divisor=64)
+num_classes = 80  # Number of classes for classification
+# Config of batch shapes. Only on val
+# It means not used if batch_shapes_cfg is None.
+batch_shapes_cfg = dict(
+    img_size=img_scale[
+        0],  # The image scale of padding should be divided by pad_size_divisor
+    size_divisor=64)  # Additional paddings for pixel scale
 
 # -----model related-----
 # Basic size of multi-scale prior box
@@ -15,17 +19,22 @@ anchors = [
     [(140, 301), (303, 264), (238, 542)],  # P5/32
     [(436, 615), (739, 380), (925, 792)]  # P6/64
 ]
-strides = [8, 16, 32, 64]
-num_det_layers = 4
+strides = [8, 16, 32, 64]  # Strides of multi-scale prior box
+num_det_layers = 4  # # The number of model output scales
 norm_cfg = dict(type='BN', momentum=0.03, eps=0.001)
-loss_cls_weight = 0.3
-loss_bbox_weight = 0.05
-loss_obj_weight = 0.7
+
 # Data augmentation
 max_translate_ratio = 0.2,  # YOLOv5RandomAffine
 scaling_ratio_range = (0.1, 2.0),  # YOLOv5RandomAffine
+mixup_prob = 0.15  # YOLOv5MixUp
+randchoice_mosaic_prob = [0.8, 0.2]
 mixup_alpha = 8.0,  # YOLOv5MixUp
 mixup_beta = 8.0,  # YOLOv5MixUp
+
+# -----train val related-----
+loss_cls_weight = 0.3
+loss_bbox_weight = 0.05
+loss_obj_weight = 0.7
 
 # ===============================Unmodified in most cases====================
 model = dict(
@@ -91,7 +100,7 @@ mosiac9_pipeline = [
 randchoice_mosaic_pipeline = dict(
     type='RandomChoice',
     transforms=[mosiac4_pipeline, mosiac9_pipeline],
-    prob=[0.8, 0.2])
+    prob=randchoice_mosaic_prob)
 
 train_pipeline = [
     *pre_transform,
@@ -100,7 +109,7 @@ train_pipeline = [
         type='YOLOv5MixUp',
         alpha=mixup_alpha,  # note
         beta=mixup_beta,  # note
-        prob=0.15,
+        prob=mixup_prob,
         pre_transform=[*pre_transform, randchoice_mosaic_pipeline]),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),

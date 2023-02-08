@@ -29,6 +29,10 @@ anchors = [
 # Base learning rate for optim_wrapper. Corresponding to 8xb16=64 bs
 base_lr = 0.01
 max_epochs = 300  # Maximum training epochs
+
+num_epoch_stage2 = 30  # The last 30 epochs switch evaluation interval
+val_interval_stage2 = 1  # Evaluation interval
+
 model_test_cfg = dict(
     # The config of multi-label for multi-class prediction.
     multi_label=True,
@@ -72,7 +76,8 @@ norm_cfg = dict(type='BN', momentum=0.03, eps=0.001)
 # Data augmentation
 max_translate_ratio = 0.2  # YOLOv5RandomAffine
 scaling_ratio_range = (0.1, 2.0)  # YOLOv5RandomAffine
-
+mixup_prob = 0.15  # YOLOv5MixUp
+randchoice_mosaic_prob = [0.8, 0.2]
 mixup_alpha = 8.0,  # YOLOv5MixUp
 mixup_beta = 8.0  # YOLOv5MixUp
 
@@ -206,7 +211,7 @@ mosiac9_pipeline = [
 randchoice_mosaic_pipeline = dict(
     type='RandomChoice',
     transforms=[mosiac4_pipeline, mosiac9_pipeline],
-    prob=[0.8, 0.2])
+    prob=randchoice_mosaic_prob)
 
 train_pipeline = [
     *pre_transform,
@@ -215,7 +220,7 @@ train_pipeline = [
         type='YOLOv5MixUp',
         alpha=mixup_alpha,  # note
         beta=mixup_beta,  # note
-        prob=0.15,
+        prob=mixup_prob,
         pre_transform=[*pre_transform, randchoice_mosaic_pipeline]),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
@@ -319,6 +324,7 @@ train_cfg = dict(
     type='EpochBasedTrainLoop',
     max_epochs=max_epochs,
     val_interval=save_epoch_intervals,
-    dynamic_intervals=[(270, 1)])
+    dynamic_intervals=[(max_epochs - num_epoch_stage2, val_interval_stage2)])
+
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
