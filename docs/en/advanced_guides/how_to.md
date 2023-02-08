@@ -638,3 +638,4 @@ The left figure shows the actual label and the right figure shows the target det
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.843
 bbox_mAP_copypaste: 0.780 0.947 0.847 -1.000 -1.000 0.780
 Epoch(val) [100][116/116]  coco/bbox_mAP: 0.7800  coco/bbox_mAP_50: 0.9470  coco/bbox_mAP_75: 0.8470  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.7800
+```
