@@ -2,6 +2,10 @@
 import torch
 from torch import Tensor
 
+_XYWH2XYXY = torch.tensor([[1.0, 0.0, 1.0, 0.0], [0.0, 1.0, 0.0, 1.0],
+                           [-0.5, 0.0, 0.5, 0.0], [0.0, -0.5, 0.0, 0.5]],
+                          dtype=torch.float32)
+
 
 class TRTEfficientNMSop(torch.autograd.Function):
 
@@ -199,6 +203,8 @@ def _batched_nms(
         `det_scores` of shape [N, num_det]
         `det_classes` of shape [N, num_det]
     """
+    if box_coding == 1:
+        boxes = boxes @ (_XYWH2XYXY.to(boxes.device))
     boxes = boxes if boxes.dim() == 4 else boxes.unsqueeze(2)
     _, _, numClasses = scores.shape
 

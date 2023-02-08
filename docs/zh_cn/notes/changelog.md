@@ -1,5 +1,36 @@
 # 更新日志
 
+## v0.4.0 (18/1/2023)
+
+### 亮点
+
+1. 实现了 [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) 目标检测模型，并通过 [projects/easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy) 支持了模型部署
+2. 新增了中英文版本的 [YOLOv8 原理和实现全解析文档](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/algorithm_descriptions/yolov8_description.md)
+
+### 新特性
+
+1. 新增 YOLOv8 和 PPYOLOE 模型结构图 (#459, #471)
+2. 调整最低支持 Python 版本从 3.6 升级为 3.7 (#449)
+3. TensorRT-8 中新增新的 YOLOX decoder 写法 (#450)
+4. 新增学习率可视化曲线脚本 (#479)
+5. 新增脚本命令速查表 (#481)
+
+### Bug 修复
+
+1. 修复 `optimize_anchors.py` 脚本导入错误问题 (#452)
+2. 修复 `get_started.md` 中安装步骤错误问题 (#474)
+3. 修复使用 `RTMDet` P6 模型时候 neck 报错问题 (#480)
+
+### 视频
+
+1. 发布了 [玩转 MMYOLO 之实用篇（四）：顶会第一步 · 模块自定义](https://www.bilibili.com/video/BV1yd4y1j7VD/)
+
+### 贡献者
+
+总共 9 位开发者参与了本次版本
+
+谢谢 @VoyagerXvoyagerx, @tianleiSHI, @RangeKing, @PeterH0323, @Nioolek, @triple-Mu, @lyviva, @Zheng-LinXiao, @hhaAndroid
+
 ## v0.3.0 (8/1/2023)
 
 ### 亮点
