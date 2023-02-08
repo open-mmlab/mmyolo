@@ -6,7 +6,6 @@ import torch
 import torch.nn.functional as F
 from mmdet.models import BatchSyncRandomResize
 from mmdet.models.data_preprocessors import DetDataPreprocessor
-
 from mmengine import MessageHub, is_list_of
 from mmengine.structures import BaseDataElement
 from torch import Tensor
@@ -30,8 +29,7 @@ class YOLOXBatchSyncRandomResize(BatchSyncRandomResize):
             Defaults to 32.
     """
 
-    def forward(self, inputs: Tensor,
-                data_samples: dict) -> Tensor and dict:
+    def forward(self, inputs: Tensor, data_samples: dict) -> Tensor and dict:
         """resize a batch of images and bboxes to shape ``self._input_size``"""
         h, w = inputs.shape[-2:]
         inputs = inputs.float()
