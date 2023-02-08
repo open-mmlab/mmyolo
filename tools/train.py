@@ -9,7 +9,7 @@ from mmengine.logging import print_log
 from mmengine.runner import Runner
 
 from mmyolo.registry import RUNNERS
-from mmyolo.utils import judge_metainfo_is_lower, register_all_modules
+from mmyolo.utils import is_metainfo_lower, register_all_modules
 
 
 def parse_args():
@@ -100,7 +100,7 @@ def main():
         cfg.load_from = args.resume
 
     # Determine whether the custom metainfo fields are all lowercase
-    judge_metainfo_is_lower(cfg)
+    is_metainfo_lower(cfg)
 
     # build the runner from config
     if 'runner_type' not in cfg:

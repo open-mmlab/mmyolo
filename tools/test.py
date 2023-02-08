@@ -9,7 +9,7 @@ from mmengine.evaluator import DumpResults
 from mmengine.runner import Runner
 
 from mmyolo.registry import RUNNERS
-from mmyolo.utils import judge_metainfo_is_lower, register_all_modules
+from mmyolo.utils import is_metainfo_lower, register_all_modules
 
 
 # TODO: support fuse_conv_bn
@@ -107,7 +107,7 @@ def main():
         cfg.merge_from_dict(cfg_json)
 
     # Determine whether the custom metainfo fields are all lowercase
-    judge_metainfo_is_lower(cfg)
+    is_metainfo_lower(cfg)
 
     # build the runner from config
     if 'runner_type' not in cfg:

@@ -116,7 +116,7 @@ def show_data_classes(data_classes):
     print(data_classes_info)
 
 
-def judge_metainfo_is_lower(cfg):
+def is_metainfo_lower(cfg):
     """Determine whether the custom metainfo fields are all lowercase."""
 
     def judge_keys(dataloader_cfg):
