@@ -617,7 +617,7 @@ python cvt_single_channel.py  --path data/cat
 ```python
 _base_ = 'yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py'
 
-max_epochs = 100
+max_epochs = 150
 data_root = './data/cat/'
 ```
 
