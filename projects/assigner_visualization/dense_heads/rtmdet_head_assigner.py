@@ -74,11 +74,8 @@ class RTMHeadAssigner(RTMDetHead):
                                         gt_bboxes, pad_bbox_flag)
 
         labels = assigned_result['assigned_labels'].reshape(-1)
-        bbox_targets = assigned_result['assigned_bboxes'].reshape(-1, 4)
         matched_gt_inds = assigned_result['matched_gt_inds']
-
-        # cls_preds = flatten_cls_scores.reshape(-1, self.num_classes)
-        # bbox_preds = flatten_bboxes.reshape(-1, 4)
+        bbox_preds = flatten_bboxes.reshape(-1, 4)
 
         # FG cat_id: [0, num_classes -1], BG cat_id: num_classes
         bg_class_ind = self.num_classes
@@ -93,23 +90,13 @@ class RTMHeadAssigner(RTMDetHead):
             level_inds[level_nums[i]:level_nums[i + 1]] = i
         level_inds_pos = level_inds[pos_inds]
 
-        bbox_targets_selected = bbox_targets[pos_inds]
         img_inds = img_inds[pos_inds]
         labels = labels[pos_inds]
 
         inputs_hw = batch_img_metas[0]['batch_input_shape']
-
         assign_results = []
         for i in range(self.num_levels):
             retained_inds = level_inds_pos == i
-            h = inputs_hw[0] // self.featmap_strides[i]
-            w = inputs_hw[1] // self.featmap_strides[i]
-
-            bbox_targets_retained = bbox_targets_selected[retained_inds]
-
-            grid_x_inds, grid_y_inds = self._convert_gt_to_grid_inds(
-                bbox_targets_retained, inputs_hw, h, w)
-
             if not retained_inds.any():
                 assign_results_prior = {
                     'stride':
@@ -128,6 +115,11 @@ class RTMHeadAssigner(RTMDetHead):
                     1
                 }
             else:
+                w = inputs_hw[1] // self.featmap_strides[i]
+
+                retained_pos_inds = pos_inds[retained_inds] - level_nums[i]
+                grid_y_inds = retained_pos_inds // w
+                grid_x_inds = retained_pos_inds - retained_pos_inds // w * w
                 assign_results_prior = {
                     'stride': self.featmap_strides[i],
                     'grid_x_inds': grid_x_inds,
@@ -139,15 +131,6 @@ class RTMHeadAssigner(RTMDetHead):
                 }
             assign_results.append([assign_results_prior])
         return assign_results
-
-    def _convert_gt_to_grid_inds(self, bbox_targets_retained, inputs_hw, h, w):
-
-        xy1, xy2 = bbox_targets_retained.split((2, 2), dim=-1)
-        gt_bboxes_xywh = torch.cat([(xy2 + xy1) / 2, (xy2 - xy1)], dim=-1)
-        gt_bboxes_xywh[:, 1::2] /= (inputs_hw[0] / h)
-        gt_bboxes_xywh[:, 0::2] /= (inputs_hw[1] / w)
-        grid_x, grid_y, _, _ = gt_bboxes_xywh.chunk(4, 1)
-        return grid_x.long().view(-1), grid_y.long().view(-1)
 
     def assign(self, x: List[Tensor], batch_gt_instances: InstanceList,
                batch_img_metas: List[dict]) -> dict:
@@ -164,8 +147,8 @@ class RTMHeadAssigner(RTMDetHead):
             dict: A dictionary of assigning components.
         """
         if isinstance(x, list):
-            # TODO: fix here, not implemented for normal version
-            pass
+            # TODO: fix here
+            raise NotImplementedError
         else:
             # Fast version
             cls_scores, bbox_preds = self(x)
