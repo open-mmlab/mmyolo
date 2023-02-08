@@ -408,27 +408,31 @@ class YOLOv6Head(YOLOv5Head):
             return torch.stack(batch_instance_list)
         else:
             # faster version
+            # format of batch_gt_instances:
+            # [img_ind, cls_ind, x1, y1, x2, y2]
+
             # sqlit batch gt instance [all_gt_bboxes, 6] ->
-            # [batch_size, number_gt_each_batch, 5]
-            batch_instance_list = []
-            max_gt_bbox_len = 0
-            for i in range(batch_size):
-                single_batch_instance = \
-                    batch_gt_instances[batch_gt_instances[:, 0] == i, :]
-                single_batch_instance = single_batch_instance[:, 1:]
-                batch_instance_list.append(single_batch_instance)
-                if len(single_batch_instance) > max_gt_bbox_len:
-                    max_gt_bbox_len = len(single_batch_instance)
+            # [batch_size, max_gt_bbox_len, 5]
+            if len(batch_gt_instances):
+                gt_images_indexes = batch_gt_instances[:, 0]
+                max_gt_bbox_len = gt_images_indexes.unique(
+                    return_counts=True)[1].max()
+                batch_instance = torch.zeros((batch_size, max_gt_bbox_len, 5),
+                                             dtype=batch_gt_instances.dtype,
+                                             device=batch_gt_instances.device)
+                # fill [-1., 0., 0., 0., 0.] if some shape of
+                # single batch not equal max_gt_bbox_len
+                batch_instance[:, :, 0] = -1.
 
-            # fill [-1., 0., 0., 0., 0.] if some shape of
-            # single batch not equal max_gt_bbox_len
-            for index, gt_instance in enumerate(batch_instance_list):
-                if gt_instance.shape[0] >= max_gt_bbox_len:
-                    continue
-                fill_tensor = batch_gt_instances.new_full(
-                    [max_gt_bbox_len - gt_instance.shape[0], 5], 0)
-                fill_tensor[:, 0] = -1.
-                batch_instance_list[index] = torch.cat(
-                    (batch_instance_list[index], fill_tensor), dim=0)
+                for i in range(batch_size):
+                    match_indexes = gt_images_indexes == i
+                    gt_num = match_indexes.sum()
+                    if gt_num:
+                        batch_instance[i, :gt_num] = batch_gt_instances[
+                            match_indexes, 1:]
+            else:
+                batch_instance = torch.zeros((batch_size, 0, 5),
+                                             dtype=batch_gt_instances.dtype,
+                                             device=batch_gt_instances.device)
 
-            return torch.stack(batch_instance_list)
+            return batch_instance
