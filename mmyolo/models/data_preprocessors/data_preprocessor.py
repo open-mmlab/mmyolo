@@ -3,12 +3,9 @@ import random
 from typing import List, Mapping, Sequence, Tuple, Union
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-from mmengine.dist import barrier, broadcast, get_dist_info
 from mmdet.models import BatchSyncRandomResize
 from mmdet.models.data_preprocessors import DetDataPreprocessor
-from mmdet.structures import DetDataSample
 
 from mmengine import MessageHub, is_list_of
 from mmengine.structures import BaseDataElement
@@ -33,13 +30,13 @@ class YOLOXBatchSyncRandomResize(BatchSyncRandomResize):
             Defaults to 32.
     """
 
-    def forward(self, inputs: Tensor, 
+    def forward(self, inputs: Tensor,
                 data_samples: dict) -> Tensor and dict:
         """resize a batch of images and bboxes to shape ``self._input_size``"""
         h, w = inputs.shape[-2:]
-        inputs=inputs.float()
+        inputs = inputs.float()
         assert isinstance(data_samples, dict)
-        
+
         if self._input_size is None:
             self._input_size = (h, w)
         scale_y = self._input_size[0] / h
@@ -50,18 +47,18 @@ class YOLOXBatchSyncRandomResize(BatchSyncRandomResize):
                 size=self._input_size,
                 mode='bilinear',
                 align_corners=False)
-            
+
             data_samples['bboxes_labels'][:, 2::2] *= scale_x
             data_samples['bboxes_labels'][:, 3::2] *= scale_y
-                
+
         message_hub = MessageHub.get_current_instance()
         if (message_hub.get_info('iter') + 1) % self._interval == 0:
             self._input_size = self._get_random_size(
                 aspect_ratio=float(w / h), device=inputs.device)
-                
+
         return inputs, data_samples
-    
-    
+
+
 @MODELS.register_module()
 class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
     """Rewrite collate_fn to get faster training speed.
@@ -120,7 +117,7 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
         if self.batch_augments is not None:
             for batch_aug in self.batch_augments:
                 inputs, data_samples = batch_aug(inputs, data_samples)
-        
+
         img_metas = [{'batch_input_shape': inputs.shape[2:]}] * len(inputs)
         data_samples = {
             'bboxes_labels': data_samples['bboxes_labels'],

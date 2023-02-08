@@ -279,7 +279,7 @@ class RTMDetHead(YOLOv5Head):
             self,
             cls_scores: List[Tensor],
             bbox_preds: List[Tensor],
-            batch_gt_instances: InstanceList,
+            batch_gt_instances: List[Tensor],
             batch_img_metas: List[dict],
             batch_gt_instances_ignore: OptInstanceList = None) -> dict:
         """Compute losses of the head.
