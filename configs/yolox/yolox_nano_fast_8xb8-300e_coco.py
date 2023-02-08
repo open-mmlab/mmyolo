@@ -1,4 +1,4 @@
-_base_ = './yolox_tiny_8xb8-300e_coco.py'
+_base_ = './yolox_tiny_fast_8xb8-300e_coco.py'
 
 deepen_factor = 0.33
 widen_factor = 0.25

@@ -29,11 +29,11 @@ model = dict(
     # TODO: Waiting for mmengine support
     use_syncbn=False,
     data_preprocessor=dict(
-        type='mmdet.DetDataPreprocessor',
+        type='YOLOv5DetDataPreprocessor',
         pad_size_divisor=32,
         batch_augments=[
             dict(
-                type='mmdet.BatchSyncRandomResize',
+                type='YOLOXBatchSyncRandomResize',
                 random_size_range=(480, 800),
                 size_divisor=32,
                 interval=10)
@@ -157,6 +157,7 @@ train_dataloader = dict(
     num_workers=train_num_workers,
     persistent_workers=True,
     pin_memory=True,
+    collate_fn=dict(type='yolov5_collate'),
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
