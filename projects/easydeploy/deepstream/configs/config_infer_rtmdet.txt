@@ -1,9 +1,10 @@
 [property]
 gpu-id=0
-net-scale-factor=0.0039215697906911373
-model-color-format=0
-model-engine-file=end2end.engine
-labelfile-path=labels.txt
+net-scale-factor=0.01735207357279195
+offsets=57.375;57.12;58.395
+model-color-format=1
+model-engine-file=../end2end.engine
+labelfile-path=../coco_labels.txt
 batch-size=1
 network-mode=0
 num-detected-classes=80
@@ -14,7 +15,7 @@ network-type=0
 cluster-mode=2
 maintain-aspect-ratio=1
 parse-bbox-func-name=NvDsInferParseCustomMMYOLO
-custom-lib-path=custom_mmyolo_bbox_parser/libnvdsparsebbox_mmyolo.so
+custom-lib-path=../build/libnvdsparsebbox_mmyolo.so
 
 [class-attrs-all]
 pre-cluster-threshold=0.45

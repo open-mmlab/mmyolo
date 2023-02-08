@@ -56,7 +56,7 @@ enable=1
 gpu-id=0
 gie-unique-id=1
 nvbuf-memory-type=0
-config-file=config_infer_primary_mmyolo.txt
+config-file=configs/config_infer_rtmdet.txt
 
 [tests]
 file-loop=0
