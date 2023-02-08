@@ -27,7 +27,7 @@ anchors = [
 ]
 
 # -----train val related-----
-# Base learning rate for optim_wrapper. Corresponding to 8xb16=64 bs
+# Base learning rate for optim_wrapper. Corresponding to 8xb16=128 bs
 base_lr = 0.01
 max_epochs = 300  # Maximum training epochs
 
@@ -77,12 +77,12 @@ loss_cls_weight = 0.5
 loss_bbox_weight = 0.05
 loss_obj_weight = 1.0
 prior_match_thr = 4.  # Priori box matching threshold
-obj_level_weights = [4., 1.,
-                     0.4]  # The obj loss weights of the three output layers
+# The obj loss weights of the three output layers
+obj_level_weights = [4., 1., 0.4]
 lr_factor = 0.01  # Learning rate scaling factor
 weight_decay = 0.0005
 # Save model checkpoint and validation intervals
-save_epoch_intervals = 10
+save_checkpoint_intervals = 10
 # The maximum checkpoints to keep.
 max_keep_ckpts = 3
 # Single-scale training is recommended to
@@ -263,7 +263,7 @@ default_hooks = dict(
         max_epochs=max_epochs),
     checkpoint=dict(
         type='CheckpointHook',
-        interval=save_epoch_intervals,
+        interval=save_checkpoint_intervals,
         save_best='auto',
         max_keep_ckpts=max_keep_ckpts))
 
@@ -287,6 +287,6 @@ test_evaluator = val_evaluator
 train_cfg = dict(
     type='EpochBasedTrainLoop',
     max_epochs=max_epochs,
-    val_interval=save_epoch_intervals)
+    val_interval=save_checkpoint_intervals)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
