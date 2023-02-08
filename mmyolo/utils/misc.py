@@ -114,3 +114,20 @@ def show_data_classes(data_classes):
     # Align display data to the left
     data_classes_info.align['Class name'] = 'l'
     print(data_classes_info)
+
+
+def judge_metainfo_is_lower(cfg):
+    """Determine whether the custom metainfo fields are all lowercase."""
+
+    def judge_keys(dataloader_cfg):
+        while 'dataset' in dataloader_cfg:
+            dataloader_cfg = dataloader_cfg['dataset']
+        if 'metainfo' in dataloader_cfg:
+            all_keys = dataloader_cfg['metainfo'].keys()
+            all_is_lower = all([str(k).islower() for k in all_keys])
+            assert all_is_lower, f'The key in dataset metainfo must be all lowercase, but got {all_keys}. ' \
+                                 f'Please refer to https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py' # noqa
+
+    judge_keys(cfg.get('train_dataloader', {}))
+    judge_keys(cfg.get('val_dataloader', {}))
+    judge_keys(cfg.get('test_dataloader', {}))
