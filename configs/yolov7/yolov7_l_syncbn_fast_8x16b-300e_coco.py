@@ -64,12 +64,7 @@ batch_shapes_cfg = dict(
     extra_pad_ratio=0.5)
 
 # -----model related-----
-# The scaling factor that controls the depth of the network structure
-deepen_factor = 0.33
-# The scaling factor that controls the width of the network structure
-widen_factor = 0.5
-# Strides of multi-scale prior box
-strides = [8, 16, 32]
+strides = [8, 16, 32]  # Strides of multi-scale prior box
 num_det_layers = 3  # The number of model output scales
 norm_cfg = dict(type='BN', momentum=0.03, eps=0.001)
 
@@ -92,12 +87,12 @@ simota_cls_weight = 1.0
 prior_match_thr = 4.  # Priori box matching threshold
 obj_level_weights = [4., 1.,
                      0.4]  # The obj loss weights of the three output layers
+
 lr_factor = 0.1  # Learning rate scaling factor
 weight_decay = 0.0005
-# Save model checkpoint and validation intervals
-save_epoch_intervals = 1
-# The maximum checkpoints to keep.
-max_keep_ckpts = 3
+save_epoch_intervals = 1  # Save model checkpoint and validation intervals
+max_keep_ckpts = 3  # The maximum checkpoints to keep.
+
 # Single-scale training is recommended to
 # be turned on, which can speed up training.
 env_cfg = dict(cudnn_benchmark=True)
@@ -325,6 +320,5 @@ train_cfg = dict(
     max_epochs=max_epochs,
     val_interval=save_epoch_intervals,
     dynamic_intervals=[(max_epochs - num_epoch_stage2, val_interval_stage2)])
-
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
