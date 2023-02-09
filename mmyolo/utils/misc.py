@@ -125,7 +125,7 @@ def is_metainfo_lower(cfg):
         if 'metainfo' in dataloader_cfg:
             all_keys = dataloader_cfg['metainfo'].keys()
             all_is_lower = all([str(k).islower() for k in all_keys])
-            assert all_is_lower, f'The key in dataset metainfo must be all lowercase, but got {all_keys}. ' \
+            assert all_is_lower, f'The keys in dataset metainfo must be all lowercase, but got {all_keys}. ' \
                                  f'Please refer to https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py' # noqa
 
     judge_keys(cfg.get('train_dataloader', {}))
