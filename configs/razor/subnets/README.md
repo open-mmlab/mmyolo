@@ -10,6 +10,8 @@ This is an implementation of MMRazor Searchable Backbone Application, we provide
 
 #### NAS model
 
+Here are the Models that come from MMRazor which support YOLO Series. If you are looking for MMRazor models only for Backbone, you could refer to MMRazor [ModelZoo](https://github.com/open-mmlab/mmrazor/blob/dev-1.x/docs/en/get_started/model_zoo.md) and corresponding repository.
+
 - [x] [AttentiveMobileNetV3](https://github.com/open-mmlab/mmrazor/blob/dev-1.x/configs/_base_/nas_backbones/attentive_mobilenetv3_supernet.py)
 - [x] [SearchableShuffleNetV2](https://github.com/open-mmlab/mmrazor/blob/dev-1.x/configs/_base_/nas_backbones/spos_shufflenet_supernet.py)
 - [x] [SearchableMobileNetV2](https://github.com/open-mmlab/mmrazor/blob/dev-1.x/configs/_base_/nas_backbones/spos_mobilenet_supernet.py)
@@ -21,6 +23,7 @@ This is an implementation of MMRazor Searchable Backbone Application, we provide
 - [MMRAZOR v1.0.0rc2](https://github.com/open-mmlab/mmrazor/tree/v1.0.0rc2) or higher (dev-1.x)
 
 Install MMRAZOR using MIM.
+
 ```shell
 mim install mmengine
 mim install "mmrazor==1.0.0rc2"
@@ -34,11 +37,13 @@ mim install -v -e .
 ### Training commands
 
 In MMYOLO's root directory, if you want to use single GPU for training, run the following command to train the model:
+
 ```bash
 CUDA_VISIBLE_DEVICES=0 PORT=29500 ./tools/dist_train.sh configs/razor/subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py
 ```
 
 If you want to use several of these GPUs to train in parallel, you can use the following command:
+
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh configs/razor/subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py
 ```
@@ -55,14 +60,14 @@ CUDA_VISIBLE_DEVICES=0 PORT=29500 ./tools/dist_test.sh configs/razor/subnets/yol
 
 Here we provide the baseline version of YOLO Series with NAS backbone.
 
-|           Model            | size | box AP | Params(M) | FLOPS(G) |                                                                   Config                                                                   |                                                                           Download                                                                            |
-| :------------------------: | :--: | :----: | :-------: | :------: | :----------------------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| yolov5-s | 640  |  37.7  |   7.235    |   8.265   |     [config](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py)     |         [model](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth)         |
-| yolov5_s_spos_shufflenetv2 | 640  |  37.9  |   7.04(-2.7%)     |   7.03   |     [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/razor/subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py)     |         [model](https://download.openmmlab.com/mmrazor/v1/spos/yolov5/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco_20230109_155302-777fd6f1.pth)         |
-|  yolov6-s  | 640  |  44.0  |   18.869   |   24.253   | [config](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco/yolov6_s_syncbn_fast_8xb32-400e_coco_20221102_203035-932e1d91.pth) |
-|  yolov6_l_attentivenas_a6  | 640  |  44.5  |   18.38(-2.6%)   |   8.49   | [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/razor/subnets/yolov6_l_attentivenas_a6_d12_syncbn_fast_16xb16-300e_coco.py) | [model](https://download.openmmlab.com/mmrazor/v1/attentivenas/yolov6/yolov6_l_attentivenas_a6_d12_syncbn_fast_16xb16-300e_coco_20230108_174944-4970f0b7.pth) |
-| RTMDet-tiny | 640  |  41.0  |    4.8    |   8.1    |     [config](./rtmdet_l_syncbn_fast_8xb32-300e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_tiny_syncbn_fast_8xb32-300e_coco/rtmdet_tiny_syncbn_fast_8xb32-300e_coco_20230102_140117-dbb1dc83.pth) |
-|   rtmdet_tiny_ofa_lat31    | 960  |  41.1  |   3.91(-18.5%)    |   6.09   |       [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/razor/subnets/rtmdet_tiny_ofa_lat31_syncbn_16xb16-300e_coco.py)       |           [model](https://download.openmmlab.com/mmrazor/v1/ofa/rtmdet/rtmdet_tiny_ofa_lat31_syncbn_16xb16-300e_coco_20230108_222141-24ff87dex.pth)           |
+|           Model            | size | box AP |  Params(M)   | FLOPS(G) |                                                                   Config                                                                   |                                                                                Download                                                                                 |
+| :------------------------: | :--: | :----: | :----------: | :------: | :----------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+|          yolov5-s          | 640  |  37.7  |    7.235     |  8.265   |            [config](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py)             | [model](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth) |
+| yolov5_s_spos_shufflenetv2 | 640  |  37.9  | 7.04(-2.7%)  |   7.03   |     [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/razor/subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py)     |              [model](https://download.openmmlab.com/mmrazor/v1/spos/yolov5/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco_20230109_155302-777fd6f1.pth)              |
+|          yolov6-s          | 640  |  44.0  |    18.869    |  24.253  |              [config](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco.py)               |     [model](https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco/yolov6_s_syncbn_fast_8xb32-400e_coco_20221102_203035-932e1d91.pth)     |
+|  yolov6_l_attentivenas_a6  | 640  |  44.5  | 18.38(-2.6%) |   8.49   | [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/razor/subnets/yolov6_l_attentivenas_a6_d12_syncbn_fast_16xb16-300e_coco.py) |      [model](https://download.openmmlab.com/mmrazor/v1/attentivenas/yolov6/yolov6_l_attentivenas_a6_d12_syncbn_fast_16xb16-300e_coco_20230108_174944-4970f0b7.pth)      |
+|        RTMDet-tiny         | 640  |  41.0  |     4.8      |   8.1    |                                            [config](./rtmdet_l_syncbn_fast_8xb32-300e_coco.py)                                             |  [model](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_tiny_syncbn_fast_8xb32-300e_coco/rtmdet_tiny_syncbn_fast_8xb32-300e_coco_20230102_140117-dbb1dc83.pth)  |
+|   rtmdet_tiny_ofa_lat31    | 960  |  41.1  | 3.91(-18.5%) |   6.09   |       [config](https://github.com/open-mmlab/mmyolo/tree/dev/configs/razor/subnets/rtmdet_tiny_ofa_lat31_syncbn_16xb16-300e_coco.py)       |                [model](https://download.openmmlab.com/mmrazor/v1/ofa/rtmdet/rtmdet_tiny_ofa_lat31_syncbn_16xb16-300e_coco_20230108_222141-24ff87dex.pth)                |
 
 **Note**:
 
