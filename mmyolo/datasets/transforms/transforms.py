@@ -12,7 +12,6 @@ from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
-from mmrotate.structures.bbox.rotated_boxes import RotatedBoxes
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
@@ -1078,9 +1077,14 @@ class RegularizeRotatedBox(BaseTransform):
 
     def __init__(self, angle_version='le90') -> None:
         self.angle_version = angle_version
+        try:
+            from mmrotate.structures.bbox import RotatedBoxes
+            self.box_type = RotatedBoxes
+        except ImportError:
+            raise ImportError('MMRotate is not installed.')
 
     def transform(self, results: dict) -> dict:
-        assert isinstance(results['gt_bboxes'], RotatedBoxes)
-        results['gt_bboxes'] = RotatedBoxes(
+        assert isinstance(results['gt_bboxes'], self.box_type)
+        results['gt_bboxes'] = self.box_type(
             results['gt_bboxes'].regularize_boxes(self.angle_version))
         return results

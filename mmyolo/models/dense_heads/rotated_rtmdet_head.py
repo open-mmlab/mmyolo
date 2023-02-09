@@ -12,12 +12,18 @@ from mmdet.utils import (ConfigType, InstanceList, OptConfigType,
 from mmengine.config import ConfigDict
 from mmengine.model import normal_init
 from mmengine.structures import InstanceData
-from mmrotate.structures.bbox.rotated_boxes import RotatedBoxes
-from mmrotate.structures.bbox.transforms import distance2obb
 from torch import Tensor
 
 from mmyolo.registry import MODELS, TASK_UTILS
 from .rtmdet_head import RTMDetHead, RTMDetSepBNHeadModule
+
+try:
+    from mmrotate.structures.bbox import RotatedBoxes, distance2obb
+    MMROTATE_AVAILABLE = True
+except ImportError:
+    RotatedBoxes = None
+    distance2obb = None
+    MMROTATE_AVAILABLE = False
 
 
 @MODELS.register_module()
@@ -202,6 +208,8 @@ class RotatedRTMDetHead(RTMDetHead):
             train_cfg: OptConfigType = None,
             test_cfg: OptConfigType = None,
             init_cfg: OptMultiConfig = None):
+        if not MMROTATE_AVAILABLE:
+            raise ImportError('MMRotate is not installed.')
         self.angle_version = angle_version
         self.use_hbbox_loss = use_hbbox_loss
         self.angle_coder = TASK_UTILS.build(angle_coder)

@@ -2,10 +2,17 @@
 from typing import Optional, Sequence, Union
 
 import torch
-from mmrotate.models.task_modules.coders import \
-    DistanceAnglePointCoder as MMROTATE_DistanceAnglePointCoder
 
 from mmyolo.registry import TASK_UTILS
+
+try:
+    from mmrotate.models.task_modules.coders import \
+        DistanceAnglePointCoder as MMROTATE_DistanceAnglePointCoder
+    MMROTATE_AVAILABLE = True
+except ImportError:
+    from mmdet.models.task_modules.coders import BaseBBoxCoder
+    MMROTATE_DistanceAnglePointCoder = BaseBBoxCoder
+    MMROTATE_AVAILABLE = False
 
 
 @TASK_UTILS.register_module()
@@ -15,6 +22,11 @@ class DistanceAnglePointCoder(MMROTATE_DistanceAnglePointCoder):
     This coder encodes gt bboxes (x, y, w, h, theta) into (top, bottom, left,
     right, theta) and decode it back to the original.
     """
+
+    def __init__(self, clip_border=True, angle_version='oc'):
+        if not MMROTATE_AVAILABLE:
+            raise ImportError('MMRotate is not installed.')
+        super().__init__(clip_border=clip_border, angle_version=angle_version)
 
     def decode(
         self,
