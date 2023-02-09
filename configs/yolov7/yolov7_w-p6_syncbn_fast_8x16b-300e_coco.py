@@ -25,7 +25,7 @@ norm_cfg = dict(type='BN', momentum=0.03, eps=0.001)
 
 # Data augmentation
 max_translate_ratio = 0.2  # YOLOv5RandomAffine
-scaling_ratio_range = (0.1, 2.0),  # YOLOv5RandomAffine
+scaling_ratio_range = (0.1, 2.0)  # YOLOv5RandomAffine
 mixup_prob = 0.15  # YOLOv5MixUp
 randchoice_mosaic_prob = [0.8, 0.2]
 mixup_alpha = 8.0,  # YOLOv5MixUp
