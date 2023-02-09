@@ -5,12 +5,12 @@ _base_ = '../_base_/default_runtime.py'
 data_root = 'data/coco/'  # Root path of data
 # path of train annotation file
 train_ann_file = 'annotations/instances_train2017.json'
-train_data_prefix = 'train2017/' # Prefix of train image path
+train_data_prefix = 'train2017/'  # Prefix of train image path
 # path of val annotation file
 val_ann_file = 'annotations/instances_val2017.json'
-val_data_prefix = 'val2017/' # Prefix of train image path
+val_data_prefix = 'val2017/'  # Prefix of train image path
 
-num_classes = 80 # Number of classes for classification
+num_classes = 80  # Number of classes for classification
 # Batch size of a single GPU during training
 train_batch_size_per_gpu = 16
 # Worker to pre-fetch data for each single GPU during tarining
@@ -23,13 +23,13 @@ persistent_workers = True
 base_lr = 0.01
 max_epochs = 300  # Maximum training epochs
 
-model_test_cfg=dict(
-        yolox_style=True,  # better
-        # The config of multi-label for multi-class prediction
-        multi_label=True,  # 40.5 -> 40.7
-        score_thr=0.001,  # Threshold to filter out boxes
-        max_per_img=300,  # Max number of detections of each image
-        nms=dict(type='nms', iou_threshold=0.65))  # NMS type and threshold
+model_test_cfg = dict(
+    yolox_style=True,  # better
+    # The config of multi-label for multi-class prediction
+    multi_label=True,  # 40.5 -> 40.7
+    score_thr=0.001,  # Threshold to filter out boxes
+    max_per_img=300,  # Max number of detections of each image
+    nms=dict(type='nms', iou_threshold=0.65))  # NMS type and threshold
 
 # ========================Possible modified parameters========================
 # -----data related-----
@@ -82,7 +82,7 @@ model = dict(
                 random_size_range=(480, 800),
                 size_divisor=32,
                 interval=10)
-            ]),
+        ]),
     backbone=dict(
         type='YOLOXCSPDarknet',
         deepen_factor=deepen_factor,
@@ -253,9 +253,9 @@ optim_wrapper = dict(
     optimizer=dict(
         type='SGD',
         lr=base_lr,
-        momentum=0.9, 
+        momentum=0.9,
         weight_decay=weight_decay,
-        nesterov=True, 
+        nesterov=True,
         train_batch_size_per_gpu=train_batch_size_per_gpu),
     paramwise_cfg=dict(norm_decay_mult=0., bias_decay_mult=0.))
 
@@ -291,9 +291,9 @@ param_scheduler = [
 
 default_hooks = dict(
     checkpoint=dict(
-        type='CheckpointHook', 
-        interval=save_epoch_intervals, 
-        max_keep_ckpts=max_keep_ckpts, 
+        type='CheckpointHook',
+        interval=save_epoch_intervals,
+        max_keep_ckpts=max_keep_ckpts,
         save_best='auto'))
 
 custom_hooks = [
