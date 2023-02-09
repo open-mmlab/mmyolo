@@ -8,9 +8,7 @@ This is an implementation of MMRazor Searchable Backbone Application, we provide
 
 ### Backbone support
 
-#### NAS model
-
-Here are the Models that come from MMRazor which support YOLO Series. If you are looking for MMRazor models only for Backbone, you could refer to MMRazor [ModelZoo](https://github.com/open-mmlab/mmrazor/blob/dev-1.x/docs/en/get_started/model_zoo.md) and corresponding repository.
+Here are the Neural Architecture Search(NAS) Models that come from MMRazor which support YOLO Series. If you are looking for MMRazor models only for Backbone, you could refer to MMRazor [ModelZoo](https://github.com/open-mmlab/mmrazor/blob/dev-1.x/docs/en/get_started/model_zoo.md) and corresponding repository.
 
 - [x] [AttentiveMobileNetV3](https://github.com/open-mmlab/mmrazor/blob/dev-1.x/configs/_base_/nas_backbones/attentive_mobilenetv3_supernet.py)
 - [x] [SearchableShuffleNetV2](https://github.com/open-mmlab/mmrazor/blob/dev-1.x/configs/_base_/nas_backbones/spos_shufflenet_supernet.py)
