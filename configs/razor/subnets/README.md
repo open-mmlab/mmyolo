@@ -24,8 +24,12 @@ Install MMRazor using MIM.
 
 ```shell
 mim install mmengine
-mim install "mmrazor==1.0.0rc2"
-# Install MMRazor from source
+mim install "mmrazor>=1.0.0rc2"
+```
+
+Install MMRazor from source
+
+```
 git clone -b dev-1.x https://github.com/open-mmlab/mmrazor.git
 cd mmrazor
 # Install MMRazor
@@ -43,7 +47,7 @@ CUDA_VISIBLE_DEVICES=0 PORT=29500 ./tools/dist_train.sh configs/razor/subnets/yo
 If you want to use several of these GPUs to train in parallel, you can use the following command:
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 ./tools/dist_train.sh configs/razor/subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 PORT=29500 ./tools/dist_train.sh configs/razor/subnets/yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py
 ```
 
 ### Testing commands
