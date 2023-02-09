@@ -1,7 +1,7 @@
 _base_ = './rtmdet_s_syncbn_fast_8xb32-300e_coco.py'
-
 checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-tiny_imagenet_600e.pth'  # noqa
 
+# ========================modified parameters======================
 deepen_factor = 0.167
 widen_factor = 0.375
 img_scale = _base_.img_scale
@@ -13,6 +13,7 @@ mosaic_max_cached_images = 20
 # Number of cached images in mixup
 mixup_max_cached_images = 10
 
+# =======================Unmodified in most cases==================
 model = dict(
     backbone=dict(
         deepen_factor=deepen_factor,

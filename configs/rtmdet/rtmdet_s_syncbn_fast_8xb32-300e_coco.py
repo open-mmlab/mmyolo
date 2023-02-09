@@ -1,6 +1,7 @@
 _base_ = './rtmdet_l_syncbn_fast_8xb32-300e_coco.py'
 checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-s_imagenet_600e.pth'  # noqa
 
+# ========================modified parameters======================
 deepen_factor = 0.33
 widen_factor = 0.5
 img_scale = _base_.img_scale
@@ -12,6 +13,7 @@ mosaic_max_cached_images = 40
 # Number of cached images in mixup
 mixup_max_cached_images = 20
 
+# =======================Unmodified in most cases==================
 model = dict(
     backbone=dict(
         deepen_factor=deepen_factor,
@@ -85,6 +87,6 @@ custom_hooks = [
         priority=49),
     dict(
         type='mmdet.PipelineSwitchHook',
-        switch_epoch=_base_.max_epochs - _base_.stage2_num_epochs,
+        switch_epoch=_base_.max_epochs - _base_.num_epochs_stage2,
         switch_pipeline=train_pipeline_stage2)
 ]

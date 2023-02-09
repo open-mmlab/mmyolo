@@ -23,7 +23,7 @@ persistent_workers = True
 base_lr = 0.004
 max_epochs = 300  # Maximum training epochs
 # Change train_pipeline for final 20 epochs (stage 2)
-stage2_num_epochs = 20
+num_epochs_stage2 = 20
 
 model_test_cfg = dict(
     # The config of multi-label for multi-class prediction.
@@ -290,7 +290,7 @@ custom_hooks = [
         priority=49),
     dict(
         type='mmdet.PipelineSwitchHook',
-        switch_epoch=max_epochs - stage2_num_epochs,
+        switch_epoch=max_epochs - num_epochs_stage2,
         switch_pipeline=train_pipeline_stage2)
 ]
 
@@ -298,7 +298,7 @@ train_cfg = dict(
     type='EpochBasedTrainLoop',
     max_epochs=max_epochs,
     val_interval=save_checkpoint_intervals,
-    dynamic_intervals=[(max_epochs - stage2_num_epochs, val_interval_stage2)])
+    dynamic_intervals=[(max_epochs - num_epochs_stage2, val_interval_stage2)])
 
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
