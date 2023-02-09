@@ -1,7 +1,8 @@
 _base_ = '../_base_/default_runtime.py'
 
-# dataset settings
-data_root = 'data/coco/'
+# ========================Frequently modified parameters======================
+# -----data related-----
+data_root = 'data/coco/'  # Root path of data
 dataset_type = 'YOLOv5CocoDataset'
 
 num_last_epochs = 15
