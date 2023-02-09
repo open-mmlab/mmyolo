@@ -20,17 +20,17 @@ Here are the Models that come from MMRazor which support YOLO Series. If you are
 
 ### Prerequisites
 
-- [MMRAZOR v1.0.0rc2](https://github.com/open-mmlab/mmrazor/tree/v1.0.0rc2) or higher (dev-1.x)
+- [MMRazor v1.0.0rc2](https://github.com/open-mmlab/mmrazor/tree/v1.0.0rc2) or higher (dev-1.x)
 
-Install MMRAZOR using MIM.
+Install MMRazor using MIM.
 
 ```shell
 mim install mmengine
 mim install "mmrazor==1.0.0rc2"
-# Install MMRAZOR from source
+# Install MMRazor from source
 git clone -b dev-1.x https://github.com/open-mmlab/mmrazor.git
 cd mmrazor
-# Install MMRAZOR
+# Install MMRazor
 mim install -v -e .
 ```
 
