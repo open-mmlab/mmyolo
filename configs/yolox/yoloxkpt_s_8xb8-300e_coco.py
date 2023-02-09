@@ -10,9 +10,11 @@ widen_factor = 0.5
 
 save_epoch_intervals = 10
 train_batch_size_per_gpu = 8
-train_num_workers = 8
+# NOTE: for debugging set to 0
+train_num_workers = 0
 val_batch_size_per_gpu = 1
-val_num_workers = 2
+# NOTE: for debugging set to 0
+val_num_workers = 0
 
 max_epochs = 100
 num_last_epochs = 15
@@ -102,9 +104,11 @@ model = dict(
         max_per_img=300,
         nms=dict(type='nms', iou_threshold=0.65)))
 
+# codec = dict(type="mmpose.RegressionLabel")
 pre_transform = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='LoadAnnotations', with_bbox=True, with_keypoints=True)
+    dict(type='LoadAnnotations', with_bbox=True, with_keypoints=True),
+    # dict(type='mmpose.GenerateTarget', encoder=codec, target_type='keypoint_label')
 ]
 
 train_pipeline_stage1 = [
@@ -114,23 +118,23 @@ train_pipeline_stage1 = [
         img_scale=img_scale,
         pad_val=114.0,
         pre_transform=pre_transform),
-    dict(
-        type='mmdet.RandomAffine',
-        scaling_ratio_range=(0.1, 2),
-        # img_scale is (width, height)
-        border=(-img_scale[0] // 2, -img_scale[1] // 2)),
-    dict(
-        type='YOLOXMixUp',
-        img_scale=img_scale,
-        ratio_range=(0.8, 1.6),
-        pad_val=114.0,
-        pre_transform=pre_transform),
-    dict(type='mmdet.YOLOXHSVRandomAug'),
-    dict(type='mmdet.RandomFlip', prob=0.5),
-    dict(
-        type='mmdet.FilterAnnotations',
-        min_gt_bbox_wh=(1, 1),
-        keep_empty=False),
+    # dict(
+    #     type='mmdet.RandomAffine',
+    #     scaling_ratio_range=(0.1, 2),
+    #     # img_scale is (width, height)
+    #     border=(-img_scale[0] // 2, -img_scale[1] // 2)),
+    # dict(
+    #     type='YOLOXMixUp',
+    #     img_scale=img_scale,
+    #     ratio_range=(0.8, 1.6),
+    #     pad_val=114.0,
+    #     pre_transform=pre_transform),
+    # dict(type='mmdet.YOLOXHSVRandomAug'),
+    # dict(type='mmdet.RandomFlip', prob=0.5),
+    # dict(
+    #     type='mmdet.FilterAnnotations',
+    #     min_gt_bbox_wh=(1, 1),
+    #     keep_empty=False),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
@@ -158,8 +162,8 @@ train_pipeline_stage2 = [
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
-    persistent_workers=True,
-    pin_memory=True,
+    persistent_workers=False, # NOTE: for debugging
+    pin_memory=False, # NOTE: for debugging
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
@@ -186,8 +190,8 @@ test_pipeline = [
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
-    persistent_workers=True,
-    pin_memory=True,
+    persistent_workers=False, # NOTE: for debugging
+    pin_memory=False, # NOTE: for debugging
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
@@ -278,3 +282,10 @@ train_cfg = dict(
 auto_scale_lr = dict(base_batch_size=64)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
+
+vis_backends = [dict(type='LocalVisBackend')]
+visualizer = dict(
+    # type='mmdet.DetLocalVisualizer',
+    type='mmpose.PoseLocalVisualizer',
+    vis_backends=vis_backends,
+    name='visualizer')

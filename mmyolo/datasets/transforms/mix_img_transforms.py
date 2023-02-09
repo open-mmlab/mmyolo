@@ -1268,8 +1268,10 @@ class MosaicKeypoints(Mosaic):
             img_shape (tuple[int]): Shape of the image.
         """
         assert len(img_shape) == 2
-        kpt[..., 0::3] = np.clip(kpt[..., 0::3], 0, img_shape[1] - 1)
-        kpt[..., 1::3] = np.clip(kpt[..., 1::3], 0, img_shape[0] - 1)
+        # keypoints outside the image are not allowed
+        flags = self._kpt_is_inside(kpt, img_shape, all_inside=False)
+        # set visibility to 0 if the keypoint is outside the image
+        kpt[..., 2::3][~flags] = 0
         return kpt
     
     def _kpt_is_inside(self, kpt, img_shape:Tuple[int, int], all_inside: bool=False, allowed_border: int=0):

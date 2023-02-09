@@ -16,6 +16,7 @@ from mmengine.visualization import Visualizer
 
 from mmyolo.registry import DATASETS, VISUALIZERS
 from mmyolo.utils import register_all_modules
+from mmpose.structures import PoseDataSample
 
 
 # TODO: Support for printing the change in key of results
@@ -220,11 +221,21 @@ def main():
                 masks = mask2ndarray(gt_masks)
                 gt_instances.masks = masks.astype(bool)
                 datasample.gt_instances = gt_instances
+
+            # Visualize keypoints
+            gt_keypoints = datasample.get("gt_keypoints", None)
+            if gt_keypoints is not None:
+                gt_instances.keypoints = gt_keypoints[..., :2]
+                gt_instances.keypoints_visible = gt_keypoints[..., 2]
+                datasample = PoseDataSample()
+                datasample.gt_instances = gt_instances
+
             # get filename from dataset or just use index as filename
             visualizer.add_datasample(
                 'result',
                 image,
                 datasample,
+                draw_bbox=True,
                 draw_pred=False,
                 draw_gt=True,
                 show=False)
