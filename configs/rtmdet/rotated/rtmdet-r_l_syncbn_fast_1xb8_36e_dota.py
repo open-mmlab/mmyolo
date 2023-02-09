@@ -2,7 +2,6 @@ _base_ = '../../_base_/default_runtime.py'
 
 data_root = '/datasets/dota_mmrotate_ss/'
 dataset_type = 'YOLOv5DOTADataset'
-checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-tiny_imagenet_600e.pth'  # noqa
 
 img_scale = (1024, 1024)  # width, height
 deepen_factor = 1.0
@@ -50,12 +49,7 @@ model = dict(
         widen_factor=widen_factor,
         channel_attention=True,
         norm_cfg=dict(type='BN'),
-        act_cfg=dict(type='SiLU', inplace=True),
-        init_cfg=dict(
-            type='Pretrained',
-            prefix='backbone.',
-            checkpoint=checkpoint,
-            map_location='cpu')),
+        act_cfg=dict(type='SiLU', inplace=True)),
     neck=dict(
         type='CSPNeXtPAFPN',
         deepen_factor=deepen_factor,
