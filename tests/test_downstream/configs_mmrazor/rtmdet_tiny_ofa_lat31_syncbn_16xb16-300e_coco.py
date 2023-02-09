@@ -1,6 +1,7 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 _base_ = [
     'mmrazor::_base_/nas_backbones/ofa_mobilenetv3_supernet.py',
-    '../../rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py'
+    '../../../configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py'
 ]
 
 checkpoint_file = 'https://download.openmmlab.com/mmrazor/v1/ofa/ofa_mobilenet_subnet_8xb256_in1k_note8_lat%4031ms_top1%4072.8_finetune%4025.py_20221214_0939-981a8b2a.pth'  # noqa
