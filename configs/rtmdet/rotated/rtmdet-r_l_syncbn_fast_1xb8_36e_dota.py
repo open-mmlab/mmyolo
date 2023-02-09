@@ -1,6 +1,6 @@
 _base_ = '../../_base_/default_runtime.py'
 
-data_root = '/datasets/dota_mmrotate_ss/'
+data_root = 'data/split_ss_dota/'
 dataset_type = 'YOLOv5DOTADataset'
 
 img_scale = (1024, 1024)  # width, height
