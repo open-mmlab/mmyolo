@@ -12,6 +12,7 @@ channels = [40, 128, 224]
 mid_channels = [40, 128, 224]
 
 _base_.train_dataloader.batch_size = 16
+_base_.nas_backbone.type = 'mmrazor.AttentiveMobileNetV3'
 _base_.nas_backbone.out_indices = (2, 4, 6)
 _base_.nas_backbone.conv_cfg = dict(type='mmrazor.BigNasConv2d')
 _base_.nas_backbone.norm_cfg = dict(type='mmrazor.DynamicBatchNorm2d')
