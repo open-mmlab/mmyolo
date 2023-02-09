@@ -1,8 +1,13 @@
 _base_ = './yolov6_m_syncbn_fast_8xb32-300e_coco.py'
 
+# ======================= Possible modified parameters =======================
+# -----model related-----
+# The scaling factor that controls the depth of the network structure
 deepen_factor = 1
+# The scaling factor that controls the width of the network structure
 widen_factor = 1
 
+# ============================== Unmodified in most cases ===================
 model = dict(
     backbone=dict(
         deepen_factor=deepen_factor,
