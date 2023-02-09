@@ -1,5 +1,6 @@
 _base_ = './yolov6_s_syncbn_fast_8xb32-300e_coco.py'
 
+# ======================= Possible modified parameters =======================
 # -----model related-----
 # The scaling factor that controls the depth of the network structure
 deepen_factor = 0.6
