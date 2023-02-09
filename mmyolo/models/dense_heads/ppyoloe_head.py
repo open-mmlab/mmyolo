@@ -13,8 +13,8 @@ from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS
-from ...utils.misc import gt_instances_preprocess
 from ..layers.yolo_bricks import PPYOLOESELayer
+from ..utils import gt_instances_preprocess
 from .yolov6_head import YOLOv6Head
 
 

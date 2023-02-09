@@ -13,7 +13,7 @@ from mmengine.model import (BaseModule, bias_init_with_prob, constant_init,
 from torch import Tensor
 
 from mmyolo.registry import MODELS, TASK_UTILS
-from ...utils.misc import gt_instances_preprocess
+from ..utils import gt_instances_preprocess
 from .yolov5_head import YOLOv5Head
 
 
