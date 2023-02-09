@@ -16,6 +16,7 @@ _base_.base_lr = 0.002
 _base_.optim_wrapper.optimizer.lr = 0.002
 _base_.param_scheduler[1].eta_min = 0.002 * 0.05
 
+_base_.nas_backbone.type = 'AttentiveMobileNetV3'
 _base_.nas_backbone.out_indices = (2, 4, 5)
 _base_.nas_backbone.conv_cfg = dict(type='mmrazor.OFAConv2d')
 _base_.nas_backbone.init_cfg = dict(
