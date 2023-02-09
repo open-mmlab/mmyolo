@@ -29,7 +29,7 @@ scaling_ratio_range = (0.1, 2.0)  # YOLOv5RandomAffine
 mixup_prob = 0.15  # YOLOv5MixUp
 randchoice_mosaic_prob = [0.8, 0.2]
 mixup_alpha = 8.0  # YOLOv5MixUp
-mixup_beta = 8.0,  # YOLOv5MixUp
+mixup_beta = 8.0  # YOLOv5MixUp
 
 # -----train val related-----
 loss_cls_weight = 0.3
