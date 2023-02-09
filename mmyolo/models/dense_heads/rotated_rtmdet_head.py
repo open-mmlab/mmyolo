@@ -270,8 +270,8 @@ class RotatedRTMDetHead(RTMDetHead):
               (num_instance, )
             - labels (Tensor): Labels of bboxes, has a shape
               (num_instances, ).
-            - bboxes (Tensor): Has a shape (num_instances, 4),
-              the last dimension 4 arrange as (x1, y1, x2, y2).
+            - bboxes (Tensor): Has a shape (num_instances, 5),
+              the last dimension 4 arrange as (x, y, w, h, angle).
         """
         assert len(cls_scores) == len(bbox_preds)
         if objectnesses is None:
