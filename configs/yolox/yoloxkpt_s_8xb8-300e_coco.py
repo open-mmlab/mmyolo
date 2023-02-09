@@ -118,11 +118,12 @@ train_pipeline_stage1 = [
         img_scale=img_scale,
         pad_val=114.0,
         pre_transform=pre_transform),
-    # dict(
-    #     type='mmdet.RandomAffine',
-    #     scaling_ratio_range=(0.1, 2),
-    #     # img_scale is (width, height)
-    #     border=(-img_scale[0] // 2, -img_scale[1] // 2)),
+    dict(
+        # type='mmdet.RandomAffine',
+        type='YOLOPoseRandomAffine',
+        scaling_ratio_range=(0.1, 2),
+        # img_scale is (width, height)
+        border=(-img_scale[0] // 2, -img_scale[1] // 2)),
     # dict(
     #     type='YOLOXMixUp',
     #     img_scale=img_scale,

@@ -14,6 +14,7 @@ from numpy import random
 from mmpose.structures.keypoint import flip_keypoints
 import torch
 from mmyolo.registry import TRANSFORMS
+from ..utils import Keypoints
 
 
 class BaseMixImageTransform(BaseTransform, metaclass=ABCMeta):
@@ -1197,8 +1198,8 @@ class MosaicKeypoints(Mosaic):
 
             # TODO: kps adjust coordinate
             gt_keypoints_i = results_patch['gt_keypoints']
-            gt_keypoints_i = self._kpt_rescale(gt_keypoints_i,[scale_ratio_i, scale_ratio_i])
-            gt_keypoints_i = self._kpt_translate(gt_keypoints_i,[padw, padh])
+            gt_keypoints_i = Keypoints._kpt_rescale(gt_keypoints_i,[scale_ratio_i, scale_ratio_i])
+            gt_keypoints_i = Keypoints._kpt_translate(gt_keypoints_i,[padw, padh])
             mosaic_keypoints.append(gt_keypoints_i)
 
         mosaic_bboxes = mosaic_bboxes[0].cat(mosaic_bboxes, 0)
@@ -1209,7 +1210,7 @@ class MosaicKeypoints(Mosaic):
 
         if self.bbox_clip_border:
             mosaic_bboxes.clip_([2 * img_scale_h, 2 * img_scale_w])
-            mosaic_keypoints = self._kpt_clip(mosaic_keypoints, [2 * img_scale_h, 2 * img_scale_w])
+            mosaic_keypoints = Keypoints._kpt_clip(mosaic_keypoints, [2 * img_scale_h, 2 * img_scale_w])
         else:
             # remove outside bboxes
             inside_inds = mosaic_bboxes.is_inside(
@@ -1219,7 +1220,7 @@ class MosaicKeypoints(Mosaic):
             mosaic_ignore_flags = mosaic_ignore_flags[inside_inds]
 
             # remove outside keypoints
-            inside_inds = self._kpt_is_inside(mosaic_keypoints, [2 * img_scale_h, 2 * img_scale_w])
+            inside_inds = Keypoints._kpt_is_inside(mosaic_keypoints, [2 * img_scale_h, 2 * img_scale_w])
             mosaic_keypoints = mosaic_keypoints[inside_inds]
 
         results['img'] = mosaic_img
@@ -1229,77 +1230,3 @@ class MosaicKeypoints(Mosaic):
         results['gt_ignore_flags'] = mosaic_ignore_flags
         results['gt_keypoints'] = mosaic_keypoints
         return results
-    
-    def _kpt_rescale(self, kpt, scale_factor:Tuple[float, float]):
-        """Rescale the keypoints according to the scale factor.
-
-        Args:
-            kpt (np.ndarray): Keypoints to be rescaled.
-            scale_factor (tuple[float]): Scale factor.
-
-        Returns:
-            np.ndarray: Rescaled keypoints.
-        """
-        assert len(scale_factor) == 2
-        kpt[..., 0::3] = kpt[..., 0::3] * scale_factor[0]
-        kpt[..., 1::3] = kpt[..., 1::3] * scale_factor[1]
-        return kpt
-    
-    def _kpt_translate(self, kpt, distances: Tuple[float, float]):
-        """Translate the keypoints according to the given distances.
-
-        Args:
-            kpt (np.ndarray): Keypoints to be translated, in shape (N, K, 3).
-            distances (tuple[float]): Distances to translate.
-
-        Returns:
-            np.ndarray: Translated keypoints.
-        """
-        assert len(distances) == 2
-        kpt[..., 0::3] = kpt[..., 0::3] + distances[0]
-        kpt[..., 1::3] = kpt[..., 1::3] + distances[1]
-        return kpt
-
-    def _kpt_clip(self, kpt, img_shape: Tuple[int, int]) -> None:
-        """Clip the keypoints.
-
-        Args:
-            kpt (np.ndarray): Keypoints to be clipped.
-            img_shape (tuple[int]): Shape of the image.
-        """
-        assert len(img_shape) == 2
-        # keypoints outside the image are not allowed
-        flags = self._kpt_is_inside(kpt, img_shape, all_inside=False)
-        # set visibility to 0 if the keypoint is outside the image
-        kpt[..., 2::3][~flags] = 0
-        return kpt
-    
-    def _kpt_is_inside(self, kpt, img_shape:Tuple[int, int], all_inside: bool=False, allowed_border: int=0):
-        """Check if the keypoints are inside the image.
-
-        Args:
-            kpt (np.ndarray): Keypoints to be checked.
-            img_shape (tuple[int]): Shape of the image.
-            all_inside (bool): Whether all keypoints should be inside the image.
-            allowed_border (int): The border to allow for the keypoints.
-
-        Returns:
-            np.ndarray: Flags indicating whether each keypoint is inside the
-                image.
-        """
-        assert len(img_shape) == 2
-        if all_inside:
-            flags = np.all(
-                (kpt[..., 0::3] >= allowed_border,
-                 kpt[..., 0::3] < img_shape[1] - allowed_border,
-                 kpt[..., 1::3] >= allowed_border,
-                 kpt[..., 1::3] < img_shape[0] - allowed_border),
-                axis=0)
-        else:
-            flags = np.any(
-                (kpt[..., 0::3] >= allowed_border,
-                 kpt[..., 0::3] < img_shape[1] - allowed_border,
-                 kpt[..., 1::3] >= allowed_border,
-                 kpt[..., 1::3] < img_shape[0] - allowed_border),
-                axis=0)
-        return flags
