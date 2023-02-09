@@ -14,8 +14,8 @@ from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS, TASK_UTILS
+from ...utils.misc import gt_instances_preprocess
 from ..utils import make_divisible
-from .utils import gt_instances_preprocess
 from .yolov5_head import YOLOv5Head
 
 

@@ -13,6 +13,7 @@ from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS
+from ...utils.misc import gt_instances_preprocess
 from ..layers.yolo_bricks import PPYOLOESELayer
 from .yolov6_head import YOLOv6Head
 
@@ -269,7 +270,7 @@ class PPYOLOEHead(YOLOv6Head):
             self.stride_tensor = self.flatten_priors_train[..., [2]]
 
         # gt info
-        gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
+        gt_info = gt_instances_preprocess(batch_gt_instances, num_imgs)
         gt_labels = gt_info[:, :, :1]
         gt_bboxes = gt_info[:, :, 1:]  # xyxy
         pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
