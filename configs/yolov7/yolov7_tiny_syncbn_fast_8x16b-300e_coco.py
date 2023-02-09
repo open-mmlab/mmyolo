@@ -8,7 +8,7 @@ max_translate_ratio = 0.1  # YOLOv5RandomAffine
 scaling_ratio_range = (0.5, 1.6)  # YOLOv5RandomAffine
 mixup_prob = 0.05  # YOLOv5MixUp
 randchoice_mosaic_prob = [0.8, 0.2]
-mixup_alpha = 8.0,  # YOLOv5MixUp
+mixup_alpha = 8.0  # YOLOv5MixUp
 mixup_beta = 8.0  # YOLOv5MixUp
 
 # -----train val related-----
