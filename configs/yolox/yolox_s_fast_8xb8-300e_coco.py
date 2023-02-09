@@ -53,8 +53,8 @@ weight_decay = 0.0005
 num_last_epochs = 15
 affine_scale_left = 0.1
 affine_scale_right = 2
-Mixup_scale_left = 0.8
-Mixup_scale_right = 1.6
+mixup_scale_left = 0.8
+mixup_scale_right = 1.6
 # Save model checkpoint and validation intervals
 save_epoch_intervals = 10
 # The maximum checkpoints to keep.
