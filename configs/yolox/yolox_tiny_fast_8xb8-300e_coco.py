@@ -6,8 +6,8 @@ widen_factor = 0.375
 
 img_scale = _base_.img_scale
 pre_transform = _base_.pre_transform
-scaling_ratio_range=(0.5, 1.5)
-random_flip_prob=0.5
+scaling_ratio_range = (0.5, 1.5)
+random_flip_prob = 0.5
 
 # =======================Unmodified in most cases==================
 # model settings
