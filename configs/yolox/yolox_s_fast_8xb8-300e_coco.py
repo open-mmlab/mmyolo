@@ -159,7 +159,7 @@ train_pipeline_stage1 = [
     dict(
         type='YOLOXMixUp',
         img_scale=img_scale,
-        ratio_range=(Mixup_scale_left, Mixup_scale_right),
+        ratio_range=(mixup_scale_left, mixup_scale_right),
         pad_val=114.0,
         pre_transform=pre_transform),
     dict(type='mmdet.YOLOXHSVRandomAug'),
