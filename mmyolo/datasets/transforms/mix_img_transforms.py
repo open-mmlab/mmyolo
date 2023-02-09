@@ -11,7 +11,8 @@ from mmdet.structures.bbox import autocast_box_type
 from mmengine.dataset import BaseDataset
 from mmengine.dataset.base_dataset import Compose
 from numpy import random
-
+from mmpose.structures.keypoint import flip_keypoints
+import torch
 from mmyolo.registry import TRANSFORMS
 
 
@@ -1124,4 +1125,179 @@ class YOLOXMixUp(BaseMixImageTransform):
 
 @TRANSFORMS.register_module()
 class MosaicKeypoints(Mosaic):
-    pass
+    def mix_img_transform(self, results: dict) -> dict:
+        """Mixed image data transformation.
+
+        Args:
+            results (dict): Result dict.
+
+        Returns:
+            results (dict): Updated result dict.
+        """
+        assert 'mix_results' in results
+        mosaic_bboxes = []
+        mosaic_bboxes_labels = []
+        mosaic_ignore_flags = []
+        mosaic_keypoints = []
+
+        # self.img_scale is wh format
+        img_scale_w, img_scale_h = self.img_scale
+
+        if len(results['img'].shape) == 3:
+            mosaic_img = np.full(
+                (int(img_scale_h * 2), int(img_scale_w * 2), 3),
+                self.pad_val,
+                dtype=results['img'].dtype)
+        else:
+            mosaic_img = np.full((int(img_scale_h * 2), int(img_scale_w * 2)),
+                                 self.pad_val,
+                                 dtype=results['img'].dtype)
+
+        # mosaic center x, y
+        center_x = int(random.uniform(*self.center_ratio_range) * img_scale_w)
+        center_y = int(random.uniform(*self.center_ratio_range) * img_scale_h)
+        center_position = (center_x, center_y)
+
+        loc_strs = ('top_left', 'top_right', 'bottom_left', 'bottom_right')
+        for i, loc in enumerate(loc_strs):
+            if loc == 'top_left':
+                results_patch = results
+            else:
+                results_patch = results['mix_results'][i - 1]
+
+            img_i = results_patch['img']
+            h_i, w_i = img_i.shape[:2]
+            # keep_ratio resize
+            scale_ratio_i = min(img_scale_h / h_i, img_scale_w / w_i)
+            img_i = mmcv.imresize(
+                img_i, (int(w_i * scale_ratio_i), int(h_i * scale_ratio_i)))
+
+            # compute the combine parameters
+            paste_coord, crop_coord = self._mosaic_combine(
+                loc, center_position, img_i.shape[:2][::-1])
+            x1_p, y1_p, x2_p, y2_p = paste_coord
+            x1_c, y1_c, x2_c, y2_c = crop_coord
+
+            # crop and paste image
+            mosaic_img[y1_p:y2_p, x1_p:x2_p] = img_i[y1_c:y2_c, x1_c:x2_c]
+
+            # adjust coordinate
+            # NOTE: bbox coordinate is xyxy format, changes here.
+            gt_bboxes_i = results_patch['gt_bboxes']
+            gt_bboxes_labels_i = results_patch['gt_bboxes_labels']
+            gt_ignore_flags_i = results_patch['gt_ignore_flags']
+
+            padw = x1_p - x1_c
+            padh = y1_p - y1_c
+            gt_bboxes_i.rescale_([scale_ratio_i, scale_ratio_i])
+            gt_bboxes_i.translate_([padw, padh])
+            mosaic_bboxes.append(gt_bboxes_i)
+            mosaic_bboxes_labels.append(gt_bboxes_labels_i)
+            mosaic_ignore_flags.append(gt_ignore_flags_i)
+
+            # TODO: kps adjust coordinate
+            gt_keypoints_i = results_patch['gt_keypoints']
+            gt_keypoints_i = self._kpt_rescale(gt_keypoints_i,[scale_ratio_i, scale_ratio_i])
+            gt_keypoints_i = self._kpt_translate(gt_keypoints_i,[padw, padh])
+            mosaic_keypoints.append(gt_keypoints_i)
+
+        mosaic_bboxes = mosaic_bboxes[0].cat(mosaic_bboxes, 0)
+        mosaic_bboxes_labels = np.concatenate(mosaic_bboxes_labels, 0)
+        mosaic_ignore_flags = np.concatenate(mosaic_ignore_flags, 0)
+
+        mosaic_keypoints = np.concatenate(mosaic_keypoints, 0)
+
+        if self.bbox_clip_border:
+            mosaic_bboxes.clip_([2 * img_scale_h, 2 * img_scale_w])
+            mosaic_keypoints = self._kpt_clip(mosaic_keypoints, [2 * img_scale_h, 2 * img_scale_w])
+        else:
+            # remove outside bboxes
+            inside_inds = mosaic_bboxes.is_inside(
+                [2 * img_scale_h, 2 * img_scale_w]).numpy()
+            mosaic_bboxes = mosaic_bboxes[inside_inds]
+            mosaic_bboxes_labels = mosaic_bboxes_labels[inside_inds]
+            mosaic_ignore_flags = mosaic_ignore_flags[inside_inds]
+
+            # remove outside keypoints
+            inside_inds = self._kpt_is_inside(mosaic_keypoints, [2 * img_scale_h, 2 * img_scale_w])
+            mosaic_keypoints = mosaic_keypoints[inside_inds]
+
+        results['img'] = mosaic_img
+        results['img_shape'] = mosaic_img.shape
+        results['gt_bboxes'] = mosaic_bboxes
+        results['gt_bboxes_labels'] = mosaic_bboxes_labels
+        results['gt_ignore_flags'] = mosaic_ignore_flags
+        results['gt_keypoints'] = mosaic_keypoints
+        return results
+    
+    def _kpt_rescale(self, kpt, scale_factor:Tuple[float, float]):
+        """Rescale the keypoints according to the scale factor.
+
+        Args:
+            kpt (np.ndarray): Keypoints to be rescaled.
+            scale_factor (tuple[float]): Scale factor.
+
+        Returns:
+            np.ndarray: Rescaled keypoints.
+        """
+        assert len(scale_factor) == 2
+        kpt[..., 0::3] = kpt[..., 0::3] * scale_factor[0]
+        kpt[..., 1::3] = kpt[..., 1::3] * scale_factor[1]
+        return kpt
+    
+    def _kpt_translate(self, kpt, distances: Tuple[float, float]):
+        """Translate the keypoints according to the given distances.
+
+        Args:
+            kpt (np.ndarray): Keypoints to be translated, in shape (N, K, 3).
+            distances (tuple[float]): Distances to translate.
+
+        Returns:
+            np.ndarray: Translated keypoints.
+        """
+        assert len(distances) == 2
+        kpt[..., 0::3] = kpt[..., 0::3] + distances[0]
+        kpt[..., 1::3] = kpt[..., 1::3] + distances[1]
+        return kpt
+
+    def _kpt_clip(self, kpt, img_shape: Tuple[int, int]) -> None:
+        """Clip the keypoints.
+
+        Args:
+            kpt (np.ndarray): Keypoints to be clipped.
+            img_shape (tuple[int]): Shape of the image.
+        """
+        assert len(img_shape) == 2
+        kpt[..., 0::3] = np.clip(kpt[..., 0::3], 0, img_shape[1] - 1)
+        kpt[..., 1::3] = np.clip(kpt[..., 1::3], 0, img_shape[0] - 1)
+        return kpt
+    
+    def _kpt_is_inside(self, kpt, img_shape:Tuple[int, int], all_inside: bool=False, allowed_border: int=0):
+        """Check if the keypoints are inside the image.
+
+        Args:
+            kpt (np.ndarray): Keypoints to be checked.
+            img_shape (tuple[int]): Shape of the image.
+            all_inside (bool): Whether all keypoints should be inside the image.
+            allowed_border (int): The border to allow for the keypoints.
+
+        Returns:
+            np.ndarray: Flags indicating whether each keypoint is inside the
+                image.
+        """
+        assert len(img_shape) == 2
+        if all_inside:
+            flags = np.all(
+                (kpt[..., 0::3] >= allowed_border,
+                 kpt[..., 0::3] < img_shape[1] - allowed_border,
+                 kpt[..., 1::3] >= allowed_border,
+                 kpt[..., 1::3] < img_shape[0] - allowed_border),
+                axis=0)
+        else:
+            flags = np.any(
+                (kpt[..., 0::3] >= allowed_border,
+                 kpt[..., 0::3] < img_shape[1] - allowed_border,
+                 kpt[..., 1::3] >= allowed_border,
+                 kpt[..., 1::3] < img_shape[0] - allowed_border),
+                axis=0)
+        return flags
