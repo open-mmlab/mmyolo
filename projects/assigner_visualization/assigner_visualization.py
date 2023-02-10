@@ -10,8 +10,7 @@ import torch
 from mmengine import ProgressBar
 from mmengine.config import Config, DictAction
 from mmengine.dataset import COLLATE_FUNCTIONS
-from mmengine.runner.checkpoint import (_load_checkpoint,
-                                        _load_checkpoint_to_model)
+from mmengine.runner import load_checkpoint
 from numpy import random
 
 from mmyolo.registry import DATASETS, MODELS
@@ -87,8 +86,7 @@ def main():
     # build model
     model = MODELS.build(cfg.model)
     if args.checkpoint is not None:
-        checkpoint = _load_checkpoint(args.checkpoint)
-        checkpoint = _load_checkpoint_to_model(model, checkpoint)
+        _ = load_checkpoint(model, args.checkpoint, map_location='cpu')
 
     assert isinstance(model.bbox_head, (YOLOv5HeadAssigner, RTMHeadAssigner)),\
         'Now, this script only support yolov5 and rtmdet, and ' \
@@ -132,9 +130,11 @@ def main():
     progress_bar = ProgressBar(display_number)
     for ind_img in range(display_number):
         data = dataset.prepare_data(ind_img)
-
         # convert data to batch format
-        # TODO: empty error occacionally, need to debug this
+        if data is None:
+            print('Unable to visualize {} due to strong data augmentation'.
+                  format(dataset[ind_img]['data_samples'].img_path))
+            continue
         batch_data = collate_fn([data])
         with torch.no_grad():
             assign_results = model.assign(batch_data)
