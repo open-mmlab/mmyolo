@@ -1,0 +1,26 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "yolo pose train",
+      "type": "python",
+      "request": "launch",
+      "program": "tools/train.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": ["configs/yolox/yoloxkpt_s_8xb8-300e_coco.py"]
+    },
+    {
+      "name": "vis pipeline",
+      "type": "python",
+      "request": "launch",
+      "program": "tools/analysis_tools/browse_dataset.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": ["configs/yolox/yoloxkpt_s_8xb8-300e_coco.py"]
+    }
+  ]
+}
