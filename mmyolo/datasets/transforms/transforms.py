@@ -716,7 +716,7 @@ class YOLOv5RandomAffine(BaseTransform):
             new_masks.append(cropped_poly_per_obj)
 
         # 无论有没有有效数据，都可以直接获取
-        gt_masks = PolygonMasks(new_masks, gt_masks.height, gt_masks.width)
+        gt_masks = PolygonMasks(new_masks, img_h, img_w)
         return gt_masks
 
     def resample_masks(self, gt_masks: PolygonMasks, resample_num=1000):
