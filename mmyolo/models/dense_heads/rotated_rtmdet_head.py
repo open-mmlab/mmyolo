@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import warnings
 from typing import List, Optional, Sequence, Tuple, Union
 
 import torch
@@ -214,7 +215,11 @@ class RotatedRTMDetHead(RTMDetHead):
         self.use_hbbox_loss = use_hbbox_loss
         self.angle_coder = TASK_UTILS.build(angle_coder)
         self.angle_out_dim = self.angle_coder.encode_size
-        head_module.angle_out_dim = self.angle_out_dim
+        if head_module.get('angle_out_dim') is not None:
+            warnings.warn('angle_out_dim will be overridden by angle_coder '
+                          'and does not need to be set manually')
+
+        head_module['angle_out_dim'] = self.angle_out_dim
         super().__init__(
             head_module=head_module,
             prior_generator=prior_generator,
@@ -287,6 +292,8 @@ class RotatedRTMDetHead(RTMDetHead):
         multi_label &= self.num_classes > 1
         cfg.multi_label = multi_label
 
+        decode_with_angle = cfg.get('decode_with_angle', True)
+
         num_imgs = len(batch_img_metas)
         featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
 
@@ -328,7 +335,7 @@ class RotatedRTMDetHead(RTMDetHead):
         flatten_angle_preds = self.angle_coder.decode(
             flatten_angle_preds, keepdim=True)
 
-        if cfg.decode_with_angle:
+        if decode_with_angle:
             flatten_rbbox_preds = torch.cat(
                 [flatten_bbox_preds, flatten_angle_preds], dim=-1)
             flatten_decoded_bboxes = self.bbox_coder.decode(

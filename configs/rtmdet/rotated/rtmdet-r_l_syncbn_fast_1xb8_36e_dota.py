@@ -20,7 +20,7 @@ persistent_workers = True
 strides = [8, 16, 32]
 base_lr = 0.004 / 16
 
-submission_dir = './work_dirs/rtm_dota/submission'
+submission_dir = './work_dirs/{{fileBasenameNoExtension}}/submission'
 
 # single-scale training is recommended to
 # be turned on, which can speed up training.
