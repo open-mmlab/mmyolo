@@ -124,12 +124,13 @@ train_pipeline_stage1 = [
         scaling_ratio_range=(0.1, 2),
         # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2)),
-    # dict(
-    #     type='YOLOXMixUp',
-    #     img_scale=img_scale,
-    #     ratio_range=(0.8, 1.6),
-    #     pad_val=114.0,
-    #     pre_transform=pre_transform),
+    dict(
+        type='YOLOXMixUpPose',
+        flip_ratio=1.0,
+        img_scale=img_scale,
+        ratio_range=(0.8, 1.6),
+        pad_val=114.0,
+        pre_transform=pre_transform),
     # dict(type='mmdet.YOLOXHSVRandomAug'),
     # dict(type='mmdet.RandomFlip', prob=0.5),
     # dict(
@@ -284,9 +285,34 @@ auto_scale_lr = dict(base_batch_size=64)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
+# 17 keypoints
+keypoint_colors = [
+    (255, 0, 0), (255, 85, 0), (255, 170, 0), (255, 0, 85), (255, 0, 170),
+    (0, 255, 0), (85, 255, 0), (170, 255, 0), (0, 255, 85), (0, 255, 170),
+    (0, 0, 255), (85, 0, 255), (170, 0, 255), (0, 85, 255), (0, 170, 255),
+    (255, 255, 0), (255, 255, 85)
+]
+
+skeleton_links = [
+    (0, 1), (0, 2), (1, 3), (2, 4), (0, 5), (0, 6), (5, 7), (7, 9), (6, 8),
+    (8, 10), (5, 6), (5, 11), (6, 12), (11, 12), (11, 13), (13, 15),
+    (12, 14), (14, 16)
+]
+
+# 18 links
+skeleton_links_colors = [
+    (255, 0, 0), (255, 85, 0), (255, 170, 0), (255, 0, 85), (255, 0, 170),
+    (0, 255, 0), (85, 255, 0), (170, 255, 0), (0, 255, 85), (0, 255, 170),
+    (0, 0, 255), (85, 0, 255), (170, 0, 255), (0, 85, 255), (0, 170, 255),
+    (255, 255, 0), (255, 255, 85), (255, 0, 255)
+]
+
 vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
     # type='mmdet.DetLocalVisualizer',
     type='mmpose.PoseLocalVisualizer',
     vis_backends=vis_backends,
+    kpt_color=keypoint_colors,
+    skeleton=skeleton_links,
+    link_color=skeleton_links_colors,
     name='visualizer')

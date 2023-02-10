@@ -126,3 +126,4 @@ yolov5-6.1/
 *.sh~
 coco/
 tmp/
+*.npy

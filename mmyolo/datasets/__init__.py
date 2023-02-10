@@ -7,5 +7,5 @@ from .yolov5_voc import YOLOv5VOCDataset
 
 __all__ = [
     'YOLOv5CocoDataset', 'YOLOv5VOCDataset', 'BatchShapePolicy',
-    'yolov5_collate', 'YOLOv5CrowdHumanDataset', 'YOLOv5PoseCocoDataset', 'YOLOPoseRandomAffine', 'Keypoints'
+    'yolov5_collate', 'YOLOv5CrowdHumanDataset', 'YOLOv5PoseCocoDataset', 'YOLOPoseRandomAffine', 'Keypoints', 'YOLOXMixUpPose'
 ]

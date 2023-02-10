@@ -4,6 +4,8 @@ from typing import List, Sequence, Tuple, Union
 import numpy as np
 import torch
 from mmengine.dataset import COLLATE_FUNCTIONS
+from mmpose.datasets.datasets.utils import parse_pose_metainfo
+from mmpose.structures.keypoint.transforms import flip_keypoints
 
 from ..registry import TASK_UTILS
 
@@ -139,7 +141,7 @@ class Keypoints:
         return kpt
     @classmethod
     def _kpt_clip(self, kpt, img_shape: Tuple[int, int]) -> None:
-        """Clip the keypoints.
+        """Clip the keypoints, only change the visibility of the keypoints, not the coordinates.
 
         Args:
             kpt (np.ndarray): Keypoints to be clipped.
@@ -209,4 +211,16 @@ class Keypoints:
         kpt[..., 0::3], kpt[..., 1::3] = self._affine_transform_pts(
             kpt[..., 0::3], kpt[..., 1::3], homography_matrix)
         return kpt
-        
+    
+    @classmethod
+    def _kpt_flip(self, kpt, img_shape: Tuple[int, int], direction) -> None:
+        # default meta info for coco
+        METAINFO: dict = dict(from_file='configs/_base_/datasets/coco.py')
+        metainfo = parse_pose_metainfo(METAINFO)
+        keypoints = kpt[..., :2]
+        keypoints_vis = kpt[..., 2]
+        keypoints, keypoints_vis = flip_keypoints(
+            keypoints, keypoints_vis, img_shape, direction=direction, flip_indices=metainfo['flip_indices'])
+        kpt[..., :2] = keypoints
+        kpt[..., 2] = keypoints_vis
+        return kpt

@@ -1023,7 +1023,7 @@ class YOLOXMixUp(BaseMixImageTransform):
         retrieve_img = retrieve_results['img']
 
         jit_factor = random.uniform(*self.ratio_range)
-        is_filp = random.uniform(0, 1) > self.flip_ratio
+        is_filp = random.uniform(0, 1) < self.flip_ratio
 
         if len(retrieve_img.shape) == 3:
             out_img = np.ones((self.img_scale[1], self.img_scale[0], 3),
@@ -1123,6 +1123,140 @@ class YOLOXMixUp(BaseMixImageTransform):
         repr_str += f'bbox_clip_border={self.bbox_clip_border})'
         return repr_str
 
+@TRANSFORMS.register_module()
+class YOLOXMixUpPose(YOLOXMixUp):
+    """YOLOX MixUp data augmentation for pose estimation."""
+    def mix_img_transform(self, results: dict) -> dict:
+        """YOLOX MixUp transform function.
+
+        Args:
+            results (dict): Result dict.
+
+        Returns:
+            results (dict): Updated result dict.
+        """
+        assert 'mix_results' in results
+        assert len(
+            results['mix_results']) == 1, 'MixUp only support 2 images now !'
+
+        if results['mix_results'][0]['gt_bboxes'].shape[0] == 0:
+            # empty bbox
+            return results
+        # change the order of mix_results
+        # results['mix_results'] = results['mix_results'][::-1]
+        retrieve_results = results['mix_results'][0]
+        retrieve_img = retrieve_results['img']
+
+        jit_factor = random.uniform(*self.ratio_range)
+        is_filp = random.uniform(0, 1) > self.flip_ratio
+
+        if len(retrieve_img.shape) == 3:
+            out_img = np.ones((self.img_scale[1], self.img_scale[0], 3),
+                              dtype=retrieve_img.dtype) * self.pad_val
+        else:
+            out_img = np.ones(
+                self.img_scale[::-1], dtype=retrieve_img.dtype) * self.pad_val
+
+        # 1. keep_ratio resize
+        scale_ratio = min(self.img_scale[1] / retrieve_img.shape[0],
+                          self.img_scale[0] / retrieve_img.shape[1])
+        retrieve_img = mmcv.imresize(
+            retrieve_img, (int(retrieve_img.shape[1] * scale_ratio),
+                           int(retrieve_img.shape[0] * scale_ratio)))
+
+        # 2. paste
+        out_img[:retrieve_img.shape[0], :retrieve_img.shape[1]] = retrieve_img
+
+        # 3. scale jit
+        scale_ratio *= jit_factor
+        out_img = mmcv.imresize(out_img, (int(out_img.shape[1] * jit_factor),
+                                          int(out_img.shape[0] * jit_factor)))
+
+        # 4. flip
+        if is_filp:
+            out_img = out_img[:, ::-1, :]
+
+        # 5. random crop
+        ori_img = results['img']
+        origin_h, origin_w = out_img.shape[:2]
+        target_h, target_w = ori_img.shape[:2]
+        padded_img = np.ones((max(origin_h, target_h), max(
+            origin_w, target_w), 3)) * self.pad_val
+        padded_img = padded_img.astype(np.uint8)
+        padded_img[:origin_h, :origin_w] = out_img
+
+        x_offset, y_offset = 0, 0
+        if padded_img.shape[0] > target_h:
+            y_offset = random.randint(0, padded_img.shape[0] - target_h)
+        if padded_img.shape[1] > target_w:
+            x_offset = random.randint(0, padded_img.shape[1] - target_w)
+        padded_cropped_img = padded_img[y_offset:y_offset + target_h,
+                                        x_offset:x_offset + target_w]
+
+        # 6. adjust bbox
+        retrieve_gt_bboxes = retrieve_results['gt_bboxes']
+        retrieve_gt_bboxes.rescale_([scale_ratio, scale_ratio])
+        if self.bbox_clip_border:
+            retrieve_gt_bboxes.clip_([origin_h, origin_w])
+
+        if is_filp:
+            retrieve_gt_bboxes.flip_([origin_h, origin_w],
+                                     direction='horizontal')
+        # adjust keypoints
+        retrieve_gt_keypoints = retrieve_results['gt_keypoints']
+        retrieve_gt_keypoints = Keypoints._kpt_rescale(retrieve_gt_keypoints, [scale_ratio, scale_ratio])
+        if self.bbox_clip_border:
+            retrieve_gt_keypoints = Keypoints._kpt_clip(retrieve_gt_keypoints, [origin_h, origin_w])
+        if is_filp:
+            retrieve_gt_keypoints = Keypoints._kpt_flip(retrieve_gt_keypoints, [origin_h, origin_w], direction='horizontal')
+
+        # 7. filter
+        cp_retrieve_gt_bboxes = retrieve_gt_bboxes.clone()
+        cp_retrieve_gt_bboxes.translate_([-x_offset, -y_offset])
+        if self.bbox_clip_border:
+            cp_retrieve_gt_bboxes.clip_([target_h, target_w])
+
+        cp_retrieve_gt_keypoints = np.copy(retrieve_gt_keypoints)
+        cp_retrieve_gt_keypoints = Keypoints._kpt_translate(cp_retrieve_gt_keypoints, [-x_offset, -y_offset])
+        if self.bbox_clip_border:
+            cp_retrieve_gt_keypoints = Keypoints._kpt_clip(cp_retrieve_gt_keypoints, [target_h, target_w])
+
+        # 8. mix up
+        mixup_img = 0.5 * ori_img + 0.5 * padded_cropped_img
+
+        retrieve_gt_bboxes_labels = retrieve_results['gt_bboxes_labels']
+        retrieve_gt_ignore_flags = retrieve_results['gt_ignore_flags']
+
+        mixup_gt_bboxes = cp_retrieve_gt_bboxes.cat(
+            (results['gt_bboxes'], cp_retrieve_gt_bboxes), dim=0)
+        mixup_gt_bboxes_labels = np.concatenate(
+            (results['gt_bboxes_labels'], retrieve_gt_bboxes_labels), axis=0)
+        mixup_gt_ignore_flags = np.concatenate(
+            (results['gt_ignore_flags'], retrieve_gt_ignore_flags), axis=0)
+        
+        mixup_gt_keypoints = np.concatenate(
+            (results['gt_keypoints'], cp_retrieve_gt_keypoints), axis=0)
+
+        if not self.bbox_clip_border:
+            # remove outside bbox
+            inside_inds = mixup_gt_bboxes.is_inside([target_h,
+                                                     target_w]).numpy()
+            mixup_gt_bboxes = mixup_gt_bboxes[inside_inds]
+            mixup_gt_bboxes_labels = mixup_gt_bboxes_labels[inside_inds]
+            mixup_gt_ignore_flags = mixup_gt_ignore_flags[inside_inds]
+
+            # remove outside keypoints
+            mixup_gt_keypoints = mixup_gt_keypoints[inside_inds]
+            mixup_gt_keypoints = Keypoints._kpt_clip(mixup_gt_keypoints, [target_h, target_w])
+
+        results['img'] = mixup_img.astype(np.uint8)
+        results['img_shape'] = mixup_img.shape
+        results['gt_bboxes'] = mixup_gt_bboxes
+        results['gt_bboxes_labels'] = mixup_gt_bboxes_labels
+        results['gt_ignore_flags'] = mixup_gt_ignore_flags
+        results['gt_keypoints'] = mixup_gt_keypoints
+
+        return results
 
 @TRANSFORMS.register_module()
 class MosaicKeypoints(Mosaic):
