@@ -250,30 +250,27 @@ class LetterResize(MMDET_Resize):
         if results.get('gt_masks', None) is None:
             return
 
+        gt_masks = results['gt_masks']
+        assert isinstance(
+            gt_masks, PolygonMasks
+        ), f'Only supports PolygonMasks, but got {type(gt_masks)}'
+
         # resize the gt_masks
         gt_mask_h = results['gt_masks'].height * results['scale_factor'][1]
         gt_mask_w = results['gt_masks'].width * results['scale_factor'][0]
         gt_masks = results['gt_masks'].resize(
             (int(round(gt_mask_h)), int(round(gt_mask_w))))
 
-        # padding the gt_masks
-        if len(gt_masks) == 0:
-            padded_masks = np.empty((0, *results['img_shape'][:2]),
-                                    dtype=np.uint8)
-        else:
-            # TODO: The function is incorrect. Because the mask may not
-            #  be able to pad.
-            padded_masks = np.stack([
-                mmcv.impad(
-                    mask,
-                    padding=(int(results['pad_param'][2]),
-                             int(results['pad_param'][0]),
-                             int(results['pad_param'][3]),
-                             int(results['pad_param'][1])),
-                    pad_val=self.pad_val.get('masks', 0)) for mask in gt_masks
-            ])
-        results['gt_masks'] = type(results['gt_masks'])(
-            padded_masks, *results['img_shape'][:2])
+        top_padding, _, left_padding, _ = results['pad_param']
+        gt_masks = gt_masks.translate(
+            out_shape=results['img_shape'][:2],
+            offset=left_padding,
+            direction='horizontal')
+        gt_masks = gt_masks.translate(
+            out_shape=results['img_shape'][:2],
+            offset=top_padding,
+            direction='vertical')
+        results['gt_masks'] = gt_masks
 
     def _resize_bboxes(self, results: dict):
         """Resize bounding boxes with ``results['scale_factor']``."""
@@ -376,7 +373,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                  **kwargs) -> None:
         self.mask2bbox = mask2bbox
         assert not poly2mask, 'Does not support BitmapMasks considering ' \
-            'that bitmap consumes more memory.'
+                              'that bitmap consumes more memory.'
         super().__init__(poly2mask=poly2mask, **kwargs)
         if self.mask2bbox:
             assert self.with_mask, 'Using mask2bbox requires ' \

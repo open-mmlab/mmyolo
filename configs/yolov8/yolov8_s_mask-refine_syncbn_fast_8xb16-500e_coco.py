@@ -1,12 +1,39 @@
 _base_ = './yolov8_s_syncbn_fast_8xb16-500e_coco.py'
 
+# ========================modified parameters======================
+use_mask2refine = True
+min_area_ratio = 0.01  # YOLOv5RandomAffine
+
+# ===============================Unmodified in most cases====================
 pre_transform = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(
-        type='LoadAnnotations', with_bbox=True, with_mask=True, mask2bbox=True)
+        type='LoadAnnotations',
+        with_bbox=True,
+        with_mask=True,
+        mask2bbox=use_mask2refine)
 ]
 
-last_transform = _base_.last_transform
+last_transform = [
+    dict(type='RemoveDataElement', keys=['gt_masks']),  # note
+    dict(
+        type='mmdet.Albu',
+        transforms=_base_.albu_train_transform,
+        bbox_params=dict(
+            type='BboxParams',
+            format='pascal_voc',
+            label_fields=['gt_bboxes_labels', 'gt_ignore_flags']),
+        keymap={
+            'img': 'image',
+            'gt_bboxes': 'bboxes'
+        }),
+    dict(type='YOLOv5HSVRandomAug'),
+    dict(type='mmdet.RandomFlip', prob=0.5),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
+                   'flip_direction'))
+]
 
 train_pipeline = [
     *pre_transform,
@@ -19,13 +46,13 @@ train_pipeline = [
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
-        scaling_ratio_range=(0.5, 1.5),
-        max_aspect_ratio=100.,
+        scaling_ratio_range=_base_.scaling_ratio_range,
+        max_aspect_ratio=_base_.max_aspect_ratio,
         # img_scale is (width, height)
         border=(-_base_.img_scale[0] // 2, -_base_.img_scale[1] // 2),
         border_val=(114, 114, 114),
-        min_area_ratio=0.01,
-        use_mask_refine=True),
+        min_area_ratio=min_area_ratio,
+        use_mask_refine=use_mask2refine),
     *last_transform
 ]
 
@@ -41,23 +68,10 @@ train_pipeline_stage2 = [
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
-        scaling_ratio_range=(0.5, 1.5),
-        max_aspect_ratio=100.,
+        scaling_ratio_range=_base_.scaling_ratio_range,
+        max_aspect_ratio=_base_.max_aspect_ratio,
         border_val=(114, 114, 114)), *last_transform
 ]
 
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
-
-custom_hooks = [
-    dict(
-        type='EMAHook',
-        ema_type='ExpMomentumEMA',
-        momentum=0.0001,
-        update_buffers=True,
-        strict_load=False,
-        priority=49),
-    dict(
-        type='mmdet.PipelineSwitchHook',
-        switch_epoch=_base_.max_epochs - 10,
-        switch_pipeline=train_pipeline_stage2)
-]
+_base_.custom_hooks[1].switch_pipeline = train_pipeline_stage2
