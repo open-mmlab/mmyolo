@@ -41,9 +41,9 @@ model = dict(
                 bias=False,
                 act_cfg=None)),
         distill_losses=dict(
-            loss_pkd_fpn0=dict(type='PKDV2', loss_weight=1),
-            loss_pkd_fpn1=dict(type='PKDV2', loss_weight=1),
-            loss_pkd_fpn2=dict(type='PKDV2', loss_weight=1)),
+            loss_pkd_fpn0=dict(type='ChannelWiseDivergence', loss_weight=1),
+            loss_pkd_fpn1=dict(type='ChannelWiseDivergence', loss_weight=1),
+            loss_pkd_fpn2=dict(type='ChannelWiseDivergence', loss_weight=1)),
         loss_forward_mappings=dict(
             loss_pkd_fpn0=dict(
                 preds_S=dict(
