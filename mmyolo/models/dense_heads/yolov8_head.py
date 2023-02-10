@@ -14,7 +14,7 @@ from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS, TASK_UTILS
-from ..utils import make_divisible
+from ..utils import gt_instances_preprocess, make_divisible
 from .yolov5_head import YOLOv5Head
 
 
@@ -304,7 +304,7 @@ class YOLOv8Head(YOLOv5Head):
             self.stride_tensor = self.flatten_priors_train[..., [2]]
 
         # gt info
-        gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
+        gt_info = gt_instances_preprocess(batch_gt_instances, num_imgs)
         gt_labels = gt_info[:, :, :1]
         gt_bboxes = gt_info[:, :, 1:]  # xyxy
         pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
@@ -389,59 +389,3 @@ class YOLOv8Head(YOLOv5Head):
             loss_cls=loss_cls * num_imgs * world_size,
             loss_bbox=loss_bbox * num_imgs * world_size,
             loss_dfl=loss_dfl * num_imgs * world_size)
-
-    @staticmethod
-    def gt_instances_preprocess(batch_gt_instances: Union[Tensor, Sequence],
-                                batch_size: int) -> Tensor:
-        """Split batch_gt_instances with batch size, from [all_gt_bboxes, 6]
-        to.
-
-        [batch_size, number_gt, 5]. If some shape of single batch smaller than
-        gt bbox len, then using [-1., 0., 0., 0., 0.] to fill.
-
-        Args:
-            batch_gt_instances (Sequence[Tensor]): Ground truth
-                instances for whole batch, shape [all_gt_bboxes, 6]
-            batch_size (int): Batch size.
-
-        Returns:
-            Tensor: batch gt instances data, shape [batch_size, number_gt, 5]
-        """
-        if isinstance(batch_gt_instances, Sequence):
-            max_gt_bbox_len = max(
-                [len(gt_instances) for gt_instances in batch_gt_instances])
-            # fill [-1., 0., 0., 0., 0.] if some shape of
-            # single batch not equal max_gt_bbox_len
-            batch_instance_list = []
-            for index, gt_instance in enumerate(batch_gt_instances):
-                bboxes = gt_instance.bboxes
-                labels = gt_instance.labels
-                batch_instance_list.append(
-                    torch.cat((labels[:, None], bboxes), dim=-1))
-
-                if bboxes.shape[0] >= max_gt_bbox_len:
-                    continue
-
-                fill_tensor = bboxes.new_full(
-                    [max_gt_bbox_len - bboxes.shape[0], 5], 0)
-                fill_tensor[:, 0] = -1.
-                batch_instance_list[index] = torch.cat(
-                    (batch_instance_list[-1], fill_tensor), dim=0)
-
-            return torch.stack(batch_instance_list)
-        else:
-            # faster version
-            # sqlit batch gt instance [all_gt_bboxes, 6] ->
-            # [batch_size, number_gt_each_batch, 5]
-            assert isinstance(batch_gt_instances, Tensor)
-            if batch_gt_instances.shape[0] == 0:
-                return batch_gt_instances.new_zeros((batch_size, 0, 5))
-            i = batch_gt_instances[:, 0]  # image index
-            _, counts = i.unique(return_counts=True)
-            out = batch_gt_instances.new_zeros((batch_size, counts.max(), 5))
-            for j in range(batch_size):
-                matches = i == j
-                n = matches.sum()
-                if n:
-                    out[j, :n] = batch_gt_instances[matches, 1:]
-            return out
