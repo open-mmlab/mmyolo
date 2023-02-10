@@ -24,9 +24,14 @@ YOLOX-l model structure
 | YOLOX-tiny | 416  |   2.8    |  32.7  | [config](https://github.com/open-mmlab/mmyolo/tree/main/configs/yolox/yolox_tiny_fast_8xb8-300e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolox/yolox_tiny_8xb8-300e_coco/yolox_tiny_8xb8-300e_coco_20220919_090908-0e40a6fc.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolox/yolox_tiny_8xb8-300e_coco/yolox_tiny_8xb8-300e_coco_20220919_090908.log.json) |
 |  YOLOX-s   | 640  |   5.6    |  40.8  |  [config](https://github.com/open-mmlab/mmyolo/tree/main/configs/yolox/yolox_s_fast_8xb8-300e_coco.py)   |       [model](https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_8xb8-300e_coco/yolox_s_8xb8-300e_coco_20220917_030738-d7e60cb2.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_8xb8-300e_coco/yolox_s_8xb8-300e_coco_20220917_030738.log.json)       |
 
-🥳 🚀 Update
+**Note**:
 
-YOLOX uses a default training configuration of `8xbs8` which results in a long training time, we expect it to use `8xbs32` to speed up the training and not cause a decrease in mAP. I modified `train_batch_size_per_gpu` from 8 to 32, `batch_augments_interval` from 10 to 1 and `base_lr` from 0.01 to 0.04 under YOLOX-s default configuration based on the linear scaling rule, which resulted in mAP degradation. Finally, I found that using RTMDet's training superparameter can improve the performance, which also validates the superiority of RTMDet's training superparameter.
+1. The test score threshold is 0.001.
+2. Due to the need for pre-training weights, we cannot reproduce the performance of the `yolox-nano` model. Please refer to https://github.com/Megvii-BaseDetection/YOLOX/issues/674 for more information.
+
+## 🥳 🚀 Update
+
+YOLOX uses a default training configuration of `8xbs8` which results in a long training time, we expect it to use `8xbs32` to speed up the training and not cause a decrease in mAP. I modified `train_batch_size_per_gpu` from 8 to 32, `batch_augments_interval` from 10 to 1 and `base_lr` from 0.01 to 0.04 under YOLOX-s default configuration based on the linear scaling rule, which resulted in mAP degradation. Finally, I found that using RTMDet's training hyperparameter can improve performance, which also validates the superiority of RTMDet's training hyperparameter.
 
 |  Backbone  | size | AMP | Mem (GB) | box AP |                                                        Config                                                        |         Download         |
 | :--------: | :--: | :-: | :------: | :----: | :------------------------------------------------------------------------------------------------------------------: | :----------------------: |
@@ -43,11 +48,6 @@ The modified training parameters are as follows：
 3. num_last_epochs: 15 -> 20
 4. optim cfg: SGD -> AdamW, base_lr 0.01 -> 0.004, weight_decay 0.0005 -> 0.05
 5. ema momentum: 0.0001 -> 0.0002
-
-**Note**:
-
-1. The test score threshold is 0.001.
-2. Due to the need for pre-training weights, we cannot reproduce the performance of the `yolox-nano` model. Please refer to https://github.com/Megvii-BaseDetection/YOLOX/issues/674 for more information.
 
 ## Citation
 
