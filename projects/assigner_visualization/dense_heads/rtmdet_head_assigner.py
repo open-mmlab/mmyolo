@@ -74,13 +74,18 @@ class RTMHeadAssigner(RTMDetHead):
                                         gt_bboxes, pad_bbox_flag)
 
         labels = assigned_result['assigned_labels'].reshape(-1)
-        matched_gt_inds = assigned_result['matched_gt_inds']
-        bbox_preds = flatten_bboxes.reshape(-1, 4)
+        bbox_targets = assigned_result['assigned_bboxes'].reshape(-1, 4)
 
         # FG cat_id: [0, num_classes -1], BG cat_id: num_classes
         bg_class_ind = self.num_classes
         pos_inds = ((labels >= 0)
                     & (labels < bg_class_ind)).nonzero().squeeze(1)
+        targets = bbox_targets[pos_inds]
+        gt_bboxes = gt_bboxes.squeeze()
+        matched_gt_inds = torch.tensor(
+            [((t == gt_bboxes).sum(dim=1) == t.shape[0]).nonzero()[0]
+             for t in targets],
+            device=device)
 
         level_inds = torch.zeros_like(labels)
         img_inds = torch.zeros_like(labels)
