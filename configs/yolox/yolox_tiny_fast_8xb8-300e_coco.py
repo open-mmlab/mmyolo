@@ -1,23 +1,26 @@
 _base_ = './yolox_s_fast_8xb8-300e_coco.py'
 
+# ========================modified parameters======================
 deepen_factor = 0.33
 widen_factor = 0.375
 
+img_scale = _base_.img_scale
+pre_transform = _base_.pre_transform
+scaling_ratio_range = (0.5, 1.5)
+
+# =======================Unmodified in most cases==================
 # model settings
 model = dict(
     data_preprocessor=dict(batch_augments=[
         dict(
-            type='mmdet.BatchSyncRandomResize',
-            random_size_range=(320, 640),  # note
+            type='YOLOXBatchSyncRandomResize',
+            random_size_range=(320, 640),
             size_divisor=32,
             interval=10)
     ]),
     backbone=dict(deepen_factor=deepen_factor, widen_factor=widen_factor),
     neck=dict(deepen_factor=deepen_factor, widen_factor=widen_factor),
     bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
-
-img_scale = _base_.img_scale
-pre_transform = _base_.pre_transform
 
 train_pipeline_stage1 = [
     *pre_transform,
@@ -28,7 +31,7 @@ train_pipeline_stage1 = [
         pre_transform=pre_transform),
     dict(
         type='mmdet.RandomAffine',
-        scaling_ratio_range=(0.5, 1.5),  # note
+        scaling_ratio_range=scaling_ratio_range,  # note
         # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2)),
     dict(type='mmdet.YOLOXHSVRandomAug'),
