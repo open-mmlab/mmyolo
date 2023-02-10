@@ -115,6 +115,12 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
             results['img_shape'] = image.shape[:2]
             results['scale_factor'] = scale_factor
 
+@TRANSFORMS.register_module()
+class YOLOPoseResize(MMDET_Resize):
+    def transform(self, results: dict) -> dict:
+        results = super().transform(results)
+        self._resize_keypoints(results)
+        return results
 
 @TRANSFORMS.register_module()
 class LetterResize(MMDET_Resize):

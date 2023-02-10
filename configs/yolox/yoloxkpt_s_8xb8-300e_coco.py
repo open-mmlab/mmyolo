@@ -16,7 +16,7 @@ val_batch_size_per_gpu = 1
 # NOTE: for debugging set to 0
 val_num_workers = 0
 
-max_epochs = 100
+max_epochs = 55 # NOTE: for debug
 num_last_epochs = 15
 
 # model settings
@@ -146,7 +146,7 @@ train_pipeline_stage1 = [
 
 train_pipeline_stage2 = [
     *pre_transform,
-    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
+    dict(type='YOLOPoseResize', scale=img_scale, keep_ratio=True),
     dict(
         type='mmdet.Pad',
         pad_to_square=True,
