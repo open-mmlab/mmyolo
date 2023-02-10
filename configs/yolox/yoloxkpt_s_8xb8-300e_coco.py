@@ -131,8 +131,8 @@ train_pipeline_stage1 = [
         ratio_range=(0.8, 1.6),
         pad_val=114.0,
         pre_transform=pre_transform),
-    # dict(type='mmdet.YOLOXHSVRandomAug'),
-    # dict(type='mmdet.RandomFlip', prob=0.5),
+    dict(type='mmdet.YOLOXHSVRandomAug'),
+    dict(type='YOLOPoseRandomFlip', prob=0.5),
     # dict(
     #     type='mmdet.FilterAnnotations',
     #     min_gt_bbox_wh=(1, 1),

@@ -9,6 +9,7 @@ import torch
 from mmcv.transforms import BaseTransform
 from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
+from mmdet.datasets.transforms import RandomFlip
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
@@ -1141,3 +1142,36 @@ class YOLOPoseRandomAffine(RandomAffine):
             results['gt_keypoints'] = keypoints
             assert len(results['gt_bboxes']) == len(results['gt_keypoints'])
         return results
+    
+@TRANSFORMS.register_module()
+class YOLOPoseRandomFlip(RandomFlip):
+    @autocast_box_type()
+    def _flip(self, results: dict) -> None:
+        """Flip images, bounding boxes, and semantic segmentation map."""
+        # flip image
+        results['img'] = mmcv.imflip(
+            results['img'], direction=results['flip_direction'])
+
+        img_shape = results['img'].shape[:2]
+
+        # flip bboxes
+        if results.get('gt_bboxes', None) is not None:
+            results['gt_bboxes'].flip_(img_shape, results['flip_direction'])
+
+        # flip masks
+        if results.get('gt_masks', None) is not None:
+            results['gt_masks'] = results['gt_masks'].flip(
+                results['flip_direction'])
+
+        # flip segs
+        if results.get('gt_seg_map', None) is not None:
+            results['gt_seg_map'] = mmcv.imflip(
+                results['gt_seg_map'], direction=results['flip_direction'])
+
+        # flip keypoints
+        if results.get('gt_keypoints', None) is not None:
+            results['gt_keypoints'] = Keypoints._kpt_flip(
+                results['gt_keypoints'], img_shape, results['flip_direction'])
+
+        # record homography matrix for flip
+        self._record_homography_matrix(results)

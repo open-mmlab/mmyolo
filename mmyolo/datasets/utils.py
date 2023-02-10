@@ -109,6 +109,9 @@ class BatchShapePolicy:
 
 
 class Keypoints:
+    METAINFO: dict = dict(from_file='configs/_base_/datasets/coco.py')
+    metainfo = parse_pose_metainfo(METAINFO)
+
     @classmethod
     def _kpt_rescale(self, kpt, scale_factor:Tuple[float, float]):
         """Rescale the keypoints according to the scale factor.
@@ -215,12 +218,11 @@ class Keypoints:
     @classmethod
     def _kpt_flip(self, kpt, img_shape: Tuple[int, int], direction) -> None:
         # default meta info for coco
-        METAINFO: dict = dict(from_file='configs/_base_/datasets/coco.py')
-        metainfo = parse_pose_metainfo(METAINFO)
         keypoints = kpt[..., :2]
         keypoints_vis = kpt[..., 2]
+        flip_indices = self.metainfo['flip_indices']
         keypoints, keypoints_vis = flip_keypoints(
-            keypoints, keypoints_vis, img_shape, direction=direction, flip_indices=metainfo['flip_indices'])
+            keypoints, keypoints_vis, img_shape, flip_indices, direction)
         kpt[..., :2] = keypoints
         kpt[..., 2] = keypoints_vis
         return kpt

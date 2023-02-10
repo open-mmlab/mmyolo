@@ -1233,7 +1233,7 @@ class YOLOXMixUpPose(YOLOXMixUp):
             (results['gt_bboxes_labels'], retrieve_gt_bboxes_labels), axis=0)
         mixup_gt_ignore_flags = np.concatenate(
             (results['gt_ignore_flags'], retrieve_gt_ignore_flags), axis=0)
-        
+        # mixup_gt_keypoints
         mixup_gt_keypoints = np.concatenate(
             (results['gt_keypoints'], cp_retrieve_gt_keypoints), axis=0)
 
