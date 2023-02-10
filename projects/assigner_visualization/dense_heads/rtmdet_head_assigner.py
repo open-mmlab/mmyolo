@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List
+from typing import List, Union
 
 import torch
 from mmdet.structures.bbox import distance2bbox
@@ -13,10 +13,14 @@ from mmyolo.registry import MODELS
 @MODELS.register_module()
 class RTMHeadAssigner(RTMDetHead):
 
-    def assign_by_gt_and_feat(self, cls_scores: List[Tensor],
-                              bbox_preds: List[Tensor],
-                              batch_gt_instances: InstanceList,
-                              batch_img_metas: List[dict]) -> dict:
+    def assign_by_gt_and_feat(
+        self,
+        cls_scores: List[Tensor],
+        bbox_preds: List[Tensor],
+        batch_gt_instances: InstanceList,
+        batch_img_metas: List[dict],
+        inputs_hw: Union[Tensor, tuple] = (640, 640)
+    ) -> dict:
         """Calculate the assigning results based on the gt and features
         extracted by the detection head.
 
@@ -137,8 +141,8 @@ class RTMHeadAssigner(RTMDetHead):
             assign_results.append([assign_results_prior])
         return assign_results
 
-    def assign(self, x: List[Tensor], batch_gt_instances: InstanceList,
-               batch_img_metas: List[dict]) -> dict:
+    def assign(self, batch_data_samples: Union[list, dict],
+               inputs_hw: Union[tuple, torch.Size]) -> dict:
         """Calculate assigning results. This function is provided to the
         `assigner_visualization.py` script.
 
@@ -151,13 +155,14 @@ class RTMHeadAssigner(RTMDetHead):
         Returns:
             dict: A dictionary of assigning components.
         """
-        if isinstance(x, list):
-            # TODO: fix here
-            raise NotImplementedError
+        if isinstance(batch_data_samples, list):
+            raise NotImplementedError(
+                'assigning results_list  is not implemented')
         else:
             # Fast version
-            cls_scores, bbox_preds = self(x)
-            assign_inputs = (cls_scores, bbox_preds, batch_gt_instances,
-                             batch_img_metas)
+            cls_scores, bbox_preds = self(batch_data_samples['feats'])
+            assign_inputs = (cls_scores, bbox_preds,
+                             batch_data_samples['bboxes_labels'],
+                             batch_data_samples['img_metas'], inputs_hw)
         assign_results = self.assign_by_gt_and_feat(*assign_inputs)
         return assign_results

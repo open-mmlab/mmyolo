@@ -6,4 +6,4 @@ custom_imports = dict(imports=[
 ])
 
 model = dict(
-    type='RTMDetectorAssigner', bbox_head=dict(type='RTMHeadAssigner'))
+    type='YOLODetectorAssigner', bbox_head=dict(type='RTMHeadAssigner'))
