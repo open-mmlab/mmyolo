@@ -218,12 +218,13 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                 with corresponding stride. Defaults to 0.5.
         """
 
-        palette = self.dataset_meta['PALETTE']
+        palette = self.dataset_meta['palette']
         center_x = ((grid_x_inds + offset) * stride)
         center_y = ((grid_y_inds + offset) * stride)
         xyxy = torch.stack((center_x, center_y, center_x, center_y), dim=1)
         assert self.priors_size is not None
-        xyxy += self.priors_size[feat_ind][prior_ind]
+        device = xyxy.device
+        xyxy += self.priors_size[feat_ind][prior_ind].to(device)
 
         colors = [palette[i] for i in class_inds]
         self.draw_bboxes(
