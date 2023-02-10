@@ -238,7 +238,7 @@ def main():
             src_image_shape=(height, width),
             nms_cfg={
                 'type': args.merge_nms_type,
-                'iou_thr': args.merge_iou_thr
+                'iou_threshold': args.merge_iou_thr
             })
 
         visualizer.add_datasample(
