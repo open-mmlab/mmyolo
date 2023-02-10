@@ -9,14 +9,7 @@ model = dict(
     backbone=dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        # Since the checkpoint includes CUDA:0 data,
-        # it must be forced to set map_location.
-        # Once checkpoint is fixed, it can be removed.
-        init_cfg=dict(
-            type='Pretrained',
-            prefix='backbone.',
-            checkpoint=checkpoint,
-            map_location='cpu')),
+        init_cfg=dict(checkpoint=checkpoint)),
     neck=dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,

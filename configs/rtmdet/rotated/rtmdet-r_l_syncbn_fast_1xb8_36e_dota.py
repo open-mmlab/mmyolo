@@ -1,6 +1,8 @@
 _base_ = '../../_base_/default_runtime.py'
 
-data_root = 'data/split_ss_dota/'
+checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-l_8xb256-rsb-a1-600e_in1k-6a760974.pth'  # noqa
+
+data_root = '/datasets/dota_mmrotate_ss/'
 dataset_type = 'YOLOv5DOTADataset'
 
 img_scale = (1024, 1024)  # width, height
@@ -49,7 +51,15 @@ model = dict(
         widen_factor=widen_factor,
         channel_attention=True,
         norm_cfg=dict(type='BN'),
-        act_cfg=dict(type='SiLU', inplace=True)),
+        act_cfg=dict(type='SiLU', inplace=True),
+        # Since the checkpoint includes CUDA:0 data,
+        # it must be forced to set map_location.
+        # Once checkpoint is fixed, it can be removed.
+        init_cfg=dict(
+            type='Pretrained',
+            prefix='backbone.',
+            checkpoint=checkpoint,
+            map_location='cpu')),
     neck=dict(
         type='CSPNeXtPAFPN',
         deepen_factor=deepen_factor,
@@ -198,30 +208,30 @@ val_dataloader = dict(
 val_evaluator = dict(type='mmrotate.DOTAMetric', metric='mAP')
 
 # Inference on val dataset
-test_dataloader = val_dataloader
-test_evaluator = val_evaluator
+# test_dataloader = val_dataloader
+# test_evaluator = val_evaluator
 
 # Inference on test dataset and format the output results
 # for submission. Note: the test set has no annotation.
-# test_dataloader = dict(
-#     batch_size=val_batch_size_per_gpu,
-#     num_workers=val_num_workers,
-#     persistent_workers=True,
-#     drop_last=False,
-#     sampler=dict(type='DefaultSampler', shuffle=False),
-#     dataset=dict(
-#         type=dataset_type,
-#         data_root=data_root,
-#         data_prefix=dict(img_path='test/images/'),
-#         img_shape=(1024, 1024),
-#         test_mode=True,
-#         batch_shapes_cfg=batch_shapes_cfg,
-#         pipeline=test_pipeline))
-# test_evaluator = dict(
-#     type='mmrotate.DOTAMetric',
-#     format_only=True,
-#     merge_patches=True,
-#     outfile_prefix=submission_dir)
+test_dataloader = dict(
+    batch_size=val_batch_size_per_gpu,
+    num_workers=val_num_workers,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_root,
+        data_prefix=dict(img_path='test/images/'),
+        img_shape=(1024, 1024),
+        test_mode=True,
+        batch_shapes_cfg=batch_shapes_cfg,
+        pipeline=test_pipeline))
+test_evaluator = dict(
+    type='mmrotate.DOTAMetric',
+    format_only=True,
+    merge_patches=True,
+    outfile_prefix=submission_dir)
 
 # optimizer
 optim_wrapper = dict(
