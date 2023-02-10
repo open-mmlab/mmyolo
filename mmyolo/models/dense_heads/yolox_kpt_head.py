@@ -281,6 +281,8 @@ class YOLOXKptHead(YOLOv5Head):
                      loss_weight=1.0),
                  loss_bbox_aux: ConfigType = dict(
                      type='mmdet.L1Loss', reduction='sum', loss_weight=1.0),
+                 loss_kpt: ConfigType = dict(
+                     type='mmdet.L1Loss', reduction='sum', loss_weight=1.0),
                  train_cfg: OptConfigType = None,
                  test_cfg: OptConfigType = None,
                  init_cfg: OptMultiConfig = None):
@@ -297,6 +299,7 @@ class YOLOXKptHead(YOLOv5Head):
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             init_cfg=init_cfg)
+        self.loss_kpt = MODELS.build(loss_kpt)
 
     def special_init(self):
         """Since YOLO series algorithms will inherit from YOLOv5Head, but

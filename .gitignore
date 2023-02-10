@@ -127,3 +127,4 @@ yolov5-6.1/
 coco/
 tmp/
 *.npy
+**/*.jpg

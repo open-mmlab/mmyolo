@@ -16,7 +16,7 @@ val_batch_size_per_gpu = 1
 # NOTE: for debugging set to 0
 val_num_workers = 0
 
-max_epochs = 55 # NOTE: for debug
+max_epochs = 55  # NOTE: for debug
 num_last_epochs = 15
 
 # model settings
@@ -91,24 +91,24 @@ model = dict(
             reduction='sum',
             loss_weight=1.0),
         loss_bbox_aux=dict(
-            type='mmdet.L1Loss', reduction='sum', loss_weight=1.0)),
-    train_cfg=dict(
-        assigner=dict(
-            type='mmdet.SimOTAAssigner',
-            center_radius=2.5,
-            iou_calculator=dict(type='mmdet.BboxOverlaps2D'))),
-    test_cfg=dict(
-        yolox_style=True,  # better
-        multi_label=True,  # 40.5 -> 40.7
-        score_thr=0.001,
-        max_per_img=300,
-        nms=dict(type='nms', iou_threshold=0.65)))
+            type='mmdet.L1Loss', reduction='sum', loss_weight=1.0),
+        loss_kpt=dict(type='OksLoss', ),
+        train_cfg=dict(
+            assigner=dict(
+                type='mmdet.SimOTAAssigner',
+                center_radius=2.5,
+                iou_calculator=dict(type='mmdet.BboxOverlaps2D'))),
+        test_cfg=dict(
+            yolox_style=True,  # better
+            multi_label=True,  # 40.5 -> 40.7
+            score_thr=0.001,
+            max_per_img=300,
+            nms=dict(type='nms', iou_threshold=0.65))))
 
 # codec = dict(type="mmpose.RegressionLabel")
 pre_transform = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='LoadAnnotations', with_bbox=True, with_keypoints=True),
-    # dict(type='mmpose.GenerateTarget', encoder=codec, target_type='keypoint_label')
+    dict(type='LoadAnnotations', with_bbox=True, with_keypoints=True)
 ]
 
 train_pipeline_stage1 = [
@@ -154,19 +154,19 @@ train_pipeline_stage2 = [
         # to be set separately for each channel.
         pad_val=dict(img=(114.0, 114.0, 114.0))),
     dict(type='mmdet.YOLOXHSVRandomAug'),
-    dict(type='mmdet.RandomFlip', prob=0.5),
+    dict(type='YOLOPoseRandomFlip', prob=0.5),
     dict(
-        type='mmdet.FilterAnnotations',
+        type='YOLOPoseFilterAnnotations',
         min_gt_bbox_wh=(1, 1),
         keep_empty=False),
-    dict(type='mmdet.PackDetInputs')
+    dict(type='YOLOPosePackInputs')
 ]
 
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
-    persistent_workers=False, # NOTE: for debugging
-    pin_memory=False, # NOTE: for debugging
+    persistent_workers=False,  # NOTE: for debugging
+    pin_memory=False,  # NOTE: for debugging
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
@@ -178,14 +178,18 @@ train_dataloader = dict(
 
 test_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
+    dict(type='YOLOPoseResize', scale=img_scale, keep_ratio=True),
     dict(
         type='mmdet.Pad',
         pad_to_square=True,
         pad_val=dict(img=(114.0, 114.0, 114.0))),
-    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
-        type='mmdet.PackDetInputs',
+        type='LoadAnnotations',
+        with_bbox=True,
+        with_keypoints=True,
+        _scope_='mmdet'),
+    dict(
+        type='YOLOPosePackInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                    'scale_factor'))
 ]
@@ -193,8 +197,8 @@ test_pipeline = [
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
-    persistent_workers=False, # NOTE: for debugging
-    pin_memory=False, # NOTE: for debugging
+    persistent_workers=False,  # NOTE: for debugging
+    pin_memory=False,  # NOTE: for debugging
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
@@ -204,7 +208,7 @@ val_dataloader = dict(
         data_prefix=dict(img='val2017/'),
         test_mode=True,
         pipeline=test_pipeline,
-        ))
+    ))
 test_dataloader = val_dataloader
 
 # Reduce evaluation time
@@ -287,18 +291,15 @@ val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 
 # 17 keypoints
-keypoint_colors = [
-    (255, 0, 0), (255, 85, 0), (255, 170, 0), (255, 0, 85), (255, 0, 170),
-    (0, 255, 0), (85, 255, 0), (170, 255, 0), (0, 255, 85), (0, 255, 170),
-    (0, 0, 255), (85, 0, 255), (170, 0, 255), (0, 85, 255), (0, 170, 255),
-    (255, 255, 0), (255, 255, 85)
-]
+keypoint_colors = [(255, 0, 0), (255, 85, 0), (255, 170, 0), (255, 0, 85),
+                   (255, 0, 170), (0, 255, 0), (85, 255, 0), (170, 255, 0),
+                   (0, 255, 85), (0, 255, 170), (0, 0, 255), (85, 0, 255),
+                   (170, 0, 255), (0, 85, 255), (0, 170, 255), (255, 255, 0),
+                   (255, 255, 85)]
 
-skeleton_links = [
-    (0, 1), (0, 2), (1, 3), (2, 4), (0, 5), (0, 6), (5, 7), (7, 9), (6, 8),
-    (8, 10), (5, 6), (5, 11), (6, 12), (11, 12), (11, 13), (13, 15),
-    (12, 14), (14, 16)
-]
+skeleton_links = [(0, 1), (0, 2), (1, 3), (2, 4), (0, 5), (0, 6), (5, 7),
+                  (7, 9), (6, 8), (8, 10), (5, 6), (5, 11), (6, 12), (11, 12),
+                  (11, 13), (13, 15), (12, 14), (14, 16)]
 
 # 18 links
 skeleton_links_colors = [

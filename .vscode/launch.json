@@ -20,7 +20,17 @@
       "program": "tools/analysis_tools/browse_dataset.py",
       "console": "integratedTerminal",
       "justMyCode": true,
-      "args": ["configs/yolox/yoloxkpt_s_8xb8-300e_coco.py"]
+      "args": [
+        "configs/yolox/yoloxkpt_s_8xb8-300e_coco.py",
+        "-n",
+        "10",
+        "--out-dir",
+        "vis",
+        "-m",
+        "pipeline",
+        "-p",
+        "val"
+      ]
     }
   ]
 }
