@@ -11,16 +11,13 @@ scaling_ratio_range = (0.5, 1.5)
 # =======================Unmodified in most cases==================
 # model settings
 model = dict(
-    data_preprocessor=dict(
-        type='YOLOv5DetDataPreprocessor',
-        pad_size_divisor=32,
-        batch_augments=[
-            dict(
-                type='YOLOXBatchSyncRandomResize',
-                random_size_range=(320, 640),
-                size_divisor=32,
-                interval=10)
-        ]),
+    data_preprocessor=dict(batch_augments=[
+        dict(
+            type='YOLOXBatchSyncRandomResize',
+            random_size_range=(320, 640),
+            size_divisor=32,
+            interval=10)
+    ]),
     backbone=dict(deepen_factor=deepen_factor, widen_factor=widen_factor),
     neck=dict(deepen_factor=deepen_factor, widen_factor=widen_factor),
     bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
