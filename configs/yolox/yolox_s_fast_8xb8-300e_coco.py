@@ -12,7 +12,7 @@ val_data_prefix = 'val2017/'  # Prefix of train image path
 
 num_classes = 80  # Number of classes for classification
 # Batch size of a single GPU during training
-train_batch_size_per_gpu = 16
+train_batch_size_per_gpu = 8
 # Worker to pre-fetch data for each single GPU during tarining
 train_num_workers = 8
 # Presistent_workers must be False if num_workers is 0
@@ -51,10 +51,8 @@ norm_cfg = dict(type='BN', momentum=0.03, eps=0.001)
 # -----train val related-----
 weight_decay = 0.0005
 num_last_epochs = 15
-affine_scale_left = 0.1
-affine_scale_right = 2
-mixup_scale_left = 0.8
-mixup_scale_right = 1.6
+random_affine_scaling_ratio_range = (0.1, 2)
+mixup_ratio_range = (0.8, 1.6)
 # Save model checkpoint and validation intervals
 save_epoch_intervals = 10
 # The maximum checkpoints to keep.
@@ -153,13 +151,13 @@ train_pipeline_stage1 = [
         pre_transform=pre_transform),
     dict(
         type='mmdet.RandomAffine',
-        scaling_ratio_range=(affine_scale_left, affine_scale_right),
+        scaling_ratio_range=random_affine_scaling_ratio_range,
         # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2)),
     dict(
         type='YOLOXMixUp',
         img_scale=img_scale,
-        ratio_range=(mixup_scale_left, mixup_scale_right),
+        ratio_range=mixup_ratio_range,
         pad_val=114.0,
         pre_transform=pre_transform),
     dict(type='mmdet.YOLOXHSVRandomAug'),
@@ -255,8 +253,7 @@ optim_wrapper = dict(
         lr=base_lr,
         momentum=0.9,
         weight_decay=weight_decay,
-        nesterov=True,
-        train_batch_size_per_gpu=train_batch_size_per_gpu),
+        nesterov=True),
     paramwise_cfg=dict(norm_decay_mult=0., bias_decay_mult=0.))
 
 # learning rate

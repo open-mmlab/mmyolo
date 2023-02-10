@@ -7,7 +7,6 @@ widen_factor = 0.375
 img_scale = _base_.img_scale
 pre_transform = _base_.pre_transform
 scaling_ratio_range = (0.5, 1.5)
-random_flip_prob = 0.5
 
 # =======================Unmodified in most cases==================
 # model settings
@@ -36,7 +35,7 @@ train_pipeline_stage1 = [
         # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2)),
     dict(type='mmdet.YOLOXHSVRandomAug'),
-    dict(type='mmdet.RandomFlip', prob=random_flip_prob),
+    dict(type='mmdet.RandomFlip', prob=0.5),
     dict(
         type='mmdet.FilterAnnotations',
         min_gt_bbox_wh=(1, 1),
