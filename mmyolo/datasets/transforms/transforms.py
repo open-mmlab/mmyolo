@@ -6,15 +6,17 @@ import cv2
 import mmcv
 import numpy as np
 import torch
-from mmcv.transforms import BaseTransform
+from mmcv.transforms import BaseTransform, to_tensor
 from mmcv.transforms.utils import cache_randomness
+from mmdet.datasets.transforms import FilterAnnotations
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
-from mmdet.datasets.transforms import RandomFlip, FilterAnnotations
+from mmdet.datasets.transforms import PackDetInputs, RandomAffine, RandomFlip
 from mmdet.datasets.transforms import Resize as MMDET_Resize
-from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
-                                   get_box_type)
+from mmdet.structures import DetDataSample
+from mmdet.structures.bbox import (BaseBoxes, HorizontalBoxes,
+                                   autocast_box_type, get_box_type)
+from mmengine.structures import InstanceData, PixelData
 from numpy import random
-from mmdet.datasets.transforms import RandomAffine
 
 from mmyolo.registry import TRANSFORMS
 from ..utils import Keypoints
@@ -367,7 +369,11 @@ class LoadAnnotations(MMDET_LoadAnnotations):
     time being, in order to speed up the pipeline, it can be excluded in
     advance."""
 
-    def __init__(self, with_mask: bool = False, poly2mask: bool = True, box_type: str = 'hbox', **kwargs) -> None:
+    def __init__(self,
+                 with_mask: bool = False,
+                 poly2mask: bool = True,
+                 box_type: str = 'hbox',
+                 **kwargs) -> None:
         super().__init__(with_mask, poly2mask, box_type, **kwargs)
         self.with_keypoints = kwargs.get('with_keypoints', False)
 
@@ -414,7 +420,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                 gt_bboxes_labels.append(instance['bbox_label'])
         results['gt_bboxes_labels'] = np.array(
             gt_bboxes_labels, dtype=np.int64)
-    
+
     def _load_kps(self, results: dict) -> None:
         gt_keypoints = []
         for instance in results.get('instances', []):
@@ -424,14 +430,13 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                 gt_keypoints.append(instance['keypoints'])
         results['gt_keypoints'] = np.array(gt_keypoints, np.float32).reshape(
             (len(gt_keypoints), -1, 3))
-        
-    
+
     def transform(self, results: dict) -> dict:
         super().transform(results)
         if self.with_keypoints:
             self._load_kps(results)
         return results
-    
+
     def __repr__(self) -> str:
         return super().__repr__() + f', with_keypoints={self.with_keypoints}'
 
@@ -1099,9 +1104,9 @@ class PPYOLOERandomCrop(BaseTransform):
         return np.where(valid)[0]
 
 
-
 @TRANSFORMS.register_module()
 class YOLOPoseRandomAffine(RandomAffine):
+
     @autocast_box_type()
     def transform(self, results: dict) -> dict:
         img = results['img']
@@ -1143,9 +1148,11 @@ class YOLOPoseRandomAffine(RandomAffine):
             results['gt_keypoints'] = keypoints
             assert len(results['gt_bboxes']) == len(results['gt_keypoints'])
         return results
-    
+
+
 @TRANSFORMS.register_module()
 class YOLOPoseRandomFlip(RandomFlip):
+
     @autocast_box_type()
     def _flip(self, results: dict) -> None:
         """Flip images, bounding boxes, and semantic segmentation map."""
@@ -1176,10 +1183,12 @@ class YOLOPoseRandomFlip(RandomFlip):
 
         # record homography matrix for flip
         self._record_homography_matrix(results)
-    
+
+
 @TRANSFORMS.register_module()
 class YOLOPoseFilterAnnotations(FilterAnnotations):
     """Filter invalid annotations."""
+
     def __init__(self, by_keypoints=False, min_keypoints=1, **kwargs):
         super().__init__(**kwargs)
         self.by_keypoints = by_keypoints
@@ -1224,3 +1233,92 @@ class YOLOPoseFilterAnnotations(FilterAnnotations):
             if key in results:
                 results[key] = results[key][keep]
         return results
+
+
+@TRANSFORMS.register_module()
+class YOLOPosePackInputs(PackDetInputs):
+    mapping_table = {
+        'gt_bboxes': 'bboxes',
+        'gt_bboxes_labels': 'labels',
+        'gt_masks': 'masks',
+        'gt_keypoints': 'keypoints',
+    }
+
+    def __init__(self,
+                 meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                            'scale_factor', 'flip', 'flip_direction')):
+        self.meta_keys = meta_keys
+
+    def transform(self, results: dict) -> dict:
+        """Method to pack the input data.
+
+        Args:
+            results (dict): Result dict from the data pipeline.
+
+        Returns:
+            dict:
+
+            - 'inputs' (obj:`torch.Tensor`): The forward data of models.
+            - 'data_sample' (obj:`DetDataSample`): The annotation info of the
+                sample.
+        """
+        packed_results = dict()
+        if 'img' in results:
+            img = results['img']
+            if len(img.shape) < 3:
+                img = np.expand_dims(img, -1)
+            img = np.ascontiguousarray(img.transpose(2, 0, 1))
+            packed_results['inputs'] = to_tensor(img)
+
+        if 'gt_ignore_flags' in results:
+            valid_idx = np.where(results['gt_ignore_flags'] == 0)[0]
+            ignore_idx = np.where(results['gt_ignore_flags'] == 1)[0]
+
+        data_sample = DetDataSample()
+        instance_data = InstanceData()
+        ignore_instance_data = InstanceData()
+
+        for key in self.mapping_table.keys():
+            if key not in results:
+                continue
+            if key == 'gt_masks' or isinstance(results[key], BaseBoxes):
+                if 'gt_ignore_flags' in results:
+                    instance_data[
+                        self.mapping_table[key]] = results[key][valid_idx]
+                    ignore_instance_data[
+                        self.mapping_table[key]] = results[key][ignore_idx]
+                else:
+                    instance_data[self.mapping_table[key]] = results[key]
+            else:
+                if 'gt_ignore_flags' in results:
+                    instance_data[self.mapping_table[key]] = to_tensor(
+                        results[key][valid_idx])
+                    ignore_instance_data[self.mapping_table[key]] = to_tensor(
+                        results[key][ignore_idx])
+                else:
+                    instance_data[self.mapping_table[key]] = to_tensor(
+                        results[key])
+        data_sample.gt_instances = instance_data
+        data_sample.ignored_instances = ignore_instance_data
+
+        if 'proposals' in results:
+            proposals = InstanceData(
+                bboxes=to_tensor(results['proposals']),
+                scores=to_tensor(results['proposals_scores']))
+            data_sample.proposals = proposals
+
+        if 'gt_seg_map' in results:
+            gt_sem_seg_data = dict(
+                sem_seg=to_tensor(results['gt_seg_map'][None, ...].copy()))
+            data_sample.gt_sem_seg = PixelData(**gt_sem_seg_data)
+
+        img_meta = {}
+        for key in self.meta_keys:
+            assert key in results, f'`{key}` is not found in `results`, ' \
+                f'the valid keys are {list(results)}.'
+            img_meta[key] = results[key]
+
+        data_sample.set_metainfo(img_meta)
+        packed_results['data_samples'] = data_sample
+
+        return packed_results

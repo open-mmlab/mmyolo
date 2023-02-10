@@ -139,7 +139,7 @@ train_pipeline_stage1 = [
         keep_empty=False,
         by_keypoints=True),
     dict(
-        type='mmdet.PackDetInputs',
+        type='YOLOPosePackInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
                    'flip_direction', 'gt_keypoints'))
 ]
