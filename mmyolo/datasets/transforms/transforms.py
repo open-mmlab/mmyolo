@@ -262,14 +262,16 @@ class LetterResize(MMDET_Resize):
             (int(round(gt_mask_h)), int(round(gt_mask_w))))
 
         top_padding, _, left_padding, _ = results['pad_param']
-        gt_masks = gt_masks.translate(
-            out_shape=results['img_shape'][:2],
-            offset=left_padding,
-            direction='horizontal')
-        gt_masks = gt_masks.translate(
-            out_shape=results['img_shape'][:2],
-            offset=top_padding,
-            direction='vertical')
+        if int(left_padding) != 0:
+            gt_masks = gt_masks.translate(
+                out_shape=results['img_shape'][:2],
+                offset=int(left_padding),
+                direction='horizontal')
+        if int(top_padding) != 0:
+            gt_masks = gt_masks.translate(
+                out_shape=results['img_shape'][:2],
+                offset=int(top_padding),
+                direction='vertical')
         results['gt_masks'] = gt_masks
 
     def _resize_bboxes(self, results: dict):

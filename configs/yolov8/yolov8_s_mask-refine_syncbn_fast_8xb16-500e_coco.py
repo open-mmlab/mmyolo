@@ -46,7 +46,7 @@ train_pipeline = [
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
-        scaling_ratio_range=_base_.scaling_ratio_range,
+        scaling_ratio_range=(1 - _base_.affine_scale, 1 + _base_.affine_scale),
         max_aspect_ratio=_base_.max_aspect_ratio,
         # img_scale is (width, height)
         border=(-_base_.img_scale[0] // 2, -_base_.img_scale[1] // 2),
@@ -68,7 +68,7 @@ train_pipeline_stage2 = [
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
-        scaling_ratio_range=_base_.scaling_ratio_range,
+        scaling_ratio_range=(1 - _base_.affine_scale, 1 + _base_.affine_scale),
         max_aspect_ratio=_base_.max_aspect_ratio,
         border_val=(114, 114, 114)), *last_transform
 ]
