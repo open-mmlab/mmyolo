@@ -300,6 +300,7 @@ class YOLOXKptHead(YOLOv5Head):
             test_cfg=test_cfg,
             init_cfg=init_cfg)
         self.loss_kpt = MODELS.build(loss_kpt)
+        self.num_keypoints = head_module['num_keypoints']
 
     def special_init(self):
         """Since YOLO series algorithms will inherit from YOLOv5Head, but
@@ -380,6 +381,14 @@ class YOLOXKptHead(YOLOv5Head):
             objectness.permute(0, 2, 3, 1).reshape(num_imgs, -1)
             for objectness in objectnesses
         ]
+        flatten_kpt_preds = [
+            kpt_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, self.num_keypoints * 2)
+            for kpt_pred in kpt_preds
+        ]
+        flatten_vis_preds = [
+            vis_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, self.num_keypoints)
+            for vis_pred in vis_preds
+        ]
 
         flatten_cls_preds = torch.cat(flatten_cls_preds, dim=1)
         flatten_bbox_preds = torch.cat(flatten_bbox_preds, dim=1)
@@ -388,8 +397,10 @@ class YOLOXKptHead(YOLOv5Head):
         flatten_bboxes = self.bbox_coder.decode(flatten_priors[..., :2],
                                                 flatten_bbox_preds,
                                                 flatten_priors[..., 2])
+        flatten_kpt_preds = torch.cat(flatten_kpt_preds, dim=1)
+        flatten_vis_preds = torch.cat(flatten_vis_preds, dim=1)
 
-        (pos_masks, cls_targets, obj_targets, bbox_targets, bbox_aux_target,
+        (pos_masks, cls_targets, obj_targets, bbox_targets, kpt_vis_targets, bbox_aux_target,
          num_fg_imgs) = multi_apply(
              self._get_targets_single,
              flatten_priors.unsqueeze(0).repeat(num_imgs, 1, 1),
@@ -409,6 +420,8 @@ class YOLOXKptHead(YOLOv5Head):
         cls_targets = torch.cat(cls_targets, 0)
         obj_targets = torch.cat(obj_targets, 0)
         bbox_targets = torch.cat(bbox_targets, 0)
+        kpt_vis_targets = torch.cat(kpt_vis_targets, 0)
+        kpt_targets, vis_targets = kpt_vis_targets[..., :2], kpt_vis_targets[..., 2]
         if self.use_bbox_aux:
             bbox_aux_target = torch.cat(bbox_aux_target, 0)
 
@@ -446,6 +459,26 @@ class YOLOXKptHead(YOLOv5Head):
             loss_dict.update(loss_bbox_aux=loss_bbox_aux)
 
         return loss_dict
+
+    @torch.no_grad()
+    def _get_kpt_targets_single(
+            self,
+            kpt_preds: Tensor,
+            vis_preds: Tensor,
+            gt_instances: InstanceData,
+            img_meta: dict,
+            gt_instances_ignore: Optional[InstanceData] = None) -> tuple:
+        """Return gt keypoints and visibilities for each prior."""
+        # get the ground truth of keypoints
+        gt_kpts = gt_instances['keypoints']
+        if gt_kpts.shape[0] == 0:
+            kpt_targets = gt_kpts.new_zeros((0, self.num_keypoints * 2))
+            vis_targets = gt_kpts.new_zeros((0, self.num_keypoints))
+            return kpt_targets, vis_targets
+        else:
+            kpt_targets = gt_kpts[..., :2]
+            vis_targets = gt_kpts[..., 2]
+            return kpt_targets, vis_targets
 
     @torch.no_grad()
     def _get_targets_single(
@@ -495,10 +528,11 @@ class YOLOXKptHead(YOLOv5Head):
         if num_gts == 0:
             cls_target = cls_preds.new_zeros((0, self.num_classes))
             bbox_target = cls_preds.new_zeros((0, 4))
+            kpt_target = cls_preds.new_zeros((0, self.num_keypoints * 3))
             bbox_aux_target = cls_preds.new_zeros((0, 4))
             obj_target = cls_preds.new_zeros((num_priors, 1))
             foreground_mask = cls_preds.new_zeros(num_priors).bool()
-            return (foreground_mask, cls_target, obj_target, bbox_target,
+            return (foreground_mask, cls_target, obj_target, bbox_target, kpt_target,
                     bbox_aux_target, 0)
 
         # YOLOX uses center priors with 0.5 offset to assign targets,
@@ -532,7 +566,9 @@ class YOLOXKptHead(YOLOv5Head):
                 bbox_aux_target, bbox_target, priors[pos_inds])
         foreground_mask = torch.zeros_like(objectness).to(torch.bool)
         foreground_mask[pos_inds] = 1
-        return (foreground_mask, cls_target, obj_target, bbox_target,
+        # TODO: kps target
+        kpt_target = gt_instances['keypoints'][sampling_result.pos_assigned_gt_inds]
+        return (foreground_mask, cls_target, obj_target, bbox_target, kpt_target,
                 bbox_aux_target, num_pos_per_img)
 
     def _get_bbox_aux_target(self,

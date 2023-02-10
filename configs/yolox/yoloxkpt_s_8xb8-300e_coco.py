@@ -92,18 +92,18 @@ model = dict(
             loss_weight=1.0),
         loss_bbox_aux=dict(
             type='mmdet.L1Loss', reduction='sum', loss_weight=1.0),
-        loss_kpt=dict(type='OksLoss', ),
-        train_cfg=dict(
-            assigner=dict(
-                type='mmdet.SimOTAAssigner',
-                center_radius=2.5,
-                iou_calculator=dict(type='mmdet.BboxOverlaps2D'))),
-        test_cfg=dict(
-            yolox_style=True,  # better
-            multi_label=True,  # 40.5 -> 40.7
-            score_thr=0.001,
-            max_per_img=300,
-            nms=dict(type='nms', iou_threshold=0.65))))
+        loss_kpt=dict(type='OksLoss')),
+    train_cfg=dict(
+        assigner=dict(
+            type='mmdet.SimOTAAssigner',
+            center_radius=2.5,
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D'))),
+    test_cfg=dict(
+        yolox_style=True,  # better
+        multi_label=True,  # 40.5 -> 40.7
+        score_thr=0.001,
+        max_per_img=300,
+        nms=dict(type='nms', iou_threshold=0.65)))
 
 # codec = dict(type="mmpose.RegressionLabel")
 pre_transform = [
