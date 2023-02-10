@@ -314,9 +314,6 @@ class Mosaic(BaseMixImageTransform):
             results (dict): Updated result dict.
         """
         assert 'mix_results' in results
-        # TODO: 对齐之后要删除
-        assert len(results['gt_masks']) == len(results['gt_bboxes']) == len(
-            results['gt_bboxes_labels'])
         mosaic_bboxes = []
         mosaic_bboxes_labels = []
         mosaic_ignore_flags = []

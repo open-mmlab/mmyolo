@@ -671,6 +671,9 @@ class YOLOv5RandomAffine(BaseTransform):
                 # otherwise it will raise out of bounds when len(valid_index)=1
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
                                                     bboxes).numpy()
+                if 'gt_masks' in results:
+                    results['gt_masks'] = PolygonMasks(results['gt_masks'],
+                                                       img_h, img_w)
 
             results['gt_bboxes'] = bboxes[valid_index]
             results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
@@ -1312,6 +1315,7 @@ class YOLOv5CopyPaste(BaseTransform):
         valid_inds = random.choice(
             indexes, size=round(self.prob * n), replace=False)
         if len(valid_inds) == 0:
+
             return results
         # prepare labels
         gt_bboxes_labels = np.concatenate(

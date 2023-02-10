@@ -40,7 +40,9 @@ mosaic_affine_transform = [
         scaling_ratio_range=(1 - affine_scale, 1 + affine_scale),
         # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
-        border_val=(114, 114, 114))
+        border_val=(114, 114, 114),
+        min_area_ratio=_base_.min_area_ratio,
+        use_mask_refine=_base_.use_mask2refine)
 ]
 
 train_pipeline = [
