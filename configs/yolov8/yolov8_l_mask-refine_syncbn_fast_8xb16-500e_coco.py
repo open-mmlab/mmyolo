@@ -1,4 +1,4 @@
-_base_ = './yolov8_m_mask-refine_copypaste_syncbn_fast_8xb16-500e_coco.py'
+_base_ = './yolov8_m_mask-refine_syncbn_fast_8xb16-500e_coco.py'
 
 deepen_factor = 1.00
 widen_factor = 1.00
