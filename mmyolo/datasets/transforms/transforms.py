@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
 from copy import deepcopy
-from typing import List, Tuple, Union
+from typing import List, Sequence, Tuple, Union
 
 import cv2
 import mmcv
@@ -375,8 +375,8 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                  poly2mask: bool = False,
                  **kwargs) -> None:
         self.mask2bbox = mask2bbox
-        assert poly2mask, 'Does not support BitmapMasks considering ' \
-                          'that bitmap consumes more memory.'
+        assert not poly2mask, 'Does not support BitmapMasks considering ' \
+            'that bitmap consumes more memory.'
         super().__init__(poly2mask=poly2mask, **kwargs)
         if self.mask2bbox:
             assert self.with_mask, 'Using mask2bbox requires ' \
@@ -566,7 +566,7 @@ class YOLOv5RandomAffine(BaseTransform):
         self.bbox_clip_border = bbox_clip_border
         self.min_bbox_size = min_bbox_size
         self.min_area_ratio = min_area_ratio
-        self.use_mask_regine = use_mask_refine
+        self.use_mask_refine = use_mask_refine
         self.max_aspect_ratio = max_aspect_ratio
 
     @cache_randomness
@@ -645,12 +645,8 @@ class YOLOv5RandomAffine(BaseTransform):
         bboxes = results['gt_bboxes']
         num_bboxes = len(bboxes)
         if num_bboxes:
-            if self.use_mask_regine and ('gt_masks' not in results):
-                # TODO: 加注释
-                print('aaa')
-
             orig_bboxes = bboxes.clone()
-            if self.use_mask_regine and 'gt_masks' in results:
+            if self.use_mask_refine and 'gt_masks' in results:
                 # If the dataset has annotations of mask,
                 # the mask will be used to adjust bbox.
                 gt_masks = results['gt_masks']
@@ -1397,3 +1393,16 @@ class YOLOv5CopyPaste(BaseTransform):
         repr_str += f'(ioa_thresh={self.ioa_thresh},'
         repr_str += f'prob={self.prob})'
         return repr_str
+
+
+@TRANSFORMS.register_module()
+class RemoveDataElement(BaseTransform):
+    """Remove unnecessary data element in results."""
+
+    def __init__(self, keys: Union[str, Sequence[str]]):
+        self.keys = [keys] if isinstance(keys, str) else keys
+
+    def transform(self, results: dict) -> dict:
+        for key in self.keys:
+            results.pop(key, None)
+        return results

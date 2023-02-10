@@ -174,6 +174,7 @@ pre_transform = [
 ]
 
 last_transform = [
+    dict(type='RemoveDataElement', keys=['gt_masks']),
     dict(
         type='mmdet.Albu',
         transforms=albu_train_transform,
