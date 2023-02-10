@@ -12,7 +12,7 @@ val_data_prefix = 'val2017/'  # Prefix of train image path
 
 num_classes = 80  # Number of classes for classification
 # Batch size of a single GPU during training
-train_batch_size_per_gpu = 16
+train_batch_size_per_gpu = 8
 # Worker to pre-fetch data for each single GPU during tarining
 train_num_workers = 8
 # Presistent_workers must be False if num_workers is 0
