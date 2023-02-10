@@ -9,7 +9,7 @@ import torch
 from mmcv.transforms import BaseTransform
 from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
-from mmdet.datasets.transforms import RandomFlip
+from mmdet.datasets.transforms import RandomFlip, FilterAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
@@ -18,6 +18,7 @@ from mmdet.datasets.transforms import RandomAffine
 
 from mmyolo.registry import TRANSFORMS
 from ..utils import Keypoints
+
 
 @TRANSFORMS.register_module()
 class YOLOv5KeepRatioResize(MMDET_Resize):
@@ -1175,3 +1176,51 @@ class YOLOPoseRandomFlip(RandomFlip):
 
         # record homography matrix for flip
         self._record_homography_matrix(results)
+    
+@TRANSFORMS.register_module()
+class YOLOPoseFilterAnnotations(FilterAnnotations):
+    """Filter invalid annotations."""
+    def __init__(self, by_keypoints=False, min_keypoints=1, **kwargs):
+        super().__init__(**kwargs)
+        self.by_keypoints = by_keypoints
+        self.min_keypoints = min_keypoints
+
+    @autocast_box_type()
+    def transform(self, results: dict) -> Union[dict, None]:
+        """Transform function to filter annotations.
+
+        Args:
+            results (dict): Result dict.
+
+        Returns:
+            dict: Updated result dict.
+        """
+        assert 'gt_bboxes' in results
+        gt_bboxes = results['gt_bboxes']
+        if gt_bboxes.shape[0] == 0:
+            return results
+
+        tests = []
+        if self.by_box:
+            tests.append(
+                ((gt_bboxes.widths > self.min_gt_bbox_wh[0]) &
+                 (gt_bboxes.heights > self.min_gt_bbox_wh[1])).numpy())
+        if self.by_mask:
+            assert 'gt_masks' in results
+            gt_masks = results['gt_masks']
+            tests.append(gt_masks.areas >= self.min_gt_mask_area)
+
+        keep = tests[0]
+        for t in tests[1:]:
+            keep = keep & t
+
+        if not keep.any():
+            if self.keep_empty:
+                return None
+        keys = ('gt_bboxes', 'gt_bboxes_labels', 'gt_masks', 'gt_ignore_flags')
+        if self.by_keypoints:
+            keys = keys + ('gt_keypoints', )
+        for key in keys:
+            if key in results:
+                results[key] = results[key][keep]
+        return results

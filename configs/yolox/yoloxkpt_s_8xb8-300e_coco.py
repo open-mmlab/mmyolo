@@ -133,10 +133,11 @@ train_pipeline_stage1 = [
         pre_transform=pre_transform),
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='YOLOPoseRandomFlip', prob=0.5),
-    # dict(
-    #     type='mmdet.FilterAnnotations',
-    #     min_gt_bbox_wh=(1, 1),
-    #     keep_empty=False),
+    dict(
+        type='YOLOPoseFilterAnnotations',
+        min_gt_bbox_wh=(1, 1),
+        keep_empty=False,
+        by_keypoints=True),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
