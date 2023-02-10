@@ -1,6 +1,9 @@
 _base_ = '../rtmdet_tiny_syncbn_fast_8xb32-300e_coco.py'
 
 teacher_ckpt = 'https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco/rtmdet_s_syncbn_fast_8xb32-300e_coco_20221230_182329-0a8c901a.pth'  # noqa: E501
+
+norm_cfg = dict(type='BN', affine=False, track_running_stats=False)
+
 model = dict(
     _delete_=True,
     _scope_='mmrazor',
@@ -22,24 +25,33 @@ model = dict(
             fpn1=dict(type='ModuleOutputs', source='neck.out_layers.1.conv'),
             fpn2=dict(type='ModuleOutputs', source='neck.out_layers.2.conv')),
         connectors=dict(
-            fpn0=dict(
+            fpn0_s=dict(
                 type='ConvModuleConnector',
                 in_channel=96,
                 out_channel=128,
                 bias=False,
+                norm_cfg=norm_cfg,
                 act_cfg=None),
-            fpn1=dict(
+            fpn0_t=dict(
+                type='NormConnector', in_channels=128, norm_cfg=norm_cfg),
+            fpn1_s=dict(
                 type='ConvModuleConnector',
                 in_channel=96,
                 out_channel=128,
                 bias=False,
+                norm_cfg=norm_cfg,
                 act_cfg=None),
-            fpn2=dict(
+            fpn1_t=dict(
+                type='NormConnector', in_channels=128, norm_cfg=norm_cfg),
+            fpn2_s=dict(
                 type='ConvModuleConnector',
                 in_channel=96,
                 out_channel=128,
                 bias=False,
-                act_cfg=None)),
+                norm_cfg=norm_cfg,
+                act_cfg=None),
+            fpn2_t=dict(
+                type='NormConnector', in_channels=128, norm_cfg=norm_cfg)),
         distill_losses=dict(
             loss_pkd_fpn0=dict(type='ChannelWiseDivergence', loss_weight=1),
             loss_pkd_fpn1=dict(type='ChannelWiseDivergence', loss_weight=1),
@@ -47,16 +59,20 @@ model = dict(
         loss_forward_mappings=dict(
             loss_pkd_fpn0=dict(
                 preds_S=dict(
-                    from_student=True, recorder='fpn0', connector='fpn0'),
-                preds_T=dict(from_student=False, recorder='fpn0')),
+                    from_student=True, recorder='fpn0', connector='fpn0_s'),
+                preds_T=dict(
+                    from_student=False, recorder='fpn0', connector='fpn0_t')),
             loss_pkd_fpn1=dict(
                 preds_S=dict(
-                    from_student=True, recorder='fpn1', connector='fpn1'),
-                preds_T=dict(from_student=False, recorder='fpn1')),
+                    from_student=True, recorder='fpn1', connector='fpn1_s'),
+                preds_T=dict(
+                    from_student=False, recorder='fpn1', connector='fpn1_t')),
             loss_pkd_fpn2=dict(
                 preds_S=dict(
-                    from_student=True, recorder='fpn2', connector='fpn2'),
-                preds_T=dict(from_student=False, recorder='fpn2')))))
+                    from_student=True, recorder='fpn2', connector='fpn2_s'),
+                preds_T=dict(
+                    from_student=False, recorder='fpn2',
+                    connector='fpn2_t')))))
 
 find_unused_parameters = True
 
