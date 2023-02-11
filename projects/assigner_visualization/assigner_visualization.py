@@ -3,6 +3,7 @@ import argparse
 import os
 import os.path as osp
 import sys
+import warnings
 
 import mmcv
 import numpy as np
@@ -87,6 +88,10 @@ def main():
     model = MODELS.build(cfg.model)
     if args.checkpoint is not None:
         _ = load_checkpoint(model, args.checkpoint, map_location='cpu')
+    elif isinstance(model.bbox_head, RTMHeadAssigner):
+        warnings.warn(
+            'if you use dynamic_assignment methods such as yolov7 or '
+            'rtmdet assigner, please load the checkpoint.')
 
     assert isinstance(model.bbox_head, (YOLOv5HeadAssigner, RTMHeadAssigner)),\
         'Now, this script only support yolov5 and rtmdet, and ' \
