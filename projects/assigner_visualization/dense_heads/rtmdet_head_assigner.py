@@ -121,7 +121,7 @@ class RTMHeadAssigner(RTMDetHead):
                     'retained_gt_inds':
                     torch.zeros([0], dtype=torch.int64).to(device),
                     'prior_ind':
-                    1
+                    0
                 }
             else:
                 w = inputs_hw[1] // self.featmap_strides[i]
