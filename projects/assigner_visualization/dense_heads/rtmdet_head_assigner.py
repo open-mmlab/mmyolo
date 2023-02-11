@@ -136,7 +136,7 @@ class RTMHeadAssigner(RTMDetHead):
                     'img_inds': img_inds[retained_inds],
                     'class_inds': labels[retained_inds],
                     'retained_gt_inds': matched_gt_inds[retained_inds],
-                    'prior_ind': 1
+                    'prior_ind': 0
                 }
             assign_results.append([assign_results_prior])
         return assign_results
