@@ -157,7 +157,7 @@ class RTMHeadAssigner(RTMDetHead):
         """
         if isinstance(batch_data_samples, list):
             raise NotImplementedError(
-                'assigning results_list  is not implemented')
+                'assigning results_list is not implemented')
         else:
             # Fast version
             cls_scores, bbox_preds = self(batch_data_samples['feats'])

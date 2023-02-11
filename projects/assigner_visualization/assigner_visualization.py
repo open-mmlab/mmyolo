@@ -137,7 +137,7 @@ def main():
         data = dataset.prepare_data(ind_img)
         # convert data to batch format
         if data is None:
-            print('Unable to visualize {} due to strong data augmentation'.
+            print('Unable to visualize {} due to strong data augmentations'.
                   format(dataset[ind_img]['data_samples'].img_path))
             continue
         batch_data = collate_fn([data])

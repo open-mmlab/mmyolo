@@ -289,7 +289,6 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                                           retained_gt_inds)
 
                 # draw title
-                # TODO: need a more sophisticated way to do this
                 if self.priors_size is not None:
                     base_prior = self.priors_size[feat_ind][prior_ind]
                 else:
