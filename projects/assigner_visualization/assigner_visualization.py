@@ -135,11 +135,11 @@ def main():
     progress_bar = ProgressBar(display_number)
     for ind_img in range(display_number):
         data = dataset.prepare_data(ind_img)
-        # convert data to batch format
         if data is None:
             print('Unable to visualize {} due to strong data augmentations'.
                   format(dataset[ind_img]['data_samples'].img_path))
             continue
+        # convert data to batch format
         batch_data = collate_fn([data])
         with torch.no_grad():
             assign_results = model.assign(batch_data)
