@@ -85,7 +85,7 @@ class RTMHeadAssigner(RTMDetHead):
         pos_inds = ((labels >= 0)
                     & (labels < bg_class_ind)).nonzero().squeeze(1)
         targets = bbox_targets[pos_inds]
-        gt_bboxes = gt_bboxes.squeeze()
+        gt_bboxes = gt_bboxes.squeeze(0)
         matched_gt_inds = torch.tensor(
             [((t == gt_bboxes).sum(dim=1) == t.shape[0]).nonzero()[0]
              for t in targets],

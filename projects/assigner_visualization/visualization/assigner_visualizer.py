@@ -222,9 +222,13 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
         center_x = ((grid_x_inds + offset) * stride)
         center_y = ((grid_y_inds + offset) * stride)
         xyxy = torch.stack((center_x, center_y, center_x, center_y), dim=1)
-        assert self.priors_size is not None
         device = xyxy.device
-        xyxy += self.priors_size[feat_ind][prior_ind].to(device)
+        if self.priors_size is not None:
+            xyxy += self.priors_size[feat_ind][prior_ind].to(device)
+        else:
+            xyxy += torch.tensor(
+                [[-stride / 2, -stride / 2, stride / 2, stride / 2]],
+                device=device)
 
         colors = [palette[i] for i in class_inds]
         self.draw_bboxes(
@@ -289,7 +293,7 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                 if self.priors_size is not None:
                     base_prior = self.priors_size[feat_ind][prior_ind]
                 else:
-                    base_prior = [0, 0, 0, 0]
+                    base_prior = [stride, stride, stride * 2, stride * 2]
                 prior_size = (base_prior[2] - base_prior[0],
                               base_prior[3] - base_prior[1])
                 pos = np.array((20, 20))
