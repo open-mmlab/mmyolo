@@ -14,7 +14,19 @@ MMYOLO 中的旋转目标检测依赖于MMRotate 1.0，请参考文档 [开始�
 
 对于自定义数据集，我们建议将数据转换为 DOTA 格式并离线进行转换，如此您只需在数据转换后修改 config 的数据标注路径和类别即可。
 
-TODO COCO 格式旋转标注
+为了方便使用，我们同样提供了基于 COCO 格式的旋转标注格式，将多边形检测框储存在COCO标注的segmentation标签中，示例如下：
+
+```json
+{
+    "id": 131,
+    "image_id": 72,
+    "bbox": [123, 167, 11, 37],
+    "area": 271.5,
+    "category_id": 1,
+    "segmentation": [[123, 167, 128, 204, 134, 201, 132, 167]],
+    "iscrowd": 0,
+}
+```
 
 ## 配置文件
 
@@ -53,22 +65,11 @@ train_pipeline = [
          prob=0.5, # 旋转概率 0.5
          angle_range=180, # 旋转范围 180
          rotate_type='mmrotate.Rotate', # 旋转方法
-         rect_obj_labels=[9, 11]), # 由于DOTA数据集中两类为正方形标注，无需角度信息，旋转中将这两类保持为水平
+         rect_obj_labels=[9, 11]), # 由于DOTA数据集中标号为9的 'storage-tank' 和标号11的 'roundabout' 两类为正方形标注，无需角度信息，旋转中将这两类保持为水平
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(type='RegularizeRotatedBox', # 统一旋转框表示形式
          angle_version=angle_version), # 根据角度的定义方式进行
     dict(type='mmdet.PackDetInputs')
-]
-
-pre_transform = [
-    dict(
-        type='LoadImageFromFile', # 第 1 个流程，从文件路径里加载图像
-        file_client_args=file_client_args),  # 文件读取后端的配置，默认从硬盘读取
-    dict(type='LoadAnnotations', # 第 2 个流程，对于当前图像，加载它的注释信息
-         with_bbox=True, # 是否使用标注框(bounding box)，目标检测需要设置为 True
-         box_type='qbox'), # 指定读取的标注格式，旋转框数据集默认的数据格式为四边形
-    dict(type='mmrotate.ConvertBoxType', # 第 3 个流程，将四边形标注转化为
-         box_type_mapping=dict(gt_bboxes='rbox')),
 ]
 
 train_dataloader = dict(
@@ -174,9 +175,50 @@ test_evaluator = dict(
     outfile_prefix='./work_dirs/dota_detection/submission') # 输出测试文件夹的路径
 ```
 
-### 检测头
+如果使用基于COCO格式的旋转框标注，只需要修改pipeline中数据读取流程和训练数据集的配置，以训练数据为例：
 
-TODO
+```python
+
+dataset_type='YOLOv5CocoDataset'
+
+train_pipeline = [
+    # 训练数据读取流程
+    dict(
+        type='LoadImageFromFile', # 第 1 个流程，从文件路径里加载图像
+        file_client_args=file_client_args),  # 文件读取后端的配置，默认从硬盘读取
+    dict(type='LoadAnnotations', # 第 2 个流程，对于当前图像，加载它的注释信息
+         with_bbox=True, # 是否使用标注框(bounding box)，目标检测需要设置为 True
+         with_mask=True, # 读取储存在mask标注中的多边形标注
+         poly2mask=False) # 不执行poly2mask，后续会将poly转化成检测框
+    dict(type='ConvertMask2BoxType', # 第 3 个流程，将mask标注转化为 boxtype
+         box_type='rbox'), # 目标类型是 rbox 旋转框
+    # 剩余的其他pipeline
+    ...
+]
+
+metainfo = dict( # DOTA数据集的metainfo
+    classes=('plane', 'baseball-diamond', 'bridge', 'ground-track-field',
+             'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
+             'basketball-court', 'storage-tank', 'soccer-ball-field',
+             'roundabout', 'harbor', 'swimming-pool', 'helicopter'))
+
+train_dataloader = dict(
+    dataset=dict( # 训练数据集的配置
+        type=dataset_type,
+        metainfo=metainfo,
+        data_root=data_root,
+        ann_file='train/train.json', # 标注文件路径
+        data_prefix=dict(img='train/images/'), # 图像路径前缀
+        filter_cfg=dict(filter_empty_gt=True), # 标注的过滤配置
+        pipeline=train_pipeline), # 数据处理流程
+)
+```
+
+### 模型配置
+
+对于旋转目标检测器，在模型配置中 backbone 和 neck 的配置和其他模型是一致的，主要差异在检测头上。
+
+目前仅支持RTMDet-R旋转目标检测器。
 
 ### 可视化器
 

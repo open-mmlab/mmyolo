@@ -7,6 +7,7 @@ MMYOLO 在 `Model Zoo <https://mmyolo.readthedocs.io/en/latest/model_zoo.html>`_
    :maxdepth: 1
 
    config.md
+   rotated_detection.md
 
 
 从入门到部署全流程
