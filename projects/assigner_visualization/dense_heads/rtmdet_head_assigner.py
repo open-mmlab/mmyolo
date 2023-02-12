@@ -25,15 +25,16 @@ class RTMHeadAssigner(RTMDetHead):
         extracted by the detection head.
 
         Args:
-            batch_gt_instances (Sequence[InstanceData]): Batch of
-                gt_instance. It usually includes ``bboxes`` and ``labels``
+            cls_scores (list[Tensor]): Box scores for each scale level
+                Has shape (N, num_anchors * num_classes, H, W)
+            bbox_preds (list[Tensor]): Decoded box for each scale
+                level with shape (N, num_anchors * 4, H, W) in
+                [tl_x, tl_y, br_x, br_y] format.
+            batch_gt_instances (list[:obj:`InstanceData`]): Batch of
+                gt_instance.  It usually includes ``bboxes`` and ``labels``
                 attributes.
-            batch_img_metas (Sequence[dict]): Meta information of each image,
-                e.g., image size, scaling factor, etc.
-            batch_gt_instances_ignore (list[:obj:`InstanceData`], optional):
-                Batch of gt_instances_ignore. It includes ``bboxes`` attribute
-                data that is ignored during training and testing.
-                Defaults to None.
+            batch_img_metas (list[dict]): Meta information of each image, e.g.,
+                image size, scaling factor, etc.
             inputs_hw (Union[Tensor, tuple]): Height and width of inputs size.
         Returns:
             dict[str, Tensor]: A dictionary of assigning results.
