@@ -275,6 +275,8 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                 grid_y_inds = assign_results_prior['grid_y_inds']
                 class_inds = assign_results_prior['class_inds']
                 prior_ind = assign_results_prior['prior_ind']
+                offset = assign_results_prior.get('offset', 0.5)
+
                 if show_prior:
                     self.draw_prior(grid_x_inds, grid_y_inds, class_inds,
                                     stride, feat_ind, prior_ind)
@@ -287,7 +289,7 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                 # draw positive
                 self.draw_positive_assign(grid_x_inds, grid_y_inds, class_inds,
                                           stride, gt_instances.bboxes,
-                                          retained_gt_inds)
+                                          retained_gt_inds, offset)
 
                 # draw title
                 if self.priors_size is not None:
