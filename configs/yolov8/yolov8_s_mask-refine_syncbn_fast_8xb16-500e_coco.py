@@ -70,7 +70,9 @@ train_pipeline_stage2 = [
         max_shear_degree=0.0,
         scaling_ratio_range=(1 - _base_.affine_scale, 1 + _base_.affine_scale),
         max_aspect_ratio=_base_.max_aspect_ratio,
-        border_val=(114, 114, 114)), *last_transform
+        border_val=(114, 114, 114),
+        min_area_ratio=min_area_ratio,
+        use_mask_refine=use_mask2refine), *last_transform
 ]
 
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
