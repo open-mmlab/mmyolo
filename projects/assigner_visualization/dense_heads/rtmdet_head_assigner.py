@@ -7,6 +7,7 @@ from mmdet.utils import InstanceList
 from torch import Tensor
 
 from mmyolo.models import RTMDetHead
+from mmyolo.models.utils import gt_instances_preprocess
 from mmyolo.registry import MODELS
 
 
@@ -43,7 +44,7 @@ class RTMHeadAssigner(RTMDetHead):
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.prior_generator.num_levels
 
-        gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
+        gt_info = gt_instances_preprocess(batch_gt_instances, num_imgs)
         gt_labels = gt_info[:, :, :1]
         gt_bboxes = gt_info[:, :, 1:]  # xyxy
         pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
