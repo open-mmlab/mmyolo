@@ -4,7 +4,6 @@ from unittest import TestCase
 import torch
 from mmengine.config import Config
 from mmengine.model import bias_init_with_prob
-from mmengine.structures import InstanceData
 from mmengine.testing import assert_allclose
 
 from mmyolo.models.dense_heads import YOLOXHead
@@ -98,11 +97,10 @@ class TestYOLOXHead(TestCase):
 
         # Test that empty ground truth encourages the network to predict
         # background
-        gt_instances = InstanceData(
-            bboxes=torch.empty((0, 4)), labels=torch.LongTensor([]))
+        gt_instances = torch.empty((0, 6))
 
         empty_gt_losses = head.loss_by_feat(cls_scores, bbox_preds,
-                                            objectnesses, [gt_instances],
+                                            objectnesses, gt_instances,
                                             img_metas)
         # When there is no truth, the cls loss should be nonzero but there
         # should be no box loss.
@@ -122,12 +120,11 @@ class TestYOLOXHead(TestCase):
         # for random inputs
         head = YOLOXHead(head_module=self.head_module, train_cfg=train_cfg)
         head.use_bbox_aux = True
-        gt_instances = InstanceData(
-            bboxes=torch.Tensor([[23.6667, 23.8757, 238.6326, 151.8874]]),
-            labels=torch.LongTensor([2]))
+        gt_instances = torch.Tensor(
+            [[0, 2, 23.6667, 23.8757, 238.6326, 151.8874]])
 
         one_gt_losses = head.loss_by_feat(cls_scores, bbox_preds, objectnesses,
-                                          [gt_instances], img_metas)
+                                          gt_instances, img_metas)
         onegt_cls_loss = one_gt_losses['loss_cls'].sum()
         onegt_box_loss = one_gt_losses['loss_bbox'].sum()
         onegt_obj_loss = one_gt_losses['loss_obj'].sum()
@@ -142,11 +139,10 @@ class TestYOLOXHead(TestCase):
                            'l1 loss should be non-zero')
 
         # Test groud truth out of bound
-        gt_instances = InstanceData(
-            bboxes=torch.Tensor([[s * 4, s * 4, s * 4 + 10, s * 4 + 10]]),
-            labels=torch.LongTensor([2]))
+        gt_instances = torch.Tensor(
+            [[0, 2, s * 4, s * 4, s * 4 + 10, s * 4 + 10]])
         empty_gt_losses = head.loss_by_feat(cls_scores, bbox_preds,
-                                            objectnesses, [gt_instances],
+                                            objectnesses, gt_instances,
                                             img_metas)
         # When gt_bboxes out of bound, the assign results should be empty,
         # so the cls and bbox loss should be zero.

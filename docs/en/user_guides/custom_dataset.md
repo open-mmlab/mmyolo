@@ -1165,7 +1165,7 @@ docker load < /path/to/mmyolo-deploy.tar
 ### 11.2 Using `projects/easydeploy` to deploy
 
 ```{SeeAlso}
-See [deployment documentation](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README_en.md) for details.
+See [deployment documentation](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy/README.md) for details.
 ```
 
 TODO: This part will be improved in the next version...

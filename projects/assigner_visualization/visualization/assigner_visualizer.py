@@ -175,7 +175,7 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
 
         # The PALETTE in the dataset_meta is required
         assert self.dataset_meta is not None
-        palette = self.dataset_meta['PALETTE']
+        palette = self.dataset_meta['palette']
         x = ((grid_x_inds + offset) * stride).long()
         y = ((grid_y_inds + offset) * stride).long()
         center = torch.stack((x, y), dim=-1)
@@ -218,12 +218,17 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                 with corresponding stride. Defaults to 0.5.
         """
 
-        palette = self.dataset_meta['PALETTE']
+        palette = self.dataset_meta['palette']
         center_x = ((grid_x_inds + offset) * stride)
         center_y = ((grid_y_inds + offset) * stride)
         xyxy = torch.stack((center_x, center_y, center_x, center_y), dim=1)
-        assert self.priors_size is not None
-        xyxy += self.priors_size[feat_ind][prior_ind]
+        device = xyxy.device
+        if self.priors_size is not None:
+            xyxy += self.priors_size[feat_ind][prior_ind].to(device)
+        else:
+            xyxy += torch.tensor(
+                [[-stride / 2, -stride / 2, stride / 2, stride / 2]],
+                device=device)
 
         colors = [palette[i] for i in class_inds]
         self.draw_bboxes(
@@ -284,7 +289,10 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                                           retained_gt_inds)
 
                 # draw title
-                base_prior = self.priors_size[feat_ind][prior_ind]
+                if self.priors_size is not None:
+                    base_prior = self.priors_size[feat_ind][prior_ind]
+                else:
+                    base_prior = [stride, stride, stride * 2, stride * 2]
                 prior_size = (base_prior[2] - base_prior[0],
                               base_prior[3] - base_prior[1])
                 pos = np.array((20, 20))
