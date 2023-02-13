@@ -672,8 +672,8 @@ class YOLOv5RandomAffine(BaseTransform):
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
                                                     bboxes).numpy()
                 if 'gt_masks' in results:
-                    results['gt_masks'] = PolygonMasks(results['gt_masks'],
-                                                       img_h, img_w)
+                    results['gt_masks'] = PolygonMasks(
+                        results['gt_masks'].masks, img_h, img_w)
 
             results['gt_bboxes'] = bboxes[valid_index]
             results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
