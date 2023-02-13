@@ -243,8 +243,7 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                     assign_results: List[List[dict]],
                     gt_instances: InstanceData,
                     show_prior: bool = False,
-                    not_show_label: bool = False,
-                    axis: int = 0) -> np.ndarray:
+                    not_show_label: bool = False) -> np.ndarray:
         """Draw assigning results.
 
         Args:
@@ -279,7 +278,7 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
 
                 if show_prior:
                     self.draw_prior(grid_x_inds, grid_y_inds, class_inds,
-                                    stride, feat_ind, prior_ind)
+                                    stride, feat_ind, prior_ind, offset)
 
                 # draw matched gt
                 retained_gt_inds = assign_results_prior['retained_gt_inds']
@@ -319,8 +318,10 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                 img_show = self.get_image()
                 img_show = mmcv.impad(img_show, padding=(5, 5, 5, 5))
                 img_show_list_feat.append(img_show)
-            img_show_list.append(
-                np.concatenate(img_show_list_feat, axis=1 - axis))
+            img_show_list.append(np.concatenate(img_show_list_feat, axis=1))
 
         # Merge all images into one image
+        h, w = img_show.shape[:2]
+        num_priors_per_feat = img_show_list[0].shape[1] // w
+        axis = 0 if num_priors_per_feat > 1 else 1
         return np.concatenate(img_show_list, axis=axis)
