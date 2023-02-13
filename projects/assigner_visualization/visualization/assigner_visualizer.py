@@ -243,7 +243,8 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                     assign_results: List[List[dict]],
                     gt_instances: InstanceData,
                     show_prior: bool = False,
-                    not_show_label: bool = False) -> np.ndarray:
+                    not_show_label: bool = False,
+                    axis: int = 0) -> np.ndarray:
         """Draw assigning results.
 
         Args:
@@ -316,7 +317,8 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                 img_show = self.get_image()
                 img_show = mmcv.impad(img_show, padding=(5, 5, 5, 5))
                 img_show_list_feat.append(img_show)
-            img_show_list.append(np.concatenate(img_show_list_feat, axis=1))
+            img_show_list.append(
+                np.concatenate(img_show_list_feat, axis=1 - axis))
 
         # Merge all images into one image
-        return np.concatenate(img_show_list, axis=0)
+        return np.concatenate(img_show_list, axis=axis)

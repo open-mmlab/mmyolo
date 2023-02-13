@@ -151,8 +151,13 @@ def main():
 
         gt_instances = data['data_samples'].gt_instances
 
-        img_show = visualizer.draw_assign(img, assign_results, gt_instances,
-                                          args.show_prior, args.not_show_label)
+        img_show = visualizer.draw_assign(
+            img,
+            assign_results,
+            gt_instances,
+            args.show_prior,
+            args.not_show_label,
+            axis=1)
 
         if hasattr(data['data_samples'], 'img_path'):
             filename = osp.basename(data['data_samples'].img_path)
