@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import List
+from typing import List, Union
 
 import torch
 from mmdet.utils import InstanceList
@@ -12,10 +12,15 @@ from mmyolo.registry import MODELS
 @MODELS.register_module()
 class YOLOv7HeadAssigner(YOLOv7Head):
 
-    def assign_by_gt_and_feat(self, cls_scores: List[Tensor],
-                              bbox_preds: List[Tensor], objectnesses,
-                              batch_gt_instances: InstanceList,
-                              batch_img_metas: List[dict]) -> dict:
+    def assign_by_gt_and_feat(
+        self,
+        cls_scores: List[Tensor],
+        bbox_preds: List[Tensor],
+        objectnesses: List[Tensor],
+        batch_gt_instances: InstanceList,
+        batch_img_metas: List[dict],
+        inputs_hw: Union[Tensor, tuple],
+    ) -> dict:
         """Calculate the assigning results based on the gt and features
         extracted by the detection head.
         Args:
@@ -33,6 +38,7 @@ class YOLOv7HeadAssigner(YOLOv7Head):
                 attributes.
             batch_img_metas (list[dict]): Meta information of each image, e.g.,
                 image size, scaling factor, etc.
+            inputs_hw (Union[Tensor, tuple]): Height and width of inputs size.
         Returns:
             dict[str, Tensor]: A dictionary of assigning results.
         """
@@ -115,29 +121,29 @@ class YOLOv7HeadAssigner(YOLOv7Head):
                 dim=1) == 7).nonzero().squeeze()
         return gt_inds
 
-    def assign(self, x: List[Tensor], batch_gt_instances: InstanceList,
-               batch_img_metas: List[dict]) -> dict:
+    def assign(self, batch_data_samples: Union[list, dict],
+               inputs_hw: Union[tuple, torch.Size]) -> dict:
         """Calculate assigning results.
 
         This function is provided to the
         `assigner_visualization.py` script.
         Args:
-           x (Tuple[Tensor]): Features from the upstream network, each is
-                a 4D-tensor.
-           batch_gt_instances (list[:obj:`InstanceData`]): Batch of
-                gt_instance. It usually includes ``bboxes`` and ``labels``
-                attributes.
-           batch_img_metas (list[dict]): Meta information of each image, e.g.,
-                image size, scaling factor, etc.
+            batch_data_samples (List[:obj:`DetDataSample`], dict): The Data
+                Samples. It usually includes information such as
+                `gt_instance`, `gt_panoptic_seg` and `gt_sem_seg`.
+            inputs_hw: Height and width of inputs size
         Returns:
             dict: A dictionary of assigning components.
         """
-        if isinstance(x, list):
-            raise NotImplementedError
+        if isinstance(batch_data_samples, list):
+            raise NotImplementedError(
+                'assigning results_list is not implemented')
         else:
             # Fast version
-            cls_scores, bbox_preds, objectnesses = self(x)
+            cls_scores, bbox_preds, objectnesses = self(
+                batch_data_samples['feats'])
             assign_inputs = (cls_scores, bbox_preds, objectnesses,
-                             batch_gt_instances, batch_img_metas)
+                             batch_data_samples['bboxes_labels'],
+                             batch_data_samples['img_metas'], inputs_hw)
         assign_results = self.assign_by_gt_and_feat(*assign_inputs)
         return assign_results
