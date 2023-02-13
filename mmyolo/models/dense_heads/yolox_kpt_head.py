@@ -263,6 +263,7 @@ class YOLOXKptHead(YOLOv5Head):
                      offset=0,
                      strides=[8, 16, 32]),
                  bbox_coder: ConfigType = dict(type='YOLOXBBoxCoder'),
+                 kpt_coder: ConfigType = dict(type='YOLOXKptCoder'),
                  loss_cls: ConfigType = dict(
                      type='mmdet.CrossEntropyLoss',
                      use_sigmoid=True,
@@ -301,6 +302,7 @@ class YOLOXKptHead(YOLOv5Head):
             init_cfg=init_cfg)
         self.loss_kpt = MODELS.build(loss_kpt)
         self.num_keypoints = head_module['num_keypoints']
+        self.kpt_coder = TASK_UTILS.build(kpt_coder)
 
     def special_init(self):
         """Since YOLO series algorithms will inherit from YOLOv5Head, but
@@ -398,7 +400,11 @@ class YOLOXKptHead(YOLOv5Head):
                                                 flatten_bbox_preds,
                                                 flatten_priors[..., 2])
         flatten_kpt_preds = torch.cat(flatten_kpt_preds, dim=1)
+        flatten_kpts = self.kpt_coder.decode(flatten_priors[..., :2],
+                                             flatten_kpt_preds,
+                                             flatten_priors[..., 2])
         flatten_vis_preds = torch.cat(flatten_vis_preds, dim=1)
+        flatten_kpt_vis_preds = torch.cat([flatten_kpts, flatten_vis_preds[..., None]], dim=-1)
 
         (pos_masks, cls_targets, obj_targets, bbox_targets, kpt_vis_targets, bbox_aux_target,
          num_fg_imgs) = multi_apply(
@@ -434,6 +440,12 @@ class YOLOXKptHead(YOLOv5Head):
             loss_bbox = self.loss_bbox(
                 flatten_bboxes.view(-1, 4)[pos_masks],
                 bbox_targets) / num_total_samples
+            loss_kpt = self.loss_kpt(
+                flatten_kpt_vis_preds.view(-1, self.num_keypoints, 3)[pos_masks],
+                kpt_vis_targets) / num_total_samples
+            loss_vis = self.loss_cls(
+                flatten_vis_preds.view(-1, self.num_keypoints)[pos_masks],
+                vis_targets) / num_total_samples
         else:
             # Avoid cls and reg branch not participating in the gradient
             # propagation when there is no ground-truth in the images.
@@ -441,9 +453,11 @@ class YOLOXKptHead(YOLOv5Head):
             # https://github.com/open-mmlab/mmdetection/issues/7298
             loss_cls = flatten_cls_preds.sum() * 0
             loss_bbox = flatten_bboxes.sum() * 0
+            loss_kpt = flatten_kpt_preds.sum() * 0
+            loss_vis = flatten_vis_preds.sum() * 0
 
         loss_dict = dict(
-            loss_cls=loss_cls, loss_bbox=loss_bbox, loss_obj=loss_obj)
+            loss_cls=loss_cls, loss_bbox=loss_bbox, loss_obj=loss_obj, loss_kpt=loss_kpt, loss_vis=loss_vis)
 
         if self.use_bbox_aux:
             if num_pos > 0:
@@ -528,7 +542,7 @@ class YOLOXKptHead(YOLOv5Head):
         if num_gts == 0:
             cls_target = cls_preds.new_zeros((0, self.num_classes))
             bbox_target = cls_preds.new_zeros((0, 4))
-            kpt_target = cls_preds.new_zeros((0, self.num_keypoints * 3))
+            kpt_target = cls_preds.new_zeros((0, self.num_keypoints, 3))
             bbox_aux_target = cls_preds.new_zeros((0, 4))
             obj_target = cls_preds.new_zeros((num_priors, 1))
             foreground_mask = cls_preds.new_zeros(num_priors).bool()

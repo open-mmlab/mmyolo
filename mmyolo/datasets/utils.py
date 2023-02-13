@@ -6,6 +6,7 @@ import torch
 from mmengine.dataset import COLLATE_FUNCTIONS
 from mmpose.datasets.datasets.utils import parse_pose_metainfo
 from mmpose.structures.keypoint.transforms import flip_keypoints
+from mmpose.evaluation.functional.nms import oks_iou
 
 from ..registry import TASK_UTILS
 
@@ -226,3 +227,21 @@ class Keypoints:
         kpt[..., :2] = keypoints
         kpt[..., 2] = keypoints_vis
         return kpt
+
+    @classmethod
+    def _kpt_area(self, kpt):
+        """
+        _kpt_area keypoints' rectangle's area.
+
+        Maximum external rectangle area.
+
+        Args:
+            kpt (numpy.ndarray or Tensor): shape N x num_kps x dimension.
+        """
+        assert kpt.shape[-1] == 3
+        kpt = kpt[..., :2]
+        x_min = kpt[..., 0].min(dim=-1)[0]
+        x_max = kpt[..., 0].max(dim=-1)[0]
+        y_min = kpt[..., 1].min(dim=-1)[0]
+        y_max = kpt[..., 1].max(dim=-1)[0]
+        return (x_max - x_min) * (y_max - y_min)
