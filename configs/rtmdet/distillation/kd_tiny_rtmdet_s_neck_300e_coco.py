@@ -86,7 +86,7 @@ custom_hooks = [
         priority=49),
     dict(
         type='mmdet.PipelineSwitchHook',
-        switch_epoch=_base_.max_epochs - _base_.stage2_num_epochs,
+        switch_epoch=_base_.max_epochs - _base_.num_epochs_stage2,
         switch_pipeline=_base_.train_pipeline_stage2),
     dict(type='mmrazor.DistillationLossDetachHook', detach_epoch=280)
 ]
