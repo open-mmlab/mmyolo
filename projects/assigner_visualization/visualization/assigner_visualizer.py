@@ -274,9 +274,11 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                 grid_y_inds = assign_results_prior['grid_y_inds']
                 class_inds = assign_results_prior['class_inds']
                 prior_ind = assign_results_prior['prior_ind']
+                offset = assign_results_prior.get('offset', 0.5)
+
                 if show_prior:
                     self.draw_prior(grid_x_inds, grid_y_inds, class_inds,
-                                    stride, feat_ind, prior_ind)
+                                    stride, feat_ind, prior_ind, offset)
 
                 # draw matched gt
                 retained_gt_inds = assign_results_prior['retained_gt_inds']
@@ -286,7 +288,7 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                 # draw positive
                 self.draw_positive_assign(grid_x_inds, grid_y_inds, class_inds,
                                           stride, gt_instances.bboxes,
-                                          retained_gt_inds)
+                                          retained_gt_inds, offset)
 
                 # draw title
                 if self.priors_size is not None:
@@ -319,4 +321,7 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
             img_show_list.append(np.concatenate(img_show_list_feat, axis=1))
 
         # Merge all images into one image
-        return np.concatenate(img_show_list, axis=0)
+        h, w = img_show.shape[:2]
+        num_priors_per_feat = img_show_list[0].shape[1] // w
+        axis = 0 if num_priors_per_feat > 1 else 1
+        return np.concatenate(img_show_list, axis=axis)
