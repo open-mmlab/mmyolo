@@ -58,8 +58,9 @@ class YOLOv7HeadAssigner(YOLOv7Head):
             self.priors_base_sizes,
             self.grid_offset,
             near_neighbor_thr=self.near_neighbor_thr)
-
+        # multi-level positive sample position.
         mlvl_positive_infos = assigner_results['mlvl_positive_infos']
+        # assigned results with label and bboxes information.
         mlvl_targets_normed = assigner_results['mlvl_targets_normed']
 
         assign_results = []
@@ -113,8 +114,16 @@ class YOLOv7HeadAssigner(YOLOv7Head):
         return assign_results
 
     def get_gt_inds(self, assigned_target, gt_instance):
-        #  Judging which one gt_ind is assigned by comparing
-        #  assign_target and origin target
+        """Judging which one gt_ind is assigned by comparing assign_target and
+        origin target.
+
+        Args:
+           assigned_target (Tensor(assign_nums,7)): YOlOv7 assigning results.
+           gt_instance (Tensor(gt_nums,7)):  Normalized gt_instance, It
+                usually includes ``bboxes`` and ``labels`` attributes.
+        Returns:
+           gt_inds (Tensor): the index which one gt is assigned.
+        """
         gt_inds = torch.zeros(assigned_target.shape[0])
         for i in range(assigned_target.shape[0]):
             gt_inds[i] = ((assigned_target[i] == gt_instance).sum(
