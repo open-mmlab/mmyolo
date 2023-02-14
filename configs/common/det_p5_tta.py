@@ -4,6 +4,16 @@ tta_model = dict(
 
 img_scales = [(640, 640), (320, 320), (960, 960)]
 
+#                                LoadImageFromFile
+#                     /                 |                     \
+# (RatioResize,LetterResize) (RatioResize,LetterResize) (RatioResize,LetterResize) # noqa
+#        /      \                    /      \                    /        \
+#  RandomFlip RandomFlip      RandomFlip RandomFlip        RandomFlip RandomFlip # noqa
+#      |          |                |         |                  |         |
+#  LoadAnn    LoadAnn           LoadAnn    LoadAnn           LoadAnn    LoadAnn
+#      |          |                |         |                  |         |
+#  PackDetIn  PackDetIn         PackDetIn  PackDetIn        PackDetIn  PackDetIn # noqa
+
 tta_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=dict(backend='disk')),
     dict(
