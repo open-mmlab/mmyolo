@@ -1,5 +1,9 @@
 _base_ = './yolov8_s_mask-refine_syncbn_fast_8xb16-500e_coco.py'
 
+# This config use refining bbox and `YOLOv5CopyPaste`.
+# Refining bbox means refining bbox by mask while loading annotations and
+# transforming after `YOLOv5RandomAffine`
+
 # ========================modified parameters======================
 deepen_factor = 0.67
 widen_factor = 0.75

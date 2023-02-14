@@ -1,5 +1,8 @@
 _base_ = './yolov8_s_syncbn_fast_8xb16-500e_coco.py'
 
+# This config will refine bbox by mask while loading annotations and
+# transforming after `YOLOv5RandomAffine`
+
 # ========================modified parameters======================
 use_mask2refine = True
 min_area_ratio = 0.01  # YOLOv5RandomAffine
@@ -15,7 +18,8 @@ pre_transform = [
 ]
 
 last_transform = [
-    dict(type='RemoveDataElement', keys=['gt_masks']),  # note
+    # Delete gt_masks to avoid more computation
+    dict(type='RemoveDataElement', keys=['gt_masks']),
     dict(
         type='mmdet.Albu',
         transforms=_base_.albu_train_transform,
