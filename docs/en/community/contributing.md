@@ -37,9 +37,10 @@ Then, you can clone the repositories to local:
 git clone git@github.com:{username}/mmyolo.git
 ```
 
-After that, you should add official repository as the upstream repository.
+After that, you should get into the project folder and add official repository as the upstream repository.
 
 ```bash
+cd mmyolo
 git remote add upstream git@github.com:open-mmlab/mmyolo
 ```
 
@@ -88,7 +89,7 @@ If the code does not conform to the code style specification, pre-commit will ra
 
 <img src="https://user-images.githubusercontent.com/57566630/202369176-67642454-0025-4023-a095-263529107aa3.png" width="1200">
 
-If we want to commit our code bypassing the pre-commit hook, we can use the `--no-verify` option(**only for temporarily commit**.
+If we want to commit our code bypassing the pre-commit hook, we can use the `--no-verify` option(**only for temporarily commit**).
 
 ```shell
 git commit -m "xxx" --no-verify
@@ -142,15 +143,19 @@ This will allow you to use the `git push` command to push code directly next tim
 
 <img src="https://user-images.githubusercontent.com/27466624/204302289-d1e54901-8f27-4934-923f-fda800ff9851.png" width="1200">
 
-(2) Modify the PR description according to the guidelines so that other developers can better understand your changes
+(2) Modify the PR description according to the guidelines so that other developers can better understand your changes.
 
-<img src="https://user-images.githubusercontent.com/27466624/204303311-84456397-ee41-44f9-945c-85ce415da235.png" width="1200">
+```{note}
+The *base* branch should be modified to *dev* branch.
+```
+
+<img src="https://user-images.githubusercontent.com/62822224/216594960-a2292b9d-2b7c-4861-b4c5-362a9458b194.png" width="1200">
 
 Find more details about Pull Request description in [pull request guidelines](#pr-specs).
 
 **note**
 
-(a) The Pull Request description should contain the reason for the change, the content of the change, and the impact of the change, and be associated with the relevant Issue (see [documentation](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue)
+(a) The Pull Request description should contain the reason for the change, the content of the change, and the impact of the change, and be associated with the relevant Issue (see [documentation](https://docs.github.com/en/issues/tracking-your-work-with-issues/linking-a-pull-request-to-an-issue))
 
 (b) If it is your first contribution, please sign the CLA
 
