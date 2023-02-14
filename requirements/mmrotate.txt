@@ -1,1 +1,1 @@
-git+https://github.com/open-mmlab/mmrotate.git@dev-1.x#egg=mmrotate
+mmrotate>=1.0.0rc1

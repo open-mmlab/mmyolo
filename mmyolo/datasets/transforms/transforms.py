@@ -1090,7 +1090,9 @@ class RegularizeRotatedBox(BaseTransform):
             from mmrotate.structures.bbox import RotatedBoxes
             self.box_type = RotatedBoxes
         except ImportError:
-            raise ImportError('MMRotate is not installed.')
+            raise ImportError(
+                'Please run "mim install -r requirements/mmrotate.txt" '
+                'to install mmrotate first for rotated detection.')
 
     def transform(self, results: dict) -> dict:
         assert isinstance(results['gt_bboxes'], self.box_type)

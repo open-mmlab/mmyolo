@@ -210,7 +210,10 @@ class RotatedRTMDetHead(RTMDetHead):
             test_cfg: OptConfigType = None,
             init_cfg: OptMultiConfig = None):
         if not MMROTATE_AVAILABLE:
-            raise ImportError('MMRotate is not installed.')
+            raise ImportError(
+                'Please run "mim install -r requirements/mmrotate.txt" '
+                'to install mmrotate first for rotated detection.')
+
         self.angle_version = angle_version
         self.use_hbbox_loss = use_hbbox_loss
         self.angle_coder = TASK_UTILS.build(angle_coder)

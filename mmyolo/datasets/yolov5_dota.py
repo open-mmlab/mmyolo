@@ -22,5 +22,8 @@ class YOLOv5DOTADataset(BatchShapePolicyDataset, DOTADataset):
 
     def __init__(self, *args, **kwargs):
         if not MMROTATE_AVAILABLE:
-            raise ImportError('MMRotate is not installed.')
+            raise ImportError(
+                'Please run "mim install -r requirements/mmrotate.txt" '
+                'to install mmrotate first for rotated detection.')
+
         super().__init__(*args, **kwargs)

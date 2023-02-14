@@ -25,7 +25,10 @@ class DistanceAnglePointCoder(MMROTATE_DistanceAnglePointCoder):
 
     def __init__(self, clip_border=True, angle_version='oc'):
         if not MMROTATE_AVAILABLE:
-            raise ImportError('MMRotate is not installed.')
+            raise ImportError(
+                'Please run "mim install -r requirements/mmrotate.txt" '
+                'to install mmrotate first for rotated detection.')
+
         super().__init__(clip_border=clip_border, angle_version=angle_version)
 
     def decode(

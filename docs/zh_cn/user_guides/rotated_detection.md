@@ -4,7 +4,7 @@
 
 关于旋转目标检测的详细介绍请参考文档 [MMRotate 基础知识](https://mmrotate.readthedocs.io/zh_CN/1.x/overview.html)
 
-MMYOLO 中的旋转目标检测依赖于 MMRotate 1.0，请参考文档 [开始你的第一步](https://mmrotate.readthedocs.io/zh_CN/1.x/get_started.html) 安装 MMRotate 1.0。
+MMYOLO 中的旋转目标检测依赖于 MMRotate 1.x，请参考文档 [开始你的第一步](https://mmrotate.readthedocs.io/zh_CN/1.x/get_started.html) 安装 MMRotate 1.0。
 
 本教程将介绍如何在 MMYOLO 中训练和使用旋转目标检测模型，目前支持了RTMDet-R。
 
@@ -32,7 +32,7 @@ MMYOLO 中的旋转目标检测依赖于 MMRotate 1.0，请参考文档 [开始�
 
 这里以 RTMDet-R 为例介绍旋转目标检测的配置文件，其中大部分和水平检测模型相同，主要介绍它们的差异，包括数据集和评测器配置、检测头、可视化等。
 
-得益于 MMEngine 的配置文件系统，大部分模块都可以调用MMRotate中的模块。
+得益于 MMEngine 的配置文件系统，大部分模块都可以调用 MMRotate 中的模块。
 
 ### 数据集和评测器配置
 

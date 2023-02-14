@@ -2,33 +2,60 @@ _base_ = '../../_base_/default_runtime.py'
 
 checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-l_8xb256-rsb-a1-600e_in1k-6a760974.pth'  # noqa
 
-data_root = '/datasets/dota_mmrotate_ss/'
-dataset_type = 'YOLOv5DOTADataset'
+# ========================Frequently modified parameters======================
+# -----data related-----
+data_root = 'datasets/split_ss_dota/'
+# Path of train annotation folder
+train_ann_file = 'trainval/annfiles/'
+train_data_prefix = 'trainval/images/'  # Prefix of train image path
+# Path of val annotation folder
+val_ann_file = 'trainval/annfiles/'
+val_data_prefix = 'trainval/images/'  # Prefix of val image path
+# Path of test images folder
+test_data_prefix = 'test/images/'
 
-img_scale = (1024, 1024)  # width, height
-deepen_factor = 1.0
-widen_factor = 1.0
-max_epochs = 36
-interval = 12
-num_classes = 15
-angle_version = 'le90'
-
-train_batch_size_per_gpu = 8
-train_num_workers = 8
-val_batch_size_per_gpu = 8
-val_num_workers = 8
-# persistent_workers must be False if num_workers is 0.
-persistent_workers = True
-strides = [8, 16, 32]
-base_lr = 0.004 / 16
-
+# Submission dir for result submit
 submission_dir = './work_dirs/{{fileBasenameNoExtension}}/submission'
 
-# single-scale training is recommended to
-# be turned on, which can speed up training.
-env_cfg = dict(cudnn_benchmark=True)
+num_classes = 15  # Number of classes for classification
+# Batch size of a single GPU during training
+train_batch_size_per_gpu = 8
+# Worker to pre-fetch data for each single GPU during training
+train_num_workers = 8
+# persistent_workers must be False if num_workers is 0.
+persistent_workers = True
 
-# only on Val
+# -----train val related-----
+# Base learning rate for optim_wrapper. Corresponding to 1xb8=8 bs
+base_lr = 0.00025  # 0.004 / 16
+max_epochs = 36  # Maximum training epochs
+
+model_test_cfg = dict(
+    # The config of multi-label for multi-class prediction.
+    multi_label=True,
+    # Decode rbox with angle
+    decode_with_angle=True,
+    # The number of boxes before NMS
+    nms_pre=30000,
+    score_thr=0.05,  # Threshold to filter out boxes.
+    nms=dict(type='nms_rotated', iou_threshold=0.1),  # NMS type and threshold
+    max_per_img=2000)  # Max number of detections of each image
+
+# ========================Possible modified parameters========================
+# -----data related-----
+img_scale = (1024, 1024)  # width, height
+# ratio for random rotate
+random_rotate_ratio = 0.5
+# label ids for rect objs
+rotate_rect_obj_labels = [9, 11]
+# Dataset type, this will be used to define the dataset
+dataset_type = 'YOLOv5DOTADataset'
+# Batch size of a single GPU during validation
+val_batch_size_per_gpu = 8
+# Worker to pre-fetch data for each single GPU during validation
+val_num_workers = 8
+
+# Config of batch shapes. Only on val.
 batch_shapes_cfg = dict(
     type='BatchShapePolicy',
     batch_size=val_batch_size_per_gpu,
@@ -36,6 +63,35 @@ batch_shapes_cfg = dict(
     size_divisor=32,
     extra_pad_ratio=0.5)
 
+# -----model related-----
+# The scaling factor that controls the depth of the network structure
+deepen_factor = 1.0
+# The scaling factor that controls the width of the network structure
+widen_factor = 1.0
+# Strides of multi-scale prior box
+strides = [8, 16, 32]
+# The angle definition for model
+angle_version = 'le90'  # le90, le135, oc are available options
+
+norm_cfg = dict(type='BN')  # Normalization config
+
+# -----train val related-----
+lr_start_factor = 1.0e-5
+dsl_topk = 13  # Number of bbox selected in each level
+loss_cls_weight = 1.0
+loss_bbox_weight = 2.0
+qfl_beta = 2.0  # beta of QualityFocalLoss
+weight_decay = 0.05
+
+# Save model checkpoint and validation intervals
+save_checkpoint_intervals = 12
+# The maximum checkpoints to keep.
+max_keep_ckpts = 3
+# single-scale training is recommended to
+# be turned on, which can speed up training.
+env_cfg = dict(cudnn_benchmark=True)
+
+# ===============================Unmodified in most cases====================
 model = dict(
     type='YOLODetector',
     data_preprocessor=dict(
@@ -50,16 +106,10 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
         channel_attention=True,
-        norm_cfg=dict(type='BN'),
+        norm_cfg=norm_cfg,
         act_cfg=dict(type='SiLU', inplace=True),
-        # Since the checkpoint includes CUDA:0 data,
-        # it must be forced to set map_location.
-        # Once checkpoint is fixed, it can be removed.
         init_cfg=dict(
-            type='Pretrained',
-            prefix='backbone.',
-            checkpoint=checkpoint,
-            map_location='cpu')),
+            type='Pretrained', prefix='backbone.', checkpoint=checkpoint)),
     neck=dict(
         type='CSPNeXtPAFPN',
         deepen_factor=deepen_factor,
@@ -68,7 +118,7 @@ model = dict(
         out_channels=256,
         num_csp_blocks=3,
         expand_ratio=0.5,
-        norm_cfg=dict(type='BN'),
+        norm_cfg=norm_cfg,
         act_cfg=dict(type='SiLU', inplace=True)),
     bbox_head=dict(
         type='RotatedRTMDetHead',
@@ -79,7 +129,7 @@ model = dict(
             in_channels=256,
             stacked_convs=2,
             feat_channels=256,
-            norm_cfg=dict(type='BN'),
+            norm_cfg=norm_cfg,
             act_cfg=dict(type='SiLU', inplace=True),
             share_conv=True,
             pred_kernel_size=1,
@@ -91,10 +141,12 @@ model = dict(
         loss_cls=dict(
             type='mmdet.QualityFocalLoss',
             use_sigmoid=True,
-            beta=2.0,
-            loss_weight=1.0),
+            beta=qfl_beta,
+            loss_weight=loss_cls_weight),
         loss_bbox=dict(
-            type='mmrotate.RotatedIoULoss', mode='linear', loss_weight=2.0),
+            type='mmrotate.RotatedIoULoss',
+            mode='linear',
+            loss_weight=loss_bbox_weight),
         angle_version=angle_version,
         use_hbbox_loss=False,
         angle_coder=dict(type='mmrotate.PseudoAngleCoder'),
@@ -103,19 +155,12 @@ model = dict(
         assigner=dict(
             type='BatchRotatedDSLAssigner',
             num_classes=num_classes,
-            topk=13,
+            topk=dsl_topk,
             iou_calculator=dict(type='mmrotate.RBboxOverlaps2D')),
         allowed_border=-1,
         pos_weight=-1,
         debug=False),
-    test_cfg=dict(
-        multi_label=True,
-        decode_with_angle=True,
-        nms_pre=30000,
-        min_bbox_size=0,
-        score_thr=0.05,
-        nms=dict(type='nms_rotated', iou_threshold=0.1),
-        max_per_img=2000),
+    test_cfg=model_test_cfg,
 )
 
 train_pipeline = [
@@ -124,17 +169,17 @@ train_pipeline = [
     dict(
         type='mmrotate.ConvertBoxType',
         box_type_mapping=dict(gt_bboxes='rbox')),
-    dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
+    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
     dict(
         type='mmdet.RandomFlip',
         prob=0.75,
         direction=['horizontal', 'vertical', 'diagonal']),
     dict(
         type='mmrotate.RandomRotate',
-        prob=0.5,
+        prob=random_rotate_ratio,
         angle_range=180,
         rotate_type='mmrotate.Rotate',
-        rect_obj_labels=[9, 11]),
+        rect_obj_labels=rotate_rect_obj_labels),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(type='RegularizeRotatedBox', angle_version=angle_version),
     dict(type='mmdet.PackDetInputs')
@@ -142,10 +187,8 @@ train_pipeline = [
 
 val_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
-    dict(
-        type='mmdet.Pad', size=(1024, 1024),
-        pad_val=dict(img=(114, 114, 114))),
+    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
+    dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(
         type='LoadAnnotations',
         with_bbox=True,
@@ -162,10 +205,8 @@ val_pipeline = [
 
 test_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
-    dict(
-        type='mmdet.Pad', size=(1024, 1024),
-        pad_val=dict(img=(114, 114, 114))),
+    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
+    dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
@@ -182,8 +223,8 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='trainval/annfiles/',
-        data_prefix=dict(img_path='trainval/images/'),
+        ann_file=train_ann_file,
+        data_prefix=dict(img_path=train_data_prefix),
         img_shape=(1024, 1024),
         filter_cfg=dict(filter_empty_gt=True),
         pipeline=train_pipeline))
@@ -198,8 +239,8 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='trainval/annfiles/',
-        data_prefix=dict(img_path='trainval/images/'),
+        ann_file=val_ann_file,
+        data_prefix=dict(img_path=val_data_prefix),
         img_shape=(1024, 1024),
         test_mode=True,
         batch_shapes_cfg=batch_shapes_cfg,
@@ -208,35 +249,35 @@ val_dataloader = dict(
 val_evaluator = dict(type='mmrotate.DOTAMetric', metric='mAP')
 
 # Inference on val dataset
-# test_dataloader = val_dataloader
-# test_evaluator = val_evaluator
+test_dataloader = val_dataloader
+test_evaluator = val_evaluator
 
 # Inference on test dataset and format the output results
 # for submission. Note: the test set has no annotation.
-test_dataloader = dict(
-    batch_size=val_batch_size_per_gpu,
-    num_workers=val_num_workers,
-    persistent_workers=True,
-    drop_last=False,
-    sampler=dict(type='DefaultSampler', shuffle=False),
-    dataset=dict(
-        type=dataset_type,
-        data_root=data_root,
-        data_prefix=dict(img_path='test/images/'),
-        img_shape=(1024, 1024),
-        test_mode=True,
-        batch_shapes_cfg=batch_shapes_cfg,
-        pipeline=test_pipeline))
-test_evaluator = dict(
-    type='mmrotate.DOTAMetric',
-    format_only=True,
-    merge_patches=True,
-    outfile_prefix=submission_dir)
+# test_dataloader = dict(
+#     batch_size=val_batch_size_per_gpu,
+#     num_workers=val_num_workers,
+#     persistent_workers=True,
+#     drop_last=False,
+#     sampler=dict(type='DefaultSampler', shuffle=False),
+#     dataset=dict(
+#         type=dataset_type,
+#         data_root=data_root,
+#         data_prefix=dict(img_path=test_data_prefix),
+#         img_shape=(1024, 1024),
+#         test_mode=True,
+#         batch_shapes_cfg=batch_shapes_cfg,
+#         pipeline=test_pipeline))
+# test_evaluator = dict(
+#     type='mmrotate.DOTAMetric',
+#     format_only=True,
+#     merge_patches=True,
+#     outfile_prefix=submission_dir)
 
 # optimizer
 optim_wrapper = dict(
     type='OptimWrapper',
-    optimizer=dict(type='AdamW', lr=base_lr, weight_decay=0.05),
+    optimizer=dict(type='AdamW', lr=base_lr, weight_decay=weight_decay),
     paramwise_cfg=dict(
         norm_decay_mult=0, bias_decay_mult=0, bypass_duplicate=True))
 
@@ -244,7 +285,7 @@ optim_wrapper = dict(
 param_scheduler = [
     dict(
         type='LinearLR',
-        start_factor=1.0e-5,
+        start_factor=lr_start_factor,
         by_epoch=False,
         begin=0,
         end=1000),
@@ -263,8 +304,8 @@ param_scheduler = [
 default_hooks = dict(
     checkpoint=dict(
         type='CheckpointHook',
-        interval=interval,
-        max_keep_ckpts=3  # only keep latest 3 checkpoints
+        interval=save_checkpoint_intervals,
+        max_keep_ckpts=max_keep_ckpts  # only keep latest 3 checkpoints
     ))
 
 custom_hooks = [
@@ -278,7 +319,9 @@ custom_hooks = [
 ]
 
 train_cfg = dict(
-    type='EpochBasedTrainLoop', max_epochs=max_epochs, val_interval=interval)
+    type='EpochBasedTrainLoop',
+    max_epochs=max_epochs,
+    val_interval=save_checkpoint_intervals)
 
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
