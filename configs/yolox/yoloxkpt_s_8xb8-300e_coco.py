@@ -224,13 +224,15 @@ test_evaluator = val_evaluator
 
 # optimizer
 # default 8 gpu
+# NOTE: clip grad is necessary for training.
 base_lr = 0.01
 optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(
         type='SGD', lr=base_lr, momentum=0.9, weight_decay=5e-4,
         nesterov=True),
-    paramwise_cfg=dict(norm_decay_mult=0., bias_decay_mult=0.))
+    paramwise_cfg=dict(norm_decay_mult=0., bias_decay_mult=0.),
+    clip_grad=dict(max_norm=35, norm_type=2))
 
 # learning rate
 param_scheduler = [
