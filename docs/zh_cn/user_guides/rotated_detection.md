@@ -1,20 +1,20 @@
 # 旋转目标检测
 
-所谓旋转目标检测（Rotated Object Detection），又称为有向目标检测（Oriented Object Detection），试图在检测出目标位置的同时得到目标的方向信息。它通过重新定义目标表示形式，以及增加回归自由度数量的操作，实现旋转矩形、四边形甚至任意形状的目标检测。旋转目标检测在人脸识别、场景文字、遥感影像、自动驾驶、医学图像、机器人抓取等领域都有广泛应用。
+旋转目标检测（Rotated Object Detection），又称为有向目标检测（Oriented Object Detection），试图在检测出目标位置的同时得到目标的方向信息。它通过重新定义目标表示形式，以及增加回归自由度数量的操作，实现旋转矩形、四边形甚至任意形状的目标检测。旋转目标检测在人脸识别、场景文字、遥感影像、自动驾驶、医学图像、机器人抓取等领域都有广泛应用。
 
 关于旋转目标检测的详细介绍请参考文档 [MMRotate 基础知识](https://mmrotate.readthedocs.io/zh_CN/1.x/overview.html)
 
-MMYOLO 中的旋转目标检测依赖于MMRotate 1.0，请参考文档 [开始你的第一步](https://mmrotate.readthedocs.io/zh_CN/1.x/get_started.html) 安装MMRotate 1.0。
+MMYOLO 中的旋转目标检测依赖于 MMRotate 1.0，请参考文档 [开始你的第一步](https://mmrotate.readthedocs.io/zh_CN/1.x/get_started.html) 安装 MMRotate 1.0。
 
 本教程将介绍如何在 MMYOLO 中训练和使用旋转目标检测模型，目前支持了RTMDet-R。
 
 ## 数据集准备
 
-对于旋转目标检测数据集，目前最常用的数据集是DOTA数据集，由于DOTA数据集中的图像分辨率较大，因此需要进行切片处理，数据集准备请参考 [Preparing DOTA Dataset](https://github.com/open-mmlab/mmrotate/blob/1.x/tools/data/dota/README.md).
+对于旋转目标检测数据集，目前最常用的数据集是 DOTA 数据集，由于DOTA数据集中的图像分辨率较大，因此需要进行切片处理，数据集准备请参考 [Preparing DOTA Dataset](https://github.com/open-mmlab/mmrotate/blob/1.x/tools/data/dota/README.md).
 
 对于自定义数据集，我们建议将数据转换为 DOTA 格式并离线进行转换，如此您只需在数据转换后修改 config 的数据标注路径和类别即可。
 
-为了方便使用，我们同样提供了基于 COCO 格式的旋转标注格式，将多边形检测框储存在COCO标注的segmentation标签中，示例如下：
+为了方便使用，我们同样提供了基于 COCO 格式的旋转标注格式，将多边形检测框储存在 COCO 标注的 segmentation 标签中，示例如下：
 
 ```json
 {
@@ -30,7 +30,7 @@ MMYOLO 中的旋转目标检测依赖于MMRotate 1.0，请参考文档 [开始�
 
 ## 配置文件
 
-这里以RTMDet-R为例介绍旋转目标检测的配置文件，其中大部分和水平检测模型相同，主要介绍它们的差异，包括数据集和评测器配置、检测头、可视化等。
+这里以 RTMDet-R 为例介绍旋转目标检测的配置文件，其中大部分和水平检测模型相同，主要介绍它们的差异，包括数据集和评测器配置、检测头、可视化等。
 
 得益于 MMEngine 的配置文件系统，大部分模块都可以调用MMRotate中的模块。
 
@@ -89,13 +89,13 @@ train_dataloader = dict(
         pipeline=train_pipeline)) # 这是由之前创建的 train_pipeline 定义的数据处理流程
 ```
 
-RTMDet-R 保持论文内的配置，默认仅采用随机旋转增强，得益于BoxType设计，在数据增强阶段，大部分增强无需改动代码即可直接支持，例如MixUp和Mosaic等，可以直接在pipeline中使用。
+RTMDet-R 保持论文内的配置，默认仅采用随机旋转增强，得益于BoxType设计，在数据增强阶段，大部分增强无需改动代码即可直接支持，例如 MixUp 和 Mosaic 等，可以直接在 pipeline 中使用。
 
 ```{Warning}
-目前已知Albu数据增强仅支持水平框，在使用其他的数据增强时建议先使用 可视化数据集脚本 `browse_dataset.py` 验证数据增强是否正确。
+目前已知 Albu 数据增强仅支持水平框，在使用其他的数据增强时建议先使用 可视化数据集脚本 `browse_dataset.py` 验证数据增强是否正确。
 ```
 
-RTMDet-R 测试阶段仅采用Resize和Pad，在验证和评测时，都采用相同的数据流进行推理。
+RTMDet-R 测试阶段仅采用 Resize 和 Pad，在验证和评测时，都采用相同的数据流进行推理。
 
 ```python
 val_pipeline = [
@@ -149,7 +149,7 @@ val_evaluator = dict( # 验证过程使用的评测器
 test_evaluator = val_evaluator  # 测试过程使用的评测器
 ```
 
-由于DOTA测试数据集没有标注文件， 如果要保存在测试数据集上的检测结果，则可以像这样编写配置：
+由于 DOTA 测试数据集没有标注文件， 如果要保存在测试数据集上的检测结果，则可以像这样编写配置：
 
 ```python
 # 在测试集上推理，
@@ -175,7 +175,7 @@ test_evaluator = dict(
     outfile_prefix='./work_dirs/dota_detection/submission') # 输出测试文件夹的路径
 ```
 
-如果使用基于COCO格式的旋转框标注，只需要修改pipeline中数据读取流程和训练数据集的配置，以训练数据为例：
+如果使用基于 COCO 格式的旋转框标注，只需要修改 pipeline 中数据读取流程和训练数据集的配置，以训练数据为例：
 
 ```python
 
@@ -218,11 +218,13 @@ train_dataloader = dict(
 
 对于旋转目标检测器，在模型配置中 backbone 和 neck 的配置和其他模型是一致的，主要差异在检测头上。
 
-目前仅支持RTMDet-R旋转目标检测器。
+目前仅支持 RTMDet-R 旋转目标检测，下面介绍检测头中新增的参数：
+
+TODO
 
 ### 可视化器
 
-由于旋转框和水平框的差异，旋转目标检测模型需要使用MMRotate中的 `RotLocalVisualizer`，配置如下：
+由于旋转框和水平框的差异，旋转目标检测模型需要使用 MMRotate 中的 `RotLocalVisualizer`，配置如下：
 
 ```python
 vis_backends = [dict(type='LocalVisBackend')]  # 可视化后端，请参考 https://mmengine.readthedocs.io/zh_CN/latest/advanced_tutorials/visualization.html
