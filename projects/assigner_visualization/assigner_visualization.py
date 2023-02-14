@@ -16,7 +16,8 @@ from numpy import random
 
 from mmyolo.registry import DATASETS, MODELS
 from mmyolo.utils import register_all_modules
-from projects.assigner_visualization.dense_heads import (YOLOv5HeadAssigner,
+from projects.assigner_visualization.dense_heads import (RTMHeadAssigner,
+                                                         YOLOv5HeadAssigner,
                                                          YOLOv7HeadAssigner)
 from projects.assigner_visualization.visualization import \
     YOLOAssignerVisualizer
@@ -88,18 +89,20 @@ def main():
     model = MODELS.build(cfg.model)
     if args.checkpoint is not None:
         load_checkpoint(model, args.checkpoint)
-    else:
-        if isinstance(model.bbox_head, YOLOv7HeadAssigner):
-            warnings.warn(
-                'if you use dynamic_assignment methods such as yolov7 or '
-                'rtmdet assigner, please load the checkpoint.')
+    elif isinstance(model.bbox_head, (YOLOv7HeadAssigner, RTMHeadAssigner)):
+        warnings.warn(
+            'if you use dynamic_assignment methods such as YOLOv7 or '
+            'RTMDet assigner, please load the checkpoint.')
     assert isinstance(model.bbox_head, (YOLOv5HeadAssigner,
-                                        YOLOv7HeadAssigner)), \
-        'Now, this script only support yolov5 and yolov7, and ' \
+                                        YOLOv7HeadAssigner,
+                                        RTMHeadAssigner)), \
+        'Now, this script only support YOLOv5, YOLOv7 and RTMdet, and ' \
         'bbox_head must use ' \
-        '`YOLOv5HeadAssigner or YOLOv7HeadAssigner`. Please use `' \
+        '`YOLOv5HeadAssigner or YOLOv7HeadAssigner or RTMHeadAssigner`.' \
+        ' Please use `' \
         'yolov5_s-v61_syncbn_fast_8xb16-300e_coco_assignervisualization.py' \
         'or yolov7_tiny_syncbn_fast_8x16b-300e_coco_assignervisualization.py' \
+        'or rtmdet_s_syncbn_fast_8xb32-300e_coco_assignervisualization.py' \
         """` as config file."""
     model.eval()
     model.to(args.device)
@@ -121,7 +124,9 @@ def main():
         }], name='visualizer')
     visualizer.dataset_meta = dataset.metainfo
     # need priors size to draw priors
-    visualizer.priors_size = model.bbox_head.prior_generator.base_anchors
+
+    if hasattr(model.bbox_head.prior_generator, 'base_anchors'):
+        visualizer.priors_size = model.bbox_head.prior_generator.base_anchors
 
     # make output dir
     os.makedirs(args.output_dir, exist_ok=True)
@@ -134,7 +139,10 @@ def main():
     progress_bar = ProgressBar(display_number)
     for ind_img in range(display_number):
         data = dataset.prepare_data(ind_img)
-
+        if data is None:
+            print('Unable to visualize {} due to strong data augmentations'.
+                  format(dataset[ind_img]['data_samples'].img_path))
+            continue
         # convert data to batch format
         batch_data = collate_fn([data])
         with torch.no_grad():
