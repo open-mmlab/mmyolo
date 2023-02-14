@@ -8,7 +8,7 @@ This project demonstrates how to inference MMYOLO models with customized parsers
 
 First, please follow the official documents and instructions to install dedicated Nvidia graphic driver and CUDA matched to your gpu and target Nvidia AIoT devices.
 
-### 2. Install DeepStream
+### 2. Install DeepStream SDK
 
 Second, please follow the official instruction to download and install DeepStream SDK. Currently stable version of DeepStream is v6.2.
 
@@ -33,6 +33,8 @@ deepstream-app -c deepstream_app_config.txt
 ```
 
 ## Performance
+
+TODO
 
 ## Code Structure
 
