@@ -223,12 +223,12 @@ class YOLOXKptHeadModule(BaseModule):
 
         cls_feat = cls_convs(x)
         reg_feat = reg_convs(x)
-        kpt_feat = kpt_convs(x)
 
         cls_score = conv_cls(cls_feat)
         bbox_pred = conv_reg(reg_feat)
         objectness = conv_obj(reg_feat)
 
+        kpt_feat = kpt_convs(x)
         kpt_pred = conv_kpt(kpt_feat)
         vis_pred = conv_vis(kpt_feat)
 
@@ -428,6 +428,7 @@ class YOLOXKptHead(YOLOv5Head):
         bbox_targets = torch.cat(bbox_targets, 0)
         kpt_vis_targets = torch.cat(kpt_vis_targets, 0)
         kpt_targets, vis_targets = kpt_vis_targets[..., :2], kpt_vis_targets[..., 2]
+        kpt_mask = vis_targets > 0
         if self.use_bbox_aux:
             bbox_aux_target = torch.cat(bbox_aux_target, 0)
 
@@ -442,10 +443,10 @@ class YOLOXKptHead(YOLOv5Head):
                 bbox_targets) / num_total_samples
             loss_kpt = self.loss_kpt(
                 flatten_kpt_vis_preds.view(-1, self.num_keypoints, 3)[pos_masks],
-                kpt_vis_targets) / num_total_samples
+                kpt_vis_targets)
             loss_vis = self.loss_cls(
                 flatten_vis_preds.view(-1, self.num_keypoints)[pos_masks],
-                vis_targets) / num_total_samples
+                kpt_mask.float()) / kpt_mask.sum()
         else:
             # Avoid cls and reg branch not participating in the gradient
             # propagation when there is no ground-truth in the images.

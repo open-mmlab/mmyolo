@@ -11,7 +11,7 @@
       "program": "tools/train.py",
       "console": "integratedTerminal",
       "justMyCode": false,
-      "args": ["configs/yolox/yoloxkpt_s_8xb8-300e_coco.py"],
+      "args": ["configs/yolox/yoloxkpt_s_8xb8-300e_coco6280.py"],
       "env": {
         "CUDA_LAUNCH_BLOCKING": "1"
       }
