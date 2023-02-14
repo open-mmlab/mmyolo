@@ -383,6 +383,15 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         self._mask_ignore_flag = None
 
     def transform(self, results: dict) -> dict:
+        """Function to load multiple types annotations.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+
+        Returns:
+            dict: The dict contains loaded bounding box, label and
+            semantic segmentation.
+        """
         if self.mask2bbox:
             self._load_masks(results)
             if self.with_label:
@@ -486,14 +495,32 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         gt_masks = PolygonMasks([mask for mask in gt_masks], h, w)
         results['gt_masks'] = gt_masks
 
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(with_bbox={self.with_bbox}, '
+        repr_str += f'with_label={self.with_label}, '
+        repr_str += f'with_mask={self.with_mask}, '
+        repr_str += f'with_seg={self.with_seg}, '
+        repr_str += f'mask2bbox={self.mask2bbox}, '
+        repr_str += f'poly2mask={self.poly2mask}, '
+        repr_str += f"imdecode_backend='{self.imdecode_backend}', "
+        repr_str += f'file_client_args={self.file_client_args})'
+        return repr_str
+
 
 @TRANSFORMS.register_module()
 class YOLOv5RandomAffine(BaseTransform):
-    """Random affine transform data augmentation in YOLOv5. It is different
-    from the implementation in YOLOX.
+    """Random affine transform data augmentation in YOLOv5 and YOLOv8. It is
+    different from the implementation in YOLOX.
 
     This operation randomly generates affine transform matrix which including
     rotation, translation, shear and scaling transforms.
+    If you set use_mask_refine == True, the code will use the masks
+    annotation to refine the bbox.
+    Our implementation is slightly different from the official. In COCO
+    dataset, a gt may have multiple mask tags.  The official YOLOv5
+    annotation file already combines the masks that an object has,
+    but our code takes into account the fact that an object has multiple masks.
 
     Required Keys:
 
@@ -501,7 +528,7 @@ class YOLOv5RandomAffine(BaseTransform):
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
     - gt_ignore_flags (bool) (optional)
-    - gt_masks (BitmapMasks) (optional)
+    - gt_masks (PolygonMasks) (optional)
 
     Modified Keys:
 
@@ -510,7 +537,7 @@ class YOLOv5RandomAffine(BaseTransform):
     - gt_bboxes (optional)
     - gt_bboxes_labels (optional)
     - gt_ignore_flags (optional)
-    - gt_masks (BitmapMasks) (optional)
+    - gt_masks (PolygonMasks) (optional)
 
     Args:
         max_rotate_degree (float): Maximum degrees of rotation transform.
@@ -536,6 +563,7 @@ class YOLOv5RandomAffine(BaseTransform):
         min_area_ratio (float): Threshold of area ratio between
             original bboxes and wrapped bboxes. If smaller than this value,
             the box will be removed. Defaults to 0.1.
+        use_mask_refine (bool): Whether to refine bbox by mask.
         max_aspect_ratio (float): Aspect ratio of width and height
             threshold to filter bboxes. If max(h/w, w/h) larger than this
             value, the box will be removed. Defaults to 20.
@@ -567,46 +595,6 @@ class YOLOv5RandomAffine(BaseTransform):
         self.min_area_ratio = min_area_ratio
         self.use_mask_refine = use_mask_refine
         self.max_aspect_ratio = max_aspect_ratio
-
-    @cache_randomness
-    def _get_random_homography_matrix(self, height: int,
-                                      width: int) -> Tuple[np.ndarray, float]:
-        """Get random homography matrix.
-
-        Args:
-            height (int): Image height.
-            width (int): Image width.
-
-        Returns:
-            Tuple[np.ndarray, float]: The result of warp_matrix and
-            scaling_ratio.
-        """
-        # Rotation
-        rotation_degree = random.uniform(-self.max_rotate_degree,
-                                         self.max_rotate_degree)
-        rotation_matrix = self._get_rotation_matrix(rotation_degree)
-
-        # Scaling
-        scaling_ratio = random.uniform(self.scaling_ratio_range[0],
-                                       self.scaling_ratio_range[1])
-        scaling_matrix = self._get_scaling_matrix(scaling_ratio)
-
-        # Shear
-        x_degree = random.uniform(-self.max_shear_degree,
-                                  self.max_shear_degree)
-        y_degree = random.uniform(-self.max_shear_degree,
-                                  self.max_shear_degree)
-        shear_matrix = self._get_shear_matrix(x_degree, y_degree)
-
-        # Translation
-        trans_x = random.uniform(0.5 - self.max_translate_ratio,
-                                 0.5 + self.max_translate_ratio) * width
-        trans_y = random.uniform(0.5 - self.max_translate_ratio,
-                                 0.5 + self.max_translate_ratio) * height
-        translate_matrix = self._get_translation_matrix(trans_x, trans_y)
-        warp_matrix = (
-            translate_matrix @ shear_matrix @ rotation_matrix @ scaling_matrix)
-        return warp_matrix, scaling_ratio
 
     @autocast_box_type()
     def transform(self, results: dict) -> dict:
@@ -647,15 +635,16 @@ class YOLOv5RandomAffine(BaseTransform):
             orig_bboxes = bboxes.clone()
             if self.use_mask_refine and 'gt_masks' in results:
                 # If the dataset has annotations of mask,
-                # the mask will be used to adjust bbox.
+                # the mask will be used to refine bbox.
                 gt_masks = results['gt_masks']
 
                 gt_masks_resample = self.resample_masks(gt_masks)
                 gt_masks = self.warp_mask(gt_masks_resample, warp_matrix,
                                           img_h, img_w)
 
-                # 这里用mask生成bboxes
+                # refine bboxes by masks
                 bboxes = gt_masks.get_bboxes(dst_type='hbox')
+                # filter bboxes outside image
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
                                                     bboxes).numpy()
                 results['gt_masks'] = gt_masks[valid_index]
@@ -683,60 +672,96 @@ class YOLOv5RandomAffine(BaseTransform):
 
         return results
 
-    def get_point_vaild_index(self, p, warp_matrix, img_w, img_h):
-        p1 = p.reshape((-1, 2))
-        p2 = np.concatenate((p1, np.ones((len(p1), 1), dtype=p.dtype)),
-                            axis=-1)
-        p3 = p2 @ warp_matrix.T
-        p4 = p3[:, :2] / p3[:, 2:3]
+    @staticmethod
+    def warp_poly(poly: np.ndarray, warp_matrix: np.ndarray, img_w: int,
+                  img_h: int) -> np.ndarray:
+        """Function to warp one mask and filter points outside image.
+
+        Args:
+            poly (np.ndarray): Segmentation annotation with shape (n, ) and
+                with format (x1, y1, x2, y2, ...).
+            warp_matrix (np.ndarray): Affine transformation matrix.
+                Shape: (3, 3).
+            img_w (int): Width of output image.
+            img_h (int): Height of output image.
+        """
+        # TODO: Current logic may cause retained masks unusable for
+        #  semantic segmentation training, which is same as official
+        #  implementation.
+        poly = poly.reshape((-1, 2))
+        poly = np.concatenate((poly, np.ones(
+            (len(poly), 1), dtype=poly.dtype)),
+                              axis=-1)
+        # transform poly
+        poly = poly @ warp_matrix.T
+        poly = poly[:, :2] / poly[:, 2:3]
 
         # filter point outside image
-        x, y = p4.T
+        x, y = poly.T
         valid_ind_point = (x >= 0) & (y >= 0) & (x <= img_w) & (y <= img_h)
-        return valid_ind_point, p4[valid_ind_point]
+        return poly[valid_ind_point].reshape(-1)
 
-    def warp_mask(self, gt_masks, warp_matrix, img_w, img_h):
+    def warp_mask(self, gt_masks: PolygonMasks, warp_matrix: np.ndarray,
+                  img_w: int, img_h: int) -> PolygonMasks:
+        """Warp masks by warp_matrix and retain masks inside image after
+        warping.
+
+        Args:
+            gt_masks (PolygonMasks): Annotations of semantic segmentation.
+            warp_matrix (np.ndarray): Affine transformation matrix.
+                Shape: (3, 3).
+            img_w (int): Width of output image.
+            img_h (int): Height of output image.
+
+        Returns:
+            PolygonMasks: Masks after warping.
+        """
         masks = gt_masks.masks
 
         new_masks = []
         for poly_per_obj in masks:
-            cropped_poly_per_obj = []
-            for p in poly_per_obj:
-                valid_ind_point, valid_point = self.get_point_vaild_index(
-                    p, warp_matrix, img_w, img_h)
-
-                # 这边确定当前单个mask是否有效即可
-                if any(valid_ind_point):
-                    # 这里不用决定gt_bboxes，放到外面来决定
-                    cropped_poly_per_obj.append(valid_point.reshape(-1))
-            # 这边要确认当前gt是否有效了
-            # 如果crop这里里面有结果，就证明有效
-            if not cropped_poly_per_obj:
-                # 这里如果mask都被认为是无效，添加个zeros。这里添加的zeros在filter_gt_bboxes里会被过滤掉
-                cropped_poly_per_obj = [
+            warpped_poly_per_obj = []
+            # One gt may have multiple masks.
+            for poly in poly_per_obj:
+                valid_poly = self.warp_poly(poly, warp_matrix, img_w, img_h)
+                if len(valid_poly):
+                    warpped_poly_per_obj.append(valid_poly.reshape(-1))
+            # If all the masks are invalid,
+            # add [0, 0, 0, 0, 0, 0,] here.
+            if not warpped_poly_per_obj:
+                # This will be filtered in function `filter_gt_bboxes`.
+                warpped_poly_per_obj = [
                     np.zeros(6, dtype=poly_per_obj[0].dtype)
                 ]
-            new_masks.append(cropped_poly_per_obj)
+            new_masks.append(warpped_poly_per_obj)
 
-        # 无论有没有有效数据，都可以直接获取
         gt_masks = PolygonMasks(new_masks, img_h, img_w)
         return gt_masks
 
-    def resample_masks(self, gt_masks: PolygonMasks, resample_num=1000):
+    @staticmethod
+    def resample_masks(gt_masks: PolygonMasks,
+                       resample_num: int = 1000) -> PolygonMasks:
+        """Function to resample each mask annotation with shape (2*n, ) to
+        shape (resample_num*2, ).
+
+        Args:
+            gt_masks (PolygonMasks): Annotations of semantic segmentation.
+            resample_num (int): Number of poly to resample to.
+        """
         masks = gt_masks.masks
         new_masks = []
         for poly_per_obj in masks:
-            cropped_poly_per_obj = []
-            for p in poly_per_obj:
-                p = p.reshape((-1, 2))  # wh
-                p = np.concatenate((p, p[0:1, :]), axis=0)
-                x = np.linspace(0, len(p) - 1, resample_num)
-                xp = np.arange(len(p))
-                p = np.concatenate([
-                    np.interp(x, xp, p[:, i]) for i in range(2)
+            resample_poly_per_obj = []
+            for poly in poly_per_obj:
+                poly = poly.reshape((-1, 2))  # wh
+                poly = np.concatenate((poly, poly[0:1, :]), axis=0)
+                x = np.linspace(0, len(poly) - 1, resample_num)
+                xp = np.arange(len(poly))
+                poly = np.concatenate([
+                    np.interp(x, xp, poly[:, i]) for i in range(2)
                 ]).reshape(2, -1).T.reshape(-1)
-                cropped_poly_per_obj.append(p)
-            new_masks.append(cropped_poly_per_obj)
+                resample_poly_per_obj.append(poly)
+            new_masks.append(resample_poly_per_obj)
         return PolygonMasks(new_masks, gt_masks.height, gt_masks.width)
 
     def filter_gt_bboxes(self, origin_bboxes: HorizontalBoxes,
@@ -764,16 +789,45 @@ class YOLOv5RandomAffine(BaseTransform):
         aspect_ratio_valid_idx = aspect_ratio < self.max_aspect_ratio
         return wh_valid_idx & area_valid_idx & aspect_ratio_valid_idx
 
-    def __repr__(self) -> str:
-        repr_str = self.__class__.__name__
-        repr_str += f'(max_rotate_degree={self.max_rotate_degree}, '
-        repr_str += f'max_translate_ratio={self.max_translate_ratio}, '
-        repr_str += f'scaling_ratio_range={self.scaling_ratio_range}, '
-        repr_str += f'max_shear_degree={self.max_shear_degree}, '
-        repr_str += f'border={self.border}, '
-        repr_str += f'border_val={self.border_val}, '
-        repr_str += f'bbox_clip_border={self.bbox_clip_border})'
-        return repr_str
+    @cache_randomness
+    def _get_random_homography_matrix(self, height: int,
+                                      width: int) -> Tuple[np.ndarray, float]:
+        """Get random homography matrix.
+
+        Args:
+            height (int): Image height.
+            width (int): Image width.
+
+        Returns:
+            Tuple[np.ndarray, float]: The result of warp_matrix and
+            scaling_ratio.
+        """
+        # Rotation
+        rotation_degree = random.uniform(-self.max_rotate_degree,
+                                         self.max_rotate_degree)
+        rotation_matrix = self._get_rotation_matrix(rotation_degree)
+
+        # Scaling
+        scaling_ratio = random.uniform(self.scaling_ratio_range[0],
+                                       self.scaling_ratio_range[1])
+        scaling_matrix = self._get_scaling_matrix(scaling_ratio)
+
+        # Shear
+        x_degree = random.uniform(-self.max_shear_degree,
+                                  self.max_shear_degree)
+        y_degree = random.uniform(-self.max_shear_degree,
+                                  self.max_shear_degree)
+        shear_matrix = self._get_shear_matrix(x_degree, y_degree)
+
+        # Translation
+        trans_x = random.uniform(0.5 - self.max_translate_ratio,
+                                 0.5 + self.max_translate_ratio) * width
+        trans_y = random.uniform(0.5 - self.max_translate_ratio,
+                                 0.5 + self.max_translate_ratio) * height
+        translate_matrix = self._get_translation_matrix(trans_x, trans_y)
+        warp_matrix = (
+            translate_matrix @ shear_matrix @ rotation_matrix @ scaling_matrix)
+        return warp_matrix, scaling_ratio
 
     @staticmethod
     def _get_rotation_matrix(rotate_degrees: float) -> np.ndarray:
@@ -840,6 +894,17 @@ class YOLOv5RandomAffine(BaseTransform):
         translation_matrix = np.array([[1, 0., x], [0., 1, y], [0., 0., 1.]],
                                       dtype=np.float32)
         return translation_matrix
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(max_rotate_degree={self.max_rotate_degree}, '
+        repr_str += f'max_translate_ratio={self.max_translate_ratio}, '
+        repr_str += f'scaling_ratio_range={self.scaling_ratio_range}, '
+        repr_str += f'max_shear_degree={self.max_shear_degree}, '
+        repr_str += f'border={self.border}, '
+        repr_str += f'border_val={self.border_val}, '
+        repr_str += f'bbox_clip_border={self.bbox_clip_border})'
+        return repr_str
 
 
 @TRANSFORMS.register_module()
@@ -1260,7 +1325,7 @@ class YOLOv5CopyPaste(BaseTransform):
     """Copy-Paste used in YOLOv5 and YOLOv8.
 
     This transform randomly copy some objects in the image to the mirror
-    position of the image.
+    position of the image.It is different from the `CopyPaste` in mmdet.
 
     Required Keys:
 
@@ -1268,7 +1333,7 @@ class YOLOv5CopyPaste(BaseTransform):
     - gt_bboxes (BaseBoxes[torch.float32])
     - gt_bboxes_labels (np.int64)
     - gt_ignore_flags (bool) (optional)
-    - gt_masks (BitmapMasks) (optional)
+    - gt_masks (PolygonMasks) (optional)
 
     Modified Keys:
 
@@ -1315,7 +1380,6 @@ class YOLOv5CopyPaste(BaseTransform):
         valid_inds = random.choice(
             indexes, size=round(self.prob * n), replace=False)
         if len(valid_inds) == 0:
-
             return results
         # prepare labels
         gt_bboxes_labels = np.concatenate(
@@ -1359,7 +1423,7 @@ class YOLOv5CopyPaste(BaseTransform):
     @staticmethod
     def bbox_ioa(gt_bboxes_flip: HorizontalBoxes,
                  gt_bboxes: HorizontalBoxes,
-                 eps: float = 1e-7):
+                 eps: float = 1e-7) -> np.ndarray:
         """Calculate ioa between gt_bboxes_flip and gt_bboxes.
 
         Args:
@@ -1400,7 +1464,11 @@ class YOLOv5CopyPaste(BaseTransform):
 
 @TRANSFORMS.register_module()
 class RemoveDataElement(BaseTransform):
-    """Remove unnecessary data element in results."""
+    """Remove unnecessary data element in results.
+
+    Args:
+        keys (Union[str, Sequence[str]]): Keys need to be removed.
+    """
 
     def __init__(self, keys: Union[str, Sequence[str]]):
         self.keys = [keys] if isinstance(keys, str) else keys
@@ -1409,3 +1477,8 @@ class RemoveDataElement(BaseTransform):
         for key in self.keys:
             results.pop(key, None)
         return results
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(keys={self.keys})'
+        return repr_str
