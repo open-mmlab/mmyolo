@@ -51,7 +51,7 @@ train_pipeline = [
         type='LoadImageFromFile', # 第 1 个流程，从文件路径里加载图像
         file_client_args=file_client_args),  # 文件读取后端的配置，默认从硬盘读取
     dict(type='LoadAnnotations', # 第 2 个流程，对于当前图像，加载它的注释信息
-         with_bbox=True, # 是否使用标注框(bounding box)，目标检测需要设置为 True
+         with_bbox=True, # 是否使用标注框 (bounding box)，目标检测需要设置为 True
          box_type='qbox'), # 指定读取的标注格式，旋转框数据集默认的数据格式为四边形
     dict(type='mmrotate.ConvertBoxType', # 第 3 个流程，转换标注格式
          box_type_mapping=dict(gt_bboxes='rbox')), # 将四边形标注转化为旋转框标注
@@ -65,7 +65,7 @@ train_pipeline = [
          prob=0.5, # 旋转概率 0.5
          angle_range=180, # 旋转范围 180
          rotate_type='mmrotate.Rotate', # 旋转方法
-         rect_obj_labels=[9, 11]), # 由于DOTA数据集中标号为9的 'storage-tank' 和标号11的 'roundabout' 两类为正方形标注，无需角度信息，旋转中将这两类保持为水平
+         rect_obj_labels=[9, 11]), # 由于 DOTA 数据集中标号为 9 的 'storage-tank' 和标号 11 的 'roundabout' 两类为正方形标注，无需角度信息，旋转中将这两类保持为水平
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(type='RegularizeRotatedBox', # 统一旋转框表示形式
          angle_version=angle_version), # 根据角度的定义方式进行
