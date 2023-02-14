@@ -43,7 +43,7 @@ class RTMHeadAssigner(RTMDetHead):
         num_imgs = len(batch_img_metas)
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.prior_generator.num_levels
-        offset = self.prior_generator.offset
+        prior_offset = self.prior_generator.offset
 
         gt_info = gt_instances_preprocess(batch_gt_instances, num_imgs)
         gt_labels = gt_info[:, :, :1]
@@ -126,7 +126,7 @@ class RTMHeadAssigner(RTMDetHead):
                     'prior_ind':
                     0,
                     'offset':
-                    offset
+                    prior_offset
                 }
             else:
                 w = inputs_hw[1] // self.featmap_strides[i]
@@ -142,7 +142,7 @@ class RTMHeadAssigner(RTMDetHead):
                     'class_inds': labels[retained_inds],
                     'retained_gt_inds': matched_gt_inds[retained_inds],
                     'prior_ind': 0,
-                    'offset': offset
+                    'offset': prior_offset
                 }
             assign_results.append([assign_results_prior])
         return assign_results
