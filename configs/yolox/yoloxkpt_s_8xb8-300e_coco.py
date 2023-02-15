@@ -188,11 +188,10 @@ test_pipeline = [
     dict(
         type='LoadAnnotations',
         with_bbox=True,
-        with_keypoints=True,
-        _scope_='mmdet'),
+        with_keypoints=True),
     dict(
         type='YOLOPosePackInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'gt_keypoints',
                    'scale_factor'))
 ]
 
@@ -214,11 +213,16 @@ val_dataloader = dict(
 test_dataloader = val_dataloader
 
 # Reduce evaluation time
-val_evaluator = dict(
-    type='YOLOPoseCocoMetric',
-    proposal_nums=(100, 1, 10),
-    ann_file=data_root + 'annotations/person_keypoints_val2017_mini.json',
-    metric='bbox')
+val_evaluator = [
+    dict(
+        type='mmdet.CocoMetric',
+        proposal_nums=(100, 1, 10),
+        ann_file=data_root + 'annotations/person_keypoints_val2017_mini.json',
+        metric=['bbox']),
+    dict(
+        type='mmpose.CocoMetric',
+        ann_file=data_root + 'annotations/person_keypoints_val2017_mini.json')
+]
 
 test_evaluator = val_evaluator
 

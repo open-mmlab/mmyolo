@@ -3,6 +3,7 @@ import os.path as osp
 from typing import Any, List, Optional, Union
 
 from mmdet.datasets import BaseDetDataset, CocoDataset
+import numpy as np
 
 from ..registry import DATASETS, TASK_UTILS
 
@@ -129,8 +130,20 @@ class YOLOv5PoseCocoDataset(BatchShapePolicyDataset, CocoDataset):
             if ann.get('segmentation', None):
                 instance['mask'] = ann['segmentation']
             if ann.get('keypoints', None):
-                instance['keypoints'] = ann['keypoints']
-                instance['num_keypoints'] = ann['num_keypoints']
+                _keypoints = np.array(
+                    ann['keypoints'], dtype=np.float32).reshape(1, -1, 3)
+                keypoints = _keypoints[..., :2]
+                keypoints_visible = np.minimum(1, _keypoints[..., 2])
+                if 'num_keypoints' in ann:
+                    num_keypoints = ann['num_keypoints']
+                else:
+                    num_keypoints = np.count_nonzero(keypoints.max(axis=2))
+                bbox_score = np.ones(1, dtype=np.float32)
+                instance['keypoints'] = keypoints
+                instance['keypoints_visible'] = keypoints_visible
+                instance['num_keypoints'] = num_keypoints
+                instance['bbox_score'] = bbox_score
+                instance['id'] = ann['id']
             instances.append(instance)
         data_info['instances'] = instances
         return data_info

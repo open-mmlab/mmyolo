@@ -114,51 +114,63 @@ class Keypoints:
     metainfo = parse_pose_metainfo(METAINFO)
 
     @classmethod
-    def _kpt_rescale(self, kpt, scale_factor:Tuple[float, float]):
+    def _kpt_rescale(self, kpt, scale_factor: Tuple[float, float]):
         """Rescale the keypoints according to the scale factor.
 
         Args:
-            kpt (np.ndarray): Keypoints to be rescaled.
-            scale_factor (tuple[float]): Scale factor.
+            kpt (np.ndarray): Keypoints to be rescaled. N x K x 2
+            scale_factor (tuple[float]): Scale factor. (r1, r2)
 
         Returns:
             np.ndarray: Rescaled keypoints.
         """
         assert len(scale_factor) == 2
-        kpt[..., 0::3] = kpt[..., 0::3] * scale_factor[0]
-        kpt[..., 1::3] = kpt[..., 1::3] * scale_factor[1]
+        assert kpt.shape[-1] == 2
+        kpt[..., 0] = kpt[..., 0] * scale_factor[0]
+        kpt[..., 1] = kpt[..., 1] * scale_factor[1]
         return kpt
+
     @classmethod
     def _kpt_translate(self, kpt, distances: Tuple[float, float]):
         """Translate the keypoints according to the given distances.
 
         Args:
-            kpt (np.ndarray): Keypoints to be translated, in shape (N, K, 3).
+            kpt (np.ndarray): Keypoints to be translated, in shape (N, K, 2).
             distances (tuple[float]): Distances to translate.
 
         Returns:
             np.ndarray: Translated keypoints.
         """
         assert len(distances) == 2
-        kpt[..., 0::3] = kpt[..., 0::3] + distances[0]
-        kpt[..., 1::3] = kpt[..., 1::3] + distances[1]
+        assert kpt.shape[-1] == 2
+        kpt[..., 0] = kpt[..., 0] + distances[0]
+        kpt[..., 1] = kpt[..., 1] + distances[1]
         return kpt
+
     @classmethod
-    def _kpt_clip(self, kpt, img_shape: Tuple[int, int]) -> None:
+    def _kpt_clip(self, kpt, kpt_vis, img_shape: Tuple[int, int]) -> None:
         """Clip the keypoints, only change the visibility of the keypoints, not the coordinates.
 
         Args:
-            kpt (np.ndarray): Keypoints to be clipped.
+            kpt (np.ndarray): Keypoints to be clipped. N x K x 2
+            kpt_vis (np.ndarray): Visibility of the keypoints. N x K
             img_shape (tuple[int]): Shape of the image.
         """
         assert len(img_shape) == 2
+        assert kpt.shape[-1] == 2
+        assert len(kpt_vis.shape) == 2
         # keypoints outside the image are not allowed
         flags = self._kpt_is_inside(kpt, img_shape, all_inside=False)
         # set visibility to 0 if the keypoint is outside the image
-        kpt[..., 2::3][~flags] = 0
-        return kpt
+        kpt_vis[~flags] = 0
+        return kpt_vis
+
     @classmethod
-    def _kpt_is_inside(self, kpt, img_shape:Tuple[int, int], all_inside: bool=False, allowed_border: int=0):
+    def _kpt_is_inside(self,
+                       kpt,
+                       img_shape: Tuple[int, int],
+                       all_inside: bool = False,
+                       allowed_border: int = 0):
         """Check if the keypoints are inside the image.
 
         Args:
@@ -169,24 +181,24 @@ class Keypoints:
 
         Returns:
             np.ndarray: Flags indicating whether each keypoint is inside the
-                image.
+                image. N x K
         """
         assert len(img_shape) == 2
+        assert kpt.shape[-1] == 2
         if all_inside:
-            flags = np.all(
-                (kpt[..., 0::3] >= allowed_border,
-                 kpt[..., 0::3] < img_shape[1] - allowed_border,
-                 kpt[..., 1::3] >= allowed_border,
-                 kpt[..., 1::3] < img_shape[0] - allowed_border),
-                axis=0)
+            flags = np.all((kpt[..., 0] >= allowed_border,
+                            kpt[..., 0] < img_shape[1] - allowed_border,
+                            kpt[..., 1] >= allowed_border,
+                            kpt[..., 1] < img_shape[0] - allowed_border),
+                           axis=0)
         else:
-            flags = np.any(
-                (kpt[..., 0::3] >= allowed_border,
-                 kpt[..., 0::3] < img_shape[1] - allowed_border,
-                 kpt[..., 1::3] >= allowed_border,
-                 kpt[..., 1::3] < img_shape[0] - allowed_border),
-                axis=0)
+            flags = np.any((kpt[..., 0] >= allowed_border,
+                            kpt[..., 0] < img_shape[1] - allowed_border,
+                            kpt[..., 1] >= allowed_border,
+                            kpt[..., 1] < img_shape[0] - allowed_border),
+                           axis=0)
         return flags
+
     @classmethod
     def _affine_transform_pts(self, x, y, matrix):
         """Affine transformation for points.
@@ -204,26 +216,29 @@ class Keypoints:
         return x_t, y_t
 
     @classmethod
-    def _kpt_project(self, kpt, homography_matrix: Union[torch.Tensor, np.ndarray]) -> None:
+    def _kpt_project(
+            self, kpt, homography_matrix: Union[torch.Tensor,
+                                                np.ndarray]) -> None:
         """Project the keypoints according to the homography matrix.
 
         Args:
-            kpt (np.ndarray): Keypoints to be projected, in shape (N, K, 3).
+            kpt (np.ndarray): Keypoints to be projected, in shape (N, K, 2).
             homography_matrix (torch.Tensor | np.ndarray): Homography matrix.
         """
-        assert kpt.shape[-1] == 3
+        assert kpt.shape[-1] == 2
         kpt[..., 0::3], kpt[..., 1::3] = self._affine_transform_pts(
             kpt[..., 0::3], kpt[..., 1::3], homography_matrix)
         return kpt
-    
+
     @classmethod
     def _kpt_flip(self, kpt, img_shape: Tuple[int, int], direction) -> None:
         # default meta info for coco
         keypoints = kpt[..., :2]
         keypoints_vis = kpt[..., 2]
         flip_indices = self.metainfo['flip_indices']
-        keypoints, keypoints_vis = flip_keypoints(
-            keypoints, keypoints_vis, img_shape, flip_indices, direction)
+        keypoints, keypoints_vis = flip_keypoints(keypoints, keypoints_vis,
+                                                  img_shape, flip_indices,
+                                                  direction)
         kpt[..., :2] = keypoints
         kpt[..., 2] = keypoints_vis
         return kpt

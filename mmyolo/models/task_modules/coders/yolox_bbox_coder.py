@@ -71,6 +71,10 @@ class YOLOXKptCoder(BaseBBoxCoder):
         Returns:
             torch.Tensor: Decoded kpts.
         """
+        assert pred_kpts.dim() == 3
+        assert priors.dim() == 2
+        assert stride.dim() == 1
+
         if (pred_kpts.shape[-1] % 2) == 0:
             c = 2
         elif (pred_kpts.shape[-1] % 3) == 0:

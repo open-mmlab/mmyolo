@@ -429,13 +429,17 @@ class LoadAnnotations(MMDET_LoadAnnotations):
 
     def _load_kps(self, results: dict) -> None:
         gt_keypoints = []
+        gt_keypoints_visible = []
         for instance in results.get('instances', []):
             if instance['ignore_flag'] == 0:
-                if "keypoints" not in instance:
-                    continue
                 gt_keypoints.append(instance['keypoints'])
+                gt_keypoints_visible.append(instance['keypoints_visible'])
+
         results['gt_keypoints'] = np.array(gt_keypoints, np.float32).reshape(
-            (len(gt_keypoints), -1, 3))
+            (len(gt_keypoints), -1, 2))
+        results['gt_keypoints_visible'] = np.array(
+            gt_keypoints_visible, np.float32).reshape(
+                (len(gt_keypoints_visible), -1))
 
     def transform(self, results: dict) -> dict:
         super().transform(results)
@@ -1148,11 +1152,13 @@ class YOLOPoseRandomAffine(RandomAffine):
 
         if 'gt_keypoints' in results:
             keypoints = results['gt_keypoints'][valid_index]
+            keypoints_visible = results['gt_keypoints_visible'][valid_index]
             keypoints = Keypoints._kpt_project(keypoints, warp_matrix)
             if self.bbox_clip_border:
-                keypoints = Keypoints._kpt_clip(keypoints, [height, width])
+                keypoints_visible = Keypoints._kpt_clip(keypoints, keypoints_visible, [height, width])
             results['gt_keypoints'] = keypoints
-            assert len(results['gt_bboxes']) == len(results['gt_keypoints'])
+            results['gt_keypoints_visible'] = keypoints_visible
+            assert len(results['gt_bboxes']) == len(results['gt_keypoints']) == len(results['gt_keypoints_visible'])
         return results
 
 

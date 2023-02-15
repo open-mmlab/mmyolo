@@ -18,6 +18,7 @@ from mmengine.config import ConfigDict
 
 from mmyolo.registry import MODELS, TASK_UTILS
 from .yolov5_head import YOLOv5Head
+from mmyolo.datasets.utils import Keypoints
 
 
 @MODELS.register_module()
@@ -115,7 +116,8 @@ class YOLOXKptHeadModule(BaseModule):
             self.multi_level_reg_convs.append(self._build_stacked_convs())
             self.multi_level_kpt_convs.append(self._build_kpt_stacked_convs())
 
-            conv_cls, conv_reg, conv_obj, conv_kpt, conv_vis = self._build_predictor()
+            conv_cls, conv_reg, conv_obj, conv_kpt, conv_vis = self._build_predictor(
+            )
 
             self.multi_level_conv_cls.append(conv_cls)
             self.multi_level_conv_reg.append(conv_reg)
@@ -175,7 +177,9 @@ class YOLOXKptHeadModule(BaseModule):
                     bias=self.conv_bias))
         return nn.Sequential(*stacked_convs)
 
-    def _build_predictor(self) -> Tuple[nn.Module, nn.Module, nn.Module, nn.Module, nn.Module]:
+    def _build_predictor(
+            self
+    ) -> Tuple[nn.Module, nn.Module, nn.Module, nn.Module, nn.Module]:
         """Initialize predictor layers of a single level head."""
         conv_cls = nn.Conv2d(self.feat_channels, self.num_classes, 1)
         conv_reg = nn.Conv2d(self.feat_channels, 4, 1)
@@ -190,8 +194,8 @@ class YOLOXKptHeadModule(BaseModule):
         super().init_weights()
         bias_init = bias_init_with_prob(0.01)
         for conv_cls, conv_obj, conv_kpt in zip(self.multi_level_conv_cls,
-                                      self.multi_level_conv_obj,
-                                      self.multi_level_conv_kpt):
+                                                self.multi_level_conv_obj,
+                                                self.multi_level_conv_kpt):
             conv_cls.bias.data.fill_(bias_init)
             conv_obj.bias.data.fill_(bias_init)
             conv_kpt.bias.data.fill_(bias_init)
@@ -207,19 +211,18 @@ class YOLOXKptHeadModule(BaseModule):
             predictions, and objectnesses.
         """
 
-        return multi_apply(self.forward_single, x, self.multi_level_cls_convs,
-                           self.multi_level_reg_convs,
-                           self.multi_level_kpt_convs,
-                           self.multi_level_conv_cls,
-                           self.multi_level_conv_reg,
-                           self.multi_level_conv_obj,
-                           self.multi_level_conv_kpt,
-                           self.multi_level_conv_vis)
+        return multi_apply(
+            self.forward_single, x, self.multi_level_cls_convs,
+            self.multi_level_reg_convs, self.multi_level_kpt_convs,
+            self.multi_level_conv_cls, self.multi_level_conv_reg,
+            self.multi_level_conv_obj, self.multi_level_conv_kpt,
+            self.multi_level_conv_vis)
 
-    def forward_single(self, x: Tensor,
-                       cls_convs: nn.Module, reg_convs: nn.Module, kpt_convs: nn.Module,
-                       conv_cls: nn.Module, conv_reg: nn.Module, conv_obj: nn.Module,
-                       conv_kpt: nn.Module, conv_vis: nn.Module) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
+    def forward_single(
+            self, x: Tensor, cls_convs: nn.Module, reg_convs: nn.Module,
+            kpt_convs: nn.Module, conv_cls: nn.Module, conv_reg: nn.Module,
+            conv_obj: nn.Module, conv_kpt: nn.Module, conv_vis: nn.Module
+    ) -> Tuple[Tensor, Tensor, Tensor, Tensor, Tensor]:
         """Forward feature of a single scale level."""
 
         cls_feat = cls_convs(x)
@@ -320,9 +323,16 @@ class YOLOXKptHead(YOLOv5Head):
     def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         return self.head_module(x)
 
-    def predict_by_feat(self, cls_scores: List[Tensor], bbox_preds: List[Tensor], objectnesses: Optional[List[Tensor]] = None, 
-                        kpt_preds: Optional[List[Tensor]] = None, vis_preds: Optional[List[Tensor]] = None,
-                        batch_img_metas: Optional[List[dict]] = None, cfg: Optional[ConfigDict] = None, rescale: bool = True, with_nms: bool = True) -> List[InstanceData]:
+    def predict_by_feat(self,
+                        cls_scores: List[Tensor],
+                        bbox_preds: List[Tensor],
+                        objectnesses: Optional[List[Tensor]] = None,
+                        kpt_preds: Optional[List[Tensor]] = None,
+                        vis_preds: Optional[List[Tensor]] = None,
+                        batch_img_metas: Optional[List[dict]] = None,
+                        cfg: Optional[ConfigDict] = None,
+                        rescale: bool = True,
+                        with_nms: bool = True) -> List[InstanceData]:
         """
         predict_by_feat predict feature from feature maps.
 
@@ -342,7 +352,8 @@ class YOLOXKptHead(YOLOv5Head):
         Returns:
             List[InstanceData]: prediction results, including boxes, labels, scores, keypoints, keypoints visibility.
         """
-        assert len(cls_scores) == len(bbox_preds) == len(kpt_preds) == len(vis_preds)
+        assert len(cls_scores) == len(bbox_preds) == len(kpt_preds) == len(
+            vis_preds)
         if objectnesses is None:
             with_objectnesses = False
         else:
@@ -390,18 +401,21 @@ class YOLOXKptHead(YOLOv5Head):
         flatten_bbox_preds = torch.cat(flatten_bbox_preds, dim=1)
         flatten_decoded_bboxes = self.bbox_coder.decode(
             flatten_priors[None], flatten_bbox_preds, flatten_stride)
-        
+
         # keypoints and visibility
         flatten_kpt_preds = [
-            kpt_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, self.num_keypoints * 2)
+            kpt_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1,
+                                                 self.num_keypoints * 2)
             for kpt_pred in kpt_preds
         ]
         flatten_kpt_preds = torch.cat(flatten_kpt_preds, dim=1)
-        flatten_decoded_kpts = self.kpt_coder.decode(
-            flatten_priors[None], flatten_kpt_preds, flatten_stride)
-        
+        flatten_decoded_kpts = self.kpt_coder.decode(flatten_priors,
+                                                     flatten_kpt_preds,
+                                                     flatten_stride)
+
         flatten_vis_preds = [
-            vis_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, self.num_keypoints)
+            vis_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1,
+                                                 self.num_keypoints)
             for vis_pred in vis_preds
         ]
         flatten_vis_preds = torch.cat(flatten_vis_preds, dim=1).sigmoid()
@@ -416,9 +430,10 @@ class YOLOXKptHead(YOLOv5Head):
             flatten_objectness = [None for _ in range(num_imgs)]
 
         results_list = []
-        for (bboxes, scores, objectness,
-             img_meta) in zip(flatten_decoded_bboxes, flatten_cls_scores,
-                              flatten_objectness, batch_img_metas):
+        for (bboxes, scores, objectness, img_meta, kpts,
+             kpts_vis) in zip(flatten_decoded_bboxes, flatten_cls_scores,
+                              flatten_objectness, batch_img_metas,
+                              flatten_decoded_kpts, flatten_vis_preds):
             ori_shape = img_meta['ori_shape']
             scale_factor = img_meta['scale_factor']
             if 'pad_param' in img_meta:
@@ -444,6 +459,8 @@ class YOLOXKptHead(YOLOv5Head):
                 empty_results.bboxes = bboxes
                 empty_results.scores = scores[:, 0]
                 empty_results.labels = scores[:, 0].int()
+                empty_results.keypoints = kpts
+                empty_results.keypoint_scores = kpts_vis
                 results_list.append(empty_results)
                 continue
 
@@ -461,15 +478,20 @@ class YOLOXKptHead(YOLOv5Head):
                     scores, score_thr, nms_pre)
 
             results = InstanceData(
-                scores=scores, labels=labels, bboxes=bboxes[keep_idxs])
+                scores=scores, labels=labels, bboxes=bboxes[keep_idxs], keypoints=kpts[keep_idxs], keypoint_scores=kpts_vis[keep_idxs])
 
             if rescale:
                 if pad_param is not None:
                     results.bboxes -= results.bboxes.new_tensor([
                         pad_param[2], pad_param[0], pad_param[2], pad_param[0]
                     ])
+                    results.keypoints -= results.keypoints.new_tensor([
+                        pad_param[2], pad_param[0]
+                    ])
                 results.bboxes /= results.bboxes.new_tensor(
                     scale_factor).repeat((1, 2))
+                results.keypoints /= results.keypoints.new_tensor(
+                    scale_factor).repeat((1, self.num_keypoints, 1))
 
             if cfg.get('yolox_style', False):
                 # do not need max_per_img
@@ -484,8 +506,22 @@ class YOLOXKptHead(YOLOv5Head):
             results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
             results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
 
+            results = self._kpt_post_process(results, cfg, rescale=False, with_nms=with_nms, img_meta=img_meta)
+            # keypoints outside the image, the visibility is set to 0
+            results.keypoints[:, :, 0].clamp_(0, ori_shape[1])
+            results.keypoints[:, :, 1].clamp_(0, ori_shape[0])
+            results.keypoint_scores[results.keypoints[:, :, 0] == 0] = 0
+            results.keypoint_scores[results.keypoints[:, :, 1] == 0] = 0
+
             results_list.append(results)
         return results_list
+
+    def _kpt_post_process(self, results, cfg, rescale=False, with_nms=True, img_meta=None):
+        if rescale:
+            assert img_meta.get('scale_factor') is not None
+            scale_factor = [1 / s for s in img_meta['scale_factor']]
+            results.keypoints = Keypoints._kpt_rescale(results.keypoints, scale_factor)
+        return results
 
     def loss_by_feat(
             self,
@@ -547,11 +583,13 @@ class YOLOXKptHead(YOLOv5Head):
             for objectness in objectnesses
         ]
         flatten_kpt_preds = [
-            kpt_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, self.num_keypoints * 2)
+            kpt_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1,
+                                                 self.num_keypoints * 2)
             for kpt_pred in kpt_preds
         ]
         flatten_vis_preds = [
-            vis_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, self.num_keypoints)
+            vis_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1,
+                                                 self.num_keypoints)
             for vis_pred in vis_preds
         ]
 
@@ -567,10 +605,11 @@ class YOLOXKptHead(YOLOv5Head):
                                              flatten_kpt_preds,
                                              flatten_priors[..., 2])
         flatten_vis_preds = torch.cat(flatten_vis_preds, dim=1)
-        flatten_kpt_vis_preds = torch.cat([flatten_kpts, flatten_vis_preds[..., None]], dim=-1)
+        flatten_kpt_vis_preds = torch.cat(
+            [flatten_kpts, flatten_vis_preds[..., None]], dim=-1)
 
-        (pos_masks, cls_targets, obj_targets, bbox_targets, kpt_vis_targets, bbox_aux_target,
-         num_fg_imgs) = multi_apply(
+        (pos_masks, cls_targets, obj_targets, bbox_targets, kpt_vis_targets,
+         bbox_aux_target, num_fg_imgs) = multi_apply(
              self._get_targets_single,
              flatten_priors.unsqueeze(0).repeat(num_imgs, 1, 1),
              flatten_cls_preds.detach(), flatten_bboxes.detach(),
@@ -590,7 +629,8 @@ class YOLOXKptHead(YOLOv5Head):
         obj_targets = torch.cat(obj_targets, 0)
         bbox_targets = torch.cat(bbox_targets, 0)
         kpt_vis_targets = torch.cat(kpt_vis_targets, 0)
-        kpt_targets, vis_targets = kpt_vis_targets[..., :2], kpt_vis_targets[..., 2]
+        kpt_targets, vis_targets = kpt_vis_targets[..., :2], kpt_vis_targets[
+            ..., 2]
         kpt_mask = vis_targets > 0
         if self.use_bbox_aux:
             bbox_aux_target = torch.cat(bbox_aux_target, 0)
@@ -605,8 +645,8 @@ class YOLOXKptHead(YOLOv5Head):
                 flatten_bboxes.view(-1, 4)[pos_masks],
                 bbox_targets) / num_total_samples
             loss_kpt = self.loss_kpt(
-                flatten_kpt_vis_preds.view(-1, self.num_keypoints, 3)[pos_masks],
-                kpt_vis_targets)
+                flatten_kpt_vis_preds.view(-1, self.num_keypoints,
+                                           3)[pos_masks], kpt_vis_targets)
             loss_vis = self.loss_cls(
                 flatten_vis_preds.view(-1, self.num_keypoints)[pos_masks],
                 kpt_mask.float()) / kpt_mask.sum()
@@ -621,7 +661,11 @@ class YOLOXKptHead(YOLOv5Head):
             loss_vis = flatten_vis_preds.sum() * 0
 
         loss_dict = dict(
-            loss_cls=loss_cls, loss_bbox=loss_bbox, loss_obj=loss_obj, loss_kpt=loss_kpt, loss_vis=loss_vis)
+            loss_cls=loss_cls,
+            loss_bbox=loss_bbox,
+            loss_obj=loss_obj,
+            loss_kpt=loss_kpt,
+            loss_vis=loss_vis)
 
         if self.use_bbox_aux:
             if num_pos > 0:
@@ -710,8 +754,8 @@ class YOLOXKptHead(YOLOv5Head):
             bbox_aux_target = cls_preds.new_zeros((0, 4))
             obj_target = cls_preds.new_zeros((num_priors, 1))
             foreground_mask = cls_preds.new_zeros(num_priors).bool()
-            return (foreground_mask, cls_target, obj_target, bbox_target, kpt_target,
-                    bbox_aux_target, 0)
+            return (foreground_mask, cls_target, obj_target, bbox_target,
+                    kpt_target, bbox_aux_target, 0)
 
         # YOLOX uses center priors with 0.5 offset to assign targets,
         # but use center priors without offset to regress bboxes.
@@ -745,9 +789,10 @@ class YOLOXKptHead(YOLOv5Head):
         foreground_mask = torch.zeros_like(objectness).to(torch.bool)
         foreground_mask[pos_inds] = 1
         # TODO: kps target
-        kpt_target = gt_instances['keypoints'][sampling_result.pos_assigned_gt_inds]
-        return (foreground_mask, cls_target, obj_target, bbox_target, kpt_target,
-                bbox_aux_target, num_pos_per_img)
+        kpt_target = gt_instances['keypoints'][
+            sampling_result.pos_assigned_gt_inds]
+        return (foreground_mask, cls_target, obj_target, bbox_target,
+                kpt_target, bbox_aux_target, num_pos_per_img)
 
     def _get_bbox_aux_target(self,
                              bbox_aux_target: Tensor,
