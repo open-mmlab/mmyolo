@@ -165,6 +165,8 @@ class RotatedRTMDetSepBNHeadModule(RTMDetSepBNHeadModule):
 class RotatedRTMDetHead(RTMDetHead):
     """RTMDet-R head.
 
+    .. code:: text
+
     Compared with RTMDetHead, RotatedRTMDetHead add some args to support
     rotated object detection.
     1. `angle_version` used to limit angle_range during training.
