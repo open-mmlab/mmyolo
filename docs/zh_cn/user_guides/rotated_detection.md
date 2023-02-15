@@ -6,7 +6,7 @@
 
 MMYOLO 中的旋转目标检测依赖于 MMRotate 1.x，请参考文档 [开始你的第一步](https://mmrotate.readthedocs.io/zh_CN/1.x/get_started.html) 安装 MMRotate 1.0。
 
-本教程将介绍如何在 MMYOLO 中训练和使用旋转目标检测模型，目前支持了RTMDet-R。
+本教程将介绍如何在 MMYOLO 中训练和使用旋转目标检测模型，目前支持了 RTMDet-R。
 
 ## 数据集准备
 
