@@ -89,7 +89,7 @@ train_dataloader = dict(
         pipeline=train_pipeline)) # 这是由之前创建的 train_pipeline 定义的数据处理流程
 ```
 
-RTMDet-R 保持论文内的配置，默认仅采用随机旋转增强，得益于BoxType设计，在数据增强阶段，大部分增强无需改动代码即可直接支持，例如 MixUp 和 Mosaic 等，可以直接在 pipeline 中使用。
+RTMDet-R 保持论文内的配置，默认仅采用随机旋转增强，得益于 BoxType 设计，在数据增强阶段，大部分增强无需改动代码即可直接支持，例如 MixUp 和 Mosaic 等，可以直接在 pipeline 中使用。
 
 ```{Warning}
 目前已知 Albu 数据增强仅支持水平框，在使用其他的数据增强时建议先使用 可视化数据集脚本 `browse_dataset.py` 验证数据增强是否正确。
@@ -135,8 +135,6 @@ val_dataloader = dict(
         test_mode=True,
         batch_shapes_cfg=batch_shapes_cfg,
         pipeline=val_pipeline))
-
-test_dataloader = val_dataloader
 ```
 
 [评测器](https://mmengine.readthedocs.io/zh_CN/latest/tutorials/evaluation.html) 用于计算训练模型在验证和测试数据集上的指标。评测器的配置由一个或一组评价指标（Metric）配置组成：
@@ -170,7 +168,7 @@ test_dataloader = dict(
         pipeline=test_pipeline))
 test_evaluator = dict(
     type='mmrotate.DOTAMetric',
-    format_only=True, # 只将模型输出转换为DOTA的txt提交格式并压缩成zip
+    format_only=True, # 只将模型输出转换为 DOTA 的 txt 提交格式并压缩成 zip
     merge_patches=True, # 将切片结果合并成大图检测结果
     outfile_prefix='./work_dirs/dota_detection/submission') # 输出测试文件夹的路径
 ```
@@ -187,16 +185,16 @@ train_pipeline = [
         type='LoadImageFromFile', # 第 1 个流程，从文件路径里加载图像
         file_client_args=file_client_args),  # 文件读取后端的配置，默认从硬盘读取
     dict(type='LoadAnnotations', # 第 2 个流程，对于当前图像，加载它的注释信息
-         with_bbox=True, # 是否使用标注框(bounding box)，目标检测需要设置为 True
-         with_mask=True, # 读取储存在mask标注中的多边形标注
-         poly2mask=False) # 不执行poly2mask，后续会将poly转化成检测框
-    dict(type='ConvertMask2BoxType', # 第 3 个流程，将mask标注转化为 boxtype
+         with_bbox=True, # 是否使用标注框 (bounding box)，目标检测需要设置为 True
+         with_mask=True, # 读取储存在 segmentation 标注中的多边形标注
+         poly2mask=False) # 不执行 poly2mask，后续会将 poly 转化成检测框
+    dict(type='ConvertMask2BoxType', # 第 3 个流程，将 mask 标注转化为 boxtype
          box_type='rbox'), # 目标类型是 rbox 旋转框
-    # 剩余的其他pipeline
+    # 剩余的其他 pipeline
     ...
 ]
 
-metainfo = dict( # DOTA数据集的metainfo
+metainfo = dict( # DOTA 数据集的 metainfo
     classes=('plane', 'baseball-diamond', 'bridge', 'ground-track-field',
              'small-vehicle', 'large-vehicle', 'ship', 'tennis-court',
              'basketball-court', 'storage-tank', 'soccer-ball-field',

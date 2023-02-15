@@ -53,7 +53,7 @@ class RotatedRTMDetSepBNHeadModule(RTMDetSepBNHeadModule):
         share_conv (bool): Whether to share conv layers between stages.
             Defaults to True.
         pred_kernel_size (int): Kernel size of ``nn.Conv2d``. Defaults to 1.
-        angle_out_dim: (int): Encoded length of angle, will passed by head.
+        angle_out_dim (int): Encoded length of angle, will passed by head.
             Defaults to 1.
         conv_cfg (:obj:`ConfigDict` or dict, optional): Config dict for
             convolution layer. Defaults to None.
@@ -174,36 +174,46 @@ class RotatedRTMDetHead(RTMDetHead):
     - `use_hbbox_loss` and `loss_angle` allow custom regression loss
       calculation for rotated box.
 
-      There are three combination options with diagrams:
-        (1) `use_hbbox_loss=False` and loss_angle is None.
+      There are three combination options for regression:
 
-            bbox_pred────(tblr)───┐
-                                  ▼
-            angle_pred          decode──►rbox_pred──(xywha)─►loss_bbox
-                │                 ▲
-                └────►decode──(a)─┘
+      1. `use_hbbox_loss=False` and loss_angle is None.
 
-        (2) `use_hbbox_loss=False` and loss_angle is specified.
-             A angle loss is added on angle_pred.
+      .. code:: text
 
-            bbox_pred────(tblr)───┐
-                                  ▼
-            angle_pred          decode──►rbox_pred──(xywha)─►loss_bbox
-                │                 ▲
-                ├────►decode──(a)─┘
-                │
-                └───────────────────────────────────────────►loss_angle
+        bbox_pred────(tblr)───┐
+                              ▼
+        angle_pred          decode──►rbox_pred──(xywha)─►loss_bbox
+            │                 ▲
+            └────►decode──(a)─┘
 
-        (3) `use_hbbox_loss=True` and loss_angle is specified.
-            In this case the loss_angle must be set.
+      2. `use_hbbox_loss=False` and loss_angle is specified.
+         A angle loss is added on angle_pred.
 
-            bbox_pred──(tblr)──►decode──►hbox_pred──(xyxy)──►loss_bbox
+      .. code:: text
 
-            angle_pred──────────────────────────────────────►loss_angle
+        bbox_pred────(tblr)───┐
+                              ▼
+        angle_pred          decode──►rbox_pred──(xywha)─►loss_bbox
+            │                 ▲
+            ├────►decode──(a)─┘
+            │
+            └───────────────────────────────────────────►loss_angle
 
-    4. There's a `decoded_with_angle` flag in test_cfg, which is similar
-       to training process.
-       When `decoded_with_angle=True`:
+      3. `use_hbbox_loss=True` and loss_angle is specified.
+         In this case the loss_angle must be set.
+
+      .. code:: text
+
+        bbox_pred──(tblr)──►decode──►hbox_pred──(xyxy)──►loss_bbox
+
+        angle_pred──────────────────────────────────────►loss_angle
+
+    - There's a `decoded_with_angle` flag in test_cfg, which is similar
+      to training process.
+
+      When `decoded_with_angle=True`:
+
+      .. code:: text
 
         bbox_pred────(tblr)───┐
                               ▼
@@ -211,7 +221,9 @@ class RotatedRTMDetHead(RTMDetHead):
             │                 ▲
             └────►decode──(a)─┘
 
-       When `decoded_with_angle=False`:
+      When `decoded_with_angle=False`:
+
+      .. code:: text
 
         bbox_pred──(tblr)─►decode
                               │ (xyxy)
