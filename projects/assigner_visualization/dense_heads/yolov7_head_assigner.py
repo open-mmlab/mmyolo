@@ -58,6 +58,7 @@ class YOLOv7HeadAssigner(YOLOv7Head):
             self.priors_base_sizes,
             self.grid_offset,
             near_neighbor_thr=self.near_neighbor_thr)
+
         # multi-level positive sample position.
         mlvl_positive_infos = assigner_results['mlvl_positive_infos']
         # assigned results with label and bboxes information.
@@ -118,7 +119,7 @@ class YOLOv7HeadAssigner(YOLOv7Head):
         origin target.
 
         Args:
-           assigned_target (Tensor(assign_nums,7)): YOlOv7 assigning results.
+           assigned_target (Tensor(assign_nums,7)): YOLOv7 assigning results.
            gt_instance (Tensor(gt_nums,7)):  Normalized gt_instance, It
                 usually includes ``bboxes`` and ``labels`` attributes.
         Returns:
