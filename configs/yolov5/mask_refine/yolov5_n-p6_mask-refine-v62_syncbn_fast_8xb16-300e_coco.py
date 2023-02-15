@@ -1,9 +1,13 @@
 _base_ = 'yolov5_s-p6_mask-refine-v62_syncbn_fast_8xb16-300e_coco.py'
 
+# This config will refine bbox by mask while loading annotations and
+# transforming after `YOLOv5RandomAffine`
+
 # ========================modified parameters======================
 deepen_factor = 0.33
 widen_factor = 0.25
 
+# ===============================Unmodified in most cases====================
 model = dict(
     backbone=dict(
         deepen_factor=deepen_factor,

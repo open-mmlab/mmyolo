@@ -1,5 +1,8 @@
 _base_ = './yolov5_s_mask-refine-v61_syncbn_fast_8xb16-300e_coco.py'
 
+# This config will refine bbox by mask while loading annotations and
+# transforming after `YOLOv5RandomAffine`
+
 # ========================modified parameters======================
 img_scale = (1280, 1280)  # width, height
 num_classes = 80  # Number of classes for classification
