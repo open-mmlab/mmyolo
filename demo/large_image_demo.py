@@ -56,7 +56,7 @@ def parse_args():
         '--patch-size', type=int, default=640, help='The size of patches')
     parser.add_argument(
         '--patch-overlap-ratio',
-        type=int,
+        type=float,
         default=0.25,
         help='Ratio of overlap between two patches')
     parser.add_argument(
