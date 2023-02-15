@@ -111,7 +111,7 @@ custom_hooks = [
         priority=49),
     dict(
         type='mmdet.PipelineSwitchHook',
-        switch_epoch=_base_.max_epochs - _base_.stage2_num_epochs,
+        switch_epoch=_base_.max_epochs - _base_.num_epochs_stage2,
         switch_pipeline=train_pipeline_stage2)
 ]
 

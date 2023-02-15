@@ -900,6 +900,7 @@ class YOLOv5MixUp(BaseMixImageTransform):
         mixup_gt_ignore_flags = np.concatenate(
             (results['gt_ignore_flags'], retrieve_gt_ignore_flags), axis=0)
         if 'gt_masks' in results:
+            assert 'gt_masks' in retrieve_results
             mixup_gt_masks = results['gt_masks'].cat(
                 [results['gt_masks'], retrieve_results['gt_masks']])
             results['gt_masks'] = mixup_gt_masks
