@@ -20,18 +20,18 @@ YOLOv8-P5 model structure
 
 ### COCO
 
-| Backbone | Arch | size | Mask Refine | Copy Paste | SyncBN | AMP | Mem (GB) | box AP |                                 Config                                  |        Download        |
-| :------: | :--: | :--: | :---------: | :--------: | :----: | :-: | :------: | :----: | :---------------------------------------------------------------------: | :--------------------: |
-| YOLOv8-n |  P5  | 640  |     No      |     No     |  Yes   | Yes |   2.8    |  37.2  |       [config](../yolov8/yolov8_n_syncbn_fast_8xb16-500e_coco.py)       | [model](x) \| [log](x) |
-| YOLOv8-n |  P5  | 640  |     Yes     |     No     |  Yes   | Yes |    x     |   x    | [config](../yolov8/yolov8_n_mask-refine_syncbn_fast_8xb16-500e_coco.py) | [model](x) \| [log](x) |
-| YOLOv8-s |  P5  | 640  |     No      |     No     |  Yes   | Yes |   4.0    |  44.2  |       [config](../yolov8/yolov8_s_syncbn_fast_8xb16-500e_coco.py)       | [model](x) \| [log](x) |
-| YOLOv8-s |  P5  | 640  |     Yes     |     No     |  Yes   | Yes |    x     |   x    | [config](../yolov8/yolov8_s_mask-refine_syncbn_fast_8xb16-500e_coco.py) | [model](x) \| [log](x) |
-| YOLOv8-m |  P5  | 640  |     No      |     No     |  Yes   | Yes |   7.2    |  49.8  |       [config](../yolov8/yolov8_m_syncbn_fast_8xb16-500e_coco.py)       | [model](x) \| [log](x) |
-| YOLOv8-m |  P5  | 640  |     Yes     |    Yes     |  Yes   | Yes |    x     |   x    | [config](../yolov8/yolov8_m_mask-refine_syncbn_fast_8xb16-500e_coco.py) | [model](x) \| [log](x) |
-| YOLOv8-l |  P5  | 640  |     No      |     No     |  Yes   | Yes |    x     |   x    |       [config](../yolov8/yolov8_l_syncbn_fast_8xb16-500e_coco.py)       | [model](x) \| [log](x) |
-| YOLOv8-l |  P5  | 640  |     Yes     |    Yes     |  Yes   | Yes |    x     |   x    | [config](../yolov8/yolov8_l_mask-refine_syncbn_fast_8xb16-500e_coco.py) | [model](x) \| [log](x) |
-| YOLOv8-x |  P5  | 640  |     No      |     No     |  Yes   | Yes |    x     |   x    |       [config](../yolov8/yolov8_x_syncbn_fast_8xb16-500e_coco.py)       | [model](x) \| [log](x) |
-| YOLOv8-x |  P5  | 640  |     Yes     |    Yes     |  Yes   | Yes |    x     |   x    | [config](../yolov8/yolov8_x_mask-refine_syncbn_fast_8xb16-500e_coco.py) | [model](x) \| [log](x) |
+| Backbone | Arch | size | Mask Refine | SyncBN | AMP | Mem (GB) | box AP |                                 Config                                  |        Download        |
+| :------: | :--: | :--: | :---------: | :----: | :-: | :------: | :----: | :---------------------------------------------------------------------: | :--------------------: |
+| YOLOv8-n |  P5  | 640  |     No      |  Yes   | Yes |   2.8    |  37.2  |       [config](../yolov8/yolov8_n_syncbn_fast_8xb16-500e_coco.py)       | [model](x) \| [log](x) |
+| YOLOv8-n |  P5  | 640  |     Yes     |  Yes   | Yes |    x     |   x    | [config](../yolov8/yolov8_n_mask-refine_syncbn_fast_8xb16-500e_coco.py) | [model](x) \| [log](x) |
+| YOLOv8-s |  P5  | 640  |     No      |  Yes   | Yes |   4.0    |  44.2  |       [config](../yolov8/yolov8_s_syncbn_fast_8xb16-500e_coco.py)       | [model](x) \| [log](x) |
+| YOLOv8-s |  P5  | 640  |     Yes     |  Yes   | Yes |    x     |   x    | [config](../yolov8/yolov8_s_mask-refine_syncbn_fast_8xb16-500e_coco.py) | [model](x) \| [log](x) |
+| YOLOv8-m |  P5  | 640  |     No      |  Yes   | Yes |   7.2    |  49.8  |       [config](../yolov8/yolov8_m_syncbn_fast_8xb16-500e_coco.py)       | [model](x) \| [log](x) |
+| YOLOv8-m |  P5  | 640  |     Yes     |  Yes   | Yes |    x     |   x    | [config](../yolov8/yolov8_m_mask-refine_syncbn_fast_8xb16-500e_coco.py) | [model](x) \| [log](x) |
+| YOLOv8-l |  P5  | 640  |     No      |  Yes   | Yes |    x     |   x    |       [config](../yolov8/yolov8_l_syncbn_fast_8xb16-500e_coco.py)       | [model](x) \| [log](x) |
+| YOLOv8-l |  P5  | 640  |     Yes     |  Yes   | Yes |    x     |   x    | [config](../yolov8/yolov8_l_mask-refine_syncbn_fast_8xb16-500e_coco.py) | [model](x) \| [log](x) |
+| YOLOv8-x |  P5  | 640  |     No      |  Yes   | Yes |    x     |   x    |       [config](../yolov8/yolov8_x_syncbn_fast_8xb16-500e_coco.py)       | [model](x) \| [log](x) |
+| YOLOv8-x |  P5  | 640  |     Yes     |  Yes   | Yes |    x     |   x    | [config](../yolov8/yolov8_x_mask-refine_syncbn_fast_8xb16-500e_coco.py) | [model](x) \| [log](x) |
 
 **Note**
 

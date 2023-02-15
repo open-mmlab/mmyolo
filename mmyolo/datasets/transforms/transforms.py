@@ -490,6 +490,8 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                             'Only supports mask annotations in polygon '
                             'format currently')
                 else:
+                    # TODO: Actually, gt with bbox and without mask needs
+                    #  to be retained
                     self._mask_ignore_flag.append(0)
         self._mask_ignore_flag = np.array(self._mask_ignore_flag, dtype=bool)
         results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=bool)
@@ -570,6 +572,7 @@ class YOLOv5RandomAffine(BaseTransform):
         max_aspect_ratio (float): Aspect ratio of width and height
             threshold to filter bboxes. If max(h/w, w/h) larger than this
             value, the box will be removed. Defaults to 20.
+        resample_num (int): Number of poly to resample to.
     """
 
     def __init__(self,
@@ -583,7 +586,8 @@ class YOLOv5RandomAffine(BaseTransform):
                  min_bbox_size: int = 2,
                  min_area_ratio: float = 0.1,
                  use_mask_refine: bool = False,
-                 max_aspect_ratio: float = 20.):
+                 max_aspect_ratio: float = 20.,
+                 resample_num: int = 1000):
         assert 0 <= max_translate_ratio <= 1
         assert scaling_ratio_range[0] <= scaling_ratio_range[1]
         assert scaling_ratio_range[0] > 0
@@ -598,6 +602,7 @@ class YOLOv5RandomAffine(BaseTransform):
         self.min_area_ratio = min_area_ratio
         self.use_mask_refine = use_mask_refine
         self.max_aspect_ratio = max_aspect_ratio
+        self.resample_num = resample_num
 
     @autocast_box_type()
     def transform(self, results: dict) -> dict:
@@ -741,24 +746,21 @@ class YOLOv5RandomAffine(BaseTransform):
         gt_masks = PolygonMasks(new_masks, img_h, img_w)
         return gt_masks
 
-    @staticmethod
-    def resample_masks(gt_masks: PolygonMasks,
-                       resample_num: int = 1000) -> PolygonMasks:
-        """Function to resample each mask annotation with shape (2*n, ) to
-        shape (resample_num*2, ).
+    def resample_masks(self, gt_masks: PolygonMasks) -> PolygonMasks:
+        """Function to resample each mask annotation with shape (2 * n, ) to
+        shape (resample_num * 2, ).
 
         Args:
             gt_masks (PolygonMasks): Annotations of semantic segmentation.
-            resample_num (int): Number of poly to resample to.
         """
         masks = gt_masks.masks
         new_masks = []
         for poly_per_obj in masks:
             resample_poly_per_obj = []
             for poly in poly_per_obj:
-                poly = poly.reshape((-1, 2))  # wh
+                poly = poly.reshape((-1, 2))  # xy
                 poly = np.concatenate((poly, poly[0:1, :]), axis=0)
-                x = np.linspace(0, len(poly) - 1, resample_num)
+                x = np.linspace(0, len(poly) - 1, self.resample_num)
                 xp = np.arange(len(poly))
                 poly = np.concatenate([
                     np.interp(x, xp, poly[:, i]) for i in range(2)
