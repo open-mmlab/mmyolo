@@ -142,8 +142,7 @@ train_pipeline_stage1 = [
         by_keypoints=True),
     dict(
         type='YOLOPosePackInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
-                   'flip_direction', 'gt_keypoints'))
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape'))
 ]
 
 train_pipeline_stage2 = [
@@ -191,7 +190,7 @@ test_pipeline = [
         with_keypoints=True),
     dict(
         type='YOLOPosePackInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'gt_keypoints',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                    'scale_factor'))
 ]
 

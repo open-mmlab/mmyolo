@@ -478,16 +478,19 @@ class YOLOXKptHead(YOLOv5Head):
                     scores, score_thr, nms_pre)
 
             results = InstanceData(
-                scores=scores, labels=labels, bboxes=bboxes[keep_idxs], keypoints=kpts[keep_idxs], keypoint_scores=kpts_vis[keep_idxs])
+                scores=scores,
+                labels=labels,
+                bboxes=bboxes[keep_idxs],
+                keypoints=kpts[keep_idxs],
+                keypoint_scores=kpts_vis[keep_idxs])
 
             if rescale:
                 if pad_param is not None:
                     results.bboxes -= results.bboxes.new_tensor([
                         pad_param[2], pad_param[0], pad_param[2], pad_param[0]
                     ])
-                    results.keypoints -= results.keypoints.new_tensor([
-                        pad_param[2], pad_param[0]
-                    ])
+                    results.keypoints -= results.keypoints.new_tensor(
+                        [pad_param[2], pad_param[0]])
                 results.bboxes /= results.bboxes.new_tensor(
                     scale_factor).repeat((1, 2))
                 results.keypoints /= results.keypoints.new_tensor(
@@ -506,7 +509,12 @@ class YOLOXKptHead(YOLOv5Head):
             results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
             results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
 
-            results = self._kpt_post_process(results, cfg, rescale=False, with_nms=with_nms, img_meta=img_meta)
+            results = self._kpt_post_process(
+                results,
+                cfg,
+                rescale=False,
+                with_nms=with_nms,
+                img_meta=img_meta)
             # keypoints outside the image, the visibility is set to 0
             results.keypoints[:, :, 0].clamp_(0, ori_shape[1])
             results.keypoints[:, :, 1].clamp_(0, ori_shape[0])
@@ -516,11 +524,17 @@ class YOLOXKptHead(YOLOv5Head):
             results_list.append(results)
         return results_list
 
-    def _kpt_post_process(self, results, cfg, rescale=False, with_nms=True, img_meta=None):
+    def _kpt_post_process(self,
+                          results,
+                          cfg,
+                          rescale=False,
+                          with_nms=True,
+                          img_meta=None):
         if rescale:
             assert img_meta.get('scale_factor') is not None
             scale_factor = [1 / s for s in img_meta['scale_factor']]
-            results.keypoints = Keypoints._kpt_rescale(results.keypoints, scale_factor)
+            results.keypoints = Keypoints._kpt_rescale(results.keypoints,
+                                                       scale_factor)
         return results
 
     def loss_by_feat(
@@ -605,11 +619,11 @@ class YOLOXKptHead(YOLOv5Head):
                                              flatten_kpt_preds,
                                              flatten_priors[..., 2])
         flatten_vis_preds = torch.cat(flatten_vis_preds, dim=1)
-        flatten_kpt_vis_preds = torch.cat(
-            [flatten_kpts, flatten_vis_preds[..., None]], dim=-1)
+        # flatten_kpt_vis_preds = torch.cat(
+        #     [flatten_kpts, flatten_vis_preds[..., None]], dim=-1)
 
-        (pos_masks, cls_targets, obj_targets, bbox_targets, kpt_vis_targets,
-         bbox_aux_target, num_fg_imgs) = multi_apply(
+        (pos_masks, cls_targets, obj_targets, bbox_targets, kpt_targets,
+         vis_targets, bbox_aux_target, num_fg_imgs) = multi_apply(
              self._get_targets_single,
              flatten_priors.unsqueeze(0).repeat(num_imgs, 1, 1),
              flatten_cls_preds.detach(), flatten_bboxes.detach(),
@@ -628,9 +642,9 @@ class YOLOXKptHead(YOLOv5Head):
         cls_targets = torch.cat(cls_targets, 0)
         obj_targets = torch.cat(obj_targets, 0)
         bbox_targets = torch.cat(bbox_targets, 0)
-        kpt_vis_targets = torch.cat(kpt_vis_targets, 0)
-        kpt_targets, vis_targets = kpt_vis_targets[..., :2], kpt_vis_targets[
-            ..., 2]
+        kpt_targets = torch.cat(kpt_targets, 0)
+        vis_targets = torch.cat(vis_targets, 0)
+
         kpt_mask = vis_targets > 0
         if self.use_bbox_aux:
             bbox_aux_target = torch.cat(bbox_aux_target, 0)
@@ -644,9 +658,10 @@ class YOLOXKptHead(YOLOv5Head):
             loss_bbox = self.loss_bbox(
                 flatten_bboxes.view(-1, 4)[pos_masks],
                 bbox_targets) / num_total_samples
-            loss_kpt = self.loss_kpt(
-                flatten_kpt_vis_preds.view(-1, self.num_keypoints,
-                                           3)[pos_masks], kpt_vis_targets)
+            # combine kpt and vis for oks loss
+            _eps = 1e-6
+            kpt_loss_factor = ((kpt_mask != 0).sum() + (kpt_mask == 0).sum()) / ((kpt_mask != 0).sum() + _eps)
+            loss_kpt = self.loss_kpt(flatten_kpts.view(-1, self.num_keypoints, 2)[pos_masks], kpt_targets) / kpt_mask.sum() * kpt_loss_factor
             loss_vis = self.loss_cls(
                 flatten_vis_preds.view(-1, self.num_keypoints)[pos_masks],
                 kpt_mask.float()) / kpt_mask.sum()
@@ -791,8 +806,10 @@ class YOLOXKptHead(YOLOv5Head):
         # TODO: kps target
         kpt_target = gt_instances['keypoints'][
             sampling_result.pos_assigned_gt_inds]
+        vis_target = gt_instances['keypoints_visible'][
+            sampling_result.pos_assigned_gt_inds]
         return (foreground_mask, cls_target, obj_target, bbox_target,
-                kpt_target, bbox_aux_target, num_pos_per_img)
+                kpt_target, vis_target, bbox_aux_target, num_pos_per_img)
 
     def _get_bbox_aux_target(self,
                              bbox_aux_target: Tensor,

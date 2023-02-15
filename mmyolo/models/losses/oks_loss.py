@@ -39,7 +39,7 @@ class OksLoss(nn.Module):
             Tensor: loss value.
         """
         assert preds.shape == targets.shape
-        assert preds.dim() == 3 and preds.shape[-1] == 3
+        assert preds.dim() == 3 and preds.shape[-1] == 2
         assert preds.shape[1] == self.dataset_info['num_keypoints']
 
         # area
@@ -69,7 +69,7 @@ class OksLoss(nn.Module):
         """
         # corner case check
         assert g.shape == d.shape, f'g.shape: {g.shape}, d.shape: {d.shape}'
-        assert g.dim() == 3 and g.shape[-1] == 3, f'g.shape: {g.shape}'
+        assert g.dim() == 3 and g.shape[-1] == 2, f'g.shape: {g.shape}'
         assert g.shape[1] == self.dataset_info['num_keypoints'], f'g.shape: {g.shape}'
         assert a_g.shape == a_d.shape, f'a_g.shape: {a_g.shape}, a_d.shape: {a_d.shape}'
         assert a_g.dim() == 1, f'a_g.shape: {a_g.shape}'
@@ -85,10 +85,10 @@ class OksLoss(nn.Module):
         vars = (sigmas * 2)**2
         xg = g[..., 0]
         yg = g[..., 1]
-        vg = g[..., 2]
+        # vg = g[..., 2]
         xd = d[..., 0]
         yd = d[..., 1]
-        vd = d[..., 2]
+        # vd = d[..., 2]
 
         dx = xg - xd
         dy = yg - yd
@@ -96,6 +96,5 @@ class OksLoss(nn.Module):
         d = dx ** 2 + dy ** 2
         s = repeat(a_g, 'n -> n h', h=g.shape[1])
         e = (-d / (s * vars + eps))
-        kpt_loss_factor = ((vg != 0).sum() + (vg == 0).sum()) / (vg!=0).sum()
-        loss = ((1 - torch.exp(e)) * (vg > 0)).mean()
-        return kpt_loss_factor * loss
+        loss = 1 - torch.exp(e)
+        return loss

@@ -231,17 +231,13 @@ class Keypoints:
         return kpt
 
     @classmethod
-    def _kpt_flip(self, kpt, img_shape: Tuple[int, int], direction) -> None:
+    def _kpt_flip(self, kpt, kpt_vis, img_shape: Tuple[int, int], direction) -> None:
         # default meta info for coco
-        keypoints = kpt[..., :2]
-        keypoints_vis = kpt[..., 2]
         flip_indices = self.metainfo['flip_indices']
-        keypoints, keypoints_vis = flip_keypoints(keypoints, keypoints_vis,
+        kpt, kpt_vis = flip_keypoints(kpt, kpt_vis,
                                                   img_shape, flip_indices,
                                                   direction)
-        kpt[..., :2] = keypoints
-        kpt[..., 2] = keypoints_vis
-        return kpt
+        return kpt, kpt_vis
 
     @classmethod
     def _kpt_area(self, kpt):
@@ -253,7 +249,7 @@ class Keypoints:
         Args:
             kpt (numpy.ndarray or Tensor): shape N x num_kps x dimension.
         """
-        assert kpt.shape[-1] == 3
+        assert kpt.shape[-1] == 2
         kpt = kpt[..., :2]
         x_min = kpt[..., 0].min(dim=-1)[0]
         x_max = kpt[..., 0].max(dim=-1)[0]
