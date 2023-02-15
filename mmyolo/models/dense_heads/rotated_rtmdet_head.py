@@ -168,14 +168,13 @@ class RotatedRTMDetHead(RTMDetHead):
     Compared with RTMDetHead, RotatedRTMDetHead add some args to support
     rotated object detection.
 
-    .. code:: text
+    - `angle_version` used to limit angle_range during training.
+    - `angle_coder` used to encode and decode angle, which is similar
+      to bbox_coder.
+    - `use_hbbox_loss` and `loss_angle` allow custom regression loss
+      calculation for rotated box.
 
-    1. `angle_version` used to limit angle_range during training.
-    2. `angle_coder` used to encode and decode angle, which is similar
-        to bbox_coder.
-    3. `use_hbbox_loss` and `loss_angle` allow custom regression loss
-        calculation for rotated box.
-        There are three combination options with diagrams:
+      There are three combination options with diagrams:
         (1) `use_hbbox_loss=False` and loss_angle is None.
 
             bbox_pred────(tblr)───┐
