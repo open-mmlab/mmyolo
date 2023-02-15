@@ -2,7 +2,7 @@ _base_ = '../_base_/default_runtime.py'
 
 # ========================Frequently modified parameters======================
 # -----data related-----
-data_root = 'data/sub_coco/'  # Root path of data
+data_root = 'data/coco/'  # Root path of data
 # Path of train annotation file
 train_ann_file = 'annotations/instances_train2017.json'
 train_data_prefix = 'train2017/'  # Prefix of train image path
@@ -12,7 +12,7 @@ val_data_prefix = 'val2017/'  # Prefix of val image path
 
 num_classes = 80  # Number of classes for classification
 # Batch size of a single GPU during training
-train_batch_size_per_gpu = 4
+train_batch_size_per_gpu = 16
 # Worker to pre-fetch data for each single GPU during training
 train_num_workers = 8
 # persistent_workers must be False if num_workers is 0
