@@ -9,7 +9,7 @@ img_scale = (640, 640)  # width, height
 deepen_factor = 0.33
 widen_factor = 0.5
 
-save_epoch_intervals = 10
+save_epoch_intervals = 1
 train_batch_size_per_gpu = 8
 # NOTE: for debugging set to 0
 train_num_workers = 0
@@ -215,7 +215,7 @@ test_dataloader = val_dataloader
 
 # Reduce evaluation time
 val_evaluator = dict(
-    type='mmdet.CocoMetric',
+    type='YOLOPoseCocoMetric',
     proposal_nums=(100, 1, 10),
     ann_file=data_root + 'annotations/person_keypoints_val2017_mini.json',
     metric='bbox')

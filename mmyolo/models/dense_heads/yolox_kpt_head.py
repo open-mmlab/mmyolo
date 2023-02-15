@@ -1,4 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+import copy
 from typing import List, Optional, Sequence, Tuple, Union
 
 import torch
@@ -6,7 +7,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import ConvModule, DepthwiseSeparableConvModule
 from mmdet.models.task_modules.samplers import PseudoSampler
-from mmdet.models.utils import multi_apply
+from mmdet.models.utils import multi_apply, filter_scores_and_topk
 from mmdet.structures.bbox import bbox_xyxy_to_cxcywh
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
                          OptMultiConfig, reduce_mean)
@@ -322,7 +323,169 @@ class YOLOXKptHead(YOLOv5Head):
     def predict_by_feat(self, cls_scores: List[Tensor], bbox_preds: List[Tensor], objectnesses: Optional[List[Tensor]] = None, 
                         kpt_preds: Optional[List[Tensor]] = None, vis_preds: Optional[List[Tensor]] = None,
                         batch_img_metas: Optional[List[dict]] = None, cfg: Optional[ConfigDict] = None, rescale: bool = True, with_nms: bool = True) -> List[InstanceData]:
-        return super().predict_by_feat(cls_scores, bbox_preds, objectnesses, batch_img_metas, cfg, rescale, with_nms)
+        """
+        predict_by_feat predict feature from feature maps.
+
+        head module outputs are feature maps, so we need to decode them to get the final prediction.
+
+        Args:
+            cls_scores (List[Tensor]): feature maps of classification.
+            bbox_preds (List[Tensor]): feature maps of localization.
+            objectnesses (Optional[List[Tensor]], optional): feature maps of objectness. Defaults to None.
+            kpt_preds (Optional[List[Tensor]], optional): feature maps of keypoints. Defaults to None.
+            vis_preds (Optional[List[Tensor]], optional): feature maps of keypoints visibility. Defaults to None.
+            batch_img_metas (Optional[List[dict]], optional): meta info for images. Defaults to None.
+            cfg (Optional[ConfigDict], optional): from config file "model.test_cfg". Defaults to None.
+            rescale (bool, optional): whether rescale back to original images. Defaults to True.
+            with_nms (bool, optional): whether use nms. Defaults to True.
+
+        Returns:
+            List[InstanceData]: prediction results, including boxes, labels, scores, keypoints, keypoints visibility.
+        """
+        assert len(cls_scores) == len(bbox_preds) == len(kpt_preds) == len(vis_preds)
+        if objectnesses is None:
+            with_objectnesses = False
+        else:
+            with_objectnesses = True
+            assert len(cls_scores) == len(objectnesses)
+
+        cfg = self.test_cfg if cfg is None else cfg
+        cfg = copy.deepcopy(cfg)
+
+        multi_label = cfg.multi_label
+        multi_label &= self.num_classes > 1
+        cfg.multi_label = multi_label
+
+        num_imgs = len(batch_img_metas)
+        featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
+
+        # If the shape does not change, use the previous mlvl_priors
+        if featmap_sizes != self.featmap_sizes:
+            self.mlvl_priors = self.prior_generator.grid_priors(
+                featmap_sizes,
+                dtype=cls_scores[0].dtype,
+                device=cls_scores[0].device)
+            self.featmap_sizes = featmap_sizes
+        flatten_priors = torch.cat(self.mlvl_priors)
+
+        mlvl_strides = [
+            flatten_priors.new_full(
+                (featmap_size.numel() * self.num_base_priors, ), stride) for
+            featmap_size, stride in zip(featmap_sizes, self.featmap_strides)
+        ]
+        flatten_stride = torch.cat(mlvl_strides)
+
+        # flatten cls_scores, bbox_preds and objectness
+        flatten_cls_scores = [
+            cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1,
+                                                  self.num_classes)
+            for cls_score in cls_scores
+        ]
+        flatten_bbox_preds = [
+            bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
+            for bbox_pred in bbox_preds
+        ]
+
+        flatten_cls_scores = torch.cat(flatten_cls_scores, dim=1).sigmoid()
+        flatten_bbox_preds = torch.cat(flatten_bbox_preds, dim=1)
+        flatten_decoded_bboxes = self.bbox_coder.decode(
+            flatten_priors[None], flatten_bbox_preds, flatten_stride)
+        
+        # keypoints and visibility
+        flatten_kpt_preds = [
+            kpt_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, self.num_keypoints * 2)
+            for kpt_pred in kpt_preds
+        ]
+        flatten_kpt_preds = torch.cat(flatten_kpt_preds, dim=1)
+        flatten_decoded_kpts = self.kpt_coder.decode(
+            flatten_priors[None], flatten_kpt_preds, flatten_stride)
+        
+        flatten_vis_preds = [
+            vis_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, self.num_keypoints)
+            for vis_pred in vis_preds
+        ]
+        flatten_vis_preds = torch.cat(flatten_vis_preds, dim=1).sigmoid()
+
+        if with_objectnesses:
+            flatten_objectness = [
+                objectness.permute(0, 2, 3, 1).reshape(num_imgs, -1)
+                for objectness in objectnesses
+            ]
+            flatten_objectness = torch.cat(flatten_objectness, dim=1).sigmoid()
+        else:
+            flatten_objectness = [None for _ in range(num_imgs)]
+
+        results_list = []
+        for (bboxes, scores, objectness,
+             img_meta) in zip(flatten_decoded_bboxes, flatten_cls_scores,
+                              flatten_objectness, batch_img_metas):
+            ori_shape = img_meta['ori_shape']
+            scale_factor = img_meta['scale_factor']
+            if 'pad_param' in img_meta:
+                pad_param = img_meta['pad_param']
+            else:
+                pad_param = None
+
+            score_thr = cfg.get('score_thr', -1)
+            # yolox_style does not require the following operations
+            if objectness is not None and score_thr > 0 and not cfg.get(
+                    'yolox_style', False):
+                conf_inds = objectness > score_thr
+                bboxes = bboxes[conf_inds, :]
+                scores = scores[conf_inds, :]
+                objectness = objectness[conf_inds]
+
+            if objectness is not None:
+                # conf = obj_conf * cls_conf
+                scores *= objectness[:, None]
+
+            if scores.shape[0] == 0:
+                empty_results = InstanceData()
+                empty_results.bboxes = bboxes
+                empty_results.scores = scores[:, 0]
+                empty_results.labels = scores[:, 0].int()
+                results_list.append(empty_results)
+                continue
+
+            nms_pre = cfg.get('nms_pre', 100000)
+            if cfg.multi_label is False:
+                scores, labels = scores.max(1, keepdim=True)
+                scores, _, keep_idxs, results = filter_scores_and_topk(
+                    scores,
+                    score_thr,
+                    nms_pre,
+                    results=dict(labels=labels[:, 0]))
+                labels = results['labels']
+            else:
+                scores, labels, keep_idxs, _ = filter_scores_and_topk(
+                    scores, score_thr, nms_pre)
+
+            results = InstanceData(
+                scores=scores, labels=labels, bboxes=bboxes[keep_idxs])
+
+            if rescale:
+                if pad_param is not None:
+                    results.bboxes -= results.bboxes.new_tensor([
+                        pad_param[2], pad_param[0], pad_param[2], pad_param[0]
+                    ])
+                results.bboxes /= results.bboxes.new_tensor(
+                    scale_factor).repeat((1, 2))
+
+            if cfg.get('yolox_style', False):
+                # do not need max_per_img
+                cfg.max_per_img = len(results)
+
+            results = self._bbox_post_process(
+                results=results,
+                cfg=cfg,
+                rescale=False,
+                with_nms=with_nms,
+                img_meta=img_meta)
+            results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
+            results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
+
+            results_list.append(results)
+        return results_list
 
     def loss_by_feat(
             self,

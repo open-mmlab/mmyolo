@@ -215,7 +215,7 @@ test_dataloader = val_dataloader
 
 # Reduce evaluation time
 val_evaluator = dict(
-    type='mmdet.CocoMetric',
+    type='CocoMetric',
     proposal_nums=(100, 1, 10),
     ann_file=data_root + 'annotations/person_keypoints_val2017_1256.json',
     metric='bbox')
