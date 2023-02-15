@@ -1377,6 +1377,7 @@ class YOLOv5CopyPaste(BaseTransform):
         gt_bboxes = results['gt_bboxes']
         gt_bboxes_labels = results.get('gt_bboxes_labels', None)
         img = results['img']
+        img_h, img_w = img.shape[:2]
 
         # calculate ioa
         gt_bboxes_flip = deepcopy(gt_bboxes)
@@ -1390,7 +1391,7 @@ class YOLOv5CopyPaste(BaseTransform):
         if len(valid_inds) == 0:
             return results
 
-        if gt_bboxes_labels:
+        if gt_bboxes_labels is not None:
             # prepare labels
             gt_bboxes_labels = np.concatenate(
                 (gt_bboxes_labels, gt_bboxes_labels[valid_inds]), axis=0)
@@ -1405,9 +1406,19 @@ class YOLOv5CopyPaste(BaseTransform):
         # convert poly format to bitmap format
         # example: poly: [[array(0.0, 0.0, 10.0, 0.0, 10.0, 10.0, 0.0, 10.0]]
         #  -> bitmap: a mask with shape equal to (1, img_h, img_w)
-        copypaste_gt_masks_bitmap = copypaste_gt_masks.to_ndarray()
+        # # type1 low speed
+        # copypaste_gt_masks_bitmap = copypaste_gt_masks.to_ndarray()
+        # copypaste_mask = np.sum(copypaste_gt_masks_bitmap, axis=0) > 0
+
+        # type2
+        copypaste_mask = np.zeros((img_h, img_w), dtype=np.uint8)
+        for poly in copypaste_gt_masks.masks:
+            poly = [i.reshape((-1, 1, 2)).astype(np.int32) for i in poly]
+            cv2.drawContours(copypaste_mask, poly, -1, (1, ), cv2.FILLED)
+
+        copypaste_mask = copypaste_mask.astype(bool)
+
         # copy objects, and paste to the mirror position of the image
-        copypaste_mask = np.sum(copypaste_gt_masks_bitmap, axis=0) > 0
         copypaste_mask_flip = mmcv.imflip(
             copypaste_mask, direction='horizontal')
         copypaste_img = mmcv.imflip(img, direction='horizontal')
@@ -1425,7 +1436,7 @@ class YOLOv5CopyPaste(BaseTransform):
 
         results['img'] = img
         results['gt_bboxes'] = gt_bboxes
-        if gt_bboxes_labels:
+        if gt_bboxes_labels is not None:
             results['gt_bboxes_labels'] = gt_bboxes_labels
         results['gt_masks'] = gt_masks
 
