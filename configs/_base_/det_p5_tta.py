@@ -1,15 +1,15 @@
 # TODO: Need to solve the problem of multiple file_client_args parameters
-_file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/': 's3://openmmlab/datasets/detection/',
-        'data/': 's3://openmmlab/datasets/detection/'
-    }))
+# _file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/': 's3://openmmlab/datasets/detection/',
+#         'data/': 's3://openmmlab/datasets/detection/'
+#     }))
 _file_client_args = dict(backend='disk')
 
 tta_model = dict(
     type='mmdet.DetTTAModel',
-    tta_cfg=dict(nms=dict(type='nms', iou_threshold=0.65), max_per_img=100))
+    tta_cfg=dict(nms=dict(type='nms', iou_threshold=0.65), max_per_img=300))
 
 img_scales = [(640, 640), (320, 320), (960, 960)]
 

@@ -1,10 +1,10 @@
 # TODO: Need to solve the problem of multiple file_client_args parameters
-_file_client_args = dict(
-    backend='petrel',
-    path_mapping=dict({
-        './data/': 's3://openmmlab/datasets/detection/',
-        'data/': 's3://openmmlab/datasets/detection/'
-    }))
+# _file_client_args = dict(
+#     backend='petrel',
+#     path_mapping=dict({
+#         './data/': 's3://openmmlab/datasets/detection/',
+#         'data/': 's3://openmmlab/datasets/detection/'
+#     }))
 _file_client_args = dict(backend='disk')
 
 tta_model = dict(
