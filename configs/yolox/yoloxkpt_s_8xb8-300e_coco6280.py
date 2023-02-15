@@ -172,6 +172,7 @@ train_dataloader = dict(
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
+        metainfo=dataset_info,
         data_root=data_root,
         ann_file='annotations/person_keypoints_train2017_6280.json',
         data_prefix=dict(img='train2017/'),
@@ -206,6 +207,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
+        metainfo=dataset_info,
         ann_file='annotations/person_keypoints_val2017_1256.json',
         data_prefix=dict(img='val2017/'),
         test_mode=True,

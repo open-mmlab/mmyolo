@@ -1,3 +1,3 @@
 from .metrics import *
 
-__all__ = ['YOLOPoseCocoMetric']
+__all__ = ['CocoMetric']

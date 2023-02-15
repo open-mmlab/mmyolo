@@ -765,12 +765,13 @@ class YOLOXKptHead(YOLOv5Head):
         if num_gts == 0:
             cls_target = cls_preds.new_zeros((0, self.num_classes))
             bbox_target = cls_preds.new_zeros((0, 4))
-            kpt_target = cls_preds.new_zeros((0, self.num_keypoints, 3))
+            kpt_target = cls_preds.new_zeros((0, self.num_keypoints, 2))
+            vis_target = cls_preds.new_zeros((0, self.num_keypoints))
             bbox_aux_target = cls_preds.new_zeros((0, 4))
             obj_target = cls_preds.new_zeros((num_priors, 1))
             foreground_mask = cls_preds.new_zeros(num_priors).bool()
             return (foreground_mask, cls_target, obj_target, bbox_target,
-                    kpt_target, bbox_aux_target, 0)
+                    kpt_target, vis_target, bbox_aux_target, 0)
 
         # YOLOX uses center priors with 0.5 offset to assign targets,
         # but use center priors without offset to regress bboxes.

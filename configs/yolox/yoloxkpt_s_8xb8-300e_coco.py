@@ -172,6 +172,7 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
+        metainfo=dataset_info,
         ann_file='annotations/person_keypoints_train2017_mini.json',
         data_prefix=dict(img='train2017/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
@@ -204,6 +205,7 @@ val_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
+        metainfo=dataset_info,
         ann_file='annotations/person_keypoints_val2017_mini.json',
         data_prefix=dict(img='val2017/'),
         test_mode=True,
@@ -219,7 +221,7 @@ val_evaluator = [
         ann_file=data_root + 'annotations/person_keypoints_val2017_mini.json',
         metric=['bbox']),
     dict(
-        type='mmpose.CocoMetric',
+        type='CocoMetric',
         ann_file=data_root + 'annotations/person_keypoints_val2017_mini.json')
 ]
 

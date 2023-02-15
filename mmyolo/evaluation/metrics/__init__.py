@@ -1,3 +1,3 @@
-from .coco_metrics import YOLOPoseCocoMetric
+from .coco_metrics import CocoMetric
 
-__all__ = ['YOLOPoseCocoMetric']
+__all__ = ['CocoMetric']

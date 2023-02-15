@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os.path as osp
 from typing import Any, List, Optional, Union
-
+from mmpose.datasets.datasets.utils import parse_pose_metainfo
 from mmdet.datasets import BaseDetDataset, CocoDataset
 import numpy as np
 
@@ -74,6 +74,11 @@ class YOLOv5PoseCocoDataset(BatchShapePolicyDataset, CocoDataset):
     We only add `BatchShapePolicy` function compared with CocoDataset. See
     `mmyolo/datasets/utils.py#BatchShapePolicy` for details
     """
+    def __init__(self, metainfo, *args, batch_shapes_cfg: Optional[dict] = None, **kwargs):
+        super().__init__(*args, batch_shapes_cfg=batch_shapes_cfg, **kwargs)
+        METAINFO: dict = dict(from_file=metainfo)
+        pose_metainfo = parse_pose_metainfo(METAINFO)
+        self.METAINFO = self.METAINFO.update(pose_metainfo)
 
     def parse_data_info(self, raw_data_info: dict) -> Union[dict, List[dict]]:
         """Parse raw annotation to target format.
