@@ -141,3 +141,30 @@ test_dataloader = val_dataloader
 # The only difference between P6 and P5 in terms of
 # hyperparameters is lr_factor
 default_hooks = dict(param_scheduler=dict(lr_factor=0.2))
+
+tta_img_scales = [(1280, 1280), (1024, 1024), (1536, 1536)]
+
+tta_pipeline = [
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(
+        type='TestTimeAug',
+        transforms=[[[
+            dict(type='YOLOv5KeepRatioResize', scale=s),
+            dict(
+                type='LetterResize',
+                scale=s,
+                allow_scale_up=False,
+                pad_val=dict(img=114))
+        ] for s in tta_img_scales],
+                    [
+                        dict(type='mmdet.RandomFlip', prob=1.),
+                        dict(type='mmdet.RandomFlip', prob=0.)
+                    ], [dict(type='mmdet.LoadAnnotations', with_bbox=True)],
+                    [
+                        dict(
+                            type='mmdet.PackDetInputs',
+                            meta_keys=('img_id', 'img_path', 'ori_shape',
+                                       'img_shape', 'scale_factor',
+                                       'pad_param', 'flip', 'flip_direction'))
+                    ]])
+]
