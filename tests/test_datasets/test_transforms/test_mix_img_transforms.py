@@ -137,7 +137,6 @@ class TestMosaic(unittest.TestCase):
             dataset
         }
         transform = Mosaic(img_scale=(12, 10), pre_transform=pre_transform)
-        results = copy.deepcopy(self.results)
         results['gt_bboxes'] = HorizontalBoxes(results['gt_bboxes'])
         results = transform(results)
         self.assertTrue(results['img'].shape[:2] == (20, 24))
@@ -305,7 +304,7 @@ class TestYOLOv5MixUp(unittest.TestCase):
         self.assertTrue(results['gt_bboxes'].dtype == torch.float32)
         self.assertTrue(results['gt_ignore_flags'].dtype == bool)
 
-    def test_transform_with_masks(self):
+    def test_transform_with_mask(self):
         rng = np.random.RandomState(0)
         pre_transform = [
             dict(

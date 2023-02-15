@@ -471,23 +471,26 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         self._mask_ignore_flag = []
         for instance in results.get('instances', []):
             if instance['ignore_flag'] == 0:
-                gt_mask = instance['mask']
-                if isinstance(gt_mask, list):
-                    gt_mask = [
-                        np.array(polygon) for polygon in gt_mask
-                        if len(polygon) % 2 == 0 and len(polygon) >= 6
-                    ]
-                    if len(gt_mask) == 0:
-                        # ignore
-                        self._mask_ignore_flag.append(0)
+                if 'mask' in instance:
+                    gt_mask = instance['mask']
+                    if isinstance(gt_mask, list):
+                        gt_mask = [
+                            np.array(polygon) for polygon in gt_mask
+                            if len(polygon) % 2 == 0 and len(polygon) >= 6
+                        ]
+                        if len(gt_mask) == 0:
+                            # ignore
+                            self._mask_ignore_flag.append(0)
+                        else:
+                            gt_masks.append(gt_mask)
+                            gt_ignore_flags.append(instance['ignore_flag'])
+                            self._mask_ignore_flag.append(1)
                     else:
-                        gt_masks.append(gt_mask)
-                        gt_ignore_flags.append(instance['ignore_flag'])
-                        self._mask_ignore_flag.append(1)
+                        raise NotImplementedError(
+                            'Only supports mask annotations in polygon '
+                            'format currently')
                 else:
-                    raise NotImplementedError(
-                        'Only supports mask annotations in polygon '
-                        'format currently')
+                    self._mask_ignore_flag.append(0)
         self._mask_ignore_flag = np.array(self._mask_ignore_flag, dtype=bool)
         results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=bool)
 
