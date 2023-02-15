@@ -68,7 +68,7 @@ val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 test_dataloader = val_dataloader
 
 tta_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=dict(backend='disk')),
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(
         type='TestTimeAug',
         transforms=[
