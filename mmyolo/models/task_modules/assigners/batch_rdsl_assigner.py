@@ -2,6 +2,7 @@
 
 import torch
 import torch.nn.functional as F
+from mmdet.utils import ConfigType
 from torch import Tensor
 
 from mmyolo.registry import TASK_UTILS
@@ -35,6 +36,12 @@ class BatchRotatedDSLAssigner(BatchDynamicSoftLabelAssigner):
     """Computes matching between predictions and ground truth with dynamic soft
     label assignment.
 
+    `BatchDynamicSoftLabelAssigner` for Rotated boxes with format (x,y,w,h,a)
+    The main changes are:
+    1. The `pred_bboxes` and `gt_bboxes` are rotated boxes with last dim 5.
+    2. The bbox centre and find inside box points method is different.
+    3. RBboxOverlaps2D doesn't support batch input, use loop instead.
+
     Args:
         num_classes (int): number of class
         soft_center_radius (float): Radius of the soft center prior.
@@ -43,8 +50,23 @@ class BatchRotatedDSLAssigner(BatchDynamicSoftLabelAssigner):
             best matches for each gt. Defaults to 13.
         iou_weight (float): The scale factor of iou cost. Defaults to 3.0.
         iou_calculator (ConfigType): Config of overlaps Calculator.
-            Defaults to dict(type='BboxOverlaps2D').
+            Defaults to dict(type='mmrotate.RBboxOverlaps2D').
     """
+
+    def __init__(
+        self,
+        num_classes,
+        soft_center_radius: float = 3.0,
+        topk: int = 13,
+        iou_weight: float = 3.0,
+        iou_calculator: ConfigType = dict(type='mmrotate.RBboxOverlaps2D')
+    ) -> None:
+        super().__init__(
+            num_classes=num_classes,
+            soft_center_radius=soft_center_radius,
+            topk=topk,
+            iou_weight=iou_weight,
+            iou_calculator=iou_calculator)
 
     @torch.no_grad()
     def forward(self, pred_bboxes: Tensor, pred_scores: Tensor, priors: Tensor,
@@ -84,10 +106,10 @@ class BatchRotatedDSLAssigner(BatchDynamicSoftLabelAssigner):
         distance = distance * valid_mask
         soft_center_prior = torch.pow(10, distance - self.soft_center_radius)
 
-        # rbox iou doesn't support batch input
+        # rbox iou doesn't support batch input, replace with loop
         ious = []
-        for d_box, gt in zip(decoded_bboxes, gt_bboxes):
-            iou = self.iou_calculator(d_box, gt)
+        for box, gt in zip(decoded_bboxes, gt_bboxes):
+            iou = self.iou_calculator(box, gt)
             ious.append(iou)
 
         pairwise_ious = torch.stack(ious, dim=0)
