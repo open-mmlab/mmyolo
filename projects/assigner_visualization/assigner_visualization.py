@@ -11,13 +11,14 @@ import torch
 from mmengine import ProgressBar
 from mmengine.config import Config, DictAction
 from mmengine.dataset import COLLATE_FUNCTIONS
-from mmengine.runner import load_checkpoint
+from mmengine.runner.checkpoint import load_checkpoint
 from numpy import random
 
 from mmyolo.registry import DATASETS, MODELS
 from mmyolo.utils import register_all_modules
 from projects.assigner_visualization.dense_heads import (RTMHeadAssigner,
-                                                         YOLOv5HeadAssigner)
+                                                         YOLOv5HeadAssigner,
+                                                         YOLOv7HeadAssigner)
 from projects.assigner_visualization.visualization import \
     YOLOAssignerVisualizer
 
@@ -87,17 +88,20 @@ def main():
     # build model
     model = MODELS.build(cfg.model)
     if args.checkpoint is not None:
-        _ = load_checkpoint(model, args.checkpoint, map_location='cpu')
-    elif isinstance(model.bbox_head, RTMHeadAssigner):
+        load_checkpoint(model, args.checkpoint)
+    elif isinstance(model.bbox_head, (YOLOv7HeadAssigner, RTMHeadAssigner)):
         warnings.warn(
-            'if you use dynamic_assignment methods such as yolov7 or '
-            'rtmdet assigner, please load the checkpoint.')
-
-    assert isinstance(model.bbox_head, (YOLOv5HeadAssigner, RTMHeadAssigner)),\
-        'Now, this script only support yolov5 and rtmdet, and ' \
+            'if you use dynamic_assignment methods such as YOLOv7 or '
+            'RTMDet assigner, please load the checkpoint.')
+    assert isinstance(model.bbox_head, (YOLOv5HeadAssigner,
+                                        YOLOv7HeadAssigner,
+                                        RTMHeadAssigner)), \
+        'Now, this script only support YOLOv5, YOLOv7 and RTMdet, and ' \
         'bbox_head must use ' \
-        '`YOLOv5HeadAssigner or RTMHeadAssigner`. Please use `' \
+        '`YOLOv5HeadAssigner or YOLOv7HeadAssigner or RTMHeadAssigner`.' \
+        ' Please use `' \
         'yolov5_s-v61_syncbn_fast_8xb16-300e_coco_assignervisualization.py' \
+        'or yolov7_tiny_syncbn_fast_8x16b-300e_coco_assignervisualization.py' \
         'or rtmdet_s_syncbn_fast_8xb32-300e_coco_assignervisualization.py' \
         """` as config file."""
     model.eval()
