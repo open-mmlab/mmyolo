@@ -1083,6 +1083,34 @@ class PPYOLOERandomCrop(BaseTransform):
 
 @TRANSFORMS.register_module()
 class RegularizeRotatedBox(BaseTransform):
+    """Regularize rotated boxes.
+
+    Due to the angle periodicity, one rotated box can be represented in
+    many different (x, y, w, h, t). To make each rotated box unique,
+    ``regularize_boxes`` will take the remainder of the angle divided by
+    180 degrees.
+
+    For convenience, three angle_version can be used here:
+
+    - 'oc': OpenCV Definition. Has the same box representation as
+        ``cv2.minAreaRect`` the angle ranges in [-90, 0).
+    - 'le90': Long Edge Definition (90). the angle ranges in [-90, 90).
+        The width is always longer than the height.
+    - 'le135': Long Edge Definition (135). the angle ranges in [-45, 135).
+        The width is always longer than the height.
+
+    Required Keys:
+
+    - gt_bboxes (RotatedBoxes[torch.float32])
+
+    Modified Keys:
+
+    - gt_bboxes
+
+    Args:
+        angle_version (str): Angle version. Can only be 'oc',
+            'le90', or 'le135'. Defaults to 'le90.
+    """
 
     def __init__(self, angle_version='le90') -> None:
         self.angle_version = angle_version

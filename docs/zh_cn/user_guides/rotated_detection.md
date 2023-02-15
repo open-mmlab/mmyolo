@@ -4,7 +4,7 @@
 
 关于旋转目标检测的详细介绍请参考文档 [MMRotate 基础知识](https://mmrotate.readthedocs.io/zh_CN/1.x/overview.html)
 
-MMYOLO 中的旋转目标检测依赖于 MMRotate 1.x，请参考文档 [开始你的第一步](https://mmrotate.readthedocs.io/zh_CN/1.x/get_started.html) 安装 MMRotate 1.0。
+MMYOLO 中的旋转目标检测依赖于 MMRotate 1.x，请参考文档 [开始你的第一步](https://mmrotate.readthedocs.io/zh_CN/1.x/get_started.html) 安装 MMRotate 1.x。
 
 本教程将介绍如何在 MMYOLO 中训练和使用旋转目标检测模型，目前支持了 RTMDet-R。
 
@@ -43,7 +43,7 @@ dataset_type = 'YOLOv5DOTADataset'  # 数据集类型，这将被用来定义数
 data_root = 'data/split_ss_dota/'  # 数据的根路径
 file_client_args = dict(backend='disk')  # 文件读取后端的配置，默认从硬盘读取
 
-angle_version = 'le90' # 角度范围的定义
+angle_version = 'le90' # 角度范围的定义，目前支持oc, le90和le135
 
 train_pipeline = [
     # 训练数据读取流程
