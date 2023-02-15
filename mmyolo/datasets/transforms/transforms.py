@@ -1331,7 +1331,7 @@ class YOLOv5CopyPaste(BaseTransform):
 
     - img (np.uint8)
     - gt_bboxes (BaseBoxes[torch.float32])
-    - gt_bboxes_labels (np.int64)
+    - gt_bboxes_labels (np.int64) (optional)
     - gt_ignore_flags (bool) (optional)
     - gt_masks (PolygonMasks) (optional)
 
@@ -1339,7 +1339,7 @@ class YOLOv5CopyPaste(BaseTransform):
 
     - img
     - gt_bboxes
-    - gt_bboxes_labels (np.int64)
+    - gt_bboxes_labels (np.int64) (optional)
     - gt_ignore_flags (optional)
     - gt_masks (optional)
 
@@ -1366,8 +1366,11 @@ class YOLOv5CopyPaste(BaseTransform):
         if len(results.get('gt_masks', [])) == 0:
             return results
         gt_masks = results['gt_masks']
+        assert isinstance(gt_masks, PolygonMasks),\
+            'only support type of PolygonMasks,' \
+            ' but get type: %s' % type(gt_masks)
         gt_bboxes = results['gt_bboxes']
-        gt_bboxes_labels = results['gt_bboxes_labels']
+        gt_bboxes_labels = results.get('gt_bboxes_labels', None)
         img = results['img']
 
         # calculate ioa
@@ -1381,9 +1384,11 @@ class YOLOv5CopyPaste(BaseTransform):
             indexes, size=round(self.prob * n), replace=False)
         if len(valid_inds) == 0:
             return results
-        # prepare labels
-        gt_bboxes_labels = np.concatenate(
-            (gt_bboxes_labels, gt_bboxes_labels[valid_inds]), axis=0)
+
+        if gt_bboxes_labels:
+            # prepare labels
+            gt_bboxes_labels = np.concatenate(
+                (gt_bboxes_labels, gt_bboxes_labels[valid_inds]), axis=0)
 
         # prepare bboxes
         copypaste_bboxes = gt_bboxes_flip[valid_inds]
@@ -1415,7 +1420,8 @@ class YOLOv5CopyPaste(BaseTransform):
 
         results['img'] = img
         results['gt_bboxes'] = gt_bboxes
-        results['gt_bboxes_labels'] = gt_bboxes_labels
+        if gt_bboxes_labels:
+            results['gt_bboxes_labels'] = gt_bboxes_labels
         results['gt_masks'] = gt_masks
 
         return results

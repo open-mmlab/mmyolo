@@ -7,7 +7,7 @@ import mmcv
 import numpy as np
 import torch
 from mmdet.structures.bbox import HorizontalBoxes
-from mmdet.structures.mask import BitmapMasks
+from mmdet.structures.mask import BitmapMasks, PolygonMasks
 
 from mmyolo.datasets.transforms import (LetterResize, LoadAnnotations,
                                         YOLOv5HSVRandomAug,
@@ -465,13 +465,27 @@ class TestYOLOv5CopyPaste(unittest.TestCase):
         TestCase calls functions in this order: setUp() -> testMethod() ->
         tearDown() -> cleanUp()
         """
-        rng = np.random.RandomState(0)
         self.data_info = dict(
             img=np.random.random((300, 400, 3)),
-            gt_bboxes=np.array([[0, 0, 150, 150]], dtype=np.float32),
-            batch_shape=np.array([192, 672], dtype=np.int64),
-            gt_masks=BitmapMasks(rng.rand(1, 300, 400), height=300, width=400))
+            gt_bboxes=np.array([[0, 0, 10, 10]], dtype=np.float32),
+            gt_masks=PolygonMasks(
+                [[np.array([0., 0., 0., 10., 10., 10., 10., 0.])]],
+                height=300,
+                width=400))
 
     def test_transform(self):
+        # test transform
         transform = YOLOv5CopyPaste(prob=1.0)
-        transform(copy.deepcopy(self.data_info))
+        results = transform(copy.deepcopy(self.data_info))
+        self.assertTrue(len(results['gt_bboxes']) == 2)
+        self.assertTrue(len(results['gt_masks']) == 2)
+
+        rng = np.random.RandomState(0)
+        # test with bitmap
+        with self.assertRaises(AssertionError):
+            results = transform(
+                dict(
+                    img=np.random.random((300, 400, 3)),
+                    gt_bboxes=np.array([[0, 0, 10, 10]], dtype=np.float32),
+                    gt_masks=BitmapMasks(
+                        rng.rand(1, 300, 400), height=300, width=400)))
