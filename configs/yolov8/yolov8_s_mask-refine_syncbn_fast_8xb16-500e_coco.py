@@ -22,7 +22,7 @@ last_transform = [
     dict(type='RemoveDataElement', keys=['gt_masks']),
     dict(
         type='mmdet.Albu',
-        transforms=_base_.albu_train_transform,
+        transforms=_base_.albu_train_transforms,
         bbox_params=dict(
             type='BboxParams',
             format='pascal_voc',

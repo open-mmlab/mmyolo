@@ -489,7 +489,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                         'Only supports mask annotations in polygon '
                         'format currently')
         self._mask_ignore_flag = np.array(self._mask_ignore_flag, dtype=bool)
-        results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=np.bool)
+        results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=bool)
 
         h, w = results['ori_shape']
         gt_masks = PolygonMasks([mask for mask in gt_masks], h, w)
