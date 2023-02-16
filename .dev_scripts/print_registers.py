@@ -46,8 +46,8 @@ def load_modules_from_dir(module_name, module_root, throw_error=False):
             with open(osp.join(_root, '__init__.py'), 'w') as _:
                 pass
 
-    for _finder, _name, _ispkg in pkgutil.walk_packages([module_root],
-                                                        prefix=module_name + '.'):
+    for _finder, _name, _ispkg in pkgutil.walk_packages(
+            [module_root], prefix=module_name + '.'):
         try:
             module = importlib.import_module(_name)
             module_list.append(module)
@@ -115,7 +115,7 @@ def print_tree(print_dict):
                 _key += f' ({_val})'
             elif isinstance(_val, dict):
                 sub_tree = _recurse(_val, _connector +
-                                    ('   ' if _last else'│  '), n + 1)
+                                    ('   ' if _last else '│  '), n + 1)
             else:
                 assert (_val is None), f'unknown print type {_val}'
             tree += '  ' + _connector + \
@@ -139,7 +139,7 @@ def parse_args():
         '--throw-error',
         action='store_true',
         default=False,
-        help='whether to throw the error when trying to import the modules'
+        help='whether to throw error when trying to import the modules'
     )
     parser.add_argument(
         '--without-tools',
@@ -175,7 +175,8 @@ def main():
             for tools_name in tools_list:
                 assert (tools_name not in registries_tree), \
                     f'duplicate tools name was found: {tools_name}'
-                tools_tree = get_pyfiles_from_dir(osp.join(tmpdir, tools_name))
+                tools_tree = get_pyfiles_from_dir(osp.join(tmpdir,
+                                                           tools_name))
                 registries_tree.update({tools_name: tools_tree})
         # print the results
         print_tree(registries_tree)
