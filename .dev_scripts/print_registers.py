@@ -175,8 +175,8 @@ def main():
             for tools_name in tools_list:
                 assert (tools_name not in registries_tree), \
                     f'duplicate tools name was found: {tools_name}'
-                tools_tree = get_pyfiles_from_dir(osp.join(tmpdir,
-                                                           tools_name))
+                tools_tree = get_pyfiles_from_dir(
+                    osp.join(tmpdir, tools_name))
                 registries_tree.update({tools_name: tools_tree})
         # print the results
         print_tree(registries_tree)
