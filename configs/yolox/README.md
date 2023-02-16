@@ -13,16 +13,16 @@ In this report, we present some experienced improvements to YOLO series, forming
 </div>
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/27466624/211143387-004c6718-3d61-44c8-9406-f56b9238452a.jpg"/>
+<img src="https://user-images.githubusercontent.com/71306851/218628641-6c0101e6-e40e-4b16-a696-c0f55b8d335c.png"/>
 YOLOX-l model structure
 </div>
 
 ## Results and Models
 
-|  Backbone  | size | Mem (GB) | box AP |                                                Config                                                 |                                                                                                                                    Download                                                                                                                                    |
-| :--------: | :--: | :------: | :----: | :---------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| YOLOX-tiny | 416  |   2.8    |  32.7  | [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolox/yolox_tiny_8xb8-300e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolox/yolox_tiny_8xb8-300e_coco/yolox_tiny_8xb8-300e_coco_20220919_090908-0e40a6fc.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolox/yolox_tiny_8xb8-300e_coco/yolox_tiny_8xb8-300e_coco_20220919_090908.log.json) |
-|  YOLOX-s   | 640  |   5.6    |  40.8  |  [config](https://github.com/open-mmlab/mmyolo/tree/master/configs/yolox/yolox_s_8xb8-300e_coco.py)   |       [model](https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_8xb8-300e_coco/yolox_s_8xb8-300e_coco_20220917_030738-d7e60cb2.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_8xb8-300e_coco/yolox_s_8xb8-300e_coco_20220917_030738.log.json)       |
+|  Backbone  | size | Mem (GB) | box AP |                                                  Config                                                  |                                                                                                                                    Download                                                                                                                                    |
+| :--------: | :--: | :------: | :----: | :------------------------------------------------------------------------------------------------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+| YOLOX-tiny | 416  |   2.8    |  32.7  | [config](https://github.com/open-mmlab/mmyolo/tree/main/configs/yolox/yolox_tiny_fast_8xb8-300e_coco.py) | [model](https://download.openmmlab.com/mmyolo/v0/yolox/yolox_tiny_8xb8-300e_coco/yolox_tiny_8xb8-300e_coco_20220919_090908-0e40a6fc.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolox/yolox_tiny_8xb8-300e_coco/yolox_tiny_8xb8-300e_coco_20220919_090908.log.json) |
+|  YOLOX-s   | 640  |   5.6    |  40.8  |  [config](https://github.com/open-mmlab/mmyolo/tree/main/configs/yolox/yolox_s_fast_8xb8-300e_coco.py)   |       [model](https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_8xb8-300e_coco/yolox_s_8xb8-300e_coco_20220917_030738-d7e60cb2.pth) \| [log](https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_8xb8-300e_coco/yolox_s_8xb8-300e_coco_20220917_030738.log.json)       |
 
 **Note**:
 
