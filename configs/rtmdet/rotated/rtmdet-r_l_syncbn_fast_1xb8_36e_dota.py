@@ -55,13 +55,8 @@ val_batch_size_per_gpu = 8
 # Worker to pre-fetch data for each single GPU during validation
 val_num_workers = 8
 
-# Config of batch shapes. Only on val.
-batch_shapes_cfg = dict(
-    type='BatchShapePolicy',
-    batch_size=val_batch_size_per_gpu,
-    img_size=img_scale[0],
-    size_divisor=32,
-    extra_pad_ratio=0.5)
+# Config of batch shapes. Only on val. Not use in RTMDet-R
+batch_shapes_cfg = None
 
 # -----model related-----
 # The scaling factor that controls the depth of the network structure
@@ -148,8 +143,13 @@ model = dict(
             mode='linear',
             loss_weight=loss_bbox_weight),
         angle_version=angle_version,
-        use_hbbox_loss=False,
+        # Used for angle encode and decode, similar to bbox coder
         angle_coder=dict(type='mmrotate.PseudoAngleCoder'),
+        # If true, it will apply loss_bbox on horizontal box, and angle_loss
+        # needs to be specified. In this case the loss_bbox should use
+        # horizontal box loss e.g. IoULoss. Arg details can be seen in
+        # `docs/zh_cn/user_guides/rotated_detection.md`
+        use_hbbox_loss=False,
         loss_angle=None),
     train_cfg=dict(
         assigner=dict(
