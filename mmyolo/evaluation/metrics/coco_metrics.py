@@ -123,7 +123,7 @@ class CocoMetric(MMPosCocoMetric):
                 kpts[img_id].append(instance)
 
         # sort keypoint results according to id and remove duplicate ones
-        kpts = self._sort_and_unique_bboxes(kpts, key='img_id')
+        # kpts = self._sort_and_unique_bboxes(kpts, key='img_id')
 
         # score the prediction results according to `score_mode`
         # and perform NMS according to `nms_mode`
@@ -136,38 +136,9 @@ class CocoMetric(MMPosCocoMetric):
                     instance['keypoints'], instance['keypoint_scores'][:, None]
                 ],
                                                        axis=-1)
-                if self.score_mode == 'bbox':
-                    instance['score'] = instance['bbox_score']
-                else:
-                    bbox_score = instance['bbox_score']
-                    if self.score_mode == 'bbox_rle':
-                        keypoint_scores = instance['keypoint_scores']
-                        instance['score'] = float(bbox_score +
-                                                  np.mean(keypoint_scores) +
-                                                  np.max(keypoint_scores))
-
-                    else:  # self.score_mode == 'bbox_keypoint':
-                        mean_kpt_score = 0
-                        valid_num = 0
-                        for kpt_idx in range(num_keypoints):
-                            kpt_score = instance['keypoint_scores'][kpt_idx]
-                            if kpt_score > self.keypoint_score_thr:
-                                mean_kpt_score += kpt_score
-                                valid_num += 1
-                        if valid_num != 0:
-                            mean_kpt_score /= valid_num
-                        instance['score'] = bbox_score * mean_kpt_score
+                instance['score'] = instance['bbox_score']
             # perform nms
-            if self.nms_mode == 'none':
-                valid_kpts[img_id] = instances
-            else:
-                nms = oks_nms if self.nms_mode == 'oks_nms' else soft_oks_nms
-                keep = nms(
-                    instances,
-                    self.nms_thr,
-                    sigmas=self.dataset_meta['sigmas'])
-                valid_kpts[img_id] = [instances[_keep] for _keep in keep]
-
+            valid_kpts[img_id] = instances
         # convert results to coco style and dump into a json file
         self.results2json(valid_kpts, outfile_prefix=outfile_prefix)
 

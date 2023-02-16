@@ -222,7 +222,9 @@ val_evaluator = [
         metric=['bbox']),
     dict(
         type='CocoMetric',
-        ann_file=data_root + 'annotations/person_keypoints_val2017_1256.json')
+        ann_file=data_root + 'annotations/person_keypoints_val2017_1256.json',
+        score_mode='bbox',
+        nms_mode='none')
 ]
 
 test_evaluator = val_evaluator
