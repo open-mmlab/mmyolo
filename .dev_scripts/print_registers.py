@@ -139,7 +139,7 @@ def parse_args():
         '--throw-error',
         action='store_true',
         default=False,
-        help='whether to throw the import error when trying to import the modules'
+        help='whether to throw the error when trying to import the modules'
     )
     parser.add_argument(
         '--without-tools',
