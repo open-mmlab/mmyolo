@@ -1,4 +1,4 @@
-_base_ = '../../_base_/default_runtime.py'
+_base_ = '../rtmdet-r_l_syncbn_fast_1xb8_36e_dota.py'
 
 checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-l_8xb256-rsb-a1-600e_in1k-6a760974.pth'  # noqa
 
