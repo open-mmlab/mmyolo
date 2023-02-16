@@ -663,7 +663,7 @@ class YOLOXKptHead(YOLOv5Head):
             kpt_vis_targets = torch.cat([kpt_targets, vis_targets[..., None]], dim=-1)
 
             loss_kpt = self.loss_kpt(
-                flatten_kpt_vis_preds.view(-1, self.num_keypoints, 3)[pos_masks], kpt_vis_targets) / kpt_mask.sum()
+                flatten_kpt_vis_preds.view(-1, self.num_keypoints, 3)[pos_masks], kpt_vis_targets)
             loss_vis = self.loss_cls(
                 flatten_vis_preds.view(-1, self.num_keypoints)[pos_masks],
                 kpt_mask.float()) / kpt_mask.sum()

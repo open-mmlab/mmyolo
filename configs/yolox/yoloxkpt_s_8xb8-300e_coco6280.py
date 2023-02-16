@@ -1,4 +1,4 @@
-_base_ = '../_base_/default_runtime.py'
+_base_ = './default_yolopose.py'
 dataset_info = '../_base_/datasets/coco.py'
 
 data_root = 'data/coco/'
@@ -17,7 +17,7 @@ val_batch_size_per_gpu = 1
 # NOTE: for debugging set to 0
 val_num_workers = 8
 
-max_epochs = 100  # NOTE: for debug
+max_epochs = 100
 num_last_epochs = 15
 
 # model settings
@@ -269,10 +269,6 @@ param_scheduler = [
         end=max_epochs,
     )
 ]
-
-default_hooks = dict(
-    checkpoint=dict(
-        type='CheckpointHook', interval=1, max_keep_ckpts=3, save_best='auto'))
 
 custom_hooks = [
     dict(
