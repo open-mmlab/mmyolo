@@ -11,15 +11,24 @@ from mmengine.fileio import dump
 from mmengine.utils import mkdir_or_exist, scandir
 from mmengine.registry import Registry
 
-# host_addr = 'https://github.com/open-mmlab'
-# tools_list = ['tools', 'configs']
-host_addr = 'https://gitee.com/open-mmlab'
+# host_addr = 'https://gitee.com/open-mmlab'
+host_addr = 'https://github.com/open-mmlab'
 tools_list = ['tools']
-proxy_names = {'mmdet': 'mmdetection', 'mmseg': 'mmsegmentation'}
+proxy_names = {
+    'mmdet': 'mmdetection',
+    'mmseg': 'mmsegmentation',
+    'mmcls': 'mmclassification'
+}
+
+
+def parse_repo_name(repo_name):
+    proxy_names_rev = dict(zip(proxy_names.values(), proxy_names.keys()))
+    repo_name = proxy_names.get(repo_name, repo_name)
+    module_name = proxy_names_rev.get(repo_name, repo_name)
+    return repo_name, module_name
 
 
 def git_pull_branch(repo_name, branch_name='', pulldir='.'):
-    repo_name = proxy_names.get(repo_name, repo_name)
     exec_str = f'cd {pulldir};git init;git pull '
     exec_str += f'{host_addr}/{repo_name}.git'
     if branch_name:
@@ -39,15 +48,18 @@ def load_modules_from_dir(module_name, module_root, throw_error=False):
     module_list = []
     error_dict = {}
     module_root = osp.join(module_root, module_name)
+    assert osp.exists(module_root), \
+        f'cannot find the module root: {module_root}'
     for _root, _dirs, _files in os.walk(module_root):
-        if (('__init__.py' not in _files) and
-                (osp.split(_root)[1] != '__pycache__')):
+        if (('__init__.py' not in _files)
+                and (osp.split(_root)[1] != '__pycache__')):
             # add __init__.py file to the package
             with open(osp.join(_root, '__init__.py'), 'w') as _:
                 pass
 
-    for _finder, _name, _ispkg in pkgutil.walk_packages(
-            [module_root], prefix=module_name + '.'):
+    for _finder, _name, _ispkg in pkgutil.walk_packages([module_root],
+                                                        prefix=module_name +
+                                                        '.'):
         try:
             module = importlib.import_module(_name)
             module_list.append(module)
@@ -80,12 +92,15 @@ def get_registries_from_modules(module_list):
         assert _obj.name not in registries_scope, \
             f'multiple definition of {_obj.name} in registries'
         registries_scope[_obj.name] = {
-            key: str(val) for key, val in _obj.module_dict.items()}
+            key: str(val)
+            for key, val in _obj.module_dict.items()
+        }
     print('registries got...')
     return registries
 
 
 def get_pyfiles_from_dir(root):
+
     def _recurse(_dict, _chain):
         if len(_chain) <= 1:
             _dict[_chain[0]] = None
@@ -95,11 +110,12 @@ def get_pyfiles_from_dir(root):
             _dict[_key] = {}
         _recurse(_dict[_key], _chain)
 
-    assert osp.exists(root), 'cannot find the recursive dir'
+    # assert osp.exists(root), 'cannot find the recursive dir'
     # find all scripts in the root directory
     pyfiles = {}
-    for pyfile in scandir(root, '.py', recursive=True):
-        _recurse(pyfiles, Path(pyfile).parts)
+    if osp.isdir(root):
+        for pyfile in scandir(root, '.py', recursive=True):
+            _recurse(pyfiles, Path(pyfile).parts)
     return pyfiles
 
 
@@ -114,8 +130,9 @@ def print_tree(print_dict):
             if isinstance(_val, str):
                 _key += f' ({_val})'
             elif isinstance(_val, dict):
-                sub_tree = _recurse(_val, _connector +
-                                    ('   ' if _last else '│  '), n + 1)
+                sub_tree = _recurse(_val,
+                                    _connector + ('   ' if _last else '│  '),
+                                    n + 1)
             else:
                 assert (_val is None), f'unknown print type {_val}'
             tree += '  ' + _connector + \
@@ -139,8 +156,7 @@ def parse_args():
         '--throw-error',
         action='store_true',
         default=False,
-        help='whether to throw error when trying to import the modules'
-    )
+        help='whether to throw error when trying to import the modules')
     parser.add_argument(
         '--without-tools',
         action='store_true',
@@ -154,16 +170,17 @@ def parse_args():
 # TODO: Refine
 def main():
     args = parse_args()
-    repo_name = args.repository
-    pwd = osp.split(osp.realpath(__file__))[0]
-    with tempfile.TemporaryDirectory(dir=pwd) as tmpdir:
+    repo_name, module_name = parse_repo_name(args.repository)
+    assert (repo_name not in ['mmengine', 'mmcv']), \
+        'mmengine or mmcv is not supported temporarily for querying'
+    with tempfile.TemporaryDirectory() as tmpdir:
         # get the registries
         git_pull_branch(
             repo_name=repo_name, branch_name=args.branch, pulldir=tmpdir)
         if tmpdir not in sys.path:
             sys.path.insert(0, tmpdir)
         module_list, error_dict = load_modules_from_dir(
-            repo_name, tmpdir, throw_error=args.throw_error)
+            module_name, tmpdir, throw_error=args.throw_error)
         registries_tree = get_registries_from_modules(module_list)
         if error_dict:
             error_dict_name = 'error_modules'
@@ -175,8 +192,8 @@ def main():
             for tools_name in tools_list:
                 assert (tools_name not in registries_tree), \
                     f'duplicate tools name was found: {tools_name}'
-                tools_tree = get_pyfiles_from_dir(
-                    osp.join(tmpdir, tools_name))
+                tools_tree = osp.join(tmpdir, tools_name)
+                tools_tree = get_pyfiles_from_dir(tools_tree)
                 registries_tree.update({tools_name: tools_tree})
         # print the results
         print_tree(registries_tree)
