@@ -55,7 +55,7 @@ RTMDet-R achieves state-of-the-art on various remote sensing datasets.
 
 **Note**:
 
-1. Please follow doc to prerare data first. [Prepare Dataset](../../tools/dataset_converters/dota_split/README.md)
+1. Please follow doc to get start with rotated detection. [Rotated Object Detection](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/rotated_detection.html)
 2. We follow the latest metrics from the DOTA evaluation server, original voc format mAP is now mAP50.
 3. All models trained with image size 1024\*1024.
 4. `IN` means ImageNet pretrain, `COCO` means COCO pretrain.
