@@ -10,7 +10,7 @@ MMYOLO 中的旋转目标检测依赖于 MMRotate 1.x，请参考文档 [开始�
 
 ## 数据集准备
 
-对于旋转目标检测数据集，目前最常用的数据集是 DOTA 数据集，由于DOTA数据集中的图像分辨率较大，因此需要进行切片处理，数据集准备请参考 [Preparing DOTA Dataset](https://github.com/open-mmlab/mmrotate/blob/1.x/tools/data/dota/README.md).
+对于旋转目标检测数据集，目前最常用的数据集是 DOTA 数据集，由于DOTA数据集中的图像分辨率较大，因此需要进行切片处理，数据集准备请参考 [Preparing DOTA Dataset](https://github.com/open-mmlab/mmyolo/tools/dataset_converters/dota_split/README.md).
 
 对于自定义数据集，我们建议将数据转换为 DOTA 格式并离线进行转换，如此您只需在数据转换后修改 config 的数据标注路径和类别即可。
 
@@ -214,11 +214,80 @@ train_dataloader = dict(
 
 ### 模型配置
 
-对于旋转目标检测器，在模型配置中 backbone 和 neck 的配置和其他模型是一致的，主要差异在检测头上。
+对于旋转目标检测器，在模型配置中 backbone 和 neck 的配置和其他模型是一致的，主要差异在检测头上。目前仅支持 RTMDet-R 旋转目标检测，下面介绍新增的参数：
 
-目前仅支持 RTMDet-R 旋转目标检测，下面介绍检测头中新增的参数：
+1. `angle_version` 角度范围，用于在训练时限制角度的范围，可选的角度范围有 `le90`, `le135` 和 `oc`。
 
-TODO
+2. `angle_coder` 角度编码器，和 bbox coder 类似，用于编码和解码角度。
+
+   默认使用的角度编码器是 `PseudoAngleCoder`，即”伪角度编码器“，并不进行编解码，直接回归角度参数。这样设计的目标是能更好的自定义角度编码方式，而无需重写代码，例如 CSL，DCL，PSC 等方法。
+
+3. `use_hbbox_loss` 是否使用水平框 loss。考虑到部分角度编码解码过程不可导，直接使用旋转框的损失函数无法学习角度，因此引入该参数用于将框和角度分开训练。
+
+4. `loss_angle` 角度损失函数。在设定`use_hbbox_loss=True` 时必须设定，而使用旋转框损失时可选，此时可以作为回归损失的辅助。
+
+通过组合 `use_hbbox_loss` 和 `loss_angle` 可以控制旋转框训练时的回归损失计算方式，共有三种组合方式：
+
+- `use_hbbox_loss=False` 且 `loss_angle` 为 None.
+
+  此时框预测和角度预测进行合并，直接对旋转框预测进行回归，此时 `loss_bbox` 应当设定为旋转框损失，例如 `RotatedIoULoss`。
+  这种方案和水平检测模型的回归方式基本一致，只是多了额外的角度编解码过程。
+
+  ```
+  bbox_pred────(tblr)───┐
+                        ▼
+  angle_pred          decode──►rbox_pred──(xywha)─►loss_bbox
+      │                 ▲
+      └────►decode──(a)─┘
+  ```
+
+- `use_hbbox_loss=False`，同时设定 `loss_angle`.
+
+  此时会增加额外的角度回归和分类损失，具体的角度损失类型需要根据角度编码器 `angle_code` 进行选择。
+
+  ```
+  bbox_pred────(tblr)───┐
+                        ▼
+  angle_pred          decode──►rbox_pred──(xywha)─►loss_bbox
+      │                 ▲
+      ├────►decode──(a)─┘
+      │
+      └───────────────────────────────────────────►loss_angle
+  ```
+
+- `use_hbbox_loss=False` 且 `loss_angle` 为 None.
+
+  此时框预测和角度预测完全分离，将两个分支视作两个任务进行训练。
+  此时 `loss_bbox` 要设定为水平框的损失函数，例如 `IoULoss` 。
+
+  ```
+  bbox_pred──(tblr)──►decode──►hbox_pred──(xyxy)──►loss_bbox
+
+  angle_pred──────────────────────────────────────►loss_angle
+  ```
+
+除了检测头中的参数，在test_cfg中还增加了 `decoded_with_angle` 参数用来控制推理时角度的处理逻辑，默认设定为 True 。设计这个参数的目标是让训练过程和推理过程的逻辑对齐。
+
+当 `decoded_with_angle=True` 时，将框和角度同时送入 `bbox_coder` 中。
+
+```
+bbox_pred────(tblr)───┐
+                      ▼
+angle_pred          decode──(xywha)──►rbox_pred
+    │                 ▲
+    └────►decode──(a)─┘
+```
+
+当 `decoded_with_angle=False` 时，首先解码出水平检测框，之后将角度 concat 到检测框。
+
+```
+bbox_pred──(tblr)─►decode
+                      │ (xyxy)
+                      ▼
+                    format───(xywh)──►concat──(xywha)──►rbox_pred
+                                       ▲
+angle_pred────────►decode────(a)───────┘
+```
 
 ### 可视化器
 
