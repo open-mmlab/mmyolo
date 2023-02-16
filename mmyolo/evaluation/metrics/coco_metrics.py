@@ -11,6 +11,7 @@ from mmengine.fileio import FileClient, dump, load
 from mmengine.logging import MMLogger
 from mmpose.evaluation.functional import oks_nms, soft_oks_nms
 from mmpose.evaluation.metrics.coco_metric import CocoMetric as MMPosCocoMetric
+from mmpose.datasets.datasets.utils import parse_pose_metainfo
 from terminaltables import AsciiTable
 from xtcocotools.coco import COCO
 from xtcocotools.cocoeval import COCOeval
@@ -21,6 +22,15 @@ from mmyolo.registry import METRICS
 
 @METRICS.register_module()
 class CocoMetric(MMPosCocoMetric):
+
+    @property
+    def dataset_meta(self) -> Optional[dict]:
+        return self._dataset_meta
+
+    @dataset_meta.setter
+    def dataset_meta(self, dataset_meta) -> Optional[dict]:
+        self._dataset_meta = parse_pose_metainfo(dict(from_file="../configs/coco.py"))
+
     def process(self, data_batch: Sequence[dict],
                 data_samples: Sequence[dict]) -> None:
         """Process one batch of data samples and predictions. The processed

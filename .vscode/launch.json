@@ -39,6 +39,18 @@
         "-p",
         "val"
       ]
+    },
+    {
+      "name": "yolo pose test",
+      "type": "python",
+      "request": "launch",
+      "program": "tools/test.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "work_dirs/yoloxkpt_s_8xb8-300e_coco6280/yoloxkpt_s_8xb8-300e_coco6280.py",
+        "work_dirs/yoloxkpt_s_8xb8-300e_coco6280/best_coco/bbox_mAP_epoch_95.pth"
+      ]
     }
   ]
 }

@@ -14,8 +14,7 @@ train_batch_size_per_gpu = 8
 # NOTE: for debugging set to 0
 train_num_workers = 8
 val_batch_size_per_gpu = 1
-# NOTE: for debugging set to 0
-val_num_workers = 8
+val_num_workers = 2
 
 max_epochs = 100
 num_last_epochs = 15
@@ -295,33 +294,3 @@ train_cfg = dict(
 auto_scale_lr = dict(base_batch_size=64)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
-
-# 17 keypoints
-keypoint_colors = [(255, 0, 0), (255, 85, 0), (255, 170, 0), (255, 0, 85),
-                   (255, 0, 170), (0, 255, 0), (85, 255, 0), (170, 255, 0),
-                   (0, 255, 85), (0, 255, 170), (0, 0, 255), (85, 0, 255),
-                   (170, 0, 255), (0, 85, 255), (0, 170, 255), (255, 255, 0),
-                   (255, 255, 85)]
-
-skeleton_links = [(0, 1), (0, 2), (1, 3), (2, 4), (0, 5), (0, 6), (5, 7),
-                  (7, 9), (6, 8), (8, 10), (5, 6), (5, 11), (6, 12), (11, 12),
-                  (11, 13), (13, 15), (12, 14), (14, 16)]
-
-# 18 links
-skeleton_links_colors = [
-    (255, 0, 0), (255, 85, 0), (255, 170, 0), (255, 0, 85), (255, 0, 170),
-    (0, 255, 0), (85, 255, 0), (170, 255, 0), (0, 255, 85), (0, 255, 170),
-    (0, 0, 255), (85, 0, 255), (170, 0, 255), (0, 85, 255), (0, 170, 255),
-    (255, 255, 0), (255, 255, 85), (255, 0, 255)
-]
-
-vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
-visualizer = dict(
-    # type='mmdet.DetLocalVisualizer',
-    type='mmpose.PoseLocalVisualizer',
-    vis_backends=vis_backends,
-    kpt_color=keypoint_colors,
-    skeleton=skeleton_links,
-    link_color=skeleton_links_colors,
-    name='visualizer')
-seed=0
