@@ -321,7 +321,6 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
             img_show_list.append(np.concatenate(img_show_list_feat, axis=1))
 
         # Merge all images into one image
-        h, w = img_show.shape[:2]
-        num_priors_per_feat = img_show_list[0].shape[1] // w
-        axis = 0 if num_priors_per_feat > 1 else 1
+        # setting axis is to beautify the merged image
+        axis = 0 if len(assign_results[0]) > 1 else 1
         return np.concatenate(img_show_list, axis=axis)
