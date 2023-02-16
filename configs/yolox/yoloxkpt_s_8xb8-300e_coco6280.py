@@ -319,7 +319,7 @@ skeleton_links_colors = [
     (255, 255, 0), (255, 255, 85), (255, 0, 255)
 ]
 
-vis_backends = [dict(type='LocalVisBackend')]
+vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
 visualizer = dict(
     # type='mmdet.DetLocalVisualizer',
     type='mmpose.PoseLocalVisualizer',

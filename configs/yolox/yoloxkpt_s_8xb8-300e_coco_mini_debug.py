@@ -9,7 +9,7 @@ img_scale = (640, 640)  # width, height
 deepen_factor = 0.33
 widen_factor = 0.5
 
-save_epoch_intervals = 10
+save_epoch_intervals = 1
 train_batch_size_per_gpu = 8
 # NOTE: for debugging set to 0
 train_num_workers = 8
@@ -173,7 +173,7 @@ train_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         metainfo=dataset_info,
-        ann_file='annotations/person_keypoints_train2017.json',
+        ann_file='annotations/person_keypoints_train2017_mini.json',
         data_prefix=dict(img='train2017/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline_stage1))
@@ -207,7 +207,7 @@ val_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         metainfo=dataset_info,
-        ann_file='annotations/person_keypoints_val2017.json',
+        ann_file='annotations/person_keypoints_val2017_mini.json',
         data_prefix=dict(img='val2017/'),
         test_mode=True,
         pipeline=test_pipeline,
@@ -219,11 +219,11 @@ val_evaluator = [
     dict(
         type='mmdet.CocoMetric',
         proposal_nums=(100, 1, 10),
-        ann_file=data_root + 'annotations/person_keypoints_val2017.json',
+        ann_file=data_root + 'annotations/person_keypoints_val2017_mini.json',
         metric=['bbox']),
     dict(
         type='CocoMetric',
-        ann_file=data_root + 'annotations/person_keypoints_val2017.json')
+        ann_file=data_root + 'annotations/person_keypoints_val2017_mini.json')
 ]
 
 test_evaluator = val_evaluator
@@ -272,7 +272,9 @@ param_scheduler = [
 
 default_hooks = dict(
     checkpoint=dict(
-        type='CheckpointHook', interval=1, max_keep_ckpts=3, save_best='auto'))
+        type='CheckpointHook', interval=1, max_keep_ckpts=3, save_best=['auto'],
+        greater_keys=['coco/ap'])
+    )
 
 custom_hooks = [
     dict(
@@ -319,7 +321,7 @@ skeleton_links_colors = [
     (255, 255, 0), (255, 255, 85), (255, 0, 255)
 ]
 
-vis_backends = [dict(type='LocalVisBackend')]
+vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]
 visualizer = dict(
     # type='mmdet.DetLocalVisualizer',
     type='mmpose.PoseLocalVisualizer',

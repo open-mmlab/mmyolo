@@ -50,6 +50,7 @@ class CocoMetric(MMPosCocoMetric):
             keypoints = data_sample['pred_instances']['keypoints']
             # [N, K], the scores for all keypoints of all instances
             keypoint_scores = data_sample['pred_instances']['keypoint_scores']
+            scores = data_sample['pred_instances']['scores']
             assert keypoint_scores.shape == keypoints.shape[:2]
 
             result = dict()
@@ -57,7 +58,7 @@ class CocoMetric(MMPosCocoMetric):
             result['img_id'] = data_sample['img_id']
             result['keypoints'] = keypoints
             result['keypoint_scores'] = keypoint_scores
-            result['bbox_scores'] = np.ones(len(keypoints))
+            result['bbox_scores'] = scores
 
             # get area information
             if 'bbox_scales' in data_sample['gt_instances']:
@@ -96,14 +97,14 @@ class CocoMetric(MMPosCocoMetric):
                     'img_id': result['img_id'],
                     'keypoints': result['keypoints'][idx],
                     'keypoint_scores': result['keypoint_scores'][idx],
-                    # 'bbox_score': result['bbox_scores'][idx],
+                    'bbox_score': result['bbox_scores'][idx],
                 }
 
                 if 'areas' in result:
                     instance['area'] = result['areas'][idx]
                 else:
                     # use keypoint to calculate bbox and get area
-                    keypoints = result['keypoints'][idx]
+                    keypoints = result['keypoints'][idx].numpy()
                     area = (
                         np.max(keypoints[:, 0]) - np.min(keypoints[:, 0])) * (
                             np.max(keypoints[:, 1]) - np.min(keypoints[:, 1]))

@@ -249,7 +249,8 @@ class Keypoints:
         Args:
             kpt (numpy.ndarray or Tensor): shape N x num_kps x dimension.
         """
-        assert kpt.shape[-1] == 2
+        assert kpt.dim() == 3
+        assert kpt.shape[-1] == 2 or kpt.shape[-1] == 3
         kpt = kpt[..., :2]
         x_min = kpt[..., 0].min(dim=-1)[0]
         x_max = kpt[..., 0].max(dim=-1)[0]

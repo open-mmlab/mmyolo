@@ -658,10 +658,12 @@ class YOLOXKptHead(YOLOv5Head):
             loss_bbox = self.loss_bbox(
                 flatten_bboxes.view(-1, 4)[pos_masks],
                 bbox_targets) / num_total_samples
-            # combine kpt and vis for oks loss
-            _eps = 1e-6
-            kpt_loss_factor = ((kpt_mask != 0).sum() + (kpt_mask == 0).sum()) / ((kpt_mask != 0).sum() + _eps)
-            loss_kpt = self.loss_kpt(flatten_kpts.view(-1, self.num_keypoints, 2)[pos_masks], kpt_targets) / kpt_mask.sum() * kpt_loss_factor
+            # combine kpt and vis for oks loss to N x K x 3.
+            flatten_kpt_vis_preds = torch.cat([flatten_kpts, flatten_vis_preds[..., None]], dim=-1)
+            kpt_vis_targets = torch.cat([kpt_targets, vis_targets[..., None]], dim=-1)
+
+            loss_kpt = self.loss_kpt(
+                flatten_kpt_vis_preds.view(-1, self.num_keypoints, 3)[pos_masks], kpt_vis_targets) / kpt_mask.sum()
             loss_vis = self.loss_cls(
                 flatten_vis_preds.view(-1, self.num_keypoints)[pos_masks],
                 kpt_mask.float()) / kpt_mask.sum()
