@@ -118,7 +118,7 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
 @TRANSFORMS.register_module()
 class YOLOPoseResize(MMDET_Resize):
     def transform(self, results: dict) -> dict:
-        results = super().transform(results)
+        super().transform(results)
         self._resize_keypoints(results)
         return results
 
@@ -1240,7 +1240,7 @@ class YOLOPoseFilterAnnotations(FilterAnnotations):
                 return None
         keys = ('gt_bboxes', 'gt_bboxes_labels', 'gt_masks', 'gt_ignore_flags')
         if self.by_keypoints:
-            keys = keys + ('gt_keypoints', )
+            keys = keys + ('gt_keypoints', 'gt_keypoints_visible')
         for key in keys:
             if key in results:
                 results[key] = results[key][keep]

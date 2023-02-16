@@ -17,7 +17,7 @@ val_batch_size_per_gpu = 1
 # NOTE: for debugging set to 0
 val_num_workers = 8
 
-max_epochs = 55  # NOTE: for debug
+max_epochs = 100  # NOTE: for debug
 num_last_epochs = 15
 
 # model settings
@@ -142,8 +142,7 @@ train_pipeline_stage1 = [
         by_keypoints=True),
     dict(
         type='YOLOPosePackInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
-                   'flip_direction', 'gt_keypoints'))
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape'))
 ]
 
 train_pipeline_stage2 = [
@@ -167,30 +166,30 @@ train_pipeline_stage2 = [
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
-    persistent_workers=True,  # NOTE: for debugging
-    pin_memory=True,  # NOTE: for debugging
+    persistent_workers=False,  # NOTE: for debugging
+    pin_memory=False,  # NOTE: for debugging
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
-        metainfo=dataset_info,
         data_root=data_root,
+        metainfo=dataset_info,
         ann_file='annotations/person_keypoints_train2017_6280.json',
         data_prefix=dict(img='train2017/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline_stage1))
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    *pre_transform,
+    # dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='YOLOPoseResize', scale=img_scale, keep_ratio=True),
     dict(
         type='mmdet.Pad',
         pad_to_square=True,
         pad_val=dict(img=(114.0, 114.0, 114.0))),
-    dict(
-        type='LoadAnnotations',
-        with_bbox=True,
-        with_keypoints=True,
-        _scope_='mmdet'),
+    # dict(
+    #     type='LoadAnnotations',
+    #     with_bbox=True,
+    #     with_keypoints=True),
     dict(
         type='YOLOPosePackInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
@@ -200,8 +199,8 @@ test_pipeline = [
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
-    persistent_workers=True,  # NOTE: for debugging
-    pin_memory=True,  # NOTE: for debugging
+    persistent_workers=False,  # NOTE: for debugging
+    pin_memory=False,  # NOTE: for debugging
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
@@ -216,16 +215,22 @@ val_dataloader = dict(
 test_dataloader = val_dataloader
 
 # Reduce evaluation time
-val_evaluator = dict(
-    type='CocoMetric',
-    proposal_nums=(100, 1, 10),
-    ann_file=data_root + 'annotations/person_keypoints_val2017_1256.json',
-    metric='bbox')
+val_evaluator = [
+    dict(
+        type='mmdet.CocoMetric',
+        proposal_nums=(100, 1, 10),
+        ann_file=data_root + 'annotations/person_keypoints_val2017_1256.json',
+        metric=['bbox']),
+    dict(
+        type='CocoMetric',
+        ann_file=data_root + 'annotations/person_keypoints_val2017_1256.json')
+]
 
 test_evaluator = val_evaluator
 
 # optimizer
 # default 8 gpu
+# NOTE: clip grad is necessary for training.
 base_lr = 0.01
 optim_wrapper = dict(
     type='OptimWrapper',

@@ -224,10 +224,11 @@ def main():
 
             # Visualize keypoints
             gt_keypoints = datasample.get("gt_keypoints", None)
+            gt_keypoints_visible = datasample.get("gt_keypoints_visible", None)
             if gt_keypoints is not None:
-                gt_instances.keypoints = gt_keypoints[..., :2]
-                gt_instances.keypoints_visible = gt_keypoints[..., 2]
-                datasample = PoseDataSample()
+                gt_instances.keypoints = gt_keypoints
+                gt_instances.keypoints_visible = gt_keypoints_visible
+                # datasample = PoseDataSample()
                 datasample.gt_instances = gt_instances
 
             # get filename from dataset or just use index as filename
