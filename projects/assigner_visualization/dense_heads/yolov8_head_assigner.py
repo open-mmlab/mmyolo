@@ -172,7 +172,6 @@ class YOLOv8HeadAssigner(YOLOv8Head):
                 'assigning results_list is not implemented')
         else:
             # Fast version
-            # import pdb; pdb.set_trace()
             cls_scores, bbox_preds = self(batch_data_samples['feats'])
             assign_inputs = (cls_scores, bbox_preds,
                              batch_data_samples['bboxes_labels'],

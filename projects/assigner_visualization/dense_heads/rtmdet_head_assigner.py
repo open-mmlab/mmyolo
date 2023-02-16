@@ -43,6 +43,7 @@ class RTMHeadAssigner(RTMDetHead):
         num_imgs = len(batch_img_metas)
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.prior_generator.num_levels
+        # rtmdet's prior offset differs from others
         prior_offset = self.prior_generator.offset
 
         gt_info = gt_instances_preprocess(batch_gt_instances, num_imgs)
