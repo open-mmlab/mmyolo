@@ -1,18 +1,11 @@
-_base_ = 'rtmdet_s_mask-refine_syncbn_fast_8xb32-300e_coco.py'
+_base_ = 'rtmdet_m_syncbn_fast_8xb32-300e_coco.py'
 
 # ========================modified parameters======================
-deepen_factor = 0.67
-widen_factor = 0.75
 use_mask2refine = True
 copypaste_prob = 0.1
 
 # =======================Unmodified in most cases==================
 img_scale = _base_.img_scale
-
-model = dict(
-    backbone=dict(deepen_factor=deepen_factor, widen_factor=widen_factor),
-    neck=dict(deepen_factor=deepen_factor, widen_factor=widen_factor),
-    bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
 
 train_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
