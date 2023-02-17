@@ -105,7 +105,18 @@ def main():
             'test_evaluator.format_only': True,
             'test_evaluator.outfile_prefix': args.json_prefix
         }
-        cfg.merge_from_dict(cfg_json)
+        if cfg.get('test_evaluator', None) is not None:
+            if isinstance(cfg['test_evaluator'], dict):
+                cfg.merge_from_dict(cfg_json)
+            elif isinstance(cfg['test_evaluator'], list):
+                cfg_json = {
+                    "format_only": True,
+                    "outfile_prefix": args.json_prefix
+                }
+                for cfg_eval in cfg['test_evaluator']:
+                    cfg_eval.update(cfg_json)
+            else:
+                raise TypeError('cfg.test_evaluator must be a dict or list')
 
     # build the runner from config
     if 'runner_type' not in cfg:
