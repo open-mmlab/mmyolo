@@ -9,7 +9,7 @@ train_batch_size_per_gpu = 32
 # 10 -> 1
 batch_augments_interval = 1
 
-# # Last epoch number to switch training pipeline
+# Last epoch number to switch training pipeline
 # 15 -> 20
 num_last_epochs = 20
 

@@ -47,6 +47,7 @@ deepen_factor = 0.33
 # The scaling factor that controls the width of the network structure
 widen_factor = 0.5
 norm_cfg = dict(type='BN', momentum=0.03, eps=0.001)
+# generate new random resize shape interval
 batch_augments_interval = 10
 
 # -----train val related-----
