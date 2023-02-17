@@ -509,17 +509,17 @@ class YOLOXKptHead(YOLOv5Head):
             results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
             results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
 
-            results = self._kpt_post_process(
-                results,
-                cfg,
-                rescale=False,
-                with_nms=with_nms,
-                img_meta=img_meta)
+            # results = self._kpt_post_process(
+            #     results,
+            #     cfg,
+            #     rescale=False,
+            #     with_nms=with_nms,
+            #     img_meta=img_meta)
             # keypoints outside the image, the visibility is set to 0
-            results.keypoints[:, :, 0].clamp_(0, ori_shape[1])
-            results.keypoints[:, :, 1].clamp_(0, ori_shape[0])
-            results.keypoint_scores[results.keypoints[:, :, 0] == 0] = 0
-            results.keypoint_scores[results.keypoints[:, :, 1] == 0] = 0
+            # results.keypoints[:, :, 0].clamp_(0, ori_shape[1])
+            # results.keypoints[:, :, 1].clamp_(0, ori_shape[0])
+            # results.keypoint_scores[results.keypoints[:, :, 0] == 0] = 0
+            # results.keypoint_scores[results.keypoints[:, :, 1] == 0] = 0
 
             results_list.append(results)
         return results_list

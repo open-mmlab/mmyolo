@@ -1,5 +1,9 @@
 default_scope = 'mmyolo'
 
+optim_wrapper = dict(
+    type='OptimWrapper',
+    clip_grad=dict(max_norm=35, norm_type=2))
+
 default_hooks = dict(
     timer=dict(type='IterTimerHook'),
     logger=dict(type='LoggerHook', interval=50),

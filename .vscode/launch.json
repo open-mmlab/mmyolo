@@ -48,8 +48,8 @@
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
-        "work_dirs/yoloxkpt_s_8xb8-300e_coco6280/yoloxkpt_s_8xb8-300e_coco6280.py",
-        "work_dirs/yoloxkpt_s_8xb8-300e_coco6280/best_coco/bbox_mAP_epoch_95.pth"
+        "work_dirs/yoloxkpt_s_8xb8-300e_coco/yoloxkpt_s_8xb8-300e_coco.py",
+        "work_dirs/yoloxkpt_s_8xb8-300e_coco/best_coco/bbox_mAP_epoch_100.pth"
       ]
     }
   ]
