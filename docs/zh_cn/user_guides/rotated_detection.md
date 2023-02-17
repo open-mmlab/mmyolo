@@ -66,7 +66,7 @@ dataset_type = 'YOLOv5DOTADataset'  # 数据集类型，这将被用来定义数
 data_root = 'data/split_ss_dota/'  # 数据的根路径
 file_client_args = dict(backend='disk')  # 文件读取后端的配置，默认从硬盘读取
 
-angle_version = 'le90' # 角度范围的定义，目前支持oc, le90和le135
+angle_version = 'le90' # 角度范围的定义，目前支持 oc, le90 和 le135
 
 train_pipeline = [
     # 训练数据读取流程
