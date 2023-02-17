@@ -1,7 +1,7 @@
 _base_ = './rtmdet-r_l_syncbn_fast_1xb8_36e_dota.py'
 
 # ========================modified parameters======================
-data_root = 'datasets/split_ms_dota/'
+data_root = 'data/split_ms_dota/'
 # Path of test images folder
 test_data_prefix = 'test/images/'
 # Submission dir for result submit
@@ -22,7 +22,6 @@ test_dataloader = val_dataloader
 #         data_root=data_root,
 #         ann_file='', # test set has no annotation
 #         data_prefix=dict(img_path=test_data_prefix),
-#         img_shape=(1024, 1024),
 #         pipeline=_base_.test_pipeline))
 # test_evaluator = dict(
 #     type='mmrotate.DOTAMetric',

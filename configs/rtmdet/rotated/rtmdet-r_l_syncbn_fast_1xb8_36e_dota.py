@@ -4,7 +4,7 @@ checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb
 
 # ========================Frequently modified parameters======================
 # -----data related-----
-data_root = 'datasets/split_ss_dota/'
+data_root = 'data/split_ss_dota/'
 # Path of train annotation folder
 train_ann_file = 'trainval/annfiles/'
 train_data_prefix = 'trainval/images/'  # Prefix of train image path
@@ -153,10 +153,12 @@ model = dict(
         loss_angle=None),
     train_cfg=dict(
         assigner=dict(
-            type='BatchRotatedDSLAssigner',
+            type='BatchDynamicSoftLabelAssigner',
             num_classes=num_classes,
             topk=dsl_topk,
-            iou_calculator=dict(type='mmrotate.RBboxOverlaps2D')),
+            iou_calculator=dict(type='mmrotate.RBboxOverlaps2D'),
+            # RBboxOverlaps2D doesn't support batch input, use loop instead.
+            batch_iou=False),
         allowed_border=-1,
         pos_weight=-1,
         debug=False),
@@ -225,7 +227,6 @@ train_dataloader = dict(
         data_root=data_root,
         ann_file=train_ann_file,
         data_prefix=dict(img_path=train_data_prefix),
-        img_shape=(1024, 1024),
         filter_cfg=dict(filter_empty_gt=True),
         pipeline=train_pipeline))
 
@@ -241,7 +242,6 @@ val_dataloader = dict(
         data_root=data_root,
         ann_file=val_ann_file,
         data_prefix=dict(img_path=val_data_prefix),
-        img_shape=(1024, 1024),
         test_mode=True,
         batch_shapes_cfg=batch_shapes_cfg,
         pipeline=val_pipeline))
@@ -264,7 +264,6 @@ test_evaluator = val_evaluator
 #         type=dataset_type,
 #         data_root=data_root,
 #         data_prefix=dict(img_path=test_data_prefix),
-#         img_shape=(1024, 1024),
 #         test_mode=True,
 #         batch_shapes_cfg=batch_shapes_cfg,
 #         pipeline=test_pipeline))
