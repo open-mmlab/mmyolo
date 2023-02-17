@@ -555,19 +555,27 @@ python ./tools/train.py \
 
 ## 在单通道图像数据集上训练示例
 
-### 数据集预处理
+MMYOLO 中默认的训练图片均为彩色三通道数据，如果希望采用单通道数据集进行训练和测试，预计需要修改的地方包括：
 
-本节以 `cat` 数据集为例，如果你使用的是自定义灰度图像数据集，你可以跳过这一步。
+1. 所有的图片处理 pipeline 都要支持单通道运算
+2. 模型的骨干网络的第一个卷积层输入通道需要从 3 改成 1
+3. 如果希望加载 COCO 预训练权重，则需要处理第一个卷积层权重尺寸不匹配问题
+
+下面以 `cat` 数据集为例，描述整个修改过程，如果你使用的是自定义灰度图像数据集，你可以跳过数据集预处理这一步。
+
+### 1 数据集预处理
 
 自定义数据集的处理训练可参照[自定义数据集 标注+训练+测试+部署 全流程](../user_guides/custom_dataset.md)。
+
+`cat` 是一个三通道彩色图片数据集，为了方便演示，你可以运行下面的代码和命令，将数据集图片替换为单通道图片，方便后续验证。
+
+**1. 下载 `cat` 数据集进行解压**
 
 ```shell
 python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat --unzip --delete
 ```
 
-`cat` 是一个 3 通道彩色图片数据集，为了方便演示，你可以运行下面的代码和命令，将数据集图片替换为单通道图片，方便后续验证。
-
-图像单通道转换示例代码:
+**2. 将数据集转换为灰度图**
 
 ```python
 import argparse
@@ -580,9 +588,8 @@ from PIL import Image
 
 def parse_args():
     parser = argparse.ArgumentParser(description='data_path')
-    parser.add_argument('--path', type=str, help='Original dataset path')
+    parser.add_argument('path', type=str, help='Original dataset path')
     return parser.parse_args()
-
 
 def main():
     args = parse_args()
@@ -599,34 +606,42 @@ def main():
         L_img.save(save_path + '/' + file)
         args = parse_args()
 
-
-if (__name__ == '__main__'):
+if __name__ == '__main__':
     main()
 ```
 
 将上述脚本命名为 `cvt_single_channel.py`, 运行命令为：
 
 ```shell
-python cvt_single_channel.py  --path data/cat
+python cvt_single_channel.py data/cat
 ```
 
-### 新建配置文件并训练
+此时会把 `cat` 数据集内图片全部转成单通道灰度图片
 
-**目前MMYOLO的一些图像处理函数还不兼容单通道图片，出现不兼容问题概率较高**。为了避免这种不兼容的问题，推荐的做法是将单通道图片作为三通道图片读取后进行训练。这样会降低一些运算性能，但是基本不需要修改配置即可使用。
+### 2 修改 base 配置文件
 
-#### 修改配置文件
+**目前 MMYOLO 的一些图像处理函数例如颜色空间变换还不兼容单通道图片，如果直接采用单通道数据训练需要修改部分 pipeline，工作量较大**。为了解决不兼容问题，推荐的做法是将单通道图片作为采用三通道图片方式读取将其加载为三通道数据，但是在输入到网络前将其转换为单通道格式。这种做法会稍微增加一些运算负担，但是用户基本不需要修改代码即可使用。
 
-以 `projects/misc/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`为 `base` 配置,将其复制到`configs/yolov5`目录下，在同级配置路径下新增 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat_single_channel.py` 文件。
+以 `projects/misc/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`为 `base` 配置,将其复制到 `configs/yolov5` 目录下，在同级配置路径下新增 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat_single_channel.py` 文件。 
+我们可以 `mmyolo/models/data_preprocessors/data_preprocessor.py` 文件中继承 `YOLOv5DetDataPreprocessor` 并命名新类为 `YOLOv5SCDetDataPreprocessor`, 在其中将图片转成单通道。 `YOLOv5SCDetDataPreprocessor` 示例代码为：
+
+```python
+@MODELS.register_module()
+class YOLOv5SCDetDataPreprocessor(YOLOv5DetDataPreprocessor):
+   TODO
+```
+
+此时 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat_single_channel.py`配置文件内容为如下所示：
 
 ```python
 _base_ = 'yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py'
 
-load_from = './checkpoints/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187_single_channel.pth'
+_base_.model.data_preprocessor.type='YOLOv5SCDetDataPreprocessor'
 ```
 
-#### 预训练模型加载问题
+### 3 预训练模型加载问题
 
-直接使用原三通道的预训练模型，理论上会导致精度有所降低（未实验验证）。可采用的解决思路：将输入层3通道每个通道的权重调整为原3通道权重的平均值, 或将输入层每个通道的权重调整为原3通道某一通道权重，也可以对输入层权重不做修改直接训练，具体效果根据实际情况有所不同。这里采用将输入层3个通道权重调整为预训练3通道权重平均值的方式。
+直接使用原三通道的预训练模型，理论上会导致精度有所降低（未实验验证）。可采用的解决思路：将输入层 3 通道每个通道的权重调整为原 3 通道权重的平均值, 或将输入层每个通道的权重调整为原3通道某一通道权重，也可以对输入层权重不做修改直接训练，具体效果根据实际情况有所不同。这里采用将输入层 3 个通道权重调整为预训练 3 通道权重平均值的方式。
 
 ```python
 import torch
@@ -640,8 +655,7 @@ def main():
     # 修改输入层权重
     weights = state_dict['state_dict']['backbone.stem.conv.weight']
     avg_weight = weights.mean(dim=1, keepdim=True)
-    new_weights = torch.cat([avg_weight] * 3, dim=1)
-    state_dict['state_dict']['backbone.stem.conv.weight'] = new_weights
+    state_dict['state_dict']['backbone.stem.conv.weight'] = avg_weight
 
     # 保存修改后的权重到新文件
     torch.save(
@@ -653,7 +667,18 @@ if __name__ == '__main__':
     main()
 ```
 
-#### 模型训练效果
+此时 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat_single_channel.py`配置文件内容为如下所示：
+
+```python
+_base_ = 'yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py'
+
+
+_base_.model.data_preprocessor.type='YOLOv5SCDetDataPreprocessor'
+
+load_from = './checkpoints/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187_single_channel.pth'
+```
+
+### 4 模型训练效果
 
 <img src="https://raw.githubusercontent.com/landhill/mmyolo/main/resources/cat_single_channel_test.jpeg"/>
 
