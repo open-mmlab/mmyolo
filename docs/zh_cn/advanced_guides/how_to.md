@@ -673,6 +673,5 @@ if __name__ == '__main__':
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.850
 bbox_mAP_copypaste: 0.798 0.953 0.864 -1.000 -1.000 0.798
-Epoch(val) [100][116/116]  coco/bbox_mAP: 0.7980  coco/bbox_mAP_50: 0.9530  coco/bbox_mAP_75: 0.8640  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 
-0.7980
+Epoch(val) [100][116/116]  coco/bbox_mAP: 0.7980  coco/bbox_mAP_50: 0.9530  coco/bbox_mAP_75: 0.8640  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.7980
 ```
