@@ -43,7 +43,7 @@ class TestRotatedRTMDetHead(TestCase):
         test_cfg = dict(
             multi_label=True,
             decode_with_angle=True,
-            nms_pre=30000,
+            nms_pre=2000,
             score_thr=0.01,
             nms=dict(type='nms_rotated', iou_threshold=0.1),
             max_per_img=300)
@@ -85,10 +85,11 @@ class TestRotatedRTMDetHead(TestCase):
         }]
         train_cfg = dict(
             assigner=dict(
+                type='BatchDynamicSoftLabelAssigner',
                 num_classes=80,
-                type='BatchRotatedDSLAssigner',
                 topk=13,
-                iou_calculator=dict(type='mmrotate.RBboxOverlaps2D')),
+                iou_calculator=dict(type='mmrotate.RBboxOverlaps2D'),
+                batch_iou=False),
             allowed_border=-1,
             pos_weight=-1,
             debug=False)
@@ -169,10 +170,11 @@ class TestRotatedRTMDetHead(TestCase):
         }]
         train_cfg = dict(
             assigner=dict(
+                type='BatchDynamicSoftLabelAssigner',
                 num_classes=80,
-                type='BatchRotatedDSLAssigner',
                 topk=13,
-                iou_calculator=dict(type='mmrotate.RBboxOverlaps2D')),
+                iou_calculator=dict(type='mmrotate.RBboxOverlaps2D'),
+                batch_iou=False),
             allowed_border=-1,
             pos_weight=-1,
             debug=False)
