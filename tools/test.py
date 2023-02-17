@@ -93,7 +93,8 @@ def main():
     cfg.load_from = args.checkpoint
 
     if args.show or args.show_dir:
-        cfg = trigger_visualization_hook(cfg, args)
+        # cfg = trigger_visualization_hook(cfg, args)
+        pass
 
     if args.deploy:
         cfg.custom_hooks.append(dict(type='SwitchToDeployHook'))

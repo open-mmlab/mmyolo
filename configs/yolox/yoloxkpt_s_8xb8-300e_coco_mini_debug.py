@@ -178,23 +178,24 @@ train_dataloader = dict(
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline_stage1))
 
-test_pipeline = [
-    *pre_transform,
-    # dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='YOLOPoseResize', scale=img_scale, keep_ratio=True),
-    dict(
-        type='mmdet.Pad',
-        pad_to_square=True,
-        pad_val=dict(img=(114.0, 114.0, 114.0))),
-    # dict(
-    #     type='LoadAnnotations',
-    #     with_bbox=True,
-    #     with_keypoints=True),
-    dict(
-        type='YOLOPosePackInputs',
-        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor'))
-]
+# test_pipeline = [
+#     *pre_transform,
+#     # dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+#     dict(type='YOLOPoseResize', scale=img_scale, keep_ratio=True),
+#     dict(
+#         type='mmdet.Pad',
+#         pad_to_square=True,
+#         pad_val=dict(img=(114.0, 114.0, 114.0))),
+#     # dict(
+#     #     type='LoadAnnotations',
+#     #     with_bbox=True,
+#     #     with_keypoints=True),
+#     dict(
+#         type='YOLOPosePackInputs',
+#         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+#                    'scale_factor'))
+# ]
+test_pipeline = train_pipeline_stage2
 
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
