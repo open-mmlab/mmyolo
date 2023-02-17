@@ -608,34 +608,67 @@ python cvt_single_channel.py  --path data/cat
 
 ### Create a new profile and train
 
+**Currently, some image processing functions in MMYOLO are not compatible with single-channel images, and the chances of incompatibility are relatively high**. The recommended approach is to read single-channel images as three-channel images for training. Although this will reduce some computational performance, it is generally not necessary to modify the configuration to use it.
+
+#### Modify the configuration file
+
 Take `projects/misc/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py` as the `base` configuration, copy it to the `configs/yolov5` directory, and add `yolov5_s-v61_syncbn_fast_1xb32-100e_cat_single_channel.py` file.
 
 ```python
 _base_ = 'yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py'
 
-max_epochs = 150
-data_root = './data/cat/'
+load_from = './checkpoints/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187_single_channel.pth'
 ```
 
-Results of model training:
+#### Pre-training model loading problem
+
+Using the original three-channel pre-training model directly may lead to a decrease in accuracy (although this has not been experimentally verified). There are several solutions: adjust the weight of each channel in the input layer to the average of the original three-channel weights, adjust the weight of each channel in the input layer to one of the original three-channel weights, or train directly without modifying the input layer weights. The specific effect of each solution varies depending on the actual situation. In our implementation, we adjust the weights of the three channels of the input layer to the average of the weights of the pre-trained three channels.
+
+```python
+import torch
+
+def main():
+    # Load weights file
+    state_dict = torch.load(
+        'checkpoints/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
+    )
+
+    # Modify input layer weights
+    weights = state_dict['state_dict']['backbone.stem.conv.weight']
+    avg_weight = weights.mean(dim=1, keepdim=True)
+    new_weights = torch.cat([avg_weight] * 3, dim=1)
+    state_dict['state_dict']['backbone.stem.conv.weight'] = new_weights
+
+    # Save the modified weights to a new file
+    torch.save(
+        state_dict,
+        'checkpoints/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187_single_channel.pth'
+    )
+
+if __name__ == '__main__':
+    main()
+```
+
+#### Results of model training:
 
 <img src="https://raw.githubusercontent.com/landhill/mmyolo/main/resources/cat_single_channel_test.jpeg"/>
 
 The left figure shows the actual label and the right figure shows the target detection result.
 
 ```shell
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.780
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.947
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.847
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.798
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.953
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.864
  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.780
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.765
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.833
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.843
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.798
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.777
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.847
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.850
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.843
-bbox_mAP_copypaste: 0.780 0.947 0.847 -1.000 -1.000 0.780
-Epoch(val) [100][116/116]  coco/bbox_mAP: 0.7800  coco/bbox_mAP_50: 0.9470  coco/bbox_mAP_75: 0.8470  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.7800
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.850
+bbox_mAP_copypaste: 0.798 0.953 0.864 -1.000 -1.000 0.798
+Epoch(val) [100][116/116]  coco/bbox_mAP: 0.7980  coco/bbox_mAP_50: 0.9530  coco/bbox_mAP_75: 0.8640  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 
+0.7980
 ```

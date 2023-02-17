@@ -612,34 +612,67 @@ python cvt_single_channel.py  --path data/cat
 
 ### 新建配置文件并训练
 
+**目前MMYOLO的一些图像处理函数还不兼容单通道图片，出现不兼容问题概率较高**。为了避免这种不兼容的问题，推荐的做法是将单通道图片作为三通道图片读取后进行训练。这样会降低一些运算性能，但是基本不需要修改配置即可使用。
+
+#### 修改配置文件
+
 以 `projects/misc/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`为 `base` 配置,将其复制到`configs/yolov5`目录下，在同级配置路径下新增 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat_single_channel.py` 文件。
 
 ```python
 _base_ = 'yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py'
 
-max_epochs = 150
-data_root = './data/cat/'
+load_from = './checkpoints/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187_single_channel.pth'
 ```
 
-训练测试结果：
+#### 预训练模型加载问题
+
+直接使用原三通道的预训练模型，理论上会导致精度有所降低（未实验验证）。可采用的解决思路：将输入层3通道每个通道的权重调整为原3通道权重的平均值, 或将输入层每个通道的权重调整为原3通道某一通道权重，也可以对输入层权重不做修改直接训练，具体效果根据实际情况有所不同。这里采用将输入层3个通道权重调整为预训练3通道权重平均值的方式。
+
+```python
+import torch
+
+def main():
+    # 加载权重文件
+    state_dict = torch.load(
+        'checkpoints/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
+    )
+
+    # 修改输入层权重
+    weights = state_dict['state_dict']['backbone.stem.conv.weight']
+    avg_weight = weights.mean(dim=1, keepdim=True)
+    new_weights = torch.cat([avg_weight] * 3, dim=1)
+    state_dict['state_dict']['backbone.stem.conv.weight'] = new_weights
+
+    # 保存修改后的权重到新文件
+    torch.save(
+        state_dict,
+        'checkpoints/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187_single_channel.pth'
+    )
+
+if __name__ == '__main__':
+    main()
+```
+
+#### 模型训练效果
 
 <img src="https://raw.githubusercontent.com/landhill/mmyolo/main/resources/cat_single_channel_test.jpeg"/>
 
 左图是实际标签，右图是目标检测结果。
 
 ```shell
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.780
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.947
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.847
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.798
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.953
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.864
  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.780
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.765
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.833
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.843
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.798
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.777
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.847
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.850
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.843
-bbox_mAP_copypaste: 0.780 0.947 0.847 -1.000 -1.000 0.780
-Epoch(val) [100][116/116]  coco/bbox_mAP: 0.7800  coco/bbox_mAP_50: 0.9470  coco/bbox_mAP_75: 0.8470  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.7800
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.850
+bbox_mAP_copypaste: 0.798 0.953 0.864 -1.000 -1.000 0.798
+Epoch(val) [100][116/116]  coco/bbox_mAP: 0.7980  coco/bbox_mAP_50: 0.9530  coco/bbox_mAP_75: 0.8640  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 
+0.7980
 ```
