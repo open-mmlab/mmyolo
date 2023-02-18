@@ -582,9 +582,7 @@ import argparse
 import imghdr
 import os
 from typing import List
-
-from PIL import Image
-
+import cv2
 
 def parse_args():
     parser = argparse.ArgumentParser(description='data_path')
@@ -601,10 +599,9 @@ def main():
     for file in file_list:
         if imghdr.what(path + '/' + file) != 'jpeg':
             continue
-        o_img = Image.open(path + '/' + file)
-        L_img = o_img.convert('L')
-        L_img.save(save_path + '/' + file)
-        args = parse_args()
+        img = cv2.imread(path + '/' + file)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        cv2.imwrite(save_path + '/' + file, img)
 
 if __name__ == '__main__':
     main()
@@ -616,19 +613,62 @@ if __name__ == '__main__':
 python cvt_single_channel.py data/cat
 ```
 
-此时会把 `cat` 数据集内图片全部转成单通道灰度图片
-
 ### 2 修改 base 配置文件
 
 **目前 MMYOLO 的一些图像处理函数例如颜色空间变换还不兼容单通道图片，如果直接采用单通道数据训练需要修改部分 pipeline，工作量较大**。为了解决不兼容问题，推荐的做法是将单通道图片作为采用三通道图片方式读取将其加载为三通道数据，但是在输入到网络前将其转换为单通道格式。这种做法会稍微增加一些运算负担，但是用户基本不需要修改代码即可使用。
 
-以 `projects/misc/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`为 `base` 配置,将其复制到 `configs/yolov5` 目录下，在同级配置路径下新增 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat_single_channel.py` 文件。 
-我们可以 `mmyolo/models/data_preprocessors/data_preprocessor.py` 文件中继承 `YOLOv5DetDataPreprocessor` 并命名新类为 `YOLOv5SCDetDataPreprocessor`, 在其中将图片转成单通道。 `YOLOv5SCDetDataPreprocessor` 示例代码为：
+以 `projects/misc/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py`为 `base` 配置,将其复制到 `configs/yolov5` 目录下，在同级配置路径下新增 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat_single_channel.py` 文件。 我们可以 `mmyolo/models/data_preprocessors/data_preprocessor.py` 文件中继承 `YOLOv5DetDataPreprocessor` 并命名新类为 `YOLOv5SCDetDataPreprocessor`, 在其中将图片转成单通道，添加依赖库并在`mmyolo/models/data_preprocessors/__init__.py`中注册新类。 `YOLOv5SCDetDataPreprocessor` 示例代码为：
 
 ```python
 @MODELS.register_module()
 class YOLOv5SCDetDataPreprocessor(YOLOv5DetDataPreprocessor):
-   TODO
+    """Rewrite collate_fn to get faster training speed.
+
+    Note: It must be used together with `mmyolo.datasets.utils.yolov5_collate`
+    """
+
+    def forward(self, data: dict, training: bool = False) -> dict:
+        """Perform normalization, padding, bgr2rgb conversion and convert to single channel image based on ``DetDataPreprocessor``.
+
+        Args:
+            data (dict): Data sampled from dataloader.
+            training (bool): Whether to enable training time augmentation.
+
+        Returns:
+            dict: Data in the same format as the model input.
+        """
+        if not training:
+            return super().forward(data, training)
+
+        data = self.cast_data(data)
+        inputs, data_samples = data['inputs'], data['data_samples']
+        assert isinstance(data['data_samples'], dict)
+
+        # TODO: Supports multi-scale training
+        if self._channel_conversion and inputs.shape[1] == 3:
+            inputs = inputs[:, [2, 1, 0], ...]
+
+        if self._enable_normalize:
+            inputs = (inputs - self.mean) / self.std
+
+        if self.batch_augments is not None:
+            for batch_aug in self.batch_augments:
+                inputs, data_samples = batch_aug(inputs, data_samples)
+
+        img_metas = [{'batch_input_shape': inputs.shape[2:]}] * len(inputs)
+        data_samples = {
+            'bboxes_labels': data_samples['bboxes_labels'],
+            'img_metas': img_metas
+        }
+
+        # Convert to single channel image
+        inputs = np.array([
+            cv2.cvtColor(np.uint8(x.transpose(1, 2, 0)), cv2.COLOR_BGR2GRAY)
+            for x in inputs
+        ])
+        inputs = np.expand_dims(inputs, axis=1)
+
+        return {'inputs': inputs, 'data_samples': data_samples}
 ```
 
 此时 `yolov5_s-v61_syncbn_fast_1xb32-100e_cat_single_channel.py`配置文件内容为如下所示：
@@ -636,7 +676,7 @@ class YOLOv5SCDetDataPreprocessor(YOLOv5DetDataPreprocessor):
 ```python
 _base_ = 'yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py'
 
-_base_.model.data_preprocessor.type='YOLOv5SCDetDataPreprocessor'
+_base_.model.data_preprocessor.type = 'YOLOv5SCDetDataPreprocessor'
 ```
 
 ### 3 预训练模型加载问题
@@ -672,8 +712,7 @@ if __name__ == '__main__':
 ```python
 _base_ = 'yolov5_s-v61_syncbn_fast_1xb32-100e_cat.py'
 
-
-_base_.model.data_preprocessor.type='YOLOv5SCDetDataPreprocessor'
+_base_.model.data_preprocessor.type = 'YOLOv5SCDetDataPreprocessor'
 
 load_from = './checkpoints/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187_single_channel.pth'
 ```
@@ -685,18 +724,18 @@ load_from = './checkpoints/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084
 左图是实际标签，右图是目标检测结果。
 
 ```shell
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.798
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.953
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.864
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.958
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 1.000
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.798
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.777
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.847
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.850
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.958
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.881
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.969
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.969
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.850
-bbox_mAP_copypaste: 0.798 0.953 0.864 -1.000 -1.000 0.798
-Epoch(val) [100][116/116]  coco/bbox_mAP: 0.7980  coco/bbox_mAP_50: 0.9530  coco/bbox_mAP_75: 0.8640  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.7980
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.969
+bbox_mAP_copypaste: 0.958 1.000 1.000 -1.000 -1.000 0.958
+Epoch(val) [100][116/116]  coco/bbox_mAP: 0.9580  coco/bbox_mAP_50: 1.0000  coco/bbox_mAP_75: 1.0000  coco/bbox_mAP_s: -1.0000  coco/bbox_mAP_m: -1.0000  coco/bbox_mAP_l: 0.9580
 ```
