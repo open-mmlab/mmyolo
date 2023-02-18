@@ -1,10 +1,10 @@
 # YOLOv5 部署全流程说明
 
-请先参考 [`部署必备指南`](basic_deployment_guide.md) 了解部署配置文件等相关信息。
+请先参考 [`部署必备指南`](./mmdeploy_guide.md) 了解部署配置文件等相关信息。
 
 ## 模型训练和测试
 
-模型训练和测试请参考 [YOLOv5 从入门到部署全流程](../user_guides/yolov5_tutorial.md) 。
+模型训练和测试请参考 [YOLOv5 从入门到部署全流程](../get_started/15_minutes.md) 。
 
 ## 准备 MMDeploy 运行环境
 
@@ -75,7 +75,7 @@ codebase_config = dict(
 backend_config = dict(type='onnxruntime')
 ```
 
-默认配置中的 `post_processing` 后处理参数是当前模型与 `pytorch` 模型精度对齐的配置，若您需要修改相关参数，可以参考 [`部署必备指南`](basic_deployment_guide.md) 的详细介绍。
+默认配置中的 `post_processing` 后处理参数是当前模型与 `pytorch` 模型精度对齐的配置，若您需要修改相关参数，可以参考 [`部署必备指南`](./mmdeploy_guide.md) 的详细介绍。
 
 当您部署在 `TensorRT` 时，您可以查看 [`detection_tensorrt_static-640x640.py`](https://github.com/open-mmlab/mmyolo/tree/main/configs/deploy/detection_tensorrt_static-640x640.py) ，如下所示：
 

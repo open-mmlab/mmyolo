@@ -1,53 +1,6 @@
-# 开始你的第一步
+# 安装流程
 
-## 依赖
-
-下表为 MMYOLO 和 MMEngine, MMCV, MMDetection 依赖库的版本要求，请安装正确的版本以避免安装问题。
-
-| MMYOLO version |   MMDetection version    |     MMEngine version     |      MMCV version       |
-| :------------: | :----------------------: | :----------------------: | :---------------------: |
-|      main      | mmdet>=3.0.0rc5, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
-|     0.3.0      | mmdet>=3.0.0rc5, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
-|     0.2.0      | mmdet>=3.0.0rc3, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
-|     0.1.3      | mmdet>=3.0.0rc3, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
-|     0.1.2      | mmdet>=3.0.0rc2, \<3.1.0 | mmengine>=0.3.0, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
-|     0.1.1      |     mmdet==3.0.0rc1      | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
-|     0.1.0      |     mmdet==3.0.0rc0      | mmengine>=0.1.0, \<0.2.0 | mmcv>=2.0.0rc0, \<2.1.0 |
-
-本节中，我们将演示如何用 PyTorch 准备一个环境。
-
-MMYOLO 支持在 Linux，Windows 和 macOS 上运行。它需要 Python 3.7 以上，CUDA 9.2 以上和 PyTorch 1.7 以上。
-
-```{note}
-如果你对 PyTorch 有经验并且已经安装了它，你可以直接跳转到[下一小节](#安装流程)。否则，你可以按照下述步骤进行准备
-```
-
-**步骤 0.** 从 [官方网站](https://docs.conda.io/en/latest/miniconda.html) 下载并安装 Miniconda。
-
-**步骤 1.** 创建并激活一个 conda 环境。
-
-```shell
-conda create -n open-mmlab python=3.8 -y
-conda activate open-mmlab
-```
-
-**步骤 2.** 基于 [PyTorch 官方说明](https://pytorch.org/get-started/locally/) 安装 PyTorch。
-
-在 GPU 平台上：
-
-```shell
-conda install pytorch torchvision -c pytorch
-```
-
-在 CPU 平台上:
-
-```shell
-conda install pytorch torchvision cpuonly -c pytorch
-```
-
-## 安装流程
-
-### 最佳实践
+## 最佳实践
 
 **步骤 0.** 使用 [MIM](https://github.com/open-mmlab/mim) 安装 [MMEngine](https://github.com/open-mmlab/mmengine)、 [MMCV](https://github.com/open-mmlab/mmcv) 和 [MMDetection](https://github.com/open-mmlab/mmdetection) 。
 
@@ -136,9 +89,9 @@ inference_detector(model, 'demo/demo.jpg')
 
 你将会看到一个包含 `DetDataSample` 的列表，预测结果在 `pred_instance` 里，包含有预测框、预测分数 和 预测类别。
 
-### 自定义安装
+## 自定义安装
 
-#### CUDA 版本
+### CUDA 版本
 
 在安装 PyTorch 时，你需要指定 CUDA 的版本。如果你不清楚应该选择哪一个，请遵循我们的建议。
 
@@ -154,7 +107,7 @@ inference_detector(model, 'demo/demo.jpg')
 的配置相匹配（如用 `conda install` 安装 PyTorch 时指定的 cudatoolkit 版本）。
 ```
 
-#### 不使用 MIM 安装 MMEngine
+### 不使用 MIM 安装 MMEngine
 
 要使用 pip 而不是 MIM 来安装 MMEngine，请遵照 [MMEngine 安装指南](https://mmengine.readthedocs.io/en/latest/get_started/installation.html)。
 
@@ -164,7 +117,7 @@ inference_detector(model, 'demo/demo.jpg')
 pip install "mmengine>=0.3.1"
 ```
 
-#### 不使用 MIM 安装 MMCV
+### 不使用 MIM 安装 MMCV
 
 MMCV 包含 C++ 和 CUDA 扩展，因此其对 PyTorch 的依赖比较复杂。MIM 会自动解析这些 依赖，选择合适的 MMCV 预编译包，使安装更简单，但它并不是必需的。
 
@@ -177,7 +130,7 @@ MMCV 包含 C++ 和 CUDA 扩展，因此其对 PyTorch 的依赖比较复杂。M
 pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/torch1.12.0/index.html
 ```
 
-#### 在 CPU 环境中安装
+### 在 CPU 环境中安装
 
 我们的代码能够建立在只使用 CPU 的环境（CUDA 不可用）。
 
@@ -205,7 +158,7 @@ pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 |                         CARAFE                          |                                          CARAFE                                          |
 |                      SyncBatchNorm                      |                                         ResNeSt                                          |
 
-#### 在 Google Colab 中安装
+### 在 Google Colab 中安装
 
 [Google Colab](https://colab.research.google.com/) 通常已经包含了 PyTorch 环境，因此我们只需要安装 MMEngine、MMCV、MMDetection 和 MMYOLO 即可，命令如下：
 
@@ -238,7 +191,7 @@ print(mmyolo.__version__)
 在 Jupyter 中，感叹号 `!` 用于执行外部命令，而 `%cd` 是一个[魔术命令](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-cd)，用于切换 Python 的工作路径。
 ```
 
-#### 通过 Docker 使用 MMYOLO
+### 通过 Docker 使用 MMYOLO
 
 我们提供了一个 [Dockerfile](https://github.com/open-mmlab/mmyolo/blob/main/docker/Dockerfile) 来构建一个镜像。请确保你的 [docker 版本](https://docs.docker.com/engine/install/) >=`19.03`。
 
@@ -265,13 +218,13 @@ export DATA_DIR=/path/to/your/dataset
 docker run --gpus all --shm-size=8g -it -v ${DATA_DIR}:/mmyolo/data mmyolo
 ```
 
-### 排除故障
+## 排除故障
 
 如果你在安装过程中遇到一些问题，请先查看 [FAQ](notes/faq.md) 页面。
 
 如果没有找到解决方案，你也可以在 GitHub 上 [打开一个问题](https://github.com/open-mmlab/mmyolo/issues/new/choose)。
 
-### 使用多个 MMYOLO 版本进行开发
+## 使用多个 MMYOLO 版本进行开发
 
 训练和测试的脚本已经在 `PYTHONPATH` 中进行了修改，以确保脚本使用当前目录中的 MMYOLO。
 

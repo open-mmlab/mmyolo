@@ -1,4 +1,4 @@
-# 可视化
+# 关于可视化的一切
 
 本文包括特征图可视化和 Grad-Based 和 Grad-Free CAM 可视化
 
@@ -292,3 +292,250 @@ python demo/boxam_vis_demo.py \
 <div align=center>
 <img src="https://user-images.githubusercontent.com/17425982/203777566-7c74e82f-b477-488e-958f-91e1d10833b9.jpg" width="800" alt="image"/>
 </div>
+
+## 可视化 COCO 标签
+
+脚本 `tools/analysis_tools/browse_coco_json.py` 能够使用可视化显示 COCO 标签在图片的情况。
+
+```shell
+python tools/analysis_tools/browse_coco_json.py [--data-root ${DATA_ROOT}] \
+                                                [--img-dir ${IMG_DIR}] \
+                                                [--ann-file ${ANN_FILE}] \
+                                                [--wait-time ${WAIT_TIME}] \
+                                                [--disp-all] [--category-names CATEGORY_NAMES [CATEGORY_NAMES ...]] \
+                                                [--shuffle]
+```
+
+其中，如果图片、标签都在同一个文件夹下的话，可以指定 `--data-root` 到该文件夹，然后 `--img-dir` 和 `--ann-file` 指定该文件夹的相对路径，代码会自动拼接。
+如果图片、标签文件不在同一个文件夹下的话，则无需指定 `--data-root` ，直接指定绝对路径的 `--img-dir` 和 `--ann-file` 即可。
+
+例子：
+
+1. 查看 `COCO` 全部类别，同时展示 `bbox`、`mask` 等所有类型的标注：
+
+```shell
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
+                                                --disp-all
+```
+
+如果图片、标签不在同一个文件夹下的话，可以使用绝对路径：
+
+```shell
+python tools/analysis_tools/browse_coco_json.py --img-dir '/dataset/image/coco/train2017' \
+                                                --ann-file '/label/instances_train2017.json' \
+                                                --disp-all
+```
+
+2. 查看 `COCO` 全部类别，同时仅展示 `bbox` 类型的标注，并打乱显示：
+
+```shell
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
+                                                --shuffle
+```
+
+3. 只查看 `bicycle` 和 `person` 类别，同时仅展示 `bbox` 类型的标注：
+
+```shell
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
+                                                --category-names 'bicycle' 'person'
+```
+
+4. 查看 `COCO` 全部类别，同时展示 `bbox`、`mask` 等所有类型的标注，并打乱显示：
+
+```shell
+python tools/analysis_tools/browse_coco_json.py --data-root './data/coco' \
+                                                --img-dir 'train2017' \
+                                                --ann-file 'annotations/instances_train2017.json' \
+                                                --disp-all \
+                                                --shuffle
+```
+
+## 可视化数据集
+
+```shell
+python tools/analysis_tools/browse_dataset.py \
+    ${CONFIG_FILE} \
+    [-o, --output-dir ${OUTPUT_DIR}] \
+    [-p, --phase ${DATASET_PHASE}] \
+    [-n, --show-number ${NUMBER_IMAGES_DISPLAY}] \
+    [-i, --show-interval ${SHOW_INTERRVAL}] \
+    [-m, --mode ${DISPLAY_MODE}] \
+    [--cfg-options ${CFG_OPTIONS}]
+```
+
+**所有参数的说明**：
+
+- `config` : 模型配置文件的路径。
+- `-o, --output-dir`: 保存图片文件夹，如果没有指定，默认为 `'./output'`。
+- **`-p, --phase`**: 可视化数据集的阶段，只能为 `['train', 'val', 'test']` 之一，默认为 `'train'`。
+- **`-n, --show-number`**: 可视化样本数量。如果没有指定，默认展示数据集的所有图片。
+- **`-m, --mode`**: 可视化的模式，只能为 `['original', 'transformed', 'pipeline']` 之一。 默认为 `'transformed'`。
+- `--cfg-options` : 对配置文件的修改，参考[学习配置文件](./config.md)。
+
+```shell
+`-m, --mode` 用于设置可视化的模式，默认设置为 'transformed'。
+- 如果 `--mode` 设置为 'original'，则获取原始图片；
+- 如果 `--mode` 设置为 'transformed'，则获取预处理后的图片；
+- 如果 `--mode` 设置为 'pipeline'，则获得数据流水线所有中间过程图片。
+```
+
+**示例**：
+
+1. **'original'** 模式 ：
+
+```shell
+python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py --phase val --output-dir tmp --mode original
+```
+
+- `--phase val`: 可视化验证集, 可简化为 `-p val`;
+- `--output-dir tmp`: 可视化结果保存在 "tmp" 文件夹, 可简化为 `-o tmp`;
+- `--mode original`: 可视化原图, 可简化为 `-m original`;
+- `--show-number 100`: 可视化100张图，可简化为 `-n 100`;
+
+2.**'transformed'** 模式 ：
+
+```shell
+python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py
+```
+
+3.**'pipeline'** 模式 ：
+
+```shell
+python ./tools/analysis_tools/browse_dataset.py configs/yolov5/yolov5_balloon.py -m pipeline
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/45811724/204810831-0fbc7f1c-0951-4be1-a11c-491cf0d194f6.png" alt="Image">
+</div>
+
+## 可视化数据集分析
+
+脚本 `tools/analysis_tools/dataset_analysis.py` 能够帮助用户得到四种功能的结果图，并将图片保存到当前运行目录下的 `dataset_analysis` 文件夹中。
+
+关于该脚本的功能的说明：
+
+通过 `main()` 的数据准备，得到每个子函数所需要的数据。
+
+功能一：显示类别和 bbox 实例个数的分布图，通过子函数 `show_bbox_num` 生成。
+
+<img src="https://user-images.githubusercontent.com/90811472/200314770-4fb21626-72f2-4a4c-be5d-bf860ad830ec.jpg"/>
+
+功能二：显示类别和 bbox 实例宽、高的分布图，通过子函数 `show_bbox_wh` 生成。
+
+<img src="https://user-images.githubusercontent.com/90811472/200315007-96e8e795-992a-4c72-90fa-f6bc00b3f2c7.jpg"/>
+
+功能三：显示类别和 bbox 实例宽/高比例的分布图，通过子函数 `show_bbox_wh_ratio` 生成。
+
+<img src="https://user-images.githubusercontent.com/90811472/200315044-4bdedcf6-087a-418e-8fe8-c2d3240ceba8.jpg"/>
+
+功能四：基于面积规则下，显示类别和 bbox 实例面积的分布图，通过子函数 `show_bbox_area` 生成。
+
+<img src="https://user-images.githubusercontent.com/90811472/200315075-71680fe2-db6f-4981-963e-a035c1281fc1.jpg"/>
+
+打印列表显示，通过脚本中子函数 `show_class_list` 和 `show_data_list` 生成。
+
+<img src="https://user-images.githubusercontent.com/90811472/200315152-9d6df91c-f2d2-4bba-9f95-b790fac37b62.jpg"/>
+
+```shell
+python tools/analysis_tools/dataset_analysis.py ${CONFIG} \
+                                                [-h] \
+                                                [--val-dataset ${TYPE}] \
+                                                [--class-name ${CLASS_NAME}] \
+                                                [--area-rule ${AREA_RULE}] \
+                                                [--func ${FUNC}] \
+                                                [--out-dir ${OUT_DIR}]
+```
+
+例子：
+
+1. 使用 `config` 文件 `configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py` 分析数据集，其中默认设置:数据加载类型为 `train_dataset` ，面积规则设置为 `[0,32,96,1e5]` ,生成包含所有类的结果图并将图片保存到当前运行目录下 `./dataset_analysis` 文件夹中：
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py
+```
+
+2. 使用 `config` 文件 `configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py` 分析数据集，通过 `--val-dataset` 设置将数据加载类型由默认的 `train_dataset` 改为 `val_dataset`：
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py \
+                                               --val-dataset
+```
+
+3. 使用 `config` 文件 `configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py` 分析数据集，通过 `--class-name` 设置将生成所有类改为特定类显示，以显示 `person` 为例：
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py \
+                                               --class-name person
+```
+
+4. 使用 `config` 文件 `configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py` 分析数据集，通过 `--area-rule` 重新定义面积规则，以 `30 70 125` 为例,面积规则变为 `[0,30,70,125,1e5]`：
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py \
+                                               --area-rule 30 70 125
+```
+
+5. 使用 `config` 文件 `configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py` 分析数据集，通过 `--func` 设置，将显示四个功能效果图改为只显示 `功能一` 为例：
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py \
+                                               --func show_bbox_num
+```
+
+6. 使用 `config` 文件 `configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py` 分析数据集，通过 `--out-dir` 设置修改图片保存地址，以 `work_dirs/dataset_analysis` 地址为例：
+
+```shell
+python tools/analysis_tools/dataset_analysis.py configs/yolov5/voc/yolov5_s-v61_fast_1xb64-50e_voc.py \
+                                               --out-dir work_dirs/dataset_analysis
+```
+
+## 优化器参数策略可视化
+
+`tools/analysis_tools/vis_scheduler.py` 旨在帮助用户检查优化器的超参数调度器（无需训练），支持学习率（learning rate）、动量（momentum）和权值衰减（weight decay）。
+
+```shell
+python tools/analysis_tools/vis_scheduler.py \
+    ${CONFIG_FILE} \
+    [-p, --parameter ${PARAMETER_NAME}] \
+    [-d, --dataset-size ${DATASET_SIZE}] \
+    [-n, --ngpus ${NUM_GPUs}] \
+    [-o, --out-dir ${OUT_DIR}] \
+    [--title ${TITLE}] \
+    [--style ${STYLE}] \
+    [--window-size ${WINDOW_SIZE}] \
+    [--cfg-options]
+```
+
+**所有参数的说明**：
+
+- `config` : 模型配置文件的路径。
+- **`-p, parameter`**: 可视化参数名，只能为 `["lr", "momentum", "wd"]` 之一， 默认为 `"lr"`.
+- **`-d, --dataset-size`**: 数据集的大小。如果指定，`DATASETS.build` 将被跳过并使用这个数值作为数据集大小，默认使用 `DATASETS.build` 所得数据集的大小。
+- **`-n, --ngpus`**: 使用 GPU 的数量, 默认为1。
+- **`-o, --out-dir`**: 保存的可视化图片的文件夹路径，默认不保存。
+- `--title`: 可视化图片的标题，默认为配置文件名。
+- `--style`: 可视化图片的风格，默认为 `whitegrid`。
+- `--window-size`: 可视化窗口大小，如果没有指定，默认为 `12*7`。如果需要指定，按照格式 `'W*H'`。
+- `--cfg-options`: 对配置文件的修改，参考[学习配置文件](../tutorials/config.md)。
+
+```{note}
+部分数据集在解析标注阶段比较耗时，推荐直接将 `-d, dataset-size` 指定数据集的大小，以节约时间。
+```
+
+你可以使用如下命令来绘制配置文件 `configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py` 将会使用的学习率变化曲线：
+
+```shell
+python tools/analysis_tools/vis_scheduler.py \
+    configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py \
+    --dataset-size 118287 \
+    --ngpus 8 \
+    --out-dir ./output
+```
+
+<div align=center><img src="https://user-images.githubusercontent.com/27466624/213091635-d322d2b3-6e28-4755-b871-ef0a89a67a6b.jpg" style=" width: auto; height: 40%; "></div>

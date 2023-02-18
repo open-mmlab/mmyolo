@@ -1,4 +1,4 @@
-# YOLOv5 从入门到部署全流程
+# 15 分钟上手 MMYOLO
 
 ## 环境安装
 
@@ -23,7 +23,7 @@ mim install -v -e .
 # "-e" 表示在可编辑模式下安装项目，因此对代码所做的任何本地修改都会生效，从而无需重新安装。
 ```
 
-详细环境配置操作请查看 [get_started](../get_started.md)
+详细环境配置操作请查看 [get_started](../get_started/installation.md)
 
 ## 数据集准备
 

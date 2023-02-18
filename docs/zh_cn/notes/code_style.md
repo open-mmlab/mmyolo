@@ -70,7 +70,7 @@ from mmcv.cnn.bricks import Conv2d, build_norm_layer, DropPath, MaxPool2d, \
 from ...utils import is_str  # 最多向上回溯一层，过多的回溯容易导致结构混乱
 ```
 
-OpenMMLab 项目使用 pre-commit 工具自动格式化代码，详情见[贡献代码](./contributing.md#代码风格)。
+OpenMMLab 项目使用 pre-commit 工具自动格式化代码，详情见[贡献代码](../featured_topics/contributing.md#代码风格)。
 
 ### 命名规范
 

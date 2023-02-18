@@ -31,7 +31,7 @@ MMYOLO 文件结构和 MMDetection 完全一致。为了能够充分复用 MMDet
 
 以下是 MMYOLO 的详细指南：
 
-1. 安装说明见[开始你的第一步](get_started.md)
+1. 安装说明见[开始你的第一步](get_started/get_started.md)
 
 2. MMYOLO 的基本使用方法请参考以下教程：
 
@@ -56,4 +56,4 @@ MMYOLO 文件结构和 MMDetection 完全一致。为了能够充分复用 MMDet
    - [How to](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/index.html#how-to)
    - [插件](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/index.html#id4)
 
-6. [解读文章和资源汇总](article.md)
+6. [解读文章和资源汇总](get_started/article.md)

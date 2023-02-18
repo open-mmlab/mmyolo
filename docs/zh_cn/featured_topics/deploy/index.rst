@@ -1,33 +1,25 @@
-模块组合
+MMDeploy 部署必备教程
 ************************
 
 .. toctree::
    :maxdepth: 1
 
-   module_combination.md
+   mmdeploy_guide.md
 
-数据流
+
+MMDeploy 部署 YOLOv5 全流程说明
 ************************
 
 .. toctree::
    :maxdepth: 1
 
-   data_flow.md
+   mmdeploy_yolov5.md
 
 
-How to
+EasyDeploy 部署必备教程
 ************************
 
 .. toctree::
    :maxdepth: 1
 
-   how_to.md
-
-
-插件
-************************
-
-.. toctree::
-   :maxdepth: 1
-
-   plugins.md
+   easydeploy_guide.md

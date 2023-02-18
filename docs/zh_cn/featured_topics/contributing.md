@@ -1,4 +1,4 @@
-## 贡献代码
+## 如何给 MMYOLO 贡献代码
 
 欢迎加入 MMYOLO 社区，我们致力于打造最前沿的计算机视觉基础库，我们欢迎任何类型的贡献，包括但不限于
 
@@ -241,7 +241,7 @@ pre-commit 钩子的配置可以在 [.pre-commit-config](./.pre-commit-config.ya
 
 pre-commit 具体的安装使用方式见[拉取请求](#2-配置-pre-commit)。
 
-更具体的规范请参考 [OpenMMLab 代码规范](code_style.md)。
+更具体的规范请参考 [OpenMMLab 代码规范](../notes/code_style.md)。
 
 #### C++ and CUDA
 
