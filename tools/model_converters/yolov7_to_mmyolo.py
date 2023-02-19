@@ -806,7 +806,7 @@ convert_dict_e2e = {
     'model.90.cv2': 'backbone.stage5.0.stride_conv_branches.1',
     'model.90.cv3': 'backbone.stage5.0.maxpool_branches.1',
 
-    # ELANBlock
+    # E-ELANBlock
     'model.91': 'backbone.stage5.1.e_elan_blocks.0.short_conv',
     'model.92': 'backbone.stage5.1.e_elan_blocks.0.main_conv',
     'model.93': 'backbone.stage5.1.e_elan_blocks.0.blocks.0.0',
@@ -839,7 +839,7 @@ convert_dict_e2e = {
     'model.113': 'neck.upsample_layers.0.0',
     'model.115': 'neck.reduce_layers.2',
 
-    # neck ELANBlock
+    # neck E-ELANBlock
     'model.117': 'neck.top_down_layers.0.e_elan_blocks.0.short_conv',
     'model.118': 'neck.top_down_layers.0.e_elan_blocks.0.main_conv',
     'model.119': 'neck.top_down_layers.0.e_elan_blocks.0.blocks.0',
