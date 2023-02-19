@@ -1068,6 +1068,7 @@ def convert(src, dst):
             implicit_m = f'bbox_head.head_module.' \
                          f'main_convs_pred.{i}.3.implicit'
             state_dict[implicit_m] = torch.ones((1, 3 * 85, 1, 1))
+
     # save checkpoint
     checkpoint = dict()
     checkpoint['state_dict'] = state_dict
