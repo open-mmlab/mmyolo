@@ -1082,8 +1082,8 @@ def main():
     parser.add_argument('dst', default='mm_yolov7l.pt', help='save path')
     args = parser.parse_args()
     convert(args.src, args.dst)
-    print('If your model weights are P6 models, such as W6, E6, D6, E6E, \
-            the auxiliary training module is not required to be loaded, \
+    print('If your model weights are from P6 models, such as W6, E6, D6, \
+            E6E, the auxiliary training module is not required to be loaded, \
             so it is normal for the weights of the auxiliary module \
             to be missing.')
 
