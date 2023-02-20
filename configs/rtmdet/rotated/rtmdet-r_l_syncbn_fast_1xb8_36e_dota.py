@@ -4,7 +4,7 @@ checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb
 
 # ========================Frequently modified parameters======================
 # -----data related-----
-data_root = '/datasets/dota_mmrotate_ss/'
+data_root = 'data/split_ss_dota/'
 # Path of train annotation folder
 train_ann_file = 'trainval/annfiles/'
 train_data_prefix = 'trainval/images/'  # Prefix of train image path
