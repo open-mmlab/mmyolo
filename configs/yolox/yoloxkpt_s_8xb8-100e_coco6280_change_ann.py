@@ -93,7 +93,7 @@ model = dict(
             loss_weight=1.0),
         loss_bbox_aux=dict(
             type='mmdet.L1Loss', reduction='sum', loss_weight=1.0),
-        loss_kpt=dict(type='OksLoss', dataset_info=dataset_info)),
+        loss_kpt=dict(type='OksLoss', dataset_info=dataset_info, loss_weight=70.0)),
     train_cfg=dict(
         assigner=dict(
             type='mmdet.SimOTAAssigner',

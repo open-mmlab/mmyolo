@@ -14,7 +14,7 @@ from einops import rearrange, reduce, repeat
 @MODELS.register_module()
 class OksLoss(nn.Module):
 
-    def __init__(self, dataset_info, oks_loss='oks') -> None:
+    def __init__(self, dataset_info, oks_loss='oks', loss_weight=1.0) -> None:
         super().__init__()
         if isinstance(dataset_info, dict):
             self.dataset_info = dataset_info
@@ -24,6 +24,7 @@ class OksLoss(nn.Module):
         else:
             raise TypeError('dataset_info must be a dict or a str')
         self.oks_loss = oks_loss
+        self.loss_weight = loss_weight
 
     def forward(self, preds: Tensor, targets: Tensor, weights: Tensor) -> Tensor:
         """
@@ -61,7 +62,7 @@ class OksLoss(nn.Module):
         kpt_mask = weights
         kpt_loss_factor = ((kpt_mask != 0).sum() + (kpt_mask == 0).sum()) / (
             (kpt_mask != 0).sum() + _eps)
-        oks_loss = torch.exp(-e)[kpt_mask].mean() * kpt_loss_factor
+        oks_loss = self.loss_weight * torch.exp(-e)[kpt_mask].mean() * kpt_loss_factor
         return oks_loss
 
     def _oks(self,
