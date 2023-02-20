@@ -1,8 +1,13 @@
-_base_ = './yolox_s_fast_8xb8-300e_coco.py'
+_base_ = './yolox_s_fast_8xb32-300e-rtmdet-hyp_coco.py'
 
 # ========================modified parameters======================
 deepen_factor = 0.33
 widen_factor = 0.375
+
+# Multi-scale training intervals
+# 10 -> 1
+batch_augments_interval = 1
+
 scaling_ratio_range = (0.5, 1.5)
 
 # =======================Unmodified in most cases==================
@@ -16,7 +21,7 @@ model = dict(
             type='YOLOXBatchSyncRandomResize',
             random_size_range=(320, 640),
             size_divisor=32,
-            interval=10)
+            interval=batch_augments_interval)
     ]),
     backbone=dict(deepen_factor=deepen_factor, widen_factor=widen_factor),
     neck=dict(deepen_factor=deepen_factor, widen_factor=widen_factor),

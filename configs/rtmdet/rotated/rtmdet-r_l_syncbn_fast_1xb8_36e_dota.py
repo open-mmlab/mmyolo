@@ -4,7 +4,7 @@ checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb
 
 # ========================Frequently modified parameters======================
 # -----data related-----
-data_root = 'data/split_ss_dota/'
+data_root = '/datasets/dota_mmrotate_ss/'
 # Path of train annotation folder
 train_ann_file = 'trainval/annfiles/'
 train_data_prefix = 'trainval/images/'  # Prefix of train image path
@@ -15,7 +15,7 @@ val_data_prefix = 'trainval/images/'  # Prefix of val image path
 test_data_prefix = 'test/images/'
 
 # Submission dir for result submit
-submission_dir = './work_dirs/{{fileBasenameNoExtension}}/submission'
+submission_dir = './work_dirs/rtm-r-tiny-final/submission'
 
 num_classes = 15  # Number of classes for classification
 # Batch size of a single GPU during training
@@ -249,29 +249,29 @@ val_dataloader = dict(
 val_evaluator = dict(type='mmrotate.DOTAMetric', metric='mAP')
 
 # Inference on val dataset
-test_dataloader = val_dataloader
-test_evaluator = val_evaluator
+# test_dataloader = val_dataloader
+# test_evaluator = val_evaluator
 
 # Inference on test dataset and format the output results
 # for submission. Note: the test set has no annotation.
-# test_dataloader = dict(
-#     batch_size=val_batch_size_per_gpu,
-#     num_workers=val_num_workers,
-#     persistent_workers=True,
-#     drop_last=False,
-#     sampler=dict(type='DefaultSampler', shuffle=False),
-#     dataset=dict(
-#         type=dataset_type,
-#         data_root=data_root,
-#         data_prefix=dict(img_path=test_data_prefix),
-#         test_mode=True,
-#         batch_shapes_cfg=batch_shapes_cfg,
-#         pipeline=test_pipeline))
-# test_evaluator = dict(
-#     type='mmrotate.DOTAMetric',
-#     format_only=True,
-#     merge_patches=True,
-#     outfile_prefix=submission_dir)
+test_dataloader = dict(
+    batch_size=val_batch_size_per_gpu,
+    num_workers=val_num_workers,
+    persistent_workers=True,
+    drop_last=False,
+    sampler=dict(type='DefaultSampler', shuffle=False),
+    dataset=dict(
+        type=dataset_type,
+        data_root=data_root,
+        data_prefix=dict(img_path=test_data_prefix),
+        test_mode=True,
+        batch_shapes_cfg=batch_shapes_cfg,
+        pipeline=test_pipeline))
+test_evaluator = dict(
+    type='mmrotate.DOTAMetric',
+    format_only=True,
+    merge_patches=True,
+    outfile_prefix=submission_dir)
 
 # optimizer
 optim_wrapper = dict(
