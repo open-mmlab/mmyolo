@@ -25,7 +25,7 @@ class OksLoss(nn.Module):
             raise TypeError('dataset_info must be a dict or a str')
         self.oks_loss = oks_loss
 
-    def forward(self, preds: Tensor, targets: Tensor) -> Tensor:
+    def forward(self, preds: Tensor, targets: Tensor, weights: Tensor) -> Tensor:
         """
         forward preds and targets to calculate OKS loss.
 
@@ -36,12 +36,13 @@ class OksLoss(nn.Module):
                 the batch size, K is the number of keypoints, 3 is the keypoint
                 coordinates plus one visible.
             targets (Tensor): ground truth keypoints tensor with shape N x K x 3.
+            weights (Tensor): weights of keypoints with shape N x K x (1).
 
         Returns:
             Tensor: loss value.
         """
         assert preds.shape == targets.shape
-        assert preds.dim() == 3 and preds.shape[-1] == 3
+        assert preds.dim() == 3
         assert preds.shape[1] == self.dataset_info['num_keypoints']
 
         # area
@@ -50,17 +51,17 @@ class OksLoss(nn.Module):
 
         # calculate oks
         if self.oks_loss == 'oks':
-            oks_loss = self._oks(targets, preds, a_g, a_p,
+            e = self._oks(targets, preds, a_g, a_p,
                                 self.dataset_info['sigmas'])
         elif self.oks_loss == 'oks2':
-            oks_loss = self._oks2(targets, preds, a_g, a_p,
+            e = self._oks2(targets, preds, a_g, a_p,
                                 self.dataset_info['sigmas'])
         # kpt loss factor
         _eps = 1e-6
-        kpt_mask = (targets[..., 2] > 0).float()
+        kpt_mask = weights
         kpt_loss_factor = ((kpt_mask != 0).sum() + (kpt_mask == 0).sum()) / (
             (kpt_mask != 0).sum() + _eps)
-        oks_loss = oks_loss * kpt_loss_factor
+        oks_loss = torch.exp(-e)[kpt_mask].mean() * kpt_loss_factor
         return oks_loss
 
     def _oks(self,
@@ -88,7 +89,7 @@ class OksLoss(nn.Module):
         """
         # corner case check
         assert g.shape == d.shape, f'g.shape: {g.shape}, d.shape: {d.shape}'
-        assert g.dim() == 3 and g.shape[-1] == 3, f'g.shape: {g.shape}'
+        assert g.dim() == 3, f'g.shape: {g.shape}'
         assert g.shape[1] == self.dataset_info[
             'num_keypoints'], f'g.shape: {g.shape}'
         assert a_g.shape == a_d.shape, f'a_g.shape: {a_g.shape}, a_d.shape: {a_d.shape}'
@@ -108,10 +109,10 @@ class OksLoss(nn.Module):
         kn_square = sigmas**2
         xg = g[..., 0]
         yg = g[..., 1]
-        vg = g[..., 2]
+        # vg = g[..., 2]
         xd = d[..., 0]
         yd = d[..., 1]
-        vd = d[..., 2]
+        # vd = d[..., 2]
 
         dx = xg - xd
         dy = yg - yd
@@ -119,11 +120,7 @@ class OksLoss(nn.Module):
         d_square = dx**2 + dy**2
         s_square = repeat(a_g, 'n -> n h', h=g.shape[1])**2
         e = d_square / (2 * s_square * kn_square + eps)
-        e = e * (vg > vis_thr)
-        # clamp
-        e = torch.clamp(e, max=4.6052)
-        oks = 1 - torch.exp(-e)[vg > vis_thr].mean()
-        return oks
+        return e
     
     def _oks2(self, g, d, a_g, a_d, sigmas, vis_thr=0):
         kpt_mask = (g[..., 2] > 0).float()
