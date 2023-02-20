@@ -21,7 +21,7 @@
 - [YOLOv8 深度详解！一文看懂，快速上手](https://zhuanlan.zhihu.com/p/598566644)
 - [玩转 MMYOLO 基础类第一期： 配置文件太复杂？继承用法看不懂？配置全解读来了](https://zhuanlan.zhihu.com/p/577715188)
 - [玩转 MMYOLO 工具类第一期： 特征图可视化](https://zhuanlan.zhihu.com/p/578141381?)
-- [玩转 MMYOLO 实用类第二期：源码阅读和调试「必备」技巧文档](https://zhuanlan.zhihu.com/p/580885852)
+- [玩转 MMYOLO 实用类第一期：源码阅读和调试「必备」技巧文档](https://zhuanlan.zhihu.com/p/580885852)
 - [玩转 MMYOLO 基础类第二期：工程文件结构简析](https://zhuanlan.zhihu.com/p/584807195)
 - [玩转 MMYOLO 实用类第二期：10分钟换遍主干网络文档](https://zhuanlan.zhihu.com/p/585641598)
 

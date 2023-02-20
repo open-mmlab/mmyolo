@@ -26,7 +26,7 @@ MMYOLO 支持在 Linux，Windows 和 macOS 上运行。它的基本环境依赖�
 如果你对 PyTorch 有经验并且已经安装了它，你可以直接跳转到下一小节。否则，你可以按照下述步骤进行准备
 ```
 
-**步骤 0.** 从 [官方网站](https://docs.conda.io/en/latest/miniconda.html) 下载并安装 Miniconda 并安装。
+**步骤 0.** 从 [官方网站](https://docs.conda.io/en/latest/miniconda.html) 下载并安装 Miniconda。
 
 **步骤 1.** 创建并激活一个 conda 环境。
 
