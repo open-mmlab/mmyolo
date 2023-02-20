@@ -21,9 +21,10 @@
    featured_topics/contributing.md
    featured_topics/model_design.md
    featured_topics/industry_examples.md
+   featured_topics/dataset_preparation.md
    featured_topics/algorithm_descriptions/index.rst
    featured_topics/replace_backbone.md
-   featured_topics/custom_dataset.md
+   featured_topics/labeling_to_deployment_tutorials.md
    featured_topics/visualization.md
    featured_topics/deploy/index.rst
    featured_topics/troubleshooting_steps.md
