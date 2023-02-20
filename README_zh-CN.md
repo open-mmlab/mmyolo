@@ -167,8 +167,10 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [概述](docs/zh_cn/get_started/overview.md)
 - [依赖](docs/zh_cn/get_started/dependencies.md)
 - [安装和验证](docs/zh_cn/get_started/installation.md)
-- [15 分钟上手 MMYOLO](docs/zh_cn/get_started/15_minutes.md)
-- [解读文章和资源汇总](docs/zh_cn/get_started/article.md)
+- [15 分钟上手 MMYOLO 目标检测](docs/zh_cn/get_started/15_minutes_object_detection.md)
+- [15 分钟上手 MMYOLO 旋转框目标检测](docs/zh_cn/get_started/15_minutes_rotated_object_detection.md)
+- [15 分钟上手 MMYOLO 实例分割](docs/zh_cn/get_started/15_minutes_instance_segmentation.md)
+- [中文解读资源汇总](docs/zh_cn/get_started/article.md)
 
 </details>
 
@@ -178,12 +180,12 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [如何给 MMYOLO 贡献代码](docs/zh_cn/featured_topics/contributing.md)
 - [MMYOLO 模型结构设计](docs/zh_cn/featured_topics/model_design.md)
 - [MMYOLO 产业范例介绍](docs/zh_cn/featured_topics/industry_examples.md)
-- [关于可视化的一切](docs/zh_cn/featured_topics/visualization.md)
-- [自定义数据集 标注+训练+测试+部署 全流程](docs/zh_cn/featured_topics/custom_dataset.md)
-- [轻松更换主干网络](docs/zh_cn/featured_topics/replace_backbone.md)
 - [原理和实现全解析](docs/zh_cn/featured_topics/algorithm_descriptions/)
+- [轻松更换主干网络](docs/zh_cn/featured_topics/replace_backbone.md)
+- [自定义数据集 标注+训练+测试+部署 全流程](docs/zh_cn/featured_topics/custom_dataset.md)
+- [关于可视化的一切](docs/zh_cn/featured_topics/visualization.md)
 - [模型部署流程](docs/zh_cn/featured_topics/deploy/)
-- [常见问题](docs/zh_cn/featured_topics/faq.md)
+- [常见错误排查步骤](docs/zh_cn/featured_topics/troubleshooting_steps.md)
 
 </details>
 
@@ -226,6 +228,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 - [学习 YOLOv5 配置文件](docs/zh_cn/tutorials/config.md)
 - [数据流](docs/zh_cn/tutorials/data_flow.md)
+- [常见问题](docs/zh_cn/tutorials/faq.md)
 
 </details>
 
