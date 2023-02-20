@@ -10,7 +10,7 @@ deepen_factor = 0.33
 widen_factor = 0.5
 
 save_epoch_intervals = 10
-train_batch_size_per_gpu = 16
+train_batch_size_per_gpu = 64
 # NOTE: for debugging set to 0
 train_num_workers = 8
 val_batch_size_per_gpu = 1
