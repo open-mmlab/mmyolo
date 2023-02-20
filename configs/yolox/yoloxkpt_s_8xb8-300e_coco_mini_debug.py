@@ -123,16 +123,19 @@ train_pipeline_stage1 = [
     dict(
         # type='mmdet.RandomAffine',
         type='YOLOPoseRandomAffine',
-        scaling_ratio_range=(0.1, 2),
+        scaling_ratio_range=(0.75, 1),
+        max_translate_ratio=0.0,
+        max_shear_degree=2.0,
         # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2)),
-    # dict(
-    #     type='YOLOXMixUpPose',
-    #     flip_ratio=1.0,
-    #     img_scale=img_scale,
-    #     ratio_range=(0.8, 1.6),
-    #     pad_val=114.0,
-    #     pre_transform=pre_transform),
+    dict(
+        type='YOLOXMixUpPose',
+        prob=0.0,
+        flip_ratio=1.0,
+        img_scale=img_scale,
+        ratio_range=(0.8, 1.6),
+        pad_val=114.0,
+        pre_transform=pre_transform),
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='YOLOPoseRandomFlip', prob=0.5),
     dict(
@@ -160,7 +163,9 @@ train_pipeline_stage2 = [
     dict(
         type='YOLOPoseFilterAnnotations',
         min_gt_bbox_wh=(1, 1),
-        keep_empty=False),
+        keep_empty=False,
+        by_keypoints=True,
+        min_keypoints=1),
     dict(type='YOLOPosePackInputs')
 ]
 
@@ -187,10 +192,12 @@ test_pipeline = [
         type='mmdet.Pad',
         pad_to_square=True,
         pad_val=dict(img=(114.0, 114.0, 114.0))),
-    # dict(
-    #     type='LoadAnnotations',
-    #     with_bbox=True,
-    #     with_keypoints=True),
+     dict(
+        type='YOLOPoseFilterAnnotations',
+        min_gt_bbox_wh=(1, 1),
+        keep_empty=False,
+        by_keypoints=True,
+        min_keypoints=1),
     dict(
         type='YOLOPosePackInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',

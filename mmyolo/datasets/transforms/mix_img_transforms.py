@@ -1353,9 +1353,10 @@ class MosaicKeypoints(Mosaic):
         mosaic_keypoints = np.concatenate(mosaic_keypoints, 0)
         mosaic_keypoints_visible = np.concatenate(mosaic_keypoints_visible, 0)
 
+        mosaic_keypoints_visible = Keypoints._kpt_clip(mosaic_keypoints, mosaic_keypoints_visible, [2 * img_scale_h, 2 * img_scale_w])
+
         if self.bbox_clip_border:
             mosaic_bboxes.clip_([2 * img_scale_h, 2 * img_scale_w])
-            mosaic_keypoints_visible = Keypoints._kpt_clip(mosaic_keypoints, mosaic_keypoints_visible, [2 * img_scale_h, 2 * img_scale_w])
         else:
             # remove outside bboxes
             inside_inds = mosaic_bboxes.is_inside(

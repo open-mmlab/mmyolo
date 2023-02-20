@@ -1154,8 +1154,7 @@ class YOLOPoseRandomAffine(RandomAffine):
             keypoints = results['gt_keypoints'][valid_index]
             keypoints_visible = results['gt_keypoints_visible'][valid_index]
             keypoints = Keypoints._kpt_project(keypoints, warp_matrix)
-            if self.bbox_clip_border:
-                keypoints_visible = Keypoints._kpt_clip(keypoints, keypoints_visible, [height, width])
+            keypoints_visible = Keypoints._kpt_clip(keypoints, keypoints_visible, [height, width])
             results['gt_keypoints'] = keypoints
             results['gt_keypoints_visible'] = keypoints_visible
             assert len(results['gt_bboxes']) == len(results['gt_keypoints']) == len(results['gt_keypoints_visible'])
