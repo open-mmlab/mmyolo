@@ -167,7 +167,7 @@ train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
     persistent_workers=True,  # NOTE: for debugging
-    pin_memory=True,  # NOTE: for debugging
+    pin_memory=False,  # NOTE: for debugging
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
@@ -200,7 +200,7 @@ val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
     persistent_workers=True,  # NOTE: for debugging
-    pin_memory=True,  # NOTE: for debugging
+    pin_memory=False,  # NOTE: for debugging
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
