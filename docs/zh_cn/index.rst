@@ -68,7 +68,9 @@
 
    tutorials/config.md
    tutorials/data_flow.md
+   tutorials/custom_installation.md
    tutorials/faq.md
+
 
 .. toctree::
    :maxdepth: 1
