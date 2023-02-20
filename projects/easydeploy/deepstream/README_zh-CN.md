@@ -32,10 +32,6 @@ make -j$(nproc) && make install
 deepstream-app -c deepstream_app_config.txt
 ```
 
-## 性能表现
-
-TODO
-
 ## 项目代码结构
 
 ```bash

@@ -32,10 +32,6 @@ Then you can run the inference with this command.
 deepstream-app -c deepstream_app_config.txt
 ```
 
-## Performance
-
-TODO
-
 ## Code Structure
 
 ```bash
