@@ -22,6 +22,7 @@
    featured_topics/model_design.md
    featured_topics/industry_examples.md
    featured_topics/dataset_preparation.md
+   featured_topics/mm_preparation.md
    featured_topics/algorithm_descriptions/index.rst
    featured_topics/replace_backbone.md
    featured_topics/labeling_to_deployment_tutorials.md

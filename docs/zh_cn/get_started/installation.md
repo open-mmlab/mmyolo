@@ -11,11 +11,19 @@ mim install "mmcv>=2.0.0rc1,<2.1.0"
 mim install "mmdet>=3.0.0rc5,<3.1.0"
 ```
 
+如果你当前已经处于 mmyolo 工程目录下，则可以采用如下简化写法
+
+```shell
+cd mmyolo
+pip install -U openmim
+mim install -r requirements/mminstall.txt
+```
+
 **注意：**
 
 a. 在 MMCV-v2.x 中，`mmcv-full` 改名为 `mmcv`，如果你想安装不包含 CUDA 算子精简版，可以通过 `mim install mmcv-lite>=2.0.0rc1` 来安装。
 
-b. 如果使用 albumentations，我们建议使用 pip install -r requirements/albu.txt 或者 pip install -U albumentations --no-binary qudida,albumentations 进行安装。 如果简单地使用 pip install albumentations==1.0.1 进行安装，则会同时安装 opencv-python-headless（即便已经安装了 opencv-python 也会再次安装）。我们建议在安装 albumentations 后检查环境，以确保没有同时安装 opencv-python 和 opencv-python-headless，因为同时安装可能会导致一些问题。更多细节请参考 [官方文档](https://albumentations.ai/docs/getting_started/installation/#note-on-opencv-dependencies) 。
+b. 如果使用 `albumentations`，我们建议使用 `pip install -r requirements/albu.txt` 或者 `pip install -U albumentations --no-binary qudida,albumentations` 进行安装。 如果简单地使用 `pip install albumentations==1.0.1` 进行安装，则会同时安装 `opencv-python-headless`（即便已经安装了 `opencv-python` 也会再次安装）。我们建议在安装 albumentations 后检查环境，以确保没有同时安装 `opencv-python` 和 `opencv-python-headless`，因为同时安装可能会导致一些问题。更多细节请参考 [官方文档](https://albumentations.ai/docs/getting_started/installation/#note-on-opencv-dependencies) 。
 
 **步骤 1.** 安装 MMYOLO
 
@@ -25,7 +33,7 @@ b. 如果使用 albumentations，我们建议使用 pip install -r requirements/
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
-pip install -r requirements/albu.txt
+mim install -r requirements/albu.txt
 # Install MMYOLO
 mim install -v -e .
 # "-v" 指详细说明，或更多的输出

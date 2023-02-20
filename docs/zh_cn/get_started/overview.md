@@ -1,33 +1,60 @@
 # 概述
 
-本章向您介绍 MMYOLO 的整体框架，并提供详细的教程链接。
-
 ## MMYOLO 介绍
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/45811724/190993591-bd3f1f11-1c30-4b93-b5f4-05c9ff64ff7f.gif" alt="图片"/>
 </div>
 
-MMYOLO 是一个 YOLO 系列的算法工具箱，目前仅实现了目标检测任务，后续会支持实例分割、全景分割和关键点检测等多种任务。其包括丰富的目标检测算法以及相关的组件和模块，下面是它的整体框架：
+MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具箱，它是 [OpenMMLab](https://openmmlab.com/) 项目的一部分。 MMYOLO 定位为 YOLO 系列热门开源库以及工业应用核心库，其愿景图如下所示：
 
-MMYOLO 文件结构和 MMDetection 完全一致。为了能够充分复用 MMDetection 代码，MMYOLO 仅包括定制内容，其由 3 个主要部分组成：`datasets`、`models`、`engine`。
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220060451-d50414e5-a239-45b7-a4db-ed8699820300.png" alt="愿景图"/>
+</div>
 
-- **datasets** 支持用于目标检测的各种数据集。
-  - **transforms** 包含各种数据增强变换。
-- **models** 是检测器最重要的部分，包含检测器的不同组件。
-  - **detectors** 定义所有检测模型类。
-  - **data_preprocessors** 用于预处理模型的输入数据。
-  - **backbones** 包含各种骨干网络
-  - **necks** 包含各种模型颈部组件
-  - **dense_heads** 包含执行密集预测的各种检测头。
-  - **losses** 包含各种损失函数
-  - **task_modules** 为检测任务提供模块。例如 assigners、samplers、box coders 和 prior generators。
-  - **layers** 提供了一些基本的神经网络层
-- **engine** 是运行时组件的一部分。
-  - **optimizers** 提供优化器和优化器封装。
-  - **hooks** 提供 runner 的各种钩子。
+目前支持的 YOLO 系列算法如下：
 
-## 文档使用指南
+<details open>
+<summary><b>支持的算法</b></summary>
+
+- YOLOv5
+- YOLOX
+- RTMDet
+- YOLOv6
+- YOLOv7
+- PPYOLOE
+- YOLOv8
+
+</details>
+
+目前支持的任务如下：
+
+<details open>
+<summary><b>支持的任务</b></summary>
+
+- 目标检测
+- 旋转框目标检测
+
+</details>
+
+MMYOLO 支持在 Linux、Windows、macOS 上运行， 支持 PyTorch 1.7 及其以上版本运行。它具有如下三个特性：
+
+- 🕹️ **统一便捷的算法评测**
+
+  MMYOLO 统一了各类 YOLO 算法模块的实现, 并提供了统一的评测流程，用户可以公平便捷地进行对比分析。
+
+- 📚 **丰富的入门和进阶文档**
+
+  MMYOLO 提供了从入门到部署到进阶和算法解析等一系列文档，方便不同用户快速上手和扩展。
+
+- 🧩 **模块化设计**
+
+  MMYOLO 将框架解耦成不同的模块组件，通过组合不同的模块和训练测试策略，用户可以便捷地构建自定义模型。
+
+<img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="基类-P5"/>
+  图为 RangeKing@GitHub 提供，非常感谢！
+
+## 本文档使用指南
 
 MMYOLO 中将文档结构分成 6 个部分，对应不同需求的用户。
 
