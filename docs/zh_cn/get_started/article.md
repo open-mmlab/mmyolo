@@ -1,4 +1,4 @@
-# 解读文章和资源汇总
+# 中文解读资源汇总
 
 本文汇总了 MMYOLO 或相关的 [OpenMMLab](https://www.zhihu.com/people/openmmlab) 解读的部分文章（更多文章和视频见 [OpenMMLabCourse](https://github.com/open-mmlab/OpenMMLabCourse) )，如果您有推荐的文章（不一定是 OpenMMLab 发布的文章，可以是自己写的文章），非常欢迎提 Pull Request 添加到这里。
 
@@ -58,6 +58,22 @@
 | :---: | :----------: | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | 第1期 | 特征图可视化 | [![Link](https://i0.hdslb.com/bfs/archive/081f300c84d6556f40d984cfbe801fc0644ff449.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1je4y1478R/)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1je4y1478R)](https://www.bilibili.com/video/BV1je4y1478R/) |
 
+## MMDetection 解读文章和资源
+
+### 文章
+
+- [MMDetection 3.0：目标检测新基准与前沿](https://zhuanlan.zhihu.com/p/575246786)
+- [目标检测、实例分割、旋转框样样精通！详解高性能检测算法 RTMDet](https://zhuanlan.zhihu.com/p/598846422)
+- [MMDetection 支持数据增强神器 Simple Copy Paste 全过程](https://zhuanlan.zhihu.com/p/559940982)
+
+### 知乎问答和资源
+
+- [深度学习科研，如何高效进行代码和实验管理？](https://www.zhihu.com/question/269707221/answer/2480772257)
+- [深度学习方面的科研工作中的实验代码有什么规范和写作技巧？如何妥善管理实验数据？](https://www.zhihu.com/question/268193800/answer/2586000037)
+- [COCO 数据集上 1x 模式下为什么不采用多尺度训练?](https://www.zhihu.com/question/462170786/answer/1915119662)
+- [MMDetection 中 SOTA 论文源码中将训练过程中 BN 层的 eval 打开?](https://www.zhihu.com/question/471189603/answer/2195540892)
+- [基于 PyTorch 的 MMDetection 中训练的随机性来自何处？](https://www.zhihu.com/question/453511684/answer/1839683634)
+
 ## MMEngine 解读文章和资源
 
 - [从 MMCV 到 MMEngine，架构升级，体验升级！](https://zhuanlan.zhihu.com/p/571830155)
@@ -66,22 +82,6 @@
 
 - [MMCV 全新升级，新增超全数据变换功能，还有两大变化](https://zhuanlan.zhihu.com/p/572550592)
 - [手把手教你如何高效地在 MMCV 中贡献算子](https://zhuanlan.zhihu.com/p/464492627)
-
-## MMDetection 解读文章和资源
-
-## 文章
-
-- [MMDetection 3.0：目标检测新基准与前沿](https://zhuanlan.zhihu.com/p/575246786)
-- [目标检测、实例分割、旋转框样样精通！详解高性能检测算法 RTMDet](https://zhuanlan.zhihu.com/p/598846422)
-- [MMDetection 支持数据增强神器 Simple Copy Paste 全过程](https://zhuanlan.zhihu.com/p/559940982)
-
-## 知乎问答和资源
-
-- [深度学习科研，如何高效进行代码和实验管理？](https://www.zhihu.com/question/269707221/answer/2480772257)
-- [深度学习方面的科研工作中的实验代码有什么规范和写作技巧？如何妥善管理实验数据？](https://www.zhihu.com/question/268193800/answer/2586000037)
-- [COCO 数据集上 1x 模式下为什么不采用多尺度训练?](https://www.zhihu.com/question/462170786/answer/1915119662)
-- [MMDetection 中 SOTA 论文源码中将训练过程中 BN 层的 eval 打开?](https://www.zhihu.com/question/471189603/answer/2195540892)
-- [基于 PyTorch 的 MMDetection 中训练的随机性来自何处？](https://www.zhihu.com/question/453511684/answer/1839683634)
 
 ## PyTorch 解读文章和资源
 

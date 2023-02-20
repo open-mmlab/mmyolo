@@ -1,4 +1,4 @@
-# 模型设计相关说明
+# MMYOLO 模型设计相关说明
 
 ## YOLO 系列模型基类
 
@@ -39,7 +39,7 @@ YOLO 系列算法大部分采用了统一的算法搭建结构，典型的如 Da
 
 MMYOLO 系列沿用 MMDetection 中设计的 `BaseDenseHead` 作为其 Head 结构的基类，但是进一步拆分了 HeadModule. 以 YOLOv5 为例，其 [HeadModule](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/dense_heads/yolov5_head.py#L24) 中的 forward 实现代替了原有的 forward 实现。
 
-## HeadModule
+## HeadModule 说明
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/33799979/190985845-ed303ad4-3a77-447b-83f9-1feba38d5e24.png" width=800 alt="HeadModule">

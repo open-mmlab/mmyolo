@@ -2,7 +2,7 @@
 
 本章向您介绍 MMYOLO 的整体框架，并提供详细的教程链接。
 
-## 什么是 MMYOLO
+## MMYOLO 介绍
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/45811724/190993591-bd3f1f11-1c30-4b93-b5f4-05c9ff64ff7f.gif" alt="图片"/>
@@ -27,33 +27,15 @@ MMYOLO 文件结构和 MMDetection 完全一致。为了能够充分复用 MMDet
   - **optimizers** 提供优化器和优化器封装。
   - **hooks** 提供 runner 的各种钩子。
 
-## 如何使用本指南
+## 文档使用指南
 
-以下是 MMYOLO 的详细指南：
+MMYOLO 中将文档结构分成 6 个部分，对应不同需求的用户。
 
-1. 安装说明见[开始你的第一步](get_started/get_started.md)
+- **开启 MMYOLO 之旅**。本部分是第一次使用 MMYOLO 用户的必读文档，请全文仔细阅读
+- **推荐专题**。本部分是 MMYOLO 中提供的以主题形式的精华文档，包括了 MMYOLO 中大量的特性等。强烈推荐使用 MMYOLO 的所有用户阅读
+- **常用功能**。本部分提供了训练测试过程中用户经常会用到的各类常用功能，用户可以在用到时候再次查阅
+- **实用工具**。本部分是 tools 下使用工具的汇总文档，便于大家能够快速的愉快使用 MMYOLO 中提供的各类脚本
+- **基础和进阶教程**。本部分设计到 MMYOLO 中的一些基本概念和进阶教程等，适合想详细了解 MMYOLO 设计思想和结构设计的用户
+- **其他**。其余部分包括 模型仓库、说明和接口文档等等
 
-2. MMYOLO 的基本使用方法请参考以下教程：
-
-   - [训练和测试](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#id1)
-   - [从入门到部署全流程](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#id2)
-   - [实用工具](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#id3)
-
-3. YOLO 系列算法实现和全解析教程：
-
-   - [必备基础](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#id1)
-   - [原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#id2)
-
-4. YOLO 系列部署教程：
-
-   - [部署必备教程](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/index.html#id1)
-   - [部署全流程说明](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/index.html#id2)
-
-5. 参考以下教程深入了解：
-
-   - [模块组合](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/index.html#id1)
-   - [数据流](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/index.html#id2)
-   - [How to](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/index.html#how-to)
-   - [插件](https://mmyolo.readthedocs.io/zh_CN/latest/advanced_guides/index.html#id4)
-
-6. [解读文章和资源汇总](get_started/article.md)
+不同需求的用户可以按需选择你心怡的内容阅读。如果你对本文档有不同异议或者更好的优化办法，欢迎给 MMYOLO 提 PR ～

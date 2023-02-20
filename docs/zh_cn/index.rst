@@ -1,14 +1,17 @@
 欢迎来到 MMYOLO 中文文档!
 =======================================
+您可以在页面左下角切换中英文文档。
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: 开启 MMYOLO 之旅
 
    get_started/overview.md
    get_started/dependencies.md
    get_started/installation.md
-   get_started/15_minutes.md
+   get_started/15_minutes_object_detection.md
+   get_started/15_minutes_rotated_object_detection.md
+   get_started/15_minutes_instance_segmentation.md
    get_started/article.md
 
 .. toctree::
@@ -18,15 +21,15 @@
    featured_topics/contributing.md
    featured_topics/model_design.md
    featured_topics/industry_examples.md
-   featured_topics/visualization.md
-   featured_topics/custom_dataset.md
-   featured_topics/replace_backbone.md
    featured_topics/algorithm_descriptions/index.rst
+   featured_topics/replace_backbone.md
+   featured_topics/custom_dataset.md
+   featured_topics/visualization.md
    featured_topics/deploy/index.rst
-   featured_topics/faq.md
+   featured_topics/troubleshooting_steps.md
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: 常用功能
 
    common_usage/resume_training.md
@@ -58,11 +61,12 @@
    useful_tools/vis_scheduler.md
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: 基础教程
 
    tutorials/config.md
    tutorials/data_flow.md
+   tutorials/faq.md
 
 .. toctree::
    :maxdepth: 1
