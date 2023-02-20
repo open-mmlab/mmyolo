@@ -1,6 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 from typing import List, Optional, Sequence, Tuple, Union
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -193,12 +194,12 @@ class YOLOXKptHeadModule(BaseModule):
         # Use prior in model initialization to improve stability
         super().init_weights()
         bias_init = bias_init_with_prob(0.01)
-        for conv_cls, conv_obj, conv_kpt in zip(self.multi_level_conv_cls,
+        for conv_cls, conv_obj, conv_vis in zip(self.multi_level_conv_cls,
                                                 self.multi_level_conv_obj,
-                                                self.multi_level_conv_kpt):
+                                                self.multi_level_conv_vis):
             conv_cls.bias.data.fill_(bias_init)
             conv_obj.bias.data.fill_(bias_init)
-            conv_kpt.bias.data.fill_(bias_init)
+            conv_vis.bias.data.fill_(bias_init)
 
     def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         """Forward features from the upstream network.
@@ -662,8 +663,12 @@ class YOLOXKptHead(YOLOv5Head):
             flatten_kpt_vis_preds = torch.cat([flatten_kpts, flatten_vis_preds[..., None]], dim=-1)
             kpt_vis_targets = torch.cat([kpt_targets, vis_targets[..., None]], dim=-1)
 
-            loss_kpt = self.loss_kpt(
-                flatten_kpt_vis_preds.view(-1, self.num_keypoints, 3)[pos_masks], kpt_vis_targets)
+            # filter by keypoint visibility.
+            # flatten_kpt_vis_preds = flatten_kpt_vis_preds[pos_masks][kpt_mask]
+            # kpt_vis_targets = kpt_vis_targets[pos_masks][kpt_mask]
+            loss_kpt = self.loss_kpt(flatten_kpts.view(-1, self.num_keypoints, 2)[pos_masks], kpt_targets, kpt_mask)
+            # loss_kpt = self.loss_kpt(
+            #     flatten_kpt_vis_preds.view(-1, self.num_keypoints, 3)[pos_masks], kpt_vis_targets, kpt_mask)
             loss_vis = self.loss_cls(
                 flatten_vis_preds.view(-1, self.num_keypoints)[pos_masks],
                 kpt_mask.float()) / kpt_mask.sum()

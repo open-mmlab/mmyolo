@@ -14,7 +14,7 @@ from einops import rearrange, reduce, repeat
 @MODELS.register_module()
 class OksLoss(nn.Module):
 
-    def __init__(self, dataset_info) -> None:
+    def __init__(self, dataset_info, oks_loss='oks') -> None:
         super().__init__()
         if isinstance(dataset_info, dict):
             self.dataset_info = dataset_info
@@ -23,6 +23,7 @@ class OksLoss(nn.Module):
             self.dataset_info = parse_pose_metainfo(_metainfo)
         else:
             raise TypeError('dataset_info must be a dict or a str')
+        self.oks_loss = oks_loss
 
     def forward(self, preds: Tensor, targets: Tensor) -> Tensor:
         """
@@ -48,8 +49,12 @@ class OksLoss(nn.Module):
         a_p = Keypoints._kpt_area(preds)
 
         # calculate oks
-        oks_loss = self._oks(targets, preds, a_g, a_p,
-                             self.dataset_info['sigmas'])
+        if self.oks_loss == 'oks':
+            oks_loss = self._oks(targets, preds, a_g, a_p,
+                                self.dataset_info['sigmas'])
+        elif self.oks_loss == 'oks2':
+            oks_loss = self._oks2(targets, preds, a_g, a_p,
+                                self.dataset_info['sigmas'])
         # kpt loss factor
         _eps = 1e-6
         kpt_mask = (targets[..., 2] > 0).float()
@@ -118,4 +123,22 @@ class OksLoss(nn.Module):
         # clamp
         e = torch.clamp(e, max=4.6052)
         oks = 1 - torch.exp(-e)[vg > vis_thr].mean()
+        return oks
+    
+    def _oks2(self, g, d, a_g, a_d, sigmas, vis_thr=0):
+        kpt_mask = (g[..., 2] > 0).float()
+        kpt_sigmas = torch.tensor(sigmas, device=g.device, dtype=g.dtype)
+        kpt_sigmas = kpt_sigmas.repeat(g.shape[0], 1)[kpt_mask == 1]
+        s = a_g.repeat(g.shape[1], 1).transpose(0, 1)[kpt_mask == 1]
+        valid_kpt_preds = d[kpt_mask == 1]
+        valid_kpt_gts = g[kpt_mask == 1]
+
+        num_valid_kpts = valid_kpt_preds.shape[0]
+        if num_valid_kpts == 0:
+            return 0
+        # l2 distance
+        e = (valid_kpt_preds - valid_kpt_gts)**2
+        kn = 2 * kpt_sigmas ** 2
+        s = s / 2
+        oks = (1  - torch.exp(-1 * e / kn[..., None] / s[..., None])).mean()
         return oks

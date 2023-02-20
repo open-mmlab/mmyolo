@@ -28,7 +28,9 @@
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
-        "configs/yolox/yoloxkpt_s_8xb8-300e_coco6280.py",
+        // "work_dirs/yoloxkpt_s_8xb8-300e_coco/yoloxkpt_s_8xb8-300e_coco.py",
+        "configs/yolox/yoloxkpt_s_8xb8-300e_coco_mini_debug.py",
+        // "configs/yolox/yoloxkpt_s_8xb8-300e_coco6280.py",
         // "configs/yolox/yoloxkpt_s_8xb8-300e_coco.py",
         "-n",
         "10",
@@ -37,7 +39,7 @@
         "-m",
         "pipeline",
         "-p",
-        "val"
+        "test"
       ]
     },
     {
@@ -48,8 +50,26 @@
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
-        "work_dirs/yoloxkpt_s_8xb8-300e_coco/yoloxkpt_s_8xb8-300e_coco.py",
-        "work_dirs/yoloxkpt_s_8xb8-300e_coco/best_coco/bbox_mAP_epoch_100.pth"
+        "configs/yolox/yoloxkpt_s_8xb8-300e_coco_mini_debug.py",
+        // "work_dirs/yoloxkpt_s_8xb8-300e_coco/yoloxkpt_s_8xb8-300e_coco.py",
+        "work_dirs/yoloxkpt_s_8xb8-300e_coco/best_coco/bbox_mAP_epoch_100.pth",
+        "--show",
+        "--json-prefix",
+        "bug"
+      ]
+    },
+    {
+      "name": "export to onnx",
+      "type": "python",
+      "request": "launch",
+      "program": "./projects/easydeploy/tools/export.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "configs/yolox/yoloxkpt_s_8xb8-300e_coco_mini_debug.py",
+        "work_dirs/yoloxkpt_s_8xb8-300e_coco/best_coco/bbox_mAP_epoch_100.pth",
+        "--simplify",
+        "--model-only"
       ]
     }
   ]

@@ -1231,6 +1231,14 @@ class YOLOPoseFilterAnnotations(FilterAnnotations):
             gt_masks = results['gt_masks']
             tests.append(gt_masks.areas >= self.min_gt_mask_area)
 
+        # filter keypoints, if no keypoints, filter the image
+        if self.by_keypoints:
+            assert 'gt_keypoints' in results
+            # gt_keypoints = results['gt_keypoints']
+            gt_keypoints_visible = results['gt_keypoints_visible']
+            tests.append(
+                (gt_keypoints_visible.sum(axis=-1) >= self.min_keypoints))
+
         keep = tests[0]
         for t in tests[1:]:
             keep = keep & t

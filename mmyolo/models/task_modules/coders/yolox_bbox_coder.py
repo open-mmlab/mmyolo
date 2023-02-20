@@ -86,5 +86,4 @@ class YOLOXKptCoder(BaseBBoxCoder):
         pred_kpts = rearrange(pred_kpts, 'b h (k c) -> b h k c', c=c)
         priors = repeat(priors, 'anchors xy -> anchors keypoints xy', keypoints=pred_kpts.shape[-2])
         xy_coordinates = (pred_kpts[..., :2] * stride) + priors
-        pred_kpts[..., :2] = xy_coordinates
-        return pred_kpts
+        return xy_coordinates

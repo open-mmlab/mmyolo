@@ -94,7 +94,7 @@ model = dict(
             loss_weight=1.0),
         loss_bbox_aux=dict(
             type='mmdet.L1Loss', reduction='sum', loss_weight=1.0),
-        loss_kpt=dict(type='OksLoss', dataset_info=dataset_info)),
+        loss_kpt=dict(type='mmpose.SmoothL1Loss')),
     train_cfg=dict(
         assigner=dict(
             type='mmdet.SimOTAAssigner',
@@ -126,20 +126,21 @@ train_pipeline_stage1 = [
         scaling_ratio_range=(0.1, 2),
         # img_scale is (width, height)
         border=(-img_scale[0] // 2, -img_scale[1] // 2)),
-    dict(
-        type='YOLOXMixUpPose',
-        flip_ratio=1.0,
-        img_scale=img_scale,
-        ratio_range=(0.8, 1.6),
-        pad_val=114.0,
-        pre_transform=pre_transform),
+    # dict(
+    #     type='YOLOXMixUpPose',
+    #     flip_ratio=1.0,
+    #     img_scale=img_scale,
+    #     ratio_range=(0.8, 1.6),
+    #     pad_val=114.0,
+    #     pre_transform=pre_transform),
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='YOLOPoseRandomFlip', prob=0.5),
     dict(
         type='YOLOPoseFilterAnnotations',
         min_gt_bbox_wh=(1, 1),
         keep_empty=False,
-        by_keypoints=True),
+        by_keypoints=True,
+        min_keypoints=1),
     dict(
         type='YOLOPosePackInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape'))
@@ -173,29 +174,29 @@ train_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         metainfo=dataset_info,
-        ann_file='annotations/person_keypoints_train2017_mini.json',
+        ann_file='annotations/person_keypoints_train2017_6280.json',
         data_prefix=dict(img='train2017/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline_stage1))
 
-# test_pipeline = [
-#     *pre_transform,
-#     # dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-#     dict(type='YOLOPoseResize', scale=img_scale, keep_ratio=True),
-#     dict(
-#         type='mmdet.Pad',
-#         pad_to_square=True,
-#         pad_val=dict(img=(114.0, 114.0, 114.0))),
-#     # dict(
-#     #     type='LoadAnnotations',
-#     #     with_bbox=True,
-#     #     with_keypoints=True),
-#     dict(
-#         type='YOLOPosePackInputs',
-#         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-#                    'scale_factor'))
-# ]
-test_pipeline = train_pipeline_stage2
+test_pipeline = [
+    *pre_transform,
+    # dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='YOLOPoseResize', scale=img_scale, keep_ratio=True),
+    dict(
+        type='mmdet.Pad',
+        pad_to_square=True,
+        pad_val=dict(img=(114.0, 114.0, 114.0))),
+    # dict(
+    #     type='LoadAnnotations',
+    #     with_bbox=True,
+    #     with_keypoints=True),
+    dict(
+        type='YOLOPosePackInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor'))
+]
+# test_pipeline = train_pipeline_stage2
 
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
@@ -274,7 +275,7 @@ param_scheduler = [
 default_hooks = dict(
     checkpoint=dict(
         type='CheckpointHook', interval=1, max_keep_ckpts=3, save_best=['auto'],
-        greater_keys=['coco/ap'])
+        greater_keys=['coco/AP', 'coco/bbox_mAP'])
     )
 
 custom_hooks = [
