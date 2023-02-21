@@ -3,7 +3,7 @@
 目标检测任务是指给定一张图片，网络预测出图片中所包括的所有物体类别和对应的边界框
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/17425982/220232979-fffa480b-9ae6-4601-8af6-4116265dc650.png" alt="object detection" width="60%"/>
+<img src="https://user-images.githubusercontent.com/17425982/220232979-fffa480b-9ae6-4601-8af6-4116265dc650.png" alt="object detection" width="100%"/>
 </div>
 
 以我们提供的猫 cat 小数据集为例，带大家 15 分钟轻松上手 MMYOLO 目标检测。整个流程包含如下步骤：
