@@ -69,6 +69,7 @@
 
    tutorials/config.md
    tutorials/data_flow.md
+   tutorials/rotated_detection.md
    tutorials/custom_installation.md
    tutorials/faq.md
 
