@@ -64,7 +64,7 @@ def convert_gt(id, gt_list, info_list, mask_paths, model_info_dict):
         num_all_rotation_parameters = rotation_parameter + 1
 
         instance = {
-            'label': str,
+            'bbox_label': str,
             'bbox': np.zeros((1, 4)),
             'rotation': np.zeros((1, num_all_rotation_parameters)),
             'translation': np.zeros((1, translation_parameter)),
@@ -74,7 +74,7 @@ def convert_gt(id, gt_list, info_list, mask_paths, model_info_dict):
 
         # fill in the values
         # get bbox from mask
-        instance['label'] = id
+        instance['bbox_label'] = id
         mask = cv2.imread(mask_path)
         instance['bbox'][0, :], _ = get_bbox_from_mask(mask)
         instance['rotation'][0, :-1] = np.array(gt['cam_R_m2c'])
@@ -202,6 +202,33 @@ if __name__ == '__main__':
 
     data_list = convert_linemod(args.id, object_path, data_examples, gt_dict,
                                 info_dict, model_info_dict)
-    out = dict(metainfo=metainfo, data_list=data_list)
+
+    model_path_list = dict(
+        ape='',
+        benchvise='',
+        bowl='',
+        cam='',
+        can='',
+        cat='',
+        cup='',
+        driller='',
+        duck='',
+        eggbox='',
+        glue='',
+        holepuncher='',
+        iron='',
+        lamp='',
+        phone='',
+    )
+    for i, name in enumerate(model_path_list):
+        if i < 10:
+            model_path = model_info_path + 'obj_0' + f'{i}' + '.ply'
+        else:
+            model_path = model_info_path + 'obj_' + f'{i}' + '.ply'
+        model_path_list[name] = model_path
+    model_list = dict(model_path_list=model_path_list)
+
+    out = dict(metainfo=metainfo, data_list=data_list, model_list=model_list)
     out_file = args.root + 'json/linemod_preprocessed_train.json'
+
     mmengine.dump(out, out_file)

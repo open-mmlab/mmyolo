@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .transforms import *  # noqa: F401,F403
 from .utils import BatchShapePolicy, yolov5_collate
-from .yolo6d_linemod import YOLO6dDataset
+from .yolo6d_linemod import YOLO6DDataset
 from .yolov5_coco import YOLOv5CocoDataset
 from .yolov5_crowdhuman import YOLOv5CrowdHumanDataset
 from .yolov5_voc import YOLOv5VOCDataset
@@ -12,5 +12,5 @@ __all__ = [
     'BatchShapePolicy',
     'yolov5_collate',
     'YOLOv5CrowdHumanDataset',
-    'YOLO6dDataset',
+    'YOLO6DDataset',
 ]
