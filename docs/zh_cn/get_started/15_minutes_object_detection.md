@@ -93,7 +93,7 @@ num_classes = len(class_name) # 数据集类别数
 # metainfo 必须要传给后面的 dataloader 配置，否则无效
 # palette 是可视化时候对应类别的显示颜色
 # palette 长度必须大于等于和 classes 长度
-metainfo = dict(classes=class_name, palette=[(220, 20, 60)])
+metainfo = dict(classes=class_name, palette=[(20, 220, 60)])
 
 # 基于 tools/analysis_tools/optimize_anchors.py 自适应计算的 anchor
 anchors = [
@@ -281,7 +281,7 @@ python tools/test.py configs/yolov5/yolov5_s-v61_fast_1xb8-40e_cat.py \
 运行以上测试命令， 你不不仅可以得到**模型训练**部分所打印的 AP 性能，还可以将推理结果图片自动保存至 `work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/{timestamp}/show_results` 文件夹中。下面为其中一张结果图片，左图为实际标注，右图为模型推理结果。
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/17425982/220242063-fc6671c4-9f84-4601-b6ec-e54edc6a437a.png" alt="result_img"/>
+<img src="https://user-images.githubusercontent.com/17425982/220251677-6c7e5c8f-9417-4803-97fc-a968d0172ab7.png" alt="result_img"/>
 </div>
 
 如果你使用了 `WandbVisBackend` 或者 `TensorboardVisBackend`，则还可以在浏览器窗口可视化模型推理结果。

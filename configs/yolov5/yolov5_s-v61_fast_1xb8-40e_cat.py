@@ -3,7 +3,7 @@ _base_ = 'yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 data_root = './data/cat/'
 class_name = ('cat', )
 num_classes = len(class_name)
-metainfo = dict(classes=class_name, palette=[(220, 20, 60)])
+metainfo = dict(classes=class_name, palette=[(20, 220, 60)])
 
 anchors = [
     [(68, 69), (154, 91), (143, 162)],  # P3/8
