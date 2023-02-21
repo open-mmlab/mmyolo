@@ -327,9 +327,9 @@ test_pipeline = [
 ]
 ```
 
-我们选择 `data/cat/images/IMG_20221020_112705.jpg` 图片作为例子，可视化 YOLOv5 backbone 和 neck 层的输出特征图
+我们选择 `data/cat/images/IMG_20221020_112705.jpg` 图片作为例子，可视化 YOLOv5 backbone 和 neck 层的输出特征图。
 
-1. 可视化 YOLOv5 backbone 输出的 3 个通道
+**1. 可视化 YOLOv5 backbone 输出的 3 个通道**
 
 ```shell
 python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
@@ -345,7 +345,7 @@ python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 
 结果会保存到当前路径的 output 文件夹下。上图中绘制的 3 个输出特征图对应大中小输出特征图。由于本次训练的 backbone 实际上没有参与训练，从上图可以看到，大物体 cat 是在小特征图进行预测，这符合目标检测分层检测思想。
 
-2. 可视化 YOLOv5 neck 输出的 3 个通道
+**2. 可视化 YOLOv5 neck 输出的 3 个通道**
 
 ```shell
 python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
@@ -361,7 +361,7 @@ python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 
 从上图可以看出，由于 neck 是参与训练的，并且由于我们重新设置了 anchor, 强行让 3 个输出特征图都拟合同一个尺度的物体，导致 neck 输出的 3 个图类似，破坏了 backbone 原先的预训练分布。同时也可以看出 40 epoch 训练上述数据集是不够的，特征图效果不佳。
 
-3. Grad-Based CAM 可视化
+**3. Grad-Based CAM 可视化**
 
 基于上述特征图可视化效果，我们可以分析特征层 bbox 级别的 Grad CAM。
 
