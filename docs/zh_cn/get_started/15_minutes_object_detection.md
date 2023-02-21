@@ -286,6 +286,124 @@ python tools/test.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
 
 如果你使用了 `WandbVisBackend` 或者 `TensorboardVisBackend`，则还可以在浏览器窗口可视化模型推理结果。
 
+## 特征图相关可视化
+
+MMYOLO 中提供了特征图相关可视化脚本，用于分析当前模型训练效果。 详细使用流程请参考 [特征图可视化](../recommended_topics/visualization.md)
+
+由于 `test_pipeline` 直接可视化会存在偏差，故将需要 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 中 `test_pipeline`
+
+```python
+test_pipeline = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args=_base_.file_client_args),
+    dict(type='YOLOv5KeepRatioResize', scale=img_scale),
+    dict(
+        type='LetterResize',
+        scale=img_scale,
+        allow_scale_up=False,
+        pad_val=dict(img=114)),
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor', 'pad_param'))
+]
+```
+
+修改为如下配置：
+
+```python
+test_pipeline = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args=_base_.file_client_args),
+    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # 这里将 LetterResize 修改成 mmdet.Resize
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor'))
+]
+```
+
+我们选择 `data/cat/images/IMG_20221020_112705.jpg` 图片作为例子，可视化 YOLOv5 backbone 和 neck 层的输出特征图
+
+1. 可视化 YOLOv5 backbone 输出的 3 个通道
+
+```shell
+python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
+                                configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                --target-layers backbone \
+                                --channel-reduction squeeze_mean
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220292217-b343a6f4-0c88-4fdb-9680-35d0ff8e5bdb.png" width="800" alt="image"/>
+</div>
+
+结果会保存到当前路径的 output 文件夹下。上图中绘制的 3 个输出特征图对应大中小输出特征图。由于本次训练的 backbone 实际上没有参与训练，从上图可以看到，大物体 cat 是在小特征图进行预测，这符合目标检测分层检测思想。
+
+2. 可视化 YOLOv5 neck 输出的 3 个通道
+
+```shell
+python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
+                                configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                --target-layers neck \
+                                --channel-reduction squeeze_mean
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220293382-0a241415-e717-4688-a718-5f6d5c844785.png" width="800" alt="image"/>
+</div>
+
+从上图可以看出，由于 neck 是参与训练的，并且由于我们重新设置了 anchor, 强行让 3 个输出特征图都拟合同一个尺度的物体，导致 neck 输出的 3 个图类似，破坏了 backbone 原先的预训练分布。同时也可以看出 40 epoch 训练上述数据集是不够的，特征图效果不佳。
+
+3. Grad-Based CAM 可视化
+
+基于上述特征图可视化效果，我们可以分析特征层 bbox 级别的 Grad CAM。
+
+(a) 查看 neck 输出的最小输出特征图的 Grad CAM
+
+```shell
+python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
+                                configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                --target-layer neck.out_layers[2]
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220298462-b0631f27-2366-4864-915a-a4ee21acd4b9.png" width="800" alt="image"/>
+</div>
+
+(b) 查看 neck 输出的中等输出特征图的 Grad CAM
+
+```shell
+python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
+                                configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                --target-layer neck.out_layers[1]
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220298090-6f335786-0b35-4ab8-9c5a-0dbdb6b6c967.png" width="800" alt="image"/>
+</div>
+
+(c) 查看 neck 输出的最大输出特征图的 Grad CAM
+
+```shell
+python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
+                                configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                --target-layer neck.out_layers[0]
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220297905-e23369db-d383-48f9-b15e-528a70ec7b23.png" width="800" alt="image"/>
+</div>
+
 ## EasyDeploy 模型部署
 
 TODO

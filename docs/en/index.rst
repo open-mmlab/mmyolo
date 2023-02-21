@@ -18,17 +18,17 @@ You can switch between Chinese and English documents in the top-right corner of 
    :maxdepth: 2
    :caption: Recommended Topics
 
-   featured_topics/contributing.md
-   featured_topics/model_design.md
-   featured_topics/algorithm_descriptions/index.rst
-   featured_topics/replace_backbone.md
-   featured_topics/labeling_to_deployment_tutorials.md
-   featured_topics/visualization.md
-   featured_topics/deploy/index.rst
-   featured_topics/troubleshooting_steps.md
-   featured_topics/industry_examples.md
-   featured_topics/mm_basics.md
-   featured_topics/dataset_preparation.md
+   recommended_topics/contributing.md
+   recommended_topics/model_design.md
+   recommended_topics/algorithm_descriptions/index.rst
+   recommended_topics/replace_backbone.md
+   recommended_topics/labeling_to_deployment_tutorials.md
+   recommended_topics/visualization.md
+   recommended_topics/deploy/index.rst
+   recommended_topics/troubleshooting_steps.md
+   recommended_topics/industry_examples.md
+   recommended_topics/mm_basics.md
+   recommended_topics/dataset_preparation.md
 
 .. toctree::
    :maxdepth: 2

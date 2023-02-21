@@ -129,7 +129,7 @@ The master branch works with **PyTorch 1.6+**.
 <img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="BaseModule-P5"/>
   The figure above is contributed by RangeKing@GitHub, thank you very much!
 
-And the figure of P6 model is in [model_design.md](docs/en/featured_topics/model_design.md).
+And the figure of P6 model is in [model_design.md](docs/en/recommended_topics/model_design.md).
 
 </details>
 
@@ -176,17 +176,17 @@ For different parts from MMDetection, we have also prepared user guides and adva
 <details>
 <summary>Recommended Topics</summary>
 
-- [How to contribute code to MMYOLO](docs/en/featured_topics/contributing.md)
-- [MMYOLO model design](docs/en/featured_topics/model_design.md)
-- [Algorithm principles and implementation](docs/en/featured_topics/algorithm_descriptions/)
-- [Replace the backbone network](docs/en/featured_topics/replace_backbone.md)
-- [Annotation-to-deployment workflow for custom dataset](docs/en/featured_topics/labeling_to_deployment_tutorials.md)
-- [Visualization](docs/en/featured_topics/visualization.md)
-- [Model deployment](docs/en/featured_topics/deploy/)
-- [Troubleshooting steps](docs/en/featured_topics/troubleshooting_steps.md)
-- [MMYOLO industry examples](docs/en/featured_topics/industry_examples.md)
-- [MM series repo essential basics](docs/en/featured_topics/mm_basics.md)
-- [Dataset preparation and description](docs/en/featured_topics/dataset_preparation.md)
+- [How to contribute code to MMYOLO](docs/en/recommended_topics/contributing.md)
+- [MMYOLO model design](docs/en/recommended_topics/model_design.md)
+- [Algorithm principles and implementation](docs/en/recommended_topics/algorithm_descriptions/)
+- [Replace the backbone network](docs/en/recommended_topics/replace_backbone.md)
+- [Annotation-to-deployment workflow for custom dataset](docs/en/recommended_topics/labeling_to_deployment_tutorials.md)
+- [Visualization](docs/en/recommended_topics/visualization.md)
+- [Model deployment](docs/en/recommended_topics/deploy/)
+- [Troubleshooting steps](docs/en/recommended_topics/troubleshooting_steps.md)
+- [MMYOLO industry examples](docs/en/recommended_topics/industry_examples.md)
+- [MM series repo essential basics](docs/en/recommended_topics/mm_basics.md)
+- [Dataset preparation and description](docs/en/recommended_topics/dataset_preparation.md)
 
 </details>
 

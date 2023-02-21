@@ -150,7 +150,7 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 <img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="基类-P5"/>
   图为 RangeKing@GitHub 提供，非常感谢！
 
-P6 模型图详见 [model_design.md](docs/zh_cn/featured_topics/model_design.md)。
+P6 模型图详见 [model_design.md](docs/zh_cn/recommended_topics/model_design.md)。
 
 </details>
 
@@ -197,17 +197,17 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 <details>
 <summary>推荐专题</summary>
 
-- [如何给 MMYOLO 贡献代码](docs/zh_cn/featured_topics/contributing.md)
-- [MMYOLO 模型结构设计](docs/zh_cn/featured_topics/model_design.md)
-- [原理和实现全解析](docs/zh_cn/featured_topics/algorithm_descriptions/)
-- [轻松更换主干网络](docs/zh_cn/featured_topics/replace_backbone.md)
-- [标注+训练+测试+部署全流程](docs/zh_cn/featured_topics/labeling_to_deployment_tutorials.md)
-- [关于可视化的一切](docs/zh_cn/featured_topics/visualization.md)
-- [模型部署流程](docs/zh_cn/featured_topics/deploy/)
-- [常见错误排查步骤](docs/zh_cn/featured_topics/troubleshooting_steps.md)
-- [MMYOLO 产业范例介绍](docs/zh_cn/featured_topics/industry_examples.md)
-- [MM 系列 Repo 必备基础](docs/zh_cn/featured_topics/mm_basics.md)
-- [数据集准备和说明](docs/zh_cn/featured_topics/dataset_preparation.md)
+- [如何给 MMYOLO 贡献代码](docs/zh_cn/recommended_topics/contributing.md)
+- [MMYOLO 模型结构设计](docs/zh_cn/recommended_topics/model_design.md)
+- [原理和实现全解析](docs/zh_cn/recommended_topics/algorithm_descriptions/)
+- [轻松更换主干网络](docs/zh_cn/recommended_topics/replace_backbone.md)
+- [标注+训练+测试+部署全流程](docs/zh_cn/recommended_topics/labeling_to_deployment_tutorials.md)
+- [关于可视化的一切](docs/zh_cn/recommended_topics/visualization.md)
+- [模型部署流程](docs/zh_cn/recommended_topics/deploy/)
+- [常见错误排查步骤](docs/zh_cn/recommended_topics/troubleshooting_steps.md)
+- [MMYOLO 产业范例介绍](docs/zh_cn/recommended_topics/industry_examples.md)
+- [MM 系列 Repo 必备基础](docs/zh_cn/recommended_topics/mm_basics.md)
+- [数据集准备和说明](docs/zh_cn/recommended_topics/dataset_preparation.md)
 
 </details>
 
