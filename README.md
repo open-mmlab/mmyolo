@@ -27,7 +27,7 @@
 [![issue resolution](https://isitmaintained.com/badge/resolution/open-mmlab/mmyolo.svg)](https://github.com/open-mmlab/mmyolo/issues)
 
 [📘Documentation](https://mmyolo.readthedocs.io/en/latest/) |
-[🛠️Installation](https://mmyolo.readthedocs.io/en/latest/get_started.html) |
+[🛠️Installation](https://mmyolo.readthedocs.io/en/latest/get_started/installation.html) |
 [👀Model Zoo](https://mmyolo.readthedocs.io/en/latest/model_zoo.html) |
 [🆕Update News](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html) |
 [🤔Reporting Issues](https://github.com/open-mmlab/mmyolo/issues/new/choose)
@@ -129,13 +129,13 @@ The master branch works with **PyTorch 1.6+**.
 <img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="BaseModule-P5"/>
   The figure above is contributed by RangeKing@GitHub, thank you very much!
 
-And the figure of P6 model is in [model_design.md](docs/en/algorithm_descriptions/model_design.md).
+And the figure of P6 model is in [model_design.md](docs/en/recommended_topics/model_design.md).
 
 </details>
 
 ## 🛠️ Installation [🔝](#-table-of-contents)
 
-MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps for installation. Please refer to the [Install Guide](docs/en/get_started.md) for more detailed instructions.
+MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps for installation. Please refer to the [Install Guide](docs/en/get_started/installation.md) for more detailed instructions.
 
 ```shell
 conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
@@ -160,38 +160,96 @@ The usage of MMYOLO is almost identical to MMDetection and all tutorials are str
 
 For different parts from MMDetection, we have also prepared user guides and advanced guides, please read our [documentation](https://mmyolo.readthedocs.io/zenh_CN/latest/).
 
-- User Guides
+<details>
+<summary>Get Started</summary>
 
-  - [Train & Test](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#train-test)
-    - [Learn about Configs with YOLOv5](docs/en/user_guides/config.md)
-  - [From getting started to deployment](https://mmyolo.readthedocs.io/en/latest/user_guides/index.html#get-started-to-deployment)
-    - [Custom Dataset](docs/en/user_guides/custom_dataset.md)
-    - [From getting started to deployment with YOLOv5](docs/en/user_guides/yolov5_tutorial.md)
-  - [Useful Tools](https://mmdetection.readthedocs.io/en/latest/user_guides/index.html#useful-tools)
-    - [Visualization](docs/en/user_guides/visualization.md)
-    - [Useful Tools](docs/en/user_guides/useful_tools.md)
+- [Overview](docs/en/get_started/overview.md)
+- [Dependencies](docs/en/get_started/dependencies.md)
+- [Installation](docs/en/get_started/installation.md)
+- [15 minutes object detection](docs/en/get_started/15_minutes_object_detection.md)
+- [15 minutes rotated object detection](docs/en/get_started/15_minutes_rotated_object_detection.md)
+- [15 minutes instance segmentation](docs/en/get_started/15_minutes_instance_segmentation.md)
+- [Resources summary](docs/en/get_started/article.md)
 
-- Algorithm description
+</details>
 
-  - [Essential Basics](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#essential-basics)
-    - [Model design-related instructions](docs/en/algorithm_descriptions/model_design.md)
-  - [Algorithm principles and implementation](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/index.html#algorithm-principles-and-implementation)
-    - [Algorithm principles and implementation with YOLOv5](docs/en/algorithm_descriptions/yolov5_description.md)
-    - [Algorithm principles and implementation with RTMDet](docs/en/algorithm_descriptions/rtmdet_description.md)
-    - [Algorithm principles and implementation with YOLOv8](docs/en/algorithm_descriptions/yolov8_description.md)
+<details>
+<summary>Recommended Topics</summary>
 
-- Deployment Guides
+- [How to contribute code to MMYOLO](docs/en/recommended_topics/contributing.md)
+- [MMYOLO model design](docs/en/recommended_topics/model_design.md)
+- [Algorithm principles and implementation](docs/en/recommended_topics/algorithm_descriptions/)
+- [Replace the backbone network](docs/en/recommended_topics/replace_backbone.md)
+- [Annotation-to-deployment workflow for custom dataset](docs/en/recommended_topics/labeling_to_deployment_tutorials.md)
+- [Visualization](docs/en/recommended_topics/visualization.md)
+- [Model deployment](docs/en/recommended_topics/deploy/)
+- [Troubleshooting steps](docs/en/recommended_topics/troubleshooting_steps.md)
+- [MMYOLO industry examples](docs/en/recommended_topics/industry_examples.md)
+- [MM series repo essential basics](docs/en/recommended_topics/mm_basics.md)
+- [Dataset preparation and description](docs/en/recommended_topics/dataset_preparation.md)
 
-  - [Basic Deployment Guide](https://mmyolo.readthedocs.io/en/latest/deploy/index.html#basic-deployment-guide)
-    - [Basic Deployment Guide](docs/en/deploy/basic_deployment_guide.md)
-  - [Deployment Tutorial](https://mmyolo.readthedocs.io/en/latest/deploy/index.html#deployment-tutorial)
-    - [YOLOv5 Deployment](docs/en/deploy/yolov5_deployment.md)
+</details>
 
-- Advanced Guides
+<details>
+<summary>Common Usage</summary>
 
-  - [Data flow](docs/en/advanced_guides/data_flow.md)
-  - [How to](docs/en/advanced_guides/how_to.md)
-  - [Plugins](docs/en/advanced_guides/plugins.md)
+- [Resume training](docs/en/common_usage/resume_training.md)
+- [Enabling and disabling SyncBatchNorm](docs/en/common_usage/syncbn.md)
+- [Enabling AMP](docs/en/common_usage/amp_training.md)
+- [Add plugins to the backbone network](docs/en/common_usage/plugins.md)
+- [Freeze layers](docs/en/common_usage/common_usage/freeze_layers.md)
+- [Output model predictions](docs/en/common_usage/output_predictions.md)
+- [Set random seed](docs/en/common_usage/set_random_seed.md)
+- [Module combination](docs/en/common_usage/module_combination.md)
+- [Cross-library calls using mim](docs/en/common_usage/mim_usage.md)
+- [Apply multiple Necks](docs/en/common_usage/multi_necks.md)
+- [Specify specific device training or inference](docs/en/common_usage/specify_device.md)
+
+</details>
+
+<details>
+<summary>Useful Tools</summary>
+
+- [Browse coco json](docs/en/useful_tools/browse_coco_json.md)
+- [Browse dataset](docs/en/useful_tools/browse_dataset.md)
+- [Print config](docs/en/useful_tools/print_config.md)
+- [Dataset analysis](docs/en/useful_tools/dataset_analysis.md)
+- [Optimize anchors](docs/en/useful_tools/optimize_anchors.md)
+- [Extract subcoco](docs/en/useful_tools/extract_subcoco.md)
+- [Visualization scheduler](docs/en/useful_tools/vis_scheduler.md)
+- [Dataset converters](docs/en/useful_tools/dataset_converters.md)
+- [Download dataset](docs/en/useful_tools/download_dataset.md)
+- [Log analysis](docs/en/useful_tools/log_analysis.md)
+- [Model converters](docs/en/useful_tools/model_converters.md)
+
+</details>
+
+<details>
+<summary>Basic Tutorials</summary>
+
+- [Learn about configs with YOLOv5](docs/en/tutorials/config.md)
+- [Data flow](docs/en/tutorials/data_flow.md)
+- [Custom Installation](docs/en/tutorials/custom_installation.md)
+- [FAQ](docs/en/tutorials/faq.md)
+
+</details>
+
+<details>
+<summary>Advanced Tutorials</summary>
+
+- [MMYOLO cross-library application](docs/en/advanced_guides/cross-library_application.md)
+
+</details>
+
+<details>
+<summary>Descriptions</summary>
+
+- [Changelog](docs/en/notes/changelog.md)
+- [Compatibility](docs/en/notes/compatibility.md)
+- [Conventions](docs/en/notes/conventions.md)
+- [Code Style](docs/en/notes/code_style.md)
+
+</details>
 
 ## 📊 Overview of Benchmark and Model Zoo [🔝](#-table-of-contents)
 
@@ -276,7 +334,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 
 ## ❓ FAQ [🔝](#-table-of-contents)
 
-Please refer to the [FAQ](docs/en/notes/faq.md) for frequently asked questions.
+Please refer to the [FAQ](docs/en/tutorials/faq.md) for frequently asked questions.
 
 ## 🙌 Contributing [🔝](#-table-of-contents)
 

@@ -1,8 +1,8 @@
-# 混合类图片数据增强更新
+# Mixed image data augmentation update
 
-混合类图片数据增强是指类似 Mosaic 和 MixUp 一样，在运行过程中需要获取多张图片的标注信息进行融合。 在 OpenMMLab 数据增强 pipeline 中一般是获取不到数据集其他索引的。 为了实现上述功能，在 MMDetection 复现的 YOLOX 中提出了 [MultiImageMixDataset](https://github.com/open-mmlab/mmdetection/blob/master/mmdet/datasets/dataset_wrappers.py#L338) 数据集包装器的概念。
+Mixed image data augmentation is similar to Mosaic and MixUp, in which the annotation information of multiple images needs to be obtained for fusion during the running process. In the OpenMMLab data augmentation pipeline, other indexes of the dataset are generally not available. In order to achieve the above function, in the YOLOX reproduced in MMDetection, the concept of [MultiImageMixDataset](https://github.com/open-mmlab/mmdetection/blob/master/mmdet/datasets/dataset_wrappers.py#L338) dataset wrapper is proposed.
 
-`MultiImageMixDataset` 数据集包装器会传入一个包括 `Mosaic` 和 `RandAffine` 等数据增强，而 `CocoDataset` 中也需要传入一个包括图片和标注加载的 `pipeline` 。通过这种方式就可以快速的实现混合类数据增强。其配置用法如下所示：
+`MultiImageMixDataset` dataset wrapper will include some data augmentation methods such as `Mosaic` and `RandAffine`, while `CocoDataset` will also need to include a `pipeline` to achieve the image and annotation loading function. In this way, we can achieve mixed data augmentation quickly. The configuration method is as follows:
 
 ```python
 train_pipeline = [
@@ -31,9 +31,9 @@ train_dataset = dict(
 
 ```
 
-但是上述实现起来会有一个缺点：对于不熟悉 MMDetection 的用户来说，其经常会忘记 Mosaic 必须要和 `MultiImageMixDataset` 配合使用，而且这样会加大复杂度和理解难度。
+However, this implementation has a disadvantage: users unfamiliar with MMDetection will forget those data augmentation methods like Mosaic must be used together with `MultiImageMixDataset`, increasing the usage complexity. Moreover, it is hard to understand as well.
 
-为了解决这个问题，在 MMYOLO 中进一步进行了简化。直接让 `pipeline` 获取到 `dataset` 对象，此时就可以将 `Mosaic` 等混合类数据增强的实现和使用随机翻转的操作一样，不再需要数据集包装器。新的配置写法为：
+To address this problem, further simplifications are made in MMYOLO, which directly lets `pipeline` get `dataset`. In this way, the implementation of `Mosaic` and other data augmentation methods can be achieved and used just as the random flip, without a data wrapper anymore. The new configuration method is as follows:
 
 ```python
 pre_transform = [
@@ -61,7 +61,7 @@ train_pipeline = [
 ]
 ```
 
-一个稍微复杂点的包括 MixUp 的 YOLOv5-m 配置如下所示：
+A more complex YOLOv5-m configuration including MixUp is shown as follows:
 
 ```python
 mosaic_affine_pipeline = [
@@ -106,7 +106,7 @@ train_pipeline = [
 ]
 ```
 
-其实现过程非常简单，只需要在 Dataset 中将本身对象传给 pipeline 即可，具体代码如下：
+It is very easy to use, just pass the object of Dataset to the pipeline.
 
 ```python
 def prepare_data(self, idx) -> Any:

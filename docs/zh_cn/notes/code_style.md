@@ -1,8 +1,8 @@
-## 代码规范
+# 代码规范
 
-### 代码规范标准
+## 代码规范标准
 
-#### PEP 8 —— Python 官方代码规范
+### PEP 8 —— Python 官方代码规范
 
 [Python 官方的代码风格指南](https://www.python.org/dev/peps/pep-0008/)，包含了以下几个方面的内容：
 
@@ -46,7 +46,7 @@ hypot2 = x * x + y * y
 这一规范是为了指示不同优先级，但 OpenMMLab 的设置中通常没有启用 yapf 的 `ARITHMETIC_PRECEDENCE_INDICATION` 选项，因而格式规范工具不会按照推荐样式格式化，以设置为准。
 :::
 
-#### Google 开源项目风格指南
+### Google 开源项目风格指南
 
 [Google 使用的编程风格指南](https://google.github.io/styleguide/pyguide.html)，包括了 Python 相关的章节。相较于 PEP 8，该指南提供了更为详尽的代码指南。该指南包括了语言规范和风格规范两个部分。
 
@@ -70,15 +70,15 @@ from mmcv.cnn.bricks import Conv2d, build_norm_layer, DropPath, MaxPool2d, \
 from ...utils import is_str  # 最多向上回溯一层，过多的回溯容易导致结构混乱
 ```
 
-OpenMMLab 项目使用 pre-commit 工具自动格式化代码，详情见[贡献代码](../featured_topics/contributing.md#代码风格)。
+OpenMMLab 项目使用 pre-commit 工具自动格式化代码，详情见[贡献代码](../recommended_topics/contributing.md#代码风格)。
 
-### 命名规范
+## 命名规范
 
-#### 命名规范的重要性
+### 命名规范的重要性
 
 优秀的命名是良好代码可读的基础。基础的命名规范对各类变量的命名做了要求，使读者可以方便地根据代码名了解变量是一个类 / 局部变量 / 全局变量等。而优秀的命名则需要代码作者对于变量的功能有清晰的认识，以及良好的表达能力，从而使读者根据名称就能了解其含义，甚至帮助了解该段代码的功能。
 
-#### 基础命名规范
+### 基础命名规范
 
 | 类型            | 公有             | 私有               |
 | --------------- | ---------------- | ------------------ |
@@ -99,7 +99,7 @@ OpenMMLab 项目使用 pre-commit 工具自动格式化代码，详情见[贡献
 - 尽量不要使用过于简单的命名，除了约定俗成的循环变量 i，文件变量 f，错误变量 e 等。
 - 不会被用到的变量可以命名为 \_，逻辑检查器会将其忽略。
 
-#### 命名技巧
+### 命名技巧
 
 良好的变量命名需要保证三点：
 
@@ -136,13 +136,13 @@ def __init__(self, in_channels, out_channels):
 
 注意避免非常规或统一约定的缩写，如 nb -> num_blocks，in_nc -> in_channels
 
-### docstring 规范
+## docstring 规范
 
-#### 为什么要写 docstring
+### 为什么要写 docstring
 
 docstring 是对一个类、一个函数功能与 API 接口的详细描述，有两个功能，一是帮助其他开发者了解代码功能，方便 debug 和复用代码；二是在 Readthedocs 文档中自动生成相关的 API reference 文档，帮助不了解源代码的社区用户使用相关功能。
 
-#### 如何写 docstring
+### 如何写 docstring
 
 与注释不同，一份规范的 docstring 有着严格的格式要求，以便于 Python 解释器以及 sphinx 进行文档解析，详细的 docstring 约定参见 [PEP 257](https://www.python.org/dev/peps/pep-0257/)。此处以例子的形式介绍各种文档的标准格式，参考格式为 [Google 风格](https://zh-google-styleguide.readthedocs.io/en/latest/google-python-styleguide/python_style_rules/#comments)。
 
@@ -372,13 +372,13 @@ docstring 是对一个类、一个函数功能与 API 接口的详细描述，�
 - [Example Google Style Python Docstrings ‒ napoleon 0.7 documentation](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html#example-google)
 ```
 
-### 注释规范
+## 注释规范
 
-#### 为什么要写注释
+### 为什么要写注释
 
 对于一个开源项目，团队合作以及社区之间的合作是必不可少的，因而尤其要重视合理的注释。不写注释的代码，很有可能过几个月自己也难以理解，造成额外的阅读和修改成本。
 
-#### 如何写注释
+### 如何写注释
 
 最需要写注释的是代码中那些技巧性的部分。如果你在下次代码审查的时候必须解释一下，那么你应该现在就给它写注释。对于复杂的操作，应该在其操作开始前写上若干行注释。对于不是一目了然的代码，应在其行尾添加注释。
 —— Google 开源项目风格指南
@@ -414,7 +414,7 @@ if i & (i-1) == 0:  # True if i bitwise and i-1 is 0.
 self._reversed_padding_repeated_twice = _reverse_repeat_tuple(self.padding, 2)
 ```
 
-#### 注释示例
+### 注释示例
 
 1. 出自 `mmcv/utils/registry.py`，对于较为复杂的逻辑结构，通过注释，明确了优先级关系。
 
@@ -447,9 +447,9 @@ self._reversed_padding_repeated_twice = _reverse_repeat_tuple(self.padding, 2)
            torch.save(checkpoint, file)
    ```
 
-### 类型注解
+## 类型注解
 
-#### 为什么要写类型注解
+### 为什么要写类型注解
 
 类型注解是对函数中变量的类型做限定或提示，为代码的安全性提供保障、增强代码的可读性、避免出现类型相关的错误。
 Python 没有对类型做强制限制，类型注解只起到一个提示作用，通常你的 IDE 会解析这些类型注解，然后在你调用相关代码时对类型做提示。另外也有类型注解检查工具，这些工具会根据类型注解，对代码中可能出现的问题进行检查，减少 bug 的出现。
@@ -461,7 +461,7 @@ Python 没有对类型做强制限制，类型注解只起到一个提示作用�
 4. 难以理解的代码请进行注释
 5. 若代码中的类型已经稳定，可以进行注释. 对于一份成熟的代码，多数情况下，即使注释了所有的函数，也不会丧失太多的灵活性.
 
-#### 如何写类型注解
+### 如何写类型注解
 
 1. 函数 / 方法类型注解，通常不对 self 和 cls 注释。
 
@@ -586,7 +586,7 @@ Python 没有对类型做强制限制，类型注解只起到一个提示作用�
 
 更多关于类型注解的写法请参考 [typing](https://docs.python.org/3/library/typing.html)。
 
-#### 类型注解检查工具
+### 类型注解检查工具
 
 [mypy](https://mypy.readthedocs.io/en/stable/) 是一个 Python 静态类型检查工具。根据你的类型注解，mypy 会检查传参、赋值等操作是否符合类型注解，从而避免可能出现的 bug。
 
