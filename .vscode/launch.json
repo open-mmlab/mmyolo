@@ -5,6 +5,14 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Python: Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": true
+    },
+    {
       "name": "yolo pose train",
       "type": "python",
       "request": "launch",
@@ -55,7 +63,7 @@
         "configs/yolox/yoloxkpt_s_8xb8-300e_coco_mini_debug.py",
         // "work_dirs/yoloxkpt_s_8xb8-300e_coco/yoloxkpt_s_8xb8-300e_coco.py",
         // "work_dirs/yoloxkpt_s_8xb8-300e_coco/best_coco/bbox_mAP_epoch_100.pth",
-        "/home/houbowei/yolox-pose/YOLOX_outputs/kpt_anno_separate_head/best_ckpt_mmyolo.pth",
+        "/home/houbowei/yolox-pose/YOLOX_outputs/kpt_anno_separate_head/best_ckpt_mmyolo.pth"
         // "--show",
         // "--json-prefix",
         // "bug"
