@@ -11,15 +11,14 @@ anchors = [
     [(353, 337), (539, 341), (443, 432)]  # P5/32
 ]
 
-max_epochs = 50
-train_batch_size_per_gpu = 8
+max_epochs = 40
+train_batch_size_per_gpu = 12
 train_num_workers = 4
-# base_lr_default * (your_bs / default_bs)
-base_lr = _base_.base_lr / 4  # TODO
 
 load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa
 
 model = dict(
+    backbone=dict(frozen_stages=4),
     bbox_head=dict(
         head_module=dict(num_classes=num_classes),
         prior_generator=dict(base_sizes=anchors)))
@@ -45,9 +44,9 @@ test_dataloader = val_dataloader
 val_evaluator = dict(ann_file=data_root + 'annotations/trainval.json')
 test_evaluator = val_evaluator
 
-optim_wrapper = dict(optimizer=dict(lr=base_lr))
 default_hooks = dict(
-    checkpoint=dict(interval=5, max_keep_ckpts=2, save_best='auto'),
+    checkpoint=dict(interval=10, max_keep_ckpts=2, save_best='auto'),
     param_scheduler=dict(max_epochs=max_epochs),
-    logger=dict(type='LoggerHook', interval=10))
-train_cfg = dict(max_epochs=max_epochs, val_interval=5)
+    logger=dict(type='LoggerHook', interval=5))
+train_cfg = dict(max_epochs=max_epochs, val_interval=10)
+# visualizer = dict(vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]) # noqa

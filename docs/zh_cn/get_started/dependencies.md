@@ -52,8 +52,7 @@ conda install pytorch torchvision cpuonly -c pytorch
 **步骤 3.** 验证 PyTorch 安装
 
 ```shell
-python -c 'import torch; print(torch.__version__)'
-python -c 'import torch; print(torch.cuda.is_available())'
+python -c "import torch; print(torch.__version__); print(torch.cuda.is_available())"
 ```
 
 如果是在 GPU 平台上，那么会打印版本信息和 True 字符，否则打印版本信息和 False 字符。

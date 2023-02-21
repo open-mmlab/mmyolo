@@ -124,20 +124,8 @@ export DATA_DIR=/path/to/your/dataset
 docker run --gpus all --shm-size=8g -it -v ${DATA_DIR}:/mmyolo/data mmyolo
 ```
 
+其余自定义安装流程请查看 [自定义安装](../tutorials/custom_installation.md)
+
 ## 排除故障
 
-如果你在安装过程中遇到一些问题，请先查看 [FAQ](notes/faq.md) 页面。
-
-如果没有找到解决方案，你也可以在 GitHub 上 [打开一个问题](https://github.com/open-mmlab/mmyolo/issues/new/choose)。
-
-## 使用多个 MMYOLO 版本进行开发
-
-训练和测试的脚本已经在 `PYTHONPATH` 中进行了修改，以确保脚本使用当前目录中的 MMYOLO。
-
-要使环境中安装默认的 MMYOLO 而不是当前正在在使用的，可以删除出现在相关脚本中的如下代码：
-
-```shell
-PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
-```
-
-其余自定义安装流程请查看 [自定义安装](../tutorials/custom_installation.md)
+如果你在安装过程中遇到一些问题，你可以在 GitHub 上 [打开一个问题](https://github.com/open-mmlab/mmyolo/issues/new/choose)。

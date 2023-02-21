@@ -99,3 +99,13 @@ print(mmyolo.__version__)
 ```{note}
 在 Jupyter 中，感叹号 `!` 用于执行外部命令，而 `%cd` 是一个[魔术命令](https://ipython.readthedocs.io/en/stable/interactive/magics.html#magic-cd)，用于切换 Python 的工作路径。
 ```
+
+## 使用多个 MMYOLO 版本进行开发
+
+训练和测试的脚本已经在 `PYTHONPATH` 中进行了修改，以确保脚本使用当前目录中的 MMYOLO。
+
+要使环境中安装默认的 MMYOLO 而不是当前正在在使用的，可以删除出现在相关脚本中的如下代码：
+
+```shell
+PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
+```
