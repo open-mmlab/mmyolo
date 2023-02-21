@@ -6,7 +6,7 @@
 
 This project is developed for easily showing assigning results. The script allows users to analyze where and how many positive samples each gt is assigned in the image.
 
-Now, the script supports `YOLOv5`, `YOLOv7` and `RTMDet`.
+Now, the script supports `YOLOv5`, `YOLOv7`, `YOLOv8` and `RTMDet`.
 
 ## Usage
 
