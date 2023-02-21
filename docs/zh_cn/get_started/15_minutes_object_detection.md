@@ -81,7 +81,7 @@ data 位于 mmyolo 工程目录下， `data/cat/annotations` 中存放的是 COC
 - 由于数据集太小，我们选择固定 backbone 网络权重
 - 原则上 batch size 改变后，学习率也需要进行线性缩放，但是实测发现不需要
 
-具体操作为在 `configs/yolov5` 文件夹下新建 `yolov5_s-v61_fast_1xb8-40e_cat.py` 配置文件(为了方便大家直接使用，我们已经提供了该配置)，并把以下内容复制配置文件中。
+具体操作为在 `configs/yolov5` 文件夹下新建 `yolov5_s-v61_fast_1xb12-40e_cat.py` 配置文件(为了方便大家直接使用，我们已经提供了该配置)，并把以下内容复制配置文件中。
 
 ```python
 # 基于该配置进行继承并重写部分配置
@@ -158,10 +158,10 @@ train_cfg = dict(max_epochs=max_epochs, val_interval=10)
 ## 模型训练
 
 ```shell
-python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb8-40e_cat.py
+python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py
 ```
 
-运行以上训练命令 `work_dirs/yolov5_s-v61_fast_1xb8-40e_cat` 文件夹会被自动生成，权重文件以及此次的训练配置文件将会保存在此文件夹中。 在 1660 低端显卡上，整个训练过程大概需要 8 分钟。
+运行以上训练命令 `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat` 文件夹会被自动生成，权重文件以及此次的训练配置文件将会保存在此文件夹中。 在 1660 低端显卡上，整个训练过程大概需要 8 分钟。
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/17425982/220236361-bd113606-248e-4a0e-a484-c0dc9e355b5b.png" alt="image"/>
@@ -201,7 +201,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb8-40e_cat.py
 如果训练中途停止，可以在训练命令最后加上 `--resume` ,程序会自动从 `work_dirs` 中加载最新的权重文件恢复训练。
 
 ```shell
-python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb8-40e_cat.py --resume
+python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py --resume
 ```
 
 ### 节省显存策略
@@ -209,7 +209,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb8-40e_cat.py --resume
 上述配置大概需要 3.0G 显存，如果你的显存不够，可以考虑开启混合精度训练
 
 ```shell
-python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb8-40e_cat.py --amp
+python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py --amp
 ```
 
 ### 训练可视化
@@ -230,7 +230,7 @@ pip install wandb
 wandb login
 ```
 
-在 `configs/yolov5/yolov5_s-v61_fast_1xb8-40e_cat.py` 配置文件最后添加 WandB 配置
+在 `configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py` 配置文件最后添加 WandB 配置
 
 ```python
 visualizer = dict(vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')])
@@ -239,7 +239,7 @@ visualizer = dict(vis_backends = [dict(type='LocalVisBackend'), dict(type='Wandb
 重新运行训练命令便可以在命令行中提示的网页链接中看到 loss、学习率和 coco/bbox_mAP 等数据可视化了。
 
 ```shell
-python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb8-40e_cat.py
+python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py
 ```
 
 <div align=center>
@@ -257,28 +257,28 @@ python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb8-40e_cat.py
 pip install tensorboard
 ```
 
-同上述在配置文件 `configs/yolov5/yolov5_s-v61_fast_1xb8-40e_cat.py`配置的最后添加 `tensorboard` 配置
+同上述在配置文件 `configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py`配置的最后添加 `tensorboard` 配置
 
 ```python
 visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='TensorboardVisBackend')])
 ```
 
-重新运行训练命令后，Tensorboard 文件会生成在可视化文件夹 `work_dirs/yolov5_s-v61_fast_1xb8-40e_cat.py/{timestamp}/vis_data` 下，
+重新运行训练命令后，Tensorboard 文件会生成在可视化文件夹 `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat.py/{timestamp}/vis_data` 下，
 运行下面的命令便可以在网页链接使用 Tensorboard 查看 loss、学习率和 coco/bbox_mAP 等可视化数据了：
 
 ```shell
-tensorboard --logdir=work_dirs/yolov5_s-v61_fast_1xb8-40e_cat.py
+tensorboard --logdir=work_dirs/yolov5_s-v61_fast_1xb12-40e_cat.py
 ```
 
 ## 模型测试
 
 ```shell
-python tools/test.py configs/yolov5/yolov5_s-v61_fast_1xb8-40e_cat.py \
-                     work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+python tools/test.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                     work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
                      --show-dir show_results
 ```
 
-运行以上测试命令， 你不不仅可以得到**模型训练**部分所打印的 AP 性能，还可以将推理结果图片自动保存至 `work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/{timestamp}/show_results` 文件夹中。下面为其中一张结果图片，左图为实际标注，右图为模型推理结果。
+运行以上测试命令， 你不不仅可以得到**模型训练**部分所打印的 AP 性能，还可以将推理结果图片自动保存至 `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/{timestamp}/show_results` 文件夹中。下面为其中一张结果图片，左图为实际标注，右图为模型推理结果。
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/17425982/220251677-6c7e5c8f-9417-4803-97fc-a968d0172ab7.png" alt="result_img"/>
