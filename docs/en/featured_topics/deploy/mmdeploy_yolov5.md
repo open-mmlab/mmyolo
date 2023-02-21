@@ -1,10 +1,10 @@
 # YOLOv5 Deployment
 
-Please check the [basic_deployment_guide](basic_deployment_guide.md) to get familiar with the configurations.
+Please check the [basic_deployment_guide](mmdeploy_guide.md) to get familiar with the configurations.
 
 ## Model Training and Validation
 
-The details of training and validation can be found at [yolov5_tutorial](../user_guides/yolov5_tutorial.md).
+TODO
 
 ## MMDeploy Environment Setup
 
@@ -75,7 +75,7 @@ codebase_config = dict(
 backend_config = dict(type='onnxruntime')
 ```
 
-The `post_processing` in the default configuration aligns the accuracy of the current model with the trained `pytorch` model. If you need to modify the relevant parameters, you can refer to the detailed introduction of [dasic_deployment_guide](basic_deployment_guide.md).
+The `post_processing` in the default configuration aligns the accuracy of the current model with the trained `pytorch` model. If you need to modify the relevant parameters, you can refer to the detailed introduction of [dasic_deployment_guide](mmdeploy_guide.md).
 
 To deploy the model to `TensorRT`, please refer to the [`detection_tensorrt_static-640x640.py`](https://github.com/open-mmlab/mmyolo/tree/main/configs/deploy/detection_tensorrt_static-640x640.p).
 
@@ -283,7 +283,7 @@ After exporting to `TensorRT`, you will get the four files as shown in Figure 2,
 
 After successfully convert the model, you can use `${MMDEPLOY_DIR}/tools/test.py` to evaluate the converted model. The following part shows how to evaluate the static models of `ONNXRuntime` and `TensorRT`. For dynamic model evaluation, please modify the configuration of the inputs.
 
-#### ONNXRuntime
+### ONNXRuntime
 
 ```shell
 python3 ${MMDEPLOY_DIR}/tools/test.py \
@@ -298,7 +298,7 @@ Once the process is done, you can get the output results as this:
 
 ![image](https://user-images.githubusercontent.com/92794867/199380483-cf8d867b-7309-4994-938a-f743f4cada77.png)
 
-#### TensorRT
+### TensorRT
 
 Note: `TensorRT` must run on `CUDA` devices!
 

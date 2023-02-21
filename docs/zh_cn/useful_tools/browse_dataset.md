@@ -18,7 +18,7 @@ python tools/analysis_tools/browse_dataset.py \
 - **`-p, --phase`**: 可视化数据集的阶段，只能为 `['train', 'val', 'test']` 之一，默认为 `'train'`。
 - **`-n, --show-number`**: 可视化样本数量。如果没有指定，默认展示数据集的所有图片。
 - **`-m, --mode`**: 可视化的模式，只能为 `['original', 'transformed', 'pipeline']` 之一。 默认为 `'transformed'`。
-- `--cfg-options` : 对配置文件的修改，参考[学习配置文件](./config.md)。
+- `--cfg-options` : 对配置文件的修改，参考[学习配置文件](../tutorials/config.md)。
 
 ```shell
 `-m, --mode` 用于设置可视化的模式，默认设置为 'transformed'。

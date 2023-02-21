@@ -216,7 +216,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py --amp
 
 MMYOLO 目前支持本地、TensorBoard 以及 WandB 等多种后端可视化，默认是采用本地可视化方式，你可以切换为 WandB 等实时可视化训练过程中各类指标。
 
-##### 1 WandB 可视化使用
+#### 1 WandB 可视化使用
 
 WandB 官网注册并在 https://wandb.ai/settings 获取到 WandB 的 API Keys。
 
@@ -249,7 +249,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py
 <img src="https://user-images.githubusercontent.com/17425982/220238535-f363a6ba-876c-4bb7-80d6-9d8d8ca9b966.png" alt="image"/>
 </div>
 
-##### 2 Tensorboard 可视化使用
+#### 2 Tensorboard 可视化使用
 
 安装 Tensorboard 环境
 

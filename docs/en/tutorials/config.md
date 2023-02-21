@@ -427,8 +427,6 @@ model = dict(
 Some intermediate variables are used in the configs files, like `train_pipeline` and `test_pipeline` in datasets. It's worth noting that when modifying intermediate variables in the children configs, users need to pass the intermediate variables into corresponding fields again.
 For example, we would like to change the `image_scale` during training and add `YOLOv5MixUp` data augmentation, `img_scale/train_pipeline/test_pipeline` are intermediate variables we would like to modify.
 
-**Notice**: `YOLOv5MixUp` requires adding the `pre_transform` and `mosaic_affine_pipeline` to its `train_pipeline` field. Please refer to [The description of YOLOv5 algorithm and its implementation](../algorithm_descriptions/yolov5_description.md) for detailed processes and diagrams.
-
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 

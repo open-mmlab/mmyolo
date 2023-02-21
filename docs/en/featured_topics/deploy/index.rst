@@ -1,5 +1,5 @@
 MMDeploy deployment tutorial
-************************
+********************************
 
 .. toctree::
    :maxdepth: 1
@@ -8,7 +8,7 @@ MMDeploy deployment tutorial
    mmdeploy_yolov5.md
 
 EasyDeploy deployment tutorial
-************************
+************************************
 
 .. toctree::
    :maxdepth: 1

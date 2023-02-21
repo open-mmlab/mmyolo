@@ -119,5 +119,5 @@ docker run --gpus all --shm-size=8g -it -v ${DATA_DIR}:/mmyolo/data mmyolo
 
 ## Troubleshooting
 
-If you have some issues during the installation, please first view the [FAQ](notes/faq.md) page.
+If you have some issues during the installation, please first view the [FAQ](../tutorials/faq.md) page.
 You may [open an issue](https://github.com/open-mmlab/mmyolo/issues/new/choose) on GitHub if no solution is found.

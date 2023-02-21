@@ -1,4 +1,4 @@
-## Mixed image data augmentation update
+# Mixed image data augmentation update
 
 Mixed image data augmentation is similar to Mosaic and MixUp, in which the annotation information of multiple images needs to be obtained for fusion during the running process. In the OpenMMLab data augmentation pipeline, other indexes of the dataset are generally not available. In order to achieve the above function, in the YOLOX reproduced in MMDetection, the concept of [MultiImageMixDataset](https://github.com/open-mmlab/mmdetection/blob/master/mmdet/datasets/dataset_wrappers.py#L338) dataset wrapper is proposed.
 

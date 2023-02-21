@@ -83,7 +83,7 @@ test_dataloader = dict(
 
 `test_pipeline` 为部署时对输入图像进行处理的流程，`LetterResize` 控制了输入图像的尺寸，同时限制了导出模型所能接受的输入尺寸。
 
-`test_dataloader` 为部署时构建数据加载器配置，`batch_shapes_cfg` 控制了是否启用 `batch_shapes` 策略，详细内容可以参考 [yolov5 配置文件说明](https://github.com/open-mmlab/mmyolo/blob/main/docs/zh_cn/user_guides/config.md) 。
+`test_dataloader` 为部署时构建数据加载器配置，`batch_shapes_cfg` 控制了是否启用 `batch_shapes` 策略，详细内容可以参考 [yolov5 配置文件说明](../../tutorials/config.md) 。
 
 #### (2) 部署配置文件介绍
 

@@ -25,7 +25,7 @@ python tools/analysis_tools/vis_scheduler.py \
 - `--title`: 可视化图片的标题，默认为配置文件名。
 - `--style`: 可视化图片的风格，默认为 `whitegrid`。
 - `--window-size`: 可视化窗口大小，如果没有指定，默认为 `12*7`。如果需要指定，按照格式 `'W*H'`。
-- `--cfg-options`: 对配置文件的修改，参考[学习配置文件](../user_guides/config.md)。
+- `--cfg-options`: 对配置文件的修改，参考[学习配置文件](../tutorials/config.md)。
 
 ```{note}
 部分数据集在解析标注阶段比较耗时，推荐直接将 `-d, dataset-size` 指定数据集的大小，以节约时间。

@@ -4,8 +4,6 @@
 
 - `ballon2coco.py` 将 `balloon` 数据集（该小型数据集仅作为入门使用）转换成 COCO 的格式。
 
-关于该脚本的详细说明，请看 [YOLOv5 从入门到部署全流程](../get_started/15_minutes.md) 中 `数据集准备` 小节。
-
 ```shell
 python tools/dataset_converters/balloon2coco.py
 ```

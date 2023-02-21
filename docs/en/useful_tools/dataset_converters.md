@@ -4,8 +4,6 @@ The folder `tools/data_converters` currently contains `ballon2coco.py`, `yolo2co
 
 - `ballon2coco.py` converts the `balloon` dataset (this small dataset is for starters only) to COCO format.
 
-For a detailed description of this script, please see the `Dataset Preparation` section in [From getting started to deployment with YOLOv5](./yolov5_tutorial.md).
-
 ```shell
 python tools/dataset_converters/balloon2coco.py
 ```
