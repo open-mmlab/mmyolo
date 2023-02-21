@@ -425,7 +425,7 @@ model = dict(
 
 配置文件里会使用一些中间变量，例如数据集里的 `train_pipeline`/`test_pipeline`。我们在定义新的 `train_pipeline`/`test_pipeline` 之后，需要将它们传递到 `data` 里。例如，我们想在训练或测试时，改变 YOLOv5 网络的 `img_scale` 训练尺度并在训练时添加 `YOLOv5MixUp` 数据增强，`img_scale/train_pipeline/test_pipeline` 是我们想要修改的中间变量。
 
-**注**：使用 `YOLOv5MixUp` 数据增强时，需要将 `YOLOv5MixUp` 之前的训练数据处理流程定义在其 `pre_transform`  中。详细过程和图解可参见 [YOLOv5 原理和实现全解析](../algorithm_descriptions/yolov5_description.md)。
+**注**：使用 `YOLOv5MixUp` 数据增强时，需要将 `YOLOv5MixUp` 之前的训练数据处理流程定义在其 `pre_transform`  中。详细过程和图解可参见 [YOLOv5 原理和实现全解析](../recommended_topics/algorithm_descriptions/yolov5_description.md)。
 
 ```python
 _base_ = './yolov5_s-v61_syncbn_8xb16-300e_coco.py'

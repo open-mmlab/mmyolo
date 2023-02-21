@@ -1,4 +1,4 @@
-## 混合类图片数据增强更新
+# 混合类图片数据增强更新
 
 混合类图片数据增强是指类似 Mosaic 和 MixUp 一样，在运行过程中需要获取多张图片的标注信息进行融合。 在 OpenMMLab 数据增强 pipeline 中一般是获取不到数据集其他索引的。 为了实现上述功能，在 MMDetection 复现的 YOLOX 中提出了 [MultiImageMixDataset](https://github.com/open-mmlab/mmdetection/blob/master/mmdet/datasets/dataset_wrappers.py#L338) 数据集包装器的概念。
 

@@ -1,63 +1,123 @@
 # 15 分钟上手 MMYOLO 目标检测
 
+目标检测任务是指给定一张图片，网络预测出图片中所包括的所有物体类别和对应的边界框
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220232979-fffa480b-9ae6-4601-8af6-4116265dc650.png" alt="object detection" width="100%"/>
+</div>
+
+以我们提供的猫 cat 小数据集为例，带大家 15 分钟轻松上手 MMYOLO 目标检测。整个流程包含如下步骤：
+
+- [环境安装](#环境安装)
+- [数据集准备](#数据集准备)
+- [配置准备](#配置准备)
+- [模型训练](#模型训练)
+- [模型测试](#模型测试)
+- [EasyDeploy 模型部署](#easydeploy-模型部署)
+
 ## 环境安装
 
-温馨提醒：由于本仓库采用的是 OpenMMLab 2.0，请最好新建一个 conda 虚拟环境，防止和 OpenMMLab 1.0 已经安装的仓库冲突。
+假设你已经提前安装好了 Conda，接下来安装 PyTorch
 
 ```shell
-conda create -n open-mmlab python=3.8 -y
-conda activate open-mmlab
+conda create -n mmyolo python=3.8 -y
+conda activate mmyolo
+# 如果你有 GPU
 conda install pytorch torchvision -c pytorch
+# 如果你是 CPU
 # conda install pytorch torchvision cpuonly -c pytorch
-pip install -U openmim
-mim install "mmengine>=0.3.1"
-mim install "mmcv>=2.0.0rc1,<2.1.0"
-mim install "mmdet>=3.0.0rc5,<3.1.0"
+```
+
+安装 MMYOLO 和依赖库
+
+```shell
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
+pip install -U openmim
+mim install -r requirements/mminstall.txt
 # Install albumentations
-pip install -r requirements/albu.txt
+mim install -r requirements/albu.txt
 # Install MMYOLO
 mim install -v -e .
 # "-v" 指详细说明，或更多的输出
 # "-e" 表示在可编辑模式下安装项目，因此对代码所做的任何本地修改都会生效，从而无需重新安装。
 ```
 
-详细环境配置操作请查看 [get_started](../get_started/installation.md)
+```{note}
+温馨提醒：由于本仓库采用的是 OpenMMLab 2.0，请最好新建一个 conda 虚拟环境，防止和 OpenMMLab 1.0 已经安装的仓库冲突。
+```
+
+详细环境配置操作请查看 [安装和验证](./installation.md)
 
 ## 数据集准备
 
-本文选取不到 40MB 大小的 balloon 气球数据集作为 MMYOLO 的学习数据集。
-
-```shell
-python tools/misc/download_dataset.py --dataset-name balloon --save-dir data --unzip
-python tools/dataset_converters/balloon2coco.py
-```
-
-执行以上命令，下载数据集并转化格式后，balloon 数据集在 `data` 文件夹中准备好了，`train.json` 和 `val.json` 便是 coco 格式的标注文件了。
+Cat 数据集是一个包括 144 张图片的单类别数据集（本 cat 数据集由 @RangeKing 提供原始图片，由 @PeterH0323 进行数据清洗）, 包括了训练所需的标注信息。 样例图片如下所示：
 
 <div align=center>
-<img src="https://cdn.vansin.top/img/20220912105312.png" alt="image"/>
+<img src="https://user-images.githubusercontent.com/25873202/205423220-c4b8f2fd-22ba-4937-8e47-1b3f6a8facd8.png" alt="cat dataset"/>
 </div>
 
-## config 文件准备
+你只需执行如下命令即可下载并且直接用起来
 
-在 `configs/yolov5` 文件夹下新建 `yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` 配置文件，并把以下内容复制配置文件中。
+```shell
+python tools/misc/download_dataset.py --dataset-name cat --save-dir ./data/cat --unzip --delete
+```
+
+数据集组织格式如下所示：
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220072078-48b88a08-6179-483e-b8d3-0549e1b465de.png" alt="image"/>
+</div>
+
+data 位于 mmyolo 工程目录下， `data/cat/annotations` 中存放的是 COCO 格式的标注，`data/cat/images` 中存放的是所有图片
+
+## 配置准备
+
+以 YOLOv5 算法为例，考虑到用户显存和内存有限，我们需要修改一些默认训练参数来让大家愉快的跑起来，核心需要修改的参数如下
+
+- YOLOv5 是 Anchor-Based 类算法，不同的数据集需要自适应计算合适的 Anchor
+- 默认配置是 8 卡，每张卡 batch size 为 16，现将其改成单卡，每张卡 batch size 为 12
+- 默认训练 epoch 是 300，将其改成 40 epoch
+- 由于数据集太小，我们选择固定 backbone 网络权重
+- 原则上 batch size 改变后，学习率也需要进行线性缩放，但是实测发现不需要
+
+具体操作为在 `configs/yolov5` 文件夹下新建 `yolov5_s-v61_fast_1xb12-40e_cat.py` 配置文件(为了方便大家直接使用，我们已经提供了该配置)，并把以下内容复制配置文件中。
 
 ```python
-_base_ = './yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
+# 基于该配置进行继承并重写部分配置
+_base_ = 'yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 
-data_root = 'data/balloon/'
+data_root = './data/cat/' # 数据集根路径
+class_name = ('cat', ) # 数据集类别名称
+num_classes = len(class_name) # 数据集类别数
+# metainfo 必须要传给后面的 dataloader 配置，否则无效
+# palette 是可视化时候对应类别的显示颜色
+# palette 长度必须大于等于和 classes 长度
+metainfo = dict(classes=class_name, palette=[(20, 220, 60)])
 
-train_batch_size_per_gpu = 4
-train_num_workers = 2
+# 基于 tools/analysis_tools/optimize_anchors.py 自适应计算的 anchor
+anchors = [
+    [(68, 69), (154, 91), (143, 162)],  # P3/8
+    [(242, 160), (189, 287), (391, 207)],  # P4/16
+    [(353, 337), (539, 341), (443, 432)]  # P5/32
+]
+# 最大训练 40 epoch
+max_epochs = 40
+# bs 为 12
+train_batch_size_per_gpu = 12
+# dataloader 加载进程数
+train_num_workers = 4
 
-metainfo = {
-    'classes': ('balloon', ),
-    'palette': [
-        (220, 20, 60),
-    ]
-}
+# 加载 COCO 预训练权重
+load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa
+
+model = dict(
+    # 固定整个 backbone 权重，不进行训练
+    backbone=dict(frozen_stages=4),
+    bbox_head=dict(
+        head_module=dict(num_classes=num_classes),
+        prior_generator=dict(base_sizes=anchors)
+    ))
 
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
@@ -65,110 +125,100 @@ train_dataloader = dict(
     dataset=dict(
         data_root=data_root,
         metainfo=metainfo,
-        data_prefix=dict(img='train/'),
-        ann_file='train.json'))
+        # 数据集标注文件 json 路径
+        ann_file='annotations/trainval.json',
+        # 数据集前缀
+        data_prefix=dict(img='images/')))
 
 val_dataloader = dict(
     dataset=dict(
-        data_root=data_root,
         metainfo=metainfo,
-        data_prefix=dict(img='val/'),
-        ann_file='val.json'))
+        data_root=data_root,
+        ann_file='annotations/trainval.json',
+        data_prefix=dict(img='images/')))
 
 test_dataloader = val_dataloader
 
-val_evaluator = dict(ann_file=data_root + 'val.json')
-
+val_evaluator = dict(ann_file=data_root + 'annotations/trainval.json')
 test_evaluator = val_evaluator
 
-model = dict(bbox_head=dict(head_module=dict(num_classes=1)))
-
-default_hooks = dict(logger=dict(interval=1))
+default_hooks = dict(
+    # 每隔 10 个 epoch 保存一次权重，并且最多保存 2 个权重
+    # 模型评估时候自动保存最佳模型
+    checkpoint=dict(interval=10, max_keep_ckpts=2, save_best='auto'),
+    param_scheduler=dict(max_epochs=max_epochs),
+    # 日志打印间隔为 5
+    logger=dict(type='LoggerHook', interval=5))
+# 评估间隔为 10
+train_cfg = dict(max_epochs=max_epochs, val_interval=10)
 ```
 
-以上配置从 `./yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py` 中继承，并根据 balloon 数据的特点更新了 `data_root`、`metainfo`、`train_dataloader`、`val_dataloader`、`num_classes` 等配置。
-我们将 logger 的 `interval` 设置为 1 的原因是，每进行 `interval` 次 iteration 会输出一次 loss 相关的日志，而我们选取气球数据集比较小，`interval` 太大我们将看不到 loss 相关日志的输出。
+以上配置从 `yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py` 中继承，并根据 cat 数据的特点更新了 `data_root`、`metainfo`、`train_dataloader`、`val_dataloader`、`num_classes` 等配置。
 
-## 训练
+## 模型训练
 
 ```shell
-python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py
+python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py
 ```
 
-运行以上训练命令，`work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon` 文件夹会被自动生成，权重文件以及此次的训练配置文件将会保存在此文件夹中。
+运行以上训练命令 `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat` 文件夹会被自动生成，权重文件以及此次的训练配置文件将会保存在此文件夹中。 在 1660 低端显卡上，整个训练过程大概需要 8 分钟。
 
 <div align=center>
-<img src="https://cdn.vansin.top/img/20220913213846.png" alt="image"/>
+<img src="https://user-images.githubusercontent.com/17425982/220236361-bd113606-248e-4a0e-a484-c0dc9e355b5b.png" alt="image"/>
 </div>
+
+在 `trainval.json` 上性能如下所示：
+
+```text
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.685
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.953
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.852
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.685
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.664
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.749
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.761
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.761
+```
+
+上述性能是通过 COCO API 打印，其中 -1 表示不存在对于尺度的物体。根据 COCO 定义的规则，Cat 数据集里面全部是大物体，不存在小和中等规模物体。
+
+### 一些注意事项
+
+在训练过程中会打印如下两个关键警告：
+
+- You are using `YOLOv5Head` with num_classes == 1. The loss_cls will be 0. This is a normal phenomenon.
+- The model and loaded state dict do not match exactly
+
+这两个警告都不会对性能有任何影响。第一个警告是说明由于当前训练的类别数是 1，根据 YOLOv5 算法的社区， 分类分支的 loss 始终是 0，这是正常现象。第二个警告是因为目前是采用微调模式进行训练，我们加载了 COCO 80 个类的预训练权重，
+这会导致最后的 Head 模块卷积通道数不对应，从而导致这部分权重无法加载，这也是正常现象。
 
 ### 中断后恢复训练
 
-如果训练中途停止，在训练命令最后加上 `--resume` ,程序会自动从 `work_dirs` 中加载最新的权重文件恢复训练。
+如果训练中途停止，可以在训练命令最后加上 `--resume` ,程序会自动从 `work_dirs` 中加载最新的权重文件恢复训练。
 
 ```shell
-python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py --resume
+python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py --resume
 ```
 
-### 加载预训练权重微调
+### 节省显存策略
 
-经过测试，相比不加载预训练模型，加载 YOLOv5-s 预训练模型在气球数据集上训练和验证 coco/bbox_mAP 能涨 30 多个百分点。
-
-1. 下载 COCO 数据集预训练权重
+上述配置大概需要 3.0G 显存，如果你的显存不够，可以考虑开启混合精度训练
 
 ```shell
-cd mmyolo
-wget https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth
+python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py --amp
 ```
 
-2. 加载预训练模型进行训练
+### 训练可视化
 
-```shell
-cd mmyolo
-python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
-                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
-```
+MMYOLO 目前支持本地、TensorBoard 以及 WandB 等多种后端可视化，默认是采用本地可视化方式，你可以切换为 WandB 等实时可视化训练过程中各类指标。
 
-3. 冻结 backbone 进行训练
+#### 1 WandB 可视化使用
 
-通过 config 文件或者命令行中设置 model.backbone.frozen_stages=4 冻结 backbone 的 4 个 stages。
-
-```shell
-# 命令行中设置 model.backbone.frozen_stages=4
-cd mmyolo
-python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
-                      --cfg-options load_from='yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth' model.backbone.frozen_stages=4
-```
-
-### 训练验证中可视化相关
-
-#### 验证阶段可视化
-
-我们将 `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` 中的 `default_hooks` 的 `visualization` 进行修改，设置 `draw` 为 `True`，`interval` 为 `2`。
-
-```shell
-default_hooks = dict(
-    logger=dict(interval=1),
-    visualization=dict(draw=True, interval=2),
-)
-```
-
-重新运行以下训练命令，在验证评估的过程中，每 `interval` 张图片就会保存一张标注结果和预测结果的拼图到 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/vis_data/vis_image` 文件夹中了。
-
-```shell
-python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py
-```
-
-<div align=center>
-<img src="https://moonstarimg.oss-cn-hangzhou.aliyuncs.com/img/20220920094007.png" alt="image"/>
-</div>
-
-#### 可视化后端使用
-
-MMEngine 支持本地、TensorBoard 以及 wandb 等多种后端。
-
-##### wandb 可视化使用
-
-wandb 官网注册并在 https://wandb.ai/settings 获取到 wandb 的 API Keys。
+WandB 官网注册并在 https://wandb.ai/settings 获取到 WandB 的 API Keys。
 
 <div align=center>
 <img src="https://cdn.vansin.top/img/20220913212628.png" alt="image"/>
@@ -180,7 +230,7 @@ pip install wandb
 wandb login
 ```
 
-在 `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py` 添加 wandb 配置
+在 `configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py` 配置文件最后添加 WandB 配置
 
 ```python
 visualizer = dict(vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')])
@@ -189,14 +239,17 @@ visualizer = dict(vis_backends = [dict(type='LocalVisBackend'), dict(type='Wandb
 重新运行训练命令便可以在命令行中提示的网页链接中看到 loss、学习率和 coco/bbox_mAP 等数据可视化了。
 
 ```shell
-python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py
+python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py
 ```
 
 <div align=center>
-<img src="https://cdn.vansin.top/img/20220913213221.png" alt="image"/>
+<img src="https://user-images.githubusercontent.com/17425982/220238131-08eacedc-28a7-4008-af8c-f36dc239ecaa.png" alt="image"/>
+</div>
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220238535-f363a6ba-876c-4bb7-80d6-9d8d8ca9b966.png" alt="image"/>
 </div>
 
-##### Tensorboard 可视化使用
+#### 2 Tensorboard 可视化使用
 
 安装 Tensorboard 环境
 
@@ -204,33 +257,155 @@ python tools/train.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.
 pip install tensorboard
 ```
 
-同上述在配置文件 `configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py`中添加 `tensorboard` 配置
+同上述在配置文件 `configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py`配置的最后添加 `tensorboard` 配置
 
 ```python
 visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='TensorboardVisBackend')])
 ```
 
-重新运行训练命令后，Tensorboard 文件会生成在可视化文件夹 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/vis_data` 下，
+重新运行训练命令后，Tensorboard 文件会生成在可视化文件夹 `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat.py/{timestamp}/vis_data` 下，
 运行下面的命令便可以在网页链接使用 Tensorboard 查看 loss、学习率和 coco/bbox_mAP 等可视化数据了：
 
 ```shell
-tensorboard --logdir=work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon
+tensorboard --logdir=work_dirs/yolov5_s-v61_fast_1xb12-40e_cat.py
 ```
 
 ## 模型测试
 
 ```shell
-python tools/test.py configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py \
-                     work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/epoch_300.pth \
+python tools/test.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                     work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
                      --show-dir show_results
 ```
 
-运行以上测试命令，推理结果图片会自动保存至 `work_dirs/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon/{timestamp}/show_results` 文件夹中。下面为其中一张结果图片，左图为实际标注，右图为模型推理结果。
+运行以上测试命令， 你不不仅可以得到**模型训练**部分所打印的 AP 性能，还可以将推理结果图片自动保存至 `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/{timestamp}/show_results` 文件夹中。下面为其中一张结果图片，左图为实际标注，右图为模型推理结果。
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/27466624/190913272-f99709e5-c798-46b8-aede-30f4e91683a3.jpg" alt="result_img"/>
+<img src="https://user-images.githubusercontent.com/17425982/220251677-6c7e5c8f-9417-4803-97fc-a968d0172ab7.png" alt="result_img"/>
 </div>
 
-## 模型部署
+如果你使用了 `WandbVisBackend` 或者 `TensorboardVisBackend`，则还可以在浏览器窗口可视化模型推理结果。
 
-请参考[这里](../deploy/yolov5_deployment.md)
+## 特征图相关可视化
+
+MMYOLO 中提供了特征图相关可视化脚本，用于分析当前模型训练效果。 详细使用流程请参考 [特征图可视化](../recommended_topics/visualization.md)
+
+由于 `test_pipeline` 直接可视化会存在偏差，故将需要 `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` 中 `test_pipeline`
+
+```python
+test_pipeline = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args=_base_.file_client_args),
+    dict(type='YOLOv5KeepRatioResize', scale=img_scale),
+    dict(
+        type='LetterResize',
+        scale=img_scale,
+        allow_scale_up=False,
+        pad_val=dict(img=114)),
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor', 'pad_param'))
+]
+```
+
+修改为如下配置：
+
+```python
+test_pipeline = [
+    dict(
+        type='LoadImageFromFile',
+        file_client_args=_base_.file_client_args),
+    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # 这里将 LetterResize 修改成 mmdet.Resize
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor'))
+]
+```
+
+我们选择 `data/cat/images/IMG_20221020_112705.jpg` 图片作为例子，可视化 YOLOv5 backbone 和 neck 层的输出特征图。
+
+**1. 可视化 YOLOv5 backbone 输出的 3 个通道**
+
+```shell
+python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
+                                configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                --target-layers backbone \
+                                --channel-reduction squeeze_mean
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220292217-b343a6f4-0c88-4fdb-9680-35d0ff8e5bdb.png" width="800" alt="image"/>
+</div>
+
+结果会保存到当前路径的 output 文件夹下。上图中绘制的 3 个输出特征图对应大中小输出特征图。由于本次训练的 backbone 实际上没有参与训练，从上图可以看到，大物体 cat 是在小特征图进行预测，这符合目标检测分层检测思想。
+
+**2. 可视化 YOLOv5 neck 输出的 3 个通道**
+
+```shell
+python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
+                                configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                --target-layers neck \
+                                --channel-reduction squeeze_mean
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220293382-0a241415-e717-4688-a718-5f6d5c844785.png" width="800" alt="image"/>
+</div>
+
+从上图可以看出，由于 neck 是参与训练的，并且由于我们重新设置了 anchor, 强行让 3 个输出特征图都拟合同一个尺度的物体，导致 neck 输出的 3 个图类似，破坏了 backbone 原先的预训练分布。同时也可以看出 40 epoch 训练上述数据集是不够的，特征图效果不佳。
+
+**3. Grad-Based CAM 可视化**
+
+基于上述特征图可视化效果，我们可以分析特征层 bbox 级别的 Grad CAM。
+
+(a) 查看 neck 输出的最小输出特征图的 Grad CAM
+
+```shell
+python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
+                                configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                --target-layer neck.out_layers[2]
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220298462-b0631f27-2366-4864-915a-a4ee21acd4b9.png" width="800" alt="image"/>
+</div>
+
+(b) 查看 neck 输出的中等输出特征图的 Grad CAM
+
+```shell
+python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
+                                configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                --target-layer neck.out_layers[1]
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220298090-6f335786-0b35-4ab8-9c5a-0dbdb6b6c967.png" width="800" alt="image"/>
+</div>
+
+(c) 查看 neck 输出的最大输出特征图的 Grad CAM
+
+```shell
+python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
+                                configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                --target-layer neck.out_layers[0]
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/220297905-e23369db-d383-48f9-b15e-528a70ec7b23.png" width="800" alt="image"/>
+</div>
+
+## EasyDeploy 模型部署
+
+TODO
+
+以上完整内容可以查看 [15_minutes_object_detection.ipynb](<>)

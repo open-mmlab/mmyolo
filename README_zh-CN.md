@@ -150,7 +150,7 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 <img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="基类-P5"/>
   图为 RangeKing@GitHub 提供，非常感谢！
 
-P6 模型图详见 [model_design.md](docs/zh_cn/featured_topics/model_design.md)。
+P6 模型图详见 [model_design.md](docs/zh_cn/recommended_topics/model_design.md)。
 
 </details>
 
@@ -197,16 +197,17 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 <details>
 <summary>推荐专题</summary>
 
-- [如何给 MMYOLO 贡献代码](docs/zh_cn/featured_topics/contributing.md)
-- [MMYOLO 模型结构设计](docs/zh_cn/featured_topics/model_design.md)
-- [MMYOLO 产业范例介绍](docs/zh_cn/featured_topics/industry_examples.md)
-- [数据集准备和说明](docs/zh_cn/featured_topics/dataset_preparation.md)
-- [原理和实现全解析](docs/zh_cn/featured_topics/algorithm_descriptions/)
-- [轻松更换主干网络](docs/zh_cn/featured_topics/replace_backbone.md)
-- [标注+训练+测试+部署全流程](docs/zh_cn/featured_topics/labeling_to_deployment_tutorials.md)
-- [关于可视化的一切](docs/zh_cn/featured_topics/visualization.md)
-- [模型部署流程](docs/zh_cn/featured_topics/deploy/)
-- [常见错误排查步骤](docs/zh_cn/featured_topics/troubleshooting_steps.md)
+- [如何给 MMYOLO 贡献代码](docs/zh_cn/recommended_topics/contributing.md)
+- [MMYOLO 模型结构设计](docs/zh_cn/recommended_topics/model_design.md)
+- [原理和实现全解析](docs/zh_cn/recommended_topics/algorithm_descriptions/)
+- [轻松更换主干网络](docs/zh_cn/recommended_topics/replace_backbone.md)
+- [标注+训练+测试+部署全流程](docs/zh_cn/recommended_topics/labeling_to_deployment_tutorials.md)
+- [关于可视化的一切](docs/zh_cn/recommended_topics/visualization.md)
+- [模型部署流程](docs/zh_cn/recommended_topics/deploy/)
+- [常见错误排查步骤](docs/zh_cn/recommended_topics/troubleshooting_steps.md)
+- [MMYOLO 产业范例介绍](docs/zh_cn/recommended_topics/industry_examples.md)
+- [MM 系列 Repo 必备基础](docs/zh_cn/recommended_topics/mm_basics.md)
+- [数据集准备和说明](docs/zh_cn/recommended_topics/dataset_preparation.md)
 
 </details>
 
@@ -220,10 +221,10 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [冻结指定网络层权重](docs/zh_cn/common_usage/common_usage/freeze_layers.md)
 - [输出模型预测结果](docs/zh_cn/common_usage/output_predictions.md)
 - [设置随机种子](docs/zh_cn/common_usage/set_random_seed.md)
+- [算法组合替换教程](docs/zh_cn/common_usage/module_combination.md)
 - [使用 mim 跨库调用其他 OpenMMLab 仓库的脚本](docs/zh_cn/common_usage/mim_usage.md)
 - [应用多个 Neck](docs/zh_cn/common_usage/multi_necks.md)
 - [指定特定设备训练或推理](docs/zh_cn/common_usage/specify_device.md)
-- [算法组合替换教程](docs/zh_cn/common_usage/module_combination.md)
 
 </details>
 
@@ -232,15 +233,15 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 - [可视化 COCO 标签](docs/zh_cn/useful_tools/browse_coco_json.md)
 - [可视化数据集](docs/zh_cn/useful_tools/browse_dataset.md)
+- [打印完整配置文件](docs/zh_cn/useful_tools/print_config.md)
 - [可视化数据集分析结果](docs/zh_cn/useful_tools/dataset_analysis.md)
+- [优化锚框尺寸](docs/zh_cn/useful_tools/optimize_anchors.md)
+- [提取 COCO 子集](docs/zh_cn/useful_tools/extract_subcoco.md)
+- [可视化优化器参数策略](docs/zh_cn/useful_tools/vis_scheduler.md)
 - [数据集转换](docs/zh_cn/useful_tools/dataset_converters.md)
 - [数据集下载](docs/zh_cn/useful_tools/download_dataset.md)
-- [提取 COCO 子集](docs/zh_cn/useful_tools/extract_subcoco.md)
 - [日志分析](docs/zh_cn/useful_tools/log_analysis.md)
 - [模型转换](docs/zh_cn/useful_tools/model_converters.md)
-- [优化锚框尺寸](docs/zh_cn/useful_tools/optimize_anchors.md)
-- [打印完整配置文件](docs/zh_cn/useful_tools/print_config.md)
-- [可视化优化器参数策略](docs/zh_cn/useful_tools/vis_scheduler.md)
 
 </details>
 
@@ -249,6 +250,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 - [学习 YOLOv5 配置文件](docs/zh_cn/tutorials/config.md)
 - [数据流](docs/zh_cn/tutorials/data_flow.md)
+- [自定义安装](docs/zh_cn/tutorials/custom_installation.md)
 - [常见问题](docs/zh_cn/tutorials/faq.md)
 
 </details>
@@ -353,7 +355,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 ## ❓ 常见问题 [🔝](#-table-of-contents)
 
-请参考 [FAQ](docs/zh_cn/featured_topics/faq.md) 了解其他用户的常见问题。
+请参考 [FAQ](docs/zh_cn/tutorials/faq.md) 了解其他用户的常见问题。
 
 ## 🙌 贡献指南 [🔝](#-table-of-contents)
 
