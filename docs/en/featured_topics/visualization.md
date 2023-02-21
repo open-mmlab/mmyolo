@@ -291,3 +291,56 @@ python demo/boxam_vis_demo.py \
 <div align=center>
 <img src="https://user-images.githubusercontent.com/17425982/203777566-7c74e82f-b477-488e-958f-91e1d10833b9.jpg" width="800" alt="image"/>
 </div>
+
+## Perform inference on large images
+
+First install [`sahi`](https://github.com/obss/sahi) with:
+
+```shell
+pip install -U sahi>=0.11.4
+```
+
+Perform MMYOLO inference on large images (as satellite imagery) as:
+
+```shell
+wget -P checkpoint https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth
+
+python demo/large_image_demo.py \
+    demo/large_image.jpg \
+    configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py \
+    checkpoint/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth \
+```
+
+Arrange slicing parameters as:
+
+```shell
+python demo/large_image_demo.py \
+    demo/large_image.jpg \
+    configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py \
+    checkpoint/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth \
+    --patch-size 512
+    --patch-overlap-ratio 0.25
+```
+
+Export debug visuals while performing inference on large images as:
+
+```shell
+python demo/large_image_demo.py \
+    demo/large_image.jpg \
+    configs/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py \
+    checkpoint/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth \
+    --debug
+```
+
+[`sahi`](https://github.com/obss/sahi) citation:
+
+```
+@article{akyon2022sahi,
+  title={Slicing Aided Hyper Inference and Fine-tuning for Small Object Detection},
+  author={Akyon, Fatih Cagatay and Altinuc, Sinan Onur and Temizel, Alptekin},
+  journal={2022 IEEE International Conference on Image Processing (ICIP)},
+  doi={10.1109/ICIP46576.2022.9897990},
+  pages={966-970},
+  year={2022}
+}
+```

@@ -2,9 +2,9 @@
 
 We list some common problems many users face and their corresponding solutions here. Feel free to enrich the list if you find any frequent issues and have ways to help others to solve them. If the contents here do not cover your issue, please create an [issue](https://github.com/open-mmlab/mmyolo/issues/new/choose) and make sure you fill in all the required information in the template.
 
-## Why do we need to launch MMYOLO? Why do we need to open a separate repository instead of putting it directly into MMDetection?
+## Why do we need to launch MMYOLO?
 
-Since the open source, we have been receiving similar questions from our community partners, and the answers can be summarized in the following three points.
+Why do we need to launch MMYOLO? Why do we need to open a separate repository instead of putting it directly into MMDetection? Since the open source, we have been receiving similar questions from our community partners, and the answers can be summarized in the following three points.
 
 **(1) Unified operation and inference platform**
 
