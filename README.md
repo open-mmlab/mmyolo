@@ -230,6 +230,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 - [Learn about configs with YOLOv5](docs/en/tutorials/config.md)
 - [Data flow](docs/en/tutorials/data_flow.md)
 - [Custom Installation](docs/en/tutorials/custom_installation.md)
+- [Common Warning Notes](docs/zh_cn/tutorials/warning_notes.md)
 - [FAQ](docs/en/tutorials/faq.md)
 
 </details>

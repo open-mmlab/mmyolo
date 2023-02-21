@@ -70,6 +70,7 @@ You can switch between Chinese and English documents in the top-right corner of 
    tutorials/config.md
    tutorials/data_flow.md
    tutorials/custom_installation.md
+   tutorials/warning_notes.md
    tutorials/faq.md
 
 

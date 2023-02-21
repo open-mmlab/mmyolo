@@ -17,3 +17,23 @@
 **(3) 多任务支持**
 
 还有一层深远的原因： **MMYOLO 任务不局限于 MMDetection**，后续会支持更多任务例如基于 MMPose 实现关键点相关的应用，基于 MMTracking 实现追踪相关的应用，因此不太适合直接并入 MMDetection 中。
+
+## YOLOv5 backbone 替换为 Swin 后效果很差
+
+## MM 系列开源库中有很多组件，如何在 MMYOLO 中使用？
+
+## MMYOLO 中是否可以加入纯背景图片进行训练？
+
+## MMYOLO 是否有计算模型推理 FPS 脚本？
+
+## MMDeploy 和 EasyDeploy 有啥区别？
+
+## 如果指定某一张 GPU 进行训练或测试？
+
+## COCOMetric 中如何查看每个类的 AP
+
+## MMYOLO 中为何没有支持 MMDet 类似的自动学习率缩放功能？
+
+## 如何进行分布式训练或者测试
+
+## 自己训练的模型权重尺寸为啥比官方发布的大？
