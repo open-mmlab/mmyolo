@@ -20,15 +20,15 @@
 
    featured_topics/contributing.md
    featured_topics/model_design.md
-   featured_topics/industry_examples.md
-   featured_topics/dataset_preparation.md
-   featured_topics/mm_basics.md
    featured_topics/algorithm_descriptions/index.rst
    featured_topics/replace_backbone.md
    featured_topics/labeling_to_deployment_tutorials.md
    featured_topics/visualization.md
    featured_topics/deploy/index.rst
    featured_topics/troubleshooting_steps.md
+   featured_topics/industry_examples.md
+   featured_topics/mm_basics.md
+   featured_topics/dataset_preparation.md
 
 .. toctree::
    :maxdepth: 2
@@ -41,10 +41,11 @@
    common_usage/freeze_layers.md
    common_usage/output_predictions.md
    common_usage/set_random_seed.md
+   common_usage/module_combination.md
    common_usage/mim_usage.md
    common_usage/multi_necks.md
    common_usage/specify_device.md
-   common_usage/module_combination.md
+
 
 .. toctree::
    :maxdepth: 2
@@ -52,15 +53,15 @@
 
    useful_tools/browse_coco_json.md
    useful_tools/browse_dataset.md
+   useful_tools/print_config.md
    useful_tools/dataset_analysis.md
+   useful_tools/optimize_anchors.md
+   useful_tools/extract_subcoco.md
+   useful_tools/vis_scheduler.md
    useful_tools/dataset_converters.md
    useful_tools/download_dataset.md
-   useful_tools/extract_subcoco.md
    useful_tools/log_analysis.md
    useful_tools/model_converters.md
-   useful_tools/optimize_anchors.md
-   useful_tools/print_config.md
-   useful_tools/vis_scheduler.md
 
 .. toctree::
    :maxdepth: 2
