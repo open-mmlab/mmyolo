@@ -12,7 +12,7 @@
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
-        "configs/yolox/yoloxkpt_s_8xb8-100e_coco6280_change_ann.py",
+        "configs/yolox/yoloxkpt_s_8xb8-100e_coco6280_change_ann.py"
         // "configs/yolox/yoloxkpt_s_8xb8-300e_coco_mini_debug.py"
         // "configs/yolox/yoloxkpt_s_8xb8-300e_coco.py"
         // "configs/yolox/yoloxkpt_s_8xb8-300e_coco6280.py"
@@ -54,10 +54,11 @@
       "args": [
         "configs/yolox/yoloxkpt_s_8xb8-300e_coco_mini_debug.py",
         // "work_dirs/yoloxkpt_s_8xb8-300e_coco/yoloxkpt_s_8xb8-300e_coco.py",
-        "work_dirs/yoloxkpt_s_8xb8-300e_coco/best_coco/bbox_mAP_epoch_100.pth",
-        "--show",
-        "--json-prefix",
-        "bug"
+        // "work_dirs/yoloxkpt_s_8xb8-300e_coco/best_coco/bbox_mAP_epoch_100.pth",
+        "/home/houbowei/yolox-pose/YOLOX_outputs/kpt_anno_separate_head/best_ckpt_mmyolo.pth",
+        // "--show",
+        // "--json-prefix",
+        // "bug"
       ]
     },
     {
@@ -72,6 +73,20 @@
         "work_dirs/yoloxkpt_s_8xb8-300e_coco/best_coco/bbox_mAP_epoch_100.pth",
         "--simplify",
         "--model-only"
+      ]
+    },
+    {
+      "name": "convert yolox to mmyolo",
+      "type": "python",
+      "request": "launch",
+      "program": "tools/model_converters/yolox_to_mmyolo.py",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "args": [
+        "--src",
+        "~/yolox-pose/YOLOX_outputs/kpt_anno_separate_head/best_ckpt.pth",
+        "--dst",
+        "~/yolox-pose/YOLOX_outputs/kpt_anno_separate_head/best_ckpt_mmyolo.pth"
       ]
     }
   ]

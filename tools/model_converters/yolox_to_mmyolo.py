@@ -66,10 +66,17 @@ def convert_head(model_key, model_weight, state_dict, converted_names):
     elif 'reg_convs' in model_key:
         new_key = model_key.replace(
             'head.reg_convs', 'bbox_head.head_module.multi_level_reg_convs')
+    elif 'kpt_convs' in model_key:
+        new_key = model_key.replace(
+            'head.kpt_convs', 'bbox_head.head_module.multi_level_kpt_convs'
+        )
     elif 'preds' in model_key:
-        new_key = model_key.replace('head.',
-                                    'bbox_head.head_module.multi_level_conv_')
-        new_key = new_key.replace('_preds', '')
+        if 'vis' in model_key:
+            new_key = model_key.replace('head.kpt_vis_preds', 'bbox_head.head_module.multi_level_conv_vis')
+        else:
+            new_key = model_key.replace('head.',
+                                        'bbox_head.head_module.multi_level_conv_')
+            new_key = new_key.replace('_preds', '')
     state_dict[new_key] = model_weight
     converted_names.add(model_key)
     print(f'Convert {model_key} to {new_key}')
