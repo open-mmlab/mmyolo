@@ -3,6 +3,7 @@ from typing import Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
+import numpy as np
 from mmpose.evaluation.functional.nms import oks_iou
 from mmpose.datasets.datasets.utils import parse_pose_metainfo
 from torch import Tensor
@@ -16,6 +17,7 @@ class OksLoss(nn.Module):
 
     def __init__(self, dataset_info, oks_loss='oks', loss_weight=1.0) -> None:
         super().__init__()
+        self.l2_loss = nn.MSELoss(reduction="none")
         if isinstance(dataset_info, dict):
             self.dataset_info = dataset_info
         if isinstance(dataset_info, str):
@@ -23,47 +25,35 @@ class OksLoss(nn.Module):
             self.dataset_info = parse_pose_metainfo(_metainfo)
         else:
             raise TypeError('dataset_info must be a dict or a str')
-        self.oks_loss = oks_loss
+        self.oks_type = oks_loss
         self.loss_weight = loss_weight
 
-    def forward(self, preds: Tensor, targets: Tensor, weights: Tensor) -> Tensor:
+    def forward(self, kpt_preds: Tensor, kpt_targets: Tensor, kpt_mask: Tensor, bbox_targets: Tensor) -> Tensor:
         """
         forward preds and targets to calculate OKS loss.
-
         Implementation of OKS loss in https://arxiv.org/abs/2204.06806
 
         Args:
-            preds (Tensor): keypoints tensor with shape N x K x 3, where N is
-                the batch size, K is the number of keypoints, 3 is the keypoint
-                coordinates plus one visible.
-            targets (Tensor): ground truth keypoints tensor with shape N x K x 3.
-            weights (Tensor): weights of keypoints with shape N x K x (1).
-
-        Returns:
-            Tensor: loss value.
+            kpt_preds(Tensor): predicted keypoints in shape N x k x 2, N: batch, K: num of keypoints, 2: xy coordinates.
+            kpt_targets(Tensor): same shape as predicted keypoints.
+            kpt_mask(Tensor): mask of valid keypoints in shape N x k, 1 for valid, 0 for invalid.
+            bbox_targets(Tensor): bounding boxes in shape N x 4, 4: xyxy coordinates.
         """
-        assert preds.shape == targets.shape
-        assert preds.dim() == 3
-        assert preds.shape[1] == self.dataset_info['num_keypoints']
-
-        # area
-        a_g = Keypoints._kpt_area(targets)
-        a_p = Keypoints._kpt_area(preds)
-
-        # calculate oks
-        if self.oks_loss == 'oks':
-            e = self._oks(targets, preds, a_g, a_p,
-                                self.dataset_info['sigmas'])
-        elif self.oks_loss == 'oks2':
-            e = self._oks2(targets, preds, a_g, a_p,
-                                self.dataset_info['sigmas'])
-        # kpt loss factor
-        _eps = 1e-6
-        kpt_mask = weights
-        kpt_loss_factor = ((kpt_mask != 0).sum() + (kpt_mask == 0).sum()) / (
-            (kpt_mask != 0).sum() + _eps)
-        oks_loss = self.loss_weight * torch.exp(-e)[kpt_mask].mean() * kpt_loss_factor
-        return oks_loss
+        ns = kpt_targets.size(0)
+        gt_bboxes_area = (bbox_targets[..., 2] - bbox_targets[..., 0]) * (bbox_targets[..., 3]-bbox_targets[..., 1]) * 0.53
+        gt_bboxes_area = repeat(gt_bboxes_area, 'n -> n k', k=kpt_preds.size(1))
+        kpt_sigmas = torch.tensor(self.dataset_info['sigmas'], device=kpt_targets.device, dtype=kpt_targets.dtype)
+        kpt_sigmas = repeat(kpt_sigmas, 'k -> n k', n=ns)
+        valid_kpt_preds = kpt_preds[kpt_mask]
+        valid_kpt_targets = kpt_targets[kpt_mask]
+        e = self.l2_loss(valid_kpt_preds, valid_kpt_targets)
+        kn = kpt_sigmas[kpt_mask]
+        s = (gt_bboxes_area[kpt_mask] + np.spacing(1)) / 2
+        s = s.unsqueeze(1).repeat(1, 2)
+        kn = kn.unsqueeze(1).repeat(1, 2)
+        loss_kpt = (e/s) * kn
+        loss_kpt = 1 - torch.exp(-1 * e/kn/s).mean()
+        return loss_kpt * self.loss_weight
 
     def _oks(self,
              g: Tensor,
