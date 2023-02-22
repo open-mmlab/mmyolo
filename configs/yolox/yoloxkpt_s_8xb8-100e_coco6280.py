@@ -179,23 +179,18 @@ train_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         metainfo=dataset_info,
-        ann_file='annotations/person_keypoints_train2017_6280.json',
+        ann_file='annotations/person_keypoints_train2017_6280_kpt2bbox.json',
         data_prefix=dict(img='train2017/'),
         filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=train_pipeline_stage1))
 
 test_pipeline = [
     *pre_transform,
-    # dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='YOLOPoseResize', scale=img_scale, keep_ratio=True),
     dict(
         type='mmdet.Pad',
         pad_to_square=True,
         pad_val=dict(img=(114.0, 114.0, 114.0))),
-    # dict(
-    #     type='LoadAnnotations',
-    #     with_bbox=True,
-    #     with_keypoints=True),
     dict(
         type='YOLOPoseFilterAnnotations',
         min_gt_bbox_wh=(1, 1),
@@ -250,9 +245,11 @@ optim_wrapper = dict(
     type='OptimWrapper',
     optimizer=dict(
         type='SGD', lr=base_lr, momentum=0.9, weight_decay=5e-4,
-        nesterov=True),
-    paramwise_cfg=dict(norm_decay_mult=0., bias_decay_mult=0.),
-    clip_grad=dict(max_norm=35, norm_type=2))
+        nesterov=True, batch_size_per_gpu=train_batch_size_per_gpu),
+    # paramwise_cfg=dict(norm_decay_mult=0., bias_decay_mult=0.),
+    # clip_grad=dict(max_norm=35, norm_type=2),
+    constructor='YOLOv5OptimizerConstructor'
+)
 
 # learning rate
 param_scheduler = [

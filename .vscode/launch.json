@@ -20,7 +20,8 @@
       "console": "integratedTerminal",
       "justMyCode": false,
       "args": [
-        "configs/yolox/mmyolo_one_img.py",
+        // "configs/yolox/mmyolo_one_img.py",
+        "configs/yolox/yoloxkpt_s_8xb8-100e_coco6280.py"
         // "configs/yolox/yoloxkpt_s_8xb8-100e_coco6280_change_ann.py"
         // "configs/yolox/yoloxkpt_s_8xb8-300e_coco_mini_debug.py"
         // "configs/yolox/yoloxkpt_s_8xb8-300e_coco.py"

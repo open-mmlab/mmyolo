@@ -6,7 +6,7 @@ optim_wrapper = dict(
 
 default_hooks = dict(
     timer=dict(type='IterTimerHook'),
-    logger=dict(type='LoggerHook', interval=50),
+    logger=dict(type='LoggerHook', interval=10),
     param_scheduler=dict(type='ParamSchedulerHook'),
     checkpoint=dict(
         type='CheckpointHook', interval=1, max_keep_ckpts=3, save_best=['auto'],
