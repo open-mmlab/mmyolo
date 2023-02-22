@@ -1,4 +1,4 @@
-_base_ = './rtmdet-r_l_syncbn_fast_1xb8_36e_dota.py'
+_base_ = './rtmdet-r_l_syncbn_fast_2xb4_36e_dota.py'
 
 # ========================modified parameters======================
 data_root = 'data/split_ms_dota/'

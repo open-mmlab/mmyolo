@@ -1,4 +1,4 @@
-_base_ = './rtmdet-r_l_syncbn_fast_1xb8_36e_dota.py'
+_base_ = './rtmdet-r_l_syncbn_fast_2xb4_36e_dota.py'
 
 # This config use longer schedule with Mixup, Mosaic and Random Rotate.
 
@@ -31,6 +31,9 @@ save_checkpoint_intervals = 10
 val_interval_stage2 = 1
 # The maximum checkpoints to keep.
 max_keep_ckpts = 3
+
+# Submission dir for result submit
+submission_dir = './work_dirs/{{fileBasenameNoExtension}}/submission'
 
 # =======================Unmodified in most cases==================
 
@@ -149,3 +152,17 @@ train_cfg = dict(
     max_epochs=max_epochs,
     val_interval=save_checkpoint_intervals,
     dynamic_intervals=[(max_epochs - num_epochs_stage2, val_interval_stage2)])
+
+# Inference on test dataset and format the output results
+# for submission. Note: the test set has no annotation.
+# test_dataloader = dict(
+#     dataset=dict(
+#         data_root=_base_.data_root,
+#         ann_file='', # test set has no annotation
+#         data_prefix=dict(img_path=_base_.test_data_prefix),
+#         pipeline=_base_.test_pipeline))
+# test_evaluator = dict(
+#     type='mmrotate.DOTAMetric',
+#     format_only=True,
+#     merge_patches=True,
+#     outfile_prefix=submission_dir)

@@ -249,29 +249,29 @@ val_dataloader = dict(
 val_evaluator = dict(type='mmrotate.DOTAMetric', metric='mAP')
 
 # Inference on val dataset
-# test_dataloader = val_dataloader
-# test_evaluator = val_evaluator
+test_dataloader = val_dataloader
+test_evaluator = val_evaluator
 
 # Inference on test dataset and format the output results
 # for submission. Note: the test set has no annotation.
-test_dataloader = dict(
-    batch_size=val_batch_size_per_gpu,
-    num_workers=val_num_workers,
-    persistent_workers=True,
-    drop_last=False,
-    sampler=dict(type='DefaultSampler', shuffle=False),
-    dataset=dict(
-        type=dataset_type,
-        data_root=data_root,
-        data_prefix=dict(img_path=test_data_prefix),
-        test_mode=True,
-        batch_shapes_cfg=batch_shapes_cfg,
-        pipeline=test_pipeline))
-test_evaluator = dict(
-    type='mmrotate.DOTAMetric',
-    format_only=True,
-    merge_patches=True,
-    outfile_prefix=submission_dir)
+# test_dataloader = dict(
+#     batch_size=val_batch_size_per_gpu,
+#     num_workers=val_num_workers,
+#     persistent_workers=True,
+#     drop_last=False,
+#     sampler=dict(type='DefaultSampler', shuffle=False),
+#     dataset=dict(
+#         type=dataset_type,
+#         data_root=data_root,
+#         data_prefix=dict(img_path=test_data_prefix),
+#         test_mode=True,
+#         batch_shapes_cfg=batch_shapes_cfg,
+#         pipeline=test_pipeline))
+# test_evaluator = dict(
+#     type='mmrotate.DOTAMetric',
+#     format_only=True,
+#     merge_patches=True,
+#     outfile_prefix=submission_dir)
 
 # optimizer
 optim_wrapper = dict(

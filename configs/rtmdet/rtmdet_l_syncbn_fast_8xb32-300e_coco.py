@@ -2,21 +2,30 @@ _base_ = '../_base_/default_runtime.py'
 
 # ========================Frequently modified parameters======================
 # -----data related-----
-data_root = 'data/coco/'
+data_root = '/datasets/vhr-10/'
 # Path of train annotation file
-train_ann_file = 'annotations/instances_train2017.json'
-train_data_prefix = 'train2017/'  # Prefix of train image path
+train_ann_file = 'annotations.json'
+train_data_prefix = 'positive image set/'  # Prefix of train image path
 # Path of val annotation file
-val_ann_file = 'annotations/instances_val2017.json'
-val_data_prefix = 'val2017/'  # Prefix of val image path
+val_ann_file = 'instances_val2017.json'
+val_data_prefix = 'positive image set/'  # Prefix of val image path
 
-num_classes = 80  # Number of classes for classification
+num_classes = 10  # Number of classes for classification
 # Batch size of a single GPU during training
-train_batch_size_per_gpu = 32
+train_batch_size_per_gpu = 8
 # Worker to pre-fetch data for each single GPU during training
 train_num_workers = 10
 # persistent_workers must be False if num_workers is 0.
 persistent_workers = True
+
+metainfo = {
+    'classes':
+    ('airplane', 'ship', 'storage_tank', 'baseball_diamond', 'tennis_court',
+     'basketball_court', 'ground_track_field', 'harbor', 'bridge', 'vehicle'),
+    'palette': [
+        (220, 20, 60),
+    ]
+}
 
 # -----train val related-----
 # Base learning rate for optim_wrapper. Corresponding to 8xb16=64 bs
@@ -46,7 +55,7 @@ mixup_max_cached_images = 20
 # Dataset type, this will be used to define the dataset
 dataset_type = 'YOLOv5CocoDataset'
 # Batch size of a single GPU during validation
-val_batch_size_per_gpu = 32
+val_batch_size_per_gpu = 8
 # Worker to pre-fetch data for each single GPU during validation
 val_num_workers = 10
 
@@ -216,6 +225,7 @@ train_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         ann_file=train_ann_file,
+        metainfo=metainfo,
         data_prefix=dict(img=train_data_prefix),
         filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=train_pipeline))
@@ -231,6 +241,7 @@ val_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         ann_file=val_ann_file,
+        metainfo=metainfo,
         data_prefix=dict(img=val_data_prefix),
         test_mode=True,
         batch_shapes_cfg=batch_shapes_cfg,
@@ -274,6 +285,7 @@ param_scheduler = [
 
 # hooks
 default_hooks = dict(
+    logger=dict(interval=1),
     checkpoint=dict(
         type='CheckpointHook',
         interval=save_checkpoint_intervals,
