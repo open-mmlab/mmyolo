@@ -15,11 +15,11 @@ val_data_prefix = 'trainval/images/'  # Prefix of val image path
 test_data_prefix = 'test/images/'
 
 # Submission dir for result submit
-submission_dir = './work_dirs/rtm-r-tiny-final/submission'
+submission_dir = './work_dirs/{{fileBasenameNoExtension}}/submission'
 
 num_classes = 15  # Number of classes for classification
 # Batch size of a single GPU during training
-train_batch_size_per_gpu = 8
+train_batch_size_per_gpu = 4
 # Worker to pre-fetch data for each single GPU during training
 train_num_workers = 8
 # persistent_workers must be False if num_workers is 0.

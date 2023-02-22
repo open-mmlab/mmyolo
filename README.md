@@ -62,18 +62,19 @@ English | [简体中文](README_zh-CN.md)
 
 ## 📄 Table of Contents
 
-- [🥳 🚀 What's New](#--whats-new-)
-  - [✨ Highlight](#-highlight-)
-- [📖 Introduction](#-introduction-)
-- [🛠️ Installation](#%EF%B8%8F-installation-)
-- [👨‍🏫 Tutorial](#-tutorial-)
-- [📊 Overview of Benchmark and Model Zoo](#-overview-of-benchmark-and-model-zoo-)
-- [❓ FAQ](#-faq-)
-- [🙌 Contributing](#-contributing-)
-- [🤝 Acknowledgement](#-acknowledgement-)
-- [🖊️ Citation](#️-citation-)
-- [🎫 License](#-license-)
-- [🏗️ Projects in OpenMMLab](#%EF%B8%8F-projects-in-openmmlab-)
+- [📄 Table of Contents](#-table-of-contents)
+- [🥳 🚀 What's New 🔝](#--whats-new-)
+  - [✨ Highlight 🔝](#-highlight-)
+- [📖 Introduction 🔝](#-introduction-)
+- [🛠️ Installation 🔝](#️-installation-)
+- [👨‍🏫 Tutorial 🔝](#-tutorial-)
+- [📊 Overview of Benchmark and Model Zoo 🔝](#-overview-of-benchmark-and-model-zoo-)
+- [❓ FAQ 🔝](#-faq-)
+- [🙌 Contributing 🔝](#-contributing-)
+- [🤝 Acknowledgement 🔝](#-acknowledgement-)
+- [🖊️ Citation 🔝](#️-citation-)
+- [🎫 License 🔝](#-license-)
+- [🏗️ Projects in OpenMMLab 🔝](#️-projects-in-openmmlab-)
 
 ## 🥳 🚀 What's New [🔝](#-table-of-contents)
 
@@ -229,6 +230,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 
 - [Learn about configs with YOLOv5](docs/en/tutorials/config.md)
 - [Data flow](docs/en/tutorials/data_flow.md)
+- [Rotated detection](docs/en/tutorials/rotated_detection.md)
 - [Custom Installation](docs/en/tutorials/custom_installation.md)
 - [FAQ](docs/en/tutorials/faq.md)
 
