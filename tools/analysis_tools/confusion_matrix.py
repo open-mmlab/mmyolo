@@ -10,8 +10,8 @@ from mmengine.fileio import load
 from mmengine.utils import ProgressBar
 
 from mmdet.evaluation import bbox_overlaps
-from mmdet.registry import DATASETS
 from mmdet.utils import replace_cfg_vals, update_data_root
+from mmyolo.registry import DATASETS
 from mmyolo.utils import register_all_modules
 
 
