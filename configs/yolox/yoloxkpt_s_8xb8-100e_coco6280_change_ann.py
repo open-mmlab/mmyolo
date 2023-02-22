@@ -10,14 +10,14 @@ deepen_factor = 0.33
 widen_factor = 0.5
 
 save_epoch_intervals = 10
-train_batch_size_per_gpu = 64
+train_batch_size_per_gpu = 16
 # NOTE: for debugging set to 0
-train_num_workers = 8
+train_num_workers = 4
 val_batch_size_per_gpu = 1
 val_num_workers = 4
 
 max_epochs = 100
-num_last_epochs = 15
+num_last_epochs = 20
 
 # model settings
 model = dict(
@@ -101,8 +101,8 @@ model = dict(
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'))),
     test_cfg=dict(
         yolox_style=True,  # better
-        multi_label=True,  # 40.5 -> 40.7
-        score_thr=0.001,
+        multi_label=False,  # 40.5 -> 40.7
+        score_thr=0.01,
         max_per_img=300,
         nms=dict(type='nms', iou_threshold=0.65)))
 
@@ -179,7 +179,7 @@ train_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         metainfo=dataset_info,
-        ann_file='annotations/person_keypoints_train2017_6280_kpt2bbox.json',
+        ann_file='annotations/person_keypoints_train2017_6280.json',
         data_prefix=dict(img='train2017/'),
         filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=train_pipeline_stage1))
