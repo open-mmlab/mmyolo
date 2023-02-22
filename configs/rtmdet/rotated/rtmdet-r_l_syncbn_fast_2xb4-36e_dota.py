@@ -148,7 +148,7 @@ model = dict(
         # If true, it will apply loss_bbox on horizontal box, and angle_loss
         # needs to be specified. In this case the loss_bbox should use
         # horizontal box loss e.g. IoULoss. Arg details can be seen in
-        # `docs/zh_cn/user_guides/rotated_detection.md`
+        # `docs/zh_cn/tutorials/rotated_detection.md`
         use_hbbox_loss=False,
         loss_angle=None),
     train_cfg=dict(
