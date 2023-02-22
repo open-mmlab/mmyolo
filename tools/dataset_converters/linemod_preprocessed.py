@@ -160,7 +160,7 @@ def convert_linemod(id, object_path, data_examples, gt_dict, info_dict,
         instances_list = instances[i]
 
         data_info = dict(
-            id=f'{image_id}.png',
+            img_id=image_id,
             img_path=image_paths[i],
             mask_path=mask_paths[i],
             depth_path=depth_paths[i],
@@ -194,8 +194,8 @@ if __name__ == '__main__':
 
     metainfo = dict(
         dataset_type='linemod_preprocessed',
-        taskname='PoseEstimation',
-        classes={
+        task_name='PoseEstimation',
+        CLASSES={
             'ape', 'benchvise', 'bowl', 'cam', 'can', 'cat', 'cup', 'driller',
             'duck', 'eggbox', 'glue', 'holepuncher', 'iron', 'lamp', 'phone'
         })
@@ -221,6 +221,7 @@ if __name__ == '__main__':
         phone='',
     )
     for i, name in enumerate(model_path_list):
+        i += 1
         if i < 10:
             model_path = model_info_path + 'obj_0' + f'{i}' + '.ply'
         else:

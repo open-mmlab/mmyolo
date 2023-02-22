@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .loading import Load6DAnnotations, LoadPlyFromFile
+from .formatting import Pack6DInputs
+from .loading import Load6DAnnotations
 from .mix_img_transforms import Mosaic, Mosaic9, YOLOv5MixUp, YOLOXMixUp
 from .transforms import (LetterResize, LoadAnnotations, PPYOLOERandomCrop,
                          PPYOLOERandomDistort, RemoveDataElement,
@@ -11,5 +12,5 @@ __all__ = [
     'YOLOv5MixUp', 'YOLOv5HSVRandomAug', 'LoadAnnotations',
     'YOLOv5RandomAffine', 'PPYOLOERandomDistort', 'PPYOLOERandomCrop',
     'Mosaic9', 'YOLOv5CopyPaste', 'RemoveDataElement', 'Load6DAnnotations',
-    'LoadPlyFromFile'
+    'Pack6DInputs'
 ]
