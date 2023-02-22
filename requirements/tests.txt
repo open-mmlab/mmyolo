@@ -5,6 +5,8 @@ isort==4.3.21
 # Note: used for kwarray.group_items, this may be ported to mmcv in the future.
 kwarray
 memory_profiler
+mmcls>=1.0.0rc4
+mmrazor>=1.0.0rc2
 parameterized
 protobuf<=3.20.1
 psutil

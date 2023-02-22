@@ -115,6 +115,7 @@ data
 *.log.json
 docs/modelzoo_statistics.md
 mmyolo/.mim
+output/
 work_dirs
 yolov5-6.1/
 

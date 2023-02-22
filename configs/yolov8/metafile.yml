@@ -1,0 +1,140 @@
+Collections:
+  - Name: YOLOv8
+    Metadata:
+      Training Data: COCO
+      Training Techniques:
+        - SGD with Nesterov
+        - Weight Decay
+        - AMP
+        - Synchronize BN
+      Training Resources: 8x A100 GPUs
+      Architecture:
+        - CSPDarkNet
+        - PAFPN
+        - Decoupled Head
+    README: configs/yolov8/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmyolo/blob/v0.0.1/mmyolo/models/detectors/yolo_detector.py#L12
+      Version: v0.0.1
+
+Models:
+  - Name: yolov8_n_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_n_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB): 2.8
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 37.2
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov8/yolov8_n_syncbn_fast_8xb16-500e_coco/yolov8_n_syncbn_fast_8xb16-500e_coco_20230114_131804-88c11cdb.pth
+  - Name: yolov8_s_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_s_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB): 4.0
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 44.2
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov8/yolov8_s_syncbn_fast_8xb16-500e_coco/yolov8_s_syncbn_fast_8xb16-500e_coco_20230117_180101-5aa5f0f1.pth
+  - Name: yolov8_m_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_m_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB): 7.2
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 49.8
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov8/yolov8_m_syncbn_fast_8xb16-500e_coco/yolov8_m_syncbn_fast_8xb16-500e_coco_20230115_192200-c22e560a.pth
+  - Name: yolov8_l_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_l_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB): 9.8
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 52.1
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov8/yolov8_l_syncbn_fast_8xb16-500e_coco/yolov8_l_syncbn_fast_8xb16-500e_coco_20230217_182526-189611b6.pth
+  - Name: yolov8_x_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_x_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB): 12.2
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 52.7
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov8/yolov8_x_syncbn_fast_8xb16-500e_coco/yolov8_x_syncbn_fast_8xb16-500e_coco_20230218_023338-5674673c.pth
+  - Name: yolov8_n_mask-refine_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_n_mask-refine_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB): 2.5
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 37.4
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov8/yolov8_n_mask-refine_syncbn_fast_8xb16-500e_coco/yolov8_n_mask-refine_syncbn_fast_8xb16-500e_coco_20230216_101206-b975b1cd.pth
+  - Name: yolov8_s_mask-refine_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_s_mask-refine_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB): 4.0
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 45.1
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov8/yolov8_s_mask-refine_syncbn_fast_8xb16-500e_coco/yolov8_s_mask-refine_syncbn_fast_8xb16-500e_coco_20230216_095938-ce3c1b3f.pth
+  - Name: yolov8_m_mask-refine_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_m_mask-refine_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB): 7.0
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 50.6
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov8/yolov8_m_mask-refine_syncbn_fast_8xb16-500e_coco/yolov8_m_mask-refine_syncbn_fast_8xb16-500e_coco_20230216_223400-f40abfcd.pth
+  - Name: yolov8_l_mask-refine_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_l_mask-refine_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB): 9.1
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 53.0
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov8/yolov8_l_mask-refine_syncbn_fast_8xb16-500e_coco/yolov8_l_mask-refine_syncbn_fast_8xb16-500e_coco_20230217_120100-5881dec4.pth
+  - Name: yolov8_x_mask-refine_syncbn_fast_8xb16-500e_coco
+    In Collection: YOLOv8
+    Config: configs/yolov8/yolov8_x_mask-refine_syncbn_fast_8xb16-500e_coco.py
+    Metadata:
+      Training Memory (GB): 12.4
+      Epochs: 500
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 54.0
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov8/yolov8_x_mask-refine_syncbn_fast_8xb16-500e_coco/yolov8_x_mask-refine_syncbn_fast_8xb16-500e_coco_20230217_120411-079ca8d1.pth

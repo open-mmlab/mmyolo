@@ -15,9 +15,21 @@
 
 请参考 [YOLOv6](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov6)。
 
+### YOLOv7
+
+请参考 [YOLOv7](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov7)。
+
+### YOLOv8
+
+请参考 [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov8)。
+
 ### YOLOX
 
 请参考 [YOLOX](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolox)。
+
+### PPYOLO-E
+
+请参考 [PPYOLO-E](https://github.com/open-mmlab/mmyolo/blob/main/configs/ppyoloe)。
 
 ### RTMDet
 

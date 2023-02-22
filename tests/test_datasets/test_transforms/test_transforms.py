@@ -7,14 +7,15 @@ import mmcv
 import numpy as np
 import torch
 from mmdet.structures.bbox import HorizontalBoxes
-from mmdet.structures.mask import BitmapMasks
+from mmdet.structures.mask import BitmapMasks, PolygonMasks
 
 from mmyolo.datasets.transforms import (LetterResize, LoadAnnotations,
                                         YOLOv5HSVRandomAug,
                                         YOLOv5KeepRatioResize,
                                         YOLOv5RandomAffine)
 from mmyolo.datasets.transforms.transforms import (PPYOLOERandomCrop,
-                                                   PPYOLOERandomDistort)
+                                                   PPYOLOERandomDistort,
+                                                   YOLOv5CopyPaste)
 
 
 class TestLetterResize(unittest.TestCase):
@@ -30,7 +31,7 @@ class TestLetterResize(unittest.TestCase):
             img=np.random.random((300, 400, 3)),
             gt_bboxes=np.array([[0, 0, 150, 150]], dtype=np.float32),
             batch_shape=np.array([192, 672], dtype=np.int64),
-            gt_masks=BitmapMasks(rng.rand(1, 300, 400), height=300, width=400))
+            gt_masks=PolygonMasks.random(1, height=300, width=400, rng=rng))
         self.data_info2 = dict(
             img=np.random.random((300, 400, 3)),
             gt_bboxes=np.array([[0, 0, 150, 150]], dtype=np.float32))
@@ -88,7 +89,6 @@ class TestLetterResize(unittest.TestCase):
 
         # Test
         transform = LetterResize(scale=(640, 640), pad_val=dict(img=144))
-        rng = np.random.RandomState(0)
         for _ in range(5):
             input_h, input_w = np.random.randint(100, 700), np.random.randint(
                 100, 700)
@@ -99,8 +99,8 @@ class TestLetterResize(unittest.TestCase):
                 img=np.random.random((input_h, input_w, 3)),
                 gt_bboxes=np.array([[0, 0, 10, 10]], dtype=np.float32),
                 batch_shape=np.array([output_h, output_w], dtype=np.int64),
-                gt_masks=BitmapMasks(
-                    rng.rand(1, input_h, input_w),
+                gt_masks=PolygonMasks(
+                    [[np.array([0., 0., 0., 10., 10., 10., 10., 0.])]],
                     height=input_h,
                     width=input_w))
             results = transform(data_info)
@@ -111,15 +111,14 @@ class TestLetterResize(unittest.TestCase):
 
         # Test without batchshape
         transform = LetterResize(scale=(640, 640), pad_val=dict(img=144))
-        rng = np.random.RandomState(0)
         for _ in range(5):
             input_h, input_w = np.random.randint(100, 700), np.random.randint(
                 100, 700)
             data_info = dict(
                 img=np.random.random((input_h, input_w, 3)),
                 gt_bboxes=np.array([[0, 0, 10, 10]], dtype=np.float32),
-                gt_masks=BitmapMasks(
-                    rng.rand(1, input_h, input_w),
+                gt_masks=PolygonMasks(
+                    [[np.array([0., 0., 0., 10., 10., 10., 10., 0.])]],
                     height=input_h,
                     width=input_w))
             results = transform(data_info)
@@ -178,7 +177,8 @@ class TestYOLOv5KeepRatioResize(unittest.TestCase):
         self.data_info1 = dict(
             img=np.random.random((300, 400, 3)),
             gt_bboxes=np.array([[0, 0, 150, 150]], dtype=np.float32),
-            gt_masks=BitmapMasks(rng.rand(1, 300, 400), height=300, width=400))
+            gt_masks=PolygonMasks.random(
+                num_masks=1, height=300, width=400, rng=rng))
         self.data_info2 = dict(img=np.random.random((300, 400, 3)))
 
     def test_yolov5_keep_ratio_resize(self):
@@ -454,3 +454,37 @@ class TestPPYOLOERandomDistort(unittest.TestCase):
         self.assertTrue(results['gt_bboxes_labels'].dtype == np.int64)
         self.assertTrue(results['gt_bboxes'].dtype == torch.float32)
         self.assertTrue(results['gt_ignore_flags'].dtype == bool)
+
+
+class TestYOLOv5CopyPaste(unittest.TestCase):
+
+    def setUp(self):
+        """Set up the data info which are used in every test method.
+
+        TestCase calls functions in this order: setUp() -> testMethod() ->
+        tearDown() -> cleanUp()
+        """
+        self.data_info = dict(
+            img=np.random.random((300, 400, 3)),
+            gt_bboxes=np.array([[0, 0, 10, 10]], dtype=np.float32),
+            gt_masks=PolygonMasks(
+                [[np.array([0., 0., 0., 10., 10., 10., 10., 0.])]],
+                height=300,
+                width=400))
+
+    def test_transform(self):
+        # test transform
+        transform = YOLOv5CopyPaste(prob=1.0)
+        results = transform(copy.deepcopy(self.data_info))
+        self.assertTrue(len(results['gt_bboxes']) == 2)
+        self.assertTrue(len(results['gt_masks']) == 2)
+
+        rng = np.random.RandomState(0)
+        # test with bitmap
+        with self.assertRaises(AssertionError):
+            results = transform(
+                dict(
+                    img=np.random.random((300, 400, 3)),
+                    gt_bboxes=np.array([[0, 0, 10, 10]], dtype=np.float32),
+                    gt_masks=BitmapMasks(
+                        rng.rand(1, 300, 400), height=300, width=400)))
