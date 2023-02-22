@@ -5,12 +5,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MultipleLocator
 from mmcv.ops import nms
+from mmdet.evaluation import bbox_overlaps
+from mmdet.utils import replace_cfg_vals, update_data_root
 from mmengine import Config, DictAction
 from mmengine.fileio import load
 from mmengine.utils import ProgressBar
 
-from mmdet.evaluation import bbox_overlaps
-from mmdet.utils import replace_cfg_vals, update_data_root
 from mmyolo.registry import DATASETS
 from mmyolo.utils import register_all_modules
 
