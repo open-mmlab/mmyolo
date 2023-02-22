@@ -18,6 +18,9 @@
 
 还有一层深远的原因： **MMYOLO 任务不局限于 MMDetection**，后续会支持更多任务例如基于 MMPose 实现关键点相关的应用，基于 MMTracking 实现追踪相关的应用，因此不太适合直接并入 MMDetection 中。
 
+## projects 文件夹是用来干什么的？
+
+
 ## YOLOv5 backbone 替换为 Swin 后效果很差
 
 ## MM 系列开源库中有很多组件，如何在 MMYOLO 中使用？
@@ -39,3 +42,20 @@
 ## 自己训练的模型权重尺寸为啥比官方发布的大？
 
 ## RTMDet 为何训练所占显存比 YOLOv5 多很多？
+
+## 修改一些代码后是否需要重新安装 MMYOLO
+
+如果你遵循最佳实践，即使用 mim install -v -e . 安装的 mmdet，则对本地代码所作的任何修改都会生效，无需重新安装
+
+## 如何使用多个 MMYOLO 版本进行开发
+
+你可以拥有多个文件夹，例如 mmyolo-v1, mmyolo-v2。 
+
+要使环境中安装默认的 MMYOLO 而不是当前正在在使用的，可以删除出现在相关脚本中的代码：
+
+```shell
+PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
+```
+
+## 训练中保存最好模型
+

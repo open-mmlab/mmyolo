@@ -19,3 +19,7 @@
 ## 训练中不打印 loss，但是程序依然正常训练和评估
 
 ## 训练中其他不符合预期或者错误
+
+## GPU out of memory
+
+## Loss goes Nan
