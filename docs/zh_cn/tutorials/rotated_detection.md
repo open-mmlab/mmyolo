@@ -59,7 +59,7 @@ mmyolo
 
 ### 数据集和评测器配置
 
-关于配置文件的基础请先阅读 [学习 YOLOV5 配置文件](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/config.html). 下面介绍旋转目标检测的一些必要设置。
+关于配置文件的基础请先阅读 [学习 YOLOV5 配置文件](./config.md). 下面介绍旋转目标检测的一些必要设置。
 
 ```python
 dataset_type = 'YOLOv5DOTADataset'  # 数据集类型，这将被用来定义数据集
@@ -326,6 +326,4 @@ visualizer = dict(
 
 目前测试可用的工具包括：
 
-[可视化数据集](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id3)
-
-<!-- [可视化数据集分析 TODO](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/useful_tools.html#id3)  -->
+[可视化数据集](../useful_tools/browse_dataset.md)
