@@ -9,12 +9,6 @@ from mmengine.structures import InstanceData
 from mmyolo.models.dense_heads import RotatedRTMDetHead
 from mmyolo.utils import register_all_modules
 
-try:
-    import importlib
-    importlib.import_module('mmrotate')
-except ImportError:
-    pytest.skip('mmrotate is not installed.', allow_module_level=True)
-
 register_all_modules()
 
 

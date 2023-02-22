@@ -2,22 +2,11 @@
 import copy
 
 import pytest
-
-try:
-    from mmcls.models.backbones.base_backbone import BaseBackbone
-except ImportError:
-    BaseBackbone = None
-
-try:
-    import mmrazor  # noqa
-    RAZOR_READY = True
-except ImportError:
-    RAZOR_READY = False
+from mmcls.models.backbones.base_backbone import BaseBackbone
 
 from mmyolo.testing import get_detector_cfg
 
 
-@pytest.mark.skipif(not RAZOR_READY, reason='')
 @pytest.mark.parametrize('cfg_file', [
     'razor/subnets/'
     'yolov5_s_spos_shufflenetv2_syncbn_8xb16-300e_coco.py', 'razor/subnets/'
