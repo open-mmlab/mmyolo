@@ -40,18 +40,18 @@ RTMDet-l model structure
 
 RTMDet-R achieves state-of-the-art on various remote sensing datasets.
 
-|  Backbone   | pretrain |       Aug       | mmAP  | mAP50 | mAP75 | Params(M) | FLOPS(G) | TRT-FP16-Latency(ms) |                                 Config                                 |         Download         |
-| :---------: | :------: | :-------------: | :---: | :---: | :---: | :-------: | :------: | :------------------: | :--------------------------------------------------------------------: | :----------------------: |
-| RTMDet-tiny |    IN    |       RR        | 46.81 | 75.88 | 50.08 |   4.88    |  20.45   |         4.40         |      [config](./rotate/rtmdet_tiny_syncbn_fast_1xb8-36e_dota.py)       | [model](<>) \| [log](<>) |
-|  RTMDet-s   |    IN    |       RR        | 48.22 | 77.09 | 50.61 |   8.86    |  37.62   |         4.86         |        [config](./rotate/rtmdet_s_syncbn_fast_1xb8-36e_dota.py)        | [model](<>) \| [log](<>) |
-|  RTMDet-m   |    IN    |       RR        |   -   |   -   |   -   |   24.67   |  99.76   |         7.82         |        [config](./rotate/rtmdet_m_syncbn_fast_1xb8-36e_dota.py)        | [model](<>) \| [log](<>) |
-|  RTMDet-l   |    IN    |       RR        |   -   |   -   |   -   |   52.27   |  204.21  |        10.82         |        [config](./rotate/rtmdet_l_syncbn_fast_1xb8-36e_dota.py)        | [model](<>) \| [log](<>) |
-| RTMDet-tiny |    IN    |      MS+RR      |   -   |   -   |   -   |   4.88    |  20.45   |         4.40         |     [config](./rotate/rtmdet_tiny_syncbn_fast_1xb8-36e_dota_ms.py)     | [model](<>) \| [log](<>) |
-|  RTMDet-s   |    IN    |      MS+RR      |   -   |   -   |   -   |   8.86    |  37.62   |         4.86         |      [config](./rotate/rtmdet_s_syncbn_fast_1xb8-36e_dota_ms.py)       | [model](<>) \| [log](<>) |
-|  RTMDet-m   |    IN    |      MS+RR      |   -   |   -   |   -   |   24.67   |  99.76   |         7.82         |      [config](./rotate/rtmdet_m_syncbn_fast_1xb8-36e_dota_ms.py)       | [model](<>) \| [log](<>) |
-|  RTMDet-l   |    IN    |      MS+RR      |   -   |   -   |   -   |   52.27   |  204.21  |        10.82         |      [config](./rotate/rtmdet_l_syncbn_fast_1xb8-36e_dota_ms.py)       | [model](<>) \| [log](<>) |
-|  RTMDet-l   |   COCO   |      MS+RR      |   -   |   -   |   -   |   52.27   |  204.21  |        10.82         | [config](./rotate/rtmdet-r_l_pretrain_syncbn_fast_1xb8_36e_dota_ms.py) | [model](<>) \| [log](<>) |
-|  RTMDet-l   |    IN    | Mixup+Mosaic+RR |   -   |   -   |   -   |   52.27   |  204.21  |        10.82         |      [config](./rotate/rtmdet-r_l_syncbn_fast_1xb8_100e_dota.py)       | [model](<>) \| [log](<>) |
+|  Backbone   | pretrain |       Aug       | mmAP  | mAP50 | mAP75 | Params(M) | FLOPS(G) | TRT-FP16-Latency(ms) |                                   Config                                    |         Download         |
+| :---------: | :------: | :-------------: | :---: | :---: | :---: | :-------: | :------: | :------------------: | :-------------------------------------------------------------------------: | :----------------------: |
+| RTMDet-tiny |    IN    |       RR        | 46.81 | 75.88 | 50.08 |   4.88    |  20.45   |         4.40         |           [config](./rotate/rtmdet-r_tiny_fast_1xb8-36e_dota.py)            | [model](<>) \| [log](<>) |
+|  RTMDet-s   |    IN    |       RR        | 48.22 | 77.09 | 50.61 |   8.86    |  37.62   |         4.86         |             [config](./rotate/rtmdet-r_s_fast_1xb8-36e_dota.py)             | [model](<>) \| [log](<>) |
+|  RTMDet-m   |    IN    |       RR        |   -   |   -   |   -   |   24.67   |  99.76   |         7.82         |         [config](./rotate/rtmdet-r_m_syncbn_fast_2xb4-36e_dota.py)          | [model](<>) \| [log](<>) |
+|  RTMDet-l   |    IN    |       RR        |   -   |   -   |   -   |   52.27   |  204.21  |        10.82         |         [config](./rotate/rtmdet-r_l_syncbn_fast_2xb4-36e_dota.py)          | [model](<>) \| [log](<>) |
+| RTMDet-tiny |    IN    |      MS+RR      |   -   |   -   |   -   |   4.88    |  20.45   |         4.40         |          [config](./rotate/rtmdet-r_tiny_fast_1xb8-36e_dota-ms.py)          | [model](<>) \| [log](<>) |
+|  RTMDet-s   |    IN    |      MS+RR      |   -   |   -   |   -   |   8.86    |  37.62   |         4.86         |           [config](./rotate/rtmdet-r_s_fast_1xb8-36e_dota-ms.py)            | [model](<>) \| [log](<>) |
+|  RTMDet-m   |    IN    |      MS+RR      |   -   |   -   |   -   |   24.67   |  99.76   |         7.82         |        [config](./rotate/rtmdet-r_m_syncbn_fast_2xb4-36e_dota-ms.py)        | [model](<>) \| [log](<>) |
+|  RTMDet-l   |    IN    |      MS+RR      |   -   |   -   |   -   |   52.27   |  204.21  |        10.82         |        [config](./rotate/rtmdet-r_l_syncbn_fast_2xb4-36e_dota-ms.py)        | [model](<>) \| [log](<>) |
+|  RTMDet-l   |   COCO   |      MS+RR      |   -   |   -   |   -   |   52.27   |  204.21  |        10.82         | [config](./rotate/rtmdet-r_l_syncbn_fast_coco-pretrain_2xb4-36e_dota-ms.py) | [model](<>) \| [log](<>) |
+|  RTMDet-l   |    IN    | Mixup+Mosaic+RR |   -   |   -   |   -   |   52.27   |  204.21  |        10.82         |       [config](./rotate/rtmdet-r_l_syncbn_fast_2xb4-aug-100e_dota.py)       | [model](<>) \| [log](<>) |
 
 **Note**:
 
