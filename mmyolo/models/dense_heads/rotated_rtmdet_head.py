@@ -374,6 +374,9 @@ class RotatedRTMDetHead(RTMDetHead):
         multi_label &= self.num_classes > 1
         cfg.multi_label = multi_label
 
+        # Whether to decode rbox with angle.
+        # different setting lead to different final results.
+        # Defaults to True.
         decode_with_angle = cfg.get('decode_with_angle', True)
 
         num_imgs = len(batch_img_metas)

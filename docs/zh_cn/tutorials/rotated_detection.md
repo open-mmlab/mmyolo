@@ -278,7 +278,7 @@ train_dataloader = dict(
       └───────────────────────────────────────────►loss_angle
   ```
 
-- `use_hbbox_loss=False` 且 `loss_angle` 为 None.
+- `use_hbbox_loss=True` 且 `loss_angle` 为 None.
 
   此时框预测和角度预测完全分离，将两个分支视作两个任务进行训练。
   此时 `loss_bbox` 要设定为水平框的损失函数，例如 `IoULoss` 。
@@ -289,9 +289,11 @@ train_dataloader = dict(
   angle_pred──────────────────────────────────────►loss_angle
   ```
 
-除了检测头中的参数，在test_cfg中还增加了 `decoded_with_angle` 参数用来控制推理时角度的处理逻辑，默认设定为 True 。设计这个参数的目标是让训练过程和推理过程的逻辑对齐。
+除了检测头中的参数，在test_cfg中还增加了 `decoded_with_angle` 参数用来控制推理时角度的处理逻辑，默认设定为 True 。
+设计这个参数的目标是让训练过程和推理过程的逻辑对齐，该参数会影响最终的精度。
 
 当 `decoded_with_angle=True` 时，将框和角度同时送入 `bbox_coder` 中。
+此时要使用旋转框的编解码器，例如`DistanceAnglePointCoder`。
 
 ```
 bbox_pred────(tblr)───┐
@@ -302,6 +304,7 @@ angle_pred          decode──(xywha)──►rbox_pred
 ```
 
 当 `decoded_with_angle=False` 时，首先解码出水平检测框，之后将角度 concat 到检测框。
+此时要使用水平框的编解码器，例如`DistancePointBBoxCoder`。
 
 ```
 bbox_pred──(tblr)─►decode
