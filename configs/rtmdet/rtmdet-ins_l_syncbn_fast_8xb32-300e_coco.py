@@ -156,7 +156,7 @@ model = dict(
     #     max_per_img=100,
     #     mask_thr_binary=0.5),
     bbox_head=dict(
-        type='RTMDetInsSepBNHead',
+        type='RTMDetHead',
         head_module=dict(
             type='RTMDetInsSepBNHeadModule',
             num_classes=80,
@@ -170,23 +170,25 @@ model = dict(
         ),
         prior_generator=dict(
             type='mmdet.MlvlPointGenerator', offset=0, strides=[8, 16, 32]),
-        bbox_coder=dict(type='mmdet.DistancePointBBoxCoder'),
+        bbox_coder=dict(type='DistancePointBBoxCoder'),
         loss_cls=dict(
             type='mmdet.QualityFocalLoss',
             use_sigmoid=True,
             beta=2.0,
             loss_weight=1.0),
         loss_bbox=dict(type='mmdet.GIoULoss', loss_weight=2.0),
-        loss_mask=dict(
-            type='mmdet.DiceLoss', loss_weight=2.0, eps=5e-6,
-            reduction='mean')),
-    test_cfg=dict(
-        nms_pre=1000,
-        min_bbox_size=0,
-        score_thr=0.05,
-        nms=dict(type='nms', iou_threshold=0.6),
-        max_per_img=100,
-        mask_thr_binary=0.5),
+        # loss_mask=dict(
+        #     type='mmdet.DiceLoss', loss_weight=2.0, eps=5e-6,
+        #     reduction='mean')
+    ),
+    # test_cfg=dict(
+    #     multi_label=True,
+    #     nms_pre=1000,
+    #     min_bbox_size=0,
+    #     score_thr=0.05,
+    #     nms=dict(type='nms', iou_threshold=0.6),
+    #     max_per_img=100,
+    #     mask_thr_binary=0.5),
     train_cfg=dict(
         assigner=dict(
             type='BatchDynamicSoftLabelAssigner',
@@ -196,7 +198,14 @@ model = dict(
         allowed_border=-1,
         pos_weight=-1,
         debug=False),
-    # test_cfg=model_test_cfg,
+    test_cfg=dict(
+        # The config of multi-label for multi-class prediction.
+        multi_label=True,
+        # The number of boxes before NMS
+        nms_pre=30000,
+        score_thr=0.001,  # Threshold to filter out boxes.
+        nms=dict(type='nms', iou_threshold=0.65),  # NMS type and threshold
+        max_per_img=300)  # Max number of detections of each image,
 )
 
 # train_pipeline = [

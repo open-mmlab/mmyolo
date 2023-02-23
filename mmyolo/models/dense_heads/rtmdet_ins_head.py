@@ -9,11 +9,12 @@ import torch.nn.functional as F
 from mmcv.cnn import ConvModule, is_norm
 from mmcv.ops import batched_nms
 from mmdet.models.task_modules import PseudoSampler
-from mmdet.models.utils import filter_scores_and_topk, select_single_mlvl
+from mmdet.models.utils import filter_scores_and_topk
 from mmdet.structures.bbox import (cat_boxes, get_box_tensor, get_box_wh,
                                    scale_boxes)
 from mmdet.utils import (ConfigType, InstanceList, OptConfigType,
                          OptInstanceList, OptMultiConfig, reduce_mean)
+from mmengine import ConfigDict
 from mmengine.model import (BaseModule, bias_init_with_prob, constant_init,
                             normal_init)
 from mmengine.structures import InstanceData
@@ -313,8 +314,11 @@ class RTMDetInsSepBNHeadModule(RTMDetSepBNHeadModule):
             cls_scores.append(cls_score)
             bbox_preds.append(reg_dist)
             kernel_preds.append(kernel_pred)
-        return tuple(cls_scores), tuple(bbox_preds), tuple(
-            kernel_preds), mask_feat
+        return [
+            tuple(cls_scores),
+            tuple(bbox_preds),
+            tuple(kernel_preds), mask_feat
+        ][:2]
 
 
 @MODELS.register_module()
@@ -395,111 +399,259 @@ class RTMDetInsSepBNHead(RTMDetHead):
         """
         return self.head_module(x)
 
-    # 抄自mmdet rtmdet_ins_head.py
-    def predict_by_feat(self,
-                        cls_scores: List[Tensor],
-                        bbox_preds: List[Tensor],
-                        kernel_preds: List[Tensor],
-                        mask_feat: Tensor,
-                        score_factors: Optional[List[Tensor]] = None,
-                        batch_img_metas: Optional[List[dict]] = None,
-                        cfg: Optional[ConfigType] = None,
-                        rescale: bool = False,
-                        with_nms: bool = True) -> InstanceList:
-        """Transform a batch of output features extracted from the head into
-        bbox results.
+    def predict_by_feat(
+            self,
+            cls_scores: List[Tensor],
+            bbox_preds: List[Tensor],
+            kernel_preds: List[Tensor],
+            mask_feat: Tensor,
+            score_factors: Optional[List[Tensor]] = None,
+            # cls_scores: List[Tensor],
+            # bbox_preds: List[Tensor],
+            # objectnesses: Optional[List[Tensor]] = None,
+            batch_img_metas: Optional[List[dict]] = None,
+            cfg: Optional[ConfigDict] = None,
+            rescale: bool = True,
+            with_nms: bool = True) -> List[InstanceData]:
 
-        Note: When score_factors is not None, the cls_scores are
-        usually multiplied by it then obtain the real score used in NMS,
-        such as CenterNess in FCOS, IoU branch in ATSS.
+        objectnesses = None
 
-        Args:
-            cls_scores (list[Tensor]): Classification scores for all
-                scale levels, each is a 4D-tensor, has shape
-                (batch_size, num_priors * num_classes, H, W).
-            bbox_preds (list[Tensor]): Box energies / deltas for all
-                scale levels, each is a 4D-tensor, has shape
-                (batch_size, num_priors * 4, H, W).
-            kernel_preds (list[Tensor]): Kernel predictions of dynamic
-                convs for all scale levels, each is a 4D-tensor, has shape
-                (batch_size, num_params, H, W).
-            mask_feat (Tensor): Mask prototype features extracted from the
-                mask head, has shape (batch_size, num_prototypes, H, W).
-            score_factors (list[Tensor], optional): Score factor for
-                all scale level, each is a 4D-tensor, has shape
-                (batch_size, num_priors * 1, H, W). Defaults to None.
-            batch_img_metas (list[dict], Optional): Batch image meta info.
-                Defaults to None.
-            cfg (ConfigDict, optional): Test / postprocessing
-                configuration, if None, test_cfg would be used.
-                Defaults to None.
-            rescale (bool): If True, return boxes in original image space.
-                Defaults to False.
-            with_nms (bool): If True, do nms before return boxes.
-                Defaults to True.
-
-        Returns:
-            list[:obj:`InstanceData`]: Object detection results of each image
-            after the post process. Each item usually contains following keys.
-
-                - scores (Tensor): Classification scores, has a shape
-                  (num_instance, )
-                - labels (Tensor): Labels of bboxes, has a shape
-                  (num_instances, ).
-                - bboxes (Tensor): Has a shape (num_instances, 4),
-                  the last dimension 4 arrange as (x1, y1, x2, y2).
-                - masks (Tensor): Has a shape (num_instances, h, w).
-        """
         assert len(cls_scores) == len(bbox_preds)
-
-        if score_factors is None:
-            # e.g. Retina, FreeAnchor, Foveabox, etc.
-            with_score_factors = False
+        if objectnesses is None:
+            with_objectnesses = False
         else:
-            # e.g. FCOS, PAA, ATSS, AutoAssign, etc.
-            with_score_factors = True
-            assert len(cls_scores) == len(score_factors)
+            with_objectnesses = True
+            assert len(cls_scores) == len(objectnesses)
 
-        num_levels = len(cls_scores)
+        cfg = self.test_cfg if cfg is None else cfg
+        cfg = copy.deepcopy(cfg)
 
-        featmap_sizes = [cls_scores[i].shape[-2:] for i in range(num_levels)]
-        mlvl_priors = self.prior_generator.grid_priors(
-            featmap_sizes,
-            dtype=cls_scores[0].dtype,
-            device=cls_scores[0].device,
-            with_stride=True)
+        multi_label = cfg.multi_label
+        multi_label &= self.num_classes > 1
+        cfg.multi_label = multi_label
 
-        result_list = []
+        num_imgs = len(batch_img_metas)
+        featmap_sizes = [cls_score.shape[2:] for cls_score in cls_scores]
 
-        for img_id in range(len(batch_img_metas)):
-            img_meta = batch_img_metas[img_id]
-            cls_score_list = select_single_mlvl(
-                cls_scores, img_id, detach=True)
-            bbox_pred_list = select_single_mlvl(
-                bbox_preds, img_id, detach=True)
-            kernel_pred_list = select_single_mlvl(
-                kernel_preds, img_id, detach=True)
-            if with_score_factors:
-                score_factor_list = select_single_mlvl(
-                    score_factors, img_id, detach=True)
+        # If the shape does not change, use the previous mlvl_priors
+        if featmap_sizes != self.featmap_sizes:
+            self.mlvl_priors = self.prior_generator.grid_priors(
+                featmap_sizes,
+                dtype=cls_scores[0].dtype,
+                device=cls_scores[0].device)
+            self.featmap_sizes = featmap_sizes
+        flatten_priors = torch.cat(self.mlvl_priors)
+
+        mlvl_strides = [
+            flatten_priors.new_full(
+                (featmap_size.numel() * self.num_base_priors, ), stride) for
+            featmap_size, stride in zip(featmap_sizes, self.featmap_strides)
+        ]
+        flatten_stride = torch.cat(mlvl_strides)
+
+        # flatten cls_scores, bbox_preds and objectness
+        flatten_cls_scores = [
+            cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1,
+                                                  self.num_classes)
+            for cls_score in cls_scores
+        ]
+        flatten_bbox_preds = [
+            bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
+            for bbox_pred in bbox_preds
+        ]
+
+        flatten_cls_scores = torch.cat(flatten_cls_scores, dim=1).sigmoid()
+        flatten_bbox_preds = torch.cat(flatten_bbox_preds, dim=1)
+        flatten_decoded_bboxes = self.bbox_coder.decode(
+            flatten_priors[None], flatten_bbox_preds, flatten_stride)
+
+        if with_objectnesses:
+            flatten_objectness = [
+                objectness.permute(0, 2, 3, 1).reshape(num_imgs, -1)
+                for objectness in objectnesses
+            ]
+            flatten_objectness = torch.cat(flatten_objectness, dim=1).sigmoid()
+        else:
+            flatten_objectness = [None for _ in range(num_imgs)]
+
+        results_list = []
+        for (bboxes, scores, objectness,
+             img_meta) in zip(flatten_decoded_bboxes, flatten_cls_scores,
+                              flatten_objectness, batch_img_metas):
+            ori_shape = img_meta['ori_shape']
+            scale_factor = img_meta['scale_factor']
+            if 'pad_param' in img_meta:
+                pad_param = img_meta['pad_param']
             else:
-                score_factor_list = [None for _ in range(num_levels)]
+                pad_param = None
 
-            results = self._predict_by_feat_single(
-                cls_score_list=cls_score_list,
-                bbox_pred_list=bbox_pred_list,
-                kernel_pred_list=kernel_pred_list,
-                mask_feat=mask_feat[img_id],
-                score_factor_list=score_factor_list,
-                mlvl_priors=mlvl_priors,
-                img_meta=img_meta,
+            score_thr = cfg.get('score_thr', -1)
+            # yolox_style does not require the following operations
+            if objectness is not None and score_thr > 0 and not cfg.get(
+                    'yolox_style', False):
+                conf_inds = objectness > score_thr
+                bboxes = bboxes[conf_inds, :]
+                scores = scores[conf_inds, :]
+                objectness = objectness[conf_inds]
+
+            if objectness is not None:
+                # conf = obj_conf * cls_conf
+                scores *= objectness[:, None]
+
+            if scores.shape[0] == 0:
+                empty_results = InstanceData()
+                empty_results.bboxes = bboxes
+                empty_results.scores = scores[:, 0]
+                empty_results.labels = scores[:, 0].int()
+                results_list.append(empty_results)
+                continue
+
+            nms_pre = cfg.get('nms_pre', 100000)
+            if cfg.multi_label is False:
+                scores, labels = scores.max(1, keepdim=True)
+                scores, _, keep_idxs, results = filter_scores_and_topk(
+                    scores,
+                    score_thr,
+                    nms_pre,
+                    results=dict(labels=labels[:, 0]))
+                labels = results['labels']
+            else:
+                scores, labels, keep_idxs, _ = filter_scores_and_topk(
+                    scores, score_thr, nms_pre)
+
+            results = InstanceData(
+                scores=scores, labels=labels, bboxes=bboxes[keep_idxs])
+
+            if rescale:
+                if pad_param is not None:
+                    results.bboxes -= results.bboxes.new_tensor([
+                        pad_param[2], pad_param[0], pad_param[2], pad_param[0]
+                    ])
+                results.bboxes /= results.bboxes.new_tensor(
+                    scale_factor).repeat((1, 2))
+
+            if cfg.get('yolox_style', False):
+                # do not need max_per_img
+                cfg.max_per_img = len(results)
+
+            results = self._bbox_post_process(
+                results=results,
                 cfg=cfg,
-                rescale=rescale,
-                with_nms=with_nms)
-            print(results)
-            raise NotImplementedError
-            result_list.append(results)
-        return result_list
+                rescale=False,
+                with_nms=with_nms,
+                img_meta=img_meta)
+            results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
+            results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
+
+            results_list.append(results)
+        return results_list
+
+    # 抄自mmdet rtmdet_ins_head.py
+    # def predict_by_feat(self,
+    #                     cls_scores: List[Tensor],
+    #                     bbox_preds: List[Tensor],
+    #                     kernel_preds: List[Tensor],
+    #                     mask_feat: Tensor,
+    #                     score_factors: Optional[List[Tensor]] = None,
+    #                     batch_img_metas: Optional[List[dict]] = None,
+    #                     cfg: Optional[ConfigType] = None,
+    #                     rescale: bool = False,
+    #                     with_nms: bool = True) -> InstanceList:
+    #     """Transform a batch of output features extracted from the head into
+    #     bbox results.
+    #
+    #     Note: When score_factors is not None, the cls_scores are
+    #     usually multiplied by it then obtain the real score used in NMS,
+    #     such as CenterNess in FCOS, IoU branch in ATSS.
+    #
+    #     Args:
+    #         cls_scores (list[Tensor]): Classification scores for all
+    #             scale levels, each is a 4D-tensor, has shape
+    #             (batch_size, num_priors * num_classes, H, W).
+    #         bbox_preds (list[Tensor]): Box energies / deltas for all
+    #             scale levels, each is a 4D-tensor, has shape
+    #             (batch_size, num_priors * 4, H, W).
+    #         kernel_preds (list[Tensor]): Kernel predictions of dynamic
+    #             convs for all scale levels, each is a 4D-tensor, has shape
+    #             (batch_size, num_params, H, W).
+    #         mask_feat (Tensor): Mask prototype features extracted from the
+    #             mask head, has shape (batch_size, num_prototypes, H, W).
+    #         score_factors (list[Tensor], optional): Score factor for
+    #             all scale level, each is a 4D-tensor, has shape
+    #             (batch_size, num_priors * 1, H, W). Defaults to None.
+    #         batch_img_metas (list[dict], Optional): Batch image meta info.
+    #             Defaults to None.
+    #         cfg (ConfigDict, optional): Test / postprocessing
+    #             configuration, if None, test_cfg would be used.
+    #             Defaults to None.
+    #         rescale (bool): If True, return boxes in original image space.
+    #             Defaults to False.
+    #         with_nms (bool): If True, do nms before return boxes.
+    #             Defaults to True.
+    #
+    #     Returns:
+    #         list[:obj:`InstanceData`]: Object detection results of each image
+    #         after the post process. Each item usually
+    #         contains following keys.
+    #
+    #             - scores (Tensor): Classification scores, has a shape
+    #               (num_instance, )
+    #             - labels (Tensor): Labels of bboxes, has a shape
+    #               (num_instances, ).
+    #             - bboxes (Tensor): Has a shape (num_instances, 4),
+    #               the last dimension 4 arrange as (x1, y1, x2, y2).
+    #             - masks (Tensor): Has a shape (num_instances, h, w).
+    #     """
+    #     assert len(cls_scores) == len(bbox_preds)
+    #
+    #     if score_factors is None:
+    #         # e.g. Retina, FreeAnchor, Foveabox, etc.
+    #         with_score_factors = False
+    #     else:
+    #         # e.g. FCOS, PAA, ATSS, AutoAssign, etc.
+    #         with_score_factors = True
+    #         assert len(cls_scores) == len(score_factors)
+    #
+    #     num_levels = len(cls_scores)
+    #
+    #     featmap_sizes = [cls_scores[i].shape[-2:] for i in range(num_levels)]
+    #     mlvl_priors = self.prior_generator.grid_priors(
+    #         featmap_sizes,
+    #         dtype=cls_scores[0].dtype,
+    #         device=cls_scores[0].device,
+    #         with_stride=True)
+    #
+    #     result_list = []
+    #
+    #     for img_id in range(len(batch_img_metas)):
+    #         img_meta = batch_img_metas[img_id]
+    #         cls_score_list = select_single_mlvl(
+    #             cls_scores, img_id, detach=True)
+    #         bbox_pred_list = select_single_mlvl(
+    #             bbox_preds, img_id, detach=True)
+    #         kernel_pred_list = select_single_mlvl(
+    #             kernel_preds, img_id, detach=True)
+    #         if with_score_factors:
+    #             score_factor_list = select_single_mlvl(
+    #                 score_factors, img_id, detach=True)
+    #         else:
+    #             score_factor_list = [None for _ in range(num_levels)]
+    #
+    #         results = self._predict_by_feat_single(
+    #             cls_score_list=cls_score_list,
+    #             bbox_pred_list=bbox_pred_list,
+    #             kernel_pred_list=kernel_pred_list,
+    #             mask_feat=mask_feat[img_id],
+    #             score_factor_list=score_factor_list,
+    #             mlvl_priors=mlvl_priors,
+    #             img_meta=img_meta,
+    #             cfg=cfg,
+    #             rescale=rescale,
+    #             with_nms=with_nms)
+    #         print(results)
+    #         raise NotImplementedError
+    #         result_list.append(results)
+    #     return result_list
 
     # 抄自mmdet rtmdet_ins_head.py
     def _predict_by_feat_single(self,
