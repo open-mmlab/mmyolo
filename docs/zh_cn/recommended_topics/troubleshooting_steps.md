@@ -51,6 +51,19 @@
 MMYOLO 中有些算法配置会在多个模块中都需要 `num_classes` 参数，用户经常出现的错误就是仅仅修改了某一个地方的 `num_classes` 而没有将所有的 `num_classes` 都修改。想快速解决这个问题，可以使用 [print_config](https://github.com/open-mmlab/mmyolo/blob/main/tools/misc/print_config.py)
 脚本打印下全配置，然后全局搜索 `num_classes` 确认是否有没有修改的模块。
 
+## 评估时候 IndexError: list index out of range
+
+具体输出信息是
+
+```text
+  File "site-packages/mmdet/evaluation/metrics/coco_metric.py", line 216, in results2json
+    data['category_id'] = self.cat_ids[label]
+IndexError: list index out of range
+```
+
+可以看出是评估时候类别索引越界，这个通常的原因是配置中的 `num_classes` 设置不正确，默认的 `num_classes` 是 80，如果你自定义类别小于 80，那么就有可能出现类别越界。注意算法配置的 `num_classes` 一般会用到多个模块，你可能只改了某几个而漏掉了一些。想快速解决这个问题，可以使用 [print_config](https://github.com/open-mmlab/mmyolo/blob/main/tools/misc/print_config.py)
+脚本打印下全配置，然后全局搜索 `num_classes` 确认是否有没有修改的模块。
+
 ## 训练中不打印 loss，但是程序依然正常训练和评估
 
 这通常是因为一个训练 epoch 没有超过 50 个迭代，而 MMYOLO 中默认的打印间隔是 50。你可以修改 `default_hooks.logger.interval` 参数。
