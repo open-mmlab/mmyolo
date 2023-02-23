@@ -453,7 +453,7 @@ python projects/easydeploy/tools/image-demo.py \
 <img src="https://user-images.githubusercontent.com/7219519/220801159-ae550fd9-8ef9-4236-81e2-0eb16aa0d8cf.jpg" width="800" alt="image"/>
 </div>
 
-我们继续转换对应 TensorRT 的 engine 文件，因为 TensorRT 需要对应当前环境以及部署使用的版本进行，所以一定要确认导出参数，这里我们导出对应 TensorRT8 版本的文件，`--backend` 为2。
+我们继续转换对应 TensorRT 的 engine 文件，因为 TensorRT 需要对应当前环境以及部署使用的版本进行，所以一定要确认导出参数，这里我们导出对应 TensorRT8 版本的文件，`--backend` 为 2。
 
 ```shell
 python projects/easydeploy/tools/export.py \
