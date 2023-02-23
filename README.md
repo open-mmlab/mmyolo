@@ -204,7 +204,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 - [Cross-library calls using mim](docs/en/common_usage/mim_usage.md)
 - [Apply multiple Necks](docs/en/common_usage/multi_necks.md)
 - [Specify specific device training or inference](docs/en/common_usage/specify_device.md)
-- [Single and multi-channel application examples](docs/en/common_usage/single_multi_channel_applications.md.md)
+- [Single and multi-channel application examples](docs/en/common_usage/single_multi_channel_applications.md)
 
 </details>
 

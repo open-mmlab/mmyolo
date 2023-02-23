@@ -12,7 +12,7 @@ The following uses the `cat` dataset as an example to describe the entire modifi
 
 ### 1 Dataset pre-processing
 
-The processing training of the custom dataset can be found in [Annotation-to-deployment workflow for custom dataset](../user_guides/custom_dataset.md)。
+The processing training of the custom dataset can be found in [Annotation-to-deployment workflow for custom dataset](../recommended_topics/labeling_to_deployment_tutorials.md)。
 
 `cat` is a three-channel color image dataset. For demonstration purpose, you can run the following code and commands to replace the dataset images with single-channel images for subsequent validation.
 

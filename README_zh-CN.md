@@ -225,7 +225,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [使用 mim 跨库调用其他 OpenMMLab 仓库的脚本](docs/zh_cn/common_usage/mim_usage.md)
 - [应用多个 Neck](docs/zh_cn/common_usage/multi_necks.md)
 - [指定特定设备训练或推理](docs/zh_cn/common_usage/specify_device.md)
-- [单通道和多通道应用案例](docs/zh_cn/common_usage/single_multi_channel_applications.md.md)
+- [单通道和多通道应用案例](docs/zh_cn/common_usage/single_multi_channel_applications.md)
 
 </details>
 
