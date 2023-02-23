@@ -39,9 +39,9 @@ ${DATA_ROOT}
 
 The folder ending with reclabelTxt stores the labels for the horizontal boxes and is not used when slicing.
 
-## split dota dataset
+## Split dota dataset
 
-Scrit `tools/dataset_converters/dota_split/dota_split.py` can split and prepare DOTA dataset.
+Script `tools/dataset_converters/dota_split/dota_split.py` can split and prepare DOTA dataset.
 
 shapely is required, please install shapely first by `pip install shapely`.
 
