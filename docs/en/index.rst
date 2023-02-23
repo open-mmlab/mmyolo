@@ -45,6 +45,7 @@ You can switch between Chinese and English documents in the top-right corner of 
    common_usage/mim_usage.md
    common_usage/multi_necks.md
    common_usage/specify_device.md
+   common_usage/single_multi_channel_applications.md
 
 
 .. toctree::
