@@ -6,8 +6,9 @@ import argparse
 import tempfile
 import importlib
 import pkgutil
+import pandas as pd
+import numpy as np
 from pathlib import Path
-from mmengine.fileio import dump
 from mmengine.utils import mkdir_or_exist, scandir
 from mmengine.registry import Registry
 
@@ -57,9 +58,13 @@ def load_modules_from_dir(module_name, module_root, throw_error=False):
             with open(osp.join(_root, '__init__.py'), 'w') as _:
                 pass
 
+    def _onerror(*args, **kwargs):
+        pass
+
     for _finder, _name, _ispkg in pkgutil.walk_packages([module_root],
                                                         prefix=module_name +
-                                                        '.'):
+                                                        '.',
+                                                        onerror=_onerror):
         try:
             module = importlib.import_module(_name)
             module_list.append(module)
@@ -110,11 +115,10 @@ def get_pyfiles_from_dir(root):
             _dict[_key] = {}
         _recurse(_dict[_key], _chain)
 
-    # assert osp.exists(root), 'cannot find the recursive dir'
-    # find all scripts in the root directory
+    # find all scripts in the root directory. (not just ('.py', '.sh'))
     pyfiles = {}
     if osp.isdir(root):
-        for pyfile in scandir(root, '.py', recursive=True):
+        for pyfile in scandir(root, recursive=True):
             _recurse(pyfiles, Path(pyfile).parts)
     return pyfiles
 
@@ -145,24 +149,131 @@ def print_tree(print_dict):
         print(f'{_pname}\n' + _recurse(_pdict))
 
 
+def divide_list_into_groups(_array, _maxsize_per_group):
+    if not _array:
+        return _array
+    _groups = np.asarray(len(_array) / _maxsize_per_group)
+    if (len(_array) % _maxsize_per_group):
+        _groups = np.floor(_groups) + 1
+    _groups = _groups.astype(int)
+    return np.array_split(_array, _groups)
+
+
+def registries_to_html(registries, title=''):
+    max_col_per_row = 5
+    max_size_per_cell = 20
+    html = ''
+    table_data = []
+    # save repository registries
+    for registry_name, registry_dict in registries.items():
+        # filter the empty registries
+        if not registry_dict:
+            continue
+        registry_strings = []
+        if isinstance(registry_dict, dict):
+            registry_dict = list(registry_dict.keys())
+        elif isinstance(registry_dict, list):
+            pass
+        else:
+            raise TypeError(
+                f'unknown type of registry_dict {type(registry_dict)}')
+        for _k in registry_dict:
+            registry_strings.append(f'<li>{_k}</li>')
+        table_data.append((registry_name, registry_strings))
+
+    # sort the data list
+    table_data = sorted(table_data, key=lambda x: len(x[1]))
+    # split multi parts
+    table_data_multi_parts = []
+    for (registry_name, registry_strings) in table_data:
+        multi_parts = False
+        if len(registry_strings) > max_size_per_cell:
+            multi_parts = True
+        for cell_idx, registry_cell in enumerate(
+                divide_list_into_groups(registry_strings, max_size_per_cell)):
+            registry_str = ''.join(registry_cell.tolist())
+            registry_str = f'<ul>{registry_str}</ul>'
+            table_data_multi_parts.append([
+                registry_name if not multi_parts else
+                f'{registry_name} (part {cell_idx + 1})', registry_str
+            ])
+
+    for table_data in divide_list_into_groups(table_data_multi_parts,
+                                              max_col_per_row):
+        table_data = list(zip(*table_data.tolist()))
+        html += dataframe_to_html(
+            pd.DataFrame([table_data[1]], columns=table_data[0]))
+    html = add_html_title(html, title)
+    return html
+
+
+def tools_to_html(tools_dict, repo_name='', tools_name=''):
+
+    def _recurse(_dict, _connector, _result):
+        assert isinstance(_dict, dict), \
+            f'unknown recurse type: {_dict} ({type(_dict)})'
+        for _k, _v in _dict.items():
+            if _v is None:
+                if _connector not in _result:
+                    _result[_connector] = []
+                _result[_connector].append(_k)
+            else:
+                _recurse(_v, f'{_connector}/{_k}', _result)
+
+    table_data = {}
+    title = f'{repo_name.capitalize()} {tools_name.capitalize()}'
+    _recurse(tools_dict, tools_name, table_data)
+    return registries_to_html(table_data, title)
+
+
+def dataframe_to_html(dataframe):
+    styler = dataframe.style
+    styler = styler.hide(axis='index')
+    styler = styler.format(na_rep='-')
+    styler = styler.set_properties(**{
+        'text-align': 'center',
+        'align': 'center',
+        'vertical-align': 'top'
+    })
+    styler = styler.set_table_styles([{
+        'selector':
+        'thead th',
+        'props':
+        'align:center;text-align:center;vertical-align:bottom'
+    }])
+    html = styler.to_html()
+    html = f'<div align=\'center\'>{html}</div><br><br>'
+    return html
+
+
+def add_html_title(html, title):
+    html = f'<div align=\'center\'><b>{title}</b></div>\n{html}'
+    html = f'<details open>{html}</details>'
+    return html
+
+
 def parse_args():
     parser = argparse.ArgumentParser(
         description='print registries in a repository')
     parser.add_argument(
-        'repository', type=str, help='git repository name in OpenMMLab')
+        'repository', type=str,
+        help='git repository name in OpenMMLab')
     parser.add_argument(
-        '-b', '--branch', type=str, help='the branch name of git repository')
+        '-b', '--branch', type=str,
+        help='the branch name of git repository')
+    parser.add_argument(
+        '-o', '--out', type=str, default='.',
+        help='output path of the result')
     parser.add_argument(
         '--throw-error',
         action='store_true',
         default=False,
-        help='whether to throw error when trying to import the modules')
+        help='whether to throw error when trying to import modules')
     parser.add_argument(
         '--without-tools',
         action='store_true',
         default=False,
-        help='whether to print the scripts in tools directory')
-    parser.add_argument('--out', type=str, help='output path of result')
+        help='whether to print the scripts of tools directory')
     args = parser.parse_args()
     return args
 
@@ -195,12 +306,28 @@ def main():
                 tools_tree = osp.join(tmpdir, tools_name)
                 tools_tree = get_pyfiles_from_dir(tools_tree)
                 registries_tree.update({tools_name: tools_tree})
-        # print the results
         print_tree(registries_tree)
-        # output results
         if args.out:
+            # get registries markdown string
             mkdir_or_exist(args.out)
-            dump(registries_tree, osp.join(args.out, 'registries_info.json'))
+            markdown_str = registries_to_html(
+                registries_tree.get(module_name, {}),
+                title=f'{repo_name.capitalize()} Module Components')
+
+            # get tools markdown string
+            if not args.without_tools:
+                for tools_name in tools_list:
+                    markdown_str += tools_to_html(
+                        registries_tree.get(tools_name, {}),
+                        repo_name=repo_name,
+                        tools_name=tools_name)
+
+            # save the file
+            save_path = osp.join(args.out,
+                                 f'registries_info_{module_name.lower()}.md')
+            with open(save_path, 'w', encoding='utf-8') as fw:
+                fw.write(markdown_str)
+            print(f'saved registries to the path: {save_path}')
 
 
 if __name__ == '__main__':
