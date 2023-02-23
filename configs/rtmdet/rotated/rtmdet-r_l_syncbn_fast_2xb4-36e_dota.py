@@ -33,7 +33,10 @@ max_epochs = 36  # Maximum training epochs
 model_test_cfg = dict(
     # The config of multi-label for multi-class prediction.
     multi_label=True,
-    # Decode rbox with angle
+    # Decode rbox with angle, For RTMDet-R, Defaults to True.
+    # When set to True, use rbox coder such as DistanceAnglePointCoder
+    # When set to False, use hbox coder such as DistancePointBBoxCoder
+    # different setting lead to different AP.
     decode_with_angle=True,
     # The number of boxes before NMS
     nms_pre=30000,
@@ -79,7 +82,7 @@ qfl_beta = 2.0  # beta of QualityFocalLoss
 weight_decay = 0.05
 
 # Save model checkpoint and validation intervals
-save_checkpoint_intervals = 12
+save_checkpoint_intervals = 1
 # The maximum checkpoints to keep.
 max_keep_ckpts = 3
 # single-scale training is recommended to
@@ -304,8 +307,8 @@ default_hooks = dict(
     checkpoint=dict(
         type='CheckpointHook',
         interval=save_checkpoint_intervals,
-        max_keep_ckpts=max_keep_ckpts  # only keep latest 3 checkpoints
-    ))
+        max_keep_ckpts=max_keep_ckpts,  # only keep latest 3 checkpoints
+        save_best='auto'))
 
 custom_hooks = [
     dict(

@@ -130,8 +130,8 @@ default_hooks = dict(
     checkpoint=dict(
         type='CheckpointHook',
         interval=save_checkpoint_intervals,
-        max_keep_ckpts=max_keep_ckpts  # only keep latest 3 checkpoints
-    ))
+        max_keep_ckpts=max_keep_ckpts,  # only keep latest 3 checkpoints
+        save_best='auto'))
 
 custom_hooks = [
     dict(

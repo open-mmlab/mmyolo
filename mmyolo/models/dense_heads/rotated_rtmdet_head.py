@@ -325,8 +325,9 @@ class RotatedRTMDetHead(RTMDetHead):
                         cfg: Optional[ConfigDict] = None,
                         rescale: bool = True,
                         with_nms: bool = True) -> List[InstanceData]:
-        """Transform a batch of output features extracted by the head into
-        bbox results.
+        """Transform a batch of output features extracted by the head into bbox
+        results.
+
         Args:
             cls_scores (list[Tensor]): Classification scores for all
                 scale levels, each is a 4D-tensor, has shape
@@ -348,6 +349,7 @@ class RotatedRTMDetHead(RTMDetHead):
                 Defaults to False.
             with_nms (bool): If True, do nms before return boxes.
                 Defaults to True.
+
         Returns:
             list[:obj:`InstanceData`]: Object detection results of each image
             after the post process. Each item usually contains following keys.
@@ -441,7 +443,6 @@ class RotatedRTMDetHead(RTMDetHead):
         for (bboxes, scores, objectness,
              img_meta) in zip(flatten_decoded_bboxes, flatten_cls_scores,
                               flatten_objectness, batch_img_metas):
-            # ori_shape = img_meta['ori_shape']
             scale_factor = img_meta['scale_factor']
             if 'pad_param' in img_meta:
                 pad_param = img_meta['pad_param']
