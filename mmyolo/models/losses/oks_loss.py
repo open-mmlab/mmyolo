@@ -10,13 +10,15 @@ from torch import Tensor
 from mmyolo.datasets.utils import Keypoints
 from mmyolo.registry import MODELS
 from einops import rearrange, reduce, repeat
+from mmpose.models.losses import SmoothL1Loss
 
 
 @MODELS.register_module()
 class OksLoss(nn.Module):
 
-    def __init__(self, dataset_info, oks_loss='oks', loss_weight=1.0) -> None:
+    def __init__(self, dataset_info, loss_type='oks', loss_weight=1.0) -> None:
         super().__init__()
+        self.l1_loss = SmoothL1Loss()
         self.l2_loss = nn.MSELoss(reduction="none")
         if isinstance(dataset_info, dict):
             self.dataset_info = dataset_info
@@ -25,10 +27,19 @@ class OksLoss(nn.Module):
             self.dataset_info = parse_pose_metainfo(_metainfo)
         else:
             raise TypeError('dataset_info must be a dict or a str')
-        self.oks_type = oks_loss
+        self.oks_type = loss_type
         self.loss_weight = loss_weight
-
+    
     def forward(self, kpt_preds: Tensor, kpt_targets: Tensor, kpt_mask: Tensor, bbox_targets: Tensor) -> Tensor:
+        if self.oks_type == 'oks_yolox':
+            loss = self.yolox_pose_loss(kpt_preds, kpt_targets, kpt_mask, bbox_targets)
+        elif self.oks_type == 'l1':
+            loss = self.l1_loss(kpt_preds, kpt_targets).mean()
+        else:
+            raise NotImplementedError
+        return loss * self.loss_weight
+
+    def yolox_pose_loss(self, kpt_preds: Tensor, kpt_targets: Tensor, kpt_mask: Tensor, bbox_targets: Tensor) -> Tensor:
         """
         forward preds and targets to calculate OKS loss.
         Implementation of OKS loss in https://arxiv.org/abs/2204.06806
@@ -53,7 +64,7 @@ class OksLoss(nn.Module):
         kn = kn.unsqueeze(1).repeat(1, 2)
         loss_kpt = (e/s) * kn
         loss_kpt = 1 - torch.exp(-1 * e/kn/s).mean()
-        return loss_kpt * self.loss_weight
+        return loss_kpt 
 
     def _oks(self,
              g: Tensor,
