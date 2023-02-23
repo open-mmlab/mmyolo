@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument(
         'img', help='Image path, include image file, dir and URL.')
     parser.add_argument('config', help='Config file')
-    parser.add_argument('checkpoint', help='Checkpoint file')
+    parser.add_argument('model', help='Exported model file')
     parser.add_argument(
         '--out-dir', default='./output', help='Path to output file')
     parser.add_argument(
@@ -62,12 +62,11 @@ def main():
 
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(1000)]
 
-    # build the model from a config file and a checkpoint file
-    if args.checkpoint.endswith('.onnx'):
-        model = ORTWrapper(args.checkpoint, args.device)
-    elif args.checkpoint.endswith('.engine') or args.checkpoint.endswith(
-            '.plan'):
-        model = TRTWrapper(args.checkpoint, args.device)
+    # build the model from a config file and a model file
+    if args.model.endswith('.onnx'):
+        model = ORTWrapper(args.model, args.device)
+    elif args.model.endswith('.engine') or args.model.endswith('.plan'):
+        model = TRTWrapper(args.model, args.device)
     else:
         raise NotImplementedError
 
