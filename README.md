@@ -62,7 +62,6 @@ English | [简体中文](README_zh-CN.md)
 
 ## 📄 Table of Contents
 
-- [📄 Table of Contents](#-table-of-contents)
 - [🥳 🚀 What's New 🔝](#--whats-new-)
   - [✨ Highlight 🔝](#-highlight-)
 - [📖 Introduction 🔝](#-introduction-)
