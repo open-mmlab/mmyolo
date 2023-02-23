@@ -74,6 +74,7 @@ English | [简体中文](README_zh-CN.md)
 - [🖊️ Citation](#️-citation-)
 - [🎫 License](#-license-)
 - [🏗️ Projects in OpenMMLab](#%EF%B8%8F-projects-in-openmmlab-)
+
 ## 🥳 🚀 What's New [🔝](#-table-of-contents)
 
 💎 **v0.4.0** was released on 18/1/2023:
