@@ -20,9 +20,9 @@ Collections:
 
 
 Models:
-  - Name: yolox_tiny_8xb8-300e_coco
+  - Name: yolox_tiny_fast_8xb8-300e_coco
     In Collection: YOLOX
-    Config: configs/yolox/yolox_tiny_8xb8-300e_coco.py
+    Config: configs/yolox/yolox_tiny_fast_8xb8-300e_coco.py
     Metadata:
       Training Memory (GB): 2.8
       Epochs: 300
@@ -32,15 +32,87 @@ Models:
         Metrics:
           box AP: 32.7
     Weights: https://download.openmmlab.com/mmyolo/v0/yolox/yolox_tiny_8xb8-300e_coco/yolox_tiny_8xb8-300e_coco_20220919_090908-0e40a6fc.pth
-  - Name: yolox_s_8xb8-300e_coco
+  - Name: yolox_s_fast_8xb8-300e_coco
     In Collection: YOLOX
-    Config: configs/yolox/yolox_s_8xb8-300e_coco.py
+    Config: configs/yolox/yolox_s_fast_8xb8-300e_coco.py
     Metadata:
-      Training Memory (GB): 5.6
+      Training Memory (GB): 2.9
       Epochs: 300
     Results:
       - Task: Object Detection
         Dataset: COCO
         Metrics:
-          box AP: 40.8
-    Weights: https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_8xb8-300e_coco/yolox_s_8xb8-300e_coco_20220917_030738-d7e60cb2.pth
+          box AP: 40.7
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_fast_8xb8-300e_coco/yolox_s_fast_8xb8-300e_coco_20230213_142600-2b224d8b.pth
+  - Name: yolox_m_fast_8xb8-300e_coco
+    In Collection: YOLOX
+    Config: configs/yolox/yolox_m_fast_8xb8-300e_coco.py
+    Metadata:
+      Training Memory (GB): 4.9
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 46.9
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolox/yolox_m_fast_8xb8-300e_coco/yolox_m_fast_8xb8-300e_coco_20230213_160218-a71a6b25.pth
+  - Name: yolox_l_fast_8xb8-300e_coco
+    In Collection: YOLOX
+    Config: configs/yolox/yolox_l_fast_8xb8-300e_coco.py
+    Metadata:
+      Training Memory (GB): 8.0
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 50.1
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolox/yolox_l_fast_8xb8-300e_coco/yolox_l_fast_8xb8-300e_coco_20230213_160715-c731eb1c.pth
+  - Name: yolox_x_fast_8xb8-300e_coco
+    In Collection: YOLOX
+    Config: configs/yolox/yolox_x_fast_8xb8-300e_coco.py
+    Metadata:
+      Training Memory (GB): 9.8
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 51.4
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolox/yolox_x_fast_8xb8-300e_coco/yolox_x_fast_8xb8-300e_coco_20230215_133950-1d509fab.pth
+  - Name: yolox_tiny_fast_8xb32-300e-rtmdet-hyp_coco
+    In Collection: YOLOX
+    Config: configs/yolox/yolox_tiny_fast_8xb32-300e-rtmdet-hyp_coco.py
+    Metadata:
+      Training Memory (GB): 4.9
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 34.3
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolox/yolox_tiny_fast_8xb32-300e-rtmdet-hyp_coco/yolox_tiny_fast_8xb32-300e-rtmdet-hyp_coco_20230210_143637-4c338102.pth
+  - Name: yolox_s_fast_8xb32-300e-rtmdet-hyp_coco
+    In Collection: YOLOX
+    Config: configs/yolox/yolox_s_fast_8xb32-300e-rtmdet-hyp_coco.py
+    Metadata:
+      Training Memory (GB): 9.8
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 41.9
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_fast_8xb32-300e-rtmdet-hyp_coco/yolox_s_fast_8xb32-300e-rtmdet-hyp_coco_20230210_134645-3a8dfbd7.pth
+  - Name: yolox_m_fast_8xb32-300e-rtmdet-hyp_coco
+    In Collection: YOLOX
+    Config: configs/yolox/yolox_m_fast_8xb32-300e-rtmdet-hyp_coco.py
+    Metadata:
+      Training Memory (GB): 17.6
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 47.5
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolox/yolox_m_fast_8xb32-300e-rtmdet-hyp_coco/yolox_m_fast_8xb32-300e-rtmdet-hyp_coco_20230210_144328-e657e182.pth

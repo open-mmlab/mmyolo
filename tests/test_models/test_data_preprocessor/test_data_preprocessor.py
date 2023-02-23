@@ -6,7 +6,8 @@ from mmdet.structures import DetDataSample
 from mmengine import MessageHub
 
 from mmyolo.models import PPYOLOEBatchRandomResize, PPYOLOEDetDataPreprocessor
-from mmyolo.models.data_preprocessors import YOLOv5DetDataPreprocessor
+from mmyolo.models.data_preprocessors import (YOLOv5DetDataPreprocessor,
+                                              YOLOXBatchSyncRandomResize)
 from mmyolo.utils import register_all_modules
 
 register_all_modules()
@@ -125,3 +126,31 @@ class TestPPYOLOEDetDataPreprocessor(TestCase):
         # data_samples must be list
         with self.assertRaises(AssertionError):
             processor(data, training=True)
+
+
+class TestYOLOXDetDataPreprocessor(TestCase):
+
+    def test_batch_sync_random_size(self):
+        processor = YOLOXBatchSyncRandomResize(
+            random_size_range=(480, 800), size_divisor=32, interval=1)
+        self.assertTrue(isinstance(processor, YOLOXBatchSyncRandomResize))
+        message_hub = MessageHub.get_instance(
+            'test_yolox_batch_sync_random_resize')
+        message_hub.update_info('iter', 0)
+
+        # test training
+        inputs = torch.randint(0, 256, (4, 3, 10, 11))
+        data_samples = {'bboxes_labels': torch.randint(0, 11, (18, 6)).float()}
+
+        inputs, data_samples = processor(inputs, data_samples)
+
+        self.assertIn('bboxes_labels', data_samples)
+        self.assertIsInstance(data_samples['bboxes_labels'], torch.Tensor)
+        self.assertIsInstance(inputs, torch.Tensor)
+
+        inputs = torch.randint(0, 256, (4, 3, 10, 11))
+        data_samples = DetDataSample()
+
+        # data_samples must be dict
+        with self.assertRaises(AssertionError):
+            processor(inputs, data_samples)

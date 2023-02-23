@@ -1,9 +1,16 @@
 _base_ = './yolov6_s_syncbn_fast_8xb32-300e_coco.py'
 
+# ======================= Possible modified parameters =======================
+# -----model related-----
+# The scaling factor that controls the depth of the network structure
 deepen_factor = 0.6
+# The scaling factor that controls the width of the network structure
 widen_factor = 0.75
-affine_scale = 0.9
 
+# -----train val related-----
+affine_scale = 0.9  # YOLOv5RandomAffine scaling ratio
+
+# ============================== Unmodified in most cases ===================
 model = dict(
     backbone=dict(
         type='YOLOv6CSPBep',
