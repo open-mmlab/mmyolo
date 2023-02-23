@@ -2,7 +2,7 @@
 
 ## download dota dataset
 
-The dota dataset can be downloaded from [DOTA](https://captain-whu.github.io/DOTA/dataset.html) or [OpenDataLab](https://opendatalab.org.cn/DOTA_V1.0)
+The dota dataset can be downloaded from [DOTA](https://captain-whu.github.io/DOTA/dataset.html) or [OpenDataLab](https://opendatalab.org.cn/DOTA_V1.0).
 
 Please unzip the file and place it in the following structure.
 
@@ -42,6 +42,8 @@ The folder ending with reclabelTxt stores the labels for the horizontal boxes an
 ## split dota dataset
 
 Scrit `tools/dataset_converters/dota_split/dota_split.py` can split and prepare DOTA dataset.
+
+shapely is required, please install shapely first by `pip install shapely`.
 
 ```shell
 python tools/dataset_converters/dota_split/dota_split.py \
