@@ -10,7 +10,8 @@
 2. 虽然注册了，但是注册错了位置，例如你实际想注册到 MMYOLO 中，但是你导入的 MODELS 是 MMDet 包里面的
 3. 你注册了且注册正确了，但是没有在对应的 `__init__.py` 中加入导致没有被导入
 4. 以上 3 个步骤都确认没问题，但是你是新增 py 文件来自定义模块的却没有重新安装 MMYOLO 导致没有生效，此时你可以重新安装一遍，即使你是 -e 模式安装也需要重新安装
-5. 你的环境中有多个版本 MMYOLO，你注册的和实际运行的实际上不是同一套代码，导致没有生效。此时你可以在程序运行前输入 `PYTHONPATH="$(dirname $0)/..":$PYTHONPATH` 强行使用当前代码
+5. 如果你是在 mmyolo 包路径下新增了一个 package, 除上述步骤外，你还需要在 [register_all_modules](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/utils/setup_env.py#L8) 函数中增加其导包代码，否则该 package 不会被自动触发
+6. 你的环境中有多个版本 MMYOLO，你注册的和实际运行的实际上不是同一套代码，导致没有生效。此时你可以在程序运行前输入 `PYTHONPATH="$(dirname $0)/..":$PYTHONPATH` 强行使用当前代码
 
 ## loss_bbox 始终为 0
 
