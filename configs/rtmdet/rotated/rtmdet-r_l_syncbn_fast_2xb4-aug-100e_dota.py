@@ -26,7 +26,7 @@ random_rotate_ratio = 0.5
 rotate_rect_obj_labels = [9, 11]
 
 # Save model checkpoint and validation intervals
-save_checkpoint_intervals = 10
+save_checkpoint_intervals = 1
 # validation intervals in stage 2
 val_interval_stage2 = 1
 # The maximum checkpoints to keep.
