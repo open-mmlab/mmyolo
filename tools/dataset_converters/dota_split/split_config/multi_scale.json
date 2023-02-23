@@ -1,0 +1,21 @@
+{
+    "sizes": [
+      1024
+    ],
+    "gaps": [
+      500
+    ],
+    "rates": [
+      0.5,
+      1.0,
+      1.5
+    ],
+    "img_rate_thr": 0.6,
+    "iof_thr": 0.7,
+    "no_padding": false,
+    "padding_value": [
+      104,
+      116,
+      124
+    ]
+}

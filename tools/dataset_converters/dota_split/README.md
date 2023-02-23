@@ -2,60 +2,133 @@
 
 ## download dota dataset
 
-The dota dataset can be downloaded from [here](https://captain-whu.github.io/DOTA/dataset.html).
+The dota dataset can be downloaded from [DOTA](https://captain-whu.github.io/DOTA/dataset.html) or [OpenDataLab](https://opendatalab.org.cn/DOTA_V1.0)
 
-The data structure is as follows:
+Please unzip the file and place it in the following structure.
 
 ```none
-mmyolo
-├── data
-│   ├── DOTA
-│   │   ├── train
-│   │   ├── val
-│   │   ├── test
+${DATA_ROOT}
+├── train
+│   ├── images
+│   │   ├── P0000.png
+│   │   ├── ...
+│   ├── labelTxt-v1.0
+│   │   ├── labelTxt
+│   │   │   ├── P0000.txt
+│   │   │   ├── ...
+│   │   ├── trainset_reclabelTxt
+│   │   │   ├── P0000.txt
+│   │   │   ├── ...
+├── val
+│   ├── images
+│   │   ├── P0003.png
+│   │   ├── ...
+│   ├── labelTxt-v1.0
+│   │   ├── labelTxt
+│   │   │   ├── P0003.txt
+│   │   │   ├── ...
+│   │   ├── valset_reclabelTxt
+│   │   │   ├── P0003.txt
+│   │   │   ├── ...
+├── test
+│   ├── images
+│   │   ├── P0006.png
+│   │   ├── ...
+
 ```
+
+The folder ending with reclabelTxt stores the labels for the horizontal boxes and is not used when slicing.
 
 ## split dota dataset
 
-Based on the configuration in the DOTA paper, we provide the config json file for image split.
-
-`ss` means single scale split.
-`ms` means multi scale split.
-
-Please update the `img_dirs` and `ann_dirs` in json.
-
-For single scale split:
+Scrit `tools/dataset_converters/dota_split/dota_split.py` can split and prepare DOTA dataset.
 
 ```shell
-mim run mmrotate img_split --base-json \
-  tools/dataset_converters/dota_split/ss_trainval.json
+python tools/dataset_converters/dota_split/dota_split.py \
+    [--splt-config ${SPLIT_CONFIG}] \
+    [--data-root ${DATA_ROOT}] \
+    [--out-dir ${OUT_DIR}] \
+    [--ann-subdir ${ANN_SUBDIR}] \
+    [--phase ${DATASET_PHASE}] \
+    [--nproc ${NPROC}] \
+    [--save-ext ${SAVE_EXT}] \
+    [--overwrite]
+```
 
-mim run mmrotate img_split --base-json \
-  tools/dataset_converters/dota_split/ss_test.json
+**Description of all parameters**：
+
+- `--splt-config` : The split config for image slicing.
+- `--data-root`: Root dir of DOTA dataset.
+- `--out-dir`: Output dir for split result.
+- `--ann-subdir`: The subdir name for annotation. Defaults to `labelTxt-v1.0`.
+- `--phase`: Phase of the data set to be prepared. Defaults to `trainval test`
+- `--nproc`: Number of processes. Defaults to 8.
+- `--save-ext`: Extension of the saved image. Defaults to `png`
+- `--overwrite`: If the target folder already exists, whether to overwrite.
+
+Based on the configuration in the DOTA paper, we provide two commonly used split config.
+
+`./split_config/single_scale.json` means single scale split.
+`./split_config/multi_scale.json` means multi scale split.
+
+Examples:
+
+Split DOTA trainval set and test set with single scale.
+
+```shell
+python tools/dataset_converters/dota_split/dota_split.py
+    --split-config 'tools/dataset_converters/dota_split/split_config/single_scale.json'
+    --data-root ${DATA_ROOT} \
+    --out-dir ${OUT_DIR}
+```
+
+If you want to split DOTA-v1.5 dataset, which have different annotation dir 'labelTxt-v1.5'.
+
+```shell
+python tools/dataset_converters/dota_split/dota_split.py
+    --split-config 'tools/dataset_converters/dota_split/split_config/single_scale.json'
+    --data-root ${DATA_ROOT} \
+    --out-dir ${OUT_DIR} \
+    --ann-subdir 'labelTxt-v1.5'
+```
+
+If you want to split DOTA trainval, val and test set with single scale.
+
+```shell
+python tools/dataset_converters/dota_split/dota_split.py
+    --split-config 'tools/dataset_converters/dota_split/split_config/single_scale.json'
+    --data-root ${DATA_ROOT} \
+    --phase trainval val test \
+    --out-dir ${OUT_DIR}
 ```
 
 For multi scale split:
 
 ```shell
-mim run mmrotate img_split --base-json \
-  tools/dataset_converters/dota_split/ms_trainval.json
-
-mim run mmrotate img_split --base-json \
-  tools/dataset_converters/dota_split/ms_test.json
+python tools/dataset_converters/dota_split/dota_split.py
+    --split-config 'tools/dataset_converters/dota_split/split_config/multi_scale.json'
+    --data-root ${DATA_ROOT} \
+    --out-dir ${OUT_DIR}
 ```
 
 The new data structure is as follows:
 
 ```none
-mmyolo
-├── data
-│   ├── split_ss_dota
-│   │   ├── trainval
-│   │   │   ├── images
-│   │   │   ├── annfiles
-│   │   ├── test
-│   │   │   ├── images
-│   │   │   ├── annfiles
+${OUT_DIR}
+├── trainval
+│   ├── images
+│   │   ├── P0000__1024__0___0.png
+│   │   ├── ...
+│   ├── annfiles
+│   │   ├── P0000__1024__0___0.txt
+│   │   ├── ...
+├── test
+│   ├── images
+│   │   ├── P0006__1024__0___0.png
+│   │   ├── ...
+│   ├── annfiles
+│   │   ├── P0006__1024__0___0.txt
+│   │   ├── ...
 ```
 
-Then change `data_root` to `data/split_ss_dota` or `data/split_ms_dota`.
+Then change `data_root` to ${OUT_DIR}.
