@@ -3,12 +3,12 @@ _base_ = './yolox_s_fast_8xb8-300e_coco.py'
 # ========================modified parameters======================
 deepen_factor = 0.33
 widen_factor = 0.375
-
-img_scale = _base_.img_scale
-pre_transform = _base_.pre_transform
 scaling_ratio_range = (0.5, 1.5)
 
 # =======================Unmodified in most cases==================
+img_scale = _base_.img_scale
+pre_transform = _base_.pre_transform
+
 # model settings
 model = dict(
     data_preprocessor=dict(batch_augments=[

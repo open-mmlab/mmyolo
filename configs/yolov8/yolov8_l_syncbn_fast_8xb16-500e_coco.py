@@ -8,6 +8,10 @@ last_stage_out_channels = 512
 mixup_prob = 0.15
 
 # =======================Unmodified in most cases==================
+pre_transform = _base_.pre_transform
+mosaic_affine_transform = _base_.mosaic_affine_transform
+last_transform = _base_.last_transform
+
 model = dict(
     backbone=dict(
         last_stage_out_channels=last_stage_out_channels,
@@ -23,17 +27,12 @@ model = dict(
             widen_factor=widen_factor,
             in_channels=[256, 512, last_stage_out_channels])))
 
-pre_transform = _base_.pre_transform
-albu_train_transform = _base_.albu_train_transform
-mosaic_affine_pipeline = _base_.mosaic_affine_pipeline
-last_transform = _base_.last_transform
-
 train_pipeline = [
-    *pre_transform, *mosaic_affine_pipeline,
+    *pre_transform, *mosaic_affine_transform,
     dict(
         type='YOLOv5MixUp',
         prob=mixup_prob,
-        pre_transform=[*pre_transform, *mosaic_affine_pipeline]),
+        pre_transform=[*pre_transform, *mosaic_affine_transform]),
     *last_transform
 ]
 
