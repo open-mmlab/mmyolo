@@ -1,28 +1,26 @@
-# Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
-from mmcv.transforms import BaseTransform, to_tensor
+
 from mmengine.structures import InstanceData
-
 from mmyolo.registry import TRANSFORMS
-from mmyolo.structure import DataSample6D
-
+from mmcv.transforms import BaseTransform, to_tensor
+from mmyolo.structures import DataSample6D
 
 @TRANSFORMS.register_module()
 class Pack6DInputs(BaseTransform):
     # todo: 预测值是哪个？需要更改
     mapping_table = {
         'gt_bboxes': 'bboxes',
-        'gt_bbox_labels': 'labels',
-        'gt_rotation': 'rotation',
-        'gt_translation': 'translation',
+        'gt_bboxes_labels': 'labels',
+        'gt_rotations': 'rotation',
+        'gt_translations': 'translation',
         'gt_center': 'center',
         'gt_corners': 'corners'
     }
-
-    def __init__(self,
+    
+    def __init__(self, 
                  meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape')):
         self.meta_keys = meta_keys
-
+        
     def transform(self, results: dict) -> dict:
         """Method to pack the input data.
 
@@ -43,33 +41,34 @@ class Pack6DInputs(BaseTransform):
                 img = np.expand_dims(img, -1)
             img = np.ascontiguousarray(img.transpose(2, 0, 1))
             packed_results['input'] = to_tensor(img)
-
+        
         data_sample = DataSample6D()
         instance_data = InstanceData()
 
         for key in self.mapping_table.keys():
             if key not in results:
                 continue
-            instance_data[self.mapping_table[key]] = to_tensor(results[key])
-
+            instance_data[self.mapping_table[key]] = to_tensor(
+                results[key])
+            
         data_sample.gt_instances = instance_data
-
+        
         img_meta = {}
         for key in self.meta_keys:
             assert key in results, f'`{key}` is not found in `results`, ' \
                 f'the valid keys are {list(results)}.'
             img_meta[key] = results[key]
-
+        
         data_sample.set_metainfo(img_meta)
         packed_results['data_samples'] = data_sample
-
+        
         return packed_results
-
+    
     def __repr__(self) -> str:
         repr_str = self.__class__.__name__
         repr_str += f'(meta_keys={self.meta_keys})'
         return repr_str
-
+        
 
 @TRANSFORMS.register_module()
 class ToTensor:
