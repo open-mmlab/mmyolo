@@ -62,18 +62,19 @@ English | [简体中文](README_zh-CN.md)
 
 ## 📄 Table of Contents
 
-- [🥳 🚀 What's New](#--whats-new-)
-  - [✨ Highlight](#-highlight-)
-- [📖 Introduction](#-introduction-)
-- [🛠️ Installation](#%EF%B8%8F-installation-)
-- [👨‍🏫 Tutorial](#-tutorial-)
-- [📊 Overview of Benchmark and Model Zoo](#-overview-of-benchmark-and-model-zoo-)
-- [❓ FAQ](#-faq-)
-- [🙌 Contributing](#-contributing-)
-- [🤝 Acknowledgement](#-acknowledgement-)
-- [🖊️ Citation](#️-citation-)
-- [🎫 License](#-license-)
-- [🏗️ Projects in OpenMMLab](#%EF%B8%8F-projects-in-openmmlab-)
+- [📄 Table of Contents](#-table-of-contents)
+- [🥳 🚀 What's New 🔝](#--whats-new-)
+  - [✨ Highlight 🔝](#-highlight-)
+- [📖 Introduction 🔝](#-introduction-)
+- [🛠️ Installation 🔝](#️-installation-)
+- [👨‍🏫 Tutorial 🔝](#-tutorial-)
+- [📊 Overview of Benchmark and Model Zoo 🔝](#-overview-of-benchmark-and-model-zoo-)
+- [❓ FAQ 🔝](#-faq-)
+- [🙌 Contributing 🔝](#-contributing-)
+- [🤝 Acknowledgement 🔝](#-acknowledgement-)
+- [🖊️ Citation 🔝](#️-citation-)
+- [🎫 License 🔝](#-license-)
+- [🏗️ Projects in OpenMMLab 🔝](#️-projects-in-openmmlab-)
 
 ## 🥳 🚀 What's New [🔝](#-table-of-contents)
 
@@ -204,6 +205,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 - [Cross-library calls using mim](docs/en/common_usage/mim_usage.md)
 - [Apply multiple Necks](docs/en/common_usage/multi_necks.md)
 - [Specify specific device training or inference](docs/en/common_usage/specify_device.md)
+- [Single and multi-channel application examples](docs/en/common_usage/single_multi_channel_applications.md.md)
 
 </details>
 
