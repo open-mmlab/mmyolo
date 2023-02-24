@@ -95,6 +95,7 @@ unset PYTHONPATH
 
 用户可以通过在配置中设置 `default_hooks.checkpoint.save_best` 参数来选择根据什么指标来筛选最优模型。以 `COCO` 数据集检测任务为例，
 则 `default_hooks.checkpoint.save_best` 可以选择输入的参数有:
+
 1. `auto` 将会根据验证集中的第一个评价指标作为筛选条件。
 2. `coco/bbox_mAP` 将会根据 `bbox_mAP` 作为筛选条件。
 3. `coco/bbox_mAP_50` 将会根据 `bbox_mAP_50` 作为筛选条件。
