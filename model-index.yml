@@ -1,8 +1,0 @@
-Import:
-  - configs/yolov5/metafile.yml
-  - configs/yolov6/metafile.yml
-  - configs/yolox/metafile.yml
-  - configs/rtmdet/metafile.yml
-  - configs/yolov7/metafile.yml
-  - configs/ppyoloe/metafile.yml
-  - configs/yolov8/metafile.yml
