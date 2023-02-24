@@ -73,8 +73,8 @@ shapely is required, please install shapely first by `pip install shapely`.
 
 Based on the configuration in the DOTA paper, we provide two commonly used split config.
 
-`./split_config/single_scale.json` means single-scale split.
-`./split_config/multi_scale.json` means multi-scale split.
+- `./split_config/single_scale.json` means single-scale split.
+- `./split_config/multi_scale.json` means multi-scale split.
 
 DOTA dataset usually uses the trainval set for training and the test set for online evaluation, since most papers
 provide the results of online evaluation. If you want to evaluate the model performance locally firstly, please split

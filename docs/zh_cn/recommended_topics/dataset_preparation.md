@@ -40,7 +40,7 @@ ${DATA_ROOT}
 
 ```
 
-其中，以 `reclabelTxt` 为结尾的文件夹存放了水平检测框的标注，目前仅使用了旋转框的标注。
+其中，以 `reclabelTxt` 为结尾的文件夹存放了水平检测框的标注，目前仅使用了 `labelTxt-v1.0` 中旋转框的标注。
 
 ### 数据集切片
 
@@ -67,11 +67,11 @@ python tools/dataset_converters/dota/dota_split.py \
 - `--out-dir`: 切片后的输出位置。
 - `--ann-subdir`: 标注文件夹的名字。 默认为 `labelTxt-v1.0` 。
 - `--phase`: 数据集的阶段。默认为 `trainval test` 。
-- `--nproc`: 进程数量。 默认为8。
+- `--nproc`: 进程数量。 默认为 8 。
 - `--save-ext`: 输出图像的扩展名，如置空则与原图保持一致。 默认为 `None` 。
 - `--overwrite`: 如果目标文件夹已存在，是否允许覆盖。
 
-基于 DOTA 数据集论文种提供的配置，我们提供了两种切片配置。
+基于 DOTA 数据集论文中提供的配置，我们提供了两种切片配置。
 
 `./split_config/single_scale.json` 用于单尺度 `single-scale` 切片
 `./split_config/multi_scale.json` 用于多尺度 `multi-scale` 切片
