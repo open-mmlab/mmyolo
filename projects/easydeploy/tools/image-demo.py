@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument(
         'img', help='Image path, include image file, dir and URL.')
     parser.add_argument('config', help='Config file')
-    parser.add_argument('model', help='Exported model file')
+    parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
         '--out-dir', default='./output', help='Path to output file')
     parser.add_argument(
@@ -62,11 +62,12 @@ def main():
 
     colors = [[random.randint(0, 255) for _ in range(3)] for _ in range(1000)]
 
-    # build the model from a config file and a model file
-    if args.model.endswith('.onnx'):
-        model = ORTWrapper(args.model, args.device)
-    elif args.model.endswith('.engine') or args.model.endswith('.plan'):
-        model = TRTWrapper(args.model, args.device)
+    # build the model from a config file and a checkpoint file
+    if args.checkpoint.endswith('.onnx'):
+        model = ORTWrapper(args.checkpoint, args.device)
+    elif args.checkpoint.endswith('.engine') or args.checkpoint.endswith(
+            '.plan'):
+        model = TRTWrapper(args.checkpoint, args.device)
     else:
         raise NotImplementedError
 
@@ -124,15 +125,16 @@ def main():
         for (bbox, score, label) in zip(bboxes, scores, labels):
             bbox = bbox.tolist()
             color = colors[label]
-            name = f'cls:{label}_score:{score:0.4f}'
+            label_name = cfg.get('class_name', {})[label]
+            name = f'cls:{label_name}_score:{score:0.4f}'
 
             cv2.rectangle(bgr, bbox[:2], bbox[2:], color, 2)
             cv2.putText(
                 bgr,
                 name, (bbox[0], bbox[1] - 2),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.75, [225, 255, 255],
-                thickness=2)
+                2.0, [225, 255, 255],
+                thickness=3)
 
         if args.show:
             mmcv.imshow(bgr, 'result', 0)

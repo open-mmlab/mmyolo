@@ -408,7 +408,7 @@ python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 
 此处我们将通过 MMYOLO 的 [EasyDeploy](../../../projects/easydeploy/) 来演示模型的转换部署和基本推理。
 
-首先需要在当前 MMYOLO 的虚拟环境中按照 EasyDeploy 的[基本文档](../../../projects/easydeploy/docs/model_convert.md) 对照自己的设备安装好所需的各个库。
+首先需要在当前 MMYOLO 的虚拟环境中按照 EasyDeploy 的 [基本文档](../../../projects/easydeploy/docs/model_convert.md) 对照自己的设备安装好所需的各个库。
 
 ```shell
 pip install onnx
@@ -416,7 +416,7 @@ pip install onnx-simplifier # 如果需要使用 simplify 功能需要安装
 pip install tensorrt        # 如果有 GPU 环境并且需要输出 TensorRT 模型需要继续执行
 ```
 
-完成安装后就可以用以下命令对已经训练好的针对 cat 数据集的模型一键转换部署，具体的各项参数含义和参数值需要对照使用的 config 文件进行调整。此处我们先导出 CPU 版本的 ONNX 模型，`--backend` 为 1。
+完成安装后就可以用以下命令对已经训练好的针对 cat 数据集的模型一键转换部署，当前设备的 ONNX 版本为 1.13.0，TensorRT 版本为 8.5.3.1，故可保持 `--opset` 为 11，其余各项参数的具体含义和参数值需要对照使用的 config 文件进行调整。此处我们先导出 CPU 版本的 ONNX 模型，`--backend` 为 1。
 
 ```shell
 python projects/easydeploy/tools/export.py \
@@ -447,10 +447,10 @@ python projects/easydeploy/tools/image-demo.py \
     --device cpu
 ```
 
-成功完成推理后会在默认的 MMYOLO 根目录下的 `output` 文件夹生成推理结果图，如果想直观看到结果而不需要保存，可以在上述命令结尾加上 `--show` 。
+成功完成推理后会在默认的 MMYOLO 根目录下的 `output` 文件夹生成推理结果图，如果想直观看到结果而不需要保存，可以在上述命令结尾加上 `--show` ，为了方便展示，下图是生成结果的截取部分。
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/7219519/220801159-ae550fd9-8ef9-4236-81e2-0eb16aa0d8cf.jpg" width="800" alt="image"/>
+<img src="https://user-images.githubusercontent.com/7219519/221061210-b91e0b5b-652d-4dfc-8451-86a9a36f7d04.png" width="800" alt="image"/>
 </div>
 
 我们继续转换对应 TensorRT 的 engine 文件，因为 TensorRT 需要对应当前环境以及部署使用的版本进行，所以一定要确认导出参数，这里我们导出对应 TensorRT8 版本的文件，`--backend` 为 2。
@@ -511,10 +511,10 @@ python projects/easydeploy/tools/image-demo.py \
     --device cuda:0
 ```
 
-此处依旧选择在 `output` 下保存推理结果而非直接显示结果，结果如图：
+此处依旧选择在 `output` 下保存推理结果而非直接显示结果，同样为了方便展示，下图是生成结果的截取部分。
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/7219519/220810115-b0d7eada-b04c-4271-8982-12ee2aa5f6a9.jpg" width="800" alt="image"/>
+<img src="https://user-images.githubusercontent.com/7219519/221061291-e7490bb6-5f0c-45ab-9fc4-caf2b62419d6.png" width="800" alt="image"/>
 </div>
 
 这样我们就完成了将训练完成的模型进行转换部署并且检查推理结果的工作。至此本教程结束。
