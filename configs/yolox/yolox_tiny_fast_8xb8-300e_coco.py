@@ -6,11 +6,11 @@ widen_factor = 0.375
 scaling_ratio_range = (0.5, 1.5)
 
 # =======================Unmodified in most cases==================
-test_img_scale = (416, 416)
-tta_img_scales = [test_img_scale, (320, 320), (640, 640)]
-
 img_scale = _base_.img_scale
 pre_transform = _base_.pre_transform
+
+test_img_scale = (416, 416)
+tta_img_scales = [test_img_scale, (320, 320), (640, 640)]
 
 # model settings
 model = dict(

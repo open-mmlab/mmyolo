@@ -47,9 +47,16 @@ deepen_factor = 0.33
 # The scaling factor that controls the width of the network structure
 widen_factor = 0.5
 norm_cfg = dict(type='BN', momentum=0.03, eps=0.001)
+# generate new random resize shape interval
+batch_augments_interval = 10
 
 # -----train val related-----
 weight_decay = 0.0005
+loss_cls_weight = 1.0
+loss_bbox_weight = 5.0
+loss_obj_weight = 1.0
+loss_bbox_aux_weight = 1.0
+center_radius = 2.5  # SimOTAAssigner
 num_last_epochs = 15
 random_affine_scaling_ratio_range = (0.1, 2)
 mixup_ratio_range = (0.8, 1.6)
@@ -57,6 +64,8 @@ mixup_ratio_range = (0.8, 1.6)
 save_epoch_intervals = 10
 # The maximum checkpoints to keep.
 max_keep_ckpts = 3
+
+ema_momentum = 0.0001
 
 # ===============================Unmodified in most cases====================
 # model settings
@@ -79,7 +88,7 @@ model = dict(
                 type='YOLOXBatchSyncRandomResize',
                 random_size_range=(480, 800),
                 size_divisor=32,
-                interval=10)
+                interval=batch_augments_interval)
         ]),
     backbone=dict(
         type='YOLOXCSPDarknet',
@@ -116,24 +125,26 @@ model = dict(
             type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
             reduction='sum',
-            loss_weight=1.0),
+            loss_weight=loss_cls_weight),
         loss_bbox=dict(
             type='mmdet.IoULoss',
             mode='square',
             eps=1e-16,
             reduction='sum',
-            loss_weight=5.0),
+            loss_weight=loss_bbox_weight),
         loss_obj=dict(
             type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
             reduction='sum',
-            loss_weight=1.0),
+            loss_weight=loss_obj_weight),
         loss_bbox_aux=dict(
-            type='mmdet.L1Loss', reduction='sum', loss_weight=1.0)),
+            type='mmdet.L1Loss',
+            reduction='sum',
+            loss_weight=loss_bbox_aux_weight)),
     train_cfg=dict(
         assigner=dict(
             type='mmdet.SimOTAAssigner',
-            center_radius=2.5,
+            center_radius=center_radius,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'))),
     test_cfg=model_test_cfg)
 
@@ -303,7 +314,7 @@ custom_hooks = [
     dict(
         type='EMAHook',
         ema_type='ExpMomentumEMA',
-        momentum=0.0001,
+        momentum=ema_momentum,
         update_buffers=True,
         strict_load=False,
         priority=49)
@@ -315,6 +326,6 @@ train_cfg = dict(
     val_interval=save_epoch_intervals,
     dynamic_intervals=[(max_epochs - num_last_epochs, 1)])
 
-auto_scale_lr = dict(base_batch_size=64)
+auto_scale_lr = dict(base_batch_size=8 * train_batch_size_per_gpu)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
