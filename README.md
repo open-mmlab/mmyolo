@@ -196,6 +196,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 - [Resume training](docs/en/common_usage/resume_training.md)
 - [Enabling and disabling SyncBatchNorm](docs/en/common_usage/syncbn.md)
 - [Enabling AMP](docs/en/common_usage/amp_training.md)
+- [TTA Related Notes](docs/en/common_usage/tta.md)
 - [Add plugins to the backbone network](docs/en/common_usage/plugins.md)
 - [Freeze layers](docs/en/common_usage/common_usage/freeze_layers.md)
 - [Output model predictions](docs/en/common_usage/output_predictions.md)

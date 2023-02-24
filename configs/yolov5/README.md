@@ -39,7 +39,7 @@ In the official YOLOv5 code, the `random_perspective` data augmentation in COCO 
 3. `SyncBN` means use SyncBN, `AMP` indicates training with mixed precision.
 4. We use 8x A100 for training, and the single-GPU batch size is 16. This is different from the official code.
 5. The performance is unstable and may fluctuate by about 0.4 mAP and the highest performance weight in `COCO` training in `YOLOv5` may not be the last epoch.
-6. `TTA` means that Test Time Augmentation. It's perform 3 multi-scaling transformations on the image, followed by 2 flipping transformations (flipping and not flipping). You only need to specify `--tta` when testing to enable.
+6. `TTA` means that Test Time Augmentation. It's perform 3 multi-scaling transformations on the image, followed by 2 flipping transformations (flipping and not flipping). You only need to specify `--tta` when testing to enable.  see [TTA](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/common_usage/tta.md) for details.
 
 ### VOC
 
