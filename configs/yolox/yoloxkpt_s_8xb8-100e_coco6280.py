@@ -10,7 +10,7 @@ deepen_factor = 0.33
 widen_factor = 0.5
 
 save_epoch_intervals = 10
-train_batch_size_per_gpu = 16
+train_batch_size_per_gpu = 32
 # NOTE: for debugging set to 0
 train_num_workers = 4
 val_batch_size_per_gpu = 1
@@ -18,19 +18,20 @@ val_num_workers = 4
 
 max_epochs = 100
 num_last_epochs = 20
+batch_augments_interval = 1
 
 # model settings
 model = dict(
     type='YOLODetector',
-    # init_cfg=[
-    #     dict(
-    #         type='Kaiming',
-    #         layer='Conv2d',
-    #         a=2.23606797749979,  # math.sqrt(5)
-    #         distribution='uniform',
-    #         mode='fan_in',
-    #         nonlinearity='leaky_relu')
-    #     ],
+    init_cfg=[
+        dict(
+            type='Kaiming',
+            layer='Conv2d',
+            a=2.23606797749979,  # math.sqrt(5)
+            distribution='uniform',
+            mode='fan_in',
+            nonlinearity='leaky_relu')
+        ],
     # TODO: Waiting for mmengine support
     use_syncbn=False,
     data_preprocessor=dict(
@@ -38,11 +39,12 @@ model = dict(
         pad_size_divisor=32,
         batch_augments=[
             dict(
-                type='mmdet.BatchSyncRandomResize',
+                type='YOLOXPoseBatchSyncRandomResize',
                 random_size_range=(480, 800),
                 size_divisor=32,
-                interval=10)
-        ]),
+                interval=batch_augments_interval)
+        ]
+        ),
     backbone=dict(
         type='YOLOXCSPDarknet',
         deepen_factor=deepen_factor,
@@ -116,30 +118,30 @@ pre_transform = [
 
 train_pipeline_stage1 = [
     *pre_transform,
-    # dict(
-    #     type='MosaicKeypoints',
-    #     img_scale=img_scale,
-    #     pad_val=114.0,
-    #     pre_transform=pre_transform),
-    # dict(
-    #     # type='mmdet.RandomAffine',
-    #     type='YOLOPoseRandomAffine',
-    #     max_rotate_degree=10.0,
-    #     scaling_ratio_range=(0.75, 1),
-    #     max_translate_ratio=0.0,
-    #     max_shear_degree=2.0,
-    #     # img_scale is (width, height)
-    #     border=(-img_scale[0] // 2, -img_scale[1] // 2)),
-    # dict(
-    #     type='YOLOXMixUpPose',
-    #     prob=0.0,
-    #     flip_ratio=1.0,
-    #     img_scale=img_scale,
-    #     ratio_range=(0.8, 1.6),
-    #     pad_val=114.0,
-    #     pre_transform=pre_transform),
-    # dict(type='mmdet.YOLOXHSVRandomAug'),
-    # dict(type='YOLOPoseRandomFlip', prob=0.5),
+    dict(
+        type='MosaicKeypoints',
+        img_scale=img_scale,
+        pad_val=114.0,
+        pre_transform=pre_transform),
+    dict(
+        # type='mmdet.RandomAffine',
+        type='YOLOPoseRandomAffine',
+        max_rotate_degree=10.0,
+        scaling_ratio_range=(0.75, 1),
+        max_translate_ratio=0.0,
+        max_shear_degree=2.0,
+        # img_scale is (width, height)
+        border=(-img_scale[0] // 2, -img_scale[1] // 2)),
+    dict(
+        type='YOLOXMixUpPose',
+        prob=0.0,
+        flip_ratio=1.0,
+        img_scale=img_scale,
+        ratio_range=(0.8, 1.6),
+        pad_val=114.0,
+        pre_transform=pre_transform),
+    dict(type='mmdet.YOLOXHSVRandomAug'),
+    dict(type='YOLOPoseRandomFlip', prob=0.5),
     dict(
         type='YOLOPoseFilterAnnotations',
         min_gt_bbox_wh=(1, 1),
@@ -177,6 +179,7 @@ train_dataloader = dict(
     persistent_workers=True,  # NOTE: for debugging
     pin_memory=False,  # NOTE: for debugging
     sampler=dict(type='DefaultSampler', shuffle=True),
+    # collate_fn=dict(type='yolov5_collate'),
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
@@ -209,6 +212,7 @@ val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
     persistent_workers=True,  # NOTE: for debugging
+    # collate_fn=dict(type='yolov5_collate'),
     pin_memory=False,  # NOTE: for debugging
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
@@ -242,18 +246,13 @@ test_evaluator = val_evaluator
 # optimizer
 # default 8 gpu
 # NOTE: clip grad is necessary for training.
-base_lr = 0.001
+base_lr = 0.004
 optim_wrapper = dict(
+    _delete_=True,
     type='OptimWrapper',
-    optimizer=dict(
-        type='SGD', lr=base_lr, momentum=0.9, weight_decay=5e-4,
-        nesterov=True, batch_size_per_gpu=train_batch_size_per_gpu),
-    paramwise_cfg=dict(norm_decay_mult=0., bias_decay_mult=0., base_total_batch_size=train_batch_size_per_gpu * 8),
-    # clip_grad=dict(max_norm=35, norm_type=2),
-    # optimizer=dict(
-    #     type='AdamW', lr=base_lr, batch_size_per_gpu=train_batch_size_per_gpu),
-    constructor='YOLOXOptimWrapperConstructor'
-)
+    optimizer=dict(type='AdamW', lr=base_lr, weight_decay=0.05),
+    paramwise_cfg=dict(
+        norm_decay_mult=0, bias_decay_mult=0, bypass_duplicate=True))
 
 # learning rate
 param_scheduler = [
@@ -297,7 +296,7 @@ custom_hooks = [
     dict(
         type='EMAHook',
         ema_type='ExpMomentumEMA',
-        momentum=0.0001,
+        momentum=0.0002,
         update_buffers=True,
         strict_load=False,
         priority=49),
@@ -310,7 +309,7 @@ train_cfg = dict(
     val_interval=save_epoch_intervals,
     dynamic_intervals=[(max_epochs - num_last_epochs, 1)])
 
-auto_scale_lr = dict(base_batch_size=64)
+auto_scale_lr = dict(base_batch_size=2*train_batch_size_per_gpu)
 val_cfg = dict(type='ValLoop')
 test_cfg = dict(type='TestLoop')
 # load_from="mmyoloxs.pt"

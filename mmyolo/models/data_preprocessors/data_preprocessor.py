@@ -12,6 +12,116 @@ from torch import Tensor
 from mmyolo.registry import MODELS
 
 
+
+@MODELS.register_module()
+class YOLOXPoseBatchSyncRandomResize(BatchSyncRandomResize):
+    """YOLOX batch random resize.
+    Args:
+        random_size_range (tuple): The multi-scale random range during
+            multi-scale training.
+        interval (int): The iter interval of change
+            image size. Defaults to 10.
+        size_divisor (int): Image size divisible factor.
+            Defaults to 32.
+    """
+
+    def forward(self, inputs: Tensor, data_samples: dict) -> Tensor and dict:
+        """resize a batch of images and bboxes to shape ``self._input_size``"""
+        h, w = inputs.shape[-2:]
+        if self._input_size is None:
+            self._input_size = (h, w)
+        scale_y = self._input_size[0] / h
+        scale_x = self._input_size[1] / w
+        if scale_x != 1 or scale_y != 1:
+            inputs = F.interpolate(
+                inputs,
+                size=self._input_size,
+                mode='bilinear',
+                align_corners=False)
+            for data_sample in data_samples:
+                img_shape = (int(data_sample.img_shape[0] * scale_y),
+                             int(data_sample.img_shape[1] * scale_x))
+                pad_shape = (int(data_sample.pad_shape[0] * scale_y),
+                             int(data_sample.pad_shape[1] * scale_x))
+                data_sample.set_metainfo({
+                    'img_shape': img_shape,
+                    'pad_shape': pad_shape,
+                    'batch_input_shape': self._input_size
+                })
+                data_sample.gt_instances.bboxes[
+                    ...,
+                    0::2] = data_sample.gt_instances.bboxes[...,
+                                                            0::2] * scale_x
+                data_sample.gt_instances.bboxes[
+                    ...,
+                    1::2] = data_sample.gt_instances.bboxes[...,
+                                                            1::2] * scale_y
+                # keypoints num_keypoints * 2
+                data_sample.gt_instances.keypoints[
+                    ..., 0::3] = data_sample.gt_instances.keypoints[..., 0::3] * scale_x
+                data_sample.gt_instances.keypoints[
+                    ..., 1::3] = data_sample.gt_instances.keypoints[..., 1::3] * scale_y
+                if 'ignored_instances' in data_sample:
+                    data_sample.ignored_instances.bboxes[
+                        ..., 0::2] = data_sample.ignored_instances.bboxes[
+                            ..., 0::2] * scale_x
+                    data_sample.ignored_instances.bboxes[
+                        ..., 1::2] = data_sample.ignored_instances.bboxes[
+                            ..., 1::2] * scale_y
+                    data_sample.ignored_instances.keypoints[
+                        ..., 0::3] = data_sample.ignored_instances.keypoints[
+                            ..., 0::3] * scale_x
+                    data_sample.ignored_instances.keypoints[
+                        ..., 1::3] = data_sample.ignored_instances.keypoints[
+                            ..., 1::3] * scale_y
+        message_hub = MessageHub.get_current_instance()
+        if (message_hub.get_info('iter') + 1) % self._interval == 0:
+            self._input_size = self._get_random_size(
+                aspect_ratio=float(w / h), device=inputs.device)
+        return inputs, data_samples
+
+
+
+@MODELS.register_module()
+class YOLOXBatchSyncRandomResize(BatchSyncRandomResize):
+    """YOLOX batch random resize.
+    Args:
+        random_size_range (tuple): The multi-scale random range during
+            multi-scale training.
+        interval (int): The iter interval of change
+            image size. Defaults to 10.
+        size_divisor (int): Image size divisible factor.
+            Defaults to 32.
+    """
+
+    def forward(self, inputs: Tensor, data_samples: dict) -> Tensor and dict:
+        """resize a batch of images and bboxes to shape ``self._input_size``"""
+        h, w = inputs.shape[-2:]
+        inputs = inputs.float()
+        assert isinstance(data_samples, dict)
+
+        if self._input_size is None:
+            self._input_size = (h, w)
+        scale_y = self._input_size[0] / h
+        scale_x = self._input_size[1] / w
+        if scale_x != 1 or scale_y != 1:
+            inputs = F.interpolate(
+                inputs,
+                size=self._input_size,
+                mode='bilinear',
+                align_corners=False)
+
+            data_samples['bboxes_labels'][:, 2::2] *= scale_x
+            data_samples['bboxes_labels'][:, 3::2] *= scale_y
+
+        message_hub = MessageHub.get_current_instance()
+        if (message_hub.get_info('iter') + 1) % self._interval == 0:
+            self._input_size = self._get_random_size(
+                aspect_ratio=float(w / h), device=inputs.device)
+
+        return inputs, data_samples
+
+
 @MODELS.register_module()
 class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
     """Rewrite collate_fn to get faster training speed.
