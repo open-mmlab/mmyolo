@@ -7,7 +7,7 @@ import cv2
 import mmcv
 import numpy as np
 import torch
-from mmcv.transforms import BaseTransform
+from mmcv.transforms import BaseTransform, Compose
 from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
@@ -17,6 +17,9 @@ from mmdet.structures.mask import PolygonMasks
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
+
+# TODO: Waiting for MMCV support
+TRANSFORMS.register_module(module=Compose, force=True)
 
 
 @TRANSFORMS.register_module()
