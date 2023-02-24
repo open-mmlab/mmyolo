@@ -235,27 +235,35 @@ test_evaluator = val_evaluator
 
 train_cfg = dict(max_epochs=max_epochs)
 
-tta_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+_multiscale_resize_transforms = [
     dict(
-        type='TestTimeAug',
-        transforms=[[[
+        type='Compose',
+        transforms=[
             dict(type='YOLOv5KeepRatioResize', scale=s),
             dict(
                 type='LetterResize',
                 scale=s,
                 allow_scale_up=False,
                 pad_val=dict(img=114))
-        ] for s in tta_img_scales],
-                    [
-                        dict(type='mmdet.RandomFlip', prob=1.),
-                        dict(type='mmdet.RandomFlip', prob=0.)
-                    ], [dict(type='mmdet.LoadAnnotations', with_bbox=True)],
-                    [
-                        dict(
-                            type='mmdet.PackDetInputs',
-                            meta_keys=('img_id', 'img_path', 'ori_shape',
-                                       'img_shape', 'scale_factor',
-                                       'pad_param', 'flip', 'flip_direction'))
-                    ]])
+        ]) for s in tta_img_scales
+]
+
+tta_pipeline = [
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(
+        type='TestTimeAug',
+        transforms=[
+            _multiscale_resize_transforms,
+            [
+                dict(type='mmdet.RandomFlip', prob=1.),
+                dict(type='mmdet.RandomFlip', prob=0.)
+            ], [dict(type='mmdet.LoadAnnotations', with_bbox=True)],
+            [
+                dict(
+                    type='mmdet.PackDetInputs',
+                    meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                               'scale_factor', 'pad_param', 'flip',
+                               'flip_direction'))
+            ]
+        ])
 ]
