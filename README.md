@@ -198,7 +198,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 - [Enabling AMP](docs/en/common_usage/amp_training.md)
 - [TTA Related Notes](docs/en/common_usage/tta.md)
 - [Add plugins to the backbone network](docs/en/common_usage/plugins.md)
-- [Freeze layers](docs/en/common_usage/common_usage/freeze_layers.md)
+- [Freeze layers](docs/en/common_usage/freeze_layers.md)
 - [Output model predictions](docs/en/common_usage/output_predictions.md)
 - [Set random seed](docs/en/common_usage/set_random_seed.md)
 - [Module combination](docs/en/common_usage/module_combination.md)

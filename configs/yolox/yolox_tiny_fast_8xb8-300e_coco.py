@@ -67,6 +67,7 @@ train_dataloader = dict(dataset=dict(pipeline=train_pipeline_stage1))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 test_dataloader = val_dataloader
 
+# Config for Test Time Augmentation. (TTA)
 tta_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(

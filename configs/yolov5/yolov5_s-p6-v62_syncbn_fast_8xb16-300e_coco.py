@@ -103,6 +103,7 @@ val_dataloader = dict(
 
 test_dataloader = val_dataloader
 
+# Config for Test Time Augmentation. (TTA)
 _multiscale_resize_transforms = [
     dict(
         type='Compose',

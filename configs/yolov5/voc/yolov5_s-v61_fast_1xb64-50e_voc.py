@@ -235,6 +235,7 @@ test_evaluator = val_evaluator
 
 train_cfg = dict(max_epochs=max_epochs)
 
+# Config for Test Time Augmentation. (TTA)
 _multiscale_resize_transforms = [
     dict(
         type='Compose',

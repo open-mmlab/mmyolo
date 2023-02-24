@@ -147,6 +147,7 @@ test_dataloader = val_dataloader
 
 default_hooks = dict(param_scheduler=dict(lr_factor=lr_factor))
 
+# Config for Test Time Augmentation. (TTA)
 _multiscale_resize_transforms = [
     dict(
         type='Compose',
