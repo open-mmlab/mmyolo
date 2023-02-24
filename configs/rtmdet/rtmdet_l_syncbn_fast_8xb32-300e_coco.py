@@ -2,7 +2,7 @@ _base_ = '../_base_/default_runtime.py'
 
 # ========================Frequently modified parameters======================
 # -----data related-----
-data_root = 'data/coco/'
+data_root = 'data/sub_coco/'
 # Path of train annotation file
 train_ann_file = 'annotations/instances_train2017.json'
 train_data_prefix = 'train2017/'  # Prefix of train image path

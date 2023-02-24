@@ -19,6 +19,7 @@ def yolov5_collate(data_batch: Sequence,
     """
     batch_imgs = []
     batch_bboxes_labels = []
+    batch_masks = []
     for i in range(len(data_batch)):
         datasamples = data_batch[i]['data_samples']
         inputs = data_batch[i]['inputs']
@@ -26,6 +27,10 @@ def yolov5_collate(data_batch: Sequence,
 
         gt_bboxes = datasamples.gt_instances.bboxes.tensor
         gt_labels = datasamples.gt_instances.labels
+        if 'masks' in datasamples.gt_instances:
+            masks = datasamples.gt_instances.masks.to_tensor(
+                dtype=torch.bool, device=gt_bboxes.device)
+            batch_masks.append(masks)
         batch_idx = gt_labels.new_full((len(gt_labels), 1), i)
         bboxes_labels = torch.cat((batch_idx, gt_labels[:, None], gt_bboxes),
                                   dim=1)
@@ -36,6 +41,8 @@ def yolov5_collate(data_batch: Sequence,
             'bboxes_labels': torch.cat(batch_bboxes_labels, 0)
         }
     }
+    if len(batch_masks) > 0:
+        collated_results['data_samples']['masks'] = torch.cat(batch_masks, 0)
 
     if use_ms_training:
         collated_results['inputs'] = batch_imgs
