@@ -31,7 +31,7 @@
 
 ## 基于官方配置继承新建的配置出现 unexpected keyword argument
 
-这通常是由于你没有删除 base 配置中的额外参数。 可以在你新建配置中的修改字典中增加 `__delete__=True` 删掉 base 中该类之前的所有参数。
+这通常是由于你没有删除 base 配置中的额外参数。 可以在你新建配置所修改的字典中增加 `_delete_=True` 删掉 base 中该类之前的所有参数。
 
 ## The testing results of the whole dataset is empty
 
