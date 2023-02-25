@@ -11,11 +11,19 @@ mim install "mmcv>=2.0.0rc1,<2.1.0"
 mim install "mmdet>=3.0.0rc5,<3.1.0"
 ```
 
+If you are currently in the mmyolo project directory, you can use the following simplified notation
+
+```shell
+cd mmyolo
+pip install -U openmom
+mim install -r requirements/mminstall.txt
+```
+
 **Note:**
 
 a. In MMCV-v2.x, `mmcv-full` is rename to `mmcv`, if you want to install `mmcv` without CUDA ops, you can use `mim install "mmcv-lite>=2.0.0rc1"` to install the lite version.
 
-b. If you would like to use albumentations, we suggest using pip install -r requirements/albu.txt or pip install -U albumentations --no-binary qudida,albumentations. If you simply use pip install albumentations==1.0.1, it will install opencv-python-headless simultaneously (even though you have already installed opencv-python). We recommended checking the environment after installing albumentation to ensure that opencv-python and opencv-python-headless are not installed at the same time, because it might cause unexpected issues if they both installed. Please refer to [official documentation](https://albumentations.ai/docs/getting_started/installation/#note-on-opencv-dependencies) for more details.
+b. If you would like to use `albumentations`, we suggest using `pip install -r requirements/albu.txt` or `pip install -U albumentations --no-binary qudida,albumentations`. If you simply use pip install albumentations==1.0.1, it will install `opencv-python-headless` simultaneously (even though you have already installed `opencv-python`). We recommended checking the environment after installing albumentation to ensure that `opencv-python` and `opencv-python-headless` are not installed at the same time, because it might cause unexpected issues if they both installed. Please refer to [official documentation](https://albumentations.ai/docs/getting_started/installation/#note-on-opencv-dependencies) for more details.
 
 **Step 1.** Install MMYOLO.
 
@@ -116,6 +124,8 @@ Run it with:
 export DATA_DIR=/path/to/your/dataset
 docker run --gpus all --shm-size=8g -it -v ${DATA_DIR}:/mmyolo/data mmyolo
 ```
+
+For other customized inatallation, see [Customized Installation](../tutorials/custom_installation.md)
 
 ## Troubleshooting
 
