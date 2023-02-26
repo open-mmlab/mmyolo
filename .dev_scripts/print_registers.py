@@ -19,6 +19,9 @@ proxy_names = {
     'mmseg': 'mmsegmentation',
     'mmcls': 'mmclassification'
 }
+markdown_title = '# MM 系列开源库注册表\n'
+markdown_title += '（注意：本文档是通过print_registers.py脚本自己生成）'
+markdown_title += '\n\n<br/>'
 
 
 def capitalize(repo_name):
@@ -358,27 +361,28 @@ def main():
     # save path of file
     mkdir_or_exist(args.out)
     save_path = osp.join(args.out, f'registries_info.md')
-    with open(save_path, 'w', encoding='utf-8') as fw:
-        with tempfile.TemporaryDirectory() as tmpdir:
-            # multi process init
-            pool = Pool(processes=len(repositories))
-            multi_proc_input_list = []
-            multi_proc_output_list = []
-            # get the git repositories
-            for branch, repository in zip(branches, repositories):
-                repo_name, module_name = parse_repo_name(repository)
-                pulldir = osp.join(tmpdir, f'tmp_{repo_name}')
-                git_pull_branch(
-                    repo_name=repo_name, branch_name=branch, pulldir=pulldir)
-                multi_proc_input_list.append(
-                    (repo_name, module_name, pulldir, args.throw_error))
-            print('starting the multi process to get the registries')
-            for multi_proc_input in multi_proc_input_list:
-                multi_proc_output_list.append(
-                    pool.apply_async(generate_markdown_by_repository,
-                                     multi_proc_input))
-            pool.close()
-            pool.join()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # multi process init
+        pool = Pool(processes=len(repositories))
+        multi_proc_input_list = []
+        multi_proc_output_list = []
+        # get the git repositories
+        for branch, repository in zip(branches, repositories):
+            repo_name, module_name = parse_repo_name(repository)
+            pulldir = osp.join(tmpdir, f'tmp_{repo_name}')
+            git_pull_branch(
+                repo_name=repo_name, branch_name=branch, pulldir=pulldir)
+            multi_proc_input_list.append(
+                (repo_name, module_name, pulldir, args.throw_error))
+        print('starting the multi process to get the registries')
+        for multi_proc_input in multi_proc_input_list:
+            multi_proc_output_list.append(
+                pool.apply_async(generate_markdown_by_repository,
+                                 multi_proc_input))
+        pool.close()
+        pool.join()
+        with open(save_path, 'w', encoding='utf-8') as fw:
+            fw.write(f'{markdown_title}\n')
             for multi_proc_output in multi_proc_output_list:
                 markdown_str = multi_proc_output.get()
                 fw.write(f'{markdown_str}\n')
