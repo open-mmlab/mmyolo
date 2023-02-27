@@ -25,7 +25,7 @@ Just set the `fp16` parameter in the configuration to turn on AMP training, and 
 ```python
 # indicates static scale
 fp16 = dict(loss_scale=512.)
-# indicates dynamic scale 
+# indicates dynamic scale
 fp16 = dict(loss_scale='dynamic')
 # Flexible dynamic scale via dictionary form
 fp16 = dict(loss_scale=dict(init_scale=512.,mode='dynamic'))

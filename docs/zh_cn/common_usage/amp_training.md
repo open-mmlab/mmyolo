@@ -25,7 +25,7 @@ fp16 = dict(loss_scale=512.) # 表示静态 scale
 ```python
 # 表示静态 scale
 fp16 = dict(loss_scale=512.)
-# 表示动态 scale 
+# 表示动态 scale
 fp16 = dict(loss_scale='dynamic')
 # 通过字典形式灵活开启动态 scale
 fp16 = dict(loss_scale=dict(init_scale=512.,mode='dynamic'))
