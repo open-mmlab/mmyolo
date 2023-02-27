@@ -35,7 +35,7 @@ conda create --name openmmlab python=3.8 -y
 conda activate openmmlab
 ```
 
-**Step 2.** Install PyTorch following [official instructions](https://pytorch.org/get-started/locally/), e.g.
+**Step 2.** Install PyTorch following [official commands](https://pytorch.org/get-started/locally/), e.g.
 
 On GPU platforms:
 
