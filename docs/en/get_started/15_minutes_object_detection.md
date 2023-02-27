@@ -79,7 +79,7 @@ Taking YOLOv5 algorithm as an example, considering the limited GPU memory of use
 - YOLOv5 is an Anchor-Based algorithm, and different datasets need to calculate suitable anchors adaptively
 - The default config uses 8 GPUs with a batch size of 16 per GPU. Now change it to a single GPU with a batch size of 12.
 - The default training epoch is 300. Change it to 40 epoch
-- Due to the dataset is too small, we choose fixed backbone weight
+- Given the small size of the dataset, we opted to use fixed backbone weights
 - In principle, after batch size is changed, the learning rate also needs to be linearly scaled, but the actual measurement found that it is not necessary
 
 Create a `yolov5_s-v61_fast_1xb12-40e_cat.py` config file in the `configs/yolov5` folder (we have provided this config for you to use directly) and copy the following into the config file.
