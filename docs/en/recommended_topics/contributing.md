@@ -65,7 +65,7 @@ Second, log in to your GitHub account to set it up.
 
 Click `New SSH key` to add a new SSH keys, and paste the copied content into Key.
 
-<img src="https://user-images.githubusercontent.com/90811472/221549754-53670c19-5efe-48b2-9ac5-bafb43891903.png" width="1200">
+<img src="https://user-images.githubusercontent.com/90811472/221577720-af5536b3-47ba-48bc-adcc-c2b83f22081d.png" width="1200">
 
 Finally, verify that SSH matches the GitHub account by running the command in `git bash` or `terminal`. If it matches, enter `yes` to succeed.
 
