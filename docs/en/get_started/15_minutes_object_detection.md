@@ -102,7 +102,7 @@ anchors = [
     [(242, 160), (189, 287), (391, 207)],  # P4/16
     [(353, 337), (539, 341), (443, 432)]  # P5/32
 ]
-# Mix training 40 epoch
+# Max training 40 epoch
 max_epochs = 40
 # bs = 12
 train_batch_size_per_gpu = 12
