@@ -104,7 +104,7 @@ anchors = [
 ]
 # Mix training 40 epoch
 max_epochs = 40
-# bs 为 12
+# bs = 12
 train_batch_size_per_gpu = 12
 # dataloader num workers
 train_num_workers = 4
