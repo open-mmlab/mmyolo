@@ -74,7 +74,7 @@ The cat dataset is located in the mmyolo project dir, and `data/cat/annotations`
 
 ## Config
 
-Taking YOLOv5 algorithm as an example, considering the limited GPU memory of users, we need to modify some default training parameters to make them run smoothly. The core parameters to be modified are as follows:
+Taking YOLOv5 algorithm as an example, considering the limited GPU memory of users, we need to modify some default training parameters to make them run smoothly. The key parameters to be modified are as follows:
 
 - YOLOv5 is an Anchor-Based algorithm, and different datasets need to calculate suitable anchors adaptively
 - The default config is 8 cards, each card batch size is 16, now change it to a single card, each card batch size is 12
