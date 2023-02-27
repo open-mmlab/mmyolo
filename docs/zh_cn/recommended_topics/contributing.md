@@ -36,20 +36,21 @@
 git --version
 ```
 
-其次，检测自己 Git Config 是否配置
+其次，检测自己 `Git Config` 是否配置
 
 ```shell
+# 在命令提示符（cmd）或终端下输入以下命令，查看 Git Config 是否配置
 git config --global --list
 ```
 
-若 user.name 和 user.email 为空，则输入以下命令进行配置。
+若 `user.name` 和 `user.email` 为空，则输入以下命令进行配置。
 
 ```shell
 git config --global user.name "这里换上你的用户名"
 git config --global user.email "这里换上你的邮箱"
 ```
 
-最后，在 `git bash` 中，输入以下命令生成密钥文件。生成成功后，会在用户目录下出现 `.ssh` 文件，其中 `id_rsa.pub` 是公钥文件。
+最后，在 `git bash` 或者 `终端` 中，输入以下命令生成密钥文件。生成成功后，会在用户目录下出现 `.ssh` 文件，其中 `id_rsa.pub` 是公钥文件。
 
 ```shell
 # useremail 是 GitHub 的邮箱
@@ -60,21 +61,21 @@ ssh-keygen -t rsa -C "useremail"
 
 首先，用记事本打开 `id_rsa.pub` 公钥文件，并复制里面全部内容。
 
-其次，登录 GitHub 账户进入设置，找到下图位置。
+其次，登录 GitHub 账户找到下图位置进行设置。
 
-<img src="https://user-images.githubusercontent.com/90811472/221406083-6675aa99-63b9-487e-9a7a-4195711692ca.png" width="1200">
+<img src="https://user-images.githubusercontent.com/90811472/221549538-153f6dfd-3c6d-4b1d-b093-557267cc280a.png" width="1200">
 
 点击 `New SSH key` 新增一个 SSH keys，将刚才复制的内容粘贴到下图所示的 Key 中，Title 可以写设备名称，最后确认即可。
 
-<img src="https://user-images.githubusercontent.com/90811472/221405509-1c496e34-2448-49e9-b8d9-7d71214df39a.png" width="1200">
+<img src="https://user-images.githubusercontent.com/90811472/221549754-53670c19-5efe-48b2-9ac5-bafb43891903.png" width="1200">
 
-最后，在 `git bash` 中输入以下命令后，最后输入 `yes` 回车就成功啦~
+最后，在 `git bash` 或者 `终端` 中输入以下命令，验证 SSH 是否与 GitHub 账户匹配。如果匹配，输入 `yes` 就成功啦~
 
 ```shell
 ssh -T git@github.com
 ```
 
-<img src="https://user-images.githubusercontent.com/90811472/221405699-75c66cf0-c7e1-4766-b8bf-9c7feb1f7c86.png" width="1200">
+<img src="https://user-images.githubusercontent.com/90811472/221573637-30e5d04d-955c-4c8f-86ab-ed6608644fc8.png" width="1200">
 
 ## 拉取请求工作流
 
