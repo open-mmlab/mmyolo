@@ -13,7 +13,7 @@ Take the small dataset of cat as an example, you can easily learn MMYOLO object 
 - [Config](#config)
 - [Training](#training)
 - [Testing](#testing)
-- [EasyDeploy](#easydeploy)
+- [EasyDeploy](#easydeploy-deployment)
 
 ## Installation
 
