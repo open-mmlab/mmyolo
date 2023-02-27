@@ -64,8 +64,8 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
     Note: It must be used together with `mmyolo.datasets.utils.yolov5_collate`
     """
 
-    def __init__(self, non_blocking: Optional[bool] = True):
-        super().__init__(non_blocking=non_blocking)
+    def __init__(self, *args, non_blocking: Optional[bool] = True, **kwargs):
+        super().__init__(*args, non_blocking=non_blocking, **kwargs)
 
     def forward(self, data: dict, training: bool = False) -> dict:
         """Perform normalization, padding and bgr2rgb conversion based on
