@@ -180,6 +180,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 - [MMYOLO model design](docs/en/recommended_topics/model_design.md)
 - [Algorithm principles and implementation](docs/en/recommended_topics/algorithm_descriptions/)
 - [Replace the backbone network](docs/en/recommended_topics/replace_backbone.md)
+- [MMYOLO model complexity analysis](docs/en/recommended_topics/complexity_analysis.md)
 - [Annotation-to-deployment workflow for custom dataset](docs/en/recommended_topics/labeling_to_deployment_tutorials.md)
 - [Visualization](docs/en/recommended_topics/visualization.md)
 - [Model deployment](docs/en/recommended_topics/deploy/)
