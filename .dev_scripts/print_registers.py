@@ -11,15 +11,16 @@ import numpy as np
 from pathlib import Path
 from multiprocessing import Pool
 
-# host_addr = 'https://gitee.com/open-mmlab'
-host_addr = 'https://github.com/open-mmlab'
-tools_list = ['tools']
+host_addr = 'https://gitee.com/open-mmlab'
+# host_addr = 'https://github.com/open-mmlab'
+tools_list = ['tools', '.dev_scripts']
 proxy_names = {
     'mmdet': 'mmdetection',
     'mmseg': 'mmsegmentation',
     'mmcls': 'mmclassification'
 }
 merge_module_keys = {'mmcv': ['mmengine']}
+exclude_prefix = {'mmcv': ['<class \'mmengine.model.']}
 markdown_title = '# MM 系列开源库注册表\n'
 markdown_title += '（注意：本文档是通过print_registers.py脚本自己生成）'
 markdown_title += '\n\n<br/>'
@@ -58,23 +59,6 @@ def git_pull_branch(repo_name, branch_name='', pulldir='.'):
     if returncode:
         raise RuntimeError(
             f'failed to get the remote repo, code: {returncode}')
-
-
-def merge_dict(src_dict, dst_dict):
-    assert type(src_dict) == type(dst_dict), \
-        (f'merge type is not supported: '
-         f'{type(dst_dict)} and {type(src_dict)}')
-    if isinstance(src_dict, str):
-        return
-    for _k, _v in dst_dict.items():
-        if (_k not in src_dict):
-            src_dict.update({_k: _v})
-        else:
-            assert isinstance(_v, (dict, str)) and \
-                isinstance(src_dict[_k], (dict, str)), \
-                    (f'merge type is not supported: '
-                     f'{type(_v)} and {type(src_dict[_k])}')
-            merge_dict(src_dict[_k], _v)
 
 
 def load_modules_from_dir(module_name, module_root, throw_error=False):
@@ -128,7 +112,6 @@ def get_registries_from_modules(module_list):
     # because it is not the temp package
     from mmengine.registry import Registry
     # only get the specific registries in module list
-    print('getting registries...')
     for module in module_list:
         for obj_name in dir(module):
             _obj = getattr(module, obj_name)
@@ -146,6 +129,33 @@ def get_registries_from_modules(module_list):
         }
     print('registries got...')
     return registries
+
+
+def merge_registries(src_dict, dst_dict):
+    assert type(src_dict) == type(dst_dict), \
+        (f'merge type is not supported: '
+         f'{type(dst_dict)} and {type(src_dict)}')
+    if isinstance(src_dict, str):
+        return
+    for _k, _v in dst_dict.items():
+        if (_k not in src_dict):
+            src_dict.update({_k: _v})
+        else:
+            assert isinstance(_v, (dict, str)) and \
+                isinstance(src_dict[_k], (dict, str)), \
+                    (f'merge type is not supported: '
+                     f'{type(_v)} and {type(src_dict[_k])}')
+            merge_registries(src_dict[_k], _v)
+
+
+def exclude_registries(registries, exclude_key):
+    for _k in list(registries.keys()):
+        _v = registries[_k]
+        if isinstance(_v, str) and \
+            _v.startswith(exclude_key):
+            registries.pop(_k)
+        elif isinstance(_v, dict):
+            exclude_registries(_v, exclude_key)
 
 
 def get_scripts_from_dir(root):
@@ -168,6 +178,22 @@ def get_scripts_from_dir(root):
             _script = osp.join(osp.relpath(_subroot, root), _file)
             _recurse(scripts, Path(_script).parts)
     return scripts
+
+
+def get_version_from_module_name(module_name, branch):
+    branch_str = str(branch) if branch is not None else ''
+    version_str = ''
+    try:
+        exec(f'import {module_name}')
+        _module = eval(f'{module_name}')
+        if hasattr(_module, "__version__"):
+            version_str = str(_module.__version__)
+        else:
+            version_str = branch_str
+        version_str = f' ({version_str})' if version_str else version_str
+    except (ImportError, AttributeError) as e:
+        print(f'can not get the version of module {module_name}: {e}')
+    return version_str
 
 
 def print_tree(print_dict):
@@ -256,7 +282,7 @@ def registries_to_html(registries, title=''):
     return html
 
 
-def tools_to_html(tools_dict, repo_name='', tools_name=''):
+def tools_to_html(tools_dict, repo_name=''):
 
     def _recurse(_dict, _connector, _result):
         assert isinstance(_dict, dict), \
@@ -267,11 +293,11 @@ def tools_to_html(tools_dict, repo_name='', tools_name=''):
                     _result[_connector] = []
                 _result[_connector].append(_k)
             else:
-                _recurse(_v, f'{_connector}/{_k}', _result)
+                _recurse(_v, osp.join(_connector, _k), _result)
 
     table_data = {}
-    title = f'{capitalize(repo_name)} {tools_name.title()}'
-    _recurse(tools_dict, tools_name, table_data)
+    title = f'{capitalize(repo_name)} Tools'
+    _recurse(tools_dict, '', table_data)
     return registries_to_html(table_data, title)
 
 
@@ -297,6 +323,7 @@ def dataframe_to_html(dataframe):
 
 def generate_markdown_by_repository(repo_name,
                                     module_name,
+                                    branch,
                                     pulldir,
                                     throw_error=False):
     # add the pull dir to the system path so that it can be found
@@ -321,21 +348,24 @@ def generate_markdown_by_repository(repo_name,
     # get registries markdown string
     module_registries = registries_tree.get(module_name, {})
     for merge_key in merge_module_keys.get(module_name, []):
-        merge_registries = registries_tree.get(merge_key, {})
-        merge_dict(module_registries, merge_registries)
+        merge_dict = registries_tree.get(merge_key, {})
+        merge_registries(module_registries, merge_dict)
+    for exclude_key in exclude_prefix.get(module_name, []):
+        exclude_registries(module_registries, exclude_key)
     markdown_str = registries_to_html(
         module_registries, title=f'{capitalize(repo_name)} Module Components')
     # get tools markdown string
+    tools_registries = {}
     for tools_name in tools_list:
-        markdown_str += tools_to_html(
-            registries_tree.get(tools_name, {}),
-            repo_name=repo_name,
-            tools_name=tools_name)
-    markdown_str = f'\n\n## {capitalize(repo_name)}\n{markdown_str}'
+        tools_registries.update(
+            {tools_name: registries_tree.get(tools_name, {})})
+    markdown_str += tools_to_html(tools_registries, repo_name=repo_name)
+    version_str = get_version_from_module_name(module_name, branch)
+    title_str = f'\n\n## {capitalize(repo_name)}{version_str}\n'
     # remove the pull dir from system path
     if pulldir in sys.path:
         sys.path.remove(pulldir)
-    return markdown_str
+    return f'{title_str}{markdown_str}'
 
 
 def parse_args():
@@ -393,7 +423,7 @@ def main():
             git_pull_branch(
                 repo_name=repo_name, branch_name=branch, pulldir=pulldir)
             multi_proc_input_list.append(
-                (repo_name, module_name, pulldir, args.throw_error))
+                (repo_name, module_name, branch, pulldir, args.throw_error))
         print('starting the multi process to get the registries')
         for multi_proc_input in multi_proc_input_list:
             multi_proc_output_list.append(
