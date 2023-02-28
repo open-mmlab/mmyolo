@@ -16,7 +16,7 @@ python tools/analysis_tools/get_flops.py
 
 接下来以 RTMDet 中的 `rtmdet_s_syncbn_fast_8xb32-300e_coco.py` 配置文件为例，详细展示该脚本的几种使用情形：
 
-## 样例 1: 打印模型的 Flops 和 Parameters，并以表格形式逐层展示每层网络复杂度
+## 样例 1: 打印模型的 Flops 和 Parameters，并以表格形式展示每层网络复杂度
 
 ```shell
 python tools/analysis_tools/get_flops.py  configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py
