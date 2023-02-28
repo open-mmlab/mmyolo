@@ -39,7 +39,7 @@ RTMDet-l model structure
 
 1. The inference speed of RTMDet is measured on an NVIDIA 3090 GPU with TensorRT 8.4.3, cuDNN 8.2.0, FP16, batch size=1, and without NMS.
 2. For a fair comparison, the config of bbox postprocessing is changed to be consistent with YOLOv5/6/7 after [PR#9494](https://github.com/open-mmlab/mmdetection/pull/9494), bringing about 0.1~0.3% AP improvement.
-3. - means checkpoints are trained with knowledge distillation. More details are list in [RTM distillation](./distillation).
+3. \* means checkpoints are trained with knowledge distillation. More details can be found in [RTMDet distillation](./distillation).
 
 ## Citation
 
