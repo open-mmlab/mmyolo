@@ -26,7 +26,7 @@ def parse_args():
         action='store_true',
         help='whether return the statistics in the form of network layers')
     parser.add_argument(
-        '--show-table',
+        '--not-show-table',
         action='store_true',
         help='whether return the statistics in the form of table'),
     parser.add_argument(
@@ -78,7 +78,7 @@ def inference(args, logger):
         model,
         input_shape=None,
         inputs=data['inputs'],  # the input tensor of the model
-        show_table=args.show_table,  # show the complexity table
+        show_table=not args.not_show_table,  # show the complexity table
         show_arch=args.show_arch)  # show the complexity arch
 
     result['flops'] = outputs['flops_str']
