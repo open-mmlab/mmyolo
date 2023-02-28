@@ -4,7 +4,8 @@
 
 | MMYOLO version |   MMDetection version    |     MMEngine version     |      MMCV version       |
 | :------------: | :----------------------: | :----------------------: | :---------------------: |
-|      main      | mmdet>=3.0.0rc5, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
+|      main      | mmdet>=3.0.0rc5, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc4, \<2.1.0 |
+|     0.5.0      | mmdet>=3.0.0rc6, \<3.1.0 | mmengine>=0.6.0, \<1.0.0 | mmcv>=2.0.0rc4, \<2.1.0 |
 |     0.4.0      | mmdet>=3.0.0rc5, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
 |     0.3.0      | mmdet>=3.0.0rc5, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |
 |     0.2.0      | mmdet>=3.0.0rc3, \<3.1.0 | mmengine>=0.3.1, \<1.0.0 | mmcv>=2.0.0rc0, \<2.1.0 |

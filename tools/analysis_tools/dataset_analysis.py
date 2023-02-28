@@ -7,11 +7,11 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 from mmengine.config import Config
+from mmengine.registry import init_default_scope
 from mmengine.utils import ProgressBar
 from prettytable import PrettyTable
 
 from mmyolo.registry import DATASETS
-from mmyolo.utils import register_all_modules
 from mmyolo.utils.misc import show_data_classes
 
 
@@ -348,8 +348,7 @@ def main():
     args = parse_args()
     cfg = Config.fromfile(args.config)
 
-    # register all modules in mmdet into the registries
-    register_all_modules()
+    init_default_scope(cfg.get('default_scope', 'mmyolo'))
 
     def replace_pipeline_to_none(cfg):
         """Recursively iterate over all dataset(or datasets) and set their
