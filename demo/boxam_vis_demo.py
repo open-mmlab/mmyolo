@@ -46,6 +46,9 @@ IGNORE_LOSS_PARAMS = {
     'yolov6': ['loss_cls'],
     'yolox': ['loss_obj'],
     'rtmdet': ['loss_cls'],
+    'yolov7': ['loss_obj'],
+    'yolov8': ['loss_cls'],
+    'ppyoloe': ['loss_cls'],
 }
 
 # This parameter is required in some algorithms
