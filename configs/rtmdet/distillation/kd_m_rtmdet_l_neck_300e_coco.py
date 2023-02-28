@@ -15,6 +15,8 @@ model = dict(
     teacher_ckpt=teacher_ckpt,
     distiller=dict(
         type='ConfigurableDistiller',
+        # `recorders` are used to record various intermediate results during
+        # the model forward.
         student_recorders=dict(
             fpn0=dict(type='ModuleOutputs', source='neck.out_layers.0.conv'),
             fpn1=dict(type='ModuleOutputs', source='neck.out_layers.1.conv'),
@@ -24,6 +26,8 @@ model = dict(
             fpn0=dict(type='ModuleOutputs', source='neck.out_layers.0.conv'),
             fpn1=dict(type='ModuleOutputs', source='neck.out_layers.1.conv'),
             fpn2=dict(type='ModuleOutputs', source='neck.out_layers.2.conv')),
+        # `connectors` are adaptive layers which usually map teacher's and
+        # students features to the same dimension.
         connectors=dict(
             fpn0_s=dict(
                 type='ConvModuleConnector',
@@ -53,9 +57,11 @@ model = dict(
             fpn2_t=dict(
                 type='NormConnector', in_channels=256, norm_cfg=norm_cfg)),
         distill_losses=dict(
-            loss_pkd_fpn0=dict(type='ChannelWiseDivergence', loss_weight=1),
-            loss_pkd_fpn1=dict(type='ChannelWiseDivergence', loss_weight=1),
-            loss_pkd_fpn2=dict(type='ChannelWiseDivergence', loss_weight=1)),
+            loss_fpn0=dict(type='ChannelWiseDivergence', loss_weight=1),
+            loss_fpn1=dict(type='ChannelWiseDivergence', loss_weight=1),
+            loss_fpn2=dict(type='ChannelWiseDivergence', loss_weight=1)),
+        # `loss_forward_mappings` are mappings between distill loss forward
+        # arguments and records.
         loss_forward_mappings=dict(
             loss_pkd_fpn0=dict(
                 preds_S=dict(

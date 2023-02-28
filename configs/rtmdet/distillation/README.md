@@ -4,7 +4,7 @@
 
 To further improve the model accuracy while not introducing much additional
 computation cost, we apply the feature-based distillation to the training phase
-of these RTM detectors. In summary,our distillation strategy are threefold:
+of these RTM detectors. In summary, our distillation strategy are threefold:
 
 (1) Inspired by [PKD](https://arxiv.org/abs/2207.02039), we first normalize
 the intermediate feature maps to have zero mean and unit variances before calculating
@@ -18,6 +18,56 @@ of each channel.
 process is split into two stages. 1) The teacher distills the student at the
 first stage (280 epochs) on strong mosaic domain. 2) The student finetunes itself
 on no masaic domain at the second stage (20 epochs).
+
+## Results and Models
+
+| Location | Dataset |                                                      Teacher                                                      |                                                         Student                                                         |     mAP     | mAP(T) | mAP(S) |                    Config                    | Download                                                                                                                                                                                             |
+| :------: | :-----: | :---------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------: | :---------: | :----: | :----: | :------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|   FPN    |  COCO   | [RTMDet-s](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py) | [RTMDet-tiny](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_tiny_syncbn_fast_8xb32-300e_coco.py) | 41.8 (+0.8) |  44.6  |  41.0  | [config](kd_tiny_rtmdet_s_neck_300e_coco.py) | [teacher](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco/rtmdet_s_syncbn_fast_8xb32-300e_coco_20221230_182329-0a8c901a.pth) \|[model](<>) \| [log](<>)         |
+|   FPN    |  COCO   | [RTMDet-m](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_m_syncbn_fast_8xb32-300e_coco.py) |    [RTMDet-s](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py)    | 45.7 (+1.1) |  49.3  |  44.6  |  [config](kd_s_rtmdet_m_neck_300e_coco.py)   | [teacher](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_m_syncbn_fast_8xb32-300e_coco/rtmdet_m_syncbn_fast_8xb32-300e_coco_20230102_135952-40af4fe8.pth)         \|[model](<>) \| [log](<>) |
+|   FPN    |  COCO   | [RTMDet-l](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco.py) |    [RTMDet-m](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_m_syncbn_fast_8xb32-300e_coco.py)    | 50.2 (+0.9) |  51.4  |  49.3  |  [config](kd_m_rtmdet_l_neck_300e_coco.py)   | [teacher](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco/rtmdet_l_syncbn_fast_8xb32-300e_coco_20230102_135928-ee3abdc4.pth) \|[model](<>) \| [log](<>)         |
+|   FPN    |  COCO   | [RTMDet-x](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_x_syncbn_fast_8xb32-300e_coco.py) |    [RTMDet-l](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco.py)    | 52.3 (+0.9) |  52.8  |  51.4  |  [config](kd_l_rtmdet_x_neck_300e_coco.py)   | [teacher](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_x_syncbn_fast_8xb32-300e_coco/rtmdet_x_syncbn_fast_8xb32-300e_coco_20221231_100345-b85cd476.pth) \|[model](<>) \| [log](<>)         |
+
+## Usage
+
+### Prerequisites
+
+- [MMRazor dev-1.x](https://github.com/open-mmlab/mmrazor/tree/dev-1.x)
+
+Install MMRazor from source
+
+```
+git clone -b dev-1.x https://github.com/open-mmlab/mmrazor.git
+cd mmrazor
+# Install MMRazor
+mim install -v -e .
+```
+
+### Training commands
+
+In MMYOLO's root directory, run the following command to train the RTMDet-tiny
+with 8 GPUs, using RTMDet-s as the teacher:
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 PORT=29500 ./tools/dist_train.sh configs/rtmdet/distillation/kd_tiny_rtmdet_s_neck_300e_coco.py
+```
+
+### Testing commands
+
+In MMYOLO's root directory, run the following command to test the model:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 PORT=29500 ./tools/dist_test.sh configs/rtmdet/distillation/kd_tiny_rtmdet_s_neck_300e_coco.py ${CHECKPOINT_PATH}
+```
+
+### Getting student-only checkpoint
+
+After training, the checkpoint contains parameters for both student and teacher models.
+Run the following command to convert it to student-only checkpoint:
+
+```bash
+python ./tools/model_converters/convert_kd_ckpt_to_student.py ${CHECKPOINT_PATH} --out-path ${OUTPUT_CHECKPOINT_PATH}
+```
 
 ## Configs
 
@@ -78,7 +128,7 @@ distiller=dict(
 
 `recorders` are used to record various intermediate results during the model forward.
 In this example, they can help record the output of 3 `nn.Module` of the teacher
-and the student.
+and the student. Details are list in [Recorder](https://github.com/open-mmlab/mmrazor/blob/dev-1.x/docs/en/advanced_guides/recorder.md) and [MMRazor Distillation](https://zhuanlan.zhihu.com/p/596582609) (if users can read Chinese).
 
 `connectors` are adaptive layers which usually map teacher's and students features
 to the same dimension.
@@ -94,12 +144,3 @@ We need to add this hook to the `custom_hooks` list like this:
 ```shell
 custom_hooks = [..., dict(type='mmrazor.DistillationLossDetachHook', detach_epoch=280)]
 ```
-
-## Results and Models
-
-| Location | Dataset |                                                      Teacher                                                      |                                                         Student                                                         | mAP  | mAP(T) | mAP(S) |                    Config                    | Download                                                                                                                                                                                             |
-| :------: | :-----: | :---------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------------------------------------------------------------------: | :--: | :----: | :----: | :------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|   FPN    |  COCO   | [RTMDet-s](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py) | [RTMDet-tiny](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_tiny_syncbn_fast_8xb32-300e_coco.py) | 41.8 |  44.6  |  41.0  | [config](kd_tiny_rtmdet_s_neck_300e_coco.py) | [teacher](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco/rtmdet_s_syncbn_fast_8xb32-300e_coco_20221230_182329-0a8c901a.pth) \|[model](<>) \| [log](<>)         |
-|   FPN    |  COCO   | [RTMDet-m](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_m_syncbn_fast_8xb32-300e_coco.py) |    [RTMDet-s](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py)    | 45.7 |  49.3  |  44.6  |  [config](kd_s_rtmdet_m_neck_300e_coco.py)   | [teacher](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_m_syncbn_fast_8xb32-300e_coco/rtmdet_m_syncbn_fast_8xb32-300e_coco_20230102_135952-40af4fe8.pth)         \|[model](<>) \| [log](<>) |
-|   FPN    |  COCO   | [RTMDet-l](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco.py) |    [RTMDet-m](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_m_syncbn_fast_8xb32-300e_coco.py)    | 50.2 |  51.4  |  49.3  |  [config](kd_m_rtmdet_l_neck_300e_coco.py)   | [teacher](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco/rtmdet_l_syncbn_fast_8xb32-300e_coco_20230102_135928-ee3abdc4.pth) \|[model](<>) \| [log](<>)         |
-|   FPN    |  COCO   | [RTMDet-x](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_x_syncbn_fast_8xb32-300e_coco.py) |    [RTMDet-l](https://github.com/open-mmlab/mmyolo/blob/main/configs/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco.py)    | 52.3 |  52.8  |  51.4  |  [config](kd_l_rtmdet_x_neck_300e_coco.py)   | [teacher](https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_x_syncbn_fast_8xb32-300e_coco/rtmdet_x_syncbn_fast_8xb32-300e_coco_20221231_100345-b85cd476.pth) \|[model](<>) \| [log](<>)         |
