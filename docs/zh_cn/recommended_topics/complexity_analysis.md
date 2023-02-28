@@ -16,7 +16,7 @@ python tools/analysis_tools/get_flops.py
 
 接下来以 RTMDet 中的 `rtmdet_s_syncbn_fast_8xb32-300e_coco.py` 配置文件为例，详细展示该脚本的几种使用情形：
 
-## 样例 1: 仅打印模型的 Flops 和 Parameters
+## 样例 1: 打印模型的 Flops 和 Parameters，并以表格形式逐层展示每层网络复杂度
 
 ```shell
 python tools/analysis_tools/get_flops.py  configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py
@@ -31,14 +31,6 @@ Model Flops: 14.835G
 Model Parameters: 8.887M
 ==============================
 ```
-
-## 样例 2：以表格形式逐层展示模型复杂度信息
-
-```shell
-python tools/analysis_tools/get_flops.py  configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py --show-table
-```
-
-输出如下：
 
 | module                            | #parameters or shape | #flops  | #activations |
 | :-------------------------------- | :------------------- | :------ | :----------: |
@@ -99,7 +91,7 @@ python tools/analysis_tools/get_flops.py  configs/rtmdet/rtmdet_s_syncbn_fast_8x
 | bbox_head.head_module.rtm_reg.1   | 0.516K               | 0.819M  |     6.4K     |
 | bbox_head.head_module.rtm_reg.2   | 0.516K               | 0.205M  |     1.6K     |
 
-## 样例 3：以网络结构形式逐层展示模型复杂度信息
+## 样例 2：以网络结构形式逐层展示模型复杂度信息
 
 ```shell
 python tools/analysis_tools/get_flops.py  configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py --show-arch
