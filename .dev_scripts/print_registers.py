@@ -21,7 +21,8 @@ proxy_names = {
     'mmcls': 'mmclassification'
 }
 merge_module_keys = {'mmcv': ['mmengine']}
-exclude_prefix = {'mmcv': ['<class \'mmengine.model.']}
+# exclude_prefix = {'mmcv': ['<class \'mmengine.model.']}
+exclude_prefix = {}
 markdown_title = '# MM 系列开源库注册表\n'
 markdown_title += '（注意：本文档是通过 .dev_scripts/print_registers.py 脚本自动生成）'
 # markdown_title += '\n\n<br/>'
