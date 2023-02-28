@@ -23,6 +23,60 @@
 1. 提交 issue，确认添加文档的必要性。
 2. 添加文档，提交拉取请求。
 
+## 准备工作
+
+拉取请求工作的命令都是用 Git 去实现的，该章节详细描述 `Git 配置` 以及与 `GitHub 绑定`
+
+### 1. Git 配置
+
+首先，确认电脑是否安装了 Git。Linux 系统和 macOS 系统，一般默认安装 Git，如未安装可在 [Git-Downloads](https://git-scm.com/downloads) 下载。
+
+```shell
+# 在命令提示符（cmd）或终端下输入以下命令，查看 Git 版本
+git --version
+```
+
+其次，检测自己 `Git Config` 是否配置
+
+```shell
+# 在命令提示符（cmd）或终端下输入以下命令，查看 Git Config 是否配置
+git config --global --list
+```
+
+若 `user.name` 和 `user.email` 为空，则输入以下命令进行配置。
+
+```shell
+git config --global user.name "这里换上你的用户名"
+git config --global user.email "这里换上你的邮箱"
+```
+
+最后，在 `git bash` 或者 `终端` 中，输入以下命令生成密钥文件。生成成功后，会在用户目录下出现 `.ssh` 文件，其中 `id_rsa.pub` 是公钥文件。
+
+```shell
+# useremail 是 GitHub 的邮箱
+ssh-keygen -t rsa -C "useremail"
+```
+
+### 2. GitHub 绑定
+
+首先，用记事本打开 `id_rsa.pub` 公钥文件，并复制里面全部内容。
+
+其次，登录 GitHub 账户找到下图位置进行设置。
+
+<img src="https://user-images.githubusercontent.com/90811472/221778382-a075167d-b028-4f68-a1c7-49a8f6f3d97b.png" width="1200">
+
+点击 `New SSH key` 新增一个 SSH keys，将刚才复制的内容粘贴到下图所示的 Key 中，Title 可以写设备名称，最后确认即可。
+
+<img src="https://user-images.githubusercontent.com/90811472/221549754-53670c19-5efe-48b2-9ac5-bafb43891903.png" width="1200">
+
+最后，在 `git bash` 或者 `终端` 中输入以下命令，验证 SSH 是否与 GitHub 账户匹配。如果匹配，输入 `yes` 就成功啦~
+
+```shell
+ssh -T git@github.com
+```
+
+<img src="https://user-images.githubusercontent.com/90811472/221573637-30e5d04d-955c-4c8f-86ab-ed6608644fc8.png" width="1200">
+
 ## 拉取请求工作流
 
 如果你对拉取请求不了解，没关系，接下来的内容将会从零开始，一步一步地指引你如何创建一个拉取请求。如果你想深入了解拉取请求的开发模式，可以参考 github [官方文档](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests)

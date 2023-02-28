@@ -21,6 +21,60 @@ The steps to fix the bug of code implementation are as follows.
 
 You can directly post a pull request to fix documents. If you want to add a document, you should first create an issue to check if it is reasonable.
 
+## Preparation
+
+The commands for processing pull requests are implemented using Git, and this chapter details `Git Configuration` and `associated GitHub`.
+
+### 1. Git Configuration
+
+First, make sure you have Git installed on your computer. For Linux systems and macOS systems, Git is generally installed by default. If it is not installed, it can be downloaded at [Git-Downloads](https://git-scm.com/downloads).
+
+```shell
+# view the Git version
+git --version
+```
+
+Second, check your `Git Config`
+
+```shell
+# view the Git config
+git config --global --list
+```
+
+If `user.name` and `user.email` are empty, run the command.
+
+```shell
+git config --global user.name "Change your username here"
+git config --global user.email "Change your useremail here"
+```
+
+Finally, run the command in `git bash` or `terminal` to generate the key file. After the generation is successful, a `.ssh` file will appear in the user directory, and `id_rsa.pub` is the public key file.
+
+```shell
+# useremail is GitHub's email address
+ssh-keygen -t rsa -C "useremail"
+```
+
+### 2. Associated GitHub
+
+First, open `id_rsa.pub` and copy the entire contents.
+
+Second, log in to your GitHub account to set it up.
+
+<img src="https://user-images.githubusercontent.com/90811472/221778382-a075167d-b028-4f68-a1c7-49a8f6f3d97b.png" width="1200">
+
+Click `New SSH key` to add a new SSH keys, and paste the copied content into Key.
+
+<img src="https://user-images.githubusercontent.com/90811472/221577720-af5536b3-47ba-48bc-adcc-c2b83f22081d.png" width="1200">
+
+Finally, verify that SSH matches the GitHub account by running the command in `git bash` or `terminal`. If it matches, enter `yes` to succeed.
+
+```shell
+ssh -T git@github.com
+```
+
+<img src="https://user-images.githubusercontent.com/90811472/221573637-30e5d04d-955c-4c8f-86ab-ed6608644fc8.png" width="1200">
+
 ## Pull Request Workflow
 
 If you're not familiar with Pull Request, don't worry! The following guidance will tell you how to create a Pull Request step by step. If you want to dive into the development mode of Pull Request, you can refer to the [official documents](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-pull-requests)
