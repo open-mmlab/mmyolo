@@ -4,15 +4,11 @@ from pathlib import Path
 
 import torch
 from mmdet.registry import MODELS
+from mmengine.analysis import get_model_complexity_info
 from mmengine.config import Config, DictAction
 from mmengine.logging import MMLogger
 from mmengine.model import revert_sync_batchnorm
 from mmengine.registry import init_default_scope
-
-try:
-    from mmengine.analysis import get_model_complexity_info
-except ImportError:
-    raise ImportError('Please upgrade mmengine >= 0.6.0')
 
 
 def parse_args():
@@ -22,16 +18,16 @@ def parse_args():
         '--shape',
         type=int,
         nargs='+',
-        default=[1280, 800],
+        default=[640, 640],
         help='input image size')
     parser.add_argument(
-        '--show_table',
-        default=True,
-        help='whether return the statistics in the form of table'),
-    parser.add_argument(
-        '--show_arch',
-        default=False,
+        '--show-arch',
+        action='store_true',
         help='whether return the statistics in the form of network layers')
+    parser.add_argument(
+        '--not-show-table',
+        action='store_true',
+        help='whether return the statistics in the form of table'),
     parser.add_argument(
         '--cfg-options',
         nargs='+',
@@ -46,13 +42,6 @@ def parse_args():
 
 
 def inference(args, logger):
-    if str(torch.__version__) < '1.12':
-        logger.warning(
-            'Some config files, such as configs/yolact and configs/detectors,'
-            'may have compatibility issues with torch.jit when torch<1.12. '
-            'If you want to calculate flops for these models, '
-            'please make sure your pytorch version is >=1.12.')
-
     config_name = Path(args.config)
     if not config_name.exists():
         logger.error(f'{config_name} not found.')
@@ -63,7 +52,7 @@ def inference(args, logger):
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
 
-    init_default_scope(cfg.get('default_scope', 'mmdet'))
+    init_default_scope(cfg.get('default_scope', 'mmyolo'))
 
     if len(args.shape) == 1:
         h = w = args.shape[0]
@@ -71,22 +60,24 @@ def inference(args, logger):
         h, w = args.shape
     else:
         raise ValueError('invalid input shape')
+
     # model
     model = MODELS.build(cfg.model)
     if torch.cuda.is_available():
         model.cuda()
     model = revert_sync_batchnorm(model)
+    model.eval()
+
     # input tensor
-    # automatically generate a  input tensor with the given input_shape.
+    # automatically generate a input tensor with the given input_shape.
     data_batch = {'inputs': [torch.rand(3, h, w)], 'batch_samples': [None]}
     data = model.data_preprocessor(data_batch)
     result = {'ori_shape': (h, w), 'pad_shape': data['inputs'].shape[-2:]}
-    model.eval()
     outputs = get_model_complexity_info(
         model,
         input_shape=None,
         inputs=data['inputs'],  # the input tensor of the model
-        show_table=args.show_table,  # show the complexity table
+        show_table=not args.not_show_table,  # show the complexity table
         show_arch=args.show_arch)  # show the complexity arch
 
     result['flops'] = outputs['flops_str']
