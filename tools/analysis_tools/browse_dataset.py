@@ -43,7 +43,7 @@ def parse_args():
         'the intermediate images. Defaults to "transformed".')
     parser.add_argument(
         '--out-dir',
-        default=None,
+        default='output',
         type=str,
         help='If there is no display interface, you can save it.')
     parser.add_argument('--not-show', default=False, action='store_true')
