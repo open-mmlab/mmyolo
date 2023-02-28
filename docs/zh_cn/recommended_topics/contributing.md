@@ -63,7 +63,7 @@ ssh-keygen -t rsa -C "useremail"
 
 其次，登录 GitHub 账户找到下图位置进行设置。
 
-<img src="https://user-images.githubusercontent.com/90811472/221549538-153f6dfd-3c6d-4b1d-b093-557267cc280a.png" width="1200">
+<img src="https://user-images.githubusercontent.com/90811472/221778382-a075167d-b028-4f68-a1c7-49a8f6f3d97b.png" width="1200">
 
 点击 `New SSH key` 新增一个 SSH keys，将刚才复制的内容粘贴到下图所示的 Key 中，Title 可以写设备名称，最后确认即可。
 

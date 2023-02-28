@@ -61,7 +61,7 @@ First, open `id_rsa.pub` and copy the entire contents.
 
 Second, log in to your GitHub account to set it up.
 
-<img src="https://user-images.githubusercontent.com/90811472/221549538-153f6dfd-3c6d-4b1d-b093-557267cc280a.png" width="1200">
+<img src="https://user-images.githubusercontent.com/90811472/221778382-a075167d-b028-4f68-a1c7-49a8f6f3d97b.png" width="1200">
 
 Click `New SSH key` to add a new SSH keys, and paste the copied content into Key.
 
