@@ -6,9 +6,9 @@
 
 ```shell
 pip install -U openmim
-mim install "mmengine>=0.3.1"
-mim install "mmcv>=2.0.0rc1,<2.1.0"
-mim install "mmdet>=3.0.0rc5,<3.1.0"
+mim install "mmengine>=0.6.0"
+mim install "mmcv>=2.0.0rc4,<2.1.0"
+mim install "mmdet>=3.0.0rc6,<3.1.0"
 ```
 
 如果你当前已经处于 mmyolo 工程目录下，则可以采用如下简化写法
@@ -86,9 +86,7 @@ python demo/image_demo.py demo/demo.jpg \
 
 ```python
 from mmdet.apis import init_detector, inference_detector
-from mmyolo.utils import register_all_modules
 
-register_all_modules()
 config_file = 'yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
 checkpoint_file = 'yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
 model = init_detector(config_file, checkpoint_file, device='cpu')  # or device='cuda:0'
