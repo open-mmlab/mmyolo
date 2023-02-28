@@ -105,3 +105,7 @@ unset PYTHONPATH
 7. `coco/bbox_mAP_l` 将会根据 `bbox_mAP_l` 作为筛选条件。
 
 此外用户还可以选择筛选的逻辑，通过设置配置中的 `default_hooks.checkpoint.rule` 来选择判断逻辑，如：`default_hooks.checkpoint.rule=greater` 表示指标越大越好。更详细的使用可以参考 [checkpoint_hook](https://github.com/open-mmlab/mmengine/blob/main/mmengine/hooks/checkpoint_hook.py) 来修改
+
+## 如何进行非正方形输入尺寸训练和测试 ?
+
+在 YOLO 系列算法中默认配置基本上都是 640x640 或者 1280x1280 正方形尺度输入训练的。用户如果想进行非正方形尺度训练，你可以修改配置中 `image_scale` 参数，并将其他对应位置进行修改即可。用户可以参考我们提供的 [yolov5_s-v61_fast_1xb12-40e_608x352_cat.py](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov5/yolov5_s-v61_fast_1xb12-40e_608x352_cat.py) 配置。
