@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import tempfile
 from pathlib import Path
@@ -25,7 +26,7 @@ def parse_args():
         action='store_true',
         help='whether return the statistics in the form of network layers')
     parser.add_argument(
-        '--not-show-table',
+        '--show-table',
         action='store_true',
         help='whether return the statistics in the form of table'),
     parser.add_argument(
@@ -77,7 +78,7 @@ def inference(args, logger):
         model,
         input_shape=None,
         inputs=data['inputs'],  # the input tensor of the model
-        show_table=not args.not_show_table,  # show the complexity table
+        show_table=args.show_table,  # show the complexity table
         show_arch=args.show_arch)  # show the complexity arch
 
     result['flops'] = outputs['flops_str']
@@ -108,8 +109,8 @@ def main():
               f'from {ori_shape} to {pad_shape}')
 
     print(f'{split_line}\n'
-          f'Input shape: {pad_shape}\nFlops: {flops}\n'
-          f'Params: {params}\n{split_line}')
+          f'Input shape: {pad_shape}\nModel Flops: {flops}\n'
+          f'Model Parameters: {params}\n{split_line}')
     print('!!!Please be cautious if you use the results in papers. '
           'You may need to check if all ops are supported and verify '
           'that the flops computation is correct.')
