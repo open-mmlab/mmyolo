@@ -11,8 +11,8 @@ import numpy as np
 from pathlib import Path
 from multiprocessing import Pool
 
-host_addr = 'https://gitee.com/open-mmlab'
-# host_addr = 'https://github.com/open-mmlab'
+# host_addr = 'https://gitee.com/open-mmlab'
+host_addr = 'https://github.com/open-mmlab'
 tools_list = ['tools', '.dev_scripts']
 proxy_names = {
     'mmdet': 'mmdetection',
