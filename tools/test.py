@@ -9,7 +9,7 @@ from mmengine.evaluator import DumpResults
 from mmengine.runner import Runner
 
 from mmyolo.registry import RUNNERS
-from mmyolo.utils import is_metainfo_lower, register_all_modules
+from mmyolo.utils import is_metainfo_lower
 
 
 # TODO: support fuse_conv_bn
@@ -72,10 +72,6 @@ def parse_args():
 
 def main():
     args = parse_args()
-
-    # register all modules in mmdet into the registries
-    # do not init the default scope here because it will be init in the runner
-    register_all_modules(init_default_scope=False)
 
     # load config
     cfg = Config.fromfile(args.config)

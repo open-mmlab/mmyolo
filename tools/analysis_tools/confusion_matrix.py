@@ -9,10 +9,10 @@ from mmdet.evaluation import bbox_overlaps
 from mmdet.utils import replace_cfg_vals, update_data_root
 from mmengine import Config, DictAction
 from mmengine.fileio import load
+from mmengine.registry import init_default_scope
 from mmengine.utils import ProgressBar
 
 from mmyolo.registry import DATASETS
-from mmyolo.utils import register_all_modules
 
 
 def parse_args():
@@ -235,7 +235,6 @@ def plot_confusion_matrix(confusion_matrix,
 
 
 def main():
-    register_all_modules()
     args = parse_args()
 
     cfg = Config.fromfile(args.config)
@@ -248,6 +247,8 @@ def main():
 
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
+
+    init_default_scope(cfg.get('default_scope', 'mmyolo'))
 
     results = load(args.prediction_path)
 

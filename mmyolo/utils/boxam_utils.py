@@ -14,6 +14,7 @@ from mmcv.transforms import Compose
 from mmdet.evaluation import get_classes
 from mmdet.utils import ConfigType
 from mmengine.config import Config
+from mmengine.registry import init_default_scope
 from mmengine.runner import load_checkpoint
 from mmengine.structures import InstanceData
 from torch import Tensor
@@ -71,6 +72,7 @@ def init_detector(
     # only change this
     # grad based method requires train_cfg
     # config.model.train_cfg = None
+    init_default_scope(config.get('default_scope', 'mmyolo'))
 
     model = MODELS.build(config.model)
     if checkpoint is not None:

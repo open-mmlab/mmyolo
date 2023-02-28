@@ -2,7 +2,7 @@
 
 ## 测试时增强 TTA
 
-MMYOLO 在 v0.5.0+ 版本中增加对 TTA 的支持，用户可以在进行评估时候指定 `--tta` 参数使能。 以 `YOLOv5-s` 为例，其单卡 TTA 测试命令为：
+MMYOLO 在 v0.5.0+ 版本中增加对 TTA 的支持，用户可以在进行评估时候指定 `--tta` 参数使用。 以 `YOLOv5-s` 为例，其单卡 TTA 测试命令为：
 
 ```shell
 python tools/test.py configs/yolov5/yolov5_n-v61_syncbn_fast_8xb16-300e_coco.py https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_n-v61_syncbn_fast_8xb16-300e_coco/yolov5_n-v61_syncbn_fast_8xb16-300e_coco_20220919_090739-b804c1ad.pth  --tta
@@ -10,7 +10,7 @@ python tools/test.py configs/yolov5/yolov5_n-v61_syncbn_fast_8xb16-300e_coco.py 
 
 TTA 功能的正常运行必须确保配置中存在 `tta_model` 和 `tta_pipeline` 两个变量，详情可以参考 [det_p5_tta.py](https://github.com/open-mmlab/mmyolo/blob/dev/configs/_base_/det_p5_tta.py)。
 
-MMYOLO 中默认的 TTA 会先执行 3 个多尺度增强，然后再增强两个水平翻转增强，一共 6 个并行的 pipeline。以 `YOLOv5-s` 为例，其 TTA 配置为：
+MMYOLO 中默认的 TTA 会先执行 3 个多尺度增强，然后在每个尺度中执行 2 种水平翻转增强，一共 6 个并行的 pipeline。以 `YOLOv5-s` 为例，其 TTA 配置为：
 
 ```python
 img_scales = [(640, 640), (320, 320), (960, 960)]
