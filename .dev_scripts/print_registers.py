@@ -183,7 +183,7 @@ def get_scripts_from_dir(root):
 
 
 def get_version_from_module_name(module_name, branch):
-    branch_str = str(branch) if branch is not None else ''
+    branch_str = f'Branch {branch}' if branch is not None else ''
     version_str = ''
     try:
         exec(f'import {module_name}')
