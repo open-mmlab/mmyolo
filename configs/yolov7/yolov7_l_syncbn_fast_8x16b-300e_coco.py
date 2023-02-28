@@ -1,4 +1,4 @@
-_base_ = '../_base_/default_runtime.py'
+_base_ = ['../_base_/default_runtime.py', '../_base_/det_p5_tta.py']
 
 # ========================Frequently modified parameters======================
 # -----data related-----
@@ -26,7 +26,7 @@ anchors = [
     [(142, 110), (192, 243), (459, 401)]  # P5/32
 ]
 # -----train val related-----
-# Base learning rate for optim_wrapper. Corresponding to 8xb16=64 bs
+# Base learning rate for optim_wrapper. Corresponding to 8xb16=128 bs
 base_lr = 0.01
 max_epochs = 300  # Maximum training epochs
 

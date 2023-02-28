@@ -1,4 +1,4 @@
-_base_ = '../_base_/default_runtime.py'
+_base_ = ['../_base_/default_runtime.py', '../_base_/det_p5_tta.py']
 
 # dataset settings
 data_root = 'data/coco/'
