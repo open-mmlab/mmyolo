@@ -47,6 +47,7 @@
    common_usage/multi_necks.md
    common_usage/specify_device.md
    common_usage/single_multi_channel_applications.md
+   common_usage/registries_info.md
 
 
 .. toctree::

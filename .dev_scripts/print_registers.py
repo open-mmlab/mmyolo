@@ -24,7 +24,6 @@ merge_module_keys = {'mmcv': ['mmengine']}
 exclude_prefix = {'mmcv': ['<class \'mmengine.model.']}
 markdown_title = '# MM 系列开源库注册表\n'
 markdown_title += '（注意：本文档是通过 .dev_scripts/print_registers.py 脚本自动生成）'
-# markdown_title += '\n\n<br/>'
 
 
 def capitalize(repo_name):
@@ -145,16 +144,15 @@ def merge_registries(src_dict, dst_dict):
         else:
             assert isinstance(_v, (dict, str)) and \
                 isinstance(src_dict[_k], (dict, str)), \
-                    (f'merge type is not supported: '
-                     f'{type(_v)} and {type(src_dict[_k])}')
+                'merge type is not supported: ' \
+                f'{type(_v)} and {type(src_dict[_k])}'
             merge_registries(src_dict[_k], _v)
 
 
 def exclude_registries(registries, exclude_key):
     for _k in list(registries.keys()):
         _v = registries[_k]
-        if isinstance(_v, str) and \
-            _v.startswith(exclude_key):
+        if isinstance(_v, str) and _v.startswith(exclude_key):
             registries.pop(_k)
         elif isinstance(_v, dict):
             exclude_registries(_v, exclude_key)
@@ -183,12 +181,12 @@ def get_scripts_from_dir(root):
 
 
 def get_version_from_module_name(module_name, branch):
-    branch_str = f'Branch {branch}' if branch is not None else ''
+    branch_str = str(branch) if branch is not None else ''
     version_str = ''
     try:
         exec(f'import {module_name}')
         _module = eval(f'{module_name}')
-        if hasattr(_module, "__version__"):
+        if hasattr(_module, '__version__'):
             version_str = str(_module.__version__)
         else:
             version_str = branch_str
