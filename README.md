@@ -141,9 +141,9 @@ MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps
 conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
 conda activate open-mmlab
 pip install openmim
-mim install "mmengine>=0.3.1"
-mim install "mmcv>=2.0.0rc1,<2.1.0"
-mim install "mmdet>=3.0.0rc5,<3.1.0"
+mim install "mmengine>=0.6.0"
+mim install "mmcv>=2.0.0rc4,<2.1.0"
+mim install "mmdet>=3.0.0rc6,<3.1.0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
@@ -196,14 +196,16 @@ For different parts from MMDetection, we have also prepared user guides and adva
 - [Resume training](docs/en/common_usage/resume_training.md)
 - [Enabling and disabling SyncBatchNorm](docs/en/common_usage/syncbn.md)
 - [Enabling AMP](docs/en/common_usage/amp_training.md)
+- [TTA Related Notes](docs/en/common_usage/tta.md)
 - [Add plugins to the backbone network](docs/en/common_usage/plugins.md)
-- [Freeze layers](docs/en/common_usage/common_usage/freeze_layers.md)
+- [Freeze layers](docs/en/common_usage/freeze_layers.md)
 - [Output model predictions](docs/en/common_usage/output_predictions.md)
 - [Set random seed](docs/en/common_usage/set_random_seed.md)
 - [Module combination](docs/en/common_usage/module_combination.md)
 - [Cross-library calls using mim](docs/en/common_usage/mim_usage.md)
 - [Apply multiple Necks](docs/en/common_usage/multi_necks.md)
 - [Specify specific device training or inference](docs/en/common_usage/specify_device.md)
+- [Single and multi-channel application examples](docs/en/common_usage/single_multi_channel_applications.md)
 
 </details>
 
@@ -230,6 +232,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 - [Learn about configs with YOLOv5](docs/en/tutorials/config.md)
 - [Data flow](docs/en/tutorials/data_flow.md)
 - [Custom Installation](docs/en/tutorials/custom_installation.md)
+- [Common Warning Notes](docs/zh_cn/tutorials/warning_notes.md)
 - [FAQ](docs/en/tutorials/faq.md)
 
 </details>

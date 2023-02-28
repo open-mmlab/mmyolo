@@ -37,6 +37,7 @@
    common_usage/resume_training.md
    common_usage/syncbn.md
    common_usage/amp_training.md
+   common_usage/tta.md
    common_usage/plugins.md
    common_usage/freeze_layers.md
    common_usage/output_predictions.md
@@ -45,6 +46,7 @@
    common_usage/mim_usage.md
    common_usage/multi_necks.md
    common_usage/specify_device.md
+   common_usage/single_multi_channel_applications.md
 
 
 .. toctree::
@@ -70,6 +72,7 @@
    tutorials/config.md
    tutorials/data_flow.md
    tutorials/custom_installation.md
+   tutorials/warning_notes.md
    tutorials/faq.md
 
 

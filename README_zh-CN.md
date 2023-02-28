@@ -162,9 +162,9 @@ MMYOLO 依赖 PyTorch, MMCV, MMEngine 和 MMDetection，以下是安装的简要
 conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
 conda activate open-mmlab
 pip install openmim
-mim install "mmengine>=0.3.1"
-mim install "mmcv>=2.0.0rc1,<2.1.0"
-mim install "mmdet>=3.0.0rc5,<3.1.0"
+mim install "mmengine>=0.6.0"
+mim install "mmcv>=2.0.0rc4,<2.1.0"
+mim install "mmdet>=3.0.0rc6,<3.1.0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
@@ -217,6 +217,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [恢复训练](docs/zh_cn/common_usage/resume_training.md)
 - [开启和关闭 SyncBatchNorm](docs/zh_cn/common_usage/syncbn.md)
 - [开启混合精度训练](docs/zh_cn/common_usage/amp_training.md)
+- [测试时增强相关说明](docs/zh_cn/common_usage/tta.md)
 - [给主干网络增加插件](docs/zh_cn/common_usage/plugins.md)
 - [冻结指定网络层权重](docs/zh_cn/common_usage/common_usage/freeze_layers.md)
 - [输出模型预测结果](docs/zh_cn/common_usage/output_predictions.md)
@@ -225,6 +226,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [使用 mim 跨库调用其他 OpenMMLab 仓库的脚本](docs/zh_cn/common_usage/mim_usage.md)
 - [应用多个 Neck](docs/zh_cn/common_usage/multi_necks.md)
 - [指定特定设备训练或推理](docs/zh_cn/common_usage/specify_device.md)
+- [单通道和多通道应用案例](docs/zh_cn/common_usage/single_multi_channel_applications.md)
 
 </details>
 
@@ -251,6 +253,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [学习 YOLOv5 配置文件](docs/zh_cn/tutorials/config.md)
 - [数据流](docs/zh_cn/tutorials/data_flow.md)
 - [自定义安装](docs/zh_cn/tutorials/custom_installation.md)
+- [常见警告说明](docs/zh_cn/tutorials/warning_notes.md)
 - [常见问题](docs/zh_cn/tutorials/faq.md)
 
 </details>

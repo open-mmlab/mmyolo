@@ -8,7 +8,7 @@ from mmengine.logging import print_log
 from mmengine.utils import ProgressBar, path
 
 from mmyolo.registry import VISUALIZERS
-from mmyolo.utils import register_all_modules, switch_to_deploy
+from mmyolo.utils import switch_to_deploy
 from mmyolo.utils.labelme_utils import LabelmeFormat
 from mmyolo.utils.misc import get_file_list, show_data_classes
 
@@ -50,9 +50,6 @@ def main():
     if args.to_labelme and args.show:
         raise RuntimeError('`--to-labelme` or `--show` only '
                            'can choose one at the same time.')
-
-    # register all modules in mmdet into the registries
-    register_all_modules()
 
     # build the model from a config file and a checkpoint file
     model = init_detector(args.config, args.checkpoint, device=args.device)

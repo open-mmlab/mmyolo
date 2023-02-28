@@ -23,7 +23,7 @@
 例如，你可以通过以下命令安装 MMEngine：
 
 ```shell
-pip install "mmengine>=0.3.1"
+pip install "mmengine>=0.6.0"
 ```
 
 ## 不使用 MIM 安装 MMCV
@@ -36,7 +36,7 @@ MMCV 包含 C++ 和 CUDA 扩展，因此其对 PyTorch 的依赖比较复杂。M
 例如，下述命令将会安装基于 PyTorch 1.12.x 和 CUDA 11.6 编译的 mmcv：
 
 ```shell
-pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/torch1.12.0/index.html
+pip install "mmcv>=2.0.0rc4" -f https://download.openmmlab.com/mmcv/dist/cu116/torch1.12.0/index.html
 ```
 
 ## 在 CPU 环境中安装
@@ -75,9 +75,9 @@ pip install "mmcv>=2.0.0rc1" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 
 ```shell
 !pip3 install openmim
-!mim install "mmengine>=0.3.1"
-!mim install "mmcv>=2.0.0rc1,<2.1.0"
-!mim install "mmdet>=3.0.0rc5,<3.1.0"
+!mim install "mmengine>=0.6.0"
+!mim install "mmcv>=2.0.0rc4,<2.1.0"
+!mim install "mmdet>=3.0.0rc6,<3.1.0"
 ```
 
 **步骤 2.** 使用源码安装 MMYOLO：
