@@ -1,15 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import os
-import sys
-import os.path as osp
 import argparse
-import tempfile
 import importlib
+import os
+import os.path as osp
 import pkgutil
-import pandas as pd
-import numpy as np
-from pathlib import Path
+import sys
+import tempfile
 from multiprocessing import Pool
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 # host_addr = 'https://gitee.com/open-mmlab'
 host_addr = 'https://github.com/open-mmlab'
@@ -21,8 +22,9 @@ proxy_names = {
 }
 merge_module_keys = {'mmcv': ['mmengine']}
 markdown_title = '# MM 系列开源库注册表\n'
-markdown_title += '（注意：本文档是通过print_registers.py脚本自己生成）'
-markdown_title += '\n\n<br/>'
+markdown_title += '（注意：本文档是通过 .dev_scripts/print_registers.py 脚本自动生成）'
+
+# markdown_title += '\n\n<br/>'
 
 
 def capitalize(repo_name):
@@ -67,13 +69,13 @@ def merge_dict(src_dict, dst_dict):
     if isinstance(src_dict, str):
         return
     for _k, _v in dst_dict.items():
-        if (_k not in src_dict):
+        if _k not in src_dict:
             src_dict.update({_k: _v})
         else:
             assert isinstance(_v, (dict, str)) and \
-                isinstance(src_dict[_k], (dict, str)), \
-                    (f'merge type is not supported: '
-                     f'{type(_v)} and {type(src_dict[_k])}')
+                   isinstance(src_dict[_k], (dict, str)), \
+                   'merge type is not supported: ' \
+                   f'{type(_v)} and {type(src_dict[_k])}'
             merge_dict(src_dict[_k], _v)
 
 
@@ -127,6 +129,7 @@ def get_registries_from_modules(module_list):
     # import at the beginning is not allowed
     # because it is not the temp package
     from mmengine.registry import Registry
+
     # only get the specific registries in module list
     print('getting registries...')
     for module in module_list:
@@ -187,7 +190,7 @@ def print_tree(print_dict):
             else:
                 assert (_val is None), f'unknown print type {_val}'
             tree += '  ' + _connector + \
-                ('└─' if _last else '├─') + f'({n}) {_key}' + '\n'
+                    ('└─' if _last else '├─') + f'({n}) {_key}' + '\n'
             tree += sub_tree
         return tree
 
@@ -200,7 +203,7 @@ def divide_list_into_groups(_array, _maxsize_per_group):
     if not _array:
         return _array
     _groups = np.asarray(len(_array) / _maxsize_per_group)
-    if (len(_array) % _maxsize_per_group):
+    if len(_array) % _maxsize_per_group:
         _groups = np.floor(_groups) + 1
     _groups = _groups.astype(int)
     return np.array_split(_array, _groups)
@@ -340,16 +343,19 @@ def generate_markdown_by_repository(repo_name,
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='print registries in mmlab repositories')
+        description='print registries in openmmlab repositories')
     parser.add_argument(
-        'repositories',
+        '-r',
+        '--repositories',
         nargs='+',
+        default=['mmdet', 'mmcls', 'mmseg', 'mmengine', 'mmcv'],
         type=str,
         help='git repositories name in OpenMMLab')
     parser.add_argument(
         '-b',
         '--branches',
         nargs='+',
+        default=['3.x', '1.x', '1.x', 'main', '2.x'],
         type=str,
         help='the branch names of git repositories, the length of branches '
         'must be same as the length of repositories')
@@ -374,13 +380,14 @@ def main():
     if branches is None:
         branches = [None] * len(repositories)
     assert isinstance(branches, list) and \
-        len(branches) == len(repositories), \
-            'The length of branches must be same as that of repositories'
+           len(branches) == len(repositories), \
+           'The length of branches must be same as ' \
+           'that of repositories'
     assert isinstance(args.out, str), \
         'The type of output path must be string'
     # save path of file
     mkdir_or_exist(args.out)
-    save_path = osp.join(args.out, f'registries_info.md')
+    save_path = osp.join(args.out, 'registries_info.md')
     with tempfile.TemporaryDirectory() as tmpdir:
         # multi process init
         pool = Pool(processes=len(repositories))
