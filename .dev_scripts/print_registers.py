@@ -19,6 +19,7 @@ proxy_names = {
     'mmseg': 'mmsegmentation',
     'mmcls': 'mmclassification'
 }
+merge_module_keys = {'mmcv': ['mmengine']}
 markdown_title = '# MM 系列开源库注册表\n'
 markdown_title += '（注意：本文档是通过print_registers.py脚本自己生成）'
 markdown_title += '\n\n<br/>'
@@ -57,6 +58,23 @@ def git_pull_branch(repo_name, branch_name='', pulldir='.'):
     if returncode:
         raise RuntimeError(
             f'failed to get the remote repo, code: {returncode}')
+
+
+def merge_dict(src_dict, dst_dict):
+    assert type(src_dict) == type(dst_dict), \
+        (f'merge type is not supported: '
+         f'{type(dst_dict)} and {type(src_dict)}')
+    if isinstance(src_dict, str):
+        return
+    for _k, _v in dst_dict.items():
+        if (_k not in src_dict):
+            src_dict.update({_k: _v})
+        else:
+            assert isinstance(_v, (dict, str)) and \
+                isinstance(src_dict[_k], (dict, str)), \
+                    (f'merge type is not supported: '
+                     f'{type(_v)} and {type(src_dict[_k])}')
+            merge_dict(src_dict[_k], _v)
 
 
 def load_modules_from_dir(module_name, module_root, throw_error=False):
@@ -219,8 +237,7 @@ def registries_to_html(registries, title=''):
         if len(registry_strings) > max_size_per_cell:
             multi_parts = True
         for cell_idx, registry_cell in enumerate(
-                divide_list_into_groups(registry_strings,
-                                        max_size_per_cell)):
+                divide_list_into_groups(registry_strings, max_size_per_cell)):
             registry_str = ''.join(registry_cell.tolist())
             registry_str = f'<ul>{registry_str}</ul>'
             table_data_multi_parts.append([
@@ -302,9 +319,12 @@ def generate_markdown_by_repository(repo_name,
         registries_tree.update({tools_name: tools_tree})
     # print_tree(registries_tree)
     # get registries markdown string
+    module_registries = registries_tree.get(module_name, {})
+    for merge_key in merge_module_keys.get(module_name, []):
+        merge_registries = registries_tree.get(merge_key, {})
+        merge_dict(module_registries, merge_registries)
     markdown_str = registries_to_html(
-        registries_tree.get(module_name, {}),
-        title=f'{capitalize(repo_name)} Module Components')
+        module_registries, title=f'{capitalize(repo_name)} Module Components')
     # get tools markdown string
     for tools_name in tools_list:
         markdown_str += tools_to_html(
