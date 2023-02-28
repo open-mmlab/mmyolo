@@ -203,6 +203,7 @@ class BoxAMDetectorWrapper(nn.Module):
             # Maybe this is a direction that can be optimized
             # self.detector.init_weights()
 
+            self.detector.bbox_head.head_module.training = True
             if hasattr(self.detector.bbox_head, 'featmap_sizes'):
                 # Prevent the model algorithm error when calculating loss
                 self.detector.bbox_head.featmap_sizes = None
@@ -218,6 +219,7 @@ class BoxAMDetectorWrapper(nn.Module):
 
             return [loss]
         else:
+            self.detector.bbox_head.head_module.training = False
             with torch.no_grad():
                 results = self.detector.test_step(self.input_data)
                 return results
