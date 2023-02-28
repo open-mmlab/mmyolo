@@ -94,5 +94,6 @@ custom_hooks = [
         type='mmdet.PipelineSwitchHook',
         switch_epoch=_base_.max_epochs - _base_.num_epochs_stage2,
         switch_pipeline=_base_.train_pipeline_stage2),
+    # stop distillation after the 280th epoch
     dict(type='mmrazor.DistillationLossDetachHook', detach_epoch=280)
 ]
