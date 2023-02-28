@@ -37,6 +37,7 @@ You can switch between Chinese and English documents in the top-right corner of 
    common_usage/resume_training.md
    common_usage/syncbn.md
    common_usage/amp_training.md
+   common_usage/tta.md
    common_usage/plugins.md
    common_usage/freeze_layers.md
    common_usage/output_predictions.md
