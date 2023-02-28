@@ -9,7 +9,7 @@ python tools/analysis_tools/get_flops.py
     ${CONFIG_FILE} \                           # 配置文件路径
     [--shape ${IMAGE_SIZE}] \                  # 输入图像大小（int），默认取 640*640
     [--show-arch ${ARCH_DISPLAY}] \            # 以网络结构形式逐层展示复杂度信息
-    [--show-table ${TABLE_DISPLAY}] \          # 以表格形式逐层展示复杂度信息
+    [--not-show-table ${TABLE_DISPLAY}] \      # 以表格形式逐层展示复杂度信息
     [--cfg-options ${CFG_OPTIONS}]             # 配置文件参数修改选项
 # [] 代表可选参数，实际输入命令行时，不用输入 []
 ```
