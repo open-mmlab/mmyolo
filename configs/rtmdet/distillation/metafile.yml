@@ -1,0 +1,69 @@
+Collections:
+  - Name: RTMDet Distilllation
+    Metadata:
+      Training Data: COCO
+      Training Techniques:
+        - AdamW
+        - Flat Cosine Annealing
+        - Distillation
+      Training Resources: 8x A100 GPUs
+      Architecture:
+        - CSPNeXt
+        - CSPNeXtPAFPN
+    README: configs/rtmdet/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/detectors/yolo_detector.py#L12
+      Version: v0.1.1
+
+Models:
+  - Name: kd_tiny_rtmdet_s_neck_300e_coco
+    In Collection: RTMDet Distilllation
+    Config: configs/rtmdet/distillation/kd_tiny_rtmdet_s_neck_300e_coco.py
+    Metadata:
+      Training Memory (GB): 11.9
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 41.8
+    Weights: https://download.openmmlab.com/mmrazor/v1/rtmdet_distillation/kd_tiny_rtmdet_s_neck_300e_coco/kd_tiny_rtmdet_s_neck_300e_coco_20230213_104240-e1e4197c.pth
+
+  - Name: kd_s_rtmdet_m_neck_300e_coco
+    In Collection: RTMDet Distilllation
+    Config: configs/rtmdet/distillation/kd_s_rtmdet_m_neck_300e_coco.py
+    Metadata:
+      Training Memory (GB): 16.3
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 45.7
+    Weights: https://download.openmmlab.com/mmrazor/v1/rtmdet_distillation/kd_s_rtmdet_m_neck_300e_coco/kd_s_rtmdet_m_neck_300e_coco_20230220_140647-446ff003.pth
+
+  - Name: kd_m_rtmdet_l_neck_300e_coco
+    In Collection: RTMDet Distilllation
+    Config: configs/rtmdet/distillation/kd_m_rtmdet_l_neck_300e_coco.py
+    Metadata:
+      Training Memory (GB): 29.0
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 50.2
+    Weights: https://download.openmmlab.com/mmrazor/v1/rtmdet_distillation/kd_m_rtmdet_l_neck_300e_coco/kd_m_rtmdet_l_neck_300e_coco_20230220_141313-b806f503.pth
+
+  - Name: kd_l_rtmdet_x_neck_300e_coco
+    In Collection: RTMDet Distilllation
+    Config: configs/rtmdet/distillation/kd_l_rtmdet_x_neck_300e_coco.py
+    Metadata:
+      Training Memory (GB): 45.2
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 41.8
+    Weights: https://download.openmmlab.com/mmrazor/v1/rtmdet_distillation/kd_l_rtmdet_x_neck_300e_coco/kd_l_rtmdet_x_neck_300e_coco_20230220_141912-c9979722.pth
