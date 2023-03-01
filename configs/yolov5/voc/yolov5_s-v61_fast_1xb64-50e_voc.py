@@ -29,6 +29,8 @@ num_det_layers = 3
 
 load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa
 
+tta_img_scales = [img_scale, (416, 416), (640, 640)]
+
 # Hyperparameter reference from:
 # https://github.com/ultralytics/yolov5/blob/master/data/hyps/hyp.VOC.yaml
 model = dict(
@@ -232,3 +234,37 @@ val_evaluator = dict(
 test_evaluator = val_evaluator
 
 train_cfg = dict(max_epochs=max_epochs)
+
+# Config for Test Time Augmentation. (TTA)
+_multiscale_resize_transforms = [
+    dict(
+        type='Compose',
+        transforms=[
+            dict(type='YOLOv5KeepRatioResize', scale=s),
+            dict(
+                type='LetterResize',
+                scale=s,
+                allow_scale_up=False,
+                pad_val=dict(img=114))
+        ]) for s in tta_img_scales
+]
+
+tta_pipeline = [
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(
+        type='TestTimeAug',
+        transforms=[
+            _multiscale_resize_transforms,
+            [
+                dict(type='mmdet.RandomFlip', prob=1.),
+                dict(type='mmdet.RandomFlip', prob=0.)
+            ], [dict(type='mmdet.LoadAnnotations', with_bbox=True)],
+            [
+                dict(
+                    type='mmdet.PackDetInputs',
+                    meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                               'scale_factor', 'pad_param', 'flip',
+                               'flip_direction'))
+            ]
+        ])
+]

@@ -26,6 +26,7 @@ loss_obj_weight = 1.0
 obj_level_weights = [4.0, 1.0, 0.25, 0.06]
 affine_scale = 0.5  # YOLOv5RandomAffine scaling ratio
 
+tta_img_scales = [(1280, 1280), (1024, 1024), (1536, 1536)]
 # =======================Unmodified in most cases==================
 model = dict(
     backbone=dict(arch='P6', out_indices=(2, 3, 4, 5)),
@@ -101,3 +102,37 @@ val_dataloader = dict(
     dataset=dict(pipeline=test_pipeline, batch_shapes_cfg=batch_shapes_cfg))
 
 test_dataloader = val_dataloader
+
+# Config for Test Time Augmentation. (TTA)
+_multiscale_resize_transforms = [
+    dict(
+        type='Compose',
+        transforms=[
+            dict(type='YOLOv5KeepRatioResize', scale=s),
+            dict(
+                type='LetterResize',
+                scale=s,
+                allow_scale_up=False,
+                pad_val=dict(img=114))
+        ]) for s in tta_img_scales
+]
+
+tta_pipeline = [
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(
+        type='TestTimeAug',
+        transforms=[
+            _multiscale_resize_transforms,
+            [
+                dict(type='mmdet.RandomFlip', prob=1.),
+                dict(type='mmdet.RandomFlip', prob=0.)
+            ], [dict(type='mmdet.LoadAnnotations', with_bbox=True)],
+            [
+                dict(
+                    type='mmdet.PackDetInputs',
+                    meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                               'scale_factor', 'pad_param', 'flip',
+                               'flip_direction'))
+            ]
+        ])
+]

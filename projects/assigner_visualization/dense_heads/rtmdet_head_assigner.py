@@ -7,6 +7,7 @@ from mmdet.utils import InstanceList
 from torch import Tensor
 
 from mmyolo.models import RTMDetHead
+from mmyolo.models.utils import gt_instances_preprocess
 from mmyolo.registry import MODELS
 
 
@@ -42,8 +43,10 @@ class RTMHeadAssigner(RTMDetHead):
         num_imgs = len(batch_img_metas)
         featmap_sizes = [featmap.size()[-2:] for featmap in cls_scores]
         assert len(featmap_sizes) == self.prior_generator.num_levels
+        # rtmdet's prior offset differs from others
+        prior_offset = self.prior_generator.offset
 
-        gt_info = self.gt_instances_preprocess(batch_gt_instances, num_imgs)
+        gt_info = gt_instances_preprocess(batch_gt_instances, num_imgs)
         gt_labels = gt_info[:, :, :1]
         gt_bboxes = gt_info[:, :, 1:]  # xyxy
         pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0).float()
@@ -122,7 +125,9 @@ class RTMHeadAssigner(RTMDetHead):
                     'retained_gt_inds':
                     torch.zeros([0], dtype=torch.int64).to(device),
                     'prior_ind':
-                    0
+                    0,
+                    'offset':
+                    prior_offset
                 }
             else:
                 w = inputs_hw[1] // self.featmap_strides[i]
@@ -137,7 +142,8 @@ class RTMHeadAssigner(RTMDetHead):
                     'img_inds': img_inds[retained_inds],
                     'class_inds': labels[retained_inds],
                     'retained_gt_inds': matched_gt_inds[retained_inds],
-                    'prior_ind': 0
+                    'prior_ind': 0,
+                    'offset': prior_offset
                 }
             assign_results.append([assign_results_prior])
         return assign_results
