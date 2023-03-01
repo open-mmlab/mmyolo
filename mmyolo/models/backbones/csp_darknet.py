@@ -12,7 +12,6 @@ from ..layers import CSPLayerWithTwoConv, SPPFBottleneck
 from ..utils import make_divisible, make_round
 from .base_backbone import BaseBackbone
 
-
 @MODELS.register_module()
 class YOLOv5CSPDarknet(BaseBackbone):
     """CSP-Darknet backbone used in YOLOv5.
