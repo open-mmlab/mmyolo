@@ -260,6 +260,14 @@ For different parts from MMDetection, we have also prepared user guides and adva
 Results and models are available in the [model zoo](docs/en/model_zoo.md).
 
 <details open>
+<summary><b>Supported Tasks</b></summary>
+
+- [x] Object detection
+- [x] Rotated object detection
+
+</details>
+
+<details open>
 <summary><b>Supported Algorithms</b></summary>
 
 - [x] [YOLOv5](configs/yolov5)
@@ -269,6 +277,16 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 - [x] [YOLOv7](configs/yolov7)
 - [x] [PPYOLOE](configs/ppyoloe)
 - [x] [YOLOv8](configs/yolov8)
+
+</details>
+
+<details open>
+<summary><b>Supported Datasets</b></summary>
+
+- [x] COCO Dataset
+- [x] VOC Dataset
+- [x] CrowdHuman Dataset
+- [x] DOTA 1.0 Dataset
 
 </details>
 
