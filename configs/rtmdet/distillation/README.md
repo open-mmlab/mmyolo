@@ -110,17 +110,17 @@ distiller=dict(
         fpn2_t=dict(
             type='NormConnector', in_channels=128, norm_cfg=norm_cfg)),
     distill_losses=dict(
-        loss_pkd_fpn0=dict(type='ChannelWiseDivergence', loss_weight=1),
-        loss_pkd_fpn1=dict(type='ChannelWiseDivergence', loss_weight=1),
-        loss_pkd_fpn2=dict(type='ChannelWiseDivergence', loss_weight=1)),
+        loss_fpn0=dict(type='ChannelWiseDivergence', loss_weight=1),
+        loss_fpn1=dict(type='ChannelWiseDivergence', loss_weight=1),
+        loss_fpn2=dict(type='ChannelWiseDivergence', loss_weight=1)),
     loss_forward_mappings=dict(
-        loss_pkd_fpn0=dict(
+        loss_fpn0=dict(
             preds_S=dict(from_student=True, recorder='fpn0', connector='fpn0_s'),
             preds_T=dict(from_student=False, recorder='fpn0', connector='fpn0_t')),
-        loss_pkd_fpn1=dict(
+        loss_fpn1=dict(
             preds_S=dict(from_student=True, recorder='fpn1', connector='fpn1_s'),
             preds_T=dict(from_student=False, recorder='fpn1', connector='fpn1_t')),
-        loss_pkd_fpn2=dict(
+        loss_fpn2=dict(
             preds_S=dict(from_student=True, recorder='fpn2', connector='fpn2_s'),
             preds_T=dict(from_student=False, recorder='fpn2', connector='fpn2_t'))))
 
@@ -138,9 +138,9 @@ to the same dimension.
 `loss_forward_mappings` are mappings between distill loss forward arguments and records.
 
 In addition, the student finetunes itself on no masaic domain at the last 20 epochs,
-so we add a new hook named `DistillationLossDetachHook` to stop distillation on time.
+so we add a new hook named `StopDistillHook` to stop distillation on time.
 We need to add this hook to the `custom_hooks` list like this:
 
 ```shell
-custom_hooks = [..., dict(type='mmrazor.DistillationLossDetachHook', detach_epoch=280)]
+custom_hooks = [..., dict(type='mmrazor.StopDistillHook', detach_epoch=280)]
 ```
