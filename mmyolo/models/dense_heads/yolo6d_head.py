@@ -1,50 +1,52 @@
-from abc import ABCMeta
-from typing import Union, List
+from typing import Union, Sequence, Tuple, List
+from mmdet.utils import OptMultiConfig
 
-import torch
-import torch.nn as nn
-
-from mmdet.utils import ConfigType, OptMultiConfig
-from mmyolo.registry import MODELS
+from torch import Tensor
+from mmyolo.models.utils import make_divisible
+from mmengine.structures import InstanceData
+from mmdet.models.dense_heads.base_dense_head import BaseDenseHead
 from mmengine.model import BaseModule
-from mmcv.cnn import ConvModule
 
-@MODELS.register_module()
-class YOLO6DHead(nn.Module, metaclass=ABCMeta):
-    """YOLO6DHead used in YOLO6D"""
-    def __init__(self,
-                 in_channels: List[int],
-                 out_channels: Union[int, List[int]],
-                 deepen_factor: float = 1.0,
-                 widen_factor: float = 1.0,
-                 freeze_all: bool = False,
-                 norm_cfg: ConfigType = None,
-                 act_cfg: ConfigType = None,
-                 init_cfg: OptMultiConfig = None,
-    ):
-        super().__init__(init_cfg)
-        self.in_channels = in_channels
-        self.out_channels = out_channels
-        self.deepen_factor = deepen_factor
-        self.widen_factor = widen_factor
-        self.freeze_all = freeze_all
-        self.norm_cfg = norm_cfg
-        self.act_cfg = act_cfg
-        
-    def build_layer(self):
-        conv1 = ConvModule(
-            in_channels=self.in_channels,
-            out_channels=self.out_channels,
-            kernel_size=3,
-            stride=1,
-            padding=1,
-            conv_cfg=self.conv_cfg,
-            norm_cfg=self.norm_cfg,
-            act_cfg=self.act_cfg)
-        
-        
+class YOLO6DHeadModule(BaseModule):
+    """YOLO6DHead head module used in 'YOLO6D'.
     
-    def forward(self, inputs: List[torch.Tensor]) -> tuple:
-        """Forward function"""
+    """
+    def __init__(self,
+                 num_classes: int,
+                 in_channels: Union[int, Sequence],
+                 widen_factor: float = 1.0,
+                 num_base_priors: int = 3,
+                 featmap_strides: Sequence[int] = (8, 16, 32),
+                 init_cfg: OptMultiConfig = None):
+        super().__init__(init_cfg=init_cfg)
+    
+    def forward():
+    
+    def forward_single():
+        
+        
+class YOLO6DHead(BaseDenseHead):
+    def __init__():
+        
+            
+    def forward(self, x: Tuple[Tensor]):
+        """Forward features from the upstream network
+        
+        Args:
+            x (Tuple[Tensor]): Features from the upstream network, each is
+            a 4D-tensor
+        
+        Returns:
+            Tuple[List]: A tuple of multi-level classification scores, bbox
+            predictions, and objectnesses.
+        """
+        return self.head_module(x)
+    
+    def predict_by_feat(self,
+                        cls_scores) -> List[InstanceData]
+    
+    def loss():
+        
+    def loss_by_feat():
         
         
