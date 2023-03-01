@@ -1,5 +1,4 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-import unittest
 from unittest import TestCase
 
 import numpy as np
@@ -223,7 +222,3 @@ class TestRTMDetInsHead(TestCase):
                 cfg=test_cfg,
                 rescale=False,
                 with_nms=False)
-
-
-if __name__ == '__main__':
-    unittest.main()
