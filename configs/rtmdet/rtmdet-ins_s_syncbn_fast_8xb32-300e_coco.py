@@ -16,12 +16,12 @@ model = dict(
             pred_kernel_size=1,
             featmap_strides=[8, 16, 32],
             widen_factor=0.5),
-        # TODO: 替换成mmyolo
         bbox_coder=dict(type='DistancePointBBoxCoder'),
         loss_mask=dict(
             type='mmdet.DiceLoss', loss_weight=2.0, eps=5e-6,
             reduction='mean')),
     test_cfg=dict(
+        multi_label=False,
         nms_pre=1000,
         min_bbox_size=0,
         score_thr=0.05,
@@ -93,3 +93,6 @@ custom_hooks = [
         switch_epoch=_base_.max_epochs - _base_.num_epochs_stage2,
         switch_pipeline=train_pipeline_stage2)
 ]
+
+val_evaluator = dict(metric=['bbox', 'segm'])
+test_evaluator = val_evaluator
