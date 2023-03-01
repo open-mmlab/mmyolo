@@ -28,6 +28,19 @@ Models:
           box AP: 41.0
     Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_tiny_syncbn_fast_8xb32-300e_coco/rtmdet_tiny_syncbn_fast_8xb32-300e_coco_20230102_140117-dbb1dc83.pth
 
+  - Name: kd_tiny_rtmdet_s_neck_300e_coco
+    In Collection: RTMDet
+    Config: configs/rtmdet/distillation/kd_tiny_rtmdet_s_neck_300e_coco.py
+    Metadata:
+      Training Memory (GB): 11.9
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 41.8
+    Weights: https://download.openmmlab.com/mmrazor/v1/rtmdet_distillation/kd_tiny_rtmdet_s_neck_300e_coco/kd_tiny_rtmdet_s_neck_300e_coco_20230213_104240-e1e4197c.pth
+
   - Name: rtmdet_s_syncbn_fast_8xb32-300e_coco
     In Collection: RTMDet
     Config: configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py
@@ -40,6 +53,19 @@ Models:
         Metrics:
           box AP: 44.6
     Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco/rtmdet_s_syncbn_fast_8xb32-300e_coco_20221230_182329-0a8c901a.pth
+
+  - Name: kd_s_rtmdet_m_neck_300e_coco
+    In Collection: RTMDet
+    Config: configs/rtmdet/distillation/kd_s_rtmdet_m_neck_300e_coco.py
+    Metadata:
+      Training Memory (GB): 16.3
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 45.7
+    Weights: https://download.openmmlab.com/mmrazor/v1/rtmdet_distillation/kd_s_rtmdet_m_neck_300e_coco/kd_s_rtmdet_m_neck_300e_coco_20230220_140647-446ff003.pth
 
   - Name: rtmdet_m_syncbn_fast_8xb32-300e_coco
     In Collection: RTMDet
@@ -54,6 +80,19 @@ Models:
           box AP: 49.3
     Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_m_syncbn_fast_8xb32-300e_coco/rtmdet_m_syncbn_fast_8xb32-300e_coco_20230102_135952-40af4fe8.pth
 
+  - Name: kd_m_rtmdet_l_neck_300e_coco
+    In Collection: RTMDet
+    Config: configs/rtmdet/distillation/kd_m_rtmdet_l_neck_300e_coco.py
+    Metadata:
+      Training Memory (GB): 29.0
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 50.2
+    Weights: https://download.openmmlab.com/mmrazor/v1/rtmdet_distillation/kd_m_rtmdet_l_neck_300e_coco/kd_m_rtmdet_l_neck_300e_coco_20230220_141313-b806f503.pth
+
   - Name: rtmdet_l_syncbn_fast_8xb32-300e_coco
     In Collection: RTMDet
     Config: configs/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco.py
@@ -66,6 +105,19 @@ Models:
         Metrics:
           box AP: 51.4
     Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco/rtmdet_l_syncbn_fast_8xb32-300e_coco_20230102_135928-ee3abdc4.pth
+
+  - Name: kd_l_rtmdet_x_neck_300e_coco
+    In Collection: RTMDet
+    Config: configs/rtmdet/distillation/kd_l_rtmdet_x_neck_300e_coco.py
+    Metadata:
+      Training Memory (GB): 45.2
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 52.3
+    Weights: https://download.openmmlab.com/mmrazor/v1/rtmdet_distillation/kd_l_rtmdet_x_neck_300e_coco/kd_l_rtmdet_x_neck_300e_coco_20230220_141912-c9979722.pth
 
   - Name: rtmdet_x_syncbn_fast_8xb32-300e_coco
     In Collection: RTMDet

@@ -10,6 +10,7 @@ batch_shapes_cfg = dict(
     img_size=img_scale[
         0],  # The image scale of padding should be divided by pad_size_divisor
     size_divisor=64)  # Additional paddings for pixel scale
+tta_img_scales = [(1280, 1280), (1024, 1024), (1536, 1536)]
 
 # -----model related-----
 # Basic size of multi-scale prior box
@@ -35,8 +36,16 @@ mixup_beta = 8.0  # YOLOv5MixUp
 loss_cls_weight = 0.3
 loss_bbox_weight = 0.05
 loss_obj_weight = 0.7
+obj_level_weights = [4.0, 1.0, 0.25, 0.06]
+simota_candidate_topk = 20
+
+# The only difference between P6 and P5 in terms of
+# hyperparameters is lr_factor
+lr_factor = 0.2
 
 # ===============================Unmodified in most cases====================
+pre_transform = _base_.pre_transform
+
 model = dict(
     backbone=dict(arch='W', out_indices=(2, 3, 4, 5)),
     neck=dict(
@@ -52,16 +61,14 @@ model = dict(
             norm_cfg=norm_cfg,
             act_cfg=dict(type='SiLU', inplace=True)),
         prior_generator=dict(base_sizes=anchors, strides=strides),
-        simota_candidate_topk=20,  # note
+        simota_candidate_topk=simota_candidate_topk,  # note
         # scaled based on number of detection layers
         loss_cls=dict(loss_weight=loss_cls_weight *
                       (num_classes / 80 * 3 / num_det_layers)),
         loss_bbox=dict(loss_weight=loss_bbox_weight * (3 / num_det_layers)),
         loss_obj=dict(loss_weight=loss_obj_weight *
                       ((img_scale[0] / 640)**2 * 3 / num_det_layers)),
-        obj_level_weights=[4.0, 1.0, 0.25, 0.06]))
-
-pre_transform = _base_.pre_transform
+        obj_level_weights=obj_level_weights))
 
 mosiac4_pipeline = [
     dict(
@@ -138,6 +145,38 @@ val_dataloader = dict(
     dataset=dict(pipeline=test_pipeline, batch_shapes_cfg=batch_shapes_cfg))
 test_dataloader = val_dataloader
 
-# The only difference between P6 and P5 in terms of
-# hyperparameters is lr_factor
-default_hooks = dict(param_scheduler=dict(lr_factor=0.2))
+default_hooks = dict(param_scheduler=dict(lr_factor=lr_factor))
+
+# Config for Test Time Augmentation. (TTA)
+_multiscale_resize_transforms = [
+    dict(
+        type='Compose',
+        transforms=[
+            dict(type='YOLOv5KeepRatioResize', scale=s),
+            dict(
+                type='LetterResize',
+                scale=s,
+                allow_scale_up=False,
+                pad_val=dict(img=114))
+        ]) for s in tta_img_scales
+]
+
+tta_pipeline = [
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(
+        type='TestTimeAug',
+        transforms=[
+            _multiscale_resize_transforms,
+            [
+                dict(type='mmdet.RandomFlip', prob=1.),
+                dict(type='mmdet.RandomFlip', prob=0.)
+            ], [dict(type='mmdet.LoadAnnotations', with_bbox=True)],
+            [
+                dict(
+                    type='mmdet.PackDetInputs',
+                    meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                               'scale_factor', 'pad_param', 'flip',
+                               'flip_direction'))
+            ]
+        ])
+]

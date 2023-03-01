@@ -28,12 +28,11 @@ import torch.nn as nn
 from mmengine.config import Config, DictAction
 from mmengine.hooks import Hook
 from mmengine.model import BaseModel
+from mmengine.registry import init_default_scope
 from mmengine.runner import Runner
 from mmengine.utils.path import mkdir_or_exist
 from mmengine.visualization import Visualizer
 from rich.progress import BarColumn, MofNCompleteColumn, Progress, TextColumn
-
-from mmyolo.utils import register_all_modules
 
 
 def parse_args():
@@ -229,8 +228,8 @@ def main():
                                 osp.splitext(osp.basename(args.config))[0])
 
     cfg.log_level = args.log_level
-    # register all modules in mmyolo into the registries
-    register_all_modules()
+
+    init_default_scope(cfg.get('default_scope', 'mmyolo'))
 
     # init logger
     print('Param_scheduler :')

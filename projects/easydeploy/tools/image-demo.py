@@ -125,15 +125,16 @@ def main():
         for (bbox, score, label) in zip(bboxes, scores, labels):
             bbox = bbox.tolist()
             color = colors[label]
-            name = f'cls:{label}_score:{score:0.4f}'
+            label_name = cfg.get('class_name', {})[label]
+            name = f'cls:{label_name}_score:{score:0.4f}'
 
             cv2.rectangle(bgr, bbox[:2], bbox[2:], color, 2)
             cv2.putText(
                 bgr,
                 name, (bbox[0], bbox[1] - 2),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                0.75, [225, 255, 255],
-                thickness=2)
+                2.0, [225, 255, 255],
+                thickness=3)
 
         if args.show:
             mmcv.imshow(bgr, 'result', 0)
