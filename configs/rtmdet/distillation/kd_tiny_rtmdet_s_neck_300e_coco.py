@@ -63,17 +63,17 @@ model = dict(
         # `loss_forward_mappings` are mappings between distill loss forward
         # arguments and records.
         loss_forward_mappings=dict(
-            loss_pkd_fpn0=dict(
+            loss_fpn0=dict(
                 preds_S=dict(
                     from_student=True, recorder='fpn0', connector='fpn0_s'),
                 preds_T=dict(
                     from_student=False, recorder='fpn0', connector='fpn0_t')),
-            loss_pkd_fpn1=dict(
+            loss_fpn1=dict(
                 preds_S=dict(
                     from_student=True, recorder='fpn1', connector='fpn1_s'),
                 preds_T=dict(
                     from_student=False, recorder='fpn1', connector='fpn1_t')),
-            loss_pkd_fpn2=dict(
+            loss_fpn2=dict(
                 preds_S=dict(
                     from_student=True, recorder='fpn2', connector='fpn2_s'),
                 preds_T=dict(
