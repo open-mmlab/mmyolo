@@ -12,6 +12,16 @@ MMYOLO is an open-source algorithms toolkit of YOLO based on PyTorch and MMDetec
 <img src="https://user-images.githubusercontent.com/17425982/220060451-d50414e5-a239-45b7-a4db-ed8699820300.png" alt="vision diagram"/>
 </div>
 
+The following tasks are currently supported:
+
+<details open>
+<summary><b>Tasks currently supported</b></summary>
+
+- object detection
+- rotated object detection
+
+</details>
+
 The YOLO series of algorithms currently supported are as follows:
 
 <details open>
@@ -27,13 +37,15 @@ The YOLO series of algorithms currently supported are as follows:
 
 </details>
 
-The following tasks are currently supported:
+The datasets currently supported are as follows:
 
 <details open>
-<summary><b>Tasks currently supported</b></summary>
+<summary><b>Datasets currently supported</b></summary>
 
-- object detection
-- rotated object detection
+- COCO Dataset
+- VOC Dataset
+- CrowdHuman Dataset
+- DOTA 1.0 Dataset
 
 </details>
 
