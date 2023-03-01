@@ -11,10 +11,6 @@ channels = [40, 112, 160]
 train_batch_size_per_gpu = 16
 img_scale = (960, 960)
 
-_base_.base_lr = 0.002
-_base_.optim_wrapper.optimizer.lr = 0.002
-_base_.param_scheduler[1].eta_min = 0.002 * 0.05
-
 _base_.nas_backbone.out_indices = (2, 4, 5)
 _base_.nas_backbone.conv_cfg = dict(type='mmrazor.OFAConv2d')
 _base_.nas_backbone.init_cfg = dict(
@@ -36,6 +32,14 @@ _base_.model.bbox_head.head_module.in_channels = channels[0]
 _base_.model.bbox_head.head_module.feat_channels = channels[0]
 _base_.model.bbox_head.head_module.widen_factor = widen_factor
 
+_base_.model.test_cfg=dict(
+    multi_label=True,
+    nms_pre=1000,
+    min_bbox_size=0,
+    score_thr=0.05,
+    nms=dict(type='nms', iou_threshold=0.6),
+    max_per_img=100)
+
 train_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(type='LoadAnnotations', with_bbox=True),
@@ -43,12 +47,12 @@ train_pipeline = [
         type='Mosaic',
         img_scale=img_scale,
         use_cached=True,
-        max_cached_images=40,
+        max_cached_images=20,
+        random_pop=False,
         pad_val=114.0),
     dict(
         type='mmdet.RandomResize',
-        # img_scale is (width, height)
-        scale=(img_scale[0] * 2, img_scale[1] * 2),
+        scale=(1280, 1280),
         ratio_range=(0.5, 2.0),  # note
         resize_type='mmdet.Resize',
         keep_ratio=True),
@@ -56,7 +60,15 @@ train_pipeline = [
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
-    dict(type='YOLOv5MixUp', use_cached=True, max_cached_images=20),
+    dict(
+        type='YOLOXMixUp',
+        img_scale=(960, 960),
+        ratio_range=(1.0, 1.0),
+        max_cached_images=10,
+        use_cached=True,
+        random_pop=False,
+        pad_val=(114, 114, 114),
+        prob=0.5),
     dict(type='mmdet.PackDetInputs')
 ]
 
@@ -81,23 +93,17 @@ train_dataloader = dict(
 
 test_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='YOLOv5KeepRatioResize', scale=img_scale),
-    dict(
-        type='LetterResize',
-        scale=img_scale,
-        allow_scale_up=False,
-        pad_val=dict(img=114)),
+    dict(type='mmdet.Resize', scale=(960, 960), keep_ratio=True),
+    dict(type='mmdet.Pad', size=(960, 960), pad_val=dict(img=(114, 114, 114))),
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor', 'pad_param'))
+                   'scale_factor'))
 ]
 
-batch_shapes_cfg = dict(img_size=img_scale[0])
-
 val_dataloader = dict(
-    dataset=dict(pipeline=test_pipeline, batch_shapes_cfg=batch_shapes_cfg))
+    dataset=dict(pipeline=test_pipeline, batch_shapes_cfg=None))
 
 test_dataloader = val_dataloader
 
