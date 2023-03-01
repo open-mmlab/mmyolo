@@ -8,56 +8,18 @@ import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import ConvModule, is_norm
 from mmcv.ops import batched_nms
-from mmdet.models.task_modules import PseudoSampler
 from mmdet.models.utils import filter_scores_and_topk
 from mmdet.structures.bbox import get_box_tensor, get_box_wh, scale_boxes
-from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
+from mmdet.utils import (ConfigType, InstanceList, OptConfigType,
+                         OptInstanceList, OptMultiConfig)
 from mmengine import ConfigDict
 from mmengine.model import (BaseModule, bias_init_with_prob, constant_init,
                             normal_init)
 from mmengine.structures import InstanceData
 from torch import Tensor
 
-from mmyolo.registry import MODELS, TASK_UTILS
-# from ..utils import gt_instances_preprocess
+from mmyolo.registry import MODELS
 from .rtmdet_head import RTMDetHead, RTMDetSepBNHeadModule
-
-# 实现步骤：
-# 1、测试精度对齐，先只包含bbox即可，使用headmodule
-# 2、测试精度对齐，此时对齐mask的map
-# 3、改为fast版本
-# 4、训练精度对齐
-
-
-def select_single_mlvl(mlvl_tensors, batch_id, detach=True):
-    """Extract a multi-scale single image tensor from a multi-scale batch
-    tensor based on batch index.
-
-    Note: The default value of detach is True, because the proposal gradient
-    needs to be detached during the training of the two-stage model. E.g
-    Cascade Mask R-CNN.
-
-    Args:
-        mlvl_tensors (list[Tensor]): Batch tensor for all scale levels,
-           each is a 4D-tensor.
-        batch_id (int): Batch index.
-        detach (bool): Whether detach gradient. Default True.
-
-    Returns:
-        list[Tensor]: Multi-scale single image tensor.
-    """
-    assert isinstance(mlvl_tensors, (list, tuple))
-    num_levels = len(mlvl_tensors)
-
-    if detach:
-        mlvl_tensor_list = [
-            mlvl_tensors[i][batch_id].detach() for i in range(num_levels)
-        ]
-    else:
-        mlvl_tensor_list = [
-            mlvl_tensors[i][batch_id] for i in range(num_levels)
-        ]
-    return mlvl_tensor_list
 
 
 class MaskFeatModule(BaseModule):
@@ -67,13 +29,13 @@ class MaskFeatModule(BaseModule):
         in_channels (int): Number of channels in the input feature map.
         feat_channels (int): Number of hidden channels of the mask feature
              map branch.
+        stacked_convs (int): Number of convs in mask feature branch.
         num_levels (int): The starting feature map level from RPN that
              will be used to predict the mask feature map.
         num_prototypes (int): Number of output channel of the mask feature
              map branch. This is the channel count of the mask
              feature map that to be dynamically convolved with the predicted
              kernel.
-        stacked_convs (int): Number of convs in mask feature branch.
         act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
             Default: dict(type='ReLU', inplace=True)
         norm_cfg (dict): Config dict for normalization layer. Default: None.
@@ -155,19 +117,26 @@ class RTMDetInsSepBNHeadModule(RTMDetSepBNHeadModule):
     """
 
     def __init__(self,
+                 num_classes: int,
                  *args,
                  num_prototypes: int = 8,
                  dyconv_channels: int = 8,
                  num_dyconvs: int = 3,
                  mask_loss_stride: int = 4,
                  share_conv: bool = True,
+                 use_sigmoid_cls: bool = False,
                  **kwargs):
         self.num_prototypes = num_prototypes
         self.num_dyconvs = num_dyconvs
         self.dyconv_channels = dyconv_channels
         self.mask_loss_stride = mask_loss_stride
         self.share_conv = share_conv
-        super().__init__(*args, **kwargs)
+        self.use_sigmoid_cls = use_sigmoid_cls
+        if self.use_sigmoid_cls:
+            self.cls_out_channels = num_classes
+        else:
+            self.cls_out_channels = num_classes + 1
+        super().__init__(num_classes=num_classes, *args, **kwargs)
 
     def _init_layers(self):
         """Initialize layers of the head."""
@@ -241,8 +210,7 @@ class RTMDetInsSepBNHeadModule(RTMDetSepBNHeadModule):
             self.rtm_cls.append(
                 nn.Conv2d(
                     self.feat_channels,
-                    # TODO: 原本变量名是cls_out_channels，要区分用不用sigmoid的情况
-                    self.num_base_priors * self.num_classes,
+                    self.num_base_priors * self.cls_out_channels,
                     self.pred_kernel_size,
                     padding=pred_pad_size))
             self.rtm_reg.append(
@@ -257,13 +225,6 @@ class RTMDetInsSepBNHeadModule(RTMDetSepBNHeadModule):
                     self.num_gen_params,
                     self.pred_kernel_size,
                     padding=pred_pad_size))
-            # if self.with_objectness:
-            #     self.rtm_obj.append(
-            #         nn.Conv2d(
-            #             self.feat_channels,
-            #             1,
-            #             self.pred_kernel_size,
-            #             padding=pred_pad_size))
 
         if self.share_conv:
             for n in range(len(self.featmap_strides)):
@@ -292,9 +253,6 @@ class RTMDetInsSepBNHeadModule(RTMDetSepBNHeadModule):
                                                 self.rtm_kernel):
             normal_init(rtm_cls, std=0.01, bias=bias_cls)
             normal_init(rtm_reg, std=0.01, bias=1)
-        # if self.with_objectness:
-        #     for rtm_obj in self.rtm_obj:
-        #         normal_init(rtm_obj, std=0.01, bias=bias_cls)
 
     def forward(self, feats: Tuple[Tensor, ...]) -> tuple:
         """Forward features from the upstream network.
@@ -333,12 +291,6 @@ class RTMDetInsSepBNHeadModule(RTMDetSepBNHeadModule):
             for reg_layer in self.reg_convs[idx]:
                 reg_feat = reg_layer(reg_feat)
             reg_dist = self.rtm_reg[idx](reg_feat)
-            # if self.with_objectness:
-            #     objectness = self.rtm_obj[idx](reg_feat)
-            #     cls_score = inverse_sigmoid(
-            #         sigmoid_geometric_mean(cls_score, objectness))
-
-            # reg_dist = F.relu(self.rtm_reg[idx](reg_feat)) * stride
 
             cls_scores.append(cls_score)
             bbox_preds.append(reg_dist)
@@ -390,40 +342,9 @@ class RTMDetInsSepBNHead(RTMDetHead):
             init_cfg=init_cfg)
 
         self.use_sigmoid_cls = loss_cls.get('use_sigmoid', False)
-        if self.use_sigmoid_cls:
-            self.cls_out_channels = self.num_classes
-        else:
-            self.cls_out_channels = self.num_classes + 1
+        if isinstance(self.head_module, RTMDetInsSepBNHeadModule):
+            assert self.use_sigmoid_cls == self.head_module.use_sigmoid_cls
         self.loss_mask = MODELS.build(loss_mask)
-
-    def special_init(self):
-        """Since YOLO series algorithms will inherit from YOLOv5Head, but
-        different algorithms have special initialization process.
-
-        The special_init function is designed to deal with this situation.
-        """
-        if self.train_cfg:
-            self.assigner = TASK_UTILS.build(self.train_cfg.assigner)
-            if self.train_cfg.get('sampler', None) is not None:
-                self.sampler = TASK_UTILS.build(
-                    self.train_cfg.sampler, default_args=dict(context=self))
-            else:
-                self.sampler = PseudoSampler(context=self)
-
-            self.featmap_sizes_train = None
-            self.flatten_priors_train = None
-
-    def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
-        """Forward features from the upstream network.
-
-        Args:
-            x (Tuple[Tensor]): Features from the upstream network, each is
-                a 4D-tensor.
-        Returns:
-            Tuple[List]: A tuple of multi-level classification scores, bbox
-            predictions, and objectnesses.
-        """
-        return self.head_module(x)
 
     def predict_by_feat(self,
                         cls_scores: List[Tensor],
@@ -435,15 +356,6 @@ class RTMDetInsSepBNHead(RTMDetHead):
                         cfg: Optional[ConfigDict] = None,
                         rescale: bool = True,
                         with_nms: bool = True) -> List[InstanceData]:
-
-        objectnesses = None
-
-        assert len(cls_scores) == len(bbox_preds)
-        if objectnesses is None:
-            with_objectnesses = False
-        else:
-            with_objectnesses = True
-            assert len(cls_scores) == len(objectnesses)
 
         cfg = self.test_cfg if cfg is None else cfg
         cfg = copy.deepcopy(cfg)
@@ -465,7 +377,6 @@ class RTMDetInsSepBNHead(RTMDetHead):
             self.featmap_sizes = featmap_sizes
         flatten_priors = torch.cat(self.mlvl_priors)
 
-        # 可以使用上面with_stride结果替换
         mlvl_strides = [
             flatten_priors.new_full(
                 (featmap_size.numel() * self.num_base_priors, ), stride) for
@@ -498,14 +409,8 @@ class RTMDetInsSepBNHead(RTMDetHead):
 
         flatten_kernel_preds = torch.cat(flatten_kernel_preds, dim=1)
 
-        if with_objectnesses:
-            flatten_objectness = [
-                objectness.permute(0, 2, 3, 1).reshape(num_imgs, -1)
-                for objectness in objectnesses
-            ]
-            flatten_objectness = torch.cat(flatten_objectness, dim=1).sigmoid()
-        else:
-            flatten_objectness = [None for _ in range(num_imgs)]
+        # RTMDet does not have objectness prediction.
+        flatten_objectness = [None for _ in range(num_imgs)]
 
         results_list = []
         for (bboxes, scores, objectness, kernel_pred, mask_feat,
@@ -584,20 +489,12 @@ class RTMDetInsSepBNHead(RTMDetHead):
                 # do not need max_per_img
                 cfg.max_per_img = len(results)
 
-            # results = self._bbox_post_process(
-            #     results=results,
-            #     cfg=cfg,
-            #     rescale=False,
-            #     with_nms=with_nms,
-            #     img_meta=img_meta)
-
             results = self._bbox_mask_post_process(
                 results=results,
                 mask_feat=mask_feat,
-                stride=flatten_stride,
                 cfg=cfg,
                 rescale_bbox=False,
-                rescale_mask=True,
+                rescale_mask=rescale,
                 with_nms=with_nms,
                 img_meta=img_meta)
             results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
@@ -609,8 +506,7 @@ class RTMDetInsSepBNHead(RTMDetHead):
     def _bbox_mask_post_process(
             self,
             results: InstanceData,
-            mask_feat,
-            stride,
+            mask_feat: Tensor,
             cfg: ConfigDict,
             rescale_bbox: bool = False,
             rescale_mask: bool = True,
@@ -620,7 +516,6 @@ class RTMDetInsSepBNHead(RTMDetHead):
             assert img_meta.get('scale_factor') is not None
             scale_factor = [1 / s for s in img_meta['scale_factor']]
             results.bboxes = scale_boxes(results.bboxes, scale_factor)
-        scale_factor = [1 / s for s in img_meta['scale_factor']]
 
         if hasattr(results, 'score_factors'):
             # TODO： Add sqrt operation in order to be consistent with
@@ -650,12 +545,14 @@ class RTMDetInsSepBNHead(RTMDetHead):
             mask_logits = self._mask_predict_by_feat(mask_feat,
                                                      results.kernels,
                                                      results.priors)
-            # 这里默认取0的逻辑要确定一下
+
+            stride = self.prior_generator.strides[0][0]
             mask_logits = F.interpolate(
-                mask_logits.unsqueeze(0), scale_factor=8, mode='bilinear')
+                mask_logits.unsqueeze(0), scale_factor=stride, mode='bilinear')
             if rescale_mask:
+                # TODO: When use mmdet.Resize or mmdet.Pad, will meet bug
+                # Use img_meta to crop and resize
                 ori_h, ori_w = img_meta['ori_shape'][:2]
-                # 由于pad逻辑不一样，所以这里用的是pad_param
                 pad_param = img_meta['pad_param'].astype(np.int32)
                 mask_logits_croppad = mask_logits[...,
                                                   pad_param[0]:-pad_param[1],
@@ -696,13 +593,11 @@ class RTMDetInsSepBNHead(RTMDetHead):
         strides = priors[:, 2:].reshape(-1, 1, 2)
         relative_coord = (points - coord).permute(0, 2, 1) / (
             strides[..., 0].reshape(-1, 1, 1) * 8)
-        relative_coord = relative_coord.reshape(num_inst, 2, h,
-                                                w)  # 这个变量其实是每个点相较于gt的偏移量
+        relative_coord = relative_coord.reshape(num_inst, 2, h, w)
 
-        mask_feat = torch.cat(  # (2, 10, 80, 80)
+        mask_feat = torch.cat(
             [relative_coord,
-             mask_feat.repeat(num_inst, 1, 1, 1)],
-            dim=1)
+             mask_feat.repeat(num_inst, 1, 1, 1)], dim=1)
         weights, biases = self.parse_dynamic_params(kernels)
 
         n_layers = len(weights)
@@ -737,3 +632,12 @@ class RTMDetInsSepBNHead(RTMDetHead):
                 bias_splits[i] = bias_splits[i].reshape(n_inst)
 
         return weight_splits, bias_splits
+
+    def loss_by_feat(
+            self,
+            cls_scores: List[Tensor],
+            bbox_preds: List[Tensor],
+            batch_gt_instances: InstanceList,
+            batch_img_metas: List[dict],
+            batch_gt_instances_ignore: OptInstanceList = None) -> dict:
+        raise NotImplementedError
