@@ -124,7 +124,7 @@ class RTMDetInsSepBNHeadModule(RTMDetSepBNHeadModule):
                  num_dyconvs: int = 3,
                  mask_loss_stride: int = 4,
                  share_conv: bool = True,
-                 use_sigmoid_cls: bool = False,
+                 use_sigmoid_cls: bool = True,
                  **kwargs):
         self.num_prototypes = num_prototypes
         self.num_dyconvs = num_dyconvs
@@ -496,6 +496,7 @@ class RTMDetInsSepBNHead(RTMDetHead):
                 rescale_bbox=False,
                 rescale_mask=rescale,
                 with_nms=with_nms,
+                pad_param=pad_param,
                 img_meta=img_meta)
             results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
             results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
@@ -511,6 +512,7 @@ class RTMDetInsSepBNHead(RTMDetHead):
             rescale_bbox: bool = False,
             rescale_mask: bool = True,
             with_nms: bool = True,
+            pad_param: Optional[np.ndarray] = None,
             img_meta: Optional[dict] = None) -> InstanceData:
         if rescale_bbox:
             assert img_meta.get('scale_factor') is not None
@@ -553,17 +555,21 @@ class RTMDetInsSepBNHead(RTMDetHead):
                 # TODO: When use mmdet.Resize or mmdet.Pad, will meet bug
                 # Use img_meta to crop and resize
                 ori_h, ori_w = img_meta['ori_shape'][:2]
-                pad_param = img_meta['pad_param'].astype(np.int32)
-                mask_logits_croppad = mask_logits[...,
-                                                  pad_param[0]:-pad_param[1],
-                                                  pad_param[2]:-pad_param[3]]
-                mask_logits_resize = F.interpolate(
-                    mask_logits_croppad,
+                if isinstance(pad_param, np.ndarray):
+                    pad_param = pad_param.astype(np.int32)
+                    crop_y1, crop_y2 = pad_param[
+                        0], mask_logits.shape[-2] - pad_param[1]
+                    crop_x1, crop_x2 = pad_param[
+                        2], mask_logits.shape[-1] - pad_param[3]
+                    mask_logits = mask_logits[..., crop_y1:crop_y2,
+                                              crop_x1:crop_x2]
+                mask_logits = F.interpolate(
+                    mask_logits,
                     size=[ori_h, ori_w],
                     mode='bilinear',
                     align_corners=False)
 
-            masks = mask_logits_resize.sigmoid().squeeze(0)
+            masks = mask_logits.sigmoid().squeeze(0)
             masks = masks > cfg.mask_thr_binary
             results.masks = masks
         else:
@@ -587,7 +593,7 @@ class RTMDetInsSepBNHead(RTMDetHead):
             mask_feat.unsqueeze(0)
 
         coord = self.prior_generator.single_level_grid_priors(
-            (h, w), level_idx=0).reshape(1, -1, 2)
+            (h, w), level_idx=0, device=mask_feat.device).reshape(1, -1, 2)
         num_inst = priors.shape[0]
         points = priors[:, :2].reshape(-1, 1, 2)
         strides = priors[:, 2:].reshape(-1, 1, 2)
