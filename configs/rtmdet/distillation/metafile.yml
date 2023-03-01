@@ -65,5 +65,5 @@ Models:
       - Task: Object Detection
         Dataset: COCO
         Metrics:
-          box AP: 41.8
+          box AP: 52.3
     Weights: https://download.openmmlab.com/mmrazor/v1/rtmdet_distillation/kd_l_rtmdet_x_neck_300e_coco/kd_l_rtmdet_x_neck_300e_coco_20230220_141912-c9979722.pth
