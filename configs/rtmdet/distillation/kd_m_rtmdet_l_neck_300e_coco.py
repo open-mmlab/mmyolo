@@ -1,4 +1,4 @@
-_base_ = './rtmdet_m_syncbn_fast_8xb32-300e_coco.py'
+_base_ = '../rtmdet_m_syncbn_fast_8xb32-300e_coco.py'
 
 teacher_ckpt = 'https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco/rtmdet_l_syncbn_fast_8xb32-300e_coco_20230102_135928-ee3abdc4.pth'  # noqa: E501
 
