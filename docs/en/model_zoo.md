@@ -4,6 +4,10 @@ This page is used to summarize the performance and related evaluation metrics of
 
 ## COCO dataset
 
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/222087414-168175cc-dae6-4c5c-a8e3-3109a152dd19.png"/>
+</div>
+
 |      Model       | Arch | Size | Batch Size | Epoch | SyncBN | AMP | Mem (GB) | Params(M) | FLOPs(G) | TRT-FP16-GPU-Latency(ms) | Box AP | TTA Box AP |
 | :--------------: | :--: | :--: | :--------: | :---: | :----: | :-: | :------: | :-------: | :------: | :----------------------: | :----: | :--------: |
 |     YOLOv5-n     |  P5  | 640  |   8xb16    |  300  |  Yes   | Yes |   1.5    |   1.87    |   2.26   |           1.14           |  28.0  |    30.7    |
