@@ -1,5 +1,42 @@
 # 更新日志
 
+## v0.5.0 (2/3/2023)
+
+### 亮点
+
+### 新特性
+
+1. 美化 MMYOLO 中配置文件并增加更多注释 (#501, #506, #516, #529, #531, #539)
+2. 新增 YOLOv7 模型结构图 (#504)
+3. 新增如何指定特定 GPU 训练和推理文档 (#503)
+4. EasyDeploy 中支持 DeepStream (#485)
+5. 支持 fast 版本的 YOLOX (#518)
+6. 新增训练或者测试时检查 metainfo 是否全为小写 (#535)
+7. 支持调用 MMRazor 中搜索出来的 NAS 子网络作为 backbone (#453)
+8. 支持 RTMDet、YOLOv8 和 YOLOv7 assigner 可视化 (#528, #543, #558)
+9. 增加 Twitter Discord Medium Youtube 等链接 (#555)
+
+### Bug 修复
+
+1. 修复 isort 版本问题 (#492, #497)
+2. 修复 assigner 可视化模块的 type 错误 (#509)
+3. 修复 YOLOv8 文档链接错误 (#517)
+4. 修复 EasyDeploy 中的 RTMDet Decoder 错误 (#519)
+5. 修复一些文档链接错误 (#537)
+
+
+### 完善
+
+1. 完善更新 contributing.md
+2. 优化 DetDataPreprocessor 支使其支持多任务 (#511)
+3. 优化 gt_instances_preprocess 使其可以用于其他 YOLO 算法 (#532)
+
+### 贡献者
+
+@triple-Mu @hhaAndroid @Audrey528 @TianWen580 @yechenzhi @RangeKing @lyviva @Nioolek @PeterH0323 @tianleiSHI @aptsunny @satuoqaq @vansin 
+
+
+
 ## v0.4.0 (18/1/2023)
 
 ### 亮点
