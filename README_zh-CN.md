@@ -201,6 +201,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [MMYOLO 模型结构设计](docs/zh_cn/recommended_topics/model_design.md)
 - [原理和实现全解析](docs/zh_cn/recommended_topics/algorithm_descriptions/)
 - [轻松更换主干网络](docs/zh_cn/recommended_topics/replace_backbone.md)
+- [MMYOLO 模型复杂度分析](docs/zh_cn/recommended_topics/complexity_analysis.md)
 - [标注+训练+测试+部署全流程](docs/zh_cn/recommended_topics/labeling_to_deployment_tutorials.md)
 - [关于可视化的一切](docs/zh_cn/recommended_topics/visualization.md)
 - [模型部署流程](docs/zh_cn/recommended_topics/deploy/)
