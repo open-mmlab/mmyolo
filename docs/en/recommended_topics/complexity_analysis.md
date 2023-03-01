@@ -1,7 +1,7 @@
 # Model Complexity Analysis
 
-We provide a `tools/analysis_tools/get_flops.py` script to help with the complexity analysis for models of MMYOLO. 
-Currently, it provides the interfaces to compute parameter, activation and flops of the given model, 
+We provide a `tools/analysis_tools/get_flops.py` script to help with the complexity analysis for models of MMYOLO.
+Currently, it provides the interfaces to compute parameter, activation and flops of the given model,
 and supports printing the related information layer-by-layer in terms of network structure or table.
 
 The commands as follows:
@@ -24,7 +24,7 @@ Let's take the `rtmdet_s_syncbn_fast_8xb32-300e_coco.py` config file in RTMDet a
 python tools/analysis_tools/get_flops.py  configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py
 ```
 
-Output: 
+Output:
 
 ```python
 ==============================
@@ -99,9 +99,8 @@ Model Parameters: 8.887M
 python tools/analysis_tools/get_flops.py  configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py --show-arch
 ```
 
-Due to the complex structure of RTMDet, the output is long. 
+Due to the complex structure of RTMDet, the output is long.
 The following shows only the output from bbox_head.head_module.rtm_reg section:
-
 
 ```python
 (rtm_reg): ModuleList(
