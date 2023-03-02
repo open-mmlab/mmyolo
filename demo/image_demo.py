@@ -1,14 +1,16 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os
 from argparse import ArgumentParser
+from pathlib import Path
 
 import mmcv
 from mmdet.apis import inference_detector, init_detector
+from mmengine.config import Config, ConfigDict
 from mmengine.logging import print_log
 from mmengine.utils import ProgressBar, path
 
 from mmyolo.registry import VISUALIZERS
-from mmyolo.utils import register_all_modules, switch_to_deploy
+from mmyolo.utils import switch_to_deploy
 from mmyolo.utils.labelme_utils import LabelmeFormat
 from mmyolo.utils.misc import get_file_list, show_data_classes
 
@@ -30,6 +32,10 @@ def parse_args():
         action='store_true',
         help='Switch model to deployment mode')
     parser.add_argument(
+        '--tta',
+        action='store_true',
+        help='Whether to use test time augmentation')
+    parser.add_argument(
         '--score-thr', type=float, default=0.3, help='Bbox score threshold')
     parser.add_argument(
         '--class-name',
@@ -50,12 +56,37 @@ def main():
     if args.to_labelme and args.show:
         raise RuntimeError('`--to-labelme` or `--show` only '
                            'can choose one at the same time.')
+    config = args.config
 
-    # register all modules in mmdet into the registries
-    register_all_modules()
+    if isinstance(config, (str, Path)):
+        config = Config.fromfile(config)
+    elif not isinstance(config, Config):
+        raise TypeError('config must be a filename or Config object, '
+                        f'but got {type(config)}')
+    if 'init_cfg' in config.model.backbone:
+        config.model.backbone.init_cfg = None
 
+    if args.tta:
+        assert 'tta_model' in config, 'Cannot find ``tta_model`` in config.' \
+            " Can't use tta !"
+        assert 'tta_pipeline' in config, 'Cannot find ``tta_pipeline`` ' \
+            "in config. Can't use tta !"
+        config.model = ConfigDict(**config.tta_model, module=config.model)
+        test_data_cfg = config.test_dataloader.dataset
+        while 'dataset' in test_data_cfg:
+            test_data_cfg = test_data_cfg['dataset']
+
+        # batch_shapes_cfg will force control the size of the output image,
+        # it is not compatible with tta.
+        if 'batch_shapes_cfg' in test_data_cfg:
+            test_data_cfg.batch_shapes_cfg = None
+        test_data_cfg.pipeline = config.tta_pipeline
+
+    # TODO: TTA mode will error if cfg_options is not set.
+    #  This is an mmdet issue and needs to be fixed later.
     # build the model from a config file and a checkpoint file
-    model = init_detector(args.config, args.checkpoint, device=args.device)
+    model = init_detector(
+        config, args.checkpoint, device=args.device, cfg_options={})
 
     if args.deploy:
         switch_to_deploy(model)

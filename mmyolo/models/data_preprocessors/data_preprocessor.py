@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import random
-from typing import List, Mapping, Sequence, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import torch
 import torch.nn.functional as F
@@ -64,29 +64,8 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
     Note: It must be used together with `mmyolo.datasets.utils.yolov5_collate`
     """
 
-    # TODO: Can be deleted after mmdet support
-    def cast_data(self, data: CastData) -> CastData:
-        """Copying data to the target device.
-
-        Args:
-            data (dict): Data returned by ``DataLoader``.
-
-        Returns:
-            CollatedResult: Inputs and data sample at target device.
-        """
-        if isinstance(data, Mapping):
-            return {key: self.cast_data(data[key]) for key in data}
-        elif isinstance(data, (str, bytes)) or data is None:
-            return data
-        elif isinstance(data, tuple) and hasattr(data, '_fields'):
-            # namedtuple
-            return type(data)(*(self.cast_data(sample) for sample in data))  # type: ignore  # noqa: E501  # yapf:disable
-        elif isinstance(data, Sequence):
-            return type(data)(self.cast_data(sample) for sample in data)  # type: ignore  # noqa: E501  # yapf:disable
-        elif isinstance(data, (torch.Tensor, BaseDataElement)):
-            return data.to(self.device, non_blocking=True)
-        else:
-            return data
+    def __init__(self, *args, non_blocking: Optional[bool] = True, **kwargs):
+        super().__init__(*args, non_blocking=non_blocking, **kwargs)
 
     def forward(self, data: dict, training: bool = False) -> dict:
         """Perform normalization, padding and bgr2rgb conversion based on
@@ -117,12 +96,14 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
                 inputs, data_samples = batch_aug(inputs, data_samples)
 
         img_metas = [{'batch_input_shape': inputs.shape[2:]}] * len(inputs)
-        data_samples = {
+        data_samples_output = {
             'bboxes_labels': data_samples['bboxes_labels'],
             'img_metas': img_metas
         }
+        if 'masks' in data_samples:
+            data_samples_output['masks'] = data_samples['masks']
 
-        return {'inputs': inputs, 'data_samples': data_samples}
+        return {'inputs': inputs, 'data_samples': data_samples_output}
 
 
 @MODELS.register_module()

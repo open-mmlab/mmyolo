@@ -9,6 +9,9 @@ scaling_ratio_range = (0.5, 1.5)
 img_scale = _base_.img_scale
 pre_transform = _base_.pre_transform
 
+test_img_scale = (416, 416)
+tta_img_scales = [test_img_scale, (320, 320), (640, 640)]
+
 # model settings
 model = dict(
     data_preprocessor=dict(batch_augments=[
@@ -48,7 +51,7 @@ train_pipeline_stage1 = [
 
 test_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='mmdet.Resize', scale=(416, 416), keep_ratio=True),  # note
+    dict(type='mmdet.Resize', scale=test_img_scale, keep_ratio=True),  # note
     dict(
         type='mmdet.Pad',
         pad_to_square=True,
@@ -63,3 +66,35 @@ test_pipeline = [
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline_stage1))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 test_dataloader = val_dataloader
+
+# Config for Test Time Augmentation. (TTA)
+tta_pipeline = [
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(
+        type='TestTimeAug',
+        transforms=[
+            [
+                dict(type='mmdet.Resize', scale=s, keep_ratio=True)
+                for s in tta_img_scales
+            ],
+            [
+                # ``RandomFlip`` must be placed before ``Pad``, otherwise
+                # bounding box coordinates after flipping cannot be
+                # recovered correctly.
+                dict(type='mmdet.RandomFlip', prob=1.),
+                dict(type='mmdet.RandomFlip', prob=0.)
+            ],
+            [
+                dict(
+                    type='mmdet.Pad',
+                    pad_to_square=True,
+                    pad_val=dict(img=(114.0, 114.0, 114.0))),
+            ],
+            [
+                dict(
+                    type='mmdet.PackDetInputs',
+                    meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                               'scale_factor', 'flip', 'flip_direction'))
+            ]
+        ])
+]
