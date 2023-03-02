@@ -80,13 +80,13 @@ English | [简体中文](README_zh-CN.md)
 💎 **v0.5.0** was released on 2/3/2023:
 
 1. Support [RTMDet-R](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md#rotated-object-detection) rotated object detection
-2. [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) support for using mask annotation to improve object detection model performance
-3. Support [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/razor/subnets/README.md) search NAS sub-network as backbone of YOLO series algorithm
+2. Support for using mask annotation to improve [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) object detection performance
+3. Support [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/razor/subnets/README.md) searchable NAS sub-network as the backbone of YOLO series algorithm
 4. Support calling [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/distillation/README.md) to distill the knowledge of RTMDet
 5. [MMYOLO](https://mmyolo.readthedocs.io/zh_CN/dev/) document structure optimization, comprehensive content upgrade
 6. Improve YOLOX mAP and training speed based on RTMDet training hyperparameters
-7. Support model parametric count, FLOPs calculation and provide GPU latency data on T4 devices, and updated Model Zoo
-8. Support test-time enhancement of TTA
+7. Support calculation of model parameters and FLOPs, provide GPU latency data on T4 devices, and update [Model Zoo](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/model_zoo.md)
+8. Support test-time augmentation (TTA)
 9. Support RTMDet, YOLOv8 and YOLOv7 assigner visualization
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).

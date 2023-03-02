@@ -86,7 +86,7 @@
 4. 支持调用 [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/distillation/README.md) 对 RTMDet 进行知识蒸馏
 5. [MMYOLO](https://mmyolo.readthedocs.io/zh_CN/dev/) 文档结构优化，内容全面升级
 6. 基于 RTMDet 训练超参提升 YOLOX 精度和训练速度
-7. 支持模型参数量、FLOPs 计算和提供 T4 设备上 GPU 延时数据，并更新了 Model Zoo
+7. 支持模型参数量、FLOPs 计算和提供 T4 设备上 GPU 延时数据，并更新了 [Model Zoo](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/model_zoo.md)
 8. 支持测试时增强 TTA
 9. 支持 RTMDet、YOLOv8 和 YOLOv7 assigner 可视化
 
