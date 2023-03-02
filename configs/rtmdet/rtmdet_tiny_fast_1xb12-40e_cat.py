@@ -1,23 +1,24 @@
-_base_ = './yolov6_s_syncbn_fast_8xb32-400e_coco.py'
+_base_ = 'rtmdet_tiny_syncbn_fast_8xb32-300e_coco.py'
 
 data_root = './data/cat/'
 class_name = ('cat', )
 num_classes = len(class_name)
 metainfo = dict(classes=class_name, palette=[(20, 220, 60)])
 
+num_epochs_stage2 = 5
+
 max_epochs = 40
 train_batch_size_per_gpu = 12
 train_num_workers = 4
-num_last_epochs = 5
+val_batch_size_per_gpu = 1
+val_num_workers = 2
 
-load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco/yolov6_s_syncbn_fast_8xb32-400e_coco_20221102_203035-932e1d91.pth'  # noqa
+load_from = 'https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_tiny_syncbn_fast_8xb32-300e_coco/rtmdet_tiny_syncbn_fast_8xb32-300e_coco_20230102_140117-dbb1dc83.pth'  # noqa
 
 model = dict(
     backbone=dict(frozen_stages=4),
     bbox_head=dict(head_module=dict(num_classes=num_classes)),
-    train_cfg=dict(
-        initial_assigner=dict(num_classes=num_classes),
-        assigner=dict(num_classes=num_classes)))
+    train_cfg=dict(assigner=dict(num_classes=num_classes)))
 
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
@@ -29,6 +30,8 @@ train_dataloader = dict(
         data_prefix=dict(img='images/')))
 
 val_dataloader = dict(
+    batch_size=val_batch_size_per_gpu,
+    num_workers=val_num_workers,
     dataset=dict(
         metainfo=metainfo,
         data_root=data_root,
@@ -37,20 +40,31 @@ val_dataloader = dict(
 
 test_dataloader = val_dataloader
 
+param_scheduler = [
+    dict(
+        type='LinearLR',
+        start_factor=_base_.lr_start_factor,
+        by_epoch=False,
+        begin=0,
+        end=30),
+    dict(
+        # use cosine lr from 150 to 300 epoch
+        type='CosineAnnealingLR',
+        eta_min=_base_.base_lr * 0.05,
+        begin=max_epochs // 2,
+        end=max_epochs,
+        T_max=max_epochs // 2,
+        by_epoch=True,
+        convert_to_iter_based=True),
+]
+
+_base_.custom_hooks[1].switch_epoch = max_epochs - num_epochs_stage2
+
 val_evaluator = dict(ann_file=data_root + 'annotations/test.json')
 test_evaluator = val_evaluator
 
-_base_.optim_wrapper.optimizer.batch_size_per_gpu = train_batch_size_per_gpu
-_base_.custom_hooks[1].switch_epoch = max_epochs - num_last_epochs
-
 default_hooks = dict(
     checkpoint=dict(interval=10, max_keep_ckpts=2, save_best='auto'),
-    # The warmup_mim_iter parameter is critical.
-    # The default value is 1000 which is not suitable for cat datasets.
-    param_scheduler=dict(max_epochs=max_epochs, warmup_mim_iter=10),
     logger=dict(type='LoggerHook', interval=5))
-train_cfg = dict(
-    max_epochs=max_epochs,
-    val_interval=10,
-    dynamic_intervals=[(max_epochs - num_last_epochs, 1)])
+train_cfg = dict(max_epochs=max_epochs, val_interval=10)
 # visualizer = dict(vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]) # noqa
