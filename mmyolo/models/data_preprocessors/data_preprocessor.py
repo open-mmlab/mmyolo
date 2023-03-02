@@ -96,12 +96,14 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
                 inputs, data_samples = batch_aug(inputs, data_samples)
 
         img_metas = [{'batch_input_shape': inputs.shape[2:]}] * len(inputs)
-        data_samples = {
+        data_samples_output = {
             'bboxes_labels': data_samples['bboxes_labels'],
             'img_metas': img_metas
         }
+        if 'masks' in data_samples:
+            data_samples_output['masks'] = data_samples['masks']
 
-        return {'inputs': inputs, 'data_samples': data_samples}
+        return {'inputs': inputs, 'data_samples': data_samples_output}
 
 
 @MODELS.register_module()
