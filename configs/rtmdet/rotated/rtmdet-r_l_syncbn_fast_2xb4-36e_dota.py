@@ -119,9 +119,9 @@ model = dict(
         norm_cfg=norm_cfg,
         act_cfg=dict(type='SiLU', inplace=True)),
     bbox_head=dict(
-        type='RotatedRTMDetHead',
+        type='RTMDetRotatedHead',
         head_module=dict(
-            type='RotatedRTMDetSepBNHeadModule',
+            type='RTMDetRotatedSepBNHeadModule',
             num_classes=num_classes,
             widen_factor=widen_factor,
             in_channels=256,
