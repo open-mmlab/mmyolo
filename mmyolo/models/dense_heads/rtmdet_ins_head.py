@@ -23,7 +23,7 @@ from .rtmdet_head import RTMDetHead, RTMDetSepBNHeadModule
 
 
 class MaskFeatModule(BaseModule):
-    """Mask feature head used in RTMDet-Ins.
+    """Mask feature head used in RTMDet-Ins. Copy from mmdet.
 
     Args:
         in_channels (int): Number of channels in the input feature map.
@@ -86,34 +86,19 @@ class MaskFeatModule(BaseModule):
 
 @MODELS.register_module()
 class RTMDetInsSepBNHeadModule(RTMDetSepBNHeadModule):
-    """Detection Head of RTMDet.
+    """Detection and Instance Segmentation Head of RTMDet.
 
     Args:
         num_classes (int): Number of categories excluding the background
             category.
-        in_channels (int): Number of channels in the input feature map.
-        widen_factor (float): Width multiplier, multiply number of
-            channels in each layer by this amount. Defaults to 1.0.
-        num_base_priors (int): The number of priors (points) at a point
-            on the feature grid.  Defaults to 1.
-        feat_channels (int): Number of hidden channels. Used in child classes.
-            Defaults to 256
-        stacked_convs (int): Number of stacking convs of the head.
-            Defaults to 2.
-        featmap_strides (Sequence[int]): Downsample factor of each feature map.
-             Defaults to (8, 16, 32).
-        share_conv (bool): Whether to share conv layers between stages.
+        num_prototypes (int): Number of mask prototype features extracted
+            from the mask head. Defaults to 8.
+        dyconv_channels (int): Channel of the dynamic conv layers.
+            Defaults to 8.
+        num_dyconvs (int): Number of the dynamic convolution layers.
+            Defaults to 3.
+        use_sigmoid_cls (bool): Use sigmoid for class prediction.
             Defaults to True.
-        pred_kernel_size (int): Kernel size of ``nn.Conv2d``. Defaults to 1.
-        conv_cfg (:obj:`ConfigDict` or dict, optional): Config dict for
-            convolution layer. Defaults to None.
-        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
-            layer. Defaults to ``dict(type='BN')``.
-        act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
-            Default: dict(type='SiLU', inplace=True).
-        init_cfg (:obj:`ConfigDict` or list[:obj:`ConfigDict`] or dict or
-            list[dict], optional): Initialization config dict.
-            Defaults to None.
     """
 
     def __init__(self,
@@ -122,15 +107,11 @@ class RTMDetInsSepBNHeadModule(RTMDetSepBNHeadModule):
                  num_prototypes: int = 8,
                  dyconv_channels: int = 8,
                  num_dyconvs: int = 3,
-                 mask_loss_stride: int = 4,
-                 share_conv: bool = True,
                  use_sigmoid_cls: bool = True,
                  **kwargs):
         self.num_prototypes = num_prototypes
         self.num_dyconvs = num_dyconvs
         self.dyconv_channels = dyconv_channels
-        self.mask_loss_stride = mask_loss_stride
-        self.share_conv = share_conv
         self.use_sigmoid_cls = use_sigmoid_cls
         if self.use_sigmoid_cls:
             self.cls_out_channels = num_classes
@@ -269,6 +250,11 @@ class RTMDetInsSepBNHeadModule(RTMDetSepBNHeadModule):
             - bbox_preds (list[Tensor]): Box energies / deltas for all scale
               levels, each is a 4D-tensor, the channels number is
               num_base_priors * 4.
+            - kernel_preds (list[Tensor]): Dynamic conv kernels for all scale
+              levels, each is a 4D-tensor, the channels number is
+              num_gen_params.
+            - mask_feat (Tensor): Mask prototype features.
+                Has shape (batch_size, num_prototypes, H, W).
         """
         mask_feat = self.mask_head(feats)
 
@@ -301,6 +287,25 @@ class RTMDetInsSepBNHeadModule(RTMDetSepBNHeadModule):
 
 @MODELS.register_module()
 class RTMDetInsSepBNHead(RTMDetHead):
+    """RTMDet Instance Segmentation head.
+
+    Args:
+        head_module(ConfigType): Base module used for RTMDetInsSepBNHead
+        prior_generator: Points generator feature maps in
+            2D points-based detectors.
+        bbox_coder (:obj:`ConfigDict` or dict): Config of bbox coder.
+        loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
+        loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
+        loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
+        loss_mask (:obj:`ConfigDict` or dict): Config of mask loss.
+        train_cfg (:obj:`ConfigDict` or dict, optional): Training config of
+            anchor head. Defaults to None.
+        test_cfg (:obj:`ConfigDict` or dict, optional): Testing config of
+            anchor head. Defaults to None.
+        init_cfg (:obj:`ConfigDict` or list[:obj:`ConfigDict`] or dict or
+            list[dict], optional): Initialization config dict.
+            Defaults to None.
+    """
 
     def __init__(self,
                  head_module: ConfigType,
@@ -356,7 +361,49 @@ class RTMDetInsSepBNHead(RTMDetHead):
                         cfg: Optional[ConfigDict] = None,
                         rescale: bool = True,
                         with_nms: bool = True) -> List[InstanceData]:
+        """Transform a batch of output features extracted from the head into
+        bbox results.
 
+        Note: When score_factors is not None, the cls_scores are
+        usually multiplied by it then obtain the real score used in NMS.
+
+        Args:
+            cls_scores (list[Tensor]): Classification scores for all
+                scale levels, each is a 4D-tensor, has shape
+                (batch_size, num_priors * num_classes, H, W).
+            bbox_preds (list[Tensor]): Box energies / deltas for all
+                scale levels, each is a 4D-tensor, has shape
+                (batch_size, num_priors * 4, H, W).
+            kernel_preds (list[Tensor]): Kernel predictions of dynamic
+                convs for all scale levels, each is a 4D-tensor, has shape
+                (batch_size, num_params, H, W).
+            mask_feats (Tensor): Mask prototype features extracted from the
+                mask head, has shape (batch_size, num_prototypes, H, W).
+            score_factors (list[Tensor], optional): Score factor for
+                all scale level, each is a 4D-tensor, has shape
+                (batch_size, num_priors * 1, H, W). Defaults to None.
+            batch_img_metas (list[dict], Optional): Batch image meta info.
+                Defaults to None.
+            cfg (ConfigDict, optional): Test / postprocessing
+                configuration, if None, test_cfg would be used.
+                Defaults to None.
+            rescale (bool): If True, return boxes in original image space.
+                Defaults to False.
+            with_nms (bool): If True, do nms before return boxes.
+                Defaults to True.
+
+        Returns:
+            list[:obj:`InstanceData`]: Object detection results of each image
+            after the post process. Each item usually contains following keys.
+
+                - scores (Tensor): Classification scores, has a shape
+                  (num_instance, )
+                - labels (Tensor): Labels of bboxes, has a shape
+                  (num_instances, ).
+                - bboxes (Tensor): Has a shape (num_instances, 4),
+                  the last dimension 4 arrange as (x1, y1, x2, y2).
+                - masks (Tensor): Has a shape (num_instances, h, w).
+        """
         cfg = self.test_cfg if cfg is None else cfg
         cfg = copy.deepcopy(cfg)
 
@@ -514,6 +561,39 @@ class RTMDetInsSepBNHead(RTMDetHead):
             with_nms: bool = True,
             pad_param: Optional[np.ndarray] = None,
             img_meta: Optional[dict] = None) -> InstanceData:
+        """bbox and mask post-processing method.
+
+        The boxes would be rescaled to the original image scale and do
+        the nms operation. Usually `with_nms` is False is used for aug test.
+
+        Args:
+            results (:obj:`InstaceData`): Detection instance results,
+                each item has shape (num_bboxes, ).
+            mask_feat (Tensor): Mask prototype features extracted from the
+                mask head, has shape (batch_size, num_prototypes, H, W).
+            cfg (ConfigDict): Test / postprocessing configuration,
+                if None, test_cfg would be used.
+            rescale_bbox (bool): If True, return boxes in original image space.
+                Default to False.
+            rescale_mask (bool): If True, return masks in original image space.
+                Default to True.
+            with_nms (bool): If True, do nms before return boxes.
+                Default to True.
+            img_meta (dict, optional): Image meta info. Defaults to None.
+
+        Returns:
+            :obj:`InstanceData`: Detection results of each image
+            after the post process.
+            Each item usually contains following keys.
+
+                - scores (Tensor): Classification scores, has a shape
+                  (num_instance, )
+                - labels (Tensor): Labels of bboxes, has a shape
+                  (num_instances, ).
+                - bboxes (Tensor): Has a shape (num_instances, 4),
+                  the last dimension 4 arrange as (x1, y1, x2, y2).
+                - masks (Tensor): Has a shape (num_instances, h, w).
+        """
         if rescale_bbox:
             assert img_meta.get('scale_factor') is not None
             scale_factor = [1 / s for s in img_meta['scale_factor']]
@@ -581,7 +661,21 @@ class RTMDetInsSepBNHead(RTMDetHead):
                 device=results.bboxes.device)
         return results
 
-    def _mask_predict_by_feat(self, mask_feat, kernels, priors):
+    def _mask_predict_by_feat(self, mask_feat: Tensor, kernels: Tensor,
+                              priors: Tensor) -> Tensor:
+        """Generate mask logits from mask features with dynamic convs.
+
+        Args:
+            mask_feat (Tensor): Mask prototype features.
+                Has shape (num_prototypes, H, W).
+            kernels (Tensor): Kernel parameters for each instance.
+                Has shape (num_instance, num_params)
+            priors (Tensor): Center priors for each instance.
+                Has shape (num_instance, 4).
+        Returns:
+            Tensor: Instance segmentation masks for each instance.
+                Has shape (num_instance, H, W).
+        """
         num_inst = kernels.shape[0]
         h, w = mask_feat.size()[-2:]
         if num_inst < 1:
