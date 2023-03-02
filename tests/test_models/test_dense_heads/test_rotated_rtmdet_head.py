@@ -6,17 +6,17 @@ import torch
 from mmengine.config import Config
 from mmengine.structures import InstanceData
 
-from mmyolo.models.dense_heads import RotatedRTMDetHead
+from mmyolo.models.dense_heads import RTMDetRotatedHead
 from mmyolo.utils import register_all_modules
 
 register_all_modules()
 
 
-class TestRotatedRTMDetHead(TestCase):
+class TestRTMDetRotatedHead(TestCase):
 
     def setUp(self):
         self.head_module = dict(
-            type='RotatedRTMDetSepBNHeadModule',
+            type='RTMDetRotatedSepBNHeadModule',
             num_classes=4,
             in_channels=1,
             stacked_convs=1,
@@ -24,7 +24,7 @@ class TestRotatedRTMDetHead(TestCase):
             featmap_strides=[4, 8, 16])
 
     def test_init_weights(self):
-        head = RotatedRTMDetHead(head_module=self.head_module)
+        head = RTMDetRotatedHead(head_module=self.head_module)
         head.head_module.init_weights()
 
     def test_predict_by_feat(self):
@@ -43,7 +43,7 @@ class TestRotatedRTMDetHead(TestCase):
             max_per_img=300)
         test_cfg = Config(test_cfg)
 
-        head = RotatedRTMDetHead(
+        head = RTMDetRotatedHead(
             head_module=self.head_module, test_cfg=test_cfg)
         feat = [
             torch.rand(1, 1, s // feat_size, s // feat_size)
@@ -88,7 +88,7 @@ class TestRotatedRTMDetHead(TestCase):
             pos_weight=-1,
             debug=False)
         train_cfg = Config(train_cfg)
-        head = RotatedRTMDetHead(
+        head = RTMDetRotatedHead(
             head_module=self.head_module, train_cfg=train_cfg).cuda()
 
         feat = [
@@ -118,7 +118,7 @@ class TestRotatedRTMDetHead(TestCase):
 
         # When truth is non-empty then both cls and box loss should be nonzero
         # for random inputs
-        head = RotatedRTMDetHead(
+        head = RTMDetRotatedHead(
             head_module=self.head_module, train_cfg=train_cfg).cuda()
         gt_instances = InstanceData(
             bboxes=torch.Tensor([[130.6667, 86.8757, 100.6326, 70.8874,
@@ -136,7 +136,7 @@ class TestRotatedRTMDetHead(TestCase):
 
         # test num_class = 1
         self.head_module['num_classes'] = 1
-        head = RotatedRTMDetHead(
+        head = RTMDetRotatedHead(
             head_module=self.head_module, train_cfg=train_cfg).cuda()
         gt_instances = InstanceData(
             bboxes=torch.Tensor([[130.6667, 86.8757, 100.6326, 70.8874,
@@ -190,7 +190,7 @@ class TestRotatedRTMDetHead(TestCase):
                 loss_weight=0.2),
             use_hbbox_loss=True,
         )
-        head = RotatedRTMDetHead(
+        head = RTMDetRotatedHead(
             head_module=self.head_module, **hbb_cfg, train_cfg=train_cfg)
 
         feat = [
@@ -223,7 +223,7 @@ class TestRotatedRTMDetHead(TestCase):
 
         # When truth is non-empty then both cls and box loss should be nonzero
         # for random inputs
-        head = RotatedRTMDetHead(
+        head = RTMDetRotatedHead(
             head_module=self.head_module, **hbb_cfg, train_cfg=train_cfg)
         gt_instances = InstanceData(
             bboxes=torch.Tensor([[130.6667, 86.8757, 100.6326, 70.8874, 0.2]]),
@@ -243,7 +243,7 @@ class TestRotatedRTMDetHead(TestCase):
 
         # test num_class = 1
         self.head_module['num_classes'] = 1
-        head = RotatedRTMDetHead(
+        head = RTMDetRotatedHead(
             head_module=self.head_module, **hbb_cfg, train_cfg=train_cfg)
         gt_instances = InstanceData(
             bboxes=torch.Tensor([[130.6667, 86.8757, 100.6326, 70.8874, 0.2]]),
