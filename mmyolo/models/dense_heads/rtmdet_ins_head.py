@@ -296,7 +296,6 @@ class RTMDetInsSepBNHead(RTMDetHead):
         bbox_coder (:obj:`ConfigDict` or dict): Config of bbox coder.
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
         loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
-        loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
         loss_mask (:obj:`ConfigDict` or dict): Config of mask loss.
         train_cfg (:obj:`ConfigDict` or dict, optional): Training config of
             anchor head. Defaults to None.
@@ -321,11 +320,6 @@ class RTMDetInsSepBNHead(RTMDetHead):
                      loss_weight=1.0),
                  loss_bbox: ConfigType = dict(
                      type='mmdet.GIoULoss', loss_weight=2.0),
-                 loss_obj: ConfigType = dict(
-                     type='mmdet.CrossEntropyLoss',
-                     use_sigmoid=True,
-                     reduction='sum',
-                     loss_weight=1.0),
                  loss_mask=dict(
                      type='mmdet.DiceLoss',
                      loss_weight=2.0,
@@ -341,7 +335,6 @@ class RTMDetInsSepBNHead(RTMDetHead):
             bbox_coder=bbox_coder,
             loss_cls=loss_cls,
             loss_bbox=loss_bbox,
-            loss_obj=loss_obj,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             init_cfg=init_cfg)
@@ -393,8 +386,9 @@ class RTMDetInsSepBNHead(RTMDetHead):
                 Defaults to True.
 
         Returns:
-            list[:obj:`InstanceData`]: Object detection results of each image
-            after the post process. Each item usually contains following keys.
+            list[:obj:`InstanceData`]: Object detection and instance
+            segmentation results of each image after the post process.
+            Each item usually contains following keys.
 
                 - scores (Tensor): Classification scores, has a shape
                   (num_instance, )
@@ -431,7 +425,7 @@ class RTMDetInsSepBNHead(RTMDetHead):
         ]
         flatten_stride = torch.cat(mlvl_strides)
 
-        # flatten cls_scores, bbox_preds and objectness
+        # flatten cls_scores, bbox_preds
         flatten_cls_scores = [
             cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1,
                                                   self.num_classes)
@@ -456,14 +450,11 @@ class RTMDetInsSepBNHead(RTMDetHead):
 
         flatten_kernel_preds = torch.cat(flatten_kernel_preds, dim=1)
 
-        # RTMDet does not have objectness prediction.
-        flatten_objectness = [None for _ in range(num_imgs)]
-
         results_list = []
-        for (bboxes, scores, objectness, kernel_pred, mask_feat,
+        for (bboxes, scores, kernel_pred, mask_feat,
              img_meta) in zip(flatten_decoded_bboxes, flatten_cls_scores,
-                              flatten_objectness, flatten_kernel_preds,
-                              mask_feats, batch_img_metas):
+                              flatten_kernel_preds, mask_feats,
+                              batch_img_metas):
             ori_shape = img_meta['ori_shape']
             scale_factor = img_meta['scale_factor']
             if 'pad_param' in img_meta:
@@ -472,18 +463,6 @@ class RTMDetInsSepBNHead(RTMDetHead):
                 pad_param = None
 
             score_thr = cfg.get('score_thr', -1)
-            # yolox_style does not require the following operations
-            if objectness is not None and score_thr > 0 and not cfg.get(
-                    'yolox_style', False):
-                conf_inds = objectness > score_thr
-                bboxes = bboxes[conf_inds, :]
-                scores = scores[conf_inds, :]
-                objectness = objectness[conf_inds]
-
-            if objectness is not None:
-                # conf = obj_conf * cls_conf
-                scores *= objectness[:, None]
-
             if scores.shape[0] == 0:
                 empty_results = InstanceData()
                 empty_results.bboxes = bboxes
