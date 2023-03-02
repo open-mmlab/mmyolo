@@ -166,8 +166,8 @@ P6 模型图详见 [model_design.md](docs/zh_cn/recommended_topics/model_design.
 MMYOLO 依赖 PyTorch, MMCV, MMEngine 和 MMDetection，以下是安装的简要步骤。 更详细的安装指南请参考[安装文档](docs/zh_cn/get_started/installation.md)。
 
 ```shell
-conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
-conda activate open-mmlab
+conda create -n mmyolo python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
+conda activate mmyolo
 pip install openmim
 mim install "mmengine>=0.6.0"
 mim install "mmcv>=2.0.0rc4,<2.1.0"
@@ -286,6 +286,10 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 </details>
 
 ## 📊 基准测试和模型库 [🔝](#-table-of-contents)
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/222087414-168175cc-dae6-4c5c-a8e3-3109a152dd19.png"/>
+</div>
 
 测试结果和模型可以在 [模型库](docs/zh_cn/model_zoo.md) 中找到。
 

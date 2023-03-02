@@ -46,13 +46,14 @@
 2. 优化 `DetDataPreprocessor` 支使其支持多任务 (#511)
 3. 优化 `gt_instances_preprocess` 使其可以用于其他 YOLO 算法 (#532)
 4. 新增 `yolov7-e6e` 权重转换脚本 (#570)
+5. 参考 YOLOv8 推理代码修改 PPYOLOE (#614)
 
 ### 贡献者
 
-总共 21 位开发者参与了本次版本
+总共 22 位开发者参与了本次版本
 
 @triple-Mu, @isLinXu, @Audrey528, @TianWen580, @yechenzhi, @RangeKing, @lyviva, @Nioolek, @PeterH0323, @tianleiSHI, @aptsunny, @satuoqaq, @vansin, @xin-li-67, @VoyagerXvoyagerx,
-@landhill, @kitecats, @tang576225574, @HIT-cwh, @RangiLyu, @hhaAndroid
+@landhill, @kitecats, @tang576225574, @HIT-cwh, @AI-Tianlong, @RangiLyu, @hhaAndroid
 
 ## v0.4.0 (18/1/2023)
 

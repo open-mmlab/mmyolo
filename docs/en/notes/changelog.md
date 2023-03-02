@@ -46,13 +46,14 @@
 2. Optimize `DetDataPreprocessor` branch to support multitasking (#511)
 3. Optimize `gt_instances_preprocess` so it can be used for other YOLO algorithms (#532)
 4. Add `yolov7-e6e` weight conversion script (#570)
+5. Reference YOLOv8 inference code modification PPYOLOE
 
 ### Contributors
 
-A total of 21 developers contributed to this release.
+A total of 22 developers contributed to this release.
 
 Thank @triple-Mu, @isLinXu, @Audrey528, @TianWen580, @yechenzhi, @RangeKing, @lyviva, @Nioolek, @PeterH0323, @tianleiSHI, @aptsunny, @satuoqaq, @vansin, @xin-li-67, @VoyagerXvoyagerx,
-@landhill, @kitecats, @tang576225574, @HIT-cwh, @RangiLyu, @hhaAndroid
+@landhill, @kitecats, @tang576225574, @HIT-cwh, @AI-Tianlong, @RangiLyu, @hhaAndroid
 
 ## v0.4.0 (18/1/2023)
 

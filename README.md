@@ -145,8 +145,8 @@ And the figure of P6 model is in [model_design.md](docs/en/recommended_topics/mo
 MMYOLO relies on PyTorch, MMCV, MMEngine, and MMDetection. Below are quick steps for installation. Please refer to the [Install Guide](docs/en/get_started/installation.md) for more detailed instructions.
 
 ```shell
-conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
-conda activate open-mmlab
+conda create -n mmyolo python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
+conda activate mmyolo
 pip install openmim
 mim install "mmengine>=0.6.0"
 mim install "mmcv>=2.0.0rc4,<2.1.0"
@@ -264,6 +264,10 @@ For different parts from MMDetection, we have also prepared user guides and adva
 </details>
 
 ## 📊 Overview of Benchmark and Model Zoo [🔝](#-table-of-contents)
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/222087414-168175cc-dae6-4c5c-a8e3-3109a152dd19.png"/>
+</div>
 
 Results and models are available in the [model zoo](docs/en/model_zoo.md).
 
