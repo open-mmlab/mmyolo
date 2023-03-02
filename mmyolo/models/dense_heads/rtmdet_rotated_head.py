@@ -29,7 +29,7 @@ except ImportError:
 
 
 @MODELS.register_module()
-class RotatedRTMDetSepBNHeadModule(RTMDetSepBNHeadModule):
+class RTMDetRotatedSepBNHeadModule(RTMDetSepBNHeadModule):
     """Detection Head Module of RTMDet-R.
 
     Compared with RTMDet Detection Head Module, RTMDet-R adds
@@ -163,10 +163,10 @@ class RotatedRTMDetSepBNHeadModule(RTMDetSepBNHeadModule):
 
 
 @MODELS.register_module()
-class RotatedRTMDetHead(RTMDetHead):
+class RTMDetRotatedHead(RTMDetHead):
     """RTMDet-R head.
 
-    Compared with RTMDetHead, RotatedRTMDetHead add some args to support
+    Compared with RTMDetHead, RTMDetRotatedHead add some args to support
     rotated object detection.
 
     - `angle_version` used to limit angle_range during training.
@@ -234,14 +234,12 @@ class RotatedRTMDetHead(RTMDetHead):
         angle_pred────────►decode────(a)───────┘
 
     Args:
-        head_module(ConfigType): Base module used for RotatedRTMDetHead.
+        head_module(ConfigType): Base module used for RTMDetRotatedHead.
         prior_generator: Points generator feature maps in
             2D points-based detectors.
         bbox_coder (:obj:`ConfigDict` or dict): Config of bbox coder.
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
         loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
-        loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
-            Just for compatibility, not actually required.
         angle_version (str): Angle representations. Defaults to 'le90'.
         use_hbbox_loss (bool): If true, use horizontal bbox loss and
             loss_angle should not be None. Default to False.
@@ -271,11 +269,6 @@ class RotatedRTMDetHead(RTMDetHead):
             loss_bbox: ConfigType = dict(
                 type='mmrotate.RotatedIoULoss', mode='linear',
                 loss_weight=2.0),
-            loss_obj: ConfigType = dict(
-                type='mmdet.CrossEntropyLoss',
-                use_sigmoid=True,
-                reduction='sum',
-                loss_weight=1.0),
             angle_version: str = 'le90',
             use_hbbox_loss: bool = False,
             angle_coder: ConfigType = dict(type='mmrotate.PseudoAngleCoder'),
@@ -306,7 +299,6 @@ class RotatedRTMDetHead(RTMDetHead):
             bbox_coder=bbox_coder,
             loss_cls=loss_cls,
             loss_bbox=loss_bbox,
-            loss_obj=loss_obj,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             init_cfg=init_cfg)
