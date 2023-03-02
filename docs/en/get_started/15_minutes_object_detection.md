@@ -15,6 +15,8 @@ Take the small dataset of cat as an example, you can easily learn MMYOLO object 
 - [Testing](#testing)
 - [EasyDeploy](#easydeploy-deployment)
 
+In this article, we take YOLOv5-s as an example. For the rest of the YOLO series algorithms, please see the corresponding algorithm configuration folder.
+
 ## Installation
 
 Assuming you've already installed Conda in advance, install PyTorch
@@ -135,19 +137,23 @@ val_dataloader = dict(
     dataset=dict(
         metainfo=metainfo,
         data_root=data_root,
-        ann_file='annotations/trainval.json',
+        ann_file='annotations/test.json',
         data_prefix=dict(img='images/')))
 
 test_dataloader = val_dataloader
 
-val_evaluator = dict(ann_file=data_root + 'annotations/trainval.json')
+_base_.optim_wrapper.optimizer.batch_size_per_gpu = train_batch_size_per_gpu
+
+val_evaluator = dict(ann_file=data_root + 'annotations/test.json')
 test_evaluator = val_evaluator
 
 default_hooks = dict(
     # Save weights every 10 epochs and a maximum of two weights can be saved.
     # The best model is saved automatically during model evaluation
     checkpoint=dict(interval=10, max_keep_ckpts=2, save_best='auto'),
-    param_scheduler=dict(max_epochs=max_epochs),
+    # The warmup_mim_iter parameter is critical.
+    # The default value is 1000 which is not suitable for cat datasets.
+    param_scheduler=dict(max_epochs=max_epochs, warmup_mim_iter=10),
     # The log printing interval is 5
     logger=dict(type='LoggerHook', interval=5))
 # The evaluation interval is 10
@@ -168,21 +174,21 @@ Run the above training command, `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat` fold
 <img src="https://user-images.githubusercontent.com/17425982/220236361-bd113606-248e-4a0e-a484-c0dc9e355b5b.png" alt="image"/>
 </div>
 
-The performance on `trainval.json` is as follows:
+The performance on `test.json` is as follows:
 
 ```text
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.685
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.953
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.852
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.631
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.909
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.747
  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.685
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.664
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.749
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.761
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.631
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.627
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.703
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.703
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.761
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.703
 ```
 
 The above properties are printed via the COCO API, where -1 indicates that no object exists for the scale. According to the rules defined by COCO, the Cat dataset contains all large sized objects, and there are no small or medium-sized objects.
@@ -244,10 +250,10 @@ python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/17425982/220238131-08eacedc-28a7-4008-af8c-f36dc239ecaa.png" alt="image"/>
+<img src="https://user-images.githubusercontent.com/17425982/222131114-30a79285-56bc-427d-a38d-8d6a6982ad60.png" alt="image"/>
 </div>
 <div align=center>
-<img src="https://user-images.githubusercontent.com/17425982/220238535-f363a6ba-876c-4bb7-80d6-9d8d8ca9b966.png" alt="image"/>
+<img src="https://user-images.githubusercontent.com/17425982/222132585-4b4962f1-211b-46f7-86b3-7534fc52a1b4.png" alt="image"/>
 </div>
 
 #### 2 Tensorboard
@@ -335,7 +341,7 @@ Let's choose the `data/cat/images/IMG_20221020_112705.jpg` image as an example t
 ```shell
 python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
                                 configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
                                 --target-layers backbone \
                                 --channel-reduction squeeze_mean
 ```
@@ -351,7 +357,7 @@ The result will be saved to the output folder in current path. Three output feat
 ```shell
 python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
                                 configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
                                 --target-layers neck \
                                 --channel-reduction squeeze_mean
 ```
@@ -371,7 +377,7 @@ Based on the above feature map visualization, we can analyze Grad CAM at the fea
 ```shell
 python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
                                 configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
                                 --target-layer neck.out_layers[2]
 ```
 
@@ -384,7 +390,7 @@ python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 ```shell
 python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
                                 configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
                                 --target-layer neck.out_layers[1]
 ```
 
@@ -397,7 +403,7 @@ python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 ```shell
 python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
                                 configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
                                 --target-layer neck.out_layers[0]
 ```
 
@@ -520,4 +526,4 @@ Here we choose to save the inference results under `output` instead of displayin
 
 This completes the transformation deployment of the trained model and checks the inference results. This is the end of the tutorial.
 
-The full content above can be viewed: [15_minutes_object_detection.ipynb](<>)
+The full content above can be viewed: [15_minutes_object_detection.ipynb](<>). If you encounter problems during training or testing, please check the \[common troubleshooting steps\](... /recommended_topics/troubleshooting_steps.md) first and feel free to raise an issue if you still can't solve it.

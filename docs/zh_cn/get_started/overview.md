@@ -30,6 +30,7 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 - YOLOv5
 - YOLOX
 - RTMDet
+- RTMDet-Rotated
 - YOLOv6
 - YOLOv7
 - PPYOLOE

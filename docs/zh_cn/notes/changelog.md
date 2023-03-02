@@ -1,5 +1,60 @@
 # 更新日志
 
+## v0.5.0 (2/3/2023)
+
+### 亮点
+
+1. 支持了 [RTMDet-R](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md#rotated-object-detection) 旋转框目标检测任务和算法
+2. [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) 支持使用 mask 标注提升目标检测模型性能
+3. 支持 [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/razor/subnets/README.md) 搜索的 NAS 子网络作为 YOLO 系列算法的 backbone
+4. 支持调用 [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/distillation/README.md) 对 RTMDet 进行知识蒸馏
+5. [MMYOLO](https://mmyolo.readthedocs.io/zh_CN/dev/) 文档结构优化，内容全面升级
+6. 基于 RTMDet 训练超参提升 YOLOX 精度和训练速度
+7. 支持模型参数量、FLOPs 计算和提供 T4 设备上 GPU 延时数据，并更新了 [Model Zoo](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/model_zoo.md)
+8. 支持测试时增强 TTA
+9. 支持 RTMDet、YOLOv8 和 YOLOv7 assigner 可视化
+
+### 新特性
+
+01. 支持 RTMDet 实例分割任务的推理 (#583)
+02. 美化 MMYOLO 中配置文件并增加更多注释 (#501, #506, #516, #529, #531, #539)
+03. 重构并优化中英文文档 (#568, #573, #579, #584, #587, #589, #596, #599, #600)
+04. 支持 fast 版本的 YOLOX (#518)
+05. EasyDeploy 中支持 DeepStream，并添加说明文档 (#485, #545, #571)
+06. 新增混淆矩阵绘制脚本 (#572)
+07. 新增单通道应用案例 (#460)
+08. 支持 auto registration (#597)
+09. Box CAM 支持 YOLOv7、YOLOv8 和 PPYOLOE (#601)
+10. 新增自动化生成 MM 系列 repo 注册信息和 tools 脚本 (#559)
+11. 新增 YOLOv7 模型结构图 (#504)
+12. 新增如何指定特定 GPU 训练和推理文档 (#503)
+13. 新增训练或者测试时检查 `metainfo` 是否全为小写 (#535)
+14. 增加 Twitter、Discord、Medium 和 YouTube 等链接 (#555)
+
+### Bug 修复
+
+1. 修复 isort 版本问题 (#492, #497)
+2. 修复 assigner 可视化模块的 type 错误 (#509)
+3. 修复 YOLOv8 文档链接错误 (#517)
+4. 修复 EasyDeploy 中的 RTMDet Decoder 错误 (#519)
+5. 修复一些文档链接错误 (#537)
+6. 修复 RTMDet-Tiny 权重路径错误 (#580)
+
+### 完善
+
+1. 完善更新 `contributing.md`
+2. 优化 `DetDataPreprocessor` 支使其支持多任务 (#511)
+3. 优化 `gt_instances_preprocess` 使其可以用于其他 YOLO 算法 (#532)
+4. 新增 `yolov7-e6e` 权重转换脚本 (#570)
+5. 参考 YOLOv8 推理代码修改 PPYOLOE (#614)
+
+### 贡献者
+
+总共 22 位开发者参与了本次版本
+
+@triple-Mu, @isLinXu, @Audrey528, @TianWen580, @yechenzhi, @RangeKing, @lyviva, @Nioolek, @PeterH0323, @tianleiSHI, @aptsunny, @satuoqaq, @vansin, @xin-li-67, @VoyagerXvoyagerx,
+@landhill, @kitecats, @tang576225574, @HIT-cwh, @AI-Tianlong, @RangiLyu, @hhaAndroid
+
 ## v0.4.0 (18/1/2023)
 
 ### 亮点
