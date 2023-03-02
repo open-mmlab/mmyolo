@@ -154,7 +154,6 @@ class TestRTMDetInsHead(TestCase):
             num_prototypes=8,
             dyconv_channels=8,
             num_dyconvs=3,
-            mask_loss_stride=4,
             share_conv=True,
             use_sigmoid_cls=True)
 

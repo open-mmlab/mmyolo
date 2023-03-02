@@ -468,6 +468,9 @@ class RTMDetInsSepBNHead(RTMDetHead):
                 empty_results.bboxes = bboxes
                 empty_results.scores = scores[:, 0]
                 empty_results.labels = scores[:, 0].int()
+                h, w = ori_shape[:2] if rescale else img_meta['img_shape'][:2]
+                empty_results.masks = torch.zeros(
+                    size=(0, h, w), dtype=torch.bool, device=bboxes.device)
                 results_list.append(empty_results)
                 continue
 
