@@ -526,4 +526,4 @@ Here we choose to save the inference results under `output` instead of displayin
 
 This completes the transformation deployment of the trained model and checks the inference results. This is the end of the tutorial.
 
-The full content above can be viewed: [15_minutes_object_detection.ipynb](<>)
+The full content above can be viewed: [15_minutes_object_detection.ipynb](<>). If you encounter problems during training or testing, please check the \[common troubleshooting steps\](... /recommended_topics/troubleshooting_steps.md) first and feel free to raise an issue if you still can't solve it.

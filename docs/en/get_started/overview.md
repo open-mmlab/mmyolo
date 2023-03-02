@@ -17,8 +17,8 @@ The following tasks are currently supported:
 <details open>
 <summary><b>Tasks currently supported</b></summary>
 
-- object detection
-- rotated object detection
+- Object detection
+- Rotated object detection
 
 </details>
 
@@ -30,6 +30,7 @@ The YOLO series of algorithms currently supported are as follows:
 - YOLOv5
 - YOLOX
 - RTMDet
+- RTMDet-Rotated
 - YOLOv6
 - YOLOv7
 - PPYOLOE

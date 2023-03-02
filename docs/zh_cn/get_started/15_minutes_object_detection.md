@@ -524,4 +524,4 @@ python projects/easydeploy/tools/image-demo.py \
 
 这样我们就完成了将训练完成的模型进行转换部署并且检查推理结果的工作。至此本教程结束。
 
-以上完整内容可以查看 [15_minutes_object_detection.ipynb](<>)。
+以上完整内容可以查看 [15_minutes_object_detection.ipynb](<>)。 如果你在训练或者测试过程中碰到问题，请先查看 [常见错误排除步骤](../recommended_topics/troubleshooting_steps.md)， 如果依然无法解决欢迎提 issue。
