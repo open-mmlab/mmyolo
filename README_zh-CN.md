@@ -201,6 +201,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [MMYOLO 模型结构设计](docs/zh_cn/recommended_topics/model_design.md)
 - [原理和实现全解析](docs/zh_cn/recommended_topics/algorithm_descriptions/)
 - [轻松更换主干网络](docs/zh_cn/recommended_topics/replace_backbone.md)
+- [MMYOLO 模型复杂度分析](docs/zh_cn/recommended_topics/complexity_analysis.md)
 - [标注+训练+测试+部署全流程](docs/zh_cn/recommended_topics/labeling_to_deployment_tutorials.md)
 - [关于可视化的一切](docs/zh_cn/recommended_topics/visualization.md)
 - [模型部署流程](docs/zh_cn/recommended_topics/deploy/)
@@ -253,6 +254,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 - [学习 YOLOv5 配置文件](docs/zh_cn/tutorials/config.md)
 - [数据流](docs/zh_cn/tutorials/data_flow.md)
+- [旋转目标检测](docs/zh_cn/tutorials/rotated_detection.md)
 - [自定义安装](docs/zh_cn/tutorials/custom_installation.md)
 - [常见警告说明](docs/zh_cn/tutorials/warning_notes.md)
 - [常见问题](docs/zh_cn/tutorials/faq.md)
@@ -281,6 +283,14 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 测试结果和模型可以在 [模型库](docs/zh_cn/model_zoo.md) 中找到。
 
 <details open>
+<summary><b>支持的任务</b></summary>
+
+- [x] 目标检测
+- [x] 旋转框目标检测
+
+</details>
+
+<details open>
 <summary><b>支持的算法</b></summary>
 
 - [x] [YOLOv5](configs/yolov5)
@@ -290,6 +300,16 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [x] [YOLOv7](configs/yolov7)
 - [x] [PPYOLOE](configs/ppyoloe)
 - [x] [YOLOv8](configs/yolov8)
+
+</details>
+
+<details open>
+<summary><b>支持的数据集</b></summary>
+
+- [x] COCO Dataset
+- [x] VOC Dataset
+- [x] CrowdHuman Dataset
+- [x] DOTA 1.0 Dataset
 
 </details>
 

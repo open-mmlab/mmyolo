@@ -22,6 +22,7 @@ You can switch between Chinese and English documents in the top-right corner of 
    recommended_topics/model_design.md
    recommended_topics/algorithm_descriptions/index.rst
    recommended_topics/replace_backbone.md
+   recommended_topics/complexity_analysis.md
    recommended_topics/labeling_to_deployment_tutorials.md
    recommended_topics/visualization.md
    recommended_topics/deploy/index.rst
@@ -77,19 +78,14 @@ You can switch between Chinese and English documents in the top-right corner of 
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Advanced Tutorials
 
    advanced_guides/cross-library_application.md
 
-.. toctree::
-   :maxdepth: 1
-   :caption: API Reference
-
-   api.rst
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Model Zoo
 
    model_zoo.md
@@ -103,6 +99,11 @@ You can switch between Chinese and English documents in the top-right corner of 
    notes/conventions.md
    notes/code_style.md
 
+.. toctree::
+   :maxdepth: 1
+   :caption: API Reference
+
+   api.rst
 
 .. toctree::
    :caption: Switch Language
