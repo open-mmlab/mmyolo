@@ -63,7 +63,7 @@ class PPYOLOEHeadModule(BaseModule):
         self.num_base_priors = num_base_priors
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
-        self.reg_max = reg_max
+        self.reg_max = reg_max + 1
 
         if isinstance(in_channels, int):
             self.in_channels = [int(in_channels * widen_factor)
@@ -103,11 +103,10 @@ class PPYOLOEHeadModule(BaseModule):
             self.cls_preds.append(
                 nn.Conv2d(in_channel, self.num_classes, 3, padding=1))
             self.reg_preds.append(
-                nn.Conv2d(in_channel, 4 * (self.reg_max + 1), 3, padding=1))
+                nn.Conv2d(in_channel, 4 * self.reg_max, 3, padding=1))
 
         # init proj
-        proj = torch.linspace(0, self.reg_max, self.reg_max + 1).view(
-            [1, self.reg_max + 1, 1, 1])
+        proj = torch.arange(self.reg_max, dtype=torch.float)
         self.register_buffer('proj', proj, persistent=False)
 
     def forward(self, x: Tuple[Tensor]) -> Tensor:
@@ -130,16 +129,21 @@ class PPYOLOEHeadModule(BaseModule):
                        reg_pred: nn.ModuleList) -> Tensor:
         """Forward feature of a single scale level."""
         b, _, h, w = x.shape
-        hw = h * w
         avg_feat = F.adaptive_avg_pool2d(x, (1, 1))
         cls_logit = cls_pred(cls_stem(x, avg_feat) + x)
         bbox_dist_preds = reg_pred(reg_stem(x, avg_feat))
-        # TODO: Test whether use matmul instead of conv can speed up training.
-        bbox_dist_preds = bbox_dist_preds.reshape(
-            [-1, 4, self.reg_max + 1, hw]).permute(0, 2, 3, 1)
+        if self.reg_max > 1:
+            bbox_dist_preds = bbox_dist_preds.reshape(
+                [-1, 4, self.reg_max, h * w]).permute(0, 3, 1, 2)
 
-        bbox_preds = F.conv2d(F.softmax(bbox_dist_preds, dim=1), self.proj)
-
+            # TODO: The get_flops script cannot handle the situation of
+            #  matmul, and needs to be fixed later
+            # bbox_preds = bbox_dist_preds.softmax(3).matmul(self.proj)
+            bbox_preds = bbox_dist_preds.softmax(3).matmul(
+                self.proj.view([-1, 1])).squeeze(-1)
+            bbox_preds = bbox_preds.transpose(1, 2).reshape(b, -1, h, w)
+        else:
+            bbox_preds = bbox_dist_preds
         if self.training:
             return cls_logit, bbox_preds, bbox_dist_preds
         else:
