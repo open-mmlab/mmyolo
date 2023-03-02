@@ -98,14 +98,14 @@ Models:
     In Collection: Rotated_RTMDet
     Config: configs/rtmdet/rotated/rtmdet-r_tiny_fast_1xb8-36e_dota.py
     Metadata:
-      Training Memory (GB):
+      Training Memory (GB): 12.7
       Epochs: 36
     Results:
       - Task: Oriented Object Detection
         Dataset: DOTAv1.0
         Metrics:
-          mAP:
-    Weights:
+          mAP: 75.07
+    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rotated/rtmdet-r_tiny_fast_1xb8-36e_dota/rtmdet-r_tiny_fast_1xb8-36e_dota_20230228_162210-e8ccfb1c.pth
 
   - Name: rtmdet-r_s_fast_1xb8-36e_dota
     In Collection: Rotated_RTMDet
