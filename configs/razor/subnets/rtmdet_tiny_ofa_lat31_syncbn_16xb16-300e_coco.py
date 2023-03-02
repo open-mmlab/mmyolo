@@ -32,7 +32,7 @@ _base_.model.bbox_head.head_module.in_channels = channels[0]
 _base_.model.bbox_head.head_module.feat_channels = channels[0]
 _base_.model.bbox_head.head_module.widen_factor = widen_factor
 
-_base_.model.test_cfg=dict(
+_base_.model.test_cfg = dict(
     multi_label=True,
     nms_pre=1000,
     min_bbox_size=0,

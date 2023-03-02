@@ -11,6 +11,8 @@ from mmengine.logging import MMLogger
 from mmengine.model import revert_sync_batchnorm
 from mmengine.registry import init_default_scope
 
+from mmyolo.utils import switch_to_deploy
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Get a detector flops')
@@ -68,6 +70,7 @@ def inference(args, logger):
         model.cuda()
     model = revert_sync_batchnorm(model)
     model.eval()
+    switch_to_deploy(model)
 
     # input tensor
     # automatically generate a input tensor with the given input_shape.

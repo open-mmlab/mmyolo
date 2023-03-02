@@ -56,7 +56,7 @@ def parse_args():
         '--patch-size', type=int, default=640, help='The size of patches')
     parser.add_argument(
         '--patch-overlap-ratio',
-        type=int,
+        type=float,
         default=0.25,
         help='Ratio of overlap between two patches')
     parser.add_argument(
@@ -235,7 +235,7 @@ def main():
             src_image_shape=(height, width),
             nms_cfg={
                 'type': args.merge_nms_type,
-                'iou_thr': args.merge_iou_thr
+                'iou_threshold': args.merge_iou_thr
             })
 
         visualizer.add_datasample(

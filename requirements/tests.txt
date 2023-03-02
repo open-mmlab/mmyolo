@@ -7,6 +7,7 @@ kwarray
 memory_profiler
 mmcls>=1.0.0rc4
 mmrazor>=1.0.0rc2
+mmrotate>=1.0.0rc1
 parameterized
 protobuf<=3.20.1
 psutil
