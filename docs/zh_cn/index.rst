@@ -73,6 +73,7 @@
 
    tutorials/config.md
    tutorials/data_flow.md
+   tutorials/rotated_detection.md
    tutorials/custom_installation.md
    tutorials/warning_notes.md
    tutorials/faq.md

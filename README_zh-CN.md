@@ -254,6 +254,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 - [学习 YOLOv5 配置文件](docs/zh_cn/tutorials/config.md)
 - [数据流](docs/zh_cn/tutorials/data_flow.md)
+- [旋转目标检测](docs/zh_cn/tutorials/rotated_detection.md)
 - [自定义安装](docs/zh_cn/tutorials/custom_installation.md)
 - [常见警告说明](docs/zh_cn/tutorials/warning_notes.md)
 - [常见问题](docs/zh_cn/tutorials/faq.md)
