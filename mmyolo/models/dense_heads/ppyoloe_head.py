@@ -289,10 +289,11 @@ class PPYOLOEHead(YOLOv6Head):
             bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
             for bbox_pred in bbox_preds
         ]
-        # (bs, reg_max+1, n, 4) -> (bs, n, 4, reg_max+1)
+        # (bs, n, reg_max, 4) -> (bs, n * 4, reg_max)
         flatten_pred_dists = [
-            bbox_pred_org.permute(0, 2, 3, 1).reshape(
-                num_imgs, -1, (self.head_module.reg_max + 1) * 4)
+            bbox_pred_org.permute(0, 3, 1,
+                                  2).reshape(num_imgs, -1,
+                                             self.head_module.reg_max * 4)
             for bbox_pred_org in bbox_dist_preds
         ]
 
@@ -354,11 +355,11 @@ class PPYOLOEHead(YOLOv6Head):
 
             # dfl loss
             dist_mask = fg_mask_pre_prior.unsqueeze(-1).repeat(
-                [1, 1, (self.head_module.reg_max + 1) * 4])
+                [1, 1, self.head_module.reg_max * 4])
 
             pred_dist_pos = torch.masked_select(
                 flatten_dist_preds,
-                dist_mask).reshape([-1, 4, self.head_module.reg_max + 1])
+                dist_mask).reshape([-1, 4, self.head_module.reg_max])
             assigned_ltrb = self.bbox_coder.encode(
                 self.flatten_priors_train[..., :2] / self.stride_tensor,
                 assigned_bboxes,
@@ -367,7 +368,7 @@ class PPYOLOEHead(YOLOv6Head):
             assigned_ltrb_pos = torch.masked_select(
                 assigned_ltrb, prior_bbox_mask).reshape([-1, 4])
             loss_dfl = self.loss_dfl(
-                pred_dist_pos.reshape(-1, self.head_module.reg_max + 1),
+                pred_dist_pos.reshape(-1, self.head_module.reg_max),
                 assigned_ltrb_pos.reshape(-1),
                 weight=bbox_weight.expand(-1, 4).reshape(-1),
                 avg_factor=assigned_scores_sum)
