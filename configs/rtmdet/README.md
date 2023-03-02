@@ -61,6 +61,7 @@ RTMDet-R achieves state-of-the-art on various remote sensing datasets.
 4. `IN` means ImageNet pretrain, `COCO` means COCO pretrain.
 5. For Aug, RR means `RandomRotate`, MS means multi-scale augmentation in data prepare.
 6. The inference speed here is measured on an NVIDIA 2080Ti GPU with TensorRT 8.4.3, cuDNN 8.2.0, FP16, batch size=1, and with NMS.
+7. Currently, the training process of RTMDet-R tiny is unstable and may have 1% accuracy fluctuation, we will continue to investigate why.
 
 ## Citation
 

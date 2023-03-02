@@ -5,9 +5,11 @@
 ### 下载 DOTA 数据集
 
 数据集可以从 DOTA 数据集的主页 [DOTA](https://captain-whu.github.io/DOTA/dataset.html)
-或 [OpenDataLab](https://opendatalab.org.cn/DOTA_V1.0) 下载.
+或 [OpenDataLab](https://opendatalab.org.cn/DOTA_V1.0) 下载。
 
-下载后解压文件，并按如下文件夹结构存放。
+我们推荐使用 [OpenDataLab](https://opendatalab.org.cn/DOTA_V1.0) 下载，其中的文件夹结构已经按照需要排列好了，只需要解压即可，不需要费心去调整文件夹结构。
+
+下载后解压数据集，并按如下文件夹结构存放。
 
 ```none
 ${DATA_ROOT}
