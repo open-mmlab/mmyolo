@@ -3,6 +3,7 @@ import argparse
 import os
 import os.path as osp
 import sys
+import warnings
 
 import mmcv
 import numpy as np
@@ -10,11 +11,15 @@ import torch
 from mmengine import ProgressBar
 from mmengine.config import Config, DictAction
 from mmengine.dataset import COLLATE_FUNCTIONS
+from mmengine.runner.checkpoint import load_checkpoint
 from numpy import random
 
 from mmyolo.registry import DATASETS, MODELS
 from mmyolo.utils import register_all_modules
-from projects.assigner_visualization.dense_heads import YOLOv5HeadAssigner
+from projects.assigner_visualization.dense_heads import (RTMHeadAssigner,
+                                                         YOLOv5HeadAssigner,
+                                                         YOLOv7HeadAssigner,
+                                                         YOLOv8HeadAssigner)
 from projects.assigner_visualization.visualization import \
     YOLOAssignerVisualizer
 
@@ -24,6 +29,7 @@ def parse_args():
         description='MMYOLO show the positive sample assigning'
         ' results.')
     parser.add_argument('config', help='config file path')
+    parser.add_argument('--checkpoint', '-c', type=str, help='checkpoint file')
     parser.add_argument(
         '--show-number',
         '-n',
@@ -82,11 +88,25 @@ def main():
 
     # build model
     model = MODELS.build(cfg.model)
-    assert isinstance(model.bbox_head, YOLOv5HeadAssigner),\
-        'Now, this script only support yolov5, and bbox_head must use ' \
-        '`YOLOv5HeadAssigner`. Please use `' \
+    if args.checkpoint is not None:
+        load_checkpoint(model, args.checkpoint)
+    elif isinstance(model.bbox_head, (YOLOv7HeadAssigner, RTMHeadAssigner)):
+        warnings.warn(
+            'if you use dynamic_assignment methods such as YOLOv7 or '
+            'YOLOv8 or RTMDet assigner, please load the checkpoint.')
+    assert isinstance(model.bbox_head, (YOLOv5HeadAssigner,
+                                        YOLOv7HeadAssigner,
+                                        YOLOv8HeadAssigner,
+                                        RTMHeadAssigner)), \
+        'Now, this script only support YOLOv5, YOLOv7, YOLOv8 and RTMdet, ' \
+        'and bbox_head must use ' \
+        '`YOLOv5HeadAssigner or YOLOv7HeadAssigne or YOLOv8HeadAssigner ' \
+        'or RTMHeadAssigner`. Please use `' \
         'yolov5_s-v61_syncbn_fast_8xb16-300e_coco_assignervisualization.py' \
-        '` as config file.'
+        'or yolov7_tiny_syncbn_fast_8x16b-300e_coco_assignervisualization.py' \
+        'or yolov8_s_syncbn_fast_8xb16-500e_coco_assignervisualization.py' \
+        'or rtmdet_s_syncbn_fast_8xb32-300e_coco_assignervisualization.py' \
+        """` as config file."""
     model.eval()
     model.to(args.device)
 
@@ -107,7 +127,9 @@ def main():
         }], name='visualizer')
     visualizer.dataset_meta = dataset.metainfo
     # need priors size to draw priors
-    visualizer.priors_size = model.bbox_head.prior_generator.base_anchors
+
+    if hasattr(model.bbox_head.prior_generator, 'base_anchors'):
+        visualizer.priors_size = model.bbox_head.prior_generator.base_anchors
 
     # make output dir
     os.makedirs(args.output_dir, exist_ok=True)
@@ -120,7 +142,10 @@ def main():
     progress_bar = ProgressBar(display_number)
     for ind_img in range(display_number):
         data = dataset.prepare_data(ind_img)
-
+        if data is None:
+            print('Unable to visualize {} due to strong data augmentations'.
+                  format(dataset[ind_img]['data_samples'].img_path))
+            continue
         # convert data to batch format
         batch_data = collate_fn([data])
         with torch.no_grad():

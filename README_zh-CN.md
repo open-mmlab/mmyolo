@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://user-images.githubusercontent.com/27466624/213156908-cef7cc50-97d1-4e0a-9e06-309bd0a49173.png" width="100%"/>
+  <img src="https://user-images.githubusercontent.com/27466624/222385182-1247251c-8fac-4e77-94f5-57580e0ce3bd.png" width="100%"/>
   <div>&nbsp;</div>
   <div align="center">
     <b><font size="5">OpenMMLab 官网</font></b>
@@ -19,17 +19,17 @@
   <div>&nbsp;</div>
 
 [![PyPI](https://img.shields.io/pypi/v/mmyolo)](https://pypi.org/project/mmyolo)
-[![docs](https://img.shields.io/badge/docs-latest-blue)](https://mmyolo.readthedocs.io/en/latest/)
+[![docs](https://img.shields.io/badge/docs-latest-blue)](https://mmyolo.readthedocs.io/zh_CN/latest/)
 [![deploy](https://github.com/open-mmlab/mmyolo/workflows/deploy/badge.svg)](https://github.com/open-mmlab/mmyolo/actions)
-[![codecov](https://codecov.io/gh/open-mmlab/mmyolo/branch/master/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmyolo)
-[![license](https://img.shields.io/github/license/open-mmlab/mmyolo.svg)](https://github.com/open-mmlab/mmyolo/blob/master/LICENSE)
+[![codecov](https://codecov.io/gh/open-mmlab/mmyolo/branch/main/graph/badge.svg)](https://codecov.io/gh/open-mmlab/mmyolo)
+[![license](https://img.shields.io/github/license/open-mmlab/mmyolo.svg)](https://github.com/open-mmlab/mmyolo/blob/main/LICENSE)
 [![open issues](https://isitmaintained.com/badge/open/open-mmlab/mmyolo.svg)](https://github.com/open-mmlab/mmyolo/issues)
 [![issue resolution](https://isitmaintained.com/badge/resolution/open-mmlab/mmyolo.svg)](https://github.com/open-mmlab/mmyolo/issues)
 
 [📘使用文档](https://mmyolo.readthedocs.io/zh_CN/latest/) |
-[🛠️安装教程](https://mmyolo.readthedocs.io/zh_CN/latest/get_started.html) |
+[🛠️安装教程](https://mmyolo.readthedocs.io/zh_CN/latest/get_started/installation.html) |
 [👀模型库](https://mmyolo.readthedocs.io/zh_CN/latest/model_zoo.html) |
-[🆕更新日志](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html) |
+[🆕更新日志](https://mmyolo.readthedocs.io/zh_CN/latest/notes/changelog.html) |
 [🤔报告问题](https://github.com/open-mmlab/mmyolo/issues/new/choose)
 
 </div>
@@ -38,6 +38,26 @@
 
 [English](README.md) | 简体中文
 
+</div>
+
+<div align="center">
+  <a href="https://openmmlab.medium.com/" style="text-decoration:none;">
+    <img src="https://user-images.githubusercontent.com/25839884/219255827-67c1a27f-f8c5-46a9-811d-5e57448c61d1.png" width="3%" alt="" /></a>
+  <img src="https://user-images.githubusercontent.com/25839884/218346358-56cc8e2f-a2b8-487f-9088-32480cceabcf.png" width="3%" alt="" />
+  <a href="https://discord.com/channels/1037617289144569886/1046608014234370059" style="text-decoration:none;">
+    <img src="https://user-images.githubusercontent.com/25839884/218347213-c080267f-cbb6-443e-8532-8e1ed9a58ea9.png" width="3%" alt="" /></a>
+  <img src="https://user-images.githubusercontent.com/25839884/218346358-56cc8e2f-a2b8-487f-9088-32480cceabcf.png" width="3%" alt="" />
+  <a href="https://twitter.com/OpenMMLab" style="text-decoration:none;">
+    <img src="https://user-images.githubusercontent.com/25839884/218346637-d30c8a0f-3eba-4699-8131-512fb06d46db.png" width="3%" alt="" /></a>
+  <img src="https://user-images.githubusercontent.com/25839884/218346358-56cc8e2f-a2b8-487f-9088-32480cceabcf.png" width="3%" alt="" />
+  <a href="https://www.youtube.com/openmmlab" style="text-decoration:none;">
+    <img src="https://user-images.githubusercontent.com/25839884/218346691-ceb2116a-465a-40af-8424-9f30d2348ca9.png" width="3%" alt="" /></a>
+  <img src="https://user-images.githubusercontent.com/25839884/218346358-56cc8e2f-a2b8-487f-9088-32480cceabcf.png" width="3%" alt="" />
+  <a href="https://space.bilibili.com/1293512903" style="text-decoration:none;">
+    <img src="https://user-images.githubusercontent.com/25839884/219026751-d7d14cce-a7c9-4e82-9942-8375fca65b99.png" width="3%" alt="" /></a>
+  <img src="https://user-images.githubusercontent.com/25839884/218346358-56cc8e2f-a2b8-487f-9088-32480cceabcf.png" width="3%" alt="" />
+  <a href="https://www.zhihu.com/people/openmmlab" style="text-decoration:none;">
+    <img src="https://user-images.githubusercontent.com/25839884/219026120-ba71e48b-6e94-4bd4-b4e9-b7d175b5e362.png" width="3%" alt="" /></a>
 </div>
 
 ## 📄 Table of Contents
@@ -58,10 +78,17 @@
 
 ## 🥳 🚀 最新进展 [🔝](#-table-of-contents)
 
-💎 **v0.4.0** 版本已经在 2023.1.18 发布：
+💎 **v0.5.0** 版本已经在 2023.3.2 发布：
 
-1. 实现了 [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) 目标检测模型，并通过 [projects/easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy) 支持了模型部署
-2. 新增了中英文版本的 [YOLOv8 原理和实现全解析文档](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/algorithm_descriptions/yolov8_description.md)
+1. 支持了 [RTMDet-R](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md#rotated-object-detection) 旋转框目标检测任务和算法
+2. [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) 支持使用 mask 标注提升目标检测模型性能
+3. 支持 [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/razor/subnets/README.md) 搜索的 NAS 子网络作为 YOLO 系列算法的 backbone
+4. 支持调用 [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/distillation/README.md) 对 RTMDet 进行知识蒸馏
+5. [MMYOLO](https://mmyolo.readthedocs.io/zh_CN/dev/) 文档结构优化，内容全面升级
+6. 基于 RTMDet 训练超参提升 YOLOX 精度和训练速度
+7. 支持模型参数量、FLOPs 计算和提供 T4 设备上 GPU 延时数据，并更新了 [Model Zoo](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/model_zoo.md)
+8. 支持测试时增强 TTA
+9. 支持 RTMDet、YOLOv8 和 YOLOv7 assigner 可视化
 
 我们提供了实用的**脚本命令速查表**
 
@@ -103,7 +130,7 @@
 <img src="https://user-images.githubusercontent.com/12907710/208044554-1e8de6b5-48d8-44e4-a7b5-75076c7ebb71.png"/>
 </div>
 
-MMYOLO 中目前仅仅实现了目标检测算法，但是相比 MMDeteciton 版本有显著训练加速，训练速度相比原先版本提升 2.6 倍。
+MMYOLO 中目前实现了目标检测和旋转框目标检测算法，但是相比 MMDeteciton 版本有显著训练加速，训练速度相比原先版本提升 2.6 倍。
 
 ## 📖 简介 [🔝](#-table-of-contents)
 
@@ -130,21 +157,21 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 <img src="https://user-images.githubusercontent.com/27466624/199999337-0544a4cb-3cbd-4f3e-be26-bcd9e74db7ff.jpg" alt="基类-P5"/>
   图为 RangeKing@GitHub 提供，非常感谢！
 
-P6 模型图详见 [model_design.md](docs/zh_CN/algorithm_descriptions/model_design.md)。
+P6 模型图详见 [model_design.md](docs/zh_cn/recommended_topics/model_design.md)。
 
 </details>
 
 ## 🛠️ 安装 [🔝](#-table-of-contents)
 
-MMYOLO 依赖 PyTorch, MMCV, MMEngine 和 MMDetection，以下是安装的简要步骤。 更详细的安装指南请参考[安装文档](docs/zh_cn/get_started.md)。
+MMYOLO 依赖 PyTorch, MMCV, MMEngine 和 MMDetection，以下是安装的简要步骤。 更详细的安装指南请参考[安装文档](docs/zh_cn/get_started/installation.md)。
 
 ```shell
-conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
-conda activate open-mmlab
+conda create -n mmyolo python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
+conda activate mmyolo
 pip install openmim
-mim install "mmengine>=0.3.1"
-mim install "mmcv>=2.0.0rc1,<2.1.0"
-mim install "mmdet>=3.0.0rc5,<3.1.0"
+mim install "mmengine>=0.6.0"
+mim install "mmcv>=2.0.0rc4,<2.1.0"
+mim install "mmdet>=3.0.0rc6,<3.1.0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
@@ -161,46 +188,118 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 针对和 MMDetection 不同的部分，我们也准备了用户指南和进阶指南，请阅读我们的 [文档](https://mmyolo.readthedocs.io/zh_CN/latest/) 。
 
-- 用户指南
+<details>
+<summary>开启 MMYOLO 之旅</summary>
 
-  - [训练 & 测试](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#训练-测试)
-    - [学习 YOLOv5 配置文件](docs/zh_cn/user_guides/config.md)
-  - [从入门到部署全流程](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#从入门到部署全流程)
-    - [自定义数据集](docs/zh_cn/user_guides/custom_dataset.md)
-    - [YOLOv5 从入门到部署全流程](docs/zh_cn/user_guides/yolov5_tutorial.md)
-  - [实用工具](https://mmyolo.readthedocs.io/zh_CN/latest/user_guides/index.html#实用工具)
-    - [可视化教程](docs/zh_cn/user_guides/visualization.md)
-    - [实用工具](docs/zh_cn/user_guides/useful_tools.md)
+- [概述](docs/zh_cn/get_started/overview.md)
+- [依赖](docs/zh_cn/get_started/dependencies.md)
+- [安装和验证](docs/zh_cn/get_started/installation.md)
+- [15 分钟上手 MMYOLO 目标检测](docs/zh_cn/get_started/15_minutes_object_detection.md)
+- [15 分钟上手 MMYOLO 旋转框目标检测](docs/zh_cn/get_started/15_minutes_rotated_object_detection.md)
+- [15 分钟上手 MMYOLO 实例分割](docs/zh_cn/get_started/15_minutes_instance_segmentation.md)
+- [中文解读资源汇总](docs/zh_cn/get_started/article.md)
 
-- 算法描述
+</details>
 
-  - [必备基础](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#基础内容)
-    - [模型设计相关说明](docs/zh_cn/algorithm_descriptions/model_design.md)
-  - [算法原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#算法原理和实现全解析)
-    - [YOLOv5 原理和实现全解析](docs/zh_cn/algorithm_descriptions/yolov5_description.md)
-    - [YOLOv6 原理和实现全解析](docs/zh_cn/algorithm_descriptions/yolov6_description.md)
-    - [RTMDet 原理和实现全解析](docs/zh_cn/algorithm_descriptions/rtmdet_description.md)
-    - [YOLOv8 原理和实现全解析](docs/zh_cn/algorithm_descriptions/yolov8_description.md)
+<details>
+<summary>推荐专题</summary>
 
-- 算法部署
+- [如何给 MMYOLO 贡献代码](docs/zh_cn/recommended_topics/contributing.md)
+- [MMYOLO 模型结构设计](docs/zh_cn/recommended_topics/model_design.md)
+- [原理和实现全解析](docs/zh_cn/recommended_topics/algorithm_descriptions/)
+- [轻松更换主干网络](docs/zh_cn/recommended_topics/replace_backbone.md)
+- [MMYOLO 模型复杂度分析](docs/zh_cn/recommended_topics/complexity_analysis.md)
+- [标注+训练+测试+部署全流程](docs/zh_cn/recommended_topics/labeling_to_deployment_tutorials.md)
+- [关于可视化的一切](docs/zh_cn/recommended_topics/visualization.md)
+- [模型部署流程](docs/zh_cn/recommended_topics/deploy/)
+- [常见错误排查步骤](docs/zh_cn/recommended_topics/troubleshooting_steps.md)
+- [MMYOLO 产业范例介绍](docs/zh_cn/recommended_topics/industry_examples.md)
+- [MM 系列 Repo 必备基础](docs/zh_cn/recommended_topics/mm_basics.md)
+- [数据集准备和说明](docs/zh_cn/recommended_topics/dataset_preparation.md)
 
-  - [部署必备教程](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/index.html#id1)
-    - [部署必备教程](docs/zh_cn/deploy/basic_deployment_guide.md)
-  - [部署全流程说明](https://mmyolo.readthedocs.io/zh_CN/latest/deploy/index.html#id2)
-    - [YOLOv5 部署全流程说明](docs/zh_cn/deploy/yolov5_deployment.md)
+</details>
 
-- 进阶指南
+<details>
+<summary>常用功能</summary>
 
-  - [模块组合](docs/zh_cn/advanced_guides/module_combination.md)
-  - [数据流](docs/zh_cn/advanced_guides/data_flow.md)
-  - [How to](docs/zh_cn/advanced_guides/how_to.md)
-  - [插件](docs/zh_cn/advanced_guides/plugins.md)
+- [恢复训练](docs/zh_cn/common_usage/resume_training.md)
+- [开启和关闭 SyncBatchNorm](docs/zh_cn/common_usage/syncbn.md)
+- [开启混合精度训练](docs/zh_cn/common_usage/amp_training.md)
+- [测试时增强相关说明](docs/zh_cn/common_usage/tta.md)
+- [给主干网络增加插件](docs/zh_cn/common_usage/plugins.md)
+- [冻结指定网络层权重](docs/zh_cn/common_usage/common_usage/freeze_layers.md)
+- [输出模型预测结果](docs/zh_cn/common_usage/output_predictions.md)
+- [设置随机种子](docs/zh_cn/common_usage/set_random_seed.md)
+- [算法组合替换教程](docs/zh_cn/common_usage/module_combination.md)
+- [使用 mim 跨库调用其他 OpenMMLab 仓库的脚本](docs/zh_cn/common_usage/mim_usage.md)
+- [应用多个 Neck](docs/zh_cn/common_usage/multi_necks.md)
+- [指定特定设备训练或推理](docs/zh_cn/common_usage/specify_device.md)
+- [单通道和多通道应用案例](docs/zh_cn/common_usage/single_multi_channel_applications.md)
+- [MM 系列开源库注册表](docs/zh_cn/common_usage/registries_info.md)
 
-- [解读文章和资源汇总](docs/zh_cn/article.md)
+</details>
+
+<details>
+<summary>实用工具</summary>
+
+- [可视化 COCO 标签](docs/zh_cn/useful_tools/browse_coco_json.md)
+- [可视化数据集](docs/zh_cn/useful_tools/browse_dataset.md)
+- [打印完整配置文件](docs/zh_cn/useful_tools/print_config.md)
+- [可视化数据集分析结果](docs/zh_cn/useful_tools/dataset_analysis.md)
+- [优化锚框尺寸](docs/zh_cn/useful_tools/optimize_anchors.md)
+- [提取 COCO 子集](docs/zh_cn/useful_tools/extract_subcoco.md)
+- [可视化优化器参数策略](docs/zh_cn/useful_tools/vis_scheduler.md)
+- [数据集转换](docs/zh_cn/useful_tools/dataset_converters.md)
+- [数据集下载](docs/zh_cn/useful_tools/download_dataset.md)
+- [日志分析](docs/zh_cn/useful_tools/log_analysis.md)
+- [模型转换](docs/zh_cn/useful_tools/model_converters.md)
+
+</details>
+
+<details>
+<summary>基础教程</summary>
+
+- [学习 YOLOv5 配置文件](docs/zh_cn/tutorials/config.md)
+- [数据流](docs/zh_cn/tutorials/data_flow.md)
+- [旋转目标检测](docs/zh_cn/tutorials/rotated_detection.md)
+- [自定义安装](docs/zh_cn/tutorials/custom_installation.md)
+- [常见警告说明](docs/zh_cn/tutorials/warning_notes.md)
+- [常见问题](docs/zh_cn/tutorials/faq.md)
+
+</details>
+
+<details>
+<summary>进阶教程</summary>
+
+- [MMYOLO 跨库应用解析](docs/zh_cn/advanced_guides/cross-library_application.md)
+
+</details>
+
+<details>
+<summary>说明</summary>
+
+- [更新日志](docs/zh_cn/notes/changelog.md)
+- [兼容性说明](docs/zh_cn/notes/compatibility.md)
+- [默认约定](docs/zh_cn/notes/conventions.md)
+- [代码规范](docs/zh_cn/notes/code_style.md)
+
+</details>
 
 ## 📊 基准测试和模型库 [🔝](#-table-of-contents)
 
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/222087414-168175cc-dae6-4c5c-a8e3-3109a152dd19.png"/>
+</div>
+
 测试结果和模型可以在 [模型库](docs/zh_cn/model_zoo.md) 中找到。
+
+<details open>
+<summary><b>支持的任务</b></summary>
+
+- [x] 目标检测
+- [x] 旋转框目标检测
+
+</details>
 
 <details open>
 <summary><b>支持的算法</b></summary>
@@ -208,10 +307,21 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [x] [YOLOv5](configs/yolov5)
 - [x] [YOLOX](configs/yolox)
 - [x] [RTMDet](configs/rtmdet)
+- [x] [RTMDet-Rotated](configs/rtmdet)
 - [x] [YOLOv6](configs/yolov6)
 - [x] [YOLOv7](configs/yolov7)
 - [x] [PPYOLOE](configs/ppyoloe)
 - [x] [YOLOv8](configs/yolov8)
+
+</details>
+
+<details open>
+<summary><b>支持的数据集</b></summary>
+
+- [x] COCO Dataset
+- [x] VOC Dataset
+- [x] CrowdHuman Dataset
+- [x] DOTA 1.0 Dataset
 
 </details>
 
@@ -281,7 +391,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 ## ❓ 常见问题 [🔝](#-table-of-contents)
 
-请参考 [FAQ](docs/zh_cn/notes/faq.md) 了解其他用户的常见问题。
+请参考 [FAQ](docs/zh_cn/tutorials/faq.md) 了解其他用户的常见问题。
 
 ## 🙌 贡献指南 [🔝](#-table-of-contents)
 

@@ -27,6 +27,8 @@ def yolov5_bbox_decoder(priors: Tensor, bbox_preds: Tensor,
 
 def rtmdet_bbox_decoder(priors: Tensor, bbox_preds: Tensor,
                         stride: Optional[Tensor]) -> Tensor:
+    stride = stride[None, :, None]
+    bbox_preds *= stride
     tl_x = (priors[..., 0] - bbox_preds[..., 0])
     tl_y = (priors[..., 1] - bbox_preds[..., 1])
     br_x = (priors[..., 0] + bbox_preds[..., 2])

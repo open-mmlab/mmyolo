@@ -14,10 +14,12 @@ python demo/large_image_demo.py \
 import os
 import random
 from argparse import ArgumentParser
+from pathlib import Path
 
 import mmcv
 import numpy as np
 from mmdet.apis import inference_detector, init_detector
+from mmengine.config import Config, ConfigDict
 from mmengine.logging import print_log
 from mmengine.utils import ProgressBar
 
@@ -28,7 +30,7 @@ except ImportError:
                       'to install sahi first for large image inference.')
 
 from mmyolo.registry import VISUALIZERS
-from mmyolo.utils import register_all_modules, switch_to_deploy
+from mmyolo.utils import switch_to_deploy
 from mmyolo.utils.large_image import merge_results_by_nms, shift_predictions
 from mmyolo.utils.misc import get_file_list
 
@@ -51,12 +53,16 @@ def parse_args():
         action='store_true',
         help='Switch model to deployment mode')
     parser.add_argument(
+        '--tta',
+        action='store_true',
+        help='Whether to use test time augmentation')
+    parser.add_argument(
         '--score-thr', type=float, default=0.3, help='Bbox score threshold')
     parser.add_argument(
         '--patch-size', type=int, default=640, help='The size of patches')
     parser.add_argument(
         '--patch-overlap-ratio',
-        type=int,
+        type=float,
         default=0.25,
         help='Ratio of overlap between two patches')
     parser.add_argument(
@@ -90,11 +96,37 @@ def parse_args():
 def main():
     args = parse_args()
 
-    # register all modules in mmdet into the registries
-    register_all_modules()
+    config = args.config
 
+    if isinstance(config, (str, Path)):
+        config = Config.fromfile(config)
+    elif not isinstance(config, Config):
+        raise TypeError('config must be a filename or Config object, '
+                        f'but got {type(config)}')
+    if 'init_cfg' in config.model.backbone:
+        config.model.backbone.init_cfg = None
+
+    if args.tta:
+        assert 'tta_model' in config, 'Cannot find ``tta_model`` in config.' \
+                                      " Can't use tta !"
+        assert 'tta_pipeline' in config, 'Cannot find ``tta_pipeline`` ' \
+                                         "in config. Can't use tta !"
+        config.model = ConfigDict(**config.tta_model, module=config.model)
+        test_data_cfg = config.test_dataloader.dataset
+        while 'dataset' in test_data_cfg:
+            test_data_cfg = test_data_cfg['dataset']
+
+        # batch_shapes_cfg will force control the size of the output image,
+        # it is not compatible with tta.
+        if 'batch_shapes_cfg' in test_data_cfg:
+            test_data_cfg.batch_shapes_cfg = None
+        test_data_cfg.pipeline = config.tta_pipeline
+
+    # TODO: TTA mode will error if cfg_options is not set.
+    #  This is an mmdet issue and needs to be fixed later.
     # build the model from a config file and a checkpoint file
-    model = init_detector(args.config, args.checkpoint, device=args.device)
+    model = init_detector(
+        config, args.checkpoint, device=args.device, cfg_options={})
 
     if args.deploy:
         switch_to_deploy(model)
@@ -238,7 +270,7 @@ def main():
             src_image_shape=(height, width),
             nms_cfg={
                 'type': args.merge_nms_type,
-                'iou_thr': args.merge_iou_thr
+                'iou_threshold': args.merge_iou_thr
             })
 
         visualizer.add_datasample(
