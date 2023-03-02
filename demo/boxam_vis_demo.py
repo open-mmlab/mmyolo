@@ -18,7 +18,6 @@ import mmcv
 from mmengine import Config, DictAction, MessageHub
 from mmengine.utils import ProgressBar
 
-from mmyolo.utils import register_all_modules
 from mmyolo.utils.boxam_utils import (BoxAMDetectorVisualizer,
                                       BoxAMDetectorWrapper, DetAblationLayer,
                                       DetBoxScoreTarget, GradCAM,
@@ -47,6 +46,9 @@ IGNORE_LOSS_PARAMS = {
     'yolov6': ['loss_cls'],
     'yolox': ['loss_obj'],
     'rtmdet': ['loss_cls'],
+    'yolov7': ['loss_obj'],
+    'yolov8': ['loss_cls'],
+    'ppyoloe': ['loss_cls'],
 }
 
 # This parameter is required in some algorithms
@@ -177,8 +179,6 @@ def init_detector_and_visualizer(args, cfg):
 
 
 def main():
-    register_all_modules()
-
     args = parse_args()
 
     # hard code

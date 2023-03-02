@@ -31,7 +31,7 @@
 
 ## 基于官方配置继承新建的配置出现 unexpected keyword argument
 
-这通常是由于你没有删除 base 配置中的额外参数。 可以在你新建配置中的修改字典中增加 `__delete__=True` 删掉 base 中该类之前的所有参数。
+这通常是由于你没有删除 base 配置中的额外参数。 可以在你新建配置所修改的字典中增加 `_delete_=True` 删掉 base 中该类之前的所有参数。
 
 ## The testing results of the whole dataset is empty
 
@@ -47,10 +47,12 @@
 
 ## ValueError: need at least one array to concatenate
 
-这个是一个非常场景的错误，可能出现在训练一开始或者训练正常但是评估时候。不管出现在何阶段，均说明你的配置不对，最常见的错误就是 `num_classes` 参数设置不对。
-在 MMYOLO 或者 MMDet 中大部分配置都是以 COCO 数据为例，因此配置中默认的 `num_classes` 是 80, 如果用户自定义数据集没有正确修改这个字段则会出现上述错误。
-MMYOLO 中有些算法配置会在多个模块中都需要 `num_classes` 参数，用户经常出现的错误就是仅仅修改了某一个地方的 `num_classes` 而没有将所有的 `num_classes` 都修改。想快速解决这个问题，可以使用 [print_config](https://github.com/open-mmlab/mmyolo/blob/main/tools/misc/print_config.py)
-脚本打印下全配置，然后全局搜索 `num_classes` 确认是否有没有修改的模块。
+这个是一个非常常见的错误，可能出现在训练一开始或者训练正常但是评估时候。不管出现在何阶段，均说明你的配置不对：
+
+1. 最常见的错误就是 `num_classes` 参数设置不对。在 MMYOLO 或者 MMDet 中大部分配置都是以 COCO 数据为例，因此配置中默认的 `num_classes` 是 80, 如果用户自定义数据集没有正确修改这个字段则会出现上述错误。
+   MMYOLO 中有些算法配置会在多个模块中都需要 `num_classes` 参数，用户经常出现的错误就是仅仅修改了某一个地方的 `num_classes` 而没有将所有的 `num_classes` 都修改。想快速解决这个问题，可以使用 [print_config](https://github.com/open-mmlab/mmyolo/blob/main/tools/misc/print_config.py)
+   脚本打印下全配置，然后全局搜索 `num_classes` 确认是否有没有修改的模块。
+2. 该错误还可能会出现在对 `dataset.metainfo.classes` 参数设置不对造成的。当用户希望训练自己的数据集但是未能正确的修改 `dataset.metainfo.classes` 参数，而默认的使用 `COCO` 数据集中的类别时，且用户自定义数据集的所有类别不在 `COCO` 数据集的类别里就会出现该错误。这时需要用户核对并修改正确的 `dataset.metainfo.classes` 信息。
 
 ## 评估时候 IndexError: list index out of range
 

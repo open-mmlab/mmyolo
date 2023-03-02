@@ -30,7 +30,7 @@ RUN wget -q https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRU
 
 # Install OPENMIM MMENGINE MMDET
 RUN pip install --no-cache-dir openmim \
-    && mim install --no-cache-dir "mmengine>=0.3.1" "mmdet>=3.0.0rc5,<3.1.0" \
+    && mim install --no-cache-dir "mmengine>=0.6.0" "mmdet>=3.0.0rc6,<3.1.0" \
     && mim install --no-cache-dir opencv-python==4.5.5.64 opencv-python-headless==4.5.5.64
 
 RUN git clone https://github.com/open-mmlab/mmcv.git -b 2.x mmcv \
