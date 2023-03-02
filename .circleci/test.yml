@@ -67,7 +67,7 @@ jobs:
           command: |
             pip install -U openmim
             mim install git+https://github.com/open-mmlab/mmengine.git@main
-            mim install 'mmcv >= 2.0.0rc1'
+            mim install 'mmcv >= 2.0.0rc4'
             mim install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
             pip install -r requirements/albu.txt
             pip install -r requirements/tests.txt
@@ -125,7 +125,7 @@ jobs:
           command: |
             docker exec mmyolo pip install -U openmim
             docker exec mmyolo mim install -e /mmengine
-            docker exec mmyolo mim install 'mmcv >= 2.0.0rc1'
+            docker exec mmyolo mim install 'mmcv >= 2.0.0rc4'
             docker exec mmyolo pip install -e /mmdetection
             docker exec mmyolo pip install -r requirements/albu.txt
             docker exec mmyolo pip install -r requirements/tests.txt

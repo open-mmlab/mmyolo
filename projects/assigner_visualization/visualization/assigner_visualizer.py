@@ -175,7 +175,7 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
 
         # The PALETTE in the dataset_meta is required
         assert self.dataset_meta is not None
-        palette = self.dataset_meta['PALETTE']
+        palette = self.dataset_meta['palette']
         x = ((grid_x_inds + offset) * stride).long()
         y = ((grid_y_inds + offset) * stride).long()
         center = torch.stack((x, y), dim=-1)
@@ -218,12 +218,17 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                 with corresponding stride. Defaults to 0.5.
         """
 
-        palette = self.dataset_meta['PALETTE']
+        palette = self.dataset_meta['palette']
         center_x = ((grid_x_inds + offset) * stride)
         center_y = ((grid_y_inds + offset) * stride)
         xyxy = torch.stack((center_x, center_y, center_x, center_y), dim=1)
-        assert self.priors_size is not None
-        xyxy += self.priors_size[feat_ind][prior_ind]
+        device = xyxy.device
+        if self.priors_size is not None:
+            xyxy += self.priors_size[feat_ind][prior_ind].to(device)
+        else:
+            xyxy += torch.tensor(
+                [[-stride / 2, -stride / 2, stride / 2, stride / 2]],
+                device=device)
 
         colors = [palette[i] for i in class_inds]
         self.draw_bboxes(
@@ -269,9 +274,11 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                 grid_y_inds = assign_results_prior['grid_y_inds']
                 class_inds = assign_results_prior['class_inds']
                 prior_ind = assign_results_prior['prior_ind']
+                offset = assign_results_prior.get('offset', 0.5)
+
                 if show_prior:
                     self.draw_prior(grid_x_inds, grid_y_inds, class_inds,
-                                    stride, feat_ind, prior_ind)
+                                    stride, feat_ind, prior_ind, offset)
 
                 # draw matched gt
                 retained_gt_inds = assign_results_prior['retained_gt_inds']
@@ -281,10 +288,13 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
                 # draw positive
                 self.draw_positive_assign(grid_x_inds, grid_y_inds, class_inds,
                                           stride, gt_instances.bboxes,
-                                          retained_gt_inds)
+                                          retained_gt_inds, offset)
 
                 # draw title
-                base_prior = self.priors_size[feat_ind][prior_ind]
+                if self.priors_size is not None:
+                    base_prior = self.priors_size[feat_ind][prior_ind]
+                else:
+                    base_prior = [stride, stride, stride * 2, stride * 2]
                 prior_size = (base_prior[2] - base_prior[0],
                               base_prior[3] - base_prior[1])
                 pos = np.array((20, 20))
@@ -311,4 +321,6 @@ class YOLOAssignerVisualizer(DetLocalVisualizer):
             img_show_list.append(np.concatenate(img_show_list_feat, axis=1))
 
         # Merge all images into one image
-        return np.concatenate(img_show_list, axis=0)
+        # setting axis is to beautify the merged image
+        axis = 0 if len(assign_results[0]) > 1 else 1
+        return np.concatenate(img_show_list, axis=axis)

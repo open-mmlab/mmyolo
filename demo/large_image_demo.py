@@ -28,7 +28,7 @@ except ImportError:
                       'to install sahi first for large image inference.')
 
 from mmyolo.registry import VISUALIZERS
-from mmyolo.utils import register_all_modules, switch_to_deploy
+from mmyolo.utils import switch_to_deploy
 from mmyolo.utils.large_image import merge_results_by_nms, shift_predictions
 from mmyolo.utils.misc import get_file_list
 
@@ -56,7 +56,7 @@ def parse_args():
         '--patch-size', type=int, default=640, help='The size of patches')
     parser.add_argument(
         '--patch-overlap-ratio',
-        type=int,
+        type=float,
         default=0.25,
         help='Ratio of overlap between two patches')
     parser.add_argument(
@@ -89,9 +89,6 @@ def parse_args():
 
 def main():
     args = parse_args()
-
-    # register all modules in mmdet into the registries
-    register_all_modules()
 
     # build the model from a config file and a checkpoint file
     model = init_detector(args.config, args.checkpoint, device=args.device)
@@ -238,7 +235,7 @@ def main():
             src_image_shape=(height, width),
             nms_cfg={
                 'type': args.merge_nms_type,
-                'iou_thr': args.merge_iou_thr
+                'iou_threshold': args.merge_iou_thr
             })
 
         visualizer.add_datasample(

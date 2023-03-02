@@ -1,31 +1,41 @@
-_base_ = '../_base_/default_runtime.py'
+_base_ = ['../_base_/default_runtime.py', '../_base_/det_p5_tta.py']
 
-# dataset settings
-data_root = 'data/coco/'
-dataset_type = 'YOLOv5CocoDataset'
+# ======================= Frequently modified parameters =====================
+# -----data related-----
+data_root = 'data/coco/'  # Root path of data
+# Path of train annotation file
+train_ann_file = 'annotations/instances_train2017.json'
+train_data_prefix = 'train2017/'  # Prefix of train image path
+# Path of val annotation file
+val_ann_file = 'annotations/instances_val2017.json'
+val_data_prefix = 'val2017/'  # Prefix of val image path
 
-num_last_epochs = 15
-max_epochs = 400
-num_classes = 80
-
-# parameters that often need to be modified
-img_scale = (640, 640)  # width, height
-deepen_factor = 0.33
-widen_factor = 0.5
-affine_scale = 0.5
-save_epoch_intervals = 10
+num_classes = 80  # Number of classes for classification
+# Batch size of a single GPU during training
 train_batch_size_per_gpu = 32
+# Worker to pre-fetch data for each single GPU during training
 train_num_workers = 8
-val_batch_size_per_gpu = 1
-val_num_workers = 2
-
-# persistent_workers must be False if num_workers is 0.
+# persistent_workers must be False if num_workers is 0
 persistent_workers = True
 
+# -----train val related-----
 # Base learning rate for optim_wrapper
 base_lr = 0.01
+max_epochs = 400  # Maximum training epochs
+num_last_epochs = 15  # Last epoch number to switch training pipeline
 
-# only on Val
+# ======================= Possible modified parameters =======================
+# -----data related-----
+img_scale = (640, 640)  # width, height
+# Dataset type, this will be used to define the dataset
+dataset_type = 'YOLOv5CocoDataset'
+# Batch size of a single GPU during validation
+val_batch_size_per_gpu = 1
+# Worker to pre-fetch data for each single GPU during validation
+val_num_workers = 2
+
+# Config of batch shapes. Only on val.
+# It means not used if batch_shapes_cfg is None.
 batch_shapes_cfg = dict(
     type='BatchShapePolicy',
     batch_size=val_batch_size_per_gpu,
@@ -33,10 +43,25 @@ batch_shapes_cfg = dict(
     size_divisor=32,
     extra_pad_ratio=0.5)
 
-# single-scale training is recommended to
+# -----model related-----
+# The scaling factor that controls the depth of the network structure
+deepen_factor = 0.33
+# The scaling factor that controls the width of the network structure
+widen_factor = 0.5
+
+# -----train val related-----
+affine_scale = 0.5  # YOLOv5RandomAffine scaling ratio
+lr_factor = 0.01  # Learning rate scaling factor
+weight_decay = 0.0005
+# Save model checkpoint and validation intervals
+save_epoch_intervals = 10
+# The maximum checkpoints to keep.
+max_keep_ckpts = 3
+# Single-scale training is recommended to
 # be turned on, which can speed up training.
 env_cfg = dict(cudnn_benchmark=True)
 
+# ============================== Unmodified in most cases ===================
 model = dict(
     type='YOLODetector',
     data_preprocessor=dict(
@@ -162,8 +187,8 @@ train_dataloader = dict(
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file='annotations/instances_train2017.json',
-        data_prefix=dict(img='train2017/'),
+        ann_file=train_ann_file,
+        data_prefix=dict(img=train_data_prefix),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline))
 
@@ -193,8 +218,8 @@ val_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         test_mode=True,
-        data_prefix=dict(img='val2017/'),
-        ann_file='annotations/instances_val2017.json',
+        data_prefix=dict(img=val_data_prefix),
+        ann_file=val_ann_file,
         pipeline=test_pipeline,
         batch_shapes_cfg=batch_shapes_cfg))
 
@@ -208,7 +233,7 @@ optim_wrapper = dict(
         type='SGD',
         lr=base_lr,
         momentum=0.937,
-        weight_decay=0.0005,
+        weight_decay=weight_decay,
         nesterov=True,
         batch_size_per_gpu=train_batch_size_per_gpu),
     constructor='YOLOv5OptimizerConstructor')
@@ -217,12 +242,12 @@ default_hooks = dict(
     param_scheduler=dict(
         type='YOLOv5ParamSchedulerHook',
         scheduler_type='cosine',
-        lr_factor=0.01,
+        lr_factor=lr_factor,
         max_epochs=max_epochs),
     checkpoint=dict(
         type='CheckpointHook',
         interval=save_epoch_intervals,
-        max_keep_ckpts=3,
+        max_keep_ckpts=max_keep_ckpts,
         save_best='auto'))
 
 custom_hooks = [
@@ -242,7 +267,7 @@ custom_hooks = [
 val_evaluator = dict(
     type='mmdet.CocoMetric',
     proposal_nums=(100, 1, 10),
-    ann_file=data_root + 'annotations/instances_val2017.json',
+    ann_file=data_root + val_ann_file,
     metric='bbox')
 test_evaluator = val_evaluator
 

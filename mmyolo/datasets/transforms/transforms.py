@@ -1,20 +1,25 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
-from typing import List, Tuple, Union
+from copy import deepcopy
+from typing import List, Sequence, Tuple, Union
 
 import cv2
 import mmcv
 import numpy as np
 import torch
-from mmcv.transforms import BaseTransform
+from mmcv.transforms import BaseTransform, Compose
 from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
+from mmdet.structures.mask import PolygonMasks
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
+
+# TODO: Waiting for MMCV support
+TRANSFORMS.register_module(module=Compose, force=True)
 
 
 @TRANSFORMS.register_module()
@@ -240,7 +245,7 @@ class LetterResize(MMDET_Resize):
         results['img_shape'] = image.shape
         if 'pad_param' in results:
             results['pad_param_origin'] = results['pad_param'] * \
-                np.repeat(ratio, 2)
+                                          np.repeat(ratio, 2)
         results['pad_param'] = np.array(padding_list, dtype=np.float32)
 
     def _resize_masks(self, results: dict):
@@ -248,32 +253,29 @@ class LetterResize(MMDET_Resize):
         if results.get('gt_masks', None) is None:
             return
 
-        # resize the gt_masks
-        gt_mask_height = results['gt_masks'].height * \
-            results['scale_factor'][1]
-        gt_mask_width = results['gt_masks'].width * \
-            results['scale_factor'][0]
-        gt_masks = results['gt_masks'].resize(
-            (int(round(gt_mask_height)), int(round(gt_mask_width))))
+        gt_masks = results['gt_masks']
+        assert isinstance(
+            gt_masks, PolygonMasks
+        ), f'Only supports PolygonMasks, but got {type(gt_masks)}'
 
-        # padding the gt_masks
-        if len(gt_masks) == 0:
-            padded_masks = np.empty((0, *results['img_shape'][:2]),
-                                    dtype=np.uint8)
-        else:
-            # TODO: The function is incorrect. Because the mask may not
-            #  be able to pad.
-            padded_masks = np.stack([
-                mmcv.impad(
-                    mask,
-                    padding=(int(results['pad_param'][2]),
-                             int(results['pad_param'][0]),
-                             int(results['pad_param'][3]),
-                             int(results['pad_param'][1])),
-                    pad_val=self.pad_val.get('masks', 0)) for mask in gt_masks
-            ])
-        results['gt_masks'] = type(results['gt_masks'])(
-            padded_masks, *results['img_shape'][:2])
+        # resize the gt_masks
+        gt_mask_h = results['gt_masks'].height * results['scale_factor'][1]
+        gt_mask_w = results['gt_masks'].width * results['scale_factor'][0]
+        gt_masks = results['gt_masks'].resize(
+            (int(round(gt_mask_h)), int(round(gt_mask_w))))
+
+        top_padding, _, left_padding, _ = results['pad_param']
+        if int(left_padding) != 0:
+            gt_masks = gt_masks.translate(
+                out_shape=results['img_shape'][:2],
+                offset=int(left_padding),
+                direction='horizontal')
+        if int(top_padding) != 0:
+            gt_masks = gt_masks.translate(
+                out_shape=results['img_shape'][:2],
+                offset=int(top_padding),
+                direction='vertical')
+        results['gt_masks'] = gt_masks
 
     def _resize_bboxes(self, results: dict):
         """Resize bounding boxes with ``results['scale_factor']``."""
@@ -356,19 +358,74 @@ class YOLOv5HSVRandomAug(BaseTransform):
         results['img'] = cv2.cvtColor(im_hsv, cv2.COLOR_HSV2BGR)
         return results
 
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(hue_delta={self.hue_delta}, '
+        repr_str += f'saturation_delta={self.saturation_delta}, '
+        repr_str += f'value_delta={self.value_delta})'
+        return repr_str
 
-# TODO: can be accelerated
+
 @TRANSFORMS.register_module()
 class LoadAnnotations(MMDET_LoadAnnotations):
     """Because the yolo series does not need to consider ignore bboxes for the
     time being, in order to speed up the pipeline, it can be excluded in
     advance."""
 
+    def __init__(self,
+                 mask2bbox: bool = False,
+                 poly2mask: bool = False,
+                 **kwargs) -> None:
+        self.mask2bbox = mask2bbox
+        assert not poly2mask, 'Does not support BitmapMasks considering ' \
+                              'that bitmap consumes more memory.'
+        super().__init__(poly2mask=poly2mask, **kwargs)
+        if self.mask2bbox:
+            assert self.with_mask, 'Using mask2bbox requires ' \
+                                   'with_mask is True.'
+        self._mask_ignore_flag = None
+
+    def transform(self, results: dict) -> dict:
+        """Function to load multiple types annotations.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+
+        Returns:
+            dict: The dict contains loaded bounding box, label and
+            semantic segmentation.
+        """
+        if self.mask2bbox:
+            self._load_masks(results)
+            if self.with_label:
+                self._load_labels(results)
+                self._update_mask_ignore_data(results)
+            gt_bboxes = results['gt_masks'].get_bboxes(dst_type='hbox')
+            results['gt_bboxes'] = gt_bboxes
+        else:
+            results = super().transform(results)
+            self._update_mask_ignore_data(results)
+        return results
+
+    def _update_mask_ignore_data(self, results: dict) -> None:
+        if 'gt_masks' not in results:
+            return
+
+        if 'gt_bboxes_labels' in results and len(
+                results['gt_bboxes_labels']) != len(results['gt_masks']):
+            assert len(results['gt_bboxes_labels']) == len(
+                self._mask_ignore_flag)
+            results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
+                self._mask_ignore_flag]
+
+        if 'gt_bboxes' in results and len(results['gt_bboxes']) != len(
+                results['gt_masks']):
+            assert len(results['gt_bboxes']) == len(self._mask_ignore_flag)
+            results['gt_bboxes'] = results['gt_bboxes'][self._mask_ignore_flag]
+
     def _load_bboxes(self, results: dict):
         """Private function to load bounding box annotations.
-
         Note: BBoxes with ignore_flag of 1 is not considered.
-
         Args:
             results (dict): Result dict from :obj:``mmengine.BaseDataset``.
 
@@ -394,10 +451,8 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         """Private function to load label annotations.
 
         Note: BBoxes with ignore_flag of 1 is not considered.
-
         Args:
             results (dict): Result dict from :obj:``mmengine.BaseDataset``.
-
         Returns:
             dict: The dict contains loaded label annotations.
         """
@@ -408,14 +463,72 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         results['gt_bboxes_labels'] = np.array(
             gt_bboxes_labels, dtype=np.int64)
 
+    def _load_masks(self, results: dict) -> None:
+        """Private function to load mask annotations.
+
+        Args:
+            results (dict): Result dict from :obj:``mmengine.BaseDataset``.
+        """
+        gt_masks = []
+        gt_ignore_flags = []
+        self._mask_ignore_flag = []
+        for instance in results.get('instances', []):
+            if instance['ignore_flag'] == 0:
+                if 'mask' in instance:
+                    gt_mask = instance['mask']
+                    if isinstance(gt_mask, list):
+                        gt_mask = [
+                            np.array(polygon) for polygon in gt_mask
+                            if len(polygon) % 2 == 0 and len(polygon) >= 6
+                        ]
+                        if len(gt_mask) == 0:
+                            # ignore
+                            self._mask_ignore_flag.append(0)
+                        else:
+                            gt_masks.append(gt_mask)
+                            gt_ignore_flags.append(instance['ignore_flag'])
+                            self._mask_ignore_flag.append(1)
+                    else:
+                        raise NotImplementedError(
+                            'Only supports mask annotations in polygon '
+                            'format currently')
+                else:
+                    # TODO: Actually, gt with bbox and without mask needs
+                    #  to be retained
+                    self._mask_ignore_flag.append(0)
+        self._mask_ignore_flag = np.array(self._mask_ignore_flag, dtype=bool)
+        results['gt_ignore_flags'] = np.array(gt_ignore_flags, dtype=bool)
+
+        h, w = results['ori_shape']
+        gt_masks = PolygonMasks([mask for mask in gt_masks], h, w)
+        results['gt_masks'] = gt_masks
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(with_bbox={self.with_bbox}, '
+        repr_str += f'with_label={self.with_label}, '
+        repr_str += f'with_mask={self.with_mask}, '
+        repr_str += f'with_seg={self.with_seg}, '
+        repr_str += f'mask2bbox={self.mask2bbox}, '
+        repr_str += f'poly2mask={self.poly2mask}, '
+        repr_str += f"imdecode_backend='{self.imdecode_backend}', "
+        repr_str += f'file_client_args={self.file_client_args})'
+        return repr_str
+
 
 @TRANSFORMS.register_module()
 class YOLOv5RandomAffine(BaseTransform):
-    """Random affine transform data augmentation in YOLOv5. It is different
-    from the implementation in YOLOX.
+    """Random affine transform data augmentation in YOLOv5 and YOLOv8. It is
+    different from the implementation in YOLOX.
 
     This operation randomly generates affine transform matrix which including
     rotation, translation, shear and scaling transforms.
+    If you set use_mask_refine == True, the code will use the masks
+    annotation to refine the bbox.
+    Our implementation is slightly different from the official. In COCO
+    dataset, a gt may have multiple mask tags.  The official YOLOv5
+    annotation file already combines the masks that an object has,
+    but our code takes into account the fact that an object has multiple masks.
 
     Required Keys:
 
@@ -423,6 +536,7 @@ class YOLOv5RandomAffine(BaseTransform):
     - gt_bboxes (BaseBoxes[torch.float32]) (optional)
     - gt_bboxes_labels (np.int64) (optional)
     - gt_ignore_flags (bool) (optional)
+    - gt_masks (PolygonMasks) (optional)
 
     Modified Keys:
 
@@ -431,6 +545,7 @@ class YOLOv5RandomAffine(BaseTransform):
     - gt_bboxes (optional)
     - gt_bboxes_labels (optional)
     - gt_ignore_flags (optional)
+    - gt_masks (PolygonMasks) (optional)
 
     Args:
         max_rotate_degree (float): Maximum degrees of rotation transform.
@@ -450,6 +565,17 @@ class YOLOv5RandomAffine(BaseTransform):
             the border of the image. In some dataset like MOT17, the gt bboxes
             are allowed to cross the border of images. Therefore, we don't
             need to clip the gt bboxes in these cases. Defaults to True.
+        min_bbox_size (float): Width and height threshold to filter bboxes.
+            If the height or width of a box is smaller than this value, it
+            will be removed. Defaults to 2.
+        min_area_ratio (float): Threshold of area ratio between
+            original bboxes and wrapped bboxes. If smaller than this value,
+            the box will be removed. Defaults to 0.1.
+        use_mask_refine (bool): Whether to refine bbox by mask.
+        max_aspect_ratio (float): Aspect ratio of width and height
+            threshold to filter bboxes. If max(h/w, w/h) larger than this
+            value, the box will be removed. Defaults to 20.
+        resample_num (int): Number of poly to resample to.
     """
 
     def __init__(self,
@@ -462,7 +588,9 @@ class YOLOv5RandomAffine(BaseTransform):
                  bbox_clip_border: bool = True,
                  min_bbox_size: int = 2,
                  min_area_ratio: float = 0.1,
-                 max_aspect_ratio: int = 20):
+                 use_mask_refine: bool = False,
+                 max_aspect_ratio: float = 20.,
+                 resample_num: int = 1000):
         assert 0 <= max_translate_ratio <= 1
         assert scaling_ratio_range[0] <= scaling_ratio_range[1]
         assert scaling_ratio_range[0] > 0
@@ -474,9 +602,200 @@ class YOLOv5RandomAffine(BaseTransform):
         self.border_val = border_val
         self.bbox_clip_border = bbox_clip_border
         self.min_bbox_size = min_bbox_size
-        self.min_bbox_size = min_bbox_size
         self.min_area_ratio = min_area_ratio
+        self.use_mask_refine = use_mask_refine
         self.max_aspect_ratio = max_aspect_ratio
+        self.resample_num = resample_num
+
+    @autocast_box_type()
+    def transform(self, results: dict) -> dict:
+        """The YOLOv5 random affine transform function.
+
+        Args:
+            results (dict): The result dict.
+
+        Returns:
+            dict: The result dict.
+        """
+        img = results['img']
+        # self.border is wh format
+        height = img.shape[0] + self.border[1] * 2
+        width = img.shape[1] + self.border[0] * 2
+
+        # Note: Different from YOLOX
+        center_matrix = np.eye(3, dtype=np.float32)
+        center_matrix[0, 2] = -img.shape[1] / 2
+        center_matrix[1, 2] = -img.shape[0] / 2
+
+        warp_matrix, scaling_ratio = self._get_random_homography_matrix(
+            height, width)
+        warp_matrix = warp_matrix @ center_matrix
+
+        img = cv2.warpPerspective(
+            img,
+            warp_matrix,
+            dsize=(width, height),
+            borderValue=self.border_val)
+        results['img'] = img
+        results['img_shape'] = img.shape
+        img_h, img_w = img.shape[:2]
+
+        bboxes = results['gt_bboxes']
+        num_bboxes = len(bboxes)
+        if num_bboxes:
+            orig_bboxes = bboxes.clone()
+            if self.use_mask_refine and 'gt_masks' in results:
+                # If the dataset has annotations of mask,
+                # the mask will be used to refine bbox.
+                gt_masks = results['gt_masks']
+
+                gt_masks_resample = self.resample_masks(gt_masks)
+                gt_masks = self.warp_mask(gt_masks_resample, warp_matrix,
+                                          img_h, img_w)
+
+                # refine bboxes by masks
+                bboxes = gt_masks.get_bboxes(dst_type='hbox')
+                # filter bboxes outside image
+                valid_index = self.filter_gt_bboxes(orig_bboxes,
+                                                    bboxes).numpy()
+                results['gt_masks'] = gt_masks[valid_index]
+            else:
+                bboxes.project_(warp_matrix)
+                if self.bbox_clip_border:
+                    bboxes.clip_([height, width])
+
+                # filter bboxes
+                orig_bboxes.rescale_([scaling_ratio, scaling_ratio])
+
+                # Be careful: valid_index must convert to numpy,
+                # otherwise it will raise out of bounds when len(valid_index)=1
+                valid_index = self.filter_gt_bboxes(orig_bboxes,
+                                                    bboxes).numpy()
+                if 'gt_masks' in results:
+                    results['gt_masks'] = PolygonMasks(
+                        results['gt_masks'].masks, img_h, img_w)
+
+            results['gt_bboxes'] = bboxes[valid_index]
+            results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
+                valid_index]
+            results['gt_ignore_flags'] = results['gt_ignore_flags'][
+                valid_index]
+
+        return results
+
+    @staticmethod
+    def warp_poly(poly: np.ndarray, warp_matrix: np.ndarray, img_w: int,
+                  img_h: int) -> np.ndarray:
+        """Function to warp one mask and filter points outside image.
+
+        Args:
+            poly (np.ndarray): Segmentation annotation with shape (n, ) and
+                with format (x1, y1, x2, y2, ...).
+            warp_matrix (np.ndarray): Affine transformation matrix.
+                Shape: (3, 3).
+            img_w (int): Width of output image.
+            img_h (int): Height of output image.
+        """
+        # TODO: Current logic may cause retained masks unusable for
+        #  semantic segmentation training, which is same as official
+        #  implementation.
+        poly = poly.reshape((-1, 2))
+        poly = np.concatenate((poly, np.ones(
+            (len(poly), 1), dtype=poly.dtype)),
+                              axis=-1)
+        # transform poly
+        poly = poly @ warp_matrix.T
+        poly = poly[:, :2] / poly[:, 2:3]
+
+        # filter point outside image
+        x, y = poly.T
+        valid_ind_point = (x >= 0) & (y >= 0) & (x <= img_w) & (y <= img_h)
+        return poly[valid_ind_point].reshape(-1)
+
+    def warp_mask(self, gt_masks: PolygonMasks, warp_matrix: np.ndarray,
+                  img_w: int, img_h: int) -> PolygonMasks:
+        """Warp masks by warp_matrix and retain masks inside image after
+        warping.
+
+        Args:
+            gt_masks (PolygonMasks): Annotations of semantic segmentation.
+            warp_matrix (np.ndarray): Affine transformation matrix.
+                Shape: (3, 3).
+            img_w (int): Width of output image.
+            img_h (int): Height of output image.
+
+        Returns:
+            PolygonMasks: Masks after warping.
+        """
+        masks = gt_masks.masks
+
+        new_masks = []
+        for poly_per_obj in masks:
+            warpped_poly_per_obj = []
+            # One gt may have multiple masks.
+            for poly in poly_per_obj:
+                valid_poly = self.warp_poly(poly, warp_matrix, img_w, img_h)
+                if len(valid_poly):
+                    warpped_poly_per_obj.append(valid_poly.reshape(-1))
+            # If all the masks are invalid,
+            # add [0, 0, 0, 0, 0, 0,] here.
+            if not warpped_poly_per_obj:
+                # This will be filtered in function `filter_gt_bboxes`.
+                warpped_poly_per_obj = [
+                    np.zeros(6, dtype=poly_per_obj[0].dtype)
+                ]
+            new_masks.append(warpped_poly_per_obj)
+
+        gt_masks = PolygonMasks(new_masks, img_h, img_w)
+        return gt_masks
+
+    def resample_masks(self, gt_masks: PolygonMasks) -> PolygonMasks:
+        """Function to resample each mask annotation with shape (2 * n, ) to
+        shape (resample_num * 2, ).
+
+        Args:
+            gt_masks (PolygonMasks): Annotations of semantic segmentation.
+        """
+        masks = gt_masks.masks
+        new_masks = []
+        for poly_per_obj in masks:
+            resample_poly_per_obj = []
+            for poly in poly_per_obj:
+                poly = poly.reshape((-1, 2))  # xy
+                poly = np.concatenate((poly, poly[0:1, :]), axis=0)
+                x = np.linspace(0, len(poly) - 1, self.resample_num)
+                xp = np.arange(len(poly))
+                poly = np.concatenate([
+                    np.interp(x, xp, poly[:, i]) for i in range(2)
+                ]).reshape(2, -1).T.reshape(-1)
+                resample_poly_per_obj.append(poly)
+            new_masks.append(resample_poly_per_obj)
+        return PolygonMasks(new_masks, gt_masks.height, gt_masks.width)
+
+    def filter_gt_bboxes(self, origin_bboxes: HorizontalBoxes,
+                         wrapped_bboxes: HorizontalBoxes) -> torch.Tensor:
+        """Filter gt bboxes.
+
+        Args:
+            origin_bboxes (HorizontalBoxes): Origin bboxes.
+            wrapped_bboxes (HorizontalBoxes): Wrapped bboxes
+
+        Returns:
+            dict: The result dict.
+        """
+        origin_w = origin_bboxes.widths
+        origin_h = origin_bboxes.heights
+        wrapped_w = wrapped_bboxes.widths
+        wrapped_h = wrapped_bboxes.heights
+        aspect_ratio = np.maximum(wrapped_w / (wrapped_h + 1e-16),
+                                  wrapped_h / (wrapped_w + 1e-16))
+
+        wh_valid_idx = (wrapped_w > self.min_bbox_size) & \
+                       (wrapped_h > self.min_bbox_size)
+        area_valid_idx = wrapped_w * wrapped_h / (origin_w * origin_h +
+                                                  1e-16) > self.min_area_ratio
+        aspect_ratio_valid_idx = aspect_ratio < self.max_aspect_ratio
+        return wh_valid_idx & area_valid_idx & aspect_ratio_valid_idx
 
     @cache_randomness
     def _get_random_homography_matrix(self, height: int,
@@ -517,99 +836,6 @@ class YOLOv5RandomAffine(BaseTransform):
         warp_matrix = (
             translate_matrix @ shear_matrix @ rotation_matrix @ scaling_matrix)
         return warp_matrix, scaling_ratio
-
-    @autocast_box_type()
-    def transform(self, results: dict) -> dict:
-        """The YOLOv5 random affine transform function.
-
-        Args:
-            results (dict): The result dict.
-
-        Returns:
-            dict: The result dict.
-        """
-        img = results['img']
-        # self.border is wh format
-        height = img.shape[0] + self.border[1] * 2
-        width = img.shape[1] + self.border[0] * 2
-
-        # Note: Different from YOLOX
-        center_matrix = np.eye(3, dtype=np.float32)
-        center_matrix[0, 2] = -img.shape[1] / 2
-        center_matrix[1, 2] = -img.shape[0] / 2
-
-        warp_matrix, scaling_ratio = self._get_random_homography_matrix(
-            height, width)
-        warp_matrix = warp_matrix @ center_matrix
-
-        img = cv2.warpPerspective(
-            img,
-            warp_matrix,
-            dsize=(width, height),
-            borderValue=self.border_val)
-        results['img'] = img
-        results['img_shape'] = img.shape
-
-        bboxes = results['gt_bboxes']
-        num_bboxes = len(bboxes)
-        if num_bboxes:
-            orig_bboxes = bboxes.clone()
-
-            bboxes.project_(warp_matrix)
-            if self.bbox_clip_border:
-                bboxes.clip_([height, width])
-
-            # filter bboxes
-            orig_bboxes.rescale_([scaling_ratio, scaling_ratio])
-
-            # Be careful: valid_index must convert to numpy,
-            # otherwise it will raise out of bounds when len(valid_index)=1
-            valid_index = self.filter_gt_bboxes(orig_bboxes, bboxes).numpy()
-            results['gt_bboxes'] = bboxes[valid_index]
-            results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
-                valid_index]
-            results['gt_ignore_flags'] = results['gt_ignore_flags'][
-                valid_index]
-
-            if 'gt_masks' in results:
-                raise NotImplementedError('RandomAffine only supports bbox.')
-        return results
-
-    def filter_gt_bboxes(self, origin_bboxes: HorizontalBoxes,
-                         wrapped_bboxes: HorizontalBoxes) -> torch.Tensor:
-        """Filter gt bboxes.
-
-        Args:
-            origin_bboxes (HorizontalBoxes): Origin bboxes.
-            wrapped_bboxes (HorizontalBoxes): Wrapped bboxes
-
-        Returns:
-            dict: The result dict.
-        """
-        origin_w = origin_bboxes.widths
-        origin_h = origin_bboxes.heights
-        wrapped_w = wrapped_bboxes.widths
-        wrapped_h = wrapped_bboxes.heights
-        aspect_ratio = np.maximum(wrapped_w / (wrapped_h + 1e-16),
-                                  wrapped_h / (wrapped_w + 1e-16))
-
-        wh_valid_idx = (wrapped_w > self.min_bbox_size) & \
-                       (wrapped_h > self.min_bbox_size)
-        area_valid_idx = wrapped_w * wrapped_h / (origin_w * origin_h +
-                                                  1e-16) > self.min_area_ratio
-        aspect_ratio_valid_idx = aspect_ratio < self.max_aspect_ratio
-        return wh_valid_idx & area_valid_idx & aspect_ratio_valid_idx
-
-    def __repr__(self) -> str:
-        repr_str = self.__class__.__name__
-        repr_str += f'(max_rotate_degree={self.max_rotate_degree}, '
-        repr_str += f'max_translate_ratio={self.max_translate_ratio}, '
-        repr_str += f'scaling_ratio_range={self.scaling_ratio_range}, '
-        repr_str += f'max_shear_degree={self.max_shear_degree}, '
-        repr_str += f'border={self.border}, '
-        repr_str += f'border_val={self.border_val}, '
-        repr_str += f'bbox_clip_border={self.bbox_clip_border})'
-        return repr_str
 
     @staticmethod
     def _get_rotation_matrix(rotate_degrees: float) -> np.ndarray:
@@ -677,6 +903,17 @@ class YOLOv5RandomAffine(BaseTransform):
                                       dtype=np.float32)
         return translation_matrix
 
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(max_rotate_degree={self.max_rotate_degree}, '
+        repr_str += f'max_translate_ratio={self.max_translate_ratio}, '
+        repr_str += f'scaling_ratio_range={self.scaling_ratio_range}, '
+        repr_str += f'max_shear_degree={self.max_shear_degree}, '
+        repr_str += f'border={self.border}, '
+        repr_str += f'border_val={self.border_val}, '
+        repr_str += f'bbox_clip_border={self.bbox_clip_border})'
+        return repr_str
+
 
 @TRANSFORMS.register_module()
 class PPYOLOERandomDistort(BaseTransform):
@@ -714,7 +951,7 @@ class PPYOLOERandomDistort(BaseTransform):
         self.contrast_cfg = contrast_cfg
         self.brightness_cfg = brightness_cfg
         self.num_distort_func = num_distort_func
-        assert 0 < self.num_distort_func <= 4,\
+        assert 0 < self.num_distort_func <= 4, \
             'num_distort_func must > 0 and <= 4'
         for cfg in [
                 self.hue_cfg, self.saturation_cfg, self.contrast_cfg,
@@ -800,6 +1037,15 @@ class PPYOLOERandomDistort(BaseTransform):
             results = func(results)
         return results
 
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(hue_cfg={self.hue_cfg}, '
+        repr_str += f'saturation_cfg={self.saturation_cfg}, '
+        repr_str += f'contrast_cfg={self.contrast_cfg}, '
+        repr_str += f'brightness_cfg={self.brightness_cfg}, '
+        repr_str += f'num_distort_func={self.num_distort_func})'
+        return repr_str
+
 
 @TRANSFORMS.register_module()
 class PPYOLOERandomCrop(BaseTransform):
@@ -828,7 +1074,7 @@ class PPYOLOERandomCrop(BaseTransform):
     Args:
         aspect_ratio (List[float]): Aspect ratio of cropped region. Default to
              [.5, 2].
-        thresholds (List[float]): Iou thresholds for decide a valid bbox crop
+        thresholds (List[float]): Iou thresholds for deciding a valid bbox crop
             in [min, max] format. Defaults to [.0, .1, .3, .5, .7, .9].
         scaling (List[float]): Ratio between a cropped region and the original
             image in [min, max] format. Default to [.3, 1.].
@@ -1070,3 +1316,242 @@ class PPYOLOERandomCrop(BaseTransform):
             valid, (cropped_box[:, :2] < cropped_box[:, 2:]).all(axis=1))
 
         return np.where(valid)[0]
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(aspect_ratio={self.aspect_ratio}, '
+        repr_str += f'thresholds={self.thresholds}, '
+        repr_str += f'scaling={self.scaling}, '
+        repr_str += f'num_attempts={self.num_attempts}, '
+        repr_str += f'allow_no_crop={self.allow_no_crop}, '
+        repr_str += f'cover_all_box={self.cover_all_box})'
+        return repr_str
+
+
+@TRANSFORMS.register_module()
+class YOLOv5CopyPaste(BaseTransform):
+    """Copy-Paste used in YOLOv5 and YOLOv8.
+
+    This transform randomly copy some objects in the image to the mirror
+    position of the image.It is different from the `CopyPaste` in mmdet.
+
+    Required Keys:
+
+    - img (np.uint8)
+    - gt_bboxes (BaseBoxes[torch.float32])
+    - gt_bboxes_labels (np.int64) (optional)
+    - gt_ignore_flags (bool) (optional)
+    - gt_masks (PolygonMasks) (optional)
+
+    Modified Keys:
+
+    - img
+    - gt_bboxes
+    - gt_bboxes_labels (np.int64) (optional)
+    - gt_ignore_flags (optional)
+    - gt_masks (optional)
+
+    Args:
+        ioa_thresh (float): Ioa thresholds for deciding valid bbox.
+        prob (float): Probability of choosing objects.
+            Defaults to 0.5.
+    """
+
+    def __init__(self, ioa_thresh: float = 0.3, prob: float = 0.5):
+        self.ioa_thresh = ioa_thresh
+        self.prob = prob
+
+    @autocast_box_type()
+    def transform(self, results: dict) -> Union[dict, None]:
+        """The YOLOv5 and YOLOv8 Copy-Paste transform function.
+
+        Args:
+            results (dict): The result dict.
+
+        Returns:
+            dict: The result dict.
+        """
+        if len(results.get('gt_masks', [])) == 0:
+            return results
+        gt_masks = results['gt_masks']
+        assert isinstance(gt_masks, PolygonMasks),\
+            'only support type of PolygonMasks,' \
+            ' but get type: %s' % type(gt_masks)
+        gt_bboxes = results['gt_bboxes']
+        gt_bboxes_labels = results.get('gt_bboxes_labels', None)
+        img = results['img']
+        img_h, img_w = img.shape[:2]
+
+        # calculate ioa
+        gt_bboxes_flip = deepcopy(gt_bboxes)
+        gt_bboxes_flip.flip_(img.shape)
+
+        ioa = self.bbox_ioa(gt_bboxes_flip, gt_bboxes)
+        indexes = torch.nonzero((ioa < self.ioa_thresh).all(1))[:, 0]
+        n = len(indexes)
+        valid_inds = random.choice(
+            indexes, size=round(self.prob * n), replace=False)
+        if len(valid_inds) == 0:
+            return results
+
+        if gt_bboxes_labels is not None:
+            # prepare labels
+            gt_bboxes_labels = np.concatenate(
+                (gt_bboxes_labels, gt_bboxes_labels[valid_inds]), axis=0)
+
+        # prepare bboxes
+        copypaste_bboxes = gt_bboxes_flip[valid_inds]
+        gt_bboxes = gt_bboxes.cat([gt_bboxes, copypaste_bboxes])
+
+        # prepare images
+        copypaste_gt_masks = gt_masks[valid_inds]
+        copypaste_gt_masks_flip = copypaste_gt_masks.flip()
+        # convert poly format to bitmap format
+        # example: poly: [[array(0.0, 0.0, 10.0, 0.0, 10.0, 10.0, 0.0, 10.0]]
+        #  -> bitmap: a mask with shape equal to (1, img_h, img_w)
+        # # type1 low speed
+        # copypaste_gt_masks_bitmap = copypaste_gt_masks.to_ndarray()
+        # copypaste_mask = np.sum(copypaste_gt_masks_bitmap, axis=0) > 0
+
+        # type2
+        copypaste_mask = np.zeros((img_h, img_w), dtype=np.uint8)
+        for poly in copypaste_gt_masks.masks:
+            poly = [i.reshape((-1, 1, 2)).astype(np.int32) for i in poly]
+            cv2.drawContours(copypaste_mask, poly, -1, (1, ), cv2.FILLED)
+
+        copypaste_mask = copypaste_mask.astype(bool)
+
+        # copy objects, and paste to the mirror position of the image
+        copypaste_mask_flip = mmcv.imflip(
+            copypaste_mask, direction='horizontal')
+        copypaste_img = mmcv.imflip(img, direction='horizontal')
+        img[copypaste_mask_flip] = copypaste_img[copypaste_mask_flip]
+
+        # prepare masks
+        gt_masks = copypaste_gt_masks.cat([gt_masks, copypaste_gt_masks_flip])
+
+        if 'gt_ignore_flags' in results:
+            # prepare gt_ignore_flags
+            gt_ignore_flags = results['gt_ignore_flags']
+            gt_ignore_flags = np.concatenate(
+                [gt_ignore_flags, gt_ignore_flags[valid_inds]], axis=0)
+            results['gt_ignore_flags'] = gt_ignore_flags
+
+        results['img'] = img
+        results['gt_bboxes'] = gt_bboxes
+        if gt_bboxes_labels is not None:
+            results['gt_bboxes_labels'] = gt_bboxes_labels
+        results['gt_masks'] = gt_masks
+
+        return results
+
+    @staticmethod
+    def bbox_ioa(gt_bboxes_flip: HorizontalBoxes,
+                 gt_bboxes: HorizontalBoxes,
+                 eps: float = 1e-7) -> np.ndarray:
+        """Calculate ioa between gt_bboxes_flip and gt_bboxes.
+
+        Args:
+            gt_bboxes_flip (HorizontalBoxes): Flipped ground truth
+                bounding boxes.
+            gt_bboxes (HorizontalBoxes): Ground truth bounding boxes.
+            eps (float): Default to 1e-10.
+        Return:
+            (Tensor): Ioa.
+        """
+        gt_bboxes_flip = gt_bboxes_flip.tensor
+        gt_bboxes = gt_bboxes.tensor
+
+        # Get the coordinates of bounding boxes
+        b1_x1, b1_y1, b1_x2, b1_y2 = gt_bboxes_flip.T
+        b2_x1, b2_y1, b2_x2, b2_y2 = gt_bboxes.T
+
+        # Intersection area
+        inter_area = (torch.minimum(b1_x2[:, None],
+                                    b2_x2) - torch.maximum(b1_x1[:, None],
+                                                           b2_x1)).clip(0) * \
+                     (torch.minimum(b1_y2[:, None],
+                                    b2_y2) - torch.maximum(b1_y1[:, None],
+                                                           b2_y1)).clip(0)
+
+        # box2 area
+        box2_area = (b2_x2 - b2_x1) * (b2_y2 - b2_y1) + eps
+
+        # Intersection over box2 area
+        return inter_area / box2_area
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(ioa_thresh={self.ioa_thresh},'
+        repr_str += f'prob={self.prob})'
+        return repr_str
+
+
+@TRANSFORMS.register_module()
+class RemoveDataElement(BaseTransform):
+    """Remove unnecessary data element in results.
+
+    Args:
+        keys (Union[str, Sequence[str]]): Keys need to be removed.
+    """
+
+    def __init__(self, keys: Union[str, Sequence[str]]):
+        self.keys = [keys] if isinstance(keys, str) else keys
+
+    def transform(self, results: dict) -> dict:
+        for key in self.keys:
+            results.pop(key, None)
+        return results
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(keys={self.keys})'
+        return repr_str
+
+
+@TRANSFORMS.register_module()
+class RegularizeRotatedBox(BaseTransform):
+    """Regularize rotated boxes.
+
+    Due to the angle periodicity, one rotated box can be represented in
+    many different (x, y, w, h, t). To make each rotated box unique,
+    ``regularize_boxes`` will take the remainder of the angle divided by
+    180 degrees.
+
+    For convenience, three angle_version can be used here:
+
+    - 'oc': OpenCV Definition. Has the same box representation as
+        ``cv2.minAreaRect`` the angle ranges in [-90, 0).
+    - 'le90': Long Edge Definition (90). the angle ranges in [-90, 90).
+        The width is always longer than the height.
+    - 'le135': Long Edge Definition (135). the angle ranges in [-45, 135).
+        The width is always longer than the height.
+
+    Required Keys:
+
+    - gt_bboxes (RotatedBoxes[torch.float32])
+
+    Modified Keys:
+
+    - gt_bboxes
+
+    Args:
+        angle_version (str): Angle version. Can only be 'oc',
+            'le90', or 'le135'. Defaults to 'le90.
+    """
+
+    def __init__(self, angle_version='le90') -> None:
+        self.angle_version = angle_version
+        try:
+            from mmrotate.structures.bbox import RotatedBoxes
+            self.box_type = RotatedBoxes
+        except ImportError:
+            raise ImportError(
+                'Please run "mim install -r requirements/mmrotate.txt" '
+                'to install mmrotate first for rotated detection.')
+
+    def transform(self, results: dict) -> dict:
+        assert isinstance(results['gt_bboxes'], self.box_type)
+        results['gt_bboxes'] = self.box_type(
+            results['gt_bboxes'].regularize_boxes(self.angle_version))
+        return results

@@ -41,12 +41,12 @@ from mmdet.utils import replace_cfg_vals, update_data_root
 from mmengine.config import Config
 from mmengine.fileio import dump
 from mmengine.logging import MMLogger
+from mmengine.registry import init_default_scope
 from mmengine.utils import ProgressBar
 from scipy.optimize import differential_evolution
 from torch import Tensor
 
 from mmyolo.registry import DATASETS
-from mmyolo.utils import register_all_modules
 
 try:
     from scipy.cluster.vq import kmeans
@@ -581,13 +581,14 @@ def main():
     args = parse_args()
     cfg = args.config
     cfg = Config.fromfile(cfg)
-    register_all_modules()
 
     # replace the ${key} with the value of cfg.key
     cfg = replace_cfg_vals(cfg)
 
     # update data root according to MMDET_DATASETS
     update_data_root(cfg)
+
+    init_default_scope(cfg.get('default_scope', 'mmyolo'))
 
     input_shape = args.input_shape
     assert len(input_shape) == 2
