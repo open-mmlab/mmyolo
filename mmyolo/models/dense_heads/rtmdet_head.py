@@ -197,7 +197,6 @@ class RTMDetHead(YOLOv5Head):
         bbox_coder (:obj:`ConfigDict` or dict): Config of bbox coder.
         loss_cls (:obj:`ConfigDict` or dict): Config of classification loss.
         loss_bbox (:obj:`ConfigDict` or dict): Config of localization loss.
-        loss_obj (:obj:`ConfigDict` or dict): Config of objectness loss.
         train_cfg (:obj:`ConfigDict` or dict, optional): Training config of
             anchor head. Defaults to None.
         test_cfg (:obj:`ConfigDict` or dict, optional): Testing config of
@@ -221,11 +220,6 @@ class RTMDetHead(YOLOv5Head):
                      loss_weight=1.0),
                  loss_bbox: ConfigType = dict(
                      type='mmdet.GIoULoss', loss_weight=2.0),
-                 loss_obj: ConfigType = dict(
-                     type='mmdet.CrossEntropyLoss',
-                     use_sigmoid=True,
-                     reduction='sum',
-                     loss_weight=1.0),
                  train_cfg: OptConfigType = None,
                  test_cfg: OptConfigType = None,
                  init_cfg: OptMultiConfig = None):
@@ -236,7 +230,6 @@ class RTMDetHead(YOLOv5Head):
             bbox_coder=bbox_coder,
             loss_cls=loss_cls,
             loss_bbox=loss_bbox,
-            loss_obj=loss_obj,
             train_cfg=train_cfg,
             test_cfg=test_cfg,
             init_cfg=init_cfg)
@@ -246,6 +239,8 @@ class RTMDetHead(YOLOv5Head):
             self.cls_out_channels = self.num_classes
         else:
             self.cls_out_channels = self.num_classes + 1
+        # rtmdet doesn't need loss_obj
+        self.loss_obj = None
 
     def special_init(self):
         """Since YOLO series algorithms will inherit from YOLOv5Head, but

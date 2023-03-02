@@ -232,6 +232,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 
 - [Learn about configs with YOLOv5](docs/en/tutorials/config.md)
 - [Data flow](docs/en/tutorials/data_flow.md)
+- [Rotated detection](docs/en/tutorials/rotated_detection.md)
 - [Custom Installation](docs/en/tutorials/custom_installation.md)
 - [Common Warning Notes](docs/zh_cn/tutorials/warning_notes.md)
 - [FAQ](docs/en/tutorials/faq.md)
@@ -260,6 +261,14 @@ For different parts from MMDetection, we have also prepared user guides and adva
 Results and models are available in the [model zoo](docs/en/model_zoo.md).
 
 <details open>
+<summary><b>Supported Tasks</b></summary>
+
+- [x] Object detection
+- [x] Rotated object detection
+
+</details>
+
+<details open>
 <summary><b>Supported Algorithms</b></summary>
 
 - [x] [YOLOv5](configs/yolov5)
@@ -269,6 +278,16 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 - [x] [YOLOv7](configs/yolov7)
 - [x] [PPYOLOE](configs/ppyoloe)
 - [x] [YOLOv8](configs/yolov8)
+
+</details>
+
+<details open>
+<summary><b>Supported Datasets</b></summary>
+
+- [x] COCO Dataset
+- [x] VOC Dataset
+- [x] CrowdHuman Dataset
+- [x] DOTA 1.0 Dataset
 
 </details>
 
