@@ -7,6 +7,8 @@
 The DOTA dataset can be downloaded from [DOTA](https://captain-whu.github.io/DOTA/dataset.html)
 or [OpenDataLab](https://opendatalab.org.cn/DOTA_V1.0).
 
+We recommend using [OpenDataLab](https://opendatalab.org.cn/DOTA_V1.0) to download the dataset, as the folder structure has already been arranged as needed and can be directly extracted without the need to adjust the folder structure.
+
 Please unzip the file and place it in the following structure.
 
 ```none
