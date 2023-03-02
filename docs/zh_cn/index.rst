@@ -22,6 +22,7 @@
    recommended_topics/model_design.md
    recommended_topics/algorithm_descriptions/index.rst
    recommended_topics/replace_backbone.md
+   recommended_topics/complexity_analysis.md
    recommended_topics/labeling_to_deployment_tutorials.md
    recommended_topics/visualization.md
    recommended_topics/deploy/index.rst
@@ -72,25 +73,21 @@
 
    tutorials/config.md
    tutorials/data_flow.md
+   tutorials/rotated_detection.md
    tutorials/custom_installation.md
    tutorials/warning_notes.md
    tutorials/faq.md
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: 进阶教程
 
    advanced_guides/cross-library_application.md
 
-.. toctree::
-   :maxdepth: 1
-   :caption: 接口文档（英文）
-
-   api.rst
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: 模型仓库
 
    model_zoo.md
@@ -104,6 +101,11 @@
    notes/conventions.md
    notes/code_style.md
 
+.. toctree::
+   :maxdepth: 1
+   :caption: 接口文档（英文）
+
+   api.rst
 
 .. toctree::
    :caption: 语言切换

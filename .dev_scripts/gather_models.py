@@ -110,6 +110,7 @@ def get_dataset_name(config):
         CocoDataset='COCO',
         YOLOv5CocoDataset='COCO',
         CocoPanopticDataset='COCO',
+        YOLOv5DOTADataset='DOTA 1.0',
         DeepFashionDataset='Deep Fashion',
         LVISV05Dataset='LVIS v0.5',
         LVISV1Dataset='LVIS v1',

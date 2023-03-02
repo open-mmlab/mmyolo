@@ -13,6 +13,20 @@ Collections:
     Code:
       URL: https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/detectors/yolo_detector.py#L12
       Version: v0.1.1
+  - Name: Rotated_RTMDet
+    Metadata:
+      Training Data: DOTAv1.0
+      Training Techniques:
+        - AdamW
+        - Flat Cosine Annealing
+      Training Resources: 1x A100 GPUs
+      Architecture:
+        - CSPNeXt
+        - CSPNeXtPAFPN
+    README: configs/rtmdet/README.md
+    Code:
+      URL: https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/detectors/yolo_detector.py#L12
+      Version: v0.1.1
 
 Models:
   - Name: rtmdet_tiny_syncbn_fast_8xb32-300e_coco
@@ -28,6 +42,19 @@ Models:
           box AP: 41.0
     Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_tiny_syncbn_fast_8xb32-300e_coco/rtmdet_tiny_syncbn_fast_8xb32-300e_coco_20230102_140117-dbb1dc83.pth
 
+  - Name: kd_tiny_rtmdet_s_neck_300e_coco
+    In Collection: RTMDet
+    Config: configs/rtmdet/distillation/kd_tiny_rtmdet_s_neck_300e_coco.py
+    Metadata:
+      Training Memory (GB): 11.9
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 41.8
+    Weights: https://download.openmmlab.com/mmrazor/v1/rtmdet_distillation/kd_tiny_rtmdet_s_neck_300e_coco/kd_tiny_rtmdet_s_neck_300e_coco_20230213_104240-e1e4197c.pth
+
   - Name: rtmdet_s_syncbn_fast_8xb32-300e_coco
     In Collection: RTMDet
     Config: configs/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco.py
@@ -40,6 +67,19 @@ Models:
         Metrics:
           box AP: 44.6
     Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco/rtmdet_s_syncbn_fast_8xb32-300e_coco_20221230_182329-0a8c901a.pth
+
+  - Name: kd_s_rtmdet_m_neck_300e_coco
+    In Collection: RTMDet
+    Config: configs/rtmdet/distillation/kd_s_rtmdet_m_neck_300e_coco.py
+    Metadata:
+      Training Memory (GB): 16.3
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 45.7
+    Weights: https://download.openmmlab.com/mmrazor/v1/rtmdet_distillation/kd_s_rtmdet_m_neck_300e_coco/kd_s_rtmdet_m_neck_300e_coco_20230220_140647-446ff003.pth
 
   - Name: rtmdet_m_syncbn_fast_8xb32-300e_coco
     In Collection: RTMDet
@@ -54,6 +94,19 @@ Models:
           box AP: 49.3
     Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_m_syncbn_fast_8xb32-300e_coco/rtmdet_m_syncbn_fast_8xb32-300e_coco_20230102_135952-40af4fe8.pth
 
+  - Name: kd_m_rtmdet_l_neck_300e_coco
+    In Collection: RTMDet
+    Config: configs/rtmdet/distillation/kd_m_rtmdet_l_neck_300e_coco.py
+    Metadata:
+      Training Memory (GB): 29.0
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 50.2
+    Weights: https://download.openmmlab.com/mmrazor/v1/rtmdet_distillation/kd_m_rtmdet_l_neck_300e_coco/kd_m_rtmdet_l_neck_300e_coco_20230220_141313-b806f503.pth
+
   - Name: rtmdet_l_syncbn_fast_8xb32-300e_coco
     In Collection: RTMDet
     Config: configs/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco.py
@@ -67,6 +120,19 @@ Models:
           box AP: 51.4
     Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco/rtmdet_l_syncbn_fast_8xb32-300e_coco_20230102_135928-ee3abdc4.pth
 
+  - Name: kd_l_rtmdet_x_neck_300e_coco
+    In Collection: RTMDet
+    Config: configs/rtmdet/distillation/kd_l_rtmdet_x_neck_300e_coco.py
+    Metadata:
+      Training Memory (GB): 45.2
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 52.3
+    Weights: https://download.openmmlab.com/mmrazor/v1/rtmdet_distillation/kd_l_rtmdet_x_neck_300e_coco/kd_l_rtmdet_x_neck_300e_coco_20230220_141912-c9979722.pth
+
   - Name: rtmdet_x_syncbn_fast_8xb32-300e_coco
     In Collection: RTMDet
     Config: configs/rtmdet/rtmdet_x_syncbn_fast_8xb32-300e_coco.py
@@ -79,3 +145,71 @@ Models:
         Metrics:
           box AP: 52.8
     Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_x_syncbn_fast_8xb32-300e_coco/rtmdet_x_syncbn_fast_8xb32-300e_coco_20221231_100345-b85cd476.pth
+
+  - Name: rtmdet-r_tiny_fast_1xb8-36e_dota
+    In Collection: Rotated_RTMDet
+    Config: configs/rtmdet/rotated/rtmdet-r_tiny_fast_1xb8-36e_dota.py
+    Metadata:
+      Training Memory (GB): 12.7
+      Epochs: 36
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          mAP: 75.07
+    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rotated/rtmdet-r_tiny_fast_1xb8-36e_dota/rtmdet-r_tiny_fast_1xb8-36e_dota_20230228_162210-e8ccfb1c.pth
+
+  - Name: rtmdet-r_s_fast_1xb8-36e_dota
+    In Collection: Rotated_RTMDet
+    Config: configs/rtmdet/rotated/rtmdet-r_s_fast_1xb8-36e_dota.py
+    Metadata:
+      Training Memory (GB): 16.6
+      Epochs: 36
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          mAP: 77.33
+    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rotated/rtmdet-r_s_fast_1xb8-36e_dota/rtmdet-r_s_fast_1xb8-36e_dota_20230224_110307-3946a5aa.pth
+
+  - Name: rtmdet-r_m_syncbn_fast_2xb4-36e_dota
+    In Collection: Rotated_RTMDet
+    Config: configs/rtmdet/rotated/rtmdet-r_m_syncbn_fast_2xb4-36e_dota.py
+    Metadata:
+      Training Resources: 2x A100 GPUs
+      Training Memory (GB): 10.9
+      Epochs: 36
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          mAP: 78.43
+    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rotated/rtmdet-r_m_syncbn_fast_2xb4-36e_dota/rtmdet-r_m_syncbn_fast_2xb4-36e_dota_20230224_124237-29ae1619.pth
+
+  - Name: rtmdet-r_l_syncbn_fast_2xb4-36e_dota
+    In Collection: Rotated_RTMDet
+    Config: configs/rtmdet/rotated/rtmdet-r_l_syncbn_fast_2xb4-36e_dota.py
+    Metadata:
+      Training Resources: 2x A100 GPUs
+      Training Memory (GB): 16.1
+      Epochs: 36
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          mAP: 78.66
+    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rotated/rtmdet-r_l_syncbn_fast_2xb4-36e_dota/rtmdet-r_l_syncbn_fast_2xb4-36e_dota_20230224_124544-38bc5f08.pth
+
+  - Name: rtmdet-r_l_syncbn_fast_2xb4-aug-100e_dota
+    In Collection: Rotated_RTMDet
+    Config: configs/rtmdet/rotated/rtmdet-r_l_syncbn_fast_2xb4-aug-100e_dota.py
+    Metadata:
+      Training Resources: 2x A100 GPUs
+      Training Memory (GB): 19.6
+      Epochs: 100
+    Results:
+      - Task: Oriented Object Detection
+        Dataset: DOTAv1.0
+        Metrics:
+          mAP: 80.14
+    Weights: https://download.openmmlab.com/mmyolo/v0/rtmdet/rotated/rtmdet-r_l_syncbn_fast_2xb4-aug-100e_dota/rtmdet-r_l_syncbn_fast_2xb4-aug-100e_dota_20230224_124735-ed4ea966.pth

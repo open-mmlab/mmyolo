@@ -1,9 +1,26 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from typing import Sequence, Tuple
 
+import torch
 from mmcv.ops import batched_nms
 from mmdet.structures import DetDataSample, SampleList
 from mmengine.structures import InstanceData
+
+
+def shift_rbboxes(bboxes: torch.Tensor, offset: Sequence[int]):
+    """Shift rotated bboxes with offset.
+
+    Args:
+        bboxes (Tensor): The rotated bboxes need to be translated.
+            With shape (n, 5), which means (x, y, w, h, a).
+        offset (Sequence[int]): The translation offsets with shape of (2, ).
+    Returns:
+        Tensor: Shifted rotated bboxes.
+    """
+    offset_tensor = bboxes.new_tensor(offset)
+    shifted_bboxes = bboxes.clone()
+    shifted_bboxes[:, 0:2] = shifted_bboxes[:, 0:2] + offset_tensor
+    return shifted_bboxes
 
 
 def shift_predictions(det_data_samples: SampleList,
@@ -32,8 +49,18 @@ def shift_predictions(det_data_samples: SampleList,
     for det_data_sample, offset in zip(det_data_samples, offsets):
         pred_inst = det_data_sample.pred_instances.clone()
 
+        # Check bbox type
+        if pred_inst.bboxes.size(-1) == 4:
+            # Horizontal bboxes
+            shifted_bboxes = shift_bboxes(pred_inst.bboxes, offset)
+        elif pred_inst.bboxes.size(-1) == 5:
+            # Rotated bboxes
+            shifted_bboxes = shift_rbboxes(pred_inst.bboxes, offset)
+        else:
+            raise NotImplementedError
+
         # shift bboxes and masks
-        pred_inst.bboxes = shift_bboxes(pred_inst.bboxes, offset)
+        pred_inst.bboxes = shifted_bboxes
         if 'masks' in det_data_sample:
             pred_inst.masks = shift_masks(pred_inst.masks, offset,
                                           src_image_shape)
