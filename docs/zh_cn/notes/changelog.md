@@ -4,17 +4,31 @@
 
 ### 亮点
 
+1. 支持了 [RTMDet-R](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md#rotated-object-detection) 旋转框目标检测任务和算法
+2. [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) 支持使用 mask 优化目标检测结果，提升模型性能
+3. 支持调用 [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/razor/subnets/README.md) 中搜索出来的 NAS 子网络作为 backbone
+4. 支持调用 [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/distillation/README.md) 对 RTMDet 进行知识蒸馏
+5. [MMYOLO](<(https://mmyolo.readthedocs.io/zh_CN/dev/)>) 文档结构优化，内容全面升级
+6. 基于 RTMDet 训练超参提升精度和 YOLOX 训练速度
+7. 支持模型参数量、FLOPs 计算和提供 T4 设备上 GPU 延时数据，并更新了 Model Zoo
+8. 支持测试时增强 TTA
+9. 支持 RTMDet、YOLOv8 和 YOLOv7 assigner 可视化
+
 ### 新特性
 
-1. 美化 MMYOLO 中配置文件并增加更多注释 (#501, #506, #516, #529, #531, #539)
-2. 新增 YOLOv7 模型结构图 (#504)
-3. 新增如何指定特定 GPU 训练和推理文档 (#503)
-4. EasyDeploy 中支持 DeepStream (#485)
-5. 支持 fast 版本的 YOLOX (#518)
-6. 新增训练或者测试时检查 metainfo 是否全为小写 (#535)
-7. 支持调用 MMRazor 中搜索出来的 NAS 子网络作为 backbone (#453)
-8. 支持 RTMDet、YOLOv8 和 YOLOv7 assigner 可视化 (#528, #543, #558)
-9. 增加 Twitter Discord Medium Youtube 等链接 (#555)
+01. 美化 MMYOLO 中配置文件并增加更多注释 (#501, #506, #516, #529, #531, #539)
+02. 重构并优化中英文文档 (#568, #573, #579, #584, #587, #589, #596, #599, #600)
+03. 支持 fast 版本的 YOLOX (#518)
+04. EasyDeploy 中支持 DeepStream，并添加说明文档 (#485, #545, #571)
+05. 新增混淆矩阵绘制脚本 (#572)
+06. 新增单通道应用案例 (#460)
+07. 支持 auto registration (#597)
+08. Box CAM 支持 YOLOv7、YOLOv8 和 PPYOLOE (#601)
+09. 新增自动化生成 MM 系列 repo 注册信息和 tools 脚本 (#559)
+10. 新增 YOLOv7 模型结构图 (#504)
+11. 新增如何指定特定 GPU 训练和推理文档 (#503)
+12. 新增训练或者测试时检查 metainfo 是否全为小写 (#535)
+13. 增加 Twitter、Discord、Mediu 和 Youtube 等链接 (#555)
 
 ### Bug 修复
 
@@ -23,19 +37,21 @@
 3. 修复 YOLOv8 文档链接错误 (#517)
 4. 修复 EasyDeploy 中的 RTMDet Decoder 错误 (#519)
 5. 修复一些文档链接错误 (#537)
-
+6. 修复 RTMDet-Tiny 权重路径错误 (#580)
 
 ### 完善
 
 1. 完善更新 contributing.md
 2. 优化 DetDataPreprocessor 支使其支持多任务 (#511)
 3. 优化 gt_instances_preprocess 使其可以用于其他 YOLO 算法 (#532)
+4. 新增 yolov7-e6e 权重转换脚本 (#570)
 
 ### 贡献者
 
-@triple-Mu @hhaAndroid @Audrey528 @TianWen580 @yechenzhi @RangeKing @lyviva @Nioolek @PeterH0323 @tianleiSHI @aptsunny @satuoqaq @vansin 
+总共 21 位开发者参与了本次版本
 
-
+@triple-Mu, @isLinXu, @Audrey528, @TianWen580, @yechenzhi, @RangeKing, @lyviva, @Nioolek, @PeterH0323, @tianleiSHI, @aptsunny, @satuoqaq, @vansin, @xin-li-67, @VoyagerXvoyagerx,
+@landhill, @kitecats, @tang576225574, @HIT-cwh, @RangiLyu, @hhaAndroid
 
 ## v0.4.0 (18/1/2023)
 
