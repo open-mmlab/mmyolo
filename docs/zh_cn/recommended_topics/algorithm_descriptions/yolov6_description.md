@@ -63,7 +63,7 @@ YOLOv6 目标检测算法中使用的数据增强与 YOLOv5 基本一致，唯�
 
 关于每一个增强的详细解释，详情请看 [YOLOv5 数据增强模块](yolov5_description.md)
 
-另外，YOLOv6 参考了 YOLOX 的数据增强方式，分为 2 钟增强方法组，一开始和 YOLOv5 一致，但是在最后 15 个 epoch 的时候将 `Mosaic` 使用 `YOLOv5KeepRatioResize` + `LetterResize` 替代了，个人感觉是为了拟合真实情况。
+另外，YOLOv6 参考了 YOLOX 的数据增强方式，分为 2 种增强方法组，一开始和 YOLOv5 一致，但是在最后 15 个 epoch 的时候将 `Mosaic` 使用 `YOLOv5KeepRatioResize` + `LetterResize` 替代了，个人感觉是为了拟合真实情况。
 
 ### 1.2 网络结构
 
@@ -334,7 +334,7 @@ def varifocal_loss(pred, target, alpha=0.75, gamma=2.0, iou_weighted=True):
 ##### SIou Loss
 
 SIoU 损失函数是 [SIoU Loss: More Powerful Learning for Bounding Box Regression](https://arxiv.org/pdf/2205.12740.pdf)
-中提出的度量预测框与 `GT` 的匹配度的指标，由之前的`GIoU`, `CIoU`, `DIoU` 都没有考虑预测框向 `GT`
+中提出的度量预测框与 `GT` 的匹配度的指标，由于之前的`GIoU`, `CIoU`, `DIoU` 都没有考虑预测框向 `GT`
 框回归的角度，然而角度也确实是回归中一个重要的影响因素，因此提出了全新的`SIoU`。
 
 SIoU 损失主要由四个度量方面组成：
@@ -429,7 +429,7 @@ def siou_loss(pred, target, eps=1e-7):
 
 #### Object Loss
 
-在 YOLOv6 中，由于额外的置信度预测头可能与 `Aligned Head` 有所冲突，经实验验证也在不同大小的模型上都有掉点，
+在 YOLOv6 中，由于额外的置信度预测头可能与 `Aligned Head` 有所冲突，经实验验证在不同大小的模型上也都有掉点，
 所以最后选择弃用 `Objectness` 分支。
 
 ### 1.5 优化策略和训练过程
