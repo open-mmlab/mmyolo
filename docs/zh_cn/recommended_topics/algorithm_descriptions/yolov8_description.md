@@ -3,7 +3,7 @@
 ## 0 简介
 
 <div align=center >
-<img alt="YOLOv8-P5_structure" src="https://user-images.githubusercontent.com/27466624/211974251-8de633c8-090c-47c9-ba52-4941dc9e3a48.jpg"/>
+<img alt="YOLOv8-P5_structure" src="https://user-images.githubusercontent.com/27466624/222713096-565f8fbd-7962-458c-aef6-4ab38d0d6de3.jpg"/>
 图 1：YOLOv8-P5 模型结构
 </div>
 

@@ -8,11 +8,11 @@ Ultralytics YOLOv8, developed by Ultralytics, is a cutting-edge, state-of-the-ar
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/17425982/212812246-51dc029c-e892-455d-86b4-946b5d03957a.png"/>
-performance
+YOLOv8 performance
 </div>
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/27466624/211974251-8de633c8-090c-47c9-ba52-4941dc9e3a48.jpg"/>
+<img src="https://user-images.githubusercontent.com/27466624/222713096-565f8fbd-7962-458c-aef6-4ab38d0d6de3.jpg"/>
 YOLOv8-P5 model structure
 </div>
 
