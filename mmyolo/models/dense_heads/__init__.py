@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from .ppyoloe_head import PPYOLOEHead, PPYOLOEHeadModule
 from .rtmdet_head import RTMDetHead, RTMDetSepBNHeadModule
-from .rtmdet_ins_head import RTMDetInsSepBNHead, RTMDetInsSepBNHeadModule
+from .rtmdet_ins_head import RTMDetInsHead, RTMDetInsSepBNHeadModule
 from .rtmdet_rotated_head import (RTMDetRotatedHead,
                                   RTMDetRotatedSepBNHeadModule)
 from .yolov5_head import YOLOv5Head, YOLOv5HeadModule
@@ -15,6 +15,6 @@ __all__ = [
     'YOLOv6HeadModule', 'YOLOXHeadModule', 'RTMDetHead',
     'RTMDetSepBNHeadModule', 'YOLOv7Head', 'PPYOLOEHead', 'PPYOLOEHeadModule',
     'YOLOv7HeadModule', 'YOLOv7p6HeadModule', 'YOLOv8Head', 'YOLOv8HeadModule',
-    'RTMDetRotatedHead', 'RTMDetRotatedSepBNHeadModule', 'RTMDetInsSepBNHead',
+    'RTMDetRotatedHead', 'RTMDetRotatedSepBNHeadModule', 'RTMDetInsHead',
     'RTMDetInsSepBNHeadModule'
 ]

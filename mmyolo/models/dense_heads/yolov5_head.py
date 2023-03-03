@@ -460,8 +460,10 @@ class YOLOv5Head(BaseDenseHead):
         else:
             outs = self(x)
             # Fast version
-            loss_inputs = outs + (batch_data_samples['bboxes_labels'],
-                                  batch_data_samples['img_metas'])
+            loss_inputs = outs + (batch_data_samples['bboxes_labels'], )
+            if 'masks' in batch_data_samples:
+                loss_inputs += (batch_data_samples['masks'], )
+            loss_inputs += (batch_data_samples['img_metas'], )
             losses = self.loss_by_feat(*loss_inputs)
 
         return losses
