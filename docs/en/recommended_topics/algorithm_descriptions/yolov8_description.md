@@ -3,7 +3,7 @@
 ## 0 Introduction
 
 <div align=center >
-<img alt="YOLOv8-P5_structure" src="https://user-images.githubusercontent.com/27466624/222713096-565f8fbd-7962-458c-aef6-4ab38d0d6de3.jpg"/>
+<img alt="YOLOv8-P5_structure" src="https://user-images.githubusercontent.com/27466624/222869864-1955f054-aa6d-4a80-aed3-92f30af28849.jpg"/>
 Figure 1：YOLOv8-P5
 </div>
 
