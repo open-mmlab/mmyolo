@@ -10,6 +10,7 @@ from mmengine.runner import Runner
 
 from mmyolo.registry import RUNNERS
 from mmyolo.utils import is_metainfo_lower
+from mmyolo.utils.misc import convert_to_val_pipeline
 
 
 # TODO: support fuse_conv_bn
@@ -35,6 +36,13 @@ def parse_args():
         '--tta',
         action='store_true',
         help='Whether to use test time augmentation')
+    parser.add_argument(
+        '--phase',
+        default='test',
+        type=str,
+        choices=['train', 'test', 'val'],
+        help='phase of dataset to test, accept "train" "test" and "val". '
+        'Defaults to "test".')
     parser.add_argument(
         '--show', action='store_true', help='show prediction results')
     parser.add_argument(
@@ -109,6 +117,23 @@ def main():
     # Determine whether the custom metainfo fields are all lowercase
     is_metainfo_lower(cfg)
 
+    #
+    if args.phase == 'train':
+        # If test on train phase, it will use val pipline
+        val_data_cfg = cfg.val_dataloader.dataset
+        while 'dataset' in val_data_cfg:
+            val_data_cfg = val_data_cfg['dataset']
+        val_pipeline = val_data_cfg.pipeline
+        train_dataset = cfg.train_dataloader.dataset
+        test_data_cfg = convert_to_val_pipeline(train_dataset, val_pipeline)
+        cfg.test_dataloader.dataset = test_data_cfg
+        # TODO Evaluator, COCO json?
+    elif args.phase == 'val':
+        test_data_cfg = cfg.val_dataloader.dataset
+        cfg.test_dataloader.dataset = cfg.val_dataloader.dataset
+    elif args.phase == 'test':
+        test_data_cfg = cfg.test_dataloader.dataset
+
     if args.tta:
         assert 'tta_model' in cfg, 'Cannot find ``tta_model`` in config.' \
                                    " Can't use tta !"
@@ -116,7 +141,7 @@ def main():
                                       "in config. Can't use tta !"
 
         cfg.model = ConfigDict(**cfg.tta_model, module=cfg.model)
-        test_data_cfg = cfg.test_dataloader.dataset
+        # test_data_cfg = cfg.test_dataloader.dataset
         while 'dataset' in test_data_cfg:
             test_data_cfg = test_data_cfg['dataset']
 

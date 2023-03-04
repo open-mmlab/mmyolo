@@ -1,9 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os
 import urllib
+from copy import deepcopy
+from typing import List, Union
 
 import numpy as np
 import torch
+from mmengine.config import Config, ConfigDict
 from mmengine.utils import scandir
 from prettytable import PrettyTable
 
@@ -55,7 +58,7 @@ def auto_arrange_images(image_list: list, image_column: int = 2) -> np.ndarray:
     return image_show
 
 
-def get_file_list(source_root: str) -> [list, dict]:
+def get_file_list(source_root: str) -> Union[list, dict]:
     """Get file list.
 
     Args:
@@ -126,8 +129,50 @@ def is_metainfo_lower(cfg):
             all_keys = dataloader_cfg['metainfo'].keys()
             all_is_lower = all([str(k).islower() for k in all_keys])
             assert all_is_lower, f'The keys in dataset metainfo must be all lowercase, but got {all_keys}. ' \
-                                 f'Please refer to https://github.com/open-mmlab/mmyolo/blob/e62c8c4593/configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py#L8' # noqa
+                                 f'Please refer to https://github.com/open-mmlab/mmyolo/blob/e62c8c4593/configs/yolov5/yolov5_s-v61_syncbn_fast_1xb4-300e_balloon.py#L8'  # noqa
 
     judge_keys(cfg.get('train_dataloader', {}))
     judge_keys(cfg.get('val_dataloader', {}))
     judge_keys(cfg.get('test_dataloader', {}))
+
+
+def get_cfg_class_name(cfg_type: str):
+    return cfg_type.split('.')[-1]
+
+
+def convert_to_val_pipeline(data_cfg: ConfigDict,
+                            val_pipeline: List) -> ConfigDict:
+
+    if get_cfg_class_name(data_cfg.get('type')) in [
+            'MultiImageMixDataset', 'ClassBalancedDataset'
+    ]:
+        # While evaluation, there shouldn't use multi image or oversample.
+        data_cfg = deepcopy(data_cfg.get('dataset'))
+        data_cfg['pipeline'] = val_pipeline
+    elif 'dataset' in data_cfg:
+        data = deepcopy(data_cfg.get('dataset'))
+        if isinstance(data, list):
+            # concat dataset
+            data_cfg['dataset'] = [
+                convert_to_val_pipeline(d, val_pipeline) for d in data
+            ]
+        else:
+            # Deal with other dataset wrapper
+            data_cfg['dataset'] = convert_to_val_pipeline(data, val_pipeline)
+    else:
+        # Regular dataset
+        data_cfg['pipeline'] = val_pipeline
+    data_cfg['test_mode'] = True
+    return data_cfg
+
+
+if __name__ == '__main__':
+    cfg = dict(
+        type='SpWrapper',
+        dataset=dict(
+            type='ClassBalancedDataset',
+            dataset=dict(type='A', pipeline=['a', 'b'])))
+    val_pp = ['c', 'd']
+    cfg = Config(cfg)
+    aa = convert_to_val_pipeline(cfg, val_pp)
+    print(aa.pretty_text)
