@@ -283,6 +283,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 <summary><b>Supported Algorithms</b></summary>
 
 - [x] [YOLOv5](configs/yolov5)
+- [ ] [YOLOv5u](configs/yolov5/yolov5u) (Inference only)
 - [x] [YOLOX](configs/yolox)
 - [x] [RTMDet](configs/rtmdet)
 - [x] [RTMDet-Rotated](configs/rtmdet)
