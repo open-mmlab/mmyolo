@@ -28,7 +28,7 @@ convert_dict_p5 = {
 
 
 def convert(src, dst):
-    """Convert keys in pretrained YOLOv5 models to mmyolo style."""
+    """Convert keys in pretrained YOLOv5u models to mmyolo style."""
     convert_dict = convert_dict_p5
 
     print('Converting P5 model')
@@ -37,7 +37,7 @@ def convert(src, dst):
         blobs = yolov5_model.state_dict()
     except ModuleNotFoundError:
         raise RuntimeError(
-            'This script must be placed under the ultralytics/yolov5 repo,'
+            'This script must be placed under the ultralytics repo,'
             ' because loading the official pretrained model need'
             ' `model.py` to build model.')
     state_dict = OrderedDict()
@@ -74,7 +74,7 @@ def convert(src, dst):
     torch.save(checkpoint, dst)
 
 
-# Note: This script must be placed under the yolov8 repo to run.
+# Note: This script must be placed under the ultralytics repo to run.
 def main():
     parser = argparse.ArgumentParser(description='Convert model keys')
     parser.add_argument(
