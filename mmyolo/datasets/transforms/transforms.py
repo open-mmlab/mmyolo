@@ -264,7 +264,7 @@ class LetterResize(MMDET_Resize):
             results['pad_param_origin'] = results['pad_param'] * \
                                           np.repeat(ratio, 2)
 
-        if self.half_pad_param:
+        if 'gt_masks' in results:
             results['pad_param'] = np.array(
                 [padding_h / 2, padding_h / 2, padding_w / 2, padding_w / 2],
                 dtype=np.float32)
