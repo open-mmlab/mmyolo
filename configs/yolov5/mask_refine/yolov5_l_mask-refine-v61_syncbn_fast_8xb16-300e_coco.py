@@ -54,6 +54,7 @@ train_pipeline = [
         type='YOLOv5MixUp',
         prob=mixup_prob,
         pre_transform=[*pre_transform, *mosaic_affine_pipeline]),
+    dict(type='RemoveDataElement', keys=['gt_masks']),
     dict(
         type='mmdet.Albu',
         transforms=albu_train_transforms,
