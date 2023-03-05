@@ -2,6 +2,7 @@
 import argparse
 import os
 import os.path as osp
+import warnings
 
 from mmdet.engine.hooks.utils import trigger_visualization_hook
 from mmengine.config import Config, ConfigDict, DictAction
@@ -127,10 +128,16 @@ def main():
         train_dataset = cfg.train_dataloader.dataset
         test_data_cfg = convert_to_val_pipeline(train_dataset, val_pipeline)
         cfg.test_dataloader.dataset = test_data_cfg
-        # TODO Evaluator, COCO json?
+        evaluator_cfg = cfg.val_evaluator
+        if evaluator_cfg.get('ann_file') is not None:
+            evaluator_cfg.pop('ann_file')
+            warnings.warn('When use train phase for test, `ann_file` will '
+                          'be removed to use loaded annotation directly.')
+        cfg.test_evaluator = cfg.val_evaluator
     elif args.phase == 'val':
         test_data_cfg = cfg.val_dataloader.dataset
         cfg.test_dataloader.dataset = cfg.val_dataloader.dataset
+        cfg.test_evaluator = cfg.val_evaluator
     elif args.phase == 'test':
         test_data_cfg = cfg.test_dataloader.dataset
 
