@@ -225,6 +225,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [恢复训练](docs/zh_cn/common_usage/resume_training.md)
 - [开启和关闭 SyncBatchNorm](docs/zh_cn/common_usage/syncbn.md)
 - [开启混合精度训练](docs/zh_cn/common_usage/amp_training.md)
+- [多尺度训练和测试](docs/en/common_usage/ms_training_testing.md)
 - [测试时增强相关说明](docs/zh_cn/common_usage/tta.md)
 - [给主干网络增加插件](docs/zh_cn/common_usage/plugins.md)
 - [冻结指定网络层权重](docs/zh_cn/common_usage/common_usage/freeze_layers.md)
