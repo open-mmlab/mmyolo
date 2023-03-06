@@ -228,7 +228,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [多尺度训练和测试](docs/zh_cn/common_usage/ms_training_testing.md)
 - [测试时增强相关说明](docs/zh_cn/common_usage/tta.md)
 - [给主干网络增加插件](docs/zh_cn/common_usage/plugins.md)
-- [冻结指定网络层权重](docs/zh_cn/common_usage/common_usage/freeze_layers.md)
+- [冻结指定网络层权重](docs/zh_cn/common_usage/freeze_layers.md)
 - [输出模型预测结果](docs/zh_cn/common_usage/output_predictions.md)
 - [设置随机种子](docs/zh_cn/common_usage/set_random_seed.md)
 - [算法组合替换教程](docs/zh_cn/common_usage/module_combination.md)
