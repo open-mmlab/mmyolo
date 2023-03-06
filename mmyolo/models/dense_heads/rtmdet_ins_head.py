@@ -785,11 +785,11 @@ class RTMDetInsHead(RTMDetHead):
         gt_labels = gt_info[:, :, :1]
         gt_bboxes = gt_info[:, :, 1:]  # xyxy
         pad_bbox_flag = (gt_bboxes.sum(-1, keepdim=True) > 0)
-        # downsample gt masks
-        batch_gt_masks = batch_gt_masks[:, self.mask_loss_stride //
-                                        2::self.mask_loss_stride,
-                                        self.mask_loss_stride //
-                                        2::self.mask_loss_stride]
+        # # downsample gt masks
+        # batch_gt_masks = batch_gt_masks[:, self.mask_loss_stride //
+        #                                 2::self.mask_loss_stride,
+        #                                 self.mask_loss_stride //
+        #                                 2::self.mask_loss_stride]
 
         device = cls_scores[0].device
 

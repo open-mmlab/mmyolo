@@ -66,6 +66,7 @@ train_pipeline = [
         type='YOLOv5MixUp',
         use_cached=True,
         max_cached_images=mixup_max_cached_images),
+    dict(type='Mask2Tensor', downsample_stride=4),
     dict(type='mmdet.PackDetInputs')
 ]
 
