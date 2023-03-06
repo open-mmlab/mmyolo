@@ -52,7 +52,8 @@ mosaic_affine_pipeline = [
         border=(-img_scale[0] // 2, -img_scale[1] // 2),
         border_val=(114, 114, 114),
         min_area_ratio=_base_.min_area_ratio,
-        use_mask_refine=_base_.use_mask2refine)
+        use_mask_refine=_base_.use_mask2refine),
+    dict(type='RemoveDataElement', keys=['gt_masks'])
 ]
 
 # enable mixup
@@ -62,7 +63,6 @@ train_pipeline = [
         type='YOLOv5MixUp',
         prob=mixup_prob,
         pre_transform=[*pre_transform, *mosaic_affine_pipeline]),
-    dict(type='RemoveDataElement', keys=['gt_masks']),
     dict(
         type='mmdet.Albu',
         transforms=albu_train_transforms,
