@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
 import math
-from typing import List, Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple
 
 import numpy as np
 import torch
@@ -14,90 +14,72 @@ from mmdet.structures.bbox import get_box_tensor, get_box_wh, scale_boxes
 from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
                          OptMultiConfig)
 from mmengine import ConfigDict
-from mmengine.dist import get_dist_info
-from mmengine.model import BaseModule
 from mmengine.structures import InstanceData
 from torch import Tensor
 
 from mmyolo.registry import MODELS, TASK_UTILS
-from ..utils import gt_instances_preprocess, make_divisible
+from ..utils import make_divisible
 from . import YOLOv8Head, YOLOv8HeadModule
-from .yolov5_head import YOLOv5Head
-
-# class Segment(Detect):
-#     # YOLOv8 Segment head for segmentation models
-#     def __init__(self, nc=80, nm=32, npr=256, ch=()):
-#         super().__init__(nc, ch)
-#         self.nm = nm  # number of masks
-#         self.npr = npr  # number of protos
-#         self.proto = Proto(ch[0], self.npr, self.nm)  # protos
-#         self.detect = Detect.forward
-#
-#         c4 = max(ch[0] // 4, self.nm)
-#         self.cv4 = nn.ModuleList(nn.Sequential(Conv(x, c4, 3), Conv(c4, c4, 3), nn.Conv2d(c4, self.nm, 1)) for x in ch)
-#
-#     def forward(self, x):
-#         p = self.proto(x[0])  # mask protos
-#         bs = p.shape[0]  # batch size
-#
-#         mc = torch.cat([self.cv4[i](x[i]).view(bs, self.nm, -1) for i in range(self.nl)], 2)  # mask coefficients
-#         x = self.detect(self, x)
-#         if self.training:
-#             return x, mc, p
-#         return (torch.cat([x, mc], 1), p) if self.export else (torch.cat([x[0], mc], 1), (x[1], mc, p))
 
 
 class Proto(nn.Module):
-    # YOLOv8 mask Proto module for segmentation models
+    """Mask Proto module for segmentation models of YOLOv8.
+
+    Args:
+        in_channels (int):
+        middle_channels (int):
+        masks_channels (int):
+        norm_cfg (:obj:`ConfigDict` or dict): Config dict for normalization
+            layer. Defaults to ``dict(type='BN', momentum=0.03, eps=0.001)``.
+        act_cfg (:obj:`ConfigDict` or dict): Config dict for activation layer.
+            Default: dict(type='SiLU', inplace=True).
+    """
+
     def __init__(self,
-                 c1,
-                 c_=256,
-                 c2=32,
-                 act_cfg=None,
-                 norm_cfg=None):  # ch_in, number of protos, number of masks
+                 in_channels: int,
+                 middle_channels: int = 256,
+                 masks_channels: int = 32,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True)):
         super().__init__()
-        self.cv1 = ConvModule(
-            in_channels=c1,
-            out_channels=c_,
+        self.conv1 = ConvModule(
+            in_channels=in_channels,
+            out_channels=middle_channels,
             kernel_size=3,
             padding=1,
             act_cfg=act_cfg,
             norm_cfg=norm_cfg)
         self.upsample = nn.ConvTranspose2d(
-            c_, c_, 2, 2, 0,
-            bias=True)  # nn.Upsample(scale_factor=2, mode='nearest')
-        self.cv2 = ConvModule(
-            in_channels=c_,
-            out_channels=c_,
+            middle_channels, middle_channels, 2, 2, 0, bias=True)
+        self.conv2 = ConvModule(
+            in_channels=middle_channels,
+            out_channels=middle_channels,
             kernel_size=3,
             padding=1,
             act_cfg=act_cfg,
             norm_cfg=norm_cfg)
-        self.cv3 = ConvModule(
-            in_channels=c_,
-            out_channels=c2,
+        self.conv3 = ConvModule(
+            in_channels=middle_channels,
+            out_channels=masks_channels,
             kernel_size=1,
             padding=0,
             act_cfg=act_cfg,
             norm_cfg=norm_cfg)
 
     def forward(self, x):
-        return self.cv3(self.cv2(self.upsample(self.cv1(x))))
+        return self.conv3(self.conv2(self.upsample(self.conv1(x))))
 
 
 @MODELS.register_module()
 class YOLOv8InsHeadModule(YOLOv8HeadModule):
 
-    def __init__(
-            self,
-            *args,
-            #####
-            num_masks=32,
-            num_protos=256,
-            #####
-            widen_factor=1.0,
-            **kwargs):
-        ###
+    def __init__(self,
+                 *args,
+                 widen_factor: float = 1.0,
+                 num_masks: int = 32,
+                 num_protos: int = 256,
+                 **kwargs):
         self.num_masks = num_masks
         self.num_protos = make_divisible(num_protos, widen_factor)
 
@@ -116,38 +98,40 @@ class YOLOv8InsHeadModule(YOLOv8HeadModule):
     def _init_layers(self):
         """initialize conv layers in YOLOv8 head."""
         # Init decouple head
-        # 原来的层不用动
         super()._init_layers()
-        self.proto = Proto(
+
+        # Init proto preds net and mask coefficients preds net
+        self.proto_preds = Proto(
             self.in_channels[0],
             self.num_protos,
             self.num_masks,
             act_cfg=self.act_cfg,
             norm_cfg=self.norm_cfg)
-        c4 = max(self.in_channels[0] // 4, self.num_masks)
-        self.cv4 = nn.ModuleList(
+
+        middle_channels = max(self.in_channels[0] // 4, self.num_masks)
+        self.mask_coe_preds = nn.ModuleList(  # mask coefficients preds
             nn.Sequential(
                 ConvModule(
-                    in_channels=x,
-                    out_channels=c4,
+                    in_channels=in_c,
+                    out_channels=middle_channels,
                     kernel_size=3,
                     padding=1,
                     act_cfg=self.act_cfg,
                     norm_cfg=self.norm_cfg),
                 ConvModule(
-                    in_channels=c4,
-                    out_channels=c4,
+                    in_channels=middle_channels,
+                    out_channels=middle_channels,
                     kernel_size=3,
                     padding=1,
                     act_cfg=self.act_cfg,
                     norm_cfg=self.norm_cfg),
                 ConvModule(
-                    in_channels=c4,
+                    in_channels=middle_channels,
                     out_channels=self.num_masks,
                     kernel_size=1,
                     padding=0,
                     act_cfg=None,
-                    norm_cfg=None)) for x in self.in_channels)
+                    norm_cfg=None)) for in_c in self.in_channels)
 
     def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         """Forward features from the upstream network.
@@ -161,7 +145,7 @@ class YOLOv8InsHeadModule(YOLOv8HeadModule):
         """
         assert len(x) == self.num_levels
 
-        p = self.proto(x[0])
+        p = self.proto_preds(x[0])
 
         return *multi_apply(self.forward_single, x, self.cls_preds,
                             self.reg_preds, self.cv4), p
@@ -171,7 +155,9 @@ class YOLOv8InsHeadModule(YOLOv8HeadModule):
                        mask_pred: nn.ModuleList) -> Tuple:
         """Forward feature of a single scale level."""
 
+        # detect prediction
         det_output = super().forward_single(x, cls_pred, reg_pred)
+        # mask prediction
         mc = mask_pred(x)
         return *det_output, mc
 
