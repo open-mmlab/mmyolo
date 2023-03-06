@@ -44,7 +44,7 @@ In the official YOLOv5 code, the `random_perspective` data augmentation in COCO 
 4. We use 8x A100 for training, and the single-GPU batch size is 16. This is different from the official code.
 5. The performance is unstable and may fluctuate by about 0.4 mAP and the highest performance weight in `COCO` training in `YOLOv5` may not be the last epoch.
 6. `TTA` means that Test Time Augmentation. It's perform 3 multi-scaling transformations on the image, followed by 2 flipping transformations (flipping and not flipping). You only need to specify `--tta` when testing to enable.  see [TTA](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/common_usage/tta.md) for details.
-7. `YOLOv5u` models use the same loss functions and split Detect head as `YOLOv8` models for improved performance.
+7. `YOLOv5u` models use the same loss functions and split Detect head as `YOLOv8` models for improved performance, but only requires 300 epochs.
 
 ### VOC
 
