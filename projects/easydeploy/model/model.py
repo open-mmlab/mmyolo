@@ -11,32 +11,34 @@ from torch import Tensor
 from mmyolo.models import RepVGGBlock
 from mmyolo.models.dense_heads import (RTMDetHead, YOLOv5Head, YOLOv7Head,
                                        YOLOXHead)
-from mmyolo.models.layers import CSPLayerWithTwoConv
-from ..backbone import DeployC2f, DeployFocus, GConvFocus, NcnnFocus
+from ..backbone import DeployFocus, GConvFocus, NcnnFocus
 from ..bbox_code import (rtmdet_bbox_decoder, yolov5_bbox_decoder,
                          yolox_bbox_decoder)
 from ..nms import batched_nms, efficient_nms, onnx_nms
+from .backend import MMYoloBackend
 
 
 class DeployModel(nn.Module):
+    transpose = False
 
     def __init__(self,
                  baseModel: nn.Module,
+                 backend: MMYoloBackend,
                  postprocess_cfg: Optional[ConfigDict] = None):
         super().__init__()
         self.baseModel = baseModel
+        self.baseHead = baseModel.bbox_head
+        self.backend = backend
         if postprocess_cfg is None:
             self.with_postprocess = False
         else:
             self.with_postprocess = True
-            self.baseHead = baseModel.bbox_head
             self.__init_sub_attributes()
             self.detector_type = type(self.baseHead)
             self.pre_top_k = postprocess_cfg.get('pre_top_k', 1000)
             self.keep_top_k = postprocess_cfg.get('keep_top_k', 100)
             self.iou_threshold = postprocess_cfg.get('iou_threshold', 0.65)
             self.score_threshold = postprocess_cfg.get('score_threshold', 0.25)
-            self.backend = postprocess_cfg.get('backend', 1)
         self.__switch_deploy()
 
     def __init_sub_attributes(self):
@@ -47,21 +49,25 @@ class DeployModel(nn.Module):
         self.num_classes = self.baseHead.num_classes
 
     def __switch_deploy(self):
+        if self.backend in (MMYoloBackend.HORIZONX3, MMYoloBackend.NCNN,
+                            MMYoloBackend.TORCHSCRIPT):
+            self.transpose = True
         for layer in self.baseModel.modules():
             if isinstance(layer, RepVGGBlock):
                 layer.switch_to_deploy()
             elif isinstance(layer, Focus):
-                # onnxruntime tensorrt8 tensorrt7
-                if self.backend in (1, 2, 3):
+                # onnxruntime openvino tensorrt8 tensorrt7
+                if self.backend in (MMYoloBackend.ONNXRUNTIME,
+                                    MMYoloBackend.OPENVINO,
+                                    MMYoloBackend.TENSORRT8,
+                                    MMYoloBackend.TENSORRT7):
                     self.baseModel.backbone.stem = DeployFocus(layer)
                 # ncnn
-                elif self.backend == 4:
+                elif self.backend == MMYoloBackend.NCNN:
                     self.baseModel.backbone.stem = NcnnFocus(layer)
                 # switch focus to group conv
                 else:
                     self.baseModel.backbone.stem = GConvFocus(layer)
-            elif isinstance(layer, CSPLayerWithTwoConv):
-                setattr(layer, '__class__', DeployC2f)
 
     def pred_by_feat(self,
                      cls_scores: List[Tensor],
@@ -129,11 +135,11 @@ class DeployModel(nn.Module):
                         self.score_threshold, self.pre_top_k, self.keep_top_k)
 
     def select_nms(self):
-        if self.backend == 1:
+        if self.backend in (MMYoloBackend.ONNXRUNTIME, MMYoloBackend.OPENVINO):
             nms_func = onnx_nms
-        elif self.backend == 2:
+        elif self.backend == MMYoloBackend.TENSORRT8:
             nms_func = efficient_nms
-        elif self.backend == 3:
+        elif self.backend == MMYoloBackend.TENSORRT7:
             nms_func = batched_nms
         else:
             raise NotImplementedError
@@ -147,4 +153,15 @@ class DeployModel(nn.Module):
         if self.with_postprocess:
             return self.pred_by_feat(*neck_outputs)
         else:
-            return neck_outputs
+            outputs = []
+            if self.transpose:
+                for feats in zip(*neck_outputs):
+                    if self.backend in (MMYoloBackend.NCNN,
+                                        MMYoloBackend.TORCHSCRIPT):
+                        outputs.append(
+                            torch.cat(
+                                [feat.permute(0, 2, 3, 1) for feat in feats],
+                                -1))
+                    else:
+                        outputs.append(torch.cat(feats, 1).permute(0, 2, 3, 1))
+            return tuple(outputs)

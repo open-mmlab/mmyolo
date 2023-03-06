@@ -7,9 +7,10 @@ import onnx
 import torch
 from mmdet.apis import init_detector
 from mmengine.config import ConfigDict
+from mmengine.logging import print_log
 from mmengine.utils.path import mkdir_or_exist
 
-from projects.easydeploy.model import DeployModel
+from projects.easydeploy.model import DeployModel, MMYoloBackend
 
 warnings.filterwarnings(action='ignore', category=torch.jit.TracerWarning)
 warnings.filterwarnings(action='ignore', category=torch.jit.ScriptWarning)
@@ -42,7 +43,10 @@ def parse_args():
     parser.add_argument(
         '--opset', type=int, default=11, help='ONNX opset version')
     parser.add_argument(
-        '--backend', type=int, default=1, help='Backend for export onnx')
+        '--backend',
+        type=str,
+        default='onnxruntime',
+        help='Backend for export onnx')
     parser.add_argument(
         '--pre-topk',
         type=int,
@@ -77,7 +81,15 @@ def build_model_from_cfg(config_path, checkpoint_path, device):
 def main():
     args = parse_args()
     mkdir_or_exist(args.work_dir)
-
+    backend = MMYoloBackend(args.backend.lower())
+    if backend in (MMYoloBackend.ONNXRUNTIME, MMYoloBackend.OPENVINO,
+                   MMYoloBackend.TENSORRT8, MMYoloBackend.TENSORRT7):
+        if not args.model_only:
+            print_log('Export ONNX with bbox decoder and NMS ...')
+    else:
+        args.model_only = True
+        print_log(f'Can not export postprocess for {args.backend.lower()}.\n'
+                  f'Set "args.model_only=True" default.')
     if args.model_only:
         postprocess_cfg = None
         output_names = None
@@ -86,13 +98,12 @@ def main():
             pre_top_k=args.pre_topk,
             keep_top_k=args.keep_topk,
             iou_threshold=args.iou_threshold,
-            score_threshold=args.score_threshold,
-            backend=args.backend)
+            score_threshold=args.score_threshold)
         output_names = ['num_dets', 'boxes', 'scores', 'labels']
     baseModel = build_model_from_cfg(args.config, args.checkpoint, args.device)
 
     deploy_model = DeployModel(
-        baseModel=baseModel, postprocess_cfg=postprocess_cfg)
+        baseModel=baseModel, backend=backend, postprocess_cfg=postprocess_cfg)
     deploy_model.eval()
 
     fake_input = torch.randn(args.batch_size, 3,
@@ -100,7 +111,9 @@ def main():
     # dry run
     deploy_model(fake_input)
 
-    save_onnx_path = os.path.join(args.work_dir, 'end2end.onnx')
+    save_onnx_path = os.path.join(
+        args.work_dir,
+        os.path.basename(args.checkpoint).replace('pth', 'onnx'))
     # export onnx
     with BytesIO() as f:
         torch.onnx.export(
@@ -115,7 +128,7 @@ def main():
         onnx.checker.check_model(onnx_model)
 
         # Fix tensorrt onnx output shape, just for view
-        if args.backend in (2, 3):
+        if backend in (MMYoloBackend.TENSORRT8, MMYoloBackend.TENSORRT8):
             shapes = [
                 args.batch_size, 1, args.batch_size, args.keep_topk, 4,
                 args.batch_size, args.keep_topk, args.batch_size,
@@ -130,9 +143,9 @@ def main():
             onnx_model, check = onnxsim.simplify(onnx_model)
             assert check, 'assert check failed'
         except Exception as e:
-            print(f'Simplify failure: {e}')
+            print_log(f'Simplify failure: {e}')
     onnx.save(onnx_model, save_onnx_path)
-    print(f'ONNX export success, save into {save_onnx_path}')
+    print_log(f'ONNX export success, save into {save_onnx_path}')
 
 
 if __name__ == '__main__':
