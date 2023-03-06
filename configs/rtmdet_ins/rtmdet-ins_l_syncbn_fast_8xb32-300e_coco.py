@@ -2,7 +2,7 @@ _base_ = ['../_base_/default_runtime.py']
 
 # ========================Frequently modified parameters======================
 # -----data related-----
-data_root = 'data/coco100/'
+data_root = 'data/coco/'
 # Path of train annotation file
 train_ann_file = 'annotations/instances_train2017.json'
 train_data_prefix = 'train2017/'  # Prefix of train image path
@@ -190,6 +190,7 @@ train_pipeline = [
         type='YOLOv5MixUp',
         use_cached=True,
         max_cached_images=mixup_max_cached_images),
+    dict(type='Mask2Tensor', downsample_stride=4),
     dict(type='mmdet.PackDetInputs')
 ]
 
