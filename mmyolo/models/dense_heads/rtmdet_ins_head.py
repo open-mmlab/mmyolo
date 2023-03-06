@@ -22,6 +22,7 @@ from torch import Tensor
 from mmyolo.registry import MODELS
 from ..utils import gt_instances_preprocess
 from .rtmdet_head import RTMDetHead, RTMDetSepBNHeadModule
+from mmengine.utils.dl_utils import TimeCounter
 
 
 class MaskFeatModule(BaseModule):
@@ -214,7 +215,8 @@ class RTMDetInsSepBNHeadModule(RTMDetSepBNHeadModule):
                 for i in range(self.stacked_convs):
                     self.cls_convs[n][i].conv = self.cls_convs[0][i].conv
                     self.reg_convs[n][i].conv = self.reg_convs[0][i].conv
-                    self.kernel_convs[n][i].conv = self.kernel_convs[0][i].conv
+                    # TODO: verify whether it is correct
+                    # self.kernel_convs[n][i].conv = self.kernel_convs[0][i].conv
 
         self.mask_head = MaskFeatModule(
             in_channels=self.in_channels,
@@ -718,6 +720,29 @@ class RTMDetInsHead(RTMDetHead):
                 bias_splits[i] = bias_splits[i].reshape(n_inst)
 
         return weight_splits, bias_splits
+    
+    def parse_dynamic_params2(self, flatten_kernels: Tensor) -> tuple:
+        """split kernel head prediction to conv weight and bias."""
+        n_inst = flatten_kernels.size(0)
+        n_layers = len(self.head_module.weight_nums)
+        params_splits = list(
+            torch.split_with_sizes(
+                flatten_kernels,
+                self.head_module.weight_nums + self.head_module.bias_nums,
+                dim=1))
+        weight_splits = params_splits[:n_layers]
+        bias_splits = params_splits[n_layers:]
+        for i in range(n_layers):
+            if i < n_layers - 1:
+                weight_splits[i] = weight_splits[i].reshape(
+                    n_inst, self.head_module.dyconv_channels, -1)
+                bias_splits[i] = bias_splits[i].reshape(
+                    n_inst, self.head_module.dyconv_channels)
+            else:
+                weight_splits[i] = weight_splits[i].reshape(n_inst, 1, -1)
+                bias_splits[i] = bias_splits[i].reshape(n_inst, 1)
+
+        return weight_splits, bias_splits
 
     def loss_by_feat(
             self,
@@ -832,7 +857,7 @@ class RTMDetInsHead(RTMDetHead):
         # --------mask loss--------
         num_pos = len(pos_inds)
         num_pos = reduce_mean(mask_feats.new_tensor([num_pos
-                                                     ])).clamp_(min=1).item()
+                                                    ])).clamp_(min=1).item()
         if len(pos_inds) > 0:
 
             pos_kernels = kernels[pos_inds]
@@ -852,7 +877,7 @@ class RTMDetInsHead(RTMDetHead):
             mask_targets = batch_gt_masks[matched_gt_inds]
             pos_mask_feats = mask_feats[batch_index]
             pos_priors = self.flatten_priors_train.repeat(num_imgs,
-                                                          1)[pos_inds]
+                                                        1)[pos_inds]
 
             h, w = pos_mask_feats.size()[-2:]
             coord = self.prior_generator.single_level_grid_priors(
@@ -864,24 +889,25 @@ class RTMDetInsHead(RTMDetHead):
             relative_coord = (points - coord).permute(0, 2, 1) / (
                 strides[..., 0].reshape(-1, 1, 1) * 8)
             relative_coord = relative_coord.reshape(num_inst, 2, h, w)
-
             pos_mask_feats = torch.cat([relative_coord, pos_mask_feats], dim=1)
-            weights, biases = self.parse_dynamic_params(pos_kernels)
+            weights, biases = self.parse_dynamic_params2(pos_kernels)
 
             n_layers = len(weights)
-            x = pos_mask_feats.reshape(1, -1, h, w)
+            x = pos_mask_feats
             for i, (weight, bias) in enumerate(zip(weights, biases)):
-                x = F.conv2d(
-                    x, weight, bias=bias, stride=1, padding=0, groups=num_inst)
+                x = torch.einsum('nij,njhw->nihw', weight, x)
+                x = x + bias[:, :, None, None]
                 if i < n_layers - 1:
                     x = F.relu(x)
             pos_mask_logits = x.reshape(num_inst, h, w)
+
             scale = self.prior_generator.strides[0][0] // self.mask_loss_stride
             pos_mask_logits = F.interpolate(
                 pos_mask_logits.unsqueeze(0),
                 scale_factor=scale,
                 mode='bilinear',
                 align_corners=False).squeeze(0)
+                
             loss_mask = self.loss_mask(
                 pos_mask_logits, mask_targets, weight=None, avg_factor=num_pos)
 
