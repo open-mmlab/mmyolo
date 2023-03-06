@@ -1,8 +1,9 @@
 _base_ = './yolov5u_s_syncbn_fast_8xb16-300e_coco.py'
 
 # ========================modified parameters======================
-deepen_factor = 0.33
-widen_factor = 0.25
+# TODO: Update the training hyperparameters
+deepen_factor = 1.0
+widen_factor = 1.0
 
 # =======================Unmodified in most cases==================
 model = dict(
