@@ -1,5 +1,60 @@
 # Changelog
 
+## v0.5.0 (2/3/2023)
+
+### Highlights
+
+1. Support [RTMDet-R](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md#rotated-object-detection) rotated object detection
+2. Support for using mask annotation to improve [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) object detection performance
+3. Support [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/razor/subnets/README.md) searchable NAS sub-network as the backbone of YOLO series algorithm
+4. Support calling [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/distillation/README.md) to distill the knowledge of RTMDet
+5. [MMYOLO](https://mmyolo.readthedocs.io/zh_CN/dev/) document structure optimization, comprehensive content upgrade
+6. Improve YOLOX mAP and training speed based on RTMDet training hyperparameters
+7. Support calculation of model parameters and FLOPs, provide GPU latency data on T4 devices, and update [Model Zoo](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/model_zoo.md)
+8. Support test-time augmentation (TTA)
+9. Support RTMDet, YOLOv8 and YOLOv7 assigner visualization
+
+### New Features
+
+01. Support inference for RTMDet instance segmentation tasks (#583)
+02. Beautify the configuration file in MMYOLO and add more comments (#501, #506, #516, #529, #531, #539)
+03. Refactor and optimize documentation (#568, #573, #579, #584, #587, #589, #596, #599, #600)
+04. Support fast version of YOLOX (#518)
+05. Support DeepStream in EasyDeploy and add documentation (#485, #545, #571)
+06. Add confusion matrix drawing script (#572)
+07. Add single channel application case (#460)
+08. Support auto registration (#597)
+09. Support Box CAM of YOLOv7, YOLOv8 and PPYOLOE (#601)
+10. Add automated generation of MM series repo registration information and tools scripts (#559)
+11. Added YOLOv7 model structure diagram (#504)
+12. Add how to specify specific GPU training and inference files (#503)
+13. Add check if `metainfo` is all lowercase when training or testing (#535)
+14. Add links to Twitter, Discord, Medium, YouTube, etc. (#555)
+
+### Bug Fixes
+
+1. Fix isort version issue (#492, #497)
+2. Fix type error of assigner visualization (#509)
+3. Fix YOLOv8 documentation link error (#517)
+4. Fix RTMDet Decoder error in EasyDeploy (#519)
+5. Fix some document linking errors (#537)
+6. Fix RTMDet-Tiny weight path error (#580)
+
+### Improvements
+
+1. Update `contributing.md`
+2. Optimize `DetDataPreprocessor` branch to support multitasking (#511)
+3. Optimize `gt_instances_preprocess` so it can be used for other YOLO algorithms (#532)
+4. Add `yolov7-e6e` weight conversion script (#570)
+5. Reference YOLOv8 inference code modification PPYOLOE
+
+### Contributors
+
+A total of 22 developers contributed to this release.
+
+Thank @triple-Mu, @isLinXu, @Audrey528, @TianWen580, @yechenzhi, @RangeKing, @lyviva, @Nioolek, @PeterH0323, @tianleiSHI, @aptsunny, @satuoqaq, @vansin, @xin-li-67, @VoyagerXvoyagerx,
+@landhill, @kitecats, @tang576225574, @HIT-cwh, @AI-Tianlong, @RangiLyu, @hhaAndroid
+
 ## v0.4.0 (18/1/2023)
 
 ### Highlights

@@ -1,27 +1,23 @@
-_base_ = 'yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
+_base_ = './yolov6_s_syncbn_fast_8xb32-400e_coco.py'
 
 data_root = './data/cat/'
 class_name = ('cat', )
 num_classes = len(class_name)
 metainfo = dict(classes=class_name, palette=[(20, 220, 60)])
 
-anchors = [
-    [(68, 69), (154, 91), (143, 162)],  # P3/8
-    [(242, 160), (189, 287), (391, 207)],  # P4/16
-    [(353, 337), (539, 341), (443, 432)]  # P5/32
-]
-
 max_epochs = 40
 train_batch_size_per_gpu = 12
 train_num_workers = 4
+num_last_epochs = 5
 
-load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'  # noqa
+load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco/yolov6_s_syncbn_fast_8xb32-400e_coco_20221102_203035-932e1d91.pth'  # noqa
 
 model = dict(
     backbone=dict(frozen_stages=4),
-    bbox_head=dict(
-        head_module=dict(num_classes=num_classes),
-        prior_generator=dict(base_sizes=anchors)))
+    bbox_head=dict(head_module=dict(num_classes=num_classes)),
+    train_cfg=dict(
+        initial_assigner=dict(num_classes=num_classes),
+        assigner=dict(num_classes=num_classes)))
 
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
@@ -41,10 +37,11 @@ val_dataloader = dict(
 
 test_dataloader = val_dataloader
 
-_base_.optim_wrapper.optimizer.batch_size_per_gpu = train_batch_size_per_gpu
-
 val_evaluator = dict(ann_file=data_root + 'annotations/test.json')
 test_evaluator = val_evaluator
+
+_base_.optim_wrapper.optimizer.batch_size_per_gpu = train_batch_size_per_gpu
+_base_.custom_hooks[1].switch_epoch = max_epochs - num_last_epochs
 
 default_hooks = dict(
     checkpoint=dict(interval=10, max_keep_ckpts=2, save_best='auto'),
@@ -52,5 +49,8 @@ default_hooks = dict(
     # The default value is 1000 which is not suitable for cat datasets.
     param_scheduler=dict(max_epochs=max_epochs, warmup_mim_iter=10),
     logger=dict(type='LoggerHook', interval=5))
-train_cfg = dict(max_epochs=max_epochs, val_interval=10)
+train_cfg = dict(
+    max_epochs=max_epochs,
+    val_interval=10,
+    dynamic_intervals=[(max_epochs - num_last_epochs, 1)])
 # visualizer = dict(vis_backends = [dict(type='LocalVisBackend'), dict(type='WandbVisBackend')]) # noqa
