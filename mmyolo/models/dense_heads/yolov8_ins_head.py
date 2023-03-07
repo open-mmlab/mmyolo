@@ -144,7 +144,7 @@ class YOLOv8InsHeadModule(YOLOv8HeadModule):
                     act_cfg=None,
                     norm_cfg=None)) for in_c in self.in_channels)
 
-    def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
+    def forward(self, x: Tuple[Tensor]) -> Tuple:
         """Forward features from the upstream network.
 
         Args:
