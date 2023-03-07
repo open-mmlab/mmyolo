@@ -1574,3 +1574,94 @@ class RegularizeRotatedBox(BaseTransform):
         results['gt_bboxes'] = self.box_type(
             results['gt_bboxes'].regularize_boxes(self.angle_version))
         return results
+
+
+def polygons2masks_overlap(imgsz, segments, downsample_ratio=1):
+    """Return a (640, 640) overlap mask."""
+    masks = np.zeros(
+        (imgsz[0] // downsample_ratio, imgsz[1] // downsample_ratio),
+        dtype=np.int32 if len(segments) > 255 else np.uint8)
+    areas = []
+    ms = []
+    for si in range(len(segments)):
+        mask = polygon2mask(
+            imgsz, segments[si], downsample_ratio=downsample_ratio, color=1)
+        ms.append(mask)
+        areas.append(mask.sum())
+    areas = np.asarray(areas)
+    index = np.argsort(-areas)
+    ms = np.array(ms)[index]
+    for i in range(len(segments)):
+        mask = ms[i] * (i + 1)
+        masks = masks + mask
+        masks = np.clip(masks, a_min=0, a_max=i + 1)
+    return masks, index
+
+
+def polygon2mask(imgsz, polygons, color=1, downsample_ratio=1):
+    """
+    Args:
+        imgsz (tuple): The image size.
+        polygons (np.ndarray): [N, M], N is the number of polygons,
+        M is the number of points(Be divided by 2).
+        color (int): color
+        downsample_ratio (int): downsample ratio
+    """
+    mask = np.zeros(imgsz, dtype=np.uint8)
+    polygons = np.asarray(polygons)
+    polygons = polygons.astype(np.int32)
+    shape = polygons.shape
+    polygons = polygons.reshape(shape[0], -1, 2)
+    cv2.fillPoly(mask, polygons, color=color)
+    nh, nw = (imgsz[0] // downsample_ratio, imgsz[1] // downsample_ratio)
+    # NOTE: fillPoly firstly then resize is trying the keep the same way
+    # of loss calculation when mask-ratio=1.
+    mask = cv2.resize(mask, (nw, nh))
+    return mask
+
+
+def polygons2masks(imgsz, polygons, color, downsample_ratio=1):
+    """
+    Args:
+        imgsz (tuple): The image size.
+        polygons (list[np.ndarray]): each polygon is [N, M],
+        N is number of polygons, M is number of points (M % 2 = 0)
+        color (int): color
+        downsample_ratio (int): downsample ratio
+    """
+    masks = []
+    for si in range(len(polygons)):
+        mask = polygon2mask(imgsz, polygons[si], color, downsample_ratio)
+        masks.append(mask)
+    return np.array(masks)
+
+
+@TRANSFORMS.register_module()
+class Polygon2Mask(BaseTransform):
+
+    def __init__(self, mask_ratio=1, mask_overlap=False):
+        self.mask_ratio = int(mask_ratio)
+        # TODO: Cannot be supported mask_overlap=True
+        self.mask_overlap = mask_overlap
+
+    def transform(self, results: dict) -> dict:
+        gt_masks = results['gt_masks']
+        assert isinstance(gt_masks, PolygonMasks)
+
+        if self.mask_overlap:
+            masks, sorted_idx = polygons2masks_overlap(
+                (gt_masks.height, gt_masks.width),
+                gt_masks,
+                downsample_ratio=self.mask_ratio)
+            masks = torch.from_numpy(masks[None])
+            results['gt_bboxes'] = results['gt_bboxes'][sorted_idx]
+            results['gt_labels'] = results['gt_bboxes_labels'][sorted_idx]
+        else:
+            masks = polygons2masks((gt_masks.height, gt_masks.width),
+                                   gt_masks,
+                                   color=1,
+                                   downsample_ratio=self.mask_ratio)
+            masks = torch.from_numpy(masks)
+
+        results['gt_masks'] = masks
+        return results
