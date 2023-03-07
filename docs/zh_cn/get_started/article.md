@@ -18,6 +18,7 @@
 - [MMYOLO 社区倾情贡献，RTMDet 原理社区开发者解读来啦！](https://zhuanlan.zhihu.com/p/569777684)
 - [MMYOLO 自定义数据集从标注到部署保姆级教程](https://zhuanlan.zhihu.com/p/595497726)
 - [满足一切需求的 MMYOLO 可视化：测试过程可视化](https://zhuanlan.zhihu.com/p/593179372)
+- [MMYOLO 想你所想: 训练过程可视化](https://zhuanlan.zhihu.com/p/608586878)
 - [YOLOv8 深度详解！一文看懂，快速上手](https://zhuanlan.zhihu.com/p/598566644)
 - [玩转 MMYOLO 基础类第一期： 配置文件太复杂？继承用法看不懂？配置全解读来了](https://zhuanlan.zhihu.com/p/577715188)
 - [玩转 MMYOLO 工具类第一期： 特征图可视化](https://zhuanlan.zhihu.com/p/578141381?)

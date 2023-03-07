@@ -15,6 +15,8 @@
 - [模型测试](#模型测试)
 - [EasyDeploy 模型部署](#easydeploy-模型部署)
 
+本文以 YOLOv5-s 为例，其余 YOLO 系列算法的猫 cat 小数据集 demo 配置请查看对应的算法配置文件夹下。
+
 ## 环境安装
 
 假设你已经提前安装好了 Conda，接下来安装 PyTorch
@@ -134,19 +136,22 @@ val_dataloader = dict(
     dataset=dict(
         metainfo=metainfo,
         data_root=data_root,
-        ann_file='annotations/trainval.json',
+        ann_file='annotations/test.json',
         data_prefix=dict(img='images/')))
 
 test_dataloader = val_dataloader
 
-val_evaluator = dict(ann_file=data_root + 'annotations/trainval.json')
+_base_.optim_wrapper.optimizer.batch_size_per_gpu = train_batch_size_per_gpu
+
+val_evaluator = dict(ann_file=data_root + 'annotations/test.json')
 test_evaluator = val_evaluator
 
 default_hooks = dict(
     # 每隔 10 个 epoch 保存一次权重，并且最多保存 2 个权重
     # 模型评估时候自动保存最佳模型
     checkpoint=dict(interval=10, max_keep_ckpts=2, save_best='auto'),
-    param_scheduler=dict(max_epochs=max_epochs),
+    # warmup_mim_iter 参数非常关键，因为 cat 数据集非常小，默认的最小 warmup_mim_iter 是 1000，导致训练过程学习率偏小
+    param_scheduler=dict(max_epochs=max_epochs, warmup_mim_iter=10),
     # 日志打印间隔为 5
     logger=dict(type='LoggerHook', interval=5))
 # 评估间隔为 10
@@ -167,21 +172,21 @@ python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py
 <img src="https://user-images.githubusercontent.com/17425982/220236361-bd113606-248e-4a0e-a484-c0dc9e355b5b.png" alt="image"/>
 </div>
 
-在 `trainval.json` 上性能如下所示：
+在 `test.json` 上性能如下所示：
 
 ```text
- Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.685
- Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.953
- Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.852
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.631
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.909
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.747
  Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.685
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.664
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.749
- Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.761
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.631
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.627
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.703
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.703
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = -1.000
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = -1.000
- Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.761
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.703
 ```
 
 上述性能是通过 COCO API 打印，其中 -1 表示不存在对于尺度的物体。根据 COCO 定义的规则，Cat 数据集里面全部是大物体，不存在小和中等规模物体。
@@ -243,10 +248,10 @@ python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py
 ```
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/17425982/220238131-08eacedc-28a7-4008-af8c-f36dc239ecaa.png" alt="image"/>
+<img src="https://user-images.githubusercontent.com/17425982/222131114-30a79285-56bc-427d-a38d-8d6a6982ad60.png" alt="image"/>
 </div>
 <div align=center>
-<img src="https://user-images.githubusercontent.com/17425982/220238535-f363a6ba-876c-4bb7-80d6-9d8d8ca9b966.png" alt="image"/>
+<img src="https://user-images.githubusercontent.com/17425982/222132585-4b4962f1-211b-46f7-86b3-7534fc52a1b4.png" alt="image"/>
 </div>
 
 #### 2 Tensorboard 可视化使用
@@ -260,7 +265,7 @@ pip install tensorboard
 同上述在配置文件 `configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py`配置的最后添加 `tensorboard` 配置
 
 ```python
-visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='TensorboardVisBackend')])
+visualizer = dict(vis_backends=[dict(type='LocalVisBackend'), dict(type='TensorboardVisBackend')])
 ```
 
 重新运行训练命令后，Tensorboard 文件会生成在可视化文件夹 `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat.py/{timestamp}/vis_data` 下，
@@ -334,7 +339,7 @@ test_pipeline = [
 ```shell
 python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
                                 configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
                                 --target-layers backbone \
                                 --channel-reduction squeeze_mean
 ```
@@ -350,7 +355,7 @@ python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 ```shell
 python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
                                 configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
                                 --target-layers neck \
                                 --channel-reduction squeeze_mean
 ```
@@ -370,7 +375,7 @@ python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 ```shell
 python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
                                 configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
                                 --target-layer neck.out_layers[2]
 ```
 
@@ -383,7 +388,7 @@ python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 ```shell
 python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
                                 configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
                                 --target-layer neck.out_layers[1]
 ```
 
@@ -396,7 +401,7 @@ python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 ```shell
 python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
                                 configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-                                work_dirs/yolov5_s-v61_fast_1xb8-40e_cat/epoch_40.pth \
+                                work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
                                 --target-layer neck.out_layers[0]
 ```
 
@@ -519,4 +524,4 @@ python projects/easydeploy/tools/image-demo.py \
 
 这样我们就完成了将训练完成的模型进行转换部署并且检查推理结果的工作。至此本教程结束。
 
-以上完整内容可以查看 [15_minutes_object_detection.ipynb](<>)
+以上完整内容可以查看 [15_minutes_object_detection.ipynb](<>)。 如果你在训练或者测试过程中碰到问题，请先查看 [常见错误排除步骤](../recommended_topics/troubleshooting_steps.md)， 如果依然无法解决欢迎提 issue。

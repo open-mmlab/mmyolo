@@ -5,7 +5,6 @@ _base_ = [
 
 checkpoint_file = 'https://download.openmmlab.com/mmrazor/v1/spos/spos_shufflenetv2_subnet_8xb128_in1k_flops_0.33M_acc_73.87_20211222-1f0a0b4d_v3.pth'  # noqa
 fix_subnet = 'https://download.openmmlab.com/mmrazor/v1/spos/spos_shufflenetv2_subnet_8xb128_in1k_flops_0.33M_acc_73.87_20211222-1f0a0b4d_subnet_cfg_v3.yaml'  # noqa
-
 widen_factor = 1.0
 channels = [160, 320, 640]
 

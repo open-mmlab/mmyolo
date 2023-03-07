@@ -38,6 +38,7 @@
    common_usage/resume_training.md
    common_usage/syncbn.md
    common_usage/amp_training.md
+   common_usage/ms_training_testing.md
    common_usage/tta.md
    common_usage/plugins.md
    common_usage/freeze_layers.md

@@ -75,7 +75,7 @@ def convert(src, dst):
     torch.save(checkpoint, dst)
 
 
-# Note: This script must be placed under the YOLOv8 repo to run.
+# Note: This script must be placed under the ultralytics repo to run.
 def main():
     parser = argparse.ArgumentParser(description='Convert model keys')
     parser.add_argument(
