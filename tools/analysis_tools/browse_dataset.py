@@ -140,6 +140,29 @@ def make_grid(imgs, names):
     return visualizer.get_image()
 
 
+def swap_pipeline_position(dataset_cfg, phase):
+    swap_phase = ['test', 'val']
+    swap_keys = {
+        'LoadAnnotations': 1
+    }
+    pipeline = dataset_cfg.get('pipeline')
+    if (pipeline is None) or (phase not in swap_phase):
+        return dataset_cfg
+    swap_trans = []
+    swap_pipeline = []
+    for idx, transform in enumerate(pipeline):
+        trans_type = transform.get('type')
+        if isinstance(trans_type, str) and \
+            (trans_type in swap_keys):
+            swap_trans.append((transform, swap_keys[trans_type]))
+        else:
+            swap_pipeline.append(transform)
+    swap_trans.sort(key=lambda x: x[1], reverse=True)
+    for transform, insert_idx in swap_trans:
+        swap_pipeline.insert(insert_idx, transform)
+    dataset_cfg['pipeline'] = swap_pipeline
+
+
 class InspectCompose(Compose):
     """Compose multiple transforms sequentially.
 
@@ -185,6 +208,7 @@ def main():
     init_default_scope(cfg.get('default_scope', 'mmyolo'))
 
     dataset_cfg = cfg.get(args.phase + '_dataloader').get('dataset')
+    swap_pipeline_position(dataset_cfg, args.phase)
     dataset = DATASETS.build(dataset_cfg)
     visualizer = VISUALIZERS.build(cfg.visualizer)
     visualizer.dataset_meta = dataset.metainfo
