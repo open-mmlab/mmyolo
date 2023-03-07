@@ -571,7 +571,7 @@ class YOLOv5RandomAffine(BaseTransform):
         min_area_ratio (float): Threshold of area ratio between
             original bboxes and wrapped bboxes. If smaller than this value,
             the box will be removed. Defaults to 0.1.
-        use_mask_refine (bool): Whether to refine bbox by mask.
+        use_mask_refine (bool): Whether to refine bbox by mask. Deprecated.
         max_aspect_ratio (float): Aspect ratio of width and height
             threshold to filter bboxes. If max(h/w, w/h) larger than this
             value, the box will be removed. Defaults to 20.
@@ -603,6 +603,7 @@ class YOLOv5RandomAffine(BaseTransform):
         self.bbox_clip_border = bbox_clip_border
         self.min_bbox_size = min_bbox_size
         self.min_area_ratio = min_area_ratio
+        # The use_mask_refine parameter has been deprecated.
         self.use_mask_refine = use_mask_refine
         self.max_aspect_ratio = max_aspect_ratio
         self.resample_num = resample_num
@@ -644,7 +645,7 @@ class YOLOv5RandomAffine(BaseTransform):
         num_bboxes = len(bboxes)
         if num_bboxes:
             orig_bboxes = bboxes.clone()
-            if self.use_mask_refine and 'gt_masks' in results:
+            if 'gt_masks' in results:
                 # If the dataset has annotations of mask,
                 # the mask will be used to refine bbox.
                 gt_masks = results['gt_masks']
@@ -655,6 +656,10 @@ class YOLOv5RandomAffine(BaseTransform):
 
                 # refine bboxes by masks
                 bboxes = gt_masks.get_bboxes(dst_type='hbox')
+                if self.bbox_clip_border:
+                    bboxes.clip_([height, width])
+                    gt_masks = self.clip_polygons(gt_masks, height, width)
+
                 # filter bboxes outside image
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
                                                     bboxes).numpy()
@@ -671,9 +676,6 @@ class YOLOv5RandomAffine(BaseTransform):
                 # otherwise it will raise out of bounds when len(valid_index)=1
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
                                                     bboxes).numpy()
-                if 'gt_masks' in results:
-                    results['gt_masks'] = PolygonMasks(
-                        results['gt_masks'].masks, img_h, img_w)
 
             results['gt_bboxes'] = bboxes[valid_index]
             results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
@@ -682,6 +684,23 @@ class YOLOv5RandomAffine(BaseTransform):
                 valid_index]
 
         return results
+
+    # TODO: Move to mmdet
+    def clip_polygons(self, gt_masks, height, width):
+        if len(gt_masks) == 0:
+            clipped_masks = PolygonMasks([], height, width)
+        else:
+            clipped_masks = []
+            for poly_per_obj in gt_masks:
+                clipped_poly_per_obj = []
+                for p in poly_per_obj:
+                    p = p.copy()
+                    p[0::2].clip(0, width)
+                    p[1::2].clip(0, height)
+                    clipped_poly_per_obj.append(p)
+                clipped_masks.append(clipped_poly_per_obj)
+            clipped_masks = PolygonMasks(clipped_masks, height, width)
+        return clipped_masks
 
     @staticmethod
     def warp_poly(poly: np.ndarray, warp_matrix: np.ndarray, img_w: int,
@@ -708,9 +727,9 @@ class YOLOv5RandomAffine(BaseTransform):
         poly = poly[:, :2] / poly[:, 2:3]
 
         # filter point outside image
-        x, y = poly.T
-        valid_ind_point = (x >= 0) & (y >= 0) & (x <= img_w) & (y <= img_h)
-        return poly[valid_ind_point].reshape(-1)
+        # x, y = poly.T
+        # valid_ind_point = (x >= 0) & (y >= 0) & (x <= img_w) & (y <= img_h)
+        return poly.reshape(-1)
 
     def warp_mask(self, gt_masks: PolygonMasks, warp_matrix: np.ndarray,
                   img_w: int, img_h: int) -> PolygonMasks:
@@ -1374,7 +1393,7 @@ class YOLOv5CopyPaste(BaseTransform):
         if len(results.get('gt_masks', [])) == 0:
             return results
         gt_masks = results['gt_masks']
-        assert isinstance(gt_masks, PolygonMasks),\
+        assert isinstance(gt_masks, PolygonMasks), \
             'only support type of PolygonMasks,' \
             ' but get type: %s' % type(gt_masks)
         gt_bboxes = results['gt_bboxes']
