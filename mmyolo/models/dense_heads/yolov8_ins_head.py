@@ -156,10 +156,11 @@ class YOLOv8InsHeadModule(YOLOv8HeadModule):
         """
         assert len(x) == self.num_levels
 
-        p = self.proto_preds(x[0])
+        mask_protos = self.proto_preds(x[0])
+        output = multi_apply(self.forward_single, x, self.cls_preds,
+                             self.reg_preds, self.mask_coe_preds)
 
-        return *multi_apply(self.forward_single, x, self.cls_preds,
-                            self.reg_preds, self.mask_coe_preds), p
+        return *output, mask_protos
 
     def forward_single(self, x: torch.Tensor, cls_pred: nn.ModuleList,
                        reg_pred: nn.ModuleList,
@@ -169,8 +170,8 @@ class YOLOv8InsHeadModule(YOLOv8HeadModule):
         # detect prediction
         det_output = super().forward_single(x, cls_pred, reg_pred)
         # mask prediction
-        mc = mask_pred(x)
-        return *det_output, mc
+        mask_coefficient = mask_pred(x)
+        return *det_output, mask_coefficient
 
 
 @MODELS.register_module()
