@@ -17,12 +17,12 @@ from mmengine import ConfigDict
 from mmengine.model import (BaseModule, bias_init_with_prob, constant_init,
                             normal_init)
 from mmengine.structures import InstanceData
+from mmengine.utils.dl_utils import TimeCounter
 from torch import Tensor
 
 from mmyolo.registry import MODELS
 from ..utils import gt_instances_preprocess
 from .rtmdet_head import RTMDetHead, RTMDetSepBNHeadModule
-from mmengine.utils.dl_utils import TimeCounter
 
 
 class MaskFeatModule(BaseModule):
@@ -423,13 +423,7 @@ class RTMDetInsHead(RTMDetHead):
                 with_stride=True)
             self.featmap_sizes = featmap_sizes
         flatten_priors = torch.cat(self.mlvl_priors)
-
-        mlvl_strides = [
-            flatten_priors.new_full(
-                (featmap_size.numel() * self.num_base_priors, ), stride) for
-            featmap_size, stride in zip(featmap_sizes, self.featmap_strides)
-        ]
-        flatten_stride = torch.cat(mlvl_strides)
+        flatten_stride = flatten_priors[:, -1]
 
         # flatten cls_scores, bbox_preds
         flatten_cls_scores = [
@@ -612,9 +606,9 @@ class RTMDetInsHead(RTMDetHead):
             results = results[:cfg.max_per_img]
 
             # process masks
-            mask_logits = self._mask_predict_by_feat(mask_feat,
-                                                     results.kernels,
-                                                     results.priors)
+            mask_logits = self._mask_predict_by_feat(
+                mask_feat.repeat(len(results), 1, 1, 1), results.kernels,
+                results.priors)
 
             stride = self.prior_generator.strides[0][0]
             mask_logits = F.interpolate(
@@ -664,6 +658,7 @@ class RTMDetInsHead(RTMDetHead):
             Tensor: Instance segmentation masks for each instance.
                 Has shape (num_instance, H, W).
         """
+        # import ipdb; ipdb.set_trace()
         num_inst = kernels.shape[0]
         h, w = mask_feat.size()[-2:]
         if num_inst < 1:
@@ -671,28 +666,20 @@ class RTMDetInsHead(RTMDetHead):
                 size=(num_inst, h, w),
                 dtype=mask_feat.dtype,
                 device=mask_feat.device)
-        if len(mask_feat.shape) < 4:
-            mask_feat.unsqueeze(0)
 
-        coord = self.prior_generator.single_level_grid_priors(
-            (h, w), level_idx=0, device=mask_feat.device).reshape(1, -1, 2)
-        num_inst = priors.shape[0]
-        points = priors[:, :2].reshape(-1, 1, 2)
-        strides = priors[:, 2:].reshape(-1, 1, 2)
-        relative_coord = (points - coord).permute(0, 2, 1) / (
-            strides[..., 0].reshape(-1, 1, 1) * 8)
-        relative_coord = relative_coord.reshape(num_inst, 2, h, w)
-
-        mask_feat = torch.cat(
-            [relative_coord,
-             mask_feat.repeat(num_inst, 1, 1, 1)], dim=1)
-        weights, biases = self.parse_dynamic_params(kernels)
+        coord = self.mlvl_priors[0][:, :2]
+        relative_coord = (priors[:, None, :2] - coord[None, ...]) / (
+            priors[:, -1, None, None] * 8)
+        relative_coord = relative_coord.permute(0, 2,
+                                                1).reshape(num_inst, 2, h, w)
+        mask_feat = torch.cat([relative_coord, mask_feat], dim=1)
+        weights, biases = self.parse_dynamic_params2(kernels)
 
         n_layers = len(weights)
-        x = mask_feat.reshape(1, -1, h, w)
+        x = mask_feat
         for i, (weight, bias) in enumerate(zip(weights, biases)):
-            x = F.conv2d(
-                x, weight, bias=bias, stride=1, padding=0, groups=num_inst)
+            x = torch.einsum('nij,njhw->nihw', weight, x)
+            x = x + bias[:, :, None, None]
             if i < n_layers - 1:
                 x = F.relu(x)
         x = x.reshape(num_inst, h, w)
@@ -720,7 +707,7 @@ class RTMDetInsHead(RTMDetHead):
                 bias_splits[i] = bias_splits[i].reshape(n_inst)
 
         return weight_splits, bias_splits
-    
+
     def parse_dynamic_params2(self, flatten_kernels: Tensor) -> tuple:
         """split kernel head prediction to conv weight and bias."""
         n_inst = flatten_kernels.size(0)
@@ -796,10 +783,12 @@ class RTMDetInsHead(RTMDetHead):
         # If the shape does not equal, generate new one
         if featmap_sizes != self.featmap_sizes_train:
             self.featmap_sizes_train = featmap_sizes
-            mlvl_priors_with_stride = self.prior_generator.grid_priors(
-                featmap_sizes, device=device, with_stride=True)
-            self.flatten_priors_train = torch.cat(
-                mlvl_priors_with_stride, dim=0)
+            self.mlvl_priors = self.prior_generator.grid_priors(
+                featmap_sizes,
+                dtype=cls_scores[0].dtype,
+                device=cls_scores[0].device,
+                with_stride=True)
+            self.flatten_priors_train = torch.cat(self.mlvl_priors, dim=0)
 
         flatten_cls_scores = torch.cat([
             cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1,
@@ -857,10 +846,12 @@ class RTMDetInsHead(RTMDetHead):
         # --------mask loss--------
         num_pos = len(pos_inds)
         num_pos = reduce_mean(mask_feats.new_tensor([num_pos
-                                                    ])).clamp_(min=1).item()
+                                                     ])).clamp_(min=1).item()
         if len(pos_inds) > 0:
 
             pos_kernels = kernels[pos_inds]
+            pos_priors = self.flatten_priors_train.repeat(num_imgs,
+                                                          1)[pos_inds]
             matched_gt_inds = assigned_result['assigned_gt_inds']
             batch_index = assigned_result['assigned_batch_index']
 
@@ -876,38 +867,36 @@ class RTMDetInsHead(RTMDetHead):
                 matched_gt_inds = matched_gt_inds + all_index_shift
             mask_targets = batch_gt_masks[matched_gt_inds]
             pos_mask_feats = mask_feats[batch_index]
-            pos_priors = self.flatten_priors_train.repeat(num_imgs,
-                                                        1)[pos_inds]
 
-            h, w = pos_mask_feats.size()[-2:]
-            coord = self.prior_generator.single_level_grid_priors(
-                (h, w), level_idx=0,
-                device=pos_mask_feats.device).reshape(1, -1, 2)
-            num_inst = pos_priors.shape[0]
-            points = pos_priors[:, :2].reshape(-1, 1, 2)
-            strides = pos_priors[:, 2:].reshape(-1, 1, 2)
-            relative_coord = (points - coord).permute(0, 2, 1) / (
-                strides[..., 0].reshape(-1, 1, 1) * 8)
-            relative_coord = relative_coord.reshape(num_inst, 2, h, w)
-            pos_mask_feats = torch.cat([relative_coord, pos_mask_feats], dim=1)
-            weights, biases = self.parse_dynamic_params2(pos_kernels)
-
-            n_layers = len(weights)
-            x = pos_mask_feats
-            for i, (weight, bias) in enumerate(zip(weights, biases)):
-                x = torch.einsum('nij,njhw->nihw', weight, x)
-                x = x + bias[:, :, None, None]
-                if i < n_layers - 1:
-                    x = F.relu(x)
-            pos_mask_logits = x.reshape(num_inst, h, w)
-
+            pos_mask_logits = self._mask_predict_by_feat(
+                pos_mask_feats, pos_kernels, pos_priors)
             scale = self.prior_generator.strides[0][0] // self.mask_loss_stride
             pos_mask_logits = F.interpolate(
                 pos_mask_logits.unsqueeze(0),
                 scale_factor=scale,
                 mode='bilinear',
                 align_corners=False).squeeze(0)
+            
+            # # visualize mask and gt mask
+            # from mmcv import imshow
+            # import numpy as np
+            # import cv2
+            # for idx, (mask, gt_mask) in enumerate(zip(pos_mask_logits, mask_targets)):
+            #     print('instance_id:', idx)
+            #     print('batch_idx:', batch_index[idx])
+            #     mask = mask.sigmoid().detach().cpu().numpy() * 255
+            #     mask = mask.astype(np.uint8)
+            #     mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+
+            #     gt_mask = gt_mask.detach().cpu().numpy().astype(np.uint8) * 255
+            #     gt_mask = cv2.cvtColor(gt_mask, cv2.COLOR_GRAY2BGR)
                 
+            #     gt_bbox = bbox_targets[pos_inds][idx] / 4
+            #     cv2.rectangle(gt_mask, (int(gt_bbox[0]), int(gt_bbox[1])), (int(gt_bbox[2]), int(gt_bbox[3])), (0, 0, 255), 1)
+            #     concat_mask = np.concatenate([mask, gt_mask], axis=1)
+            #     imshow(concat_mask, win_name='mask_and_gt', wait_time=0)
+
+
             loss_mask = self.loss_mask(
                 pos_mask_logits, mask_targets, weight=None, avg_factor=num_pos)
 
