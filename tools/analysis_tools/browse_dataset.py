@@ -141,9 +141,7 @@ def make_grid(imgs, names):
 
 
 def swap_pipeline_position(dataset_cfg):
-    swap_keys = {
-        'LoadAnnotations': 1
-    }
+    swap_keys = {'LoadAnnotations': 1}
     pipeline = dataset_cfg.get('pipeline')
     if (pipeline is None):
         return dataset_cfg
