@@ -5,7 +5,7 @@
 The popular YOLOv5, YOLOv6, YOLOv7, YOLOv8 and RTMDet algorithms are supported in MMYOLO currently, and their default configuration is single-scale 640x640 training. There are two implementations of multiscale training commonly used in the MM family of open source libraries
 
 1. Each image output in `train_pipeline` is at variable scale, and pad different scales of input images to the same scale by [stack_batch](https://github.com/open-mmlab/mmengine/blob/main/mmengine/model/base_model/data_preprocessor.py#L260) function in [DataPreprocessor](https://github.com/open-mmlab/mmdetection/blob/3.x/mmdet/models/data_preprocessors/data_preprocessor.py). Most of the algorithms in MMDet are implemented using this approach.
-2. Each image output in `train_pipeline` is at fixed scale, and then up and down sampling of batches of images directly in DataPreprocessor for multi-scale training.
+2. Each image output in `train_pipeline` is at fixed scale, and then up and down sampling of batches of images directly in `DataPreprocessor` for multi-scale training.
 
 Theoretically, the first implementation generates richer scales, but due to its independent data augmentation of a single image, the training efficiency is not as efficient as the second one. Both multi-scale training methods are supported in MMYOLO, but I recommend you use the second one.
 

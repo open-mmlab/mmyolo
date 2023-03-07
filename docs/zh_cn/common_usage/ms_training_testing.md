@@ -6,7 +6,7 @@ MMYOLO 中目前支持了主流的 YOLOv5、YOLOv6、YOLOv7、YOLOv8 和 RTMDet 
 
 1. 在 `train_pipeline` 中输出的每张图都是不定尺度的，然后在 [DataPreprocessor](https://github.com/open-mmlab/mmdetection/blob/3.x/mmdet/models/data_preprocessors/data_preprocessor.py) 中将不同尺度的输入图片
    通过 [stack_batch](https://github.com/open-mmlab/mmengine/blob/main/mmengine/model/base_model/data_preprocessor.py#L260) 函数填充到同一尺度，从而组成 batch 进行训练。MMDet 中大部分算法都是采用这个实现方式。
-2. 在 `train_pipeline` 中输出的每张图都是固定尺度的，然后直接在 DataPreprocessor 中进行 batch 张图片的上下采样，从而实现多尺度训练功能
+2. 在 `train_pipeline` 中输出的每张图都是固定尺度的，然后直接在 `DataPreprocessor` 中进行 batch 张图片的上下采样，从而实现多尺度训练功能
 
 理论上第一种实现方式所生成的尺度会更加丰富，但是由于其对单张图进行独立增强，训练效率不然第二种方式。在 MMYOLO 中两种多尺度训练方式都是支持的，但是我推荐你使用第二种。
 
