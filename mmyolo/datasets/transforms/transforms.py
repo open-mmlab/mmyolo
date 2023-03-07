@@ -1569,19 +1569,17 @@ class Mask2Tensor(BaseTransform):
 
     - gt_masks
     """
+
     def __init__(self, downsample_stride=1) -> None:
         assert downsample_stride >= 1
         # downsample_stride should be divisible by 2
         assert downsample_stride % 2 == 0
         self.downsample_stride = downsample_stride
 
-
     def transform(self, results: dict) -> dict:
         mask = results['gt_masks'].to_tensor(dtype=torch.bool, device='cpu')
         if self.downsample_stride > 1:
-            mask = mask[:, self.downsample_stride //
-                        2::self.downsample_stride,
-                        self.downsample_stride //
-                        2::self.downsample_stride]
+            mask = mask[:, self.downsample_stride // 2::self.downsample_stride,
+                        self.downsample_stride // 2::self.downsample_stride]
         results['gt_masks'] = mask
         return results
