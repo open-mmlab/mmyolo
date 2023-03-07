@@ -119,9 +119,14 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
         self.batch_iou = batch_iou
 
     @torch.no_grad()
-    def forward(self, pred_bboxes: Tensor, pred_scores: Tensor, priors: Tensor,
-                gt_labels: Tensor, gt_bboxes: Tensor,
-                pad_bbox_flag: Tensor) -> dict:
+    def forward(self,
+                pred_bboxes: Tensor,
+                pred_scores: Tensor,
+                priors: Tensor,
+                gt_labels: Tensor,
+                gt_bboxes: Tensor,
+                pad_bbox_flag: Tensor,
+                gt_centers: Tensor = None) -> dict:
         num_gt = gt_bboxes.size(1)
         decoded_bboxes = pred_bboxes
         batch_size, num_bboxes, box_dim = decoded_bboxes.size()
@@ -155,11 +160,12 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
         # (B, N_points)
         valid_mask = is_in_gts.sum(dim=-1) > 0
 
-        gt_center = get_box_center(gt_bboxes, box_dim)
+        if gt_centers is None:
+            gt_centers = get_box_center(gt_bboxes, box_dim)
 
         strides = priors[..., 2]
         distance = (priors[None].unsqueeze(2)[..., :2] -
-                    gt_center[:, None, :, :]
+                    gt_centers[:, None, :, :]
                     ).pow(2).sum(-1).sqrt() / strides[None, :, None]
 
         # prevent overflow

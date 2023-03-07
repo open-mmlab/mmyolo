@@ -643,8 +643,11 @@ class RTMDetInsHead(RTMDetHead):
                 device=results.bboxes.device)
         return results
 
-    def _mask_predict_by_feat(self, mask_feat: Tensor, kernels: Tensor,
-                              priors: Tensor) -> Tensor:
+    def _mask_predict_by_feat(self,
+                              mask_feat: Tensor,
+                              kernels: Tensor,
+                              priors: Tensor,
+                              training=False) -> Tensor:
         """Generate mask logits from mask features with dynamic convs.
 
         Args:
@@ -666,8 +669,10 @@ class RTMDetInsHead(RTMDetHead):
                 size=(num_inst, h, w),
                 dtype=mask_feat.dtype,
                 device=mask_feat.device)
-
-        coord = self.mlvl_priors[0][:, :2]
+        if self.training:
+            coord = self.mlvl_priors_train[0][:, :2]
+        else:
+            coord = self.mlvl_priors[0][:, :2]
         relative_coord = (priors[:, None, :2] - coord[None, ...]) / (
             priors[:, -1, None, None] * 8)
         relative_coord = relative_coord.permute(0, 2,
@@ -783,12 +788,13 @@ class RTMDetInsHead(RTMDetHead):
         # If the shape does not equal, generate new one
         if featmap_sizes != self.featmap_sizes_train:
             self.featmap_sizes_train = featmap_sizes
-            self.mlvl_priors = self.prior_generator.grid_priors(
+            self.mlvl_priors_train = self.prior_generator.grid_priors(
                 featmap_sizes,
                 dtype=cls_scores[0].dtype,
                 device=cls_scores[0].device,
                 with_stride=True)
-            self.flatten_priors_train = torch.cat(self.mlvl_priors, dim=0)
+            self.flatten_priors_train = torch.cat(
+                self.mlvl_priors_train, dim=0)
 
         flatten_cls_scores = torch.cat([
             cls_score.permute(0, 2, 3, 1).reshape(num_imgs, -1,
@@ -810,10 +816,17 @@ class RTMDetInsHead(RTMDetHead):
             for kernel_pred in kernel_preds
         ], 1)
 
+        # get mask center for assigner
+        gt_centers = torch.zeros_like(gt_bboxes[..., :2])
+        gt_centers[pad_bbox_flag.squeeze(
+            2)] = _get_mask_center(batch_gt_masks) * self.mask_loss_stride
+        # import ipdb; ipdb.set_trace()
+
         assigned_result = self.assigner(flatten_bboxes.detach(),
                                         flatten_cls_scores.detach(),
-                                        self.flatten_priors_train, gt_labels,
-                                        gt_bboxes, pad_bbox_flag.float())
+                                        self.flatten_priors_train,
+                                        gt_labels, gt_bboxes,
+                                        pad_bbox_flag.float(), gt_centers)
 
         labels = assigned_result['assigned_labels'].reshape(-1)
         label_weights = assigned_result['assigned_labels_weights'].reshape(-1)
@@ -869,20 +882,20 @@ class RTMDetInsHead(RTMDetHead):
             pos_mask_feats = mask_feats[batch_index]
 
             pos_mask_logits = self._mask_predict_by_feat(
-                pos_mask_feats, pos_kernels, pos_priors)
+                pos_mask_feats, pos_kernels, pos_priors, training=True)
             scale = self.prior_generator.strides[0][0] // self.mask_loss_stride
             pos_mask_logits = F.interpolate(
                 pos_mask_logits.unsqueeze(0),
                 scale_factor=scale,
                 mode='bilinear',
                 align_corners=False).squeeze(0)
-            
+
             # # visualize mask and gt mask
             # from mmcv import imshow
             # import numpy as np
             # import cv2
             # h, w = mask_feats.size()[-2:]
-            # coord = self.mlvl_priors[0][:, :2]
+            # coord = self.mlvl_priors_train[0][:, :2]
             # relative_coord = (pos_priors[:, None, :2] - coord[None, ...]) / (
             #     pos_priors[:, -1, None, None] * 8)
             # relative_coord = relative_coord.permute(0, 2,
@@ -901,7 +914,7 @@ class RTMDetInsHead(RTMDetHead):
 
             #     gt_mask = gt_mask.detach().cpu().numpy().astype(np.uint8) * 255
             #     gt_mask = cv2.cvtColor(gt_mask, cv2.COLOR_GRAY2BGR)
-                
+
             #     gt_bbox = bbox_targets[pos_inds][idx] / 4
             #     cv2.rectangle(gt_mask, (int(gt_bbox[0]), int(gt_bbox[1])), (int(gt_bbox[2]), int(gt_bbox[3])), (0, 0, 255), 1)
             #     concat_mask = np.concatenate([mask, gt_mask], axis=1)
@@ -915,3 +928,23 @@ class RTMDetInsHead(RTMDetHead):
 
         return dict(
             loss_cls=loss_cls, loss_bbox=loss_bbox, loss_mask=loss_mask)
+
+
+def _get_mask_center(masks: Tensor, eps: float = 1e-7) -> Tensor:
+    """Compute the masks center of mass.
+
+    Args:
+        masks: Mask tensor, has shape (num_masks, H, W).
+        eps: a small number to avoid normalizer to be zero.
+            Defaults to 1e-7.
+    Returns:
+        Tensor: The masks center of mass. Has shape (num_masks, 2).
+    """
+    n, h, w = masks.shape
+    grid_h = torch.arange(h, device=masks.device)[:, None]
+    grid_w = torch.arange(w, device=masks.device)
+    normalizer = masks.sum(dim=(1, 2)).float().clamp(min=eps)
+    center_y = (masks * grid_h).sum(dim=(1, 2)) / normalizer
+    center_x = (masks * grid_w).sum(dim=(1, 2)) / normalizer
+    center = torch.cat([center_x[:, None], center_y[:, None]], dim=1)
+    return center
