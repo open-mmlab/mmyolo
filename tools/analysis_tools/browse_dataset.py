@@ -140,13 +140,12 @@ def make_grid(imgs, names):
     return visualizer.get_image()
 
 
-def swap_pipeline_position(dataset_cfg, phase):
-    swap_phase = ['test', 'val']
+def swap_pipeline_position(dataset_cfg):
     swap_keys = {
         'LoadAnnotations': 1
     }
     pipeline = dataset_cfg.get('pipeline')
-    if (pipeline is None) or (phase not in swap_phase):
+    if (pipeline is None):
         return dataset_cfg
     swap_trans = []
     swap_pipeline = []
@@ -208,7 +207,8 @@ def main():
     init_default_scope(cfg.get('default_scope', 'mmyolo'))
 
     dataset_cfg = cfg.get(args.phase + '_dataloader').get('dataset')
-    swap_pipeline_position(dataset_cfg, args.phase)
+    if (args.phase in ['test', 'val']):
+        swap_pipeline_position(dataset_cfg)
     dataset = DATASETS.build(dataset_cfg)
     visualizer = VISUALIZERS.build(cfg.visualizer)
     visualizer.dataset_meta = dataset.metainfo
