@@ -881,9 +881,20 @@ class RTMDetInsHead(RTMDetHead):
             # from mmcv import imshow
             # import numpy as np
             # import cv2
+            # h, w = mask_feats.size()[-2:]
+            # coord = self.mlvl_priors[0][:, :2]
+            # relative_coord = (pos_priors[:, None, :2] - coord[None, ...]) / (
+            #     pos_priors[:, -1, None, None] * 8)
+            # relative_coord = relative_coord.permute(0, 2,
+            #                                         1).reshape(len(pos_inds), 2, h, w)
+
             # for idx, (mask, gt_mask) in enumerate(zip(pos_mask_logits, mask_targets)):
             #     print('instance_id:', idx)
             #     print('batch_idx:', batch_index[idx])
+            #     relative_coord_1= relative_coord[idx][0].detach().cpu().numpy()
+            #     relative_coord_2= relative_coord[idx][1].detach().cpu().numpy()
+            #     concat_coord = np.concatenate([relative_coord_1, relative_coord_2], axis=1)
+            #     imshow(concat_coord, win_name='relative_coord', wait_time=1)
             #     mask = mask.sigmoid().detach().cpu().numpy() * 255
             #     mask = mask.astype(np.uint8)
             #     mask = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
@@ -895,7 +906,6 @@ class RTMDetInsHead(RTMDetHead):
             #     cv2.rectangle(gt_mask, (int(gt_bbox[0]), int(gt_bbox[1])), (int(gt_bbox[2]), int(gt_bbox[3])), (0, 0, 255), 1)
             #     concat_mask = np.concatenate([mask, gt_mask], axis=1)
             #     imshow(concat_mask, win_name='mask_and_gt', wait_time=0)
-
 
             loss_mask = self.loss_mask(
                 pos_mask_logits, mask_targets, weight=None, avg_factor=num_pos)
