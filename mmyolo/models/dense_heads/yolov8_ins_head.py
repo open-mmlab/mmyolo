@@ -159,7 +159,7 @@ class YOLOv8InsHeadModule(YOLOv8HeadModule):
         p = self.proto_preds(x[0])
 
         return *multi_apply(self.forward_single, x, self.cls_preds,
-                            self.reg_preds, self.cv4), p
+                            self.reg_preds, self.mask_coe_preds), p
 
     def forward_single(self, x: torch.Tensor, cls_pred: nn.ModuleList,
                        reg_pred: nn.ModuleList,

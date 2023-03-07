@@ -53,9 +53,16 @@ def convert(src, dst):
         if '.m.' in new_key:
             new_key = new_key.replace('.m.', '.blocks.')
             new_key = new_key.replace('.cv', '.conv')
+        elif 'bbox_head.head_module.proto.cv' in new_key:
+            new_key = new_key.replace(
+                'bbox_head.head_module.proto.cv',
+                'bbox_head.head_module.proto_preds.conv')
         elif 'bbox_head.head_module.proto' in new_key:
-            pass
+            new_key = new_key.replace('bbox_head.head_module.proto',
+                                      'bbox_head.head_module.proto_preds')
         elif 'bbox_head.head_module.cv4.' in new_key:
+            new_key = new_key.replace('bbox_head.head_module.cv4',
+                                      'bbox_head.head_module.mask_coe_preds')
             new_key = new_key.replace('.2.weight', '.2.conv.weight')
             new_key = new_key.replace('.2.bias', '.2.conv.bias')
         elif 'bbox_head.head_module' in new_key:
