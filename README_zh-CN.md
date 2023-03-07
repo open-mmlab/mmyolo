@@ -305,6 +305,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 <summary><b>支持的算法</b></summary>
 
 - [x] [YOLOv5](configs/yolov5)
+- [ ] [YOLOv5u](configs/yolov5/yolov5u) (仅推理)
 - [x] [YOLOX](configs/yolox)
 - [x] [RTMDet](configs/rtmdet)
 - [x] [RTMDet-Rotated](configs/rtmdet)
