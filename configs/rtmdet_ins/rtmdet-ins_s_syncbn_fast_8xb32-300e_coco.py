@@ -92,6 +92,7 @@ train_pipeline_stage2 = [
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
+    dict(type='Mask2Tensor', downsample_stride=4),
     dict(type='mmdet.PackDetInputs')
 ]
 
