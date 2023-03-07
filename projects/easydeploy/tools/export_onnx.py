@@ -10,7 +10,7 @@ from mmengine.config import ConfigDict
 from mmengine.logging import print_log
 from mmengine.utils.path import mkdir_or_exist
 
-from projects.easydeploy.model import DeployModel, MMYoloBackend
+from projects.easydeploy.model import DeployModel, MMYOLOBackend
 
 warnings.filterwarnings(action='ignore', category=torch.jit.TracerWarning)
 warnings.filterwarnings(action='ignore', category=torch.jit.ScriptWarning)
@@ -81,9 +81,9 @@ def build_model_from_cfg(config_path, checkpoint_path, device):
 def main():
     args = parse_args()
     mkdir_or_exist(args.work_dir)
-    backend = MMYoloBackend(args.backend.lower())
-    if backend in (MMYoloBackend.ONNXRUNTIME, MMYoloBackend.OPENVINO,
-                   MMYoloBackend.TENSORRT8, MMYoloBackend.TENSORRT7):
+    backend = MMYOLOBackend(args.backend.lower())
+    if backend in (MMYOLOBackend.ONNXRUNTIME, MMYOLOBackend.OPENVINO,
+                   MMYOLOBackend.TENSORRT8, MMYOLOBackend.TENSORRT7):
         if not args.model_only:
             print_log('Export ONNX with bbox decoder and NMS ...')
     else:
@@ -128,7 +128,7 @@ def main():
         onnx.checker.check_model(onnx_model)
 
         # Fix tensorrt onnx output shape, just for view
-        if backend in (MMYoloBackend.TENSORRT8, MMYoloBackend.TENSORRT8):
+        if backend in (MMYOLOBackend.TENSORRT8, MMYOLOBackend.TENSORRT8):
             shapes = [
                 args.batch_size, 1, args.batch_size, args.keep_topk, 4,
                 args.batch_size, args.keep_topk, args.batch_size,

@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from .backend import MMYoloBackend
+from .backend import MMYOLOBackend
 from .backendwrapper import ORTWrapper, TRTWrapper
 from .model import DeployModel
 
-__all__ = ['DeployModel', 'TRTWrapper', 'ORTWrapper', 'MMYoloBackend']
+__all__ = ['DeployModel', 'TRTWrapper', 'ORTWrapper', 'MMYOLOBackend']

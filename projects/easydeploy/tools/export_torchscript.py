@@ -7,7 +7,7 @@ from mmdet.apis import init_detector
 from mmengine.logging import print_log
 from mmengine.utils.path import mkdir_or_exist
 
-from projects.easydeploy.model import DeployModel, MMYoloBackend
+from projects.easydeploy.model import DeployModel, MMYOLOBackend
 
 warnings.filterwarnings(action='ignore', category=torch.jit.TracerWarning)
 warnings.filterwarnings(action='ignore', category=torch.jit.ScriptWarning)
@@ -50,7 +50,7 @@ def main():
 
     deploy_model = DeployModel(
         baseModel=baseModel,
-        backend=MMYoloBackend.TORCHSCRIPT,
+        backend=MMYOLOBackend.TORCHSCRIPT,
         postprocess_cfg=None)
     deploy_model.eval()
 

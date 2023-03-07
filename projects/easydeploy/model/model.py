@@ -15,7 +15,7 @@ from ..backbone import DeployFocus, GConvFocus, NcnnFocus
 from ..bbox_code import (rtmdet_bbox_decoder, yolov5_bbox_decoder,
                          yolox_bbox_decoder)
 from ..nms import batched_nms, efficient_nms, onnx_nms
-from .backend import MMYoloBackend
+from .backend import MMYOLOBackend
 
 
 class DeployModel(nn.Module):
@@ -23,7 +23,7 @@ class DeployModel(nn.Module):
 
     def __init__(self,
                  baseModel: nn.Module,
-                 backend: MMYoloBackend,
+                 backend: MMYOLOBackend,
                  postprocess_cfg: Optional[ConfigDict] = None):
         super().__init__()
         self.baseModel = baseModel
@@ -49,21 +49,21 @@ class DeployModel(nn.Module):
         self.num_classes = self.baseHead.num_classes
 
     def __switch_deploy(self):
-        if self.backend in (MMYoloBackend.HORIZONX3, MMYoloBackend.NCNN,
-                            MMYoloBackend.TORCHSCRIPT):
+        if self.backend in (MMYOLOBackend.HORIZONX3, MMYOLOBackend.NCNN,
+                            MMYOLOBackend.TORCHSCRIPT):
             self.transpose = True
         for layer in self.baseModel.modules():
             if isinstance(layer, RepVGGBlock):
                 layer.switch_to_deploy()
             elif isinstance(layer, Focus):
                 # onnxruntime openvino tensorrt8 tensorrt7
-                if self.backend in (MMYoloBackend.ONNXRUNTIME,
-                                    MMYoloBackend.OPENVINO,
-                                    MMYoloBackend.TENSORRT8,
-                                    MMYoloBackend.TENSORRT7):
+                if self.backend in (MMYOLOBackend.ONNXRUNTIME,
+                                    MMYOLOBackend.OPENVINO,
+                                    MMYOLOBackend.TENSORRT8,
+                                    MMYOLOBackend.TENSORRT7):
                     self.baseModel.backbone.stem = DeployFocus(layer)
                 # ncnn
-                elif self.backend == MMYoloBackend.NCNN:
+                elif self.backend == MMYOLOBackend.NCNN:
                     self.baseModel.backbone.stem = NcnnFocus(layer)
                 # switch focus to group conv
                 else:
@@ -135,11 +135,11 @@ class DeployModel(nn.Module):
                         self.score_threshold, self.pre_top_k, self.keep_top_k)
 
     def select_nms(self):
-        if self.backend in (MMYoloBackend.ONNXRUNTIME, MMYoloBackend.OPENVINO):
+        if self.backend in (MMYOLOBackend.ONNXRUNTIME, MMYOLOBackend.OPENVINO):
             nms_func = onnx_nms
-        elif self.backend == MMYoloBackend.TENSORRT8:
+        elif self.backend == MMYOLOBackend.TENSORRT8:
             nms_func = efficient_nms
-        elif self.backend == MMYoloBackend.TENSORRT7:
+        elif self.backend == MMYOLOBackend.TENSORRT7:
             nms_func = batched_nms
         else:
             raise NotImplementedError
@@ -156,8 +156,8 @@ class DeployModel(nn.Module):
             outputs = []
             if self.transpose:
                 for feats in zip(*neck_outputs):
-                    if self.backend in (MMYoloBackend.NCNN,
-                                        MMYoloBackend.TORCHSCRIPT):
+                    if self.backend in (MMYOLOBackend.NCNN,
+                                        MMYOLOBackend.TORCHSCRIPT):
                         outputs.append(
                             torch.cat(
                                 [feat.permute(0, 2, 3, 1) for feat in feats],
