@@ -1,4 +1,4 @@
-_base_ = './yolov8_s_syncbn_fast_8xb16-500e_coco.py'
+_base_ = './yolov8_s_mask-refine_syncbn_fast_8xb16-500e_coco.py'
 
 model_test_cfg = dict(
     multi_label=True,
@@ -14,16 +14,9 @@ model = dict(
     bbox_head=dict(
         type='YOLOv8InsHead',
         head_module=dict(
-            type='YOLOv8InsHeadModule', num_masks=32, num_protos=256)),
+            type='YOLOv8InsHeadModule', masks_channels=32,
+            protos_channels=256)),
     test_cfg=model_test_cfg)
-
-test_pipeline = _base_.test_pipeline
-test_pipeline[-2] = dict(
-    type='LoadAnnotations', with_bbox=True, with_mask=True, _scope_='mmdet')
-
-val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
-
-test_dataloader = val_dataloader
 
 val_evaluator = dict(metric=['bbox', 'segm'])
 test_evaluator = val_evaluator
