@@ -12,7 +12,7 @@ MMYOLO 中目前支持了主流的 YOLOv5、YOLOv6、YOLOv7、YOLOv8 和 RTMDet 
 
 以 `configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py` 配置为例，其默认配置采用的是 640x640 固定尺度训练，假设想实现以 32 为倍数，且多尺度范围为 (480, 800) 的训练方式，则可以参考 YOLOX 做法通过 DataPreprocessor 中的 [YOLOXBatchSyncRandomResize](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/data_preprocessors/data_preprocessor.py#L20) 实现。
 
-在 `configs/yolov5` 路径下新建配置，命名为 `configs/yolov5/yolov5_s-v61_fast_mstraing_1xb12-40e_cat.py`，其内容如下：
+在 `configs/yolov5` 路径下新建配置，命名为 `configs/yolov5/yolov5_s-v61_fast_1xb12-ms-40e_cat.py`，其内容如下：
 
 ```python
 _base_ = 'yolov5_s-v61_fast_1xb12-40e_cat.py'

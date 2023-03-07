@@ -11,7 +11,7 @@ Theoretically, the first implementation generates richer scales, but due to its 
 
 Take `configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py` configuration as an example, its default configuration is 640x640 fixed scale training, suppose you want to implement training in multiples of 32 and multi-scale range (480, 800), you can refer to YOLOX practice by [YOLOXBatchSyncRandomResize](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/models/data_preprocessors/data_preprocessor.py#L20) in the DataPreprocessor.
 
-Create a new configuration under the `configs/yolov5` path named `configs/yolov5/yolov5_s-v61_fast_mstraing_1xb12-40e_cat.py` with the following contents.
+Create a new configuration under the `configs/yolov5` path named `configs/yolov5/yolov5_s-v61_fast_1xb12-ms-40e_cat.py` with the following contents.
 
 ```python
 _base_ = 'yolov5_s-v61_fast_1xb12-40e_cat.py'
