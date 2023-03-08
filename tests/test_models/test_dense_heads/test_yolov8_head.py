@@ -181,6 +181,7 @@ class TestYOLOv8InsHead(TestCase):
         img_metas = [{
             'img_shape': (s, s, 3),
             'ori_shape': (s, s, 3),
+            'batch_input_shape': (s, s),
             'scale_factor': (1.0, 1.0),
         }]
         test_cfg = Config(

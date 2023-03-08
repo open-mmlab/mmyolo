@@ -107,9 +107,10 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
                     backend=self.backend)
 
             resized_h, resized_w = image.shape[:2]
-            scale_ratio = resized_h / original_h
+            scale_ratio_h = resized_h / original_h
+            scale_ratio_w = resized_w / original_w
 
-            scale_factor = (scale_ratio, scale_ratio)
+            scale_factor = (scale_ratio_w, scale_ratio_h)
 
             results['img'] = image
             results['img_shape'] = image.shape[:2]
@@ -212,7 +213,8 @@ class LetterResize(MMDET_Resize):
                 interpolation=self.interpolation,
                 backend=self.backend)
 
-        scale_factor = (ratio[1], ratio[0])  # mmcv scale factor is (w, h)
+        scale_factor = (no_pad_shape[1] / image_shape[1],
+                        no_pad_shape[0] / image_shape[0])
 
         if 'scale_factor' in results:
             results['scale_factor_origin'] = results['scale_factor']
