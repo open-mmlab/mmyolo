@@ -28,7 +28,6 @@
    recommended_topics/visualization.md
    recommended_topics/deploy/index.rst
    recommended_topics/troubleshooting_steps.md
-   recommended_topics/industry_examples.md
    recommended_topics/mm_basics.md
    recommended_topics/dataset_preparation.md
 
