@@ -35,7 +35,7 @@ def yolov5_collate(data_batch: Sequence,
         if 'masks' in datasamples.gt_instances:
             batch_masks.append(datasamples.gt_instances.masks)
         if 'gt_panoptic_seg' in datasamples:
-            batch_masks.append(datasamples.gt_panoptic_seg)
+            batch_masks.append(datasamples.gt_panoptic_seg.pan_seg)
 
         batch_idx = gt_labels.new_full((len(gt_labels), 1), i)
         bboxes_labels = torch.cat((batch_idx, gt_labels[:, None], gt_bboxes),
