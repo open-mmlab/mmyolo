@@ -1,5 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import copy
+import math
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -509,6 +510,7 @@ class RTMDetInsHead(RTMDetHead):
 
             if rescale:
                 if pad_param is not None:
+                    # import ipdb; ipdb.set_trace()
                     results.bboxes -= results.bboxes.new_tensor([
                         pad_param[2], pad_param[0], pad_param[2], pad_param[0]
                     ])
@@ -617,20 +619,18 @@ class RTMDetInsHead(RTMDetHead):
             if rescale_mask:
                 # TODO: When use mmdet.Resize or mmdet.Pad, will meet bug
                 # Use img_meta to crop and resize
+                scale_factor = [1 / s for s in img_meta['scale_factor']]
                 ori_h, ori_w = img_meta['ori_shape'][:2]
-                if isinstance(pad_param, np.ndarray):
-                    pad_param = pad_param.astype(np.int32)
-                    crop_y1, crop_y2 = pad_param[
-                        0], mask_logits.shape[-2] - pad_param[1]
-                    crop_x1, crop_x2 = pad_param[
-                        2], mask_logits.shape[-1] - pad_param[3]
-                    mask_logits = mask_logits[..., crop_y1:crop_y2,
-                                              crop_x1:crop_x2]
+                pad_param = pad_param.astype(np.int32)
+                mask_logits = mask_logits[..., pad_param[0]:, pad_param[2]:]
                 mask_logits = F.interpolate(
                     mask_logits,
-                    size=[ori_h, ori_w],
+                    size=[
+                        math.ceil(mask_logits.shape[-2] * scale_factor[0]),
+                        math.ceil(mask_logits.shape[-1] * scale_factor[1])
+                    ],
                     mode='bilinear',
-                    align_corners=False)
+                    align_corners=False)[..., :ori_h, :ori_w]
 
             masks = mask_logits.sigmoid().squeeze(0)
             masks = masks > cfg.mask_thr_binary
