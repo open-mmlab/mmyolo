@@ -7,19 +7,122 @@ import cv2
 import mmcv
 import numpy as np
 import torch
-from mmcv.transforms import BaseTransform, Compose
+from mmcv.transforms import BaseTransform, Compose, to_tensor
 from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
+from mmdet.datasets.transforms import PackDetInputs as MMDET_PackDetInputs
 from mmdet.datasets.transforms import Resize as MMDET_Resize
-from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
-                                   get_box_type)
+from mmdet.structures import DetDataSample
+from mmdet.structures.bbox import (BaseBoxes, HorizontalBoxes,
+                                   autocast_box_type, get_box_type)
 from mmdet.structures.mask import PolygonMasks
+from mmengine.structures import InstanceData, PixelData
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
 
 # TODO: Waiting for MMCV support
 TRANSFORMS.register_module(module=Compose, force=True)
+
+
+@TRANSFORMS.register_module()
+class PackDetInputs(MMDET_PackDetInputs):
+    """Pack the inputs data for the detection / semantic segmentation /
+    panoptic segmentation.
+
+    Compared to mmdet, we just add the `gt_panoptic_seg` field and logic.
+    """
+
+    def transform(self, results: dict) -> dict:
+        """Method to pack the input data.
+
+        Args:
+            results (dict): Result dict from the data pipeline.
+
+        Returns:
+            dict:
+
+            - 'inputs' (obj:`torch.Tensor`): The forward data of models.
+            - 'data_sample' (obj:`DetDataSample`): The annotation info of the
+                sample.
+        """
+        packed_results = dict()
+        if 'img' in results:
+            img = results['img']
+            if len(img.shape) < 3:
+                img = np.expand_dims(img, -1)
+            # To improve the computational speed by by 3-5 times, apply:
+            # If image is not contiguous, use
+            # `numpy.transpose()` followed by `numpy.ascontiguousarray()`
+            # If image is already contiguous, use
+            # `torch.permute()` followed by `torch.contiguous()`
+            # Refer to https://github.com/open-mmlab/mmdetection/pull/9533
+            # for more details
+            if not img.flags.c_contiguous:
+                img = np.ascontiguousarray(img.transpose(2, 0, 1))
+                img = to_tensor(img)
+            else:
+                img = to_tensor(img).permute(2, 0, 1).contiguous()
+
+            packed_results['inputs'] = img
+
+        if 'gt_ignore_flags' in results:
+            valid_idx = np.where(results['gt_ignore_flags'] == 0)[0]
+            ignore_idx = np.where(results['gt_ignore_flags'] == 1)[0]
+
+        data_sample = DetDataSample()
+        instance_data = InstanceData()
+        ignore_instance_data = InstanceData()
+
+        for key in self.mapping_table.keys():
+            if key not in results:
+                continue
+            if key == 'gt_masks' or isinstance(results[key], BaseBoxes):
+                if 'gt_ignore_flags' in results:
+                    instance_data[
+                        self.mapping_table[key]] = results[key][valid_idx]
+                    ignore_instance_data[
+                        self.mapping_table[key]] = results[key][ignore_idx]
+                else:
+                    instance_data[self.mapping_table[key]] = results[key]
+            else:
+                if 'gt_ignore_flags' in results:
+                    instance_data[self.mapping_table[key]] = to_tensor(
+                        results[key][valid_idx])
+                    ignore_instance_data[self.mapping_table[key]] = to_tensor(
+                        results[key][ignore_idx])
+                else:
+                    instance_data[self.mapping_table[key]] = to_tensor(
+                        results[key])
+        data_sample.gt_instances = instance_data
+        data_sample.ignored_instances = ignore_instance_data
+
+        if 'proposals' in results:
+            proposals = InstanceData(
+                bboxes=to_tensor(results['proposals']),
+                scores=to_tensor(results['proposals_scores']))
+            data_sample.proposals = proposals
+
+        if 'gt_seg_map' in results:
+            gt_sem_seg_data = dict(
+                sem_seg=to_tensor(results['gt_seg_map'][None, ...].copy()))
+            data_sample.gt_sem_seg = PixelData(**gt_sem_seg_data)
+
+        # Only modified here
+        if 'gt_panoptic_seg' in results:
+            data_sample.gt_panoptic_seg = PixelData(
+                pan_seg=results['gt_panoptic_seg'])
+
+        img_meta = {}
+        for key in self.meta_keys:
+            assert key in results, f'`{key}` is not found in `results`, ' \
+                                   f'the valid keys are {list(results)}.'
+            img_meta[key] = results[key]
+
+        data_sample.set_metainfo(img_meta)
+        packed_results['data_samples'] = data_sample
+
+        return packed_results
 
 
 @TRANSFORMS.register_module()
@@ -1641,7 +1744,6 @@ class Polygon2Mask(BaseTransform):
 
     def __init__(self, mask_ratio=1, mask_overlap=False):
         self.mask_ratio = int(mask_ratio)
-        # TODO: Cannot be supported mask_overlap=True
         self.mask_overlap = mask_overlap
 
     def transform(self, results: dict) -> dict:
@@ -1653,15 +1755,18 @@ class Polygon2Mask(BaseTransform):
                 (gt_masks.height, gt_masks.width),
                 gt_masks,
                 downsample_ratio=self.mask_ratio)
-            masks = torch.from_numpy(masks[None])
             results['gt_bboxes'] = results['gt_bboxes'][sorted_idx]
             results['gt_labels'] = results['gt_bboxes_labels'][sorted_idx]
+
+            # In this case we put gt_masks in gt_panoptic_seg
+            results.pop('gt_masks')
+            results['gt_panoptic_seg'] = torch.from_numpy(masks[None])
         else:
             masks = polygons2masks((gt_masks.height, gt_masks.width),
                                    gt_masks,
                                    color=1,
                                    downsample_ratio=self.mask_ratio)
             masks = torch.from_numpy(masks)
-
-        results['gt_masks'] = masks
+            # Consistent logic with mmdet
+            results['gt_masks'] = masks
         return results

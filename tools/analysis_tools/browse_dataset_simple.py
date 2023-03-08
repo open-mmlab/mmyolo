@@ -2,7 +2,8 @@
 import argparse
 import os.path as osp
 
-import cv2
+import torch
+import torch.nn.functional as F
 from mmdet.models.utils import mask2ndarray
 from mmdet.structures.bbox import BaseBoxes
 from mmengine.config import Config, DictAction
@@ -57,35 +58,58 @@ def main():
     for i in range(len(dataset)):
         item = dataset[i]
         img = item['inputs'].permute(1, 2, 0).numpy()
-        data_sample = item['data_samples'].numpy()
-        gt_instances = data_sample.gt_instances
-        img_path = osp.basename(item['data_samples'].img_path)
 
+        data_sample = item['data_samples']
+        gt_instances = data_sample.gt_instances
+        assert not ('masks' in gt_instances and
+                    'gt_panoptic_seg' in data_sample), \
+            'masks and gt_panoptic_seg are not allowed to exist ' \
+            'at the same time.'
+
+        if 'masks' in gt_instances and gt_instances.masks.shape[
+                1:] != img.shape[:2]:
+            masks = F.interpolate(
+                gt_instances.masks[None].float(),
+                size=img.shape[:2],
+                mode='bilinear',
+                align_corners=False)[0]
+            gt_instances.masks = masks
+
+        if 'gt_panoptic_seg' in data_sample:
+            pan_seg = data_sample.gt_panoptic_seg.pan_seg
+            max_len = torch.arange(torch.max(pan_seg)) + 1
+            gt_mask = torch.where(pan_seg == max_len.view(-1, 1, 1), 1.0, 0.0)
+            if pan_seg.shape[1:] != img.shape[:2]:
+                gt_mask = F.interpolate(
+                    gt_mask[None],
+                    size=img.shape[:2],
+                    mode='bilinear',
+                    align_corners=False)[0]
+            gt_instances.masks = gt_mask
+            del data_sample.gt_panoptic_seg
+
+        gt_bboxes = gt_instances.get('bboxes', None)
+        if gt_bboxes is not None and isinstance(gt_bboxes, BaseBoxes):
+            gt_instances.bboxes = gt_bboxes.tensor
+
+        gt_masks = gt_instances.get('masks', None)
+        if gt_masks is not None:
+            masks = mask2ndarray(gt_masks)
+            gt_instances.masks = masks.astype(bool)
+
+        data_sample.gt_instances = gt_instances
+
+        img_path = osp.basename(item['data_samples'].img_path)
         out_file = osp.join(
             args.output_dir,
             osp.basename(img_path)) if args.output_dir is not None else None
 
         img = img[..., [2, 1, 0]]  # bgr to rgb
-        gt_bboxes = gt_instances.get('bboxes', None)
-        if gt_bboxes is not None and isinstance(gt_bboxes, BaseBoxes):
-            gt_instances.bboxes = gt_bboxes.tensor
-        gt_masks = gt_instances.get('masks', None)
-
-        if gt_masks is not None:
-            if gt_masks.shape[1:] != img.shape[:2]:
-                gt_masks = cv2.resize(
-                    gt_masks.transpose([1, 2, 0]), img.shape[:2])
-                if gt_masks.ndim == 2:
-                    gt_masks = gt_masks[..., None]
-                gt_masks = gt_masks.transpose([2, 0, 1])
-            masks = mask2ndarray(gt_masks)
-            gt_instances.masks = masks.astype(bool)
-        data_sample.gt_instances = gt_instances
 
         visualizer.add_datasample(
             osp.basename(img_path),
             img,
-            data_sample,
+            data_sample.numpy(),
             draw_pred=False,
             show=not args.not_show,
             wait_time=args.show_interval,
