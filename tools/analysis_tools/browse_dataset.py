@@ -141,22 +141,15 @@ def make_grid(imgs, names):
 
 
 def swap_pipeline_position(dataset_cfg):
-    swap_keys = {'LoadAnnotations': 1}
+    load_ann_tfm_name = 'LoadAnnotations'
     pipeline = dataset_cfg.get('pipeline')
     if (pipeline is None):
         return dataset_cfg
-    swap_trans = []
-    swap_pipeline = []
-    for idx, transform in enumerate(pipeline):
-        trans_type = transform.get('type')
-        if isinstance(trans_type, str) and (trans_type in swap_keys):
-            swap_trans.append((transform, swap_keys[trans_type]))
-        else:
-            swap_pipeline.append(transform)
-    swap_trans.sort(key=lambda x: x[1], reverse=True)
-    for transform, insert_idx in swap_trans:
-        swap_pipeline.insert(insert_idx, transform)
-    dataset_cfg['pipeline'] = swap_pipeline
+    all_transform_types = [tfm['type'] for tfm in pipeline]
+    if load_ann_tfm_name in all_transform_types:
+        load_ann_tfm_index = all_transform_types.index(load_ann_tfm_name)
+        load_ann_tfm = pipeline.pop(load_ann_tfm_index)
+        pipeline.insert(1, load_ann_tfm)
 
 
 class InspectCompose(Compose):
