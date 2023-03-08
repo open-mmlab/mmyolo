@@ -15,7 +15,7 @@ from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures import DetDataSample
 from mmdet.structures.bbox import (BaseBoxes, HorizontalBoxes,
                                    autocast_box_type, get_box_type)
-from mmdet.structures.mask import PolygonMasks
+from mmdet.structures.mask import PolygonMasks, polygon_to_bitmap
 from mmengine.structures import InstanceData, PixelData
 from numpy import random
 
@@ -1679,7 +1679,10 @@ class RegularizeRotatedBox(BaseTransform):
         return results
 
 
-def polygons2masks_overlap(imgsz, segments, downsample_ratio=1):
+def polygons2masks_overlap(imgsz,
+                           segments,
+                           downsample_ratio=1,
+                           coco_style=False):
     """Return a (640, 640) overlap mask."""
     masks = np.zeros(
         (imgsz[0] // downsample_ratio, imgsz[1] // downsample_ratio),
@@ -1688,7 +1691,11 @@ def polygons2masks_overlap(imgsz, segments, downsample_ratio=1):
     ms = []
     for si in range(len(segments)):
         mask = polygon2mask(
-            imgsz, segments[si], downsample_ratio=downsample_ratio, color=1)
+            imgsz,
+            segments[si],
+            downsample_ratio=downsample_ratio,
+            color=1,
+            coco_style=coco_style)
         ms.append(mask)
         areas.append(mask.sum())
     areas = np.asarray(areas)
@@ -1701,7 +1708,11 @@ def polygons2masks_overlap(imgsz, segments, downsample_ratio=1):
     return masks, index
 
 
-def polygon2mask(imgsz, polygons, color=1, downsample_ratio=1):
+def polygon2mask(imgsz,
+                 polygons,
+                 color=1,
+                 downsample_ratio=1,
+                 coco_style=False):
     """
     Args:
         imgsz (tuple): The image size.
@@ -1710,20 +1721,35 @@ def polygon2mask(imgsz, polygons, color=1, downsample_ratio=1):
         color (int): color
         downsample_ratio (int): downsample ratio
     """
-    mask = np.zeros(imgsz, dtype=np.uint8)
-    polygons = np.asarray(polygons)
-    polygons = polygons.astype(np.int32)
-    shape = polygons.shape
-    polygons = polygons.reshape(shape[0], -1, 2)
-    cv2.fillPoly(mask, polygons, color=color)
     nh, nw = (imgsz[0] // downsample_ratio, imgsz[1] // downsample_ratio)
-    # NOTE: fillPoly firstly then resize is trying the keep the same way
-    # of loss calculation when mask-ratio=1.
-    mask = cv2.resize(mask, (nw, nh))
+    if coco_style:
+        # This practice can lead to the loss of small objects
+        # polygons = polygons.resize((nh, nw)).masks
+        # polygons = np.asarray(polygons).reshape(-1)
+        # mask = polygon_to_bitmap([polygons], nh, nw)
+
+        polygons = np.asarray(polygons).reshape(-1)
+        mask = polygon_to_bitmap([polygons], imgsz[0],
+                                 imgsz[1]).astype(np.uint8)
+        mask = cv2.resize(mask, (nw, nh))
+    else:
+        mask = np.zeros(imgsz, dtype=np.uint8)
+        polygons = np.asarray(polygons)
+        polygons = polygons.astype(np.int32)
+        shape = polygons.shape
+        polygons = polygons.reshape(shape[0], -1, 2)
+        cv2.fillPoly(mask, polygons, color=color)
+        # NOTE: fillPoly firstly then resize is trying the keep the same way
+        # of loss calculation when mask-ratio=1.
+        mask = cv2.resize(mask, (nw, nh))
     return mask
 
 
-def polygons2masks(imgsz, polygons, color, downsample_ratio=1):
+def polygons2masks(imgsz,
+                   polygons,
+                   color,
+                   downsample_ratio=1,
+                   coco_style=False):
     """
     Args:
         imgsz (tuple): The image size.
@@ -1732,19 +1758,26 @@ def polygons2masks(imgsz, polygons, color, downsample_ratio=1):
         color (int): color
         downsample_ratio (int): downsample ratio
     """
-    masks = []
-    for si in range(len(polygons)):
-        mask = polygon2mask(imgsz, polygons[si], color, downsample_ratio)
-        masks.append(mask)
-    return np.array(masks)
+    if coco_style:
+        nh, nw = (imgsz[0] // downsample_ratio, imgsz[1] // downsample_ratio)
+        masks = polygons.resize((nh, nw)).to_ndarray()
+        return masks
+    else:
+        masks = []
+        for si in range(len(polygons)):
+            mask = polygon2mask(
+                imgsz, polygons[si], color, downsample_ratio, coco_style=False)
+            masks.append(mask)
+        return np.array(masks)
 
 
 @TRANSFORMS.register_module()
 class Polygon2Mask(BaseTransform):
 
-    def __init__(self, mask_ratio=1, mask_overlap=False):
+    def __init__(self, mask_ratio=1, mask_overlap=False, coco_style=False):
         self.mask_ratio = int(mask_ratio)
         self.mask_overlap = mask_overlap
+        self.coco_style = coco_style
 
     def transform(self, results: dict) -> dict:
         gt_masks = results['gt_masks']
@@ -1754,7 +1787,8 @@ class Polygon2Mask(BaseTransform):
             masks, sorted_idx = polygons2masks_overlap(
                 (gt_masks.height, gt_masks.width),
                 gt_masks,
-                downsample_ratio=self.mask_ratio)
+                downsample_ratio=self.mask_ratio,
+                coco_style=self.coco_style)
             results['gt_bboxes'] = results['gt_bboxes'][sorted_idx]
             results['gt_labels'] = results['gt_bboxes_labels'][sorted_idx]
 
@@ -1765,7 +1799,8 @@ class Polygon2Mask(BaseTransform):
             masks = polygons2masks((gt_masks.height, gt_masks.width),
                                    gt_masks,
                                    color=1,
-                                   downsample_ratio=self.mask_ratio)
+                                   downsample_ratio=self.mask_ratio,
+                                   coco_style=self.coco_style)
             masks = torch.from_numpy(masks)
             # Consistent logic with mmdet
             results['gt_masks'] = masks

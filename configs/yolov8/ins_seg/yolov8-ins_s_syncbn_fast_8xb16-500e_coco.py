@@ -190,7 +190,11 @@ last_transform = [
         }),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
-    dict(type='Polygon2Mask', mask_ratio=4.0, mask_overlap=True),
+    dict(
+        type='Polygon2Mask',
+        mask_ratio=4.0,
+        mask_overlap=True,
+        coco_style=False),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
