@@ -19,8 +19,8 @@ def parse_args():
 
 def main():
     args = parse_args()
-    checkpoint = CheckpointLoader.load_checkpoint(args.checkpoint,
-                                                  map_location='cpu')
+    checkpoint = CheckpointLoader.load_checkpoint(
+        args.checkpoint, map_location='cpu')
     new_state_dict = dict()
     new_meta = checkpoint['meta']
 
