@@ -25,6 +25,8 @@ class DeployModel(nn.Module):
                  postprocess_cfg: Optional[ConfigDict] = None):
         super().__init__()
         self.baseModel = baseModel
+        self.mean = baseModel.data_preprocessor.mean
+        self.std = baseModel.data_preprocessor.std
         if postprocess_cfg is None:
             self.with_postprocess = False
         else:
@@ -143,8 +145,12 @@ class DeployModel(nn.Module):
         return nms_func
 
     def forward(self, inputs: Tensor):
+        inputs = (inputs - self.mean) / self.std
         neck_outputs = self.baseModel(inputs)
+
         if self.with_postprocess:
             return self.pred_by_feat(*neck_outputs)
         else:
-            return neck_outputs
+            return [
+                torch.cat(o, 1).permute(0, 2, 3, 1) for o in zip(*neck_outputs)
+            ]
