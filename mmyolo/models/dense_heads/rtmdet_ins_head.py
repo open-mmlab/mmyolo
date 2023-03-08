@@ -216,8 +216,7 @@ class RTMDetInsSepBNHeadModule(RTMDetSepBNHeadModule):
                 for i in range(self.stacked_convs):
                     self.cls_convs[n][i].conv = self.cls_convs[0][i].conv
                     self.reg_convs[n][i].conv = self.reg_convs[0][i].conv
-                    # TODO: verify whether it is correct
-                    # self.kernel_convs[n][i].conv = self.kernel_convs[0][i].conv
+                    self.kernel_convs[n][i].conv = self.kernel_convs[0][i].conv
 
         self.mask_head = MaskFeatModule(
             in_channels=self.in_channels,
