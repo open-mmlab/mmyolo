@@ -149,8 +149,7 @@ def swap_pipeline_position(dataset_cfg):
     swap_pipeline = []
     for idx, transform in enumerate(pipeline):
         trans_type = transform.get('type')
-        if isinstance(trans_type, str) and \
-            (trans_type in swap_keys):
+        if isinstance(trans_type, str) and (trans_type in swap_keys):
             swap_trans.append((transform, swap_keys[trans_type]))
         else:
             swap_pipeline.append(transform)
