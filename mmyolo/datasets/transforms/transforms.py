@@ -99,10 +99,10 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
                                             self.scale)
 
             if ratio != 1:
-                # resize image according to the ratio
-                image = mmcv.imrescale(
+                # resize image according to the shape
+                image = mmcv.imresize(
                     img=image,
-                    scale=ratio,
+                    size=(int(original_w * ratio), int(original_h * ratio)),
                     interpolation='area' if ratio < 1 else 'bilinear',
                     backend=self.backend)
 
@@ -246,7 +246,10 @@ class LetterResize(MMDET_Resize):
         if 'pad_param' in results:
             results['pad_param_origin'] = results['pad_param'] * \
                                           np.repeat(ratio, 2)
-        results['pad_param'] = np.array(padding_list, dtype=np.float32)
+        # Have influence on mask mAP
+        results['pad_param'] = np.array(
+            [padding_h / 2, padding_h / 2, padding_w / 2, padding_w / 2],
+            dtype=np.float32)
 
     def _resize_masks(self, results: dict):
         """Resize masks with ``results['scale']``"""

@@ -3,14 +3,13 @@ import copy
 import math
 from typing import List, Optional, Sequence, Tuple
 
+import cv2
 import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import ConvModule
-from mmcv.ops import batched_nms
 from mmdet.models.utils import filter_scores_and_topk, multi_apply
-from mmdet.structures.bbox import get_box_tensor, get_box_wh, scale_boxes
 from mmdet.utils import ConfigType, OptInstanceList
 from mmengine import ConfigDict
 from mmengine.structures import InstanceData
@@ -159,8 +158,9 @@ class YOLOv8InsHeadModule(YOLOv8HeadModule):
         mask_protos = self.proto_preds(x[0])
         output = multi_apply(self.forward_single, x, self.cls_preds,
                              self.reg_preds, self.mask_coe_preds)
+        output = *output, mask_protos
 
-        return *output, mask_protos
+        return output
 
     def forward_single(self, x: torch.Tensor, cls_pred: nn.ModuleList,
                        reg_pred: nn.ModuleList,
@@ -171,7 +171,8 @@ class YOLOv8InsHeadModule(YOLOv8HeadModule):
         det_output = super().forward_single(x, cls_pred, reg_pred)
         # mask prediction
         mask_coefficient = mask_pred(x)
-        return *det_output, mask_coefficient
+        output = *det_output, mask_coefficient
+        return output
 
 
 @MODELS.register_module()
@@ -350,162 +351,89 @@ class YOLOv8InsHead(YOLOv8Head):
                 bboxes=bboxes[keep_idxs],
                 mcs_pred=mcs_pred)
 
+            results = self._bbox_post_process(
+                results=results,
+                cfg=cfg,
+                rescale=False,
+                with_nms=with_nms,
+                img_meta=img_meta)
+
+            input_shape_h, input_shape_w = img_meta['batch_input_shape'][:2]
+            masks = self.process_mask(
+                mask_proto,
+                results.mcs_pred,
+                results.bboxes, (input_shape_h, input_shape_w),
+                rescale,
+                mask_thr_binary=cfg.mask_thr_binary)[0]
+
             if rescale:
                 if pad_param is not None:
-                    results.bboxes -= results.bboxes.new_tensor([
-                        pad_param[2], pad_param[0], pad_param[2], pad_param[0]
-                    ])
+                    top_pad, bottom_pad, left_pad, right_pad = pad_param
+
+                    results.bboxes -= results.bboxes.new_tensor(
+                        [left_pad, top_pad, left_pad, top_pad])
+                    top, left = int(top_pad), int(left_pad)
+                    bottom, right = int(input_shape_h -
+                                        top_pad), int(input_shape_w - left_pad)
+                    masks = masks[:, top:bottom, left:right]
+
                 results.bboxes /= results.bboxes.new_tensor(
                     scale_factor).repeat((1, 2))
+                # TODO: Running speed is very slow and needs to be optimized
+                # Now, the logic remains the same as official
+                masks = masks.permute(1, 2, 0).contiguous().cpu().numpy()
+                # astype(np.uint8) is very important
+                masks = cv2.resize(
+                    masks.astype(np.uint8), (ori_shape[1], ori_shape[0]))
 
-            if cfg.get('yolox_style', False):
-                # do not need max_per_img
-                cfg.max_per_img = len(results)
+                if len(masks.shape) == 2:
+                    masks = masks[:, :, None]
 
-            results = self._bbox_mask_post_process(
-                results=results,
-                mask_feat=mask_proto,
-                cfg=cfg,
-                rescale_bbox=False,
-                rescale_mask=rescale,
-                with_nms=with_nms,
-                pad_param=pad_param,
-                img_meta=img_meta)
+                masks = torch.from_numpy(masks).permute(2, 0, 1)
+
             results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
             results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
 
+            results.masks = masks.bool()
             results_list.append(results)
         return results_list
 
-    def _bbox_mask_post_process(
-            self,
-            results: InstanceData,
-            mask_feat: Tensor,
-            cfg: ConfigDict,
-            rescale_bbox: bool = False,
-            rescale_mask: bool = True,
-            with_nms: bool = True,
-            pad_param: Optional[np.ndarray] = None,
-            img_meta: Optional[dict] = None) -> InstanceData:
-        """bbox and mask post-processing method.
-
-        The boxes would be rescaled to the original image scale and do
-        the nms operation. Usually `with_nms` is False is used for aug test.
+    def process_mask(self,
+                     mask_proto: Tensor,
+                     mcs_pred: Tensor,
+                     bboxes: Tensor,
+                     shape: Tuple[int, int],
+                     upsample: bool = False,
+                     mask_thr_binary: float = 0.5):
+        """Generate mask logits results.
 
         Args:
-            results (:obj:`InstaceData`): Detection instance results,
-                each item has shape (num_bboxes, ).
-            mask_feat (Tensor): Mask prototype features extracted from the
-                mask head, has shape (batch_size, num_prototypes, H, W).
-            cfg (ConfigDict): Test / postprocessing configuration,
-                if None, test_cfg would be used.
-            rescale_bbox (bool): If True, return boxes in original image space.
-                Default to False.
-            rescale_mask (bool): If True, return masks in original image space.
-                Default to True.
-            with_nms (bool): If True, do nms before return boxes.
-                Default to True.
-            img_meta (dict, optional): Image meta info. Defaults to None.
 
-        Returns:
-            :obj:`InstanceData`: Detection results of each image
-            after the post process.
-            Each item usually contains following keys.
+            mask_proto (Tensor): Mask prototype features.
+                Has shape (num_instance, masks_channels).
+            mcs_pred (Tensor): Mask coefficients prediction for single image.
+                Has shape (masks_channels, H, W)
+            bboxes (Tensor): Tensor of the bbox. Has shape (num_instance, 4).
+            shape (Tuple): Batch input shape of image.
+            upsample (bool): Whether upsample masks results to batch input
+                shape. Default to False.
+            mask_thr_binary (float): Threshold of mask prediction. Default
+                to 0.5.
 
-                - scores (Tensor): Classification scores, has a shape
-                  (num_instance, )
-                - labels (Tensor): Labels of bboxes, has a shape
-                  (num_instances, ).
-                - bboxes (Tensor): Has a shape (num_instances, 4),
-                  the last dimension 4 arrange as (x1, y1, x2, y2).
-                - masks (Tensor): Has a shape (num_instances, h, w).
-        """
-        if rescale_bbox:
-            assert img_meta.get('scale_factor') is not None
-            scale_factor = [1 / s for s in img_meta['scale_factor']]
-            results.bboxes = scale_boxes(results.bboxes, scale_factor)
-
-        if hasattr(results, 'score_factors'):
-            # TODO： Add sqrt operation in order to be consistent with
-            #  the paper.
-            score_factors = results.pop('score_factors')
-            results.scores = results.scores * score_factors
-
-        # filter small size bboxes
-        if cfg.get('min_bbox_size', -1) >= 0:
-            w, h = get_box_wh(results.bboxes)
-            valid_mask = (w > cfg.min_bbox_size) & (h > cfg.min_bbox_size)
-            if not valid_mask.all():
-                results = results[valid_mask]
-
-        # TODO: deal with `with_nms` and `nms_cfg=None` in test_cfg
-        assert with_nms, 'with_nms must be True for YOLOv8-Ins'
-        if results.bboxes.numel() > 0:
-            bboxes = get_box_tensor(results.bboxes)
-            det_bboxes, keep_idxs = batched_nms(bboxes, results.scores,
-                                                results.labels, cfg.nms)
-            results = results[keep_idxs]
-            # some nms would reweight the score, such as softnms
-            results.scores = det_bboxes[:, -1]
-            results = results[:cfg.max_per_img]
-
-            # process masks
-            mask_logits = self._mask_predict_by_feat(mask_feat,
-                                                     results.mcs_pred)
-            stride = self.prior_generator.strides[0][0]
-            mask_logits = F.interpolate(
-                mask_logits.unsqueeze(0),
-                scale_factor=stride // 2,
-                mode='bilinear')
-
-            # TODO: logic is diffenent from the official.
-            if rescale_mask:
-                # Use img_meta to crop and resize
-                ori_h, ori_w = img_meta['ori_shape'][:2]
-                if isinstance(pad_param, np.ndarray):
-                    pad_param = pad_param.astype(np.int32)
-                    crop_y1, crop_y2 = pad_param[
-                        0], mask_logits.shape[-2] - pad_param[1]
-                    crop_x1, crop_x2 = pad_param[
-                        2], mask_logits.shape[-1] - pad_param[3]
-                    mask_logits = mask_logits[..., crop_y1:crop_y2,
-                                              crop_x1:crop_x2]
-                mask_logits = F.interpolate(
-                    mask_logits,
-                    size=[ori_h, ori_w],
-                    mode='bilinear',
-                    align_corners=False)
-            # Remove the prediction points on the outside of the box
-            mask_logits = self.crop_mask(mask_logits, results.bboxes)
-            masks = mask_logits.squeeze(0)
-            masks = masks > cfg.mask_thr_binary
-            results.masks = masks
-        else:
-            h, w = img_meta['ori_shape'][:2] if rescale_mask else img_meta[
-                'img_shape'][:2]
-            results.masks = torch.zeros(
-                size=(results.bboxes.shape[0], h, w),
-                dtype=torch.bool,
-                device=results.bboxes.device)
-        return results
-
-    def _mask_predict_by_feat(self, mask_feat: Tensor,
-                              kernels: Tensor) -> Tensor:
-        """Generate mask logits from mask features with dynamic convs.
-
-        Args:
-            mask_feat (Tensor): Mask prototype features.
-                Has shape (mask_channels, H, W).
-            kernels (Tensor): Kernel parameters for each instance.
-                Has shape (num_instance, mask_channels)
-        Returns:
+        Return:
             Tensor: Instance segmentation masks for each instance.
                 Has shape (num_instance, H, W).
         """
-        c, mh, mw = mask_feat.shape
-        masks = (kernels @ mask_feat.float().view(c, -1)).sigmoid().view(
+
+        c, mh, mw = mask_proto.shape  # CHW
+        masks = (mcs_pred @ mask_proto.float().view(c, -1)).sigmoid().view(
             -1, mh, mw)
-        return masks
+        if upsample:
+            masks = F.interpolate(
+                masks[None], shape, mode='bilinear',
+                align_corners=False)  # CHW
+        masks = self.crop_mask(masks, bboxes)  # CHW
+        return masks.gt_(mask_thr_binary)
 
     def crop_mask(self, masks: Tensor, boxes: Tensor):
         """Crop mask by the bounding box.
