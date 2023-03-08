@@ -1,8 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
+import os.path as osp
 from pathlib import Path
-
-import torch
+from mmengine.utils import mkdir_or_exist
+from mmengine.runner import (CheckpointLoader, save_checkpoint)
 
 
 def parse_args():
@@ -18,7 +19,8 @@ def parse_args():
 
 def main():
     args = parse_args()
-    checkpoint = torch.load(args.checkpoint, map_location='cpu')
+    checkpoint = CheckpointLoader.load_checkpoint(args.checkpoint,
+                                                  map_location='cpu')
     new_state_dict = dict()
     new_meta = checkpoint['meta']
 
@@ -32,7 +34,9 @@ def main():
     checkpoint['state_dict'] = new_state_dict
 
     if args.inplace:
-        torch.save(checkpoint, args.checkpoint)
+        assert osp.exists(args.checkpoint), \
+            'can not find the checkpoint path: {args.checkpoint}'
+        save_checkpoint(checkpoint, args.checkpoint)
     else:
         ckpt_path = Path(args.checkpoint)
         ckpt_name = ckpt_path.stem
@@ -40,8 +44,9 @@ def main():
             ckpt_dir = Path(args.out_path)
         else:
             ckpt_dir = ckpt_path.parent
-        new_ckpt_path = ckpt_dir / f'{ckpt_name}_student.pth'
-        torch.save(checkpoint, new_ckpt_path)
+        mkdir_or_exist(ckpt_dir)
+        new_ckpt_path = osp.join(ckpt_dir, f'{ckpt_name}_student.pth')
+        save_checkpoint(checkpoint, new_ckpt_path)
 
 
 if __name__ == '__main__':
