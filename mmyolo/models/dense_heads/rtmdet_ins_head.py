@@ -330,6 +330,7 @@ class RTMDetInsHead(RTMDetHead):
                      loss_weight=2.0,
                      eps=5e-6,
                      reduction='mean'),
+                 mask_loss_stride=4,
                  train_cfg: OptConfigType = None,
                  test_cfg: OptConfigType = None,
                  init_cfg: OptMultiConfig = None):
@@ -348,7 +349,7 @@ class RTMDetInsHead(RTMDetHead):
         if isinstance(self.head_module, RTMDetInsSepBNHeadModule):
             assert self.use_sigmoid_cls == self.head_module.use_sigmoid_cls
         self.loss_mask = MODELS.build(loss_mask)
-        self.mask_loss_stride = 4
+        self.mask_loss_stride = mask_loss_stride
 
     def predict_by_feat(self,
                         cls_scores: List[Tensor],
@@ -678,7 +679,7 @@ class RTMDetInsHead(RTMDetHead):
         relative_coord = relative_coord.permute(0, 2,
                                                 1).reshape(num_inst, 2, h, w)
         mask_feat = torch.cat([relative_coord, mask_feat], dim=1)
-        weights, biases = self.parse_dynamic_params2(kernels)
+        weights, biases = self.parse_dynamic_params(kernels)
 
         n_layers = len(weights)
         x = mask_feat
@@ -691,29 +692,6 @@ class RTMDetInsHead(RTMDetHead):
         return x
 
     def parse_dynamic_params(self, flatten_kernels: Tensor) -> tuple:
-        """split kernel head prediction to conv weight and bias."""
-        n_inst = flatten_kernels.size(0)
-        n_layers = len(self.head_module.weight_nums)
-        params_splits = list(
-            torch.split_with_sizes(
-                flatten_kernels,
-                self.head_module.weight_nums + self.head_module.bias_nums,
-                dim=1))
-        weight_splits = params_splits[:n_layers]
-        bias_splits = params_splits[n_layers:]
-        for i in range(n_layers):
-            if i < n_layers - 1:
-                weight_splits[i] = weight_splits[i].reshape(
-                    n_inst * self.head_module.dyconv_channels, -1, 1, 1)
-                bias_splits[i] = bias_splits[i].reshape(
-                    n_inst * self.head_module.dyconv_channels)
-            else:
-                weight_splits[i] = weight_splits[i].reshape(n_inst, -1, 1, 1)
-                bias_splits[i] = bias_splits[i].reshape(n_inst)
-
-        return weight_splits, bias_splits
-
-    def parse_dynamic_params2(self, flatten_kernels: Tensor) -> tuple:
         """split kernel head prediction to conv weight and bias."""
         n_inst = flatten_kernels.size(0)
         n_layers = len(self.head_module.weight_nums)

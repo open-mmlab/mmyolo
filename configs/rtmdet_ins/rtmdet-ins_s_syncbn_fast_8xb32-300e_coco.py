@@ -32,7 +32,6 @@ model = dict(
     ),
     bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
 
-
 train_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
     dict(
@@ -66,7 +65,7 @@ train_pipeline = [
         type='YOLOv5MixUp',
         use_cached=True,
         max_cached_images=mixup_max_cached_images),
-    dict(type='Mask2Tensor', downsample_stride=4),
+    dict(type='Mask2Tensor', downsample_stride=_base_.mask_downsample_stride),
     dict(type='mmdet.PackDetInputs')
 ]
 
@@ -92,7 +91,7 @@ train_pipeline_stage2 = [
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
-    dict(type='Mask2Tensor', downsample_stride=4),
+    dict(type='Mask2Tensor', downsample_stride=_base_.mask_downsample_stride),
     dict(type='mmdet.PackDetInputs')
 ]
 

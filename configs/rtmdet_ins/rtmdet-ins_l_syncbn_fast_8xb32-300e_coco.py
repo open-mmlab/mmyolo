@@ -52,6 +52,7 @@ val_batch_size_per_gpu = 32
 val_num_workers = 10
 use_mask2refine = True
 copypaste_prob = 0.3
+mask_downsample_stride = 4
 
 # Config of batch shapes. Only on val.
 batch_shapes_cfg = dict(
@@ -143,7 +144,8 @@ model = dict(
             type='mmdet.DiceLoss',
             loss_weight=loss_mask_weight,
             eps=5e-6,
-            reduction='mean')),
+            reduction='mean'),
+        mask_loss_stride=mask_downsample_stride),
     train_cfg=dict(
         assigner=dict(
             type='BatchDynamicSoftLabelAssigner',
@@ -190,7 +192,7 @@ train_pipeline = [
         type='YOLOv5MixUp',
         use_cached=True,
         max_cached_images=mixup_max_cached_images),
-    dict(type='Mask2Tensor', downsample_stride=4),
+    dict(type='Mask2Tensor', downsample_stride=mask_downsample_stride),
     dict(type='mmdet.PackDetInputs')
 ]
 
@@ -216,7 +218,7 @@ train_pipeline_stage2 = [
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
-    dict(type='Mask2Tensor', downsample_stride=4),
+    dict(type='Mask2Tensor', downsample_stride=mask_downsample_stride),
     dict(type='mmdet.PackDetInputs')
 ]
 
