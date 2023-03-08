@@ -1,6 +1,4 @@
-# MMYOLO 应用案例
-
-基于 MMYOLO 的频高图实时目标检测 benchmark。
+# 基于 MMYOLO 的频高图实时目标检测 benchmark
 
 ## 数据集构建
 
