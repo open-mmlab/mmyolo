@@ -7,7 +7,7 @@ import cv2
 import mmcv
 import numpy as np
 import torch
-from mmcv.transforms import BaseTransform
+from mmcv.transforms import BaseTransform, Compose
 from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
@@ -17,6 +17,9 @@ from mmdet.structures.mask import PolygonMasks
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
+
+# TODO: Waiting for MMCV support
+TRANSFORMS.register_module(module=Compose, force=True)
 
 
 @TRANSFORMS.register_module()
@@ -1504,3 +1507,51 @@ class RemoveDataElement(BaseTransform):
         repr_str = self.__class__.__name__
         repr_str += f'(keys={self.keys})'
         return repr_str
+
+
+@TRANSFORMS.register_module()
+class RegularizeRotatedBox(BaseTransform):
+    """Regularize rotated boxes.
+
+    Due to the angle periodicity, one rotated box can be represented in
+    many different (x, y, w, h, t). To make each rotated box unique,
+    ``regularize_boxes`` will take the remainder of the angle divided by
+    180 degrees.
+
+    For convenience, three angle_version can be used here:
+
+    - 'oc': OpenCV Definition. Has the same box representation as
+        ``cv2.minAreaRect`` the angle ranges in [-90, 0).
+    - 'le90': Long Edge Definition (90). the angle ranges in [-90, 90).
+        The width is always longer than the height.
+    - 'le135': Long Edge Definition (135). the angle ranges in [-45, 135).
+        The width is always longer than the height.
+
+    Required Keys:
+
+    - gt_bboxes (RotatedBoxes[torch.float32])
+
+    Modified Keys:
+
+    - gt_bboxes
+
+    Args:
+        angle_version (str): Angle version. Can only be 'oc',
+            'le90', or 'le135'. Defaults to 'le90.
+    """
+
+    def __init__(self, angle_version='le90') -> None:
+        self.angle_version = angle_version
+        try:
+            from mmrotate.structures.bbox import RotatedBoxes
+            self.box_type = RotatedBoxes
+        except ImportError:
+            raise ImportError(
+                'Please run "mim install -r requirements/mmrotate.txt" '
+                'to install mmrotate first for rotated detection.')
+
+    def transform(self, results: dict) -> dict:
+        assert isinstance(results['gt_bboxes'], self.box_type)
+        results['gt_bboxes'] = self.box_type(
+            results['gt_bboxes'].regularize_boxes(self.angle_version))
+        return results

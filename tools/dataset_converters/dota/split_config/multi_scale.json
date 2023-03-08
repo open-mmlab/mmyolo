@@ -1,0 +1,19 @@
+{
+    "patch_sizes": [
+      1024
+    ],
+    "patch_overlap_sizes": [
+      500
+    ],
+    "img_resize_ratio": [
+      0.5, 1.0, 1.5
+    ],
+    "min_img_ratio": 0.6,
+    "iof_thr": 0.7,
+    "padding": true,
+    "padding_value": [
+      104,
+      116,
+      124
+    ]
+}

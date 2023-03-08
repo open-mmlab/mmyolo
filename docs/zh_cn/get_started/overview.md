@@ -12,6 +12,16 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 <img src="https://user-images.githubusercontent.com/17425982/220060451-d50414e5-a239-45b7-a4db-ed8699820300.png" alt="愿景图"/>
 </div>
 
+目前支持的任务如下：
+
+<details open>
+<summary><b>支持的任务</b></summary>
+
+- 目标检测
+- 旋转框目标检测
+
+</details>
+
 目前支持的 YOLO 系列算法如下：
 
 <details open>
@@ -20,6 +30,7 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 - YOLOv5
 - YOLOX
 - RTMDet
+- RTMDet-Rotated
 - YOLOv6
 - YOLOv7
 - PPYOLOE
@@ -27,13 +38,15 @@ MMYOLO 是一个基于 PyTorch 和 MMDetection 的 YOLO 系列算法开源工具
 
 </details>
 
-目前支持的任务如下：
+目前支持的数据集如下：
 
 <details open>
-<summary><b>支持的任务</b></summary>
+<summary><b>支持的数据集</b></summary>
 
-- 目标检测
-- 旋转框目标检测
+- COCO Dataset
+- VOC Dataset
+- CrowdHuman Dataset
+- DOTA 1.0 Dataset
 
 </details>
 

@@ -9,7 +9,7 @@ from mmengine.logging import print_log
 from mmengine.runner import Runner
 
 from mmyolo.registry import RUNNERS
-from mmyolo.utils import is_metainfo_lower, register_all_modules
+from mmyolo.utils import is_metainfo_lower
 
 
 def parse_args():
@@ -54,10 +54,6 @@ def parse_args():
 
 def main():
     args = parse_args()
-
-    # register all modules in mmdet into the registries
-    # do not init the default scope here because it will be init in the runner
-    register_all_modules(init_default_scope=False)
 
     # load config
     cfg = Config.fromfile(args.config)

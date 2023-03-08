@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://user-images.githubusercontent.com/27466624/213156908-cef7cc50-97d1-4e0a-9e06-309bd0a49173.png" width="100%"/>
+  <img src="https://user-images.githubusercontent.com/27466624/222385182-1247251c-8fac-4e77-94f5-57580e0ce3bd.png" width="100%"/>
   <div>&nbsp;</div>
   <div align="center">
     <b><font size="5">OpenMMLab 官网</font></b>
@@ -78,10 +78,17 @@
 
 ## 🥳 🚀 最新进展 [🔝](#-table-of-contents)
 
-💎 **v0.4.0** 版本已经在 2023.1.18 发布：
+💎 **v0.5.0** 版本已经在 2023.3.2 发布：
 
-1. 实现了 [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) 目标检测模型，并通过 [projects/easydeploy](https://github.com/open-mmlab/mmyolo/blob/dev/projects/easydeploy) 支持了模型部署
-2. 新增了中英文版本的 [YOLOv8 原理和实现全解析文档](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/algorithm_descriptions/yolov8_description.md)
+1. 支持了 [RTMDet-R](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md#rotated-object-detection) 旋转框目标检测任务和算法
+2. [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) 支持使用 mask 标注提升目标检测模型性能
+3. 支持 [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/razor/subnets/README.md) 搜索的 NAS 子网络作为 YOLO 系列算法的 backbone
+4. 支持调用 [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/distillation/README.md) 对 RTMDet 进行知识蒸馏
+5. [MMYOLO](https://mmyolo.readthedocs.io/zh_CN/dev/) 文档结构优化，内容全面升级
+6. 基于 RTMDet 训练超参提升 YOLOX 精度和训练速度
+7. 支持模型参数量、FLOPs 计算和提供 T4 设备上 GPU 延时数据，并更新了 [Model Zoo](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/model_zoo.md)
+8. 支持测试时增强 TTA
+9. 支持 RTMDet、YOLOv8 和 YOLOv7 assigner 可视化
 
 我们提供了实用的**脚本命令速查表**
 
@@ -123,7 +130,7 @@
 <img src="https://user-images.githubusercontent.com/12907710/208044554-1e8de6b5-48d8-44e4-a7b5-75076c7ebb71.png"/>
 </div>
 
-MMYOLO 中目前仅仅实现了目标检测算法，但是相比 MMDeteciton 版本有显著训练加速，训练速度相比原先版本提升 2.6 倍。
+MMYOLO 中目前实现了目标检测和旋转框目标检测算法，但是相比 MMDeteciton 版本有显著训练加速，训练速度相比原先版本提升 2.6 倍。
 
 ## 📖 简介 [🔝](#-table-of-contents)
 
@@ -159,12 +166,12 @@ P6 模型图详见 [model_design.md](docs/zh_cn/recommended_topics/model_design.
 MMYOLO 依赖 PyTorch, MMCV, MMEngine 和 MMDetection，以下是安装的简要步骤。 更详细的安装指南请参考[安装文档](docs/zh_cn/get_started/installation.md)。
 
 ```shell
-conda create -n open-mmlab python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
-conda activate open-mmlab
+conda create -n mmyolo python=3.8 pytorch==1.10.1 torchvision==0.11.2 cudatoolkit=11.3 -c pytorch -y
+conda activate mmyolo
 pip install openmim
-mim install "mmengine>=0.3.1"
-mim install "mmcv>=2.0.0rc1,<2.1.0"
-mim install "mmdet>=3.0.0rc5,<3.1.0"
+mim install "mmengine>=0.6.0"
+mim install "mmcv>=2.0.0rc4,<2.1.0"
+mim install "mmdet>=3.0.0rc6,<3.1.0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
@@ -201,6 +208,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [MMYOLO 模型结构设计](docs/zh_cn/recommended_topics/model_design.md)
 - [原理和实现全解析](docs/zh_cn/recommended_topics/algorithm_descriptions/)
 - [轻松更换主干网络](docs/zh_cn/recommended_topics/replace_backbone.md)
+- [MMYOLO 模型复杂度分析](docs/zh_cn/recommended_topics/complexity_analysis.md)
 - [标注+训练+测试+部署全流程](docs/zh_cn/recommended_topics/labeling_to_deployment_tutorials.md)
 - [关于可视化的一切](docs/zh_cn/recommended_topics/visualization.md)
 - [模型部署流程](docs/zh_cn/recommended_topics/deploy/)
@@ -217,14 +225,18 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [恢复训练](docs/zh_cn/common_usage/resume_training.md)
 - [开启和关闭 SyncBatchNorm](docs/zh_cn/common_usage/syncbn.md)
 - [开启混合精度训练](docs/zh_cn/common_usage/amp_training.md)
+- [多尺度训练和测试](docs/zh_cn/common_usage/ms_training_testing.md)
+- [测试时增强相关说明](docs/zh_cn/common_usage/tta.md)
 - [给主干网络增加插件](docs/zh_cn/common_usage/plugins.md)
-- [冻结指定网络层权重](docs/zh_cn/common_usage/common_usage/freeze_layers.md)
+- [冻结指定网络层权重](docs/zh_cn/common_usage/freeze_layers.md)
 - [输出模型预测结果](docs/zh_cn/common_usage/output_predictions.md)
 - [设置随机种子](docs/zh_cn/common_usage/set_random_seed.md)
 - [算法组合替换教程](docs/zh_cn/common_usage/module_combination.md)
 - [使用 mim 跨库调用其他 OpenMMLab 仓库的脚本](docs/zh_cn/common_usage/mim_usage.md)
 - [应用多个 Neck](docs/zh_cn/common_usage/multi_necks.md)
 - [指定特定设备训练或推理](docs/zh_cn/common_usage/specify_device.md)
+- [单通道和多通道应用案例](docs/zh_cn/common_usage/single_multi_channel_applications.md)
+- [MM 系列开源库注册表](docs/zh_cn/common_usage/registries_info.md)
 
 </details>
 
@@ -250,7 +262,9 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 - [学习 YOLOv5 配置文件](docs/zh_cn/tutorials/config.md)
 - [数据流](docs/zh_cn/tutorials/data_flow.md)
+- [旋转目标检测](docs/zh_cn/tutorials/rotated_detection.md)
 - [自定义安装](docs/zh_cn/tutorials/custom_installation.md)
+- [常见警告说明](docs/zh_cn/tutorials/warning_notes.md)
 - [常见问题](docs/zh_cn/tutorials/faq.md)
 
 </details>
@@ -274,18 +288,42 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 
 ## 📊 基准测试和模型库 [🔝](#-table-of-contents)
 
+<div align=center>
+<img src="https://user-images.githubusercontent.com/17425982/222087414-168175cc-dae6-4c5c-a8e3-3109a152dd19.png"/>
+</div>
+
 测试结果和模型可以在 [模型库](docs/zh_cn/model_zoo.md) 中找到。
+
+<details open>
+<summary><b>支持的任务</b></summary>
+
+- [x] 目标检测
+- [x] 旋转框目标检测
+
+</details>
 
 <details open>
 <summary><b>支持的算法</b></summary>
 
 - [x] [YOLOv5](configs/yolov5)
+- [ ] [YOLOv5u](configs/yolov5/yolov5u) (仅推理)
 - [x] [YOLOX](configs/yolox)
 - [x] [RTMDet](configs/rtmdet)
+- [x] [RTMDet-Rotated](configs/rtmdet)
 - [x] [YOLOv6](configs/yolov6)
 - [x] [YOLOv7](configs/yolov7)
 - [x] [PPYOLOE](configs/ppyoloe)
 - [x] [YOLOv8](configs/yolov8)
+
+</details>
+
+<details open>
+<summary><b>支持的数据集</b></summary>
+
+- [x] COCO Dataset
+- [x] VOC Dataset
+- [x] CrowdHuman Dataset
+- [x] DOTA 1.0 Dataset
 
 </details>
 
