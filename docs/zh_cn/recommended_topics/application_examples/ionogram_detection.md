@@ -4,7 +4,7 @@
 
 数字频高图是获取电离层实时信息最重要的途径。电离层结构检测对精准提取电离层关键参数，具有非常重要的研究意义。
 
-利用中国科学院在海南、武汉、怀来获取的不同季节的4311张频高图建立数据集，人工标注出 E 层、Es-c 层、Es-l 层、F1 层、F2 层、Spread F 层共 6 种结构。[数据集下载](https://github.com/VoyagerXvoyagerx/Ionogram_detection/releases/download/Dataset/Iono4311.zip)
+利用中国科学院在海南、武汉、怀来获取的不同季节的4311张频高图建立数据集，人工标注出 E 层、Es-c 层、Es-l 层、F1 层、F2 层、Spread F 层共 6 种结构。\[数据集下载\]
 
 <div align=center>
 <img width="40%" src="https://user-images.githubusercontent.com/67947949/223638535-c4583d88-aa5a-4f21-b35a-e6e8328c9bd4.jpg"/>
@@ -12,6 +12,8 @@
 使用 labelme 标注的图像预览
 
 </div>
+
+1. 数据集准备
 
 下载数据后，放置在 MMYOLO 仓库的根目录下，使用 `unzip test.zip` 命令（linux）解压至当前文件夹。解压后的文件夹结构为：
 
@@ -23,7 +25,7 @@ Iono4311/
 
 其中，`images` 目录下存放输入图片，`labels` 目录下存放使用 labelme 标注得到的 json 文件。
 
-1. 数据集格式转换
+2. 数据集格式转换
 
 使用MMYOLO提供的 `tools/dataset_converters/labelme2coco.py` 脚本将 labelme 格式的标注文件 转换为 COCO 格式的标注文件。
 
@@ -33,7 +35,7 @@ python tools/dataset_converters/labelme2coco.py --img-dir ./Iono4311/images \
                                                 --out ./Iono4311/annotations/annotations_all.json
 ```
 
-2. 浏览数据集
+3. 浏览数据集
 
 使用下面的命令可以将 COCO 的 label 在图片上进行显示，这一步可以验证刚刚转换是否有问题。
 
@@ -42,7 +44,7 @@ python tools/analysis_tools/browse_coco_json.py --img-dir ./Iono4311/images \
                                                 --ann-file ./Iono4311/annotations/annotations_all.json
 ```
 
-3. 划分训练集、验证集、测试集
+4. 划分训练集、验证集、测试集
 
 设置70%的图片为训练集，15%作为验证集，15%为测试集。
 
