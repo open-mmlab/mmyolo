@@ -356,37 +356,46 @@ class YOLOv8InsHead(YOLOv8Head):
                 img_meta=img_meta)
 
             input_shape_h, input_shape_w = img_meta['batch_input_shape'][:2]
-            masks = self.process_mask(
-                mask_proto,
-                results.mask_coeff_pred,
-                results.bboxes, (input_shape_h, input_shape_w),
-                rescale,
-                mask_thr_binary=cfg.mask_thr_binary)[0]
+            masks = self.process_mask(mask_proto, results.mask_coeff_pred,
+                                      results.bboxes,
+                                      (input_shape_h, input_shape_w), rescale)
 
-            if rescale:
-                if pad_param is not None:
-                    top_pad, bottom_pad, left_pad, right_pad = pad_param
+            if rescale and (pad_param is not None):
+                top_pad, bottom_pad, left_pad, right_pad = pad_param
 
-                    results.bboxes -= results.bboxes.new_tensor(
-                        [left_pad, top_pad, left_pad, top_pad])
-                    top, left = int(top_pad), int(left_pad)
-                    bottom, right = int(input_shape_h -
-                                        top_pad), int(input_shape_w - left_pad)
-                    masks = masks[:, top:bottom, left:right]
-
+                results.bboxes -= results.bboxes.new_tensor(
+                    [left_pad, top_pad, left_pad, top_pad])
                 results.bboxes /= results.bboxes.new_tensor(
                     scale_factor).repeat((1, 2))
-                # TODO: Running speed is very slow and needs to be optimized
-                # Now, the logic remains the same as official
-                masks = masks.permute(1, 2, 0).contiguous().cpu().numpy()
-                # astype(np.uint8) is very important
-                masks = cv2.resize(
-                    masks.astype(np.uint8), (ori_shape[1], ori_shape[0]))
+                top, left = int(top_pad), int(left_pad)
+                bottom, right = int(input_shape_h -
+                                    top_pad), int(input_shape_w - left_pad)
+                masks = masks[:, :, top:bottom, left:right]
 
-                if len(masks.shape) == 2:
-                    masks = masks[:, :, None]
+            fast_test = cfg.get('fast_test', False)
+            if fast_test:
+                if rescale:
+                    masks = F.interpolate(
+                        masks,
+                        size=[input_shape_h, input_shape_w],
+                        mode='bilinear',
+                        align_corners=False)
 
-                masks = torch.from_numpy(masks).permute(2, 0, 1)
+                masks = masks.squeeze(0)
+                masks = masks > cfg.mask_thr_binary
+            else:
+                masks.gt_(cfg.mask_thr_binary)
+                if rescale:
+                    masks = masks[0].permute(1, 2,
+                                             0).contiguous().cpu().numpy()
+                    # astype(np.uint8) is very important
+                    masks = cv2.resize(
+                        masks.astype(np.uint8), (ori_shape[1], ori_shape[0]))
+
+                    if len(masks.shape) == 2:
+                        masks = masks[:, :, None]
+
+                    masks = torch.from_numpy(masks).permute(2, 0, 1)
 
             results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
             results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
@@ -400,8 +409,7 @@ class YOLOv8InsHead(YOLOv8Head):
                      mask_coeff_pred: Tensor,
                      bboxes: Tensor,
                      shape: Tuple[int, int],
-                     upsample: bool = False,
-                     mask_thr_binary: float = 0.5):
+                     upsample: bool = False):
         """Generate mask logits results.
 
         Args:
@@ -414,8 +422,6 @@ class YOLOv8InsHead(YOLOv8Head):
             shape (Tuple): Batch input shape of image.
             upsample (bool): Whether upsample masks results to batch input
                 shape. Default to False.
-            mask_thr_binary (float): Threshold of mask prediction. Default
-                to 0.5.
 
         Return:
             Tensor: Instance segmentation masks for each instance.
@@ -425,13 +431,12 @@ class YOLOv8InsHead(YOLOv8Head):
         c, mh, mw = mask_proto.shape  # CHW
         masks = (
             mask_coeff_pred @ mask_proto.float().view(c, -1)).sigmoid().view(
-                -1, mh, mw)
+                -1, mh, mw)[None]
         if upsample:
             masks = F.interpolate(
-                masks[None], shape, mode='bilinear',
-                align_corners=False)  # CHW
-        masks = self.crop_mask(masks, bboxes)  # CHW
-        return masks.gt_(mask_thr_binary)
+                masks, shape, mode='bilinear', align_corners=False)  # 1CHW
+        masks = self.crop_mask(masks, bboxes)  # 1CHW
+        return masks
 
     def crop_mask(self, masks: Tensor, boxes: Tensor):
         """Crop mask by the bounding box.

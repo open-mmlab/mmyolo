@@ -25,7 +25,17 @@ model_test_cfg = dict(
     score_thr=0.001,
     nms=dict(type='nms', iou_threshold=0.7),
     max_per_img=300,
-    mask_thr_binary=0.5)
+    mask_thr_binary=0.5,
+    # fast_test: Whether to use fast test methods. When set
+    # to False, the implementation here is the same as the
+    # official, with higher mAP. If set to True, mask will first
+    # be upsampled to origin image shape through Pytorch, and
+    # then use mask_thr_binary to determine which pixels belong
+    # to the object. If set to False, will first use
+    # mask_thr_binary to determine which pixels belong to the
+    # object , and then use opencv to upsample mask to origin
+    # image shape. Default to False.
+    fast_test=False)
 
 # ===============================Unmodified in most cases====================
 model = dict(
