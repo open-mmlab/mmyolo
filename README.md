@@ -204,6 +204,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 - [Resume training](docs/en/common_usage/resume_training.md)
 - [Enabling and disabling SyncBatchNorm](docs/en/common_usage/syncbn.md)
 - [Enabling AMP](docs/en/common_usage/amp_training.md)
+- [Multi-scale training and testing](docs/en/common_usage/ms_training_testing.md)
 - [TTA Related Notes](docs/en/common_usage/tta.md)
 - [Add plugins to the backbone network](docs/en/common_usage/plugins.md)
 - [Freeze layers](docs/en/common_usage/freeze_layers.md)
@@ -283,6 +284,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 <summary><b>Supported Algorithms</b></summary>
 
 - [x] [YOLOv5](configs/yolov5)
+- [ ] [YOLOv5u](configs/yolov5/yolov5u) (Inference only)
 - [x] [YOLOX](configs/yolox)
 - [x] [RTMDet](configs/rtmdet)
 - [x] [RTMDet-Rotated](configs/rtmdet)
