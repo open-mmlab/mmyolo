@@ -2,8 +2,9 @@
 import argparse
 import os.path as osp
 from pathlib import Path
+
+from mmengine.runner import CheckpointLoader, save_checkpoint
 from mmengine.utils import mkdir_or_exist
-from mmengine.runner import (CheckpointLoader, save_checkpoint)
 
 
 def parse_args():
