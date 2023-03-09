@@ -1,4 +1,5 @@
-_base_ = 'mmyolo::yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'  # noqa
+_base_ = 'mmyolo::yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
+
 # ======================= Modified parameters =====================
 # -----data related-----
 data_root = './Iono4311/'
