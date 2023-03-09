@@ -27,7 +27,7 @@ anchors = [[[14, 14], [35, 6], [32, 18]], [[32, 45], [28, 97], [52, 80]],
 # -----train val related-----
 #  base_lr_default * (your_bs 32 / default_bs (8 x 16))
 base_lr = _base_.base_lr * train_batch_size_per_gpu / (8 * 16)
-load_from = './work_dirs/yolov7_l_syncbn_fast_8x16b-300e_coco_20221123_023601-8113c0eb.pth'  # noqa
+load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov7/yolov7_l_syncbn_fast_8x16b-300e_coco/yolov7_l_syncbn_fast_8x16b-300e_coco_20221123_023601-8113c0eb.pth'  # noqa
 
 # default hooks
 save_epoch_intervals = 10
