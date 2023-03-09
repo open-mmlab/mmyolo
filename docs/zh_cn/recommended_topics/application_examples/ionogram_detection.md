@@ -74,77 +74,51 @@ Iono4311/
 └── val_images
 ```
 
-使用以下代码可以统计数据集中各类别的实例数量：
-
-```python
-import json
-import numpy as np
-import pandas as pd
-
-
-# 指定标注文件路径
-ann_file_all = '/home/ubuntu/ionogram_detection/Iono4311/annotations/annotations_all.json'
-ann_file_train = '/home/ubuntu/ionogram_detection/Iono4311/annotations/train.json'
-ann_file_val = '/home/ubuntu/ionogram_detection/Iono4311/annotations/val.json'
-ann_file_test = '/home/ubuntu/ionogram_detection/Iono4311/annotations/test.json'
-
-for index, filename in enumerate((ann_file_all, ann_file_train, ann_file_val, ann_file_test)):
-    with open(filename, 'r') as f:
-        annotations = json.load(f)
-    dataset = pd.DataFrame(np.zeros((1, 6), dtype=int), columns=['E', 'Esl', 'Esc', 'F1', 'F2', 'Fspread'])
-    for ins in annotations["annotations"]:
-        dataset.iloc[0, ins["category_id"]-1] += 1
-    set_name = filename.split('/')
-    print(set_name[-1][: -5], len(annotations["images"]), 'images')
-    print(dataset, '\n')
-    f.close()
-```
-
-得到如下输出，说明本数据集存在样本分布不均衡的现象。
-
-```python
-annotations_all 4311 images
-      E  Esl  Esc    F1    F2  Fspread
-0  2040  753  893  2059  4177      133
-
-train 3019 images
-      E  Esl  Esc    F1    F2  Fspread
-0  1436  529  629  1459  2928       91
-
-val 646 images
-     E  Esl  Esc   F1   F2  Fspread
-0  311  101  137  303  626       20
-
-test 646 images
-     E  Esl  Esc   F1   F2  Fspread
-0  293  123  127  297  623       22
-```
-
 ## 配置文件
 
-配置文件在目录 `/configs/custom_dataset` 下。
+配置文件存放在目录 `/configs/custom_dataset/ionogram_detection` 下。
 
-1. 数据集可视化分析
+1. 数据集分析
+
+使用 `tools/analysis_tools/dataset_analysis.py` 从数据集中采样 200 张图片进行可视化分析：
 
 ```shell
-python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5_s-v61_syncbn_fast_1xb32-50e_ionogram.py \
+python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py \
                                                 --out-dir output
 ```
 
-<img width="100%" src="https://user-images.githubusercontent.com/67947949/223640412-4008a0a1-0626-419d-90bf-fb7ce6f26fc9.jpg"/>
-
-E、Es-l、Esc、F1 类别以小目标居多，F2、Fspread 类主要是中等大小目标。
-
-2. 可视化config中的数据处理部分
-
-以 YOLOv5-s 为例：
+得到以下输出：
 
 ```shell
-python tools/analysis_tools/browse_dataset.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py \
-                                              --out-dir output --show-interval 1
+The information obtained is as follows:
++------------------------------+
+| Information of dataset class |
++---------------+--------------+
+| Class name    | Bbox num     |
++---------------+--------------+
+| E             | 98           |
+| Es-l          | 27           |
+| Es-c          | 46           |
+| F1            | 100          |
+| F2            | 194          |
+| Spread-F      | 6            |
++---------------+--------------+
 ```
 
-根据配置文件中的 `train_pipeline`，训练时采用的数据增强策略包括：
+说明本数据集存在样本不均衡的现象。
+
+<div align=center>
+<img width="100%" src="https://user-images.githubusercontent.com/67947949/223640412-4008a0a1-0626-419d-90bf-fb7ce6f26fc9.jpg"/>
+
+各类别目标大小统计
+
+</div>
+
+根据统计结果，E、Es-l、Esc、F1 类别以小目标居多，F2、Spread F 类主要是中等大小目标。
+
+1. 可视化 config 中的数据处理部分
+
+以 YOLOv5-s 为例，根据配置文件中的 `train_pipeline`，训练时采用的数据增强策略包括：
 
 - 马赛克增强
 - 仿射变换
@@ -152,16 +126,20 @@ python tools/analysis_tools/browse_dataset.py configs/custom_dataset/yolov5/yolo
 - HSV随机增强图像
 - 随机水平翻转
 
-修改 `train_pipeline` 并可视化不同的数据增强方法：
+使用 `tools/analysis_tools/browse_dataset.py` 脚本的 **'pipeline'** 模式，可以可视化每个 pipeline 输出效果:
 
-| Aug Method | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram_aug0.py)            | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_syncbn_fast_1xb32-100e_ionogram_mosaic.py)           | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram_mosaic_affine.py)   | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py)                  |
-| ---------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
-| Mosaic     |                                                                                                                    | √                                                                                                                   | √                                                                                                                  | √                                                                                                                   |
-| Affine     |                                                                                                                    |                                                                                                                     | √                                                                                                                  | √                                                                                                                   |
-| Albu       |                                                                                                                    |                                                                                                                     |                                                                                                                    | √                                                                                                                   |
-| HSV        |                                                                                                                    |                                                                                                                     |                                                                                                                    | √                                                                                                                   |
-| Flip       |                                                                                                                    |                                                                                                                     |                                                                                                                    | √                                                                                                                   |
-| 可视化     | <img src="https://user-images.githubusercontent.com/67947949/223640764-2f9798a5-90d7-4b69-9fd1-d0f54fae0433.png"/> | <img  src="https://user-images.githubusercontent.com/67947949/223640628-1ed7e911-8339-4c03-adcb-77eb3abe5a4c.png"/> | <img src="https://user-images.githubusercontent.com/67947949/223640839-df347b96-b649-4795-acf6-f1f42f53f9ea.png"/> | <img  src="https://user-images.githubusercontent.com/67947949/223640915-cd4dea0e-ac9f-43a8-a32c-fd81468ce187.png"/> |
+```shell
+python tools/analysis_tools/browse_dataset.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py \
+                                              -m pipeline \
+                                              --out-dir output
+```
+
+<div align=center>
+<img src="https://user-images.githubusercontent.com/67947949/223914228-abcd017d-a068-4dcd-9d91-e6b546540060.png"/>
+
+pipeline 输出可视化
+
+</div>
 
 3. 修改 Anchor 尺寸
 
