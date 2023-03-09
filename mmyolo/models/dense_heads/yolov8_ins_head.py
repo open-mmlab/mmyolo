@@ -358,7 +358,7 @@ class YOLOv8InsHead(YOLOv8Head):
             input_shape_h, input_shape_w = img_meta['batch_input_shape'][:2]
             masks = self.process_mask(mask_proto, results.mask_coeff_pred,
                                       results.bboxes,
-                                      (input_shape_h, input_shape_w), rescale)
+                                      (input_shape_h, input_shape_w), True)
 
             if rescale and (pad_param is not None):
                 top_pad, bottom_pad, left_pad, right_pad = pad_param
@@ -377,7 +377,7 @@ class YOLOv8InsHead(YOLOv8Head):
                 if rescale:
                     masks = F.interpolate(
                         masks,
-                        size=[input_shape_h, input_shape_w],
+                        size=ori_shape,
                         mode='bilinear',
                         align_corners=False)
 
