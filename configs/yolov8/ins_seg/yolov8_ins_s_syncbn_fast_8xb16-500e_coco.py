@@ -1,4 +1,4 @@
-_base_ = './yolov8_s_mask-refine_syncbn_fast_8xb16-500e_coco.py'
+_base_ = '../yolov8_s_mask-refine_syncbn_fast_8xb16-500e_coco.py'
 
 # Batch size of a single GPU during validation
 val_batch_size_per_gpu = 16
@@ -15,6 +15,9 @@ batch_shapes_cfg = dict(
     # Additional paddings for pixel scale
     extra_pad_ratio=0.5)
 
+# Testing take a long time due to model_test_cfg.
+# If you want to speed it up, you can increase score_thr
+# or decraese nms_pre and max_per_img
 model_test_cfg = dict(
     multi_label=True,
     nms_pre=30000,

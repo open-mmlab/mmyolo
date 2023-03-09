@@ -119,7 +119,7 @@ class YOLOv8InsHeadModule(YOLOv8HeadModule):
 
         middle_channels = max(self.in_channels[0] // 4, self.masks_channels)
         # mask coefficients preds
-        self.mask_coe_preds = nn.ModuleList(
+        self.mask_coeff_preds = nn.ModuleList(
             nn.Sequential(
                 ConvModule(
                     in_channels=in_c,
@@ -157,20 +157,20 @@ class YOLOv8InsHeadModule(YOLOv8HeadModule):
 
         mask_protos = self.proto_preds(x[0])
         output = multi_apply(self.forward_single, x, self.cls_preds,
-                             self.reg_preds, self.mask_coe_preds)
+                             self.reg_preds, self.mask_coeff_preds)
         output = *output, mask_protos
 
         return output
 
     def forward_single(self, x: torch.Tensor, cls_pred: nn.ModuleList,
                        reg_pred: nn.ModuleList,
-                       mask_pred: nn.ModuleList) -> Tuple:
+                       mask_coeff_pred: nn.ModuleList) -> Tuple:
         """Forward feature of a single scale level."""
 
         # detect prediction
         det_output = super().forward_single(x, cls_pred, reg_pred)
         # mask prediction
-        mask_coefficient = mask_pred(x)
+        mask_coefficient = mask_coeff_pred(x)
         output = *det_output, mask_coefficient
         return output
 
@@ -271,12 +271,7 @@ class YOLOv8InsHead(YOLOv8Head):
             self.featmap_sizes = featmap_sizes
         flatten_priors = torch.cat(self.mlvl_priors)
 
-        mlvl_strides = [
-            flatten_priors.new_full(
-                (featmap_size.numel() * self.num_base_priors, ), stride) for
-            featmap_size, stride in zip(featmap_sizes, self.featmap_strides)
-        ]
-        flatten_stride = torch.cat(mlvl_strides)
+        flatten_stride = flatten_priors[:, -1]
 
         # flatten cls_scores, bbox_preds
         flatten_cls_scores = [
@@ -288,7 +283,7 @@ class YOLOv8InsHead(YOLOv8Head):
             bbox_pred.permute(0, 2, 3, 1).reshape(num_imgs, -1, 4)
             for bbox_pred in bbox_preds
         ]
-        flatten_mcs_preds = [
+        flatten_mask_coeff_preds = [
             kernel_pred.permute(0, 2, 3,
                                 1).reshape(num_imgs, -1,
                                            self.head_module.masks_channels)
@@ -301,12 +296,13 @@ class YOLOv8InsHead(YOLOv8Head):
             flatten_priors[..., :2].unsqueeze(0), flatten_bbox_preds,
             flatten_stride)
 
-        flatten_mcs_preds = torch.cat(flatten_mcs_preds, dim=1)
+        flatten_mask_coeff_preds = torch.cat(flatten_mask_coeff_preds, dim=1)
 
         results_list = []
-        for (bboxes, scores, mcs_pred, mask_proto,
+        for (bboxes, scores, mask_coeff_pred, mask_proto,
              img_meta) in zip(flatten_decoded_bboxes, flatten_cls_scores,
-                              flatten_mcs_preds, mask_protos, batch_img_metas):
+                              flatten_mask_coeff_preds, mask_protos,
+                              batch_img_metas):
             ori_shape = img_meta['ori_shape']
             scale_factor = img_meta['scale_factor']
             if 'pad_param' in img_meta:
@@ -333,23 +329,24 @@ class YOLOv8InsHead(YOLOv8Head):
                     scores,
                     score_thr,
                     nms_pre,
-                    results=dict(labels=labels[:, 0], mcs_pred=mcs_pred))
+                    results=dict(
+                        labels=labels[:, 0], mask_coeff_pred=mask_coeff_pred))
                 labels = results['labels']
-                mcs_pred = results['mcs_pred']
+                mask_coeff_pred = results['mask_coeff_pred']
             else:
                 out = filter_scores_and_topk(
                     scores,
                     score_thr,
                     nms_pre,
-                    results=dict(mcs_pred=mcs_pred))
+                    results=dict(mask_coeff_pred=mask_coeff_pred))
                 scores, labels, keep_idxs, filtered_results = out
-                mcs_pred = filtered_results['mcs_pred']
+                mask_coeff_pred = filtered_results['mask_coeff_pred']
 
             results = InstanceData(
                 scores=scores,
                 labels=labels,
                 bboxes=bboxes[keep_idxs],
-                mcs_pred=mcs_pred)
+                mask_coeff_pred=mask_coeff_pred)
 
             results = self._bbox_post_process(
                 results=results,
@@ -361,7 +358,7 @@ class YOLOv8InsHead(YOLOv8Head):
             input_shape_h, input_shape_w = img_meta['batch_input_shape'][:2]
             masks = self.process_mask(
                 mask_proto,
-                results.mcs_pred,
+                results.mask_coeff_pred,
                 results.bboxes, (input_shape_h, input_shape_w),
                 rescale,
                 mask_thr_binary=cfg.mask_thr_binary)[0]
@@ -400,7 +397,7 @@ class YOLOv8InsHead(YOLOv8Head):
 
     def process_mask(self,
                      mask_proto: Tensor,
-                     mcs_pred: Tensor,
+                     mask_coeff_pred: Tensor,
                      bboxes: Tensor,
                      shape: Tuple[int, int],
                      upsample: bool = False,
@@ -411,8 +408,8 @@ class YOLOv8InsHead(YOLOv8Head):
 
             mask_proto (Tensor): Mask prototype features.
                 Has shape (num_instance, masks_channels).
-            mcs_pred (Tensor): Mask coefficients prediction for single image.
-                Has shape (masks_channels, H, W)
+            mask_coeff_pred (Tensor): Mask coefficients prediction for
+                single image. Has shape (masks_channels, H, W)
             bboxes (Tensor): Tensor of the bbox. Has shape (num_instance, 4).
             shape (Tuple): Batch input shape of image.
             upsample (bool): Whether upsample masks results to batch input
@@ -426,8 +423,9 @@ class YOLOv8InsHead(YOLOv8Head):
         """
 
         c, mh, mw = mask_proto.shape  # CHW
-        masks = (mcs_pred @ mask_proto.float().view(c, -1)).sigmoid().view(
-            -1, mh, mw)
+        masks = (
+            mask_coeff_pred @ mask_proto.float().view(c, -1)).sigmoid().view(
+                -1, mh, mw)
         if upsample:
             masks = F.interpolate(
                 masks[None], shape, mode='bilinear',

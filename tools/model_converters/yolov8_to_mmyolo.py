@@ -61,8 +61,9 @@ def convert(src, dst):
             new_key = new_key.replace('bbox_head.head_module.proto',
                                       'bbox_head.head_module.proto_preds')
         elif 'bbox_head.head_module.cv4.' in new_key:
-            new_key = new_key.replace('bbox_head.head_module.cv4',
-                                      'bbox_head.head_module.mask_coe_preds')
+            new_key = new_key.replace(
+                'bbox_head.head_module.cv4',
+                'bbox_head.head_module.mask_coeff_preds')
             new_key = new_key.replace('.2.weight', '.2.conv.weight')
             new_key = new_key.replace('.2.bias', '.2.conv.bias')
         elif 'bbox_head.head_module' in new_key:
