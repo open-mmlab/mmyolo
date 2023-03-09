@@ -4,7 +4,7 @@
 
 数字频高图是获取电离层实时信息最重要的途径。电离层结构检测对精准提取电离层关键参数，具有非常重要的研究意义。
 
-利用中国科学院在海南、武汉、怀来获取的不同季节的4311张频高图建立数据集，人工标注出 E 层、Es-c 层、Es-l 层、F1 层、F2 层、Spread F 层共 6 种结构。\[数据集下载\]
+利用中国科学院在海南、武汉、怀来获取的不同季节的4311张频高图建立数据集，人工标注出 E 层、Es-c 层、Es-l 层、F1 层、F2 层、Spread F 层共 6 种结构。[数据集下载](https://github.com/VoyagerXvoyagerx/Ionogram_detection/releases/download/Dataset/Iono4311.zip)
 
 <div align=center>
 <img width="40%" src="https://user-images.githubusercontent.com/67947949/223638535-c4583d88-aa5a-4f21-b35a-e6e8328c9bd4.jpg"/>
@@ -27,7 +27,7 @@ Iono4311/
 
 2. 数据集格式转换
 
-使用MMYOLO提供的 `tools/dataset_converters/labelme2coco.py` 脚本将 labelme 格式的标注文件 转换为 COCO 格式的标注文件。
+使用MMYOLO提供的 `tools/dataset_converters/labelme2coco.py` 脚本将 labelme 格式的标注文件转换为 COCO 格式的标注文件。
 
 ```shell
 python tools/dataset_converters/labelme2coco.py --img-dir ./Iono4311/images \
@@ -46,7 +46,7 @@ python tools/analysis_tools/browse_coco_json.py --img-dir ./Iono4311/images \
 
 4. 划分训练集、验证集、测试集
 
-设置70%的图片为训练集，15%作为验证集，15%为测试集。
+设置 70% 的图片为训练集，15% 作为验证集，15% 为测试集。
 
 ```shell
 python tools/misc/coco_split.py --json ./Iono4311/annotations/annotations_all.json \
@@ -123,7 +123,7 @@ The information obtained is as follows:
 - 马赛克增强
 - 仿射变换
 - Albumentations 数据增强工具包（包括多种数字图像处理方法）
-- HSV随机增强图像
+- HSV 随机增强图像
 - 随机水平翻转
 
 使用 `tools/analysis_tools/browse_dataset.py` 脚本的 **'pipeline'** 模式，可以可视化每个 pipeline 输出效果:
@@ -175,7 +175,7 @@ Model Parameters: 7.036M
 
 1. 训练
 
-训练可视化：本范例按照[标注+训练+测试+部署全流程](/pr/mmyolo/docs/zh_cn/recommended_topics/labeling_to_deployment_tutorials.md#91-训练可视化)中的步骤安装和配置 [wandb](https://wandb.ai/site)。
+训练可视化：本范例按照[标注+训练+测试+部署全流程](https://mmyolo.readthedocs.io/zh_CN/dev/recommended_topics/labeling_to_deployment_tutorials.html#id11)中的步骤安装和配置 [wandb](https://wandb.ai/site)。
 
 调试技巧：在调试代码的过程中，有时需要训练几个 epoch，例如调试验证过程或者权重的保存是否符合期望。对于继承自 `BaseDataset` 的数据集（如本范例中的 `YOLOv5CocoDataset`），在 `train_dataloader` 中的 `dataset` 字段增加 `indices` 参数，即可指定每个 epoch 迭代的样本数，减少迭代时间。
 
@@ -210,7 +210,7 @@ python tools/train.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_
 
 ```shell
 python tools/test.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py \
-                     work_dirs/yolov5_s_100e/best_coco-test-0.584.pth
+                     work_dirs/yolov5_s-v61_fast_1xb96-100e_ionogram/xxx
 ```
 
 ## 实验与结果分析
@@ -238,20 +238,21 @@ python tools/test.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1
 | YOLOv5-s | 200(148)    | True  | 96        | 6           | 54.66%           | 72 min        | 0.575   |
 | YOLOv5-s | 200(188)    | True  | 96        | **8**       | 54.66%           | 67 min        | 0.576   |
 
-不同 batch size 的训练过程中，数据加载时间 `data_time` 占每步总时长的比例
-
 <div align=center>
 <img width="60%" src="https://user-images.githubusercontent.com/67947949/223635966-948c8424-1ba8-4df0-92d7-079029dc1231.png">
+
+不同 batch size 的训练过程中，数据加载时间 `data_time` 占每步总时长的比例
+
 </div>
 
 分析结果，可以得出以下结论：
 
-- 使用混合精度训练队模型表现影响很小（约百分之零点几），并且可以明显减少显存占用。
-- Batch size 增加三倍，和训练时长并没有相应地减小3倍。根据训练记录，batch size 越大，`data_time` 也越大，说明数据加载成为了限制训练速度的瓶颈。增大加载数据的进程数 `num_workers` 可以加快数据加载。
+- 混合精度训练对模型的精度几乎没有影响，并且可以明显减少显存占用。
+- Batch size 增加 3 倍，和训练时长并没有相应地减小 3 倍。根据训练过程中 `data_time` 的记录，batch size 越大，`data_time` 也越大，说明数据加载成为了限制训练速度的瓶颈。增大加载数据的进程数 `num_workers` 可以加快数据加载。
 
 ### 消融实验
 
-为了得到使用于本数据集的训练流水线，以 YOLOv5-s 模型为例，进行以下的消融实验。
+为了得到适用于本数据集的训练流水线，以 YOLOv5-s 模型为例，进行以下消融实验。
 
 #### 不同数据增强方法
 
@@ -268,7 +269,7 @@ python tools/test.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1
 
 #### 是否使用预训练权重
 
-在配置文件中，修改 `load_from = None` 即可不使用预训练权重。对不使用预训练权重的实验，将基础学习率增大四倍，训练轮数增加至 200 轮，保证模型得到充分的训练。
+在配置文件中，修改 `load_from = None` 即可不使用预训练权重。对不使用预训练权重的实验，将基础学习率增大四倍，训练轮数增加至 200 轮，使模型得到较为充分的训练。
 
 | Model    | Epoch(best) | FLOPs(G) | Params(M) | Pretrain | Val mAP | Config                                                                                           |
 | -------- | ----------- | -------- | --------- | -------- | ------- | ------------------------------------------------------------------------------------------------ |
@@ -284,9 +285,9 @@ python tools/test.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1
 
 </div>
 
-损失下降的过程表明，使用预训练权重时，loss 下降得更快。可见即使是自然图像数据集上预训练的模型，在雷达图像数据集上微调，也可以加快收敛。
+损失下降曲线表明，使用预训练权重时，loss 下降得更快。可见即使是自然图像数据集上预训练的模型，在雷达图像数据集上微调时，也可以加快模型收敛。
 
-### 频高图检测 benchmark
+### 频高图结构检测 benchmark
 
 | Model       | epoch(best) | FLOPs(G) | Params(M) | pretrain | val mAP | test mAP | Config                                                                                      | Log                                                                                                           |
 | ----------- | ----------- | -------- | --------- | -------- | ------- | -------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
