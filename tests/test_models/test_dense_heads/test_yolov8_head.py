@@ -204,20 +204,9 @@ class TestYOLOv8InsHead(TestCase):
             feat.append(
                 torch.rand(1, in_channel, s // feat_size, s // feat_size))
 
-        cls_scores, bbox_preds, mask_coefficients, mask_protos = head.forward(
-            feat)
-        head.predict_by_feat(
-            cls_scores,
-            bbox_preds,
-            mask_coefficients,
-            mask_protos,
-            None,
-            img_metas,
-            cfg=test_cfg,
-            rescale=True,
-            with_nms=True)
-
-        with self.assertRaises(AssertionError):
+        with torch.no_grad():
+            res = head.forward(feat)
+            cls_scores, bbox_preds, mask_coefficients, mask_protos = res
             head.predict_by_feat(
                 cls_scores,
                 bbox_preds,
@@ -227,4 +216,16 @@ class TestYOLOv8InsHead(TestCase):
                 img_metas,
                 cfg=test_cfg,
                 rescale=True,
-                with_nms=False)
+                with_nms=True)
+
+            with self.assertRaises(AssertionError):
+                head.predict_by_feat(
+                    cls_scores,
+                    bbox_preds,
+                    mask_coefficients,
+                    mask_protos,
+                    None,
+                    img_metas,
+                    cfg=test_cfg,
+                    rescale=True,
+                    with_nms=False)

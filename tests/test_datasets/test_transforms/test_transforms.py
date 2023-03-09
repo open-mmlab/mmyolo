@@ -491,7 +491,3 @@ class TestYOLOv5CopyPaste(unittest.TestCase):
                     gt_bboxes=np.array([[0, 0, 10, 10]], dtype=np.float32),
                     gt_masks=BitmapMasks(
                         rng.rand(1, 300, 400), height=300, width=400)))
-
-
-if __name__ == '__main__':
-    unittest.main()
