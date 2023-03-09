@@ -1,9 +1,6 @@
-_base_ = './yolov6_s_syncbn_fast_1xb32-100e_ionogram.py'
+_base_ = './yolov6_s_fast_1xb32-100e_ionogram.py'
 
 # ======================= Modified parameters =======================
-# -----data related-----
-work_dir = './work_dirs/yolov6_m_100e'
-
 # -----model related-----
 # The scaling factor that controls the depth of the network structure
 deepen_factor = 0.6

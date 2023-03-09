@@ -1,9 +1,7 @@
-_base_ = '../../yolov7/yolov7_l_syncbn_fast_8x16b-300e_coco.py'
+_base_ = '../../../../configs/yolov7/yolov7_l_syncbn_fast_8x16b-300e_coco.py'
 
 # ======================== Modified parameters ======================
 # -----data related-----
-work_dir = './work_dirs/yolov7_l_100e'
-
 data_root = './Iono4311/'
 train_ann_file = 'annotations/train.json'
 train_data_prefix = 'train_images/'
@@ -43,11 +41,9 @@ val_begin = 20
 tta_model = None
 tta_pipeline = None
 
-visualizer = dict(vis_backends=[
-    dict(type='LocalVisBackend'),
-    dict(type='WandbVisBackend'),
-    dict(type='TensorboardVisBackend')
-])
+visualizer = dict(
+    vis_backends=[dict(type='LocalVisBackend'),
+                  dict(type='WandbVisBackend')])
 
 # =======================Unmodified in most cases==================
 model = dict(

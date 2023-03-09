@@ -1,9 +1,8 @@
-_base_ = './yolov7_l_syncbn_fast_1xb16-100e_ionogram.py'
+_base_ = './yolov7_l_fast_1xb16-100e_ionogram.py'
 
 # ========================modified parameters========================
 # work_dir and pre-train
 load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov7/yolov7_tiny_syncbn_fast_8x16b-300e_coco/yolov7_tiny_syncbn_fast_8x16b-300e_coco_20221126_102719-0ee5bbdf.pth'  # noqa
-work_dir = './work_dirs/yolov7_tiny_100e'
 
 # -----model related-----
 # Data augmentation

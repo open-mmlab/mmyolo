@@ -1,8 +1,7 @@
-_base_ = './yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py'
+_base_ = './yolov5_s-v61_fast_1xb96-100e_ionogram.py'
 
 # ========================modified parameters======================
 # -----data related-----
-work_dir = './work_dirs/yolov5_s_abl/mosaic_1280'
 train_batch_size_per_gpu = 32
 
 # -----train val related-----

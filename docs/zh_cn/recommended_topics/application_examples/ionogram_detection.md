@@ -76,14 +76,14 @@ Iono4311/
 
 ## 配置文件
 
-配置文件存放在目录 `/configs/custom_dataset/ionogram_detection` 下。
+配置文件存放在目录 `/projects/misc/ionogram_detection/` 下。
 
 1. 数据集分析
 
 使用 `tools/analysis_tools/dataset_analysis.py` 从数据集中采样 200 张图片进行可视化分析：
 
 ```shell
-python tools/analysis_tools/dataset_analysis.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py \
+python tools/analysis_tools/dataset_analysis.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py \
                                                 --out-dir output
 ```
 
@@ -129,7 +129,7 @@ The information obtained is as follows:
 使用 `tools/analysis_tools/browse_dataset.py` 脚本的 **'pipeline'** 模式，可以可视化每个 pipeline 输出效果:
 
 ```shell
-python tools/analysis_tools/browse_dataset.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py \
+python tools/analysis_tools/browse_dataset.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py \
                                               -m pipeline \
                                               --out-dir output
 ```
@@ -146,7 +146,7 @@ pipeline 输出可视化
 使用分析工具中的 `tools/analysis_tools/optimize_anchors.py` 脚本得到适用于本数据集的先验锚框尺寸。
 
 ```shell
-python tools/analysis_tools/optimize_anchors.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py \
+python tools/analysis_tools/optimize_anchors.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py \
                                                 --algorithm v5-k-means \
                                                 --input-shape 640 640 \
                                                 --prior-match-thr 4.0 \
@@ -158,7 +158,7 @@ python tools/analysis_tools/optimize_anchors.py configs/custom_dataset/yolov5/yo
 根据配置文件，使用分析工具中的 `tools/analysis_tools/get_flops.py` 脚本可以得到模型的参数量、浮点计算量等信息。以 YOLOv5-s 为例：
 
 ```shell
-python tools/analysis_tools/get_flops.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py
+python tools/analysis_tools/get_flops.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py
 ```
 
 得到如下输出，表示模型的浮点运算量为 7.947G，一共有 7.036M 个可学习参数。
@@ -175,9 +175,7 @@ Model Parameters: 7.036M
 
 1. 训练
 
-```shell
-python tools/train.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py
-```
+训练可视化：本范例按照[标注+训练+测试+部署全流程](/pr/mmyolo/docs/zh_cn/recommended_topics/labeling_to_deployment_tutorials.md#91-训练可视化)中的步骤安装和配置 [wandb](https://wandb.ai/site)。
 
 调试技巧：在调试代码的过程中，有时需要训练几个 epoch，例如调试验证过程或者权重的保存是否符合期望。对于继承自 `BaseDataset` 的数据集（如本范例中的 `YOLOv5CocoDataset`），在 `train_dataloader` 中的 `dataset` 字段增加 `indices` 参数，即可指定每个 epoch 迭代的样本数，减少迭代时间。
 
@@ -200,10 +198,18 @@ train_dataloader = dict(
             pipeline=_base_.train_pipeline)))
 ```
 
-2. 测试
+启动训练：
 
 ```shell
-python tools/test.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py \
+python tools/train.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py
+```
+
+2. 测试
+
+指定配置文件和模型的路径以启动测试：
+
+```shell
+python tools/test.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py \
                      work_dirs/yolov5_s_100e/best_coco-test-0.584.pth
 ```
 
@@ -212,7 +218,7 @@ python tools/test.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb9
 ### 选择合适的 batch size
 
 - Batch size 主导了训练速度。通常，理想的 batch size 是是硬件能支持的最大 batch size。
-- 当显存占用没有达到饱和时，如果 batch size 翻倍，训练吞吐量也应该翻倍（或接近翻倍）。训练时间应该减半或接近减半。
+- 当显存占用没有达到饱和时，如果 batch size 翻倍，训练吞吐量也应该翻倍（或接近翻倍），训练时间应该减半或接近减半。
 - 使用**混合精度训练**可以加快训练速度、减小显存。在执行 `train.py` 脚本时添加 `--amp` 参数即可开启。
 
 硬件信息：
@@ -241,7 +247,7 @@ python tools/test.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb9
 分析结果，可以得出以下结论：
 
 - 使用混合精度训练队模型表现影响很小（约百分之零点几），并且可以明显减少显存占用。
-- Batch size 增加三倍，和训练时长并没有相应地减小3倍。根据训练记录，batch size 越大，`data_time` 也越大，说明数据加载成为了限制训练速度的瓶颈。增大加载数据的进程数（`num_workers`）可以加快数据加载。
+- Batch size 增加三倍，和训练时长并没有相应地减小3倍。根据训练记录，batch size 越大，`data_time` 也越大，说明数据加载成为了限制训练速度的瓶颈。增大加载数据的进程数 `num_workers` 可以加快数据加载。
 
 ### 消融实验
 
@@ -249,14 +255,14 @@ python tools/test.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb9
 
 #### 不同数据增强方法
 
-| Aug Method | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram_aug0.py) | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_syncbn_fast_1xb32-100e_ionogram_mosaic.py) | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram_mosaic_affine.py) | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram_mosaic_affine_albu_hsv.py) | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py) |
-| ---------- | ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Mosaic     |                                                                                                         | √                                                                                                         | √                                                                                                                | √                                                                                                                         | √                                                                                                  |
-| Affine     |                                                                                                         |                                                                                                           | √                                                                                                                | √                                                                                                                         | √                                                                                                  |
-| Albu       |                                                                                                         |                                                                                                           |                                                                                                                  | √                                                                                                                         | √                                                                                                  |
-| HSV        |                                                                                                         |                                                                                                           |                                                                                                                  | √                                                                                                                         | √                                                                                                  |
-| Flip       |                                                                                                         |                                                                                                           |                                                                                                                  |                                                                                                                           | √                                                                                                  |
-| Val mAP    | 0.507                                                                                                   | 0.550                                                                                                     | 0.572                                                                                                            | 0.567                                                                                                                     | 0.575                                                                                              |
+| Aug Method | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram_aug0.py) | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb32-100e_ionogram_mosaic.py) | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram_mosaic_affine.py) | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram_mosaic_affine_albu_hsv.py) | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py) |
+| ---------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| Mosaic     |                                                                                                  | √                                                                                                  | √                                                                                                         | √                                                                                                                  | √                                                                                           |
+| Affine     |                                                                                                  |                                                                                                    | √                                                                                                         | √                                                                                                                  | √                                                                                           |
+| Albu       |                                                                                                  |                                                                                                    |                                                                                                           | √                                                                                                                  | √                                                                                           |
+| HSV        |                                                                                                  |                                                                                                    |                                                                                                           | √                                                                                                                  | √                                                                                           |
+| Flip       |                                                                                                  |                                                                                                    |                                                                                                           |                                                                                                                    | √                                                                                           |
+| Val mAP    | 0.507                                                                                            | 0.550                                                                                              | 0.572                                                                                                     | 0.567                                                                                                              | 0.575                                                                                       |
 
 结果表明，马赛克增强和随机仿射变换可以对验证集表现带来明显的提升。
 
@@ -264,12 +270,12 @@ python tools/test.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb9
 
 在配置文件中，修改 `load_from = None` 即可不使用预训练权重。对不使用预训练权重的实验，将基础学习率增大四倍，训练轮数增加至 200 轮，保证模型得到充分的训练。
 
-| Model    | Epoch(best) | FLOPs(G) | Params(M) | Pretrain | Val mAP | Config                                                                                                  |
-| -------- | ----------- | -------- | --------- | -------- | ------- | ------------------------------------------------------------------------------------------------------- |
-| YOLOv5-s | 100(82)     | 7.95     | 7.04      | Coco     | 0.575   | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py)      |
-| YOLOv5-s | 200(145)    | 7.95     | 7.04      | None     | 0.565   | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_syncbn_fast_1xb96-200e_ionogram_pre0.py) |
-| YOLOv6-s | 100(54)     | 24.2     | 18.84     | Coco     | 0.584   | [config](/projects/misc/ionogram_detection/yolov6/yolov6_s_syncbn_fast_1xb32-100e_ionogram.py)          |
-| YOLOv6-s | 200(188)    | 24.2     | 18.84     | None     | 0.557   | [config](/projects/misc/ionogram_detection/yolov6/yolov6_s_syncbn_fast_1xb32-200e_ionogram_pre0.py)     |
+| Model    | Epoch(best) | FLOPs(G) | Params(M) | Pretrain | Val mAP | Config                                                                                           |
+| -------- | ----------- | -------- | --------- | -------- | ------- | ------------------------------------------------------------------------------------------------ |
+| YOLOv5-s | 100(82)     | 7.95     | 7.04      | Coco     | 0.575   | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py)      |
+| YOLOv5-s | 200(145)    | 7.95     | 7.04      | None     | 0.565   | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-200e_ionogram_pre0.py) |
+| YOLOv6-s | 100(54)     | 24.2     | 18.84     | Coco     | 0.584   | [config](/projects/misc/ionogram_detection/yolov6/yolov6_s_fast_1xb32-100e_ionogram.py)          |
+| YOLOv6-s | 200(188)    | 24.2     | 18.84     | None     | 0.557   | [config](/projects/misc/ionogram_detection/yolov6/yolov6_s_fast_1xb32-200e_ionogram_pre0.py)     |
 
 <div align=center>
 <img width="60%" src="https://user-images.githubusercontent.com/67947949/223641016-9ded0d11-62b8-45f4-be5b-bd4ffae3ec21.png">
@@ -282,13 +288,13 @@ python tools/test.py configs/custom_dataset/yolov5/yolov5_s-v61_syncbn_fast_1xb9
 
 ### 频高图检测 benchmark
 
-| Model       | epoch(best) | FLOPs(G) | Params(M) | pretrain | val mAP | test mAP | Config                                                                                             | Log                                                                                                           |
-| ----------- | ----------- | -------- | --------- | -------- | ------- | -------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| YOLOv5-s    | 100(82)     | 7.95     | 7.04      | Coco     | 0.575   | 0.584    | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py) | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov5_s_20230105_213510.json)    |
-| YOLOv5-m    | 100(70)     | 24.05    | 20.89     | Coco     | 0.587   | 0.586    | [config](/projects/misc/ionogram_detection/yolov5/yolov5_m-v61_syncbn_fast_1xb32-100e_ionogram.py) | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov5_m_20230106_004642.json)    |
-| YOLOv6-s    | 100(54)     | 24.2     | 18.84     | Coco     | 0.584   | 0.594    | [config](/projects/misc/ionogram_detection/yolov6/yolov6_s_syncbn_fast_1xb32-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov6_s_20230107_003207.json)    |
-| YOLOv6-m    | 100(76)     | 37.08    | 44.42     | Coco     | 0.590   | 0.590    | [config](/projects/misc/ionogram_detection/yolov6/yolov6_m_syncbn_fast_1xb32-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov6_m_20230107_201029.json)    |
-| YOLOv6-l    | 100(76)     | 71.33    | 58.47     | Coco     | 0.605   | 0.597    | [config](/projects/misc/ionogram_detection/yolov6/yolov6_l_syncbn_fast_1xb32-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov6_l_20230108_005634.json)    |
-| YOLOv7-tiny | 100(78)     | 6.57     | 6.02      | Coco     | 0.549   | 0.568    | [config](/projects/misc/ionogram_detection/yolov7/yolov7_tiny_syncbn_fast_1xb16-100e_ionogram.py)  | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov7_tiny_20230215_202837.json) |
-| YOLOv7-x    | 100(58)     | 94.27    | 70.85     | Coco     | 0.602   | 0.595    | [config](/projects/misc/ionogram_detection/yolov7/yolov7_x_syncbn_fast_1xb16-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov7_x_20230110_165832.json)    |
-| rtmdet-s    | 100(64)     | 14.76    | 8.86      | Coco     | 0.581   | 0.571    | [config](/projects/misc/ionogram_detection/rtmdet/rtmdet_s_syncbn_fast_1xb8-100e_ionogram.py)      | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/rtmdet_s_20230215_211817.json)    |
+| Model       | epoch(best) | FLOPs(G) | Params(M) | pretrain | val mAP | test mAP | Config                                                                                      | Log                                                                                                           |
+| ----------- | ----------- | -------- | --------- | -------- | ------- | -------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| YOLOv5-s    | 100(82)     | 7.95     | 7.04      | Coco     | 0.575   | 0.584    | [config](/projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py) | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov5_s_20230105_213510.json)    |
+| YOLOv5-m    | 100(70)     | 24.05    | 20.89     | Coco     | 0.587   | 0.586    | [config](/projects/misc/ionogram_detection/yolov5/yolov5_m-v61_fast_1xb32-100e_ionogram.py) | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov5_m_20230106_004642.json)    |
+| YOLOv6-s    | 100(54)     | 24.2     | 18.84     | Coco     | 0.584   | 0.594    | [config](/projects/misc/ionogram_detection/yolov6/yolov6_s_fast_1xb32-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov6_s_20230107_003207.json)    |
+| YOLOv6-m    | 100(76)     | 37.08    | 44.42     | Coco     | 0.590   | 0.590    | [config](/projects/misc/ionogram_detection/yolov6/yolov6_m_fast_1xb32-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov6_m_20230107_201029.json)    |
+| YOLOv6-l    | 100(76)     | 71.33    | 58.47     | Coco     | 0.605   | 0.597    | [config](/projects/misc/ionogram_detection/yolov6/yolov6_l_fast_1xb32-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov6_l_20230108_005634.json)    |
+| YOLOv7-tiny | 100(78)     | 6.57     | 6.02      | Coco     | 0.549   | 0.568    | [config](/projects/misc/ionogram_detection/yolov7/yolov7_tiny_fast_1xb16-100e_ionogram.py)  | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov7_tiny_20230215_202837.json) |
+| YOLOv7-x    | 100(58)     | 94.27    | 70.85     | Coco     | 0.602   | 0.595    | [config](/projects/misc/ionogram_detection/yolov7/yolov7_x_fast_1xb16-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov7_x_20230110_165832.json)    |
+| rtmdet-s    | 100(64)     | 14.76    | 8.86      | Coco     | 0.581   | 0.571    | [config](/projects/misc/ionogram_detection/rtmdet/rtmdet_s_fast_1xb32-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/rtmdet_s_20230215_211817.json)    |

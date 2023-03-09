@@ -1,9 +1,7 @@
-_base_ = '../../rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco.py'
+_base_ = '../../../../configs/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco.py'
 
 # ======================== Modified parameters ======================
 # -----data related-----
-work_dir = './work_dirs/rtmdet_l_100e'
-
 data_root = './Iono4311/'
 train_ann_file = 'annotations/train.json'
 train_data_prefix = 'train_images/'
@@ -19,7 +17,7 @@ metainfo = dict(
     palette=[(250, 165, 30), (120, 69, 125), (53, 125, 34), (0, 11, 123),
              (130, 20, 12), (120, 121, 80)])
 
-train_batch_size_per_gpu = 8
+train_batch_size_per_gpu = 32
 train_num_workers = 8
 val_batch_size_per_gpu = train_batch_size_per_gpu
 
@@ -28,7 +26,6 @@ batch_shapes_cfg = dict(batch_size=val_batch_size_per_gpu)
 
 # -----train val related-----
 load_from = 'https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco/rtmdet_l_syncbn_fast_8xb32-300e_coco_20230102_135928-ee3abdc4.pth'  # noqa
-base_lr = _base_.base_lr * train_batch_size_per_gpu / (8 * 32)
 
 # default hooks
 save_epoch_intervals = 10
@@ -42,11 +39,9 @@ val_begin = 20
 tta_model = None
 tta_pipeline = None
 
-visualizer = dict(vis_backends=[
-    dict(type='LocalVisBackend'),
-    dict(type='WandbVisBackend'),
-    dict(type='TensorboardVisBackend')
-])
+visualizer = dict(
+    vis_backends=[dict(type='LocalVisBackend'),
+                  dict(type='WandbVisBackend')])
 
 # =======================Unmodified in most cases==================
 model = dict(
@@ -80,8 +75,6 @@ test_dataloader = dict(
         data_prefix=dict(img=test_data_prefix),
         ann_file=test_ann_file))
 
-optim_wrapper = dict(optimizer=dict(lr=base_lr))
-
 # learning rate
 param_scheduler = [
     dict(
@@ -93,7 +86,7 @@ param_scheduler = [
     dict(
         # use cosine lr from 150 to 300 epoch
         type='CosineAnnealingLR',
-        eta_min=base_lr * 0.05,
+        eta_min=_base_.base_lr * 0.05,
         begin=max_epochs // 2,
         end=max_epochs,
         T_max=max_epochs // 2,
@@ -103,7 +96,9 @@ param_scheduler = [
 
 default_hooks = dict(
     checkpoint=dict(
-        interval=save_epoch_intervals, max_keep_ckpts=max_keep_ckpts))
+        interval=save_epoch_intervals,
+        max_keep_ckpts=max_keep_ckpts,
+        save_best='auto'))
 
 val_evaluator = dict(ann_file=data_root + val_ann_file)
 test_evaluator = dict(ann_file=data_root + test_ann_file)

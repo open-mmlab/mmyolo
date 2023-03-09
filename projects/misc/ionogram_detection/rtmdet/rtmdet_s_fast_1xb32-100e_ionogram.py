@@ -1,8 +1,7 @@
-_base_ = './rtmdet_l_syncbn_fast_1xb8-100e_ionogram.py'
+_base_ = './rtmdet_l_fast_1xb32-100e_ionogram.py'
 
 checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-s_imagenet_600e.pth'  # noqa
 load_from = 'https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco/rtmdet_s_syncbn_fast_8xb32-300e_coco_20221230_182329-0a8c901a.pth'  # noqa
-work_dir = './work_dirs/rtmdet_s_100e'
 
 # ========================modified parameters======================
 deepen_factor = 0.33

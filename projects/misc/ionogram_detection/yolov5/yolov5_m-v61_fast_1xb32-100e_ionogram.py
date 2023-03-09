@@ -1,4 +1,4 @@
-_base_ = './yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py'
+_base_ = './yolov5_s-v61_fast_1xb96-100e_ionogram.py'
 
 # ========================modified parameters======================
 # Copied from '../../yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py'
@@ -11,7 +11,6 @@ loss_obj_weight = 0.7
 mixup_prob = 0.1
 
 # -----data related-----
-work_dir = './work_dirs/yolov5_m_100e'
 train_batch_size_per_gpu = 32
 
 # -----train val related-----

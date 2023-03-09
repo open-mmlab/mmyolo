@@ -1,9 +1,6 @@
-_base_ = './yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py'
+_base_ = './yolov5_s-v61_fast_1xb96-100e_ionogram.py'
 
 # ========================modified parameters======================
-# -----data related-----
-work_dir = './work_dirs/yolov5_s_abl/mosaic'
-
 # -----train val related-----
 train_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=dict(backend='disk')),
@@ -25,21 +22,6 @@ train_pipeline = [
         scaling_ratio_range=(0.5, 1.5),
         border=(-320, -320),
         border_val=(114, 114, 114)),
-    dict(
-        type='mmdet.Albu',
-        transforms=[
-            dict(type='Blur', p=0.01),
-            dict(type='MedianBlur', p=0.01),
-            dict(type='ToGray', p=0.01),
-            dict(type='CLAHE', p=0.01)
-        ],
-        bbox_params=dict(
-            type='BboxParams',
-            format='pascal_voc',
-            label_fields=['gt_bboxes_labels', 'gt_ignore_flags']),
-        keymap=dict(img='image', gt_bboxes='bboxes')),
-    dict(type='YOLOv5HSVRandomAug'),
-    # dict(type='mmdet.RandomFlip', prob=0.5),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape'))

@@ -1,9 +1,6 @@
-_base_ = './yolov5_s-v61_syncbn_fast_1xb96-100e_ionogram.py'
+_base_ = './yolov5_s-v61_fast_1xb96-100e_ionogram.py'
 
 # ========================modified parameters======================
-# -----data related-----
-work_dir = './work_dirs/yolov5_s_100e_aug0'
-
 # -----train val related-----
 train_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=dict(backend='disk')),
