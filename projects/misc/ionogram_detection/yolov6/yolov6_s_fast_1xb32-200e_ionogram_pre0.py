@@ -1,6 +1,6 @@
 _base_ = './yolov6_s_fast_1xb32-100e_ionogram.py'
 
-# ========================modified parameters======================
+# ======================= Modified parameters =====================
 base_lr = _base_.base_lr * 4
 optim_wrapper = dict(optimizer=dict(lr=base_lr))
 max_epochs = 200

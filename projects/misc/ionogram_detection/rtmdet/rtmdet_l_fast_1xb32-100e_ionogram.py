@@ -1,4 +1,4 @@
-_base_ = '../../../../configs/rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco.py'
+_base_ = 'mmyolo::rtmdet/rtmdet_l_syncbn_fast_8xb32-300e_coco.py'
 
 # ======================== Modified parameters ======================
 # -----data related-----
@@ -43,7 +43,7 @@ visualizer = dict(
     vis_backends=[dict(type='LocalVisBackend'),
                   dict(type='WandbVisBackend')])
 
-# =======================Unmodified in most cases==================
+# ===================== Unmodified in most cases ==================
 model = dict(
     bbox_head=dict(head_module=dict(num_classes=num_classes)),
     train_cfg=dict(assigner=dict(num_classes=num_classes)))

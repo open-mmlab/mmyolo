@@ -1,6 +1,6 @@
 _base_ = './yolov5_s-v61_fast_1xb96-100e_ionogram.py'
 
-# ========================modified parameters======================
+# ======================= Modified parameters =====================
 # -----data related-----
 train_batch_size_per_gpu = 32
 
@@ -25,7 +25,7 @@ train_pipeline = [
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape'))
 ]
 
-# =======================Unmodified in most cases==================
+# ===================== Unmodified in most cases ==================
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     dataset=dict(dataset=dict(pipeline=train_pipeline)))

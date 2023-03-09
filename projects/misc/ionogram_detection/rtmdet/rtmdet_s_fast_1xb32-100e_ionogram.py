@@ -3,7 +3,7 @@ _base_ = './rtmdet_l_fast_1xb32-100e_ionogram.py'
 checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-s_imagenet_600e.pth'  # noqa
 load_from = 'https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco/rtmdet_s_syncbn_fast_8xb32-300e_coco_20221230_182329-0a8c901a.pth'  # noqa
 
-# ========================modified parameters======================
+# ======================= Modified parameters =====================
 deepen_factor = 0.33
 widen_factor = 0.5
 img_scale = _base_.img_scale
@@ -15,7 +15,7 @@ mosaic_max_cached_images = 40
 # Number of cached images in mixup
 mixup_max_cached_images = 20
 
-# =======================Unmodified in most cases==================
+# ===================== Unmodified in most cases ==================
 model = dict(
     backbone=dict(
         deepen_factor=deepen_factor,

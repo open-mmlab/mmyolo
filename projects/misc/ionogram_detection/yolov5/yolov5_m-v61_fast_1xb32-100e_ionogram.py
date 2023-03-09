@@ -1,6 +1,6 @@
 _base_ = './yolov5_s-v61_fast_1xb96-100e_ionogram.py'
 
-# ========================modified parameters======================
+# ======================= Modified parameters =====================
 # Copied from '../../yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco.py'
 deepen_factor = 0.67
 widen_factor = 0.75
@@ -19,7 +19,7 @@ base_lr = _base_.base_lr * train_batch_size_per_gpu \
     / _base_.train_batch_size_per_gpu
 load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_m-v61_syncbn_fast_8xb16-300e_coco/yolov5_m-v61_syncbn_fast_8xb16-300e_coco_20220917_204944-516a710f.pth'  # noqa
 
-# =======================Unmodified in most cases==================
+# ===================== Unmodified in most cases ==================
 num_classes = _base_.num_classes
 num_det_layers = _base_.num_det_layers
 img_scale = _base_.img_scale

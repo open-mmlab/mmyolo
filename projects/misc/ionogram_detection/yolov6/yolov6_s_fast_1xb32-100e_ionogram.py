@@ -1,6 +1,6 @@
-_base_ = '../../../../configs/yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco.py'
+_base_ = 'mmyolo::yolov6/yolov6_s_syncbn_fast_8xb32-400e_coco.py'
 
-# ========================modified parameters======================
+# ======================= Modified parameters =====================
 # -----data related-----
 data_root = './Iono4311/'
 train_ann_file = 'annotations/train.json'

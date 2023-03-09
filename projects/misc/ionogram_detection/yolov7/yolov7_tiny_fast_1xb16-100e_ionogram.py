@@ -1,7 +1,7 @@
 _base_ = './yolov7_l_fast_1xb16-100e_ionogram.py'
 
-# ========================modified parameters========================
-# work_dir and pre-train
+# ======================== Modified parameters =======================
+# pre-train
 load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov7/yolov7_tiny_syncbn_fast_8x16b-300e_coco/yolov7_tiny_syncbn_fast_8x16b-300e_coco_20221126_102719-0ee5bbdf.pth'  # noqa
 
 # -----model related-----
@@ -19,7 +19,7 @@ loss_obj_weight = 1.0
 
 lr_factor = 0.01  # Learning rate scaling factor
 
-# ===============================Unmodified in most cases====================
+# ====================== Unmodified in most cases ====================
 num_classes = _base_.num_classes
 num_det_layers = _base_.num_det_layers
 img_scale = _base_.img_scale

@@ -1,6 +1,5 @@
-_base_ = '../../../../configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'  # noqa
-
-# ========================modified parameters======================
+_base_ = 'mmyolo::yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'  # noqa
+# ======================= Modified parameters =====================
 # -----data related-----
 data_root = './Iono4311/'
 train_ann_file = 'annotations/train.json'
@@ -47,7 +46,7 @@ visualizer = dict(
     vis_backends=[dict(type='LocalVisBackend'),
                   dict(type='WandbVisBackend')])
 
-# =======================Unmodified in most cases==================
+# ===================== Unmodified in most cases ==================
 model = dict(
     bbox_head=dict(
         head_module=dict(num_classes=num_classes),

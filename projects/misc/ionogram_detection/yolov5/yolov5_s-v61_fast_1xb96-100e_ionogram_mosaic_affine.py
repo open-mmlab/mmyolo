@@ -1,6 +1,6 @@
 _base_ = './yolov5_s-v61_fast_1xb96-100e_ionogram.py'
 
-# ========================modified parameters======================
+# ======================= Modified parameters =====================
 # -----train val related-----
 train_pipeline = [
     dict(type='LoadImageFromFile', file_client_args=dict(backend='disk')),
@@ -27,5 +27,5 @@ train_pipeline = [
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape'))
 ]
 
-# =======================Unmodified in most cases==================
+# ===================== Unmodified in most cases ==================
 train_dataloader = dict(dataset=dict(dataset=dict(pipeline=train_pipeline)))

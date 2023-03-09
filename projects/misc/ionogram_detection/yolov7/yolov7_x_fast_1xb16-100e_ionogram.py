@@ -1,8 +1,9 @@
 _base_ = './yolov7_l_fast_1xb16-100e_ionogram.py'
 
-# work_dir and pre-train
+# ======================== Modified parameters =======================
 load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov7/yolov7_x_syncbn_fast_8x16b-300e_coco/yolov7_x_syncbn_fast_8x16b-300e_coco_20221124_215331-ef949a68.pth'  # noqa
 
+# ===================== Unmodified in most cases ==================
 model = dict(
     backbone=dict(arch='X'),
     neck=dict(

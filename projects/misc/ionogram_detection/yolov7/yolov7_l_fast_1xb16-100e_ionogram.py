@@ -1,4 +1,4 @@
-_base_ = '../../../../configs/yolov7/yolov7_l_syncbn_fast_8x16b-300e_coco.py'
+_base_ = 'mmyolo::yolov7/yolov7_l_syncbn_fast_8x16b-300e_coco.py'
 
 # ======================== Modified parameters ======================
 # -----data related-----
@@ -45,7 +45,7 @@ visualizer = dict(
     vis_backends=[dict(type='LocalVisBackend'),
                   dict(type='WandbVisBackend')])
 
-# =======================Unmodified in most cases==================
+# ===================== Unmodified in most cases ==================
 model = dict(
     bbox_head=dict(
         head_module=dict(num_classes=num_classes),

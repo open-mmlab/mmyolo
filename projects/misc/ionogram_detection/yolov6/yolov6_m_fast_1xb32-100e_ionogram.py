@@ -11,7 +11,7 @@ widen_factor = 0.75
 affine_scale = 0.9  # YOLOv5RandomAffine scaling ratio
 load_from = 'https://download.openmmlab.com/mmyolo/v0/yolov6/yolov6_m_syncbn_fast_8xb32-300e_coco/yolov6_m_syncbn_fast_8xb32-300e_coco_20221109_182658-85bda3f4.pth'  # noqa
 
-# ============================== Unmodified in most cases ===================
+# ====================== Unmodified in most cases ===================
 model = dict(
     backbone=dict(
         type='YOLOv6CSPBep',
