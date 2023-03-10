@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
 from copy import deepcopy
-from typing import List, Sequence, Tuple, Union
+from typing import Optional, List, Sequence, Tuple, Union
 
 import cv2
 import mmcv
@@ -9,11 +9,12 @@ import numpy as np
 import torch
 from mmcv.transforms import BaseTransform, Compose
 from mmcv.transforms.utils import cache_randomness
+from mmdet.datasets.transforms import Albu as MMDET_Albu
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
-from mmdet.structures.mask import PolygonMasks
+from mmdet.structures.mask import BitmapMasks, PolygonMasks
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
@@ -1554,4 +1555,126 @@ class RegularizeRotatedBox(BaseTransform):
         assert isinstance(results['gt_bboxes'], self.box_type)
         results['gt_bboxes'] = self.box_type(
             results['gt_bboxes'].regularize_boxes(self.angle_version))
+        return results
+
+
+@TRANSFORMS.register_module()
+class Albu(MMDET_Albu):
+
+    def __init__(self, *arg, **kwargs):
+        super().__init__(*arg, **kwargs)
+
+    def _postprocess_results(
+            self,
+            results: dict,
+            ori_masks: Optional[Union[BitmapMasks,
+                                      PolygonMasks]] = None) -> dict:
+        """Post-processing Albu output."""
+        # albumentations may return np.array or list on different versions
+        if 'gt_bboxes_labels' in results and isinstance(
+                results['gt_bboxes_labels'], list):
+            results['gt_bboxes_labels'] = np.array(
+                results['gt_bboxes_labels'], dtype=np.int64)
+        if 'gt_ignore_flags' in results and isinstance(
+                results['gt_ignore_flags'], list):
+            results['gt_ignore_flags'] = np.array(
+                results['gt_ignore_flags'], dtype=bool)
+
+        if 'bboxes' in results:
+            if isinstance(results['bboxes'], list):
+                results['bboxes'] = np.array(
+                    results['bboxes'], dtype=np.float32)
+            results['bboxes'] = results['bboxes'].reshape(-1, 4)
+            results['bboxes'] = HorizontalBoxes(results['bboxes'])
+
+            # filter label_fields
+            if self.filter_lost_elements:
+                for label in self.origin_label_fields:
+                    results[label] = np.array(
+                        [results[label][i] for i in results['idx_mapper']])
+                if 'masks' in results:
+                    assert ori_masks is not None
+                    results['masks'] = np.array(
+                        [results['masks'][i] for i in results['idx_mapper']])
+                    results['masks'] = ori_masks.__class__(
+                        results['masks'], ori_masks.shape[0],
+                        ori_masks.shape[1])
+
+                if (not len(results['idx_mapper'])
+                        and self.skip_img_without_anno):
+                    return None
+            elif 'masks' in results:
+                # TODO: fix in mmdet, use ori_masks height and width
+                results['masks'] = ori_masks.__class__(
+                    results['masks'], ori_masks.height, ori_masks.width)
+
+        return results
+
+
+@TRANSFORMS.register_module()
+class YOLOv5Polygon2Mask(BaseTransform):
+    def __init__(self, mask_ratio: int = 4, overlap: bool = True):
+        self.mask_ratio = mask_ratio
+        self.overlap = overlap
+    
+    def polygon2mask(self, img_shape, poly_per_obj, color=1):
+        '''
+        transform from polygon to bitmask
+        '''
+        mask = np.zeros(img_shape[:2], dtype=np.uint8)
+        # polygons are merged into one polygon in offical yolov5
+        # So we need to deal with it
+        reshape_poly_per_obj = []
+        for poly in poly_per_obj:
+            poly = poly.astype(np.int32)
+            poly = poly.reshape(-1, 2)
+            reshape_poly_per_obj.append(poly)
+        cv2.fillPoly(mask, reshape_poly_per_obj, color=color)
+        nh, nw = (img_shape[0] // self.mask_ratio, img_shape[1] // self.mask_ratio)
+        # NOTE: fillPoly firstly then resize is trying the keep the same way
+        # of loss calculation when mask-ratio=1.
+        mask = cv2.resize(mask, (nw, nh))
+        return mask
+    
+    def polygon2masks(self, img_shape, polygons, color=1):
+        areas = []
+        masks = []
+        for poly_per_obj in polygons:
+            mask = self.polygon2mask(img_shape, poly_per_obj, color)
+            masks.append(mask)
+            areas.append(mask.sum())
+        areas = np.asarray(areas)
+        index = np.argsort(-areas)
+        masks = np.array(masks)
+        return masks, index
+
+    def transform(self, results: dict):
+        img_shape = results['img_shape']
+        polygons = results['gt_masks'].masks
+
+        if self.overlap:
+            combine_mask = np.zeros((img_shape[0] // self.mask_ratio,
+                img_shape[1] // self.mask_ratio), dtype=np.uint8)
+            # transform polygon to masks
+            masks, index = self.polygon2masks(img_shape, polygons)
+            masks = masks[index]
+            # compress into one mask
+            for i in range(len(polygons)):
+                mask = masks[i] * (i + 1)
+                combine_mask = combine_mask + mask
+                combine_mask = np.clip(combine_mask, a_min=0, a_max=i+1)
+            masks = combine_mask[None]
+            # bbox/label sort
+            results['gt_bboxes'] = results['gt_bboxes'][index]
+            results['gt_bboxes_labels'] = results['gt_bboxes_labels'][index]
+            results['gt_ignore_flags'] = results['gt_ignore_flags'][index]
+            results['gt_masks_overlap'] = True
+        else:
+            masks, _ = self.polygon2masks(img_shape, polygons)
+            results['gt_masks_overlap'] = False
+        
+        results['gt_masks'] = BitmapMasks(
+            masks,
+            img_shape[0] // self.mask_ratio,
+            img_shape[1] // self.mask_ratio)
         return results
