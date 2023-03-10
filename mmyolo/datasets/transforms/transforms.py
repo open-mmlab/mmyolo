@@ -109,7 +109,6 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
             resized_h, resized_w = image.shape[:2]
             scale_ratio_h = resized_h / original_h
             scale_ratio_w = resized_w / original_w
-
             scale_factor = (scale_ratio_w, scale_ratio_h)
 
             results['img'] = image
@@ -248,10 +247,15 @@ class LetterResize(MMDET_Resize):
         if 'pad_param' in results:
             results['pad_param_origin'] = results['pad_param'] * \
                                           np.repeat(ratio, 2)
-        # Have influence on mask mAP
-        results['pad_param'] = np.array(
-            [padding_h / 2, padding_h / 2, padding_w / 2, padding_w / 2],
-            dtype=np.float32)
+
+        if 'gt_masks' in results:
+            results['pad_param'] = np.array(
+                [padding_h / 2, padding_h / 2, padding_w / 2, padding_w / 2],
+                dtype=np.float32)
+        else:
+            # We found in object detection, using padding list with
+            # int type can get higher mAP.
+            results['pad_param'] = np.array(padding_list, dtype=np.float32)
 
     def _resize_masks(self, results: dict):
         """Resize masks with ``results['scale']``"""

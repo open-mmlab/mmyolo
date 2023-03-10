@@ -304,11 +304,17 @@ class YOLOv8InsHead(YOLOv8Head):
                               flatten_mask_coeff_preds, mask_protos,
                               batch_img_metas):
             ori_shape = img_meta['ori_shape']
-            scale_factor = img_meta['scale_factor']
+            batch_input_shape = img_meta['batch_input_shape']
             if 'pad_param' in img_meta:
                 pad_param = img_meta['pad_param']
+                input_shape_withoutpad = (batch_input_shape[0] - pad_param[0] -
+                                          pad_param[1], batch_input_shape[1] -
+                                          pad_param[2] - pad_param[3])
             else:
                 pad_param = None
+                input_shape_withoutpad = batch_input_shape
+            scale_factor = (input_shape_withoutpad[1] / ori_shape[1],
+                            input_shape_withoutpad[0] / ori_shape[0])
 
             score_thr = cfg.get('score_thr', -1)
             if scores.shape[0] == 0:
@@ -356,52 +362,59 @@ class YOLOv8InsHead(YOLOv8Head):
                 img_meta=img_meta)
 
             input_shape_h, input_shape_w = img_meta['batch_input_shape'][:2]
-            masks = self.process_mask(mask_proto, results.mask_coeff_pred,
-                                      results.bboxes,
-                                      (input_shape_h, input_shape_w), True)
+            if len(results.bboxes):
+                masks = self.process_mask(mask_proto, results.mask_coeff_pred,
+                                          results.bboxes,
+                                          (input_shape_h, input_shape_w), True)
 
-            if rescale and (pad_param is not None):
-                top_pad, bottom_pad, left_pad, right_pad = pad_param
+                if rescale and (pad_param is not None):
+                    top_pad, bottom_pad, left_pad, right_pad = pad_param
 
-                results.bboxes -= results.bboxes.new_tensor(
-                    [left_pad, top_pad, left_pad, top_pad])
-                results.bboxes /= results.bboxes.new_tensor(
-                    scale_factor).repeat((1, 2))
-                top, left = int(top_pad), int(left_pad)
-                bottom, right = int(input_shape_h -
-                                    top_pad), int(input_shape_w - left_pad)
-                masks = masks[:, :, top:bottom, left:right]
+                    results.bboxes -= results.bboxes.new_tensor(
+                        [left_pad, top_pad, left_pad, top_pad])
+                    results.bboxes /= results.bboxes.new_tensor(
+                        scale_factor).repeat((1, 2))
+                    top, left = int(top_pad), int(left_pad)
+                    bottom, right = int(input_shape_h -
+                                        top_pad), int(input_shape_w - left_pad)
+                    masks = masks[:, :, top:bottom, left:right]
 
-            fast_test = cfg.get('fast_test', False)
-            if fast_test:
-                if rescale:
-                    masks = F.interpolate(
-                        masks,
-                        size=ori_shape,
-                        mode='bilinear',
-                        align_corners=False)
+                fast_test = cfg.get('fast_test', False)
+                if fast_test:
+                    if rescale:
+                        masks = F.interpolate(
+                            masks,
+                            size=ori_shape,
+                            mode='bilinear',
+                            align_corners=False)
 
-                masks = masks.squeeze(0)
-                masks = masks > cfg.mask_thr_binary
+                    masks = masks.squeeze(0)
+                    masks = masks > cfg.mask_thr_binary
+                else:
+                    masks.gt_(cfg.mask_thr_binary)
+                    if rescale:
+                        masks = masks[0].permute(1, 2,
+                                                 0).contiguous().cpu().numpy()
+                        # astype(np.uint8) is very important
+                        masks = cv2.resize(
+                            masks.astype(np.uint8),
+                            (ori_shape[1], ori_shape[0]))
+
+                        if len(masks.shape) == 2:
+                            masks = masks[:, :, None]
+
+                        masks = torch.from_numpy(masks).permute(2, 0, 1)
+
+                results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
+                results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
+
+                results.masks = masks.bool()
+                results_list.append(results)
             else:
-                masks.gt_(cfg.mask_thr_binary)
-                if rescale:
-                    masks = masks[0].permute(1, 2,
-                                             0).contiguous().cpu().numpy()
-                    # astype(np.uint8) is very important
-                    masks = cv2.resize(
-                        masks.astype(np.uint8), (ori_shape[1], ori_shape[0]))
-
-                    if len(masks.shape) == 2:
-                        masks = masks[:, :, None]
-
-                    masks = torch.from_numpy(masks).permute(2, 0, 1)
-
-            results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
-            results.bboxes[:, 1::2].clamp_(0, ori_shape[0])
-
-            results.masks = masks.bool()
-            results_list.append(results)
+                h, w = ori_shape[:2] if rescale else img_meta['img_shape'][:2]
+                results.masks = torch.zeros(
+                    size=(0, h, w), dtype=torch.bool, device=bboxes.device)
+                results_list.append(results)
         return results_list
 
     def process_mask(self,
