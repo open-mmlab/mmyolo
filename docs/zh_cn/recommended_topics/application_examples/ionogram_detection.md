@@ -4,7 +4,7 @@
 
 数字频高图是获取电离层实时信息最重要的途径。电离层结构检测对精准提取电离层关键参数，具有非常重要的研究意义。
 
-利用中国科学院在海南、武汉、怀来获取的不同季节的 4311 张频高图建立数据集，人工标注出 E 层、Es-c 层、Es-l 层、F1 层、F2 层、Spread F 层共 6 种结构。[数据集下载](https://github.com/VoyagerXvoyagerx/Ionogram_detection/releases/download/Dataset/Iono4311.zip)
+利用中国科学院在海南、武汉、怀来获取的不同季节的 4311 张频高图建立数据集，使用 [labelme](https://github.com/wkentaro/labelme) 人工标注出 E 层、Es-c 层、Es-l 层、F1 层、F2 层、Spread F 层共 6 种结构。[数据集下载](https://github.com/VoyagerXvoyagerx/Ionogram_detection/releases/download/Dataset/Iono4311.zip)
 
 <div align=center>
 <img width="40%" src="https://user-images.githubusercontent.com/67947949/223638535-c4583d88-aa5a-4f21-b35a-e6e8328c9bd4.jpg"/>
