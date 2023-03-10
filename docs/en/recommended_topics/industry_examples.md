@@ -1,1 +1,0 @@
-# MMYOLO industry examples
