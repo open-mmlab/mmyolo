@@ -120,7 +120,7 @@ The information obtained is as follows:
 
 根据统计结果，E、Es-l、Esc、F1 类别以小目标居多，F2、Spread F 类主要是中等大小目标。
 
-1. 可视化 config 中的数据处理部分
+2. 可视化 config 中的数据处理部分
 
 以 YOLOv5-s 为例，根据配置文件中的 `train_pipeline`，训练时采用的数据增强策略包括：
 
@@ -130,7 +130,7 @@ The information obtained is as follows:
 - HSV 随机增强图像
 - 随机水平翻转
 
-使用 `tools/analysis_tools/browse_dataset.py` 脚本的 **'pipeline'** 模式，可以可视化每个 pipeline 输出效果:
+使用 `tools/analysis_tools/browse_dataset.py` 脚本的 **'pipeline'** 模式，可以可视化每个 pipeline 的输出效果:
 
 ```shell
 python tools/analysis_tools/browse_dataset.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py \
