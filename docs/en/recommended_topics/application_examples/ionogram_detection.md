@@ -79,7 +79,7 @@ Iono4311/
 └── val_images
 ```
 
-## Create config files
+## Config files
 
 The configuration files are stored in the directory `/projects/misc/ionogram_detection/`.
 
@@ -180,9 +180,9 @@ Model Parameters: 7.036M
 
 1. Train
 
-Training visualization：By following the tutorial of [Annotation-to-deployment workflow for custom dataset](https://mmyolo.readthedocs.io/en/dev/recommended_topics/labeling_to_deployment_tutorials.html#id11), this example uses [wandb](https://wandb.ai/site) to visulize training.
+**Training visualization**: By following the tutorial of [Annotation-to-deployment workflow for custom dataset](https://mmyolo.readthedocs.io/en/dev/recommended_topics/labeling_to_deployment_tutorials.html#id11), this example uses [wandb](https://wandb.ai/site) to visulize training.
 
-Debug tricks: During the process of debugging code, sometimes it is necessary to train for several epochs, such as debugging the validation process or checking whether the checkpoint saving meets expectations. For datasets inherited from `BaseDataset` (such as `YOLOv5CocoDataset` in this example),  setting `indices` in the `dataset` field can specify the number of samples per epoch to reduce the iteration time.
+**Debug tricks**: During the process of debugging code, sometimes it is necessary to train for several epochs, such as debugging the validation process or checking whether the checkpoint saving meets expectations. For datasets inherited from `BaseDataset` (such as `YOLOv5CocoDataset` in this example),  setting `indices` in the `dataset` field can specify the number of samples per epoch to reduce the iteration time.
 
 ```python
 train_dataloader = dict(
@@ -203,13 +203,13 @@ train_dataloader = dict(
             pipeline=_base_.train_pipeline)))
 ```
 
-Start the training：
+**Start training**：
 
 ```shell
 python tools/train.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py
 ```
 
-2. Test
+1. Test
 
 Specify the path of the config file and the model to start the test:
 
@@ -303,5 +303,5 @@ The loss reduction curve shows that when using pre-trained weights, the loss dec
 | YOLOv6-l    | 100(76)     | 71.33    | 58.47     | Coco     | 0.605   | 0.597    | [config](/projects/misc/ionogram_detection/yolov6/yolov6_l_fast_1xb32-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov6_l_20230108_005634.json)    |
 | YOLOv7-tiny | 100(78)     | 6.57     | 6.02      | Coco     | 0.549   | 0.568    | [config](/projects/misc/ionogram_detection/yolov7/yolov7_tiny_fast_1xb16-100e_ionogram.py)  | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov7_tiny_20230215_202837.json) |
 | YOLOv7-x    | 100(58)     | 94.27    | 70.85     | Coco     | 0.602   | 0.595    | [config](/projects/misc/ionogram_detection/yolov7/yolov7_x_fast_1xb16-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov7_x_20230110_165832.json)    |
-| rtmdet-s    | 100(92)     | 14.76    | 8.86      | Coco     | 0.588   | 0.585    | [config](/projects/misc/ionogram_detection/rtmdet/rtmdet_s_fast_1xb32-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/rtmdet_s_20230310_163853.json)    |
 | rtmdet-tiny | 100(100)    | 8.03     | 4.88      | Coco     | 0.582   | 0.589    | [config](/projects/misc/ionogram_detection/rtmdet/rtmdet_tiny_fast_1xb32-100e_ionogram.py)  | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/rtmdet_tiny_20230310_125440.json) |
+| rtmdet-s    | 100(92)     | 14.76    | 8.86      | Coco     | 0.588   | 0.585    | [config](/projects/misc/ionogram_detection/rtmdet/rtmdet_s_fast_1xb32-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/rtmdet_s_20230310_163853.json)    |

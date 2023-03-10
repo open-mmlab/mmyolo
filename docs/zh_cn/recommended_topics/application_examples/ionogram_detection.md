@@ -125,7 +125,7 @@ The information obtained is as follows:
 以 YOLOv5-s 为例，根据配置文件中的 `train_pipeline`，训练时采用的数据增强策略包括：
 
 - 马赛克增强
-- 仿射变换
+- 随机仿射变换
 - Albumentations 数据增强工具包（包括多种数字图像处理方法）
 - HSV 随机增强图像
 - 随机水平翻转
@@ -145,7 +145,7 @@ pipeline 输出可视化
 
 </div>
 
-3. 修改 Anchor 尺寸
+3. 优化 Anchor 尺寸
 
 使用分析工具中的 `tools/analysis_tools/optimize_anchors.py` 脚本得到适用于本数据集的先验锚框尺寸。
 
@@ -302,5 +302,5 @@ python tools/test.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1
 | YOLOv6-l    | 100(76)     | 71.33    | 58.47     | Coco     | 0.605   | 0.597    | [config](/projects/misc/ionogram_detection/yolov6/yolov6_l_fast_1xb32-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov6_l_20230108_005634.json)    |
 | YOLOv7-tiny | 100(78)     | 6.57     | 6.02      | Coco     | 0.549   | 0.568    | [config](/projects/misc/ionogram_detection/yolov7/yolov7_tiny_fast_1xb16-100e_ionogram.py)  | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov7_tiny_20230215_202837.json) |
 | YOLOv7-x    | 100(58)     | 94.27    | 70.85     | Coco     | 0.602   | 0.595    | [config](/projects/misc/ionogram_detection/yolov7/yolov7_x_fast_1xb16-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/yolov7_x_20230110_165832.json)    |
-| rtmdet-s    | 100(92)     | 14.76    | 8.86      | Coco     | 0.588   | 0.585    | [config](/projects/misc/ionogram_detection/rtmdet/rtmdet_s_fast_1xb32-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/rtmdet_s_20230310_163853.json)    |
 | rtmdet-tiny | 100(100)    | 8.03     | 4.88      | Coco     | 0.582   | 0.589    | [config](/projects/misc/ionogram_detection/rtmdet/rtmdet_tiny_fast_1xb32-100e_ionogram.py)  | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/rtmdet_tiny_20230310_125440.json) |
+| rtmdet-s    | 100(92)     | 14.76    | 8.86      | Coco     | 0.588   | 0.585    | [config](/projects/misc/ionogram_detection/rtmdet/rtmdet_s_fast_1xb32-100e_ionogram.py)     | [log](https://github.com/VoyagerXvoyagerx/Ionogram_detection/blob/main/logs/rtmdet_s_20230310_163853.json)    |
