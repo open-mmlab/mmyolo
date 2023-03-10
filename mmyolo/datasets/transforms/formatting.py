@@ -1,43 +1,21 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import numpy as np
 from mmcv.transforms import to_tensor
-from mmengine.structures import InstanceData, PixelData
 from mmdet.datasets.transforms import PackDetInputs as MMDET_PackDetInputs
-
-from mmyolo.registry import TRANSFORMS
 from mmdet.structures import DetDataSample
 from mmdet.structures.bbox import BaseBoxes
+from mmengine.structures import InstanceData, PixelData
+
+from mmyolo.registry import TRANSFORMS
 
 
 @TRANSFORMS.register_module()
 class PackDetInputs(MMDET_PackDetInputs):
     """Pack the inputs data for the detection / semantic segmentation /
     panoptic segmentation.
-    The ``img_meta`` item is always populated.  The contents of the
-    ``img_meta`` dictionary depends on ``meta_keys``. By default this includes:
-        - ``img_id``: id of the image
-        - ``img_path``: path to the image file
-        - ``ori_shape``: original shape of the image as a tuple (h, w)
-        - ``img_shape``: shape of the image input to the network as a tuple \
-            (h, w).  Note that images may be zero padded on the \
-            bottom/right if the batch tensor is larger than this shape.
-        - ``scale_factor``: a float indicating the preprocessing scale
-        - ``flip``: a boolean indicating if image flip transform was used
-        - ``flip_direction``: the flipping direction
-    Args:
-        meta_keys (Sequence[str], optional): Meta keys to be converted to
-            ``mmcv.DataContainer`` and collected in ``data[img_metas]``.
-            Default: ``('img_id', 'img_path', 'ori_shape', 'img_shape',
-            'scale_factor', 'flip', 'flip_direction')``
-    """
-    mapping_table = {
-        'gt_bboxes': 'bboxes',
-        'gt_bboxes_labels': 'labels',
-        'gt_masks': 'masks'
-    }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    Compared to mmdet, we just add the `gt_panoptic_seg` field and logic.
+    """
 
     def transform(self, results: dict) -> dict:
         """Method to pack the input data.
@@ -80,18 +58,7 @@ class PackDetInputs(MMDET_PackDetInputs):
         for key in self.mapping_table.keys():
             if key not in results:
                 continue
-            if key == 'gt_masks':
-                if results.get('gt_masks_overlap', False):
-                    data_sample.gt_masks = results[key]
-                else:
-                    if 'gt_ignore_flags' in results:
-                        instance_data[
-                            self.mapping_table[key]] = results[key][valid_idx]
-                        ignore_instance_data[
-                            self.mapping_table[key]] = results[key][ignore_idx]
-                    else:
-                        instance_data[self.mapping_table[key]] = results[key]
-            elif isinstance(results[key], BaseBoxes):
+            if key == 'gt_masks' or isinstance(results[key], BaseBoxes):
                 if 'gt_ignore_flags' in results:
                     instance_data[
                         self.mapping_table[key]] = results[key][valid_idx]
@@ -122,10 +89,15 @@ class PackDetInputs(MMDET_PackDetInputs):
                 sem_seg=to_tensor(results['gt_seg_map'][None, ...].copy()))
             data_sample.gt_sem_seg = PixelData(**gt_sem_seg_data)
 
+        # Only modified here
+        if 'gt_panoptic_seg' in results:
+            data_sample.gt_panoptic_seg = PixelData(
+                pan_seg=results['gt_panoptic_seg'])
+
         img_meta = {}
         for key in self.meta_keys:
             assert key in results, f'`{key}` is not found in `results`, ' \
-                f'the valid keys are {list(results)}.'
+                                   f'the valid keys are {list(results)}.'
             img_meta[key] = results[key]
 
         data_sample.set_metainfo(img_meta)

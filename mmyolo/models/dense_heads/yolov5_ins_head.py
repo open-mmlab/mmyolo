@@ -6,10 +6,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.cnn import ConvModule
-from mmdet.structures.bbox import bbox_cxcywh_to_xyxy
 from mmdet.models.utils import filter_scores_and_topk, multi_apply
-from mmdet.utils import (ConfigType, OptConfigType, OptInstanceList,
-                         OptMultiConfig)
+from mmdet.structures.bbox import bbox_cxcywh_to_xyxy
+from mmdet.utils import ConfigType, OptInstanceList
 from mmengine.config import ConfigDict
 from mmengine.dist import get_dist_info
 from mmengine.model import BaseModule
@@ -21,61 +20,40 @@ from ..utils import make_divisible
 from .yolov5_head import YOLOv5Head, YOLOv5HeadModule
 
 
-def crop_mask(masks, boxes):
-    """"Crop" predicted masks by zeroing out everything not in the predicted
-    bbox. Vectorized by Chong (thanks Chong).
-    Args:
-        - masks should be a size [h, w, n] tensor of masks
-        - boxes should be a size [n, 4] tensor of bbox
-        coords in relative point form
-    """
+class ProtoModule(BaseModule):
 
-    n, h, w = masks.shape
-    x1, y1, x2, y2 = torch.chunk(boxes[:, :, None], 4, 1)  # x1 shape(1,1,n)
-    r = torch.arange(
-        w, device=masks.device, dtype=x1.dtype)[None,
-                                                None, :]  # rows shape(1,w,1)
-    c = torch.arange(
-        h, device=masks.device, dtype=x1.dtype)[None, :,
-                                                None]  # cols shape(h,1,1)
-
-    return masks * ((r >= x1) * (r < x2) * (c >= y1) * (c < y2))
-
-
-class Proto(BaseModule):
     def __init__(self,
-                 in_channels,
-                 proto_channels=256,
-                 num_protos=32,
+                 in_channels: int,
+                 middle_channels: int = 256,
+                 mask_channels: int = 32,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
-                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-                 init_cfg=None):
-        super().__init__(init_cfg)
-        self.cv1 = ConvModule(
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True)):
+        super().__init__()
+        self.conv1 = ConvModule(
             in_channels,
-            proto_channels,
+            middle_channels,
             kernel_size=3,
             padding=1,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
         self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
-        self.cv2 = ConvModule(
-            proto_channels,
-            proto_channels,
+        self.conv2 = ConvModule(
+            middle_channels,
+            middle_channels,
             kernel_size=3,
             padding=1,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
-        self.cv3 = ConvModule(
-            proto_channels,
-            num_protos,
+        self.conv3 = ConvModule(
+            middle_channels,
+            mask_channels,
             kernel_size=1,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
     def forward(self, x):
-        return self.cv3(self.cv2(self.upsample(self.cv1(x))))
+        return self.conv3(self.conv2(self.upsample(self.conv1(x))))
 
 
 @MODELS.register_module()
@@ -84,15 +62,15 @@ class YOLOv5InsHeadModule(YOLOv5HeadModule):
     def __init__(self,
                  *args,
                  num_classes,
-                 num_protos=32,
+                 mask_channels=32,
                  proto_channels=256,
+                 widen_factor=1.0,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
-                 widen_factor=1.0,
                  **kwargs):
-        self.num_protos = num_protos
-        self.num_out_attrib_with_proto = 5 + num_classes + num_protos
+        self.mask_channels = mask_channels
+        self.num_out_attrib_with_proto = 5 + num_classes + mask_channels
         self.proto_channels = make_divisible(proto_channels, widen_factor)
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
@@ -109,18 +87,18 @@ class YOLOv5InsHeadModule(YOLOv5HeadModule):
             conv_pred = nn.Conv2d(
                 self.in_channels[i],
                 self.num_base_priors * self.num_out_attrib_with_proto, 1)
-
             self.convs_pred.append(conv_pred)
 
-        self.proto = Proto(
+        self.proto_preds = ProtoModule(
             self.in_channels[0],
             self.proto_channels,
-            self.num_protos,
+            self.mask_channels,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
 
     def forward(self, x: Tuple[Tensor]) -> Tuple[List]:
         """Forward features from the upstream network.
+
         Args:
             x (Tuple[Tensor]): Features from the upstream network, each is
                 a 4D-tensor.
@@ -131,8 +109,8 @@ class YOLOv5InsHeadModule(YOLOv5HeadModule):
         assert len(x) == self.num_levels
         cls_scores, bbox_preds, objectnesses, coeff_preds = multi_apply(
             self.forward_single, x, self.convs_pred)
-        segm_preds = self.proto(x[0])
-        return cls_scores, bbox_preds, objectnesses, coeff_preds, segm_preds
+        mask_protos = self.proto_preds(x[0])
+        return cls_scores, bbox_preds, objectnesses, coeff_preds, mask_protos
 
     def forward_single(
             self, x: Tensor,
@@ -161,16 +139,37 @@ class YOLOv5InsHead(YOLOv5Head):
                  *args,
                  overlap=True,
                  loss_mask=dict(
-                    type='mmdet.CrossEntropyLoss',
-                    use_sigmoid=True,
-                    loss_weight=0.05,
-                    reduction='none'),
+                     type='mmdet.CrossEntropyLoss',
+                     use_sigmoid=True,
+                     loss_weight=0.05,
+                     reduction='none'),
                  **kwargs):
         super().__init__(*args, **kwargs)
-        self.num_protos = self.head_module.num_protos
+        self.mask_channels = self.head_module.mask_channels
         self.overlap = overlap
         self.loss_mask: nn.Module = MODELS.build(loss_mask)
-    
+
+    def crop_mask(self, masks, boxes):
+        """"Crop predicted masks by zeroing out everything not in the predicted
+        bbox. Vectorized by Chong (thanks Chong).
+        Args:
+            - masks should be a size [h, w, n] tensor of masks
+            - boxes should be a size [n, 4] tensor of bbox
+            coords in relative point form
+        """
+
+        n, h, w = masks.shape
+        x1, y1, x2, y2 = torch.chunk(boxes[:, :, None], 4,
+                                     1)  # x1 shape(1,1,n)
+        r = torch.arange(
+            w, device=masks.device,
+            dtype=x1.dtype)[None, None, :]  # rows shape(1,w,1)
+        c = torch.arange(
+            h, device=masks.device, dtype=x1.dtype)[None, :,
+                                                    None]  # cols shape(h,1,1)
+
+        return masks * ((r >= x1) * (r < x2) * (c >= y1) * (c < y2))
+
     def loss(self, x: Tuple[Tensor], batch_data_samples: Union[list,
                                                                dict]) -> dict:
         """Perform forward propagation and loss calculation of the detection
@@ -331,7 +330,8 @@ class YOLOv5InsHead(YOLOv5Head):
             # prepare pred results and positive sample indexes to
             # calculate class loss and bbox lo
             _chunk_targets = batch_targets_scaled.chunk(4, 1)
-            img_class_inds, grid_xy, grid_wh, priors_targets_inds = _chunk_targets
+            img_class_inds, grid_xy, grid_wh,\
+                priors_targets_inds = _chunk_targets
             (priors_inds, targets_inds) = priors_targets_inds.long().T
             (img_inds, class_inds) = img_class_inds.long().T
 
@@ -370,32 +370,42 @@ class YOLOv5InsHead(YOLOv5Head):
                 loss_cls += self.loss_cls(pred_cls_scores, target_class)
             else:
                 loss_cls += cls_scores[i].sum() * 0
-            
+
             # mask regression
             retained_coeff_preds = coeff_preds[i].reshape(
                 batch_size, self.num_base_priors, -1, h,
                 w)[img_inds, priors_inds, :, grid_y_inds, grid_x_inds]
 
-            _, c , mask_h, mask_w = segm_preds.shape
+            _, c, mask_h, mask_w = segm_preds.shape
             if batch_gt_masks.shape[-2:] != (mask_h, mask_w):
                 batch_gt_masks = F.interpolate(
                     batch_gt_masks[None], (mask_h, mask_w), mode='nearest')[0]
-            
+
             nxywh = batch_targets_scaled[:, 2:6] / scaled_factor[2:6]
             marea = nxywh[:, 2:].prod(1)
-            mxyxy = bbox_cxcywh_to_xyxy(nxywh * scaled_factor[2:6] * 2) # TODO
+            scale_xywh = nxywh * torch.tensor(
+                segm_preds.shape, device=device)[[3, 2, 3, 2]]
+            scale_xyxy = bbox_cxcywh_to_xyxy(scale_xywh)
 
             for bs in range(batch_size):
-                j = (img_inds == bs)  # matching index
+                match_inds = (img_inds == bs)  # matching index
+                if match_inds.any() is False:
+                    continue
+
                 if self.overlap:
-                    mask_gti = torch.where(batch_gt_masks[bs][None] == targets_inds[j].view(-1, 1, 1), 1.0, 0.0)
+                    mask_gti = torch.where(
+                        batch_gt_masks[bs][None] ==
+                        targets_inds[match_inds].view(-1, 1, 1), 1.0, 0.0)
                 else:
-                    mask_gti = batch_gt_masks[targets_inds][j]
-                
-                mask_preds = (retained_coeff_preds[j] @ segm_preds[bs].float().view(c, -1)).view(
-                    -1, mask_h, mask_w)
+                    mask_gti = batch_gt_masks[targets_inds][match_inds]
+
+                mask_preds = (retained_coeff_preds[match_inds]
+                              @ segm_preds[bs].float().view(c, -1)).view(
+                                  -1, mask_h, mask_w)
                 loss_mask_full = self.loss_mask(mask_preds, mask_gti)
-                loss_mask += (crop_mask(loss_mask_full, mxyxy[j]).mean(dim=(1, 2)) / marea[j]).mean()
+                loss_mask += (self.crop_mask(
+                    loss_mask_full, scale_xyxy[match_inds]).mean(dim=(1, 2)) /
+                              marea[match_inds]).mean()
 
         _, world_size = get_dist_info()
         return dict(
@@ -415,17 +425,17 @@ class YOLOv5InsHead(YOLOv5Head):
             target_inds = []
             for i in range(batch_size):
                 # find number of targets of each image
-                num = (batch_gt_instances[:, 0] == i).sum() 
+                num = (batch_gt_instances[:, 0] == i).sum()
                 # (num_anchor, num_gts)
                 target_inds.append(
-                    torch.arange(num, device=batch_gt_instances.device).float().view(
-                    1, num).repeat(self.num_base_priors, 1) + 1)
+                    torch.arange(num, device=batch_gt_instances.device).float(
+                    ).view(1, num).repeat(self.num_base_priors, 1) + 1)
             target_inds = torch.cat(target_inds, 1)
         else:
             num_gts = batch_gt_instances.shape[0]
             target_inds = torch.arange(
                 num_gts, device=batch_gt_instances.device).float().view(
-                1, num_gts).repeat(self.num_base_priors, 1)
+                    1, num_gts).repeat(self.num_base_priors, 1)
         batch_targets_normed = torch.cat(
             [batch_targets_normed, target_inds[..., None]], 2)
         return batch_targets_normed
@@ -623,8 +633,8 @@ class YOLOv5InsHead(YOLOv5Head):
         return results_list
 
     def process_mask(self, protos, masks_in, bboxes, shape, upsample=False):
-        """
-        Crop before upsample.
+        """Crop before upsample.
+
         proto_out: [mask_dim, mask_h, mask_w]
         out_masks: [n, mask_dim], n is number of masks after nms
         bboxes: [n, 4], n is number of masks after nms
@@ -636,7 +646,7 @@ class YOLOv5InsHead(YOLOv5Head):
             -1, mh, mw)
         masks = F.interpolate(
             masks[None], shape, mode='bilinear', align_corners=False)[0]  # CHW
-        masks = crop_mask(masks, bboxes)  # CHW
+        masks = self.crop_mask(masks, bboxes)  # CHW
         return masks.gt_(0.5)
 
         # c, mh, mw = protos.shape  # CHW

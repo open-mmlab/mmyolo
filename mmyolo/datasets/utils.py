@@ -28,13 +28,9 @@ def yolov5_collate(data_batch: Sequence,
         gt_bboxes = datasamples.gt_instances.bboxes.tensor
         gt_labels = datasamples.gt_instances.labels
         if 'masks' in datasamples.gt_instances:
-            masks = datasamples.gt_instances.masks.to_tensor(
-                dtype=torch.bool, device=gt_bboxes.device)
-            batch_masks.append(masks)
-        elif datasamples.get('gt_masks', None):
-            masks = datasamples.gt_masks.to_tensor(
-                dtype=torch.uint8, device=gt_bboxes.device)
-            batch_masks.append(masks)
+            batch_masks.append(datasamples.gt_instances.masks)
+        if 'gt_panoptic_seg' in datasamples:
+            batch_masks.append(datasamples.gt_panoptic_seg.pan_seg)
         batch_idx = gt_labels.new_full((len(gt_labels), 1), i)
         bboxes_labels = torch.cat((batch_idx, gt_labels[:, None], gt_bboxes),
                                   dim=1)

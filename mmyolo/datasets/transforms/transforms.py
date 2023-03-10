@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import math
 from copy import deepcopy
-from typing import Optional, List, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import cv2
 import mmcv
@@ -14,7 +14,7 @@ from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
-from mmdet.structures.mask import BitmapMasks, PolygonMasks
+from mmdet.structures.mask import BitmapMasks, PolygonMasks, polygon_to_bitmap
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
@@ -645,7 +645,7 @@ class YOLOv5RandomAffine(BaseTransform):
         num_bboxes = len(bboxes)
         if num_bboxes:
             orig_bboxes = bboxes.clone()
-            if self.use_mask_refine and 'gt_masks' in results:
+            if 'gt_masks' in results:
                 # If the dataset has annotations of mask,
                 # the mask will be used to refine bbox.
                 gt_masks = results['gt_masks']
@@ -656,6 +656,9 @@ class YOLOv5RandomAffine(BaseTransform):
 
                 # refine bboxes by masks
                 bboxes = gt_masks.get_bboxes(dst_type='hbox')
+                if self.bbox_clip_border:
+                    bboxes.clip_([height, width])
+                    gt_masks = self.clip_polygons(gt_masks, height, width)
                 # filter bboxes outside image
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
                                                     bboxes).numpy()
@@ -672,9 +675,6 @@ class YOLOv5RandomAffine(BaseTransform):
                 # otherwise it will raise out of bounds when len(valid_index)=1
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
                                                     bboxes).numpy()
-                if 'gt_masks' in results:
-                    results['gt_masks'] = PolygonMasks(
-                        results['gt_masks'].masks, img_h, img_w)
 
             results['gt_bboxes'] = bboxes[valid_index]
             results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
@@ -683,6 +683,23 @@ class YOLOv5RandomAffine(BaseTransform):
                 valid_index]
 
         return results
+
+    # TODO: Move to mmdet
+    def clip_polygons(self, gt_masks, height, width):
+        if len(gt_masks) == 0:
+            clipped_masks = PolygonMasks([], height, width)
+        else:
+            clipped_masks = []
+            for poly_per_obj in gt_masks:
+                clipped_poly_per_obj = []
+                for p in poly_per_obj:
+                    p = p.copy()
+                    p[0::2].clip(0, width)
+                    p[1::2].clip(0, height)
+                    clipped_poly_per_obj.append(p)
+                clipped_masks.append(clipped_poly_per_obj)
+            clipped_masks = PolygonMasks(clipped_masks, height, width)
+        return clipped_masks
 
     @staticmethod
     def warp_poly(poly: np.ndarray, warp_matrix: np.ndarray, img_w: int,
@@ -709,9 +726,9 @@ class YOLOv5RandomAffine(BaseTransform):
         poly = poly[:, :2] / poly[:, 2:3]
 
         # filter point outside image
-        x, y = poly.T
-        valid_ind_point = (x >= 0) & (y >= 0) & (x <= img_w) & (y <= img_h)
-        return poly[valid_ind_point].reshape(-1)
+        # x, y = poly.T
+        # valid_ind_point = (x >= 0) & (y >= 0) & (x <= img_w) & (y <= img_h)
+        return poly.reshape(-1)
 
     def warp_mask(self, gt_masks: PolygonMasks, warp_matrix: np.ndarray,
                   img_w: int, img_h: int) -> PolygonMasks:
@@ -1605,76 +1622,118 @@ class Albu(MMDET_Albu):
                     return None
             elif 'masks' in results:
                 # TODO: fix in mmdet, use ori_masks height and width
-                results['masks'] = ori_masks.__class__(
-                    results['masks'], ori_masks.height, ori_masks.width)
+                results['masks'] = ori_masks.__class__(results['masks'],
+                                                       ori_masks.height,
+                                                       ori_masks.width)
 
         return results
 
 
 @TRANSFORMS.register_module()
-class YOLOv5Polygon2Mask(BaseTransform):
-    def __init__(self, mask_ratio: int = 4, overlap: bool = True):
-        self.mask_ratio = mask_ratio
-        self.overlap = overlap
-    
-    def polygon2mask(self, img_shape, poly_per_obj, color=1):
-        '''
-        transform from polygon to bitmask
-        '''
-        mask = np.zeros(img_shape[:2], dtype=np.uint8)
-        # polygons are merged into one polygon in offical yolov5
-        # So we need to deal with it
-        reshape_poly_per_obj = []
-        for poly in poly_per_obj:
-            poly = poly.astype(np.int32)
-            poly = poly.reshape(-1, 2)
-            reshape_poly_per_obj.append(poly)
-        cv2.fillPoly(mask, reshape_poly_per_obj, color=color)
-        nh, nw = (img_shape[0] // self.mask_ratio, img_shape[1] // self.mask_ratio)
-        # NOTE: fillPoly firstly then resize is trying the keep the same way
-        # of loss calculation when mask-ratio=1.
-        mask = cv2.resize(mask, (nw, nh))
+class Polygon2Mask(BaseTransform):
+
+    def __init__(self,
+                 downsample_ratio: int = 4,
+                 mask_overlap: bool = True,
+                 coco_style: bool = False):
+        self.downsample_ratio = downsample_ratio
+        self.mask_overlap = mask_overlap
+        self.coco_style = coco_style
+
+    def polygon2mask(self, img_shape, polygons, color=1):
+        """
+        Args:
+            imgsz (tuple): The image size.
+            polygons (np.ndarray): [N, M], N is the number of polygons,
+            M is the number of points(Be divided by 2).
+            color (int): color
+            downsample_ratio (int): downsample ratio
+        """
+        nh, nw = (img_shape[0] // self.downsample_ratio,
+                  img_shape[1] // self.downsample_ratio)
+        if self.coco_style:
+            # This practice can lead to the loss of small objects
+            # polygons = polygons.resize((nh, nw)).masks
+            # polygons = np.asarray(polygons).reshape(-1)
+            # mask = polygon_to_bitmap([polygons], nh, nw)
+
+            polygons = np.asarray(polygons).reshape(-1)
+            mask = polygon_to_bitmap([polygons], img_shape[0],
+                                     img_shape[1]).astype(np.uint8)
+            mask = cv2.resize(mask, (nw, nh))
+        else:
+            mask = np.zeros(img_shape, dtype=np.uint8)
+            polygons = np.asarray(polygons)
+            polygons = polygons.astype(np.int32)
+            shape = polygons.shape
+            polygons = polygons.reshape(shape[0], -1, 2)
+            cv2.fillPoly(mask, polygons, color=color)
+            # NOTE: fillPoly firstly then resize is trying the keep the same
+            #  way of loss calculation when mask-ratio=1.
+            mask = cv2.resize(mask, (nw, nh))
         return mask
-    
-    def polygon2masks(self, img_shape, polygons, color=1):
+
+    def polygons2masks(self, img_shape, polygons, color=1):
+        """
+        Args:
+            imgsz (tuple): The image size.
+            polygons (list[np.ndarray]): each polygon is [N, M],
+            N is number of polygons, M is number of points (M % 2 = 0)
+            color (int): color
+            downsample_ratio (int): downsample ratio
+        """
+        if self.coco_style:
+            nh, nw = (img_shape[0] // self.downsample_ratio,
+                      img_shape[1] // self.downsample_ratio)
+            masks = polygons.resize((nh, nw)).to_ndarray()
+            return masks
+        else:
+            masks = []
+            for si in range(len(polygons)):
+                mask = self.polygon2mask(img_shape, polygons[si], color)
+                masks.append(mask)
+            return np.array(masks)
+
+    def polygons2masks_overlap(self, img_shape, polygons):
+        """Return a (640, 640) overlap mask."""
+        masks = np.zeros((img_shape[0] // self.downsample_ratio,
+                          img_shape[1] // self.downsample_ratio),
+                         dtype=np.int32 if len(polygons) > 255 else np.uint8)
         areas = []
-        masks = []
-        for poly_per_obj in polygons:
-            mask = self.polygon2mask(img_shape, poly_per_obj, color)
-            masks.append(mask)
+        ms = []
+        for si in range(len(polygons)):
+            mask = self.polygon2mask(img_shape, polygons[si], color=1)
+            ms.append(mask)
             areas.append(mask.sum())
         areas = np.asarray(areas)
         index = np.argsort(-areas)
-        masks = np.array(masks)
+        ms = np.array(ms)[index]
+        for i in range(len(polygons)):
+            mask = ms[i] * (i + 1)
+            masks = masks + mask
+            masks = np.clip(masks, a_min=0, a_max=i + 1)
         return masks, index
 
     def transform(self, results: dict):
-        img_shape = results['img_shape']
-        polygons = results['gt_masks'].masks
+        gt_masks = results['gt_masks']
+        assert isinstance(gt_masks, PolygonMasks)
 
-        if self.overlap:
-            combine_mask = np.zeros((img_shape[0] // self.mask_ratio,
-                img_shape[1] // self.mask_ratio), dtype=np.uint8)
-            # transform polygon to masks
-            masks, index = self.polygon2masks(img_shape, polygons)
-            masks = masks[index]
-            # compress into one mask
-            for i in range(len(polygons)):
-                mask = masks[i] * (i + 1)
-                combine_mask = combine_mask + mask
-                combine_mask = np.clip(combine_mask, a_min=0, a_max=i+1)
-            masks = combine_mask[None]
-            # bbox/label sort
-            results['gt_bboxes'] = results['gt_bboxes'][index]
-            results['gt_bboxes_labels'] = results['gt_bboxes_labels'][index]
-            results['gt_ignore_flags'] = results['gt_ignore_flags'][index]
-            results['gt_masks_overlap'] = True
+        if self.mask_overlap:
+            masks, sorted_idx = self.polygons2masks_overlap(
+                (gt_masks.height, gt_masks.width), gt_masks)
+            results['gt_bboxes'] = results['gt_bboxes'][sorted_idx]
+            results['gt_labels'] = results['gt_bboxes_labels'][sorted_idx]
+
+            # In this case we put gt_masks in gt_panoptic_seg
+            results.pop('gt_masks')
+            results['gt_panoptic_seg'] = torch.from_numpy(masks[None])
         else:
-            masks, _ = self.polygon2masks(img_shape, polygons)
-            results['gt_masks_overlap'] = False
-        
-        results['gt_masks'] = BitmapMasks(
-            masks,
-            img_shape[0] // self.mask_ratio,
-            img_shape[1] // self.mask_ratio)
+            masks = self.polygons2masks((gt_masks.height, gt_masks.width),
+                                        gt_masks,
+                                        color=1,
+                                        downsample_ratio=self.downsample_ratio,
+                                        coco_style=self.coco_style)
+            masks = torch.from_numpy(masks)
+            # Consistent logic with mmdet
+            results['gt_masks'] = masks
         return results

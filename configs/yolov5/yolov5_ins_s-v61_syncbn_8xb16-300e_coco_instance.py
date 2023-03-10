@@ -1,13 +1,12 @@
 _base_ = 'yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
-
 model = dict(
     type='YOLODetector',
     bbox_head=dict(
         type='YOLOv5InsHead',
         head_module=dict(
             type='YOLOv5InsHeadModule',
-            num_protos=32,
+            mask_channels=32,
             proto_channels=256,
             norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
             act_cfg=dict(type='SiLU', inplace=True),
@@ -17,22 +16,13 @@ model = dict(
             featmap_strides=_base_.strides,
             num_base_priors=3)))
 
-pre_transform = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(
-        type='LoadAnnotations',
-        with_bbox=True,
-        with_mask=True,
-        poly2mask=False)
-]
-
 train_pipeline = [
-    *pre_transform,
+    *_base_.pre_transform,
     dict(
         type='Mosaic',
         img_scale=_base_.img_scale,
         pad_val=114.0,
-        pre_transform=pre_transform),
+        pre_transform=_base_.pre_transform),
     dict(
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
@@ -43,10 +33,7 @@ train_pipeline = [
         min_area_ratio=0.01,
         max_aspect_ratio=100,
         use_mask_refine=True),
-    dict(
-        type='YOLOv5Polygon2Mask',
-        mask_ratio=4,
-        overlap=False),
+    dict(type='Polygon2Mask', downsample_ratio=4, mask_overlap=False),
     dict(
         type='Albu',
         transforms=_base_.albu_train_transforms,
