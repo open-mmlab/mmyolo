@@ -32,6 +32,22 @@ save_epoch_intervals = 10
 max_epochs = 100
 max_keep_ckpts = 1
 
+# learning rate
+param_scheduler = [
+    dict(
+        type='LinearLR', start_factor=1.0e-5, by_epoch=False, begin=0,
+        end=300),
+    dict(
+        # use cosine lr from 20 to 100 epoch
+        type='CosineAnnealingLR',
+        eta_min=_base_.base_lr * 0.05,
+        begin=max_epochs // 5,
+        end=max_epochs,
+        T_max=max_epochs * 4 // 5,
+        by_epoch=True,
+        convert_to_iter_based=True),
+]
+
 # train_cfg
 val_interval = 2
 val_begin = 20
@@ -74,25 +90,6 @@ test_dataloader = dict(
         data_root=data_root,
         data_prefix=dict(img=test_data_prefix),
         ann_file=test_ann_file))
-
-# learning rate
-param_scheduler = [
-    dict(
-        type='LinearLR',
-        start_factor=1.0e-5,
-        by_epoch=False,
-        begin=0,
-        end=1000),
-    dict(
-        # use cosine lr from 150 to 300 epoch
-        type='CosineAnnealingLR',
-        eta_min=_base_.base_lr * 0.05,
-        begin=max_epochs // 2,
-        end=max_epochs,
-        T_max=max_epochs // 2,
-        by_epoch=True,
-        convert_to_iter_based=True),
-]
 
 default_hooks = dict(
     checkpoint=dict(

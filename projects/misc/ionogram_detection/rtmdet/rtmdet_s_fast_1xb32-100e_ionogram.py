@@ -1,6 +1,5 @@
 _base_ = './rtmdet_l_fast_1xb32-100e_ionogram.py'
 
-checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-s_imagenet_600e.pth'  # noqa
 load_from = 'https://download.openmmlab.com/mmyolo/v0/rtmdet/rtmdet_s_syncbn_fast_8xb32-300e_coco/rtmdet_s_syncbn_fast_8xb32-300e_coco_20221230_182329-0a8c901a.pth'  # noqa
 
 # ======================= Modified parameters =====================
@@ -17,17 +16,7 @@ mixup_max_cached_images = 20
 
 # ===================== Unmodified in most cases ==================
 model = dict(
-    backbone=dict(
-        deepen_factor=deepen_factor,
-        widen_factor=widen_factor,
-        # Since the checkpoint includes CUDA:0 data,
-        # it must be forced to set map_location.
-        # Once checkpoint is fixed, it can be removed.
-        init_cfg=dict(
-            type='Pretrained',
-            prefix='backbone.',
-            checkpoint=checkpoint,
-            map_location='cpu')),
+    backbone=dict(deepen_factor=deepen_factor, widen_factor=widen_factor),
     neck=dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
