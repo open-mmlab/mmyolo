@@ -209,7 +209,7 @@ train_dataloader = dict(
 python tools/train.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py
 ```
 
-1. Test
+2. Test
 
 Specify the path of the config file and the model to start the test:
 
