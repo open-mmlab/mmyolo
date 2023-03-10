@@ -222,6 +222,14 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
     def forward(self, inputs: List[torch.Tensor]) -> tuple:
         """Forward function."""
         assert len(inputs) == len(self.in_channels)
+        out_channels_backbone = [
+            inputs[idx].shape[1] for idx in range(len(inputs))
+        ]
+        assert out_channels_backbone == self.in_channels, \
+            f'The output channels of the backbone is {out_channels_backbone}, \
+                but the input channels of the neck is {self.in_channels}. \
+                Please check the config file.'
+
         # reduce layers
         reduce_outs = []
         for idx in range(len(self.in_channels)):
