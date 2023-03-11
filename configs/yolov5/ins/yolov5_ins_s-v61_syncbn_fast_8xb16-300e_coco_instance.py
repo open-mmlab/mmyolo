@@ -39,7 +39,7 @@ train_pipeline = [
         mask_overlap=True,
         coco_style=False),
     dict(
-        type='Albu',
+        type='mmdet.Albu',
         transforms=_base_.albu_train_transforms,
         bbox_params=dict(
             type='BboxParams',
@@ -48,7 +48,6 @@ train_pipeline = [
         keymap={
             'img': 'image',
             'gt_bboxes': 'bboxes',
-            'gt_masks': 'masks'
         }),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
