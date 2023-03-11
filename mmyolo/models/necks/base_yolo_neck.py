@@ -225,10 +225,12 @@ class BaseYOLONeck(BaseModule, metaclass=ABCMeta):
         out_channels_backbone = [
             inputs[idx].shape[1] for idx in range(len(inputs))
         ]
-        assert out_channels_backbone == self.in_channels, \
-            f'The output channels of the backbone are {out_channels_backbone} \
-                , but the input channels of the neck are {self.in_channels}. \
-                Please check the config file.'
+        in_channels_actual = [c * self.widen_factor for c in self.in_channels]
+        assert out_channels_backbone == in_channels_actual, \
+            f'''
+            The output channels of the backbone are {out_channels_backbone},
+            but the input channels of the neck are {in_channels_actual}.
+            Please check the config file.'''
 
         # reduce layers
         reduce_outs = []
