@@ -93,7 +93,9 @@ METRICS = Registry(
 
 # manage task-specific modules like anchor generators and box coders
 TASK_UTILS = Registry(
-    'task util', parent=MMENGINE_TASK_UTILS, locations=['mmyolo.models'])
+    'task util',
+    parent=MMENGINE_TASK_UTILS,
+    locations=['mmyolo.core', 'mmyolo.models'])
 
 # manage visualizer
 VISUALIZERS = Registry(
