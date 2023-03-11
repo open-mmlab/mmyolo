@@ -1,4 +1,4 @@
-_base_ = './mask_refine/yolov5_s_mask-refine-v61_syncbn_fast_8xb16-300e_coco.py'  # noqa
+_base_ = '../mask_refine/yolov5_s_mask-refine-v61_syncbn_fast_8xb16-300e_coco.py'  # noqa
 
 model = dict(
     type='YOLODetector',
@@ -33,8 +33,11 @@ train_pipeline = [
         min_area_ratio=_base_.min_area_ratio,
         max_aspect_ratio=100,
         use_mask_refine=True),
-    dict(type='Polygon2Mask', downsample_ratio=4,
-         mask_overlap=True),  # Fast version
+    dict(
+        type='Polygon2Mask',
+        downsample_ratio=4,
+        mask_overlap=True,
+        coco_style=False),
     dict(
         type='Albu',
         transforms=_base_.albu_train_transforms,
@@ -45,6 +48,7 @@ train_pipeline = [
         keymap={
             'img': 'image',
             'gt_bboxes': 'bboxes',
+            'gt_masks': 'masks'
         }),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),

@@ -28,7 +28,8 @@ def yolov5_collate(data_batch: Sequence,
         gt_bboxes = datasamples.gt_instances.bboxes.tensor
         gt_labels = datasamples.gt_instances.labels
         if 'masks' in datasamples.gt_instances:
-            batch_masks.append(datasamples.gt_instances.masks)
+            masks = datasamples.gt_instances.masks
+            batch_masks.append(masks)
         if 'gt_panoptic_seg' in datasamples:
             batch_masks.append(datasamples.gt_panoptic_seg.pan_seg)
         batch_idx = gt_labels.new_full((len(gt_labels), 1), i)

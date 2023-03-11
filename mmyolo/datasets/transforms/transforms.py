@@ -581,7 +581,7 @@ class YOLOv5RandomAffine(BaseTransform):
         min_area_ratio (float): Threshold of area ratio between
             original bboxes and wrapped bboxes. If smaller than this value,
             the box will be removed. Defaults to 0.1.
-        use_mask_refine (bool): Whether to refine bbox by mask.
+        use_mask_refine (bool): Whether to refine bbox by mask. Deprecated.
         max_aspect_ratio (float): Aspect ratio of width and height
             threshold to filter bboxes. If max(h/w, w/h) larger than this
             value, the box will be removed. Defaults to 20.
@@ -613,6 +613,7 @@ class YOLOv5RandomAffine(BaseTransform):
         self.bbox_clip_border = bbox_clip_border
         self.min_bbox_size = min_bbox_size
         self.min_area_ratio = min_area_ratio
+        # The use_mask_refine parameter has been deprecated.
         self.use_mask_refine = use_mask_refine
         self.max_aspect_ratio = max_aspect_ratio
         self.resample_num = resample_num
@@ -1401,7 +1402,7 @@ class YOLOv5CopyPaste(BaseTransform):
         if len(results.get('gt_masks', [])) == 0:
             return results
         gt_masks = results['gt_masks']
-        assert isinstance(gt_masks, PolygonMasks),\
+        assert isinstance(gt_masks, PolygonMasks), \
             'only support type of PolygonMasks,' \
             ' but get type: %s' % type(gt_masks)
         gt_bboxes = results['gt_bboxes']
@@ -1623,8 +1624,7 @@ class Albu(MMDET_Albu):
                     results['masks'] = np.array(
                         [results['masks'][i] for i in results['idx_mapper']])
                     results['masks'] = ori_masks.__class__(
-                        results['masks'], ori_masks.shape[0],
-                        ori_masks.shape[1])
+                        results['masks'], ori_masks.height, ori_masks.width)
 
                 if (not len(results['idx_mapper'])
                         and self.skip_img_without_anno):
