@@ -99,17 +99,17 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
                                             self.scale)
 
             if ratio != 1:
-                # resize image according to the ratio
-                image = mmcv.imrescale(
+                # resize image according to the shape
+                image = mmcv.imresize(
                     img=image,
-                    scale=ratio,
+                    size=(int(original_w * ratio), int(original_h * ratio)),
                     interpolation='area' if ratio < 1 else 'bilinear',
                     backend=self.backend)
 
             resized_h, resized_w = image.shape[:2]
-            scale_ratio = resized_h / original_h
-
-            scale_factor = (scale_ratio, scale_ratio)
+            scale_ratio_h = resized_h / original_h
+            scale_ratio_w = resized_w / original_w
+            scale_factor = (scale_ratio_w, scale_ratio_h)
 
             results['img'] = image
             results['img_shape'] = image.shape[:2]
@@ -212,7 +212,8 @@ class LetterResize(MMDET_Resize):
                 interpolation=self.interpolation,
                 backend=self.backend)
 
-        scale_factor = (ratio[1], ratio[0])  # mmcv scale factor is (w, h)
+        scale_factor = (no_pad_shape[1] / image_shape[1],
+                        no_pad_shape[0] / image_shape[0])
 
         if 'scale_factor' in results:
             results['scale_factor_origin'] = results['scale_factor']
@@ -246,7 +247,15 @@ class LetterResize(MMDET_Resize):
         if 'pad_param' in results:
             results['pad_param_origin'] = results['pad_param'] * \
                                           np.repeat(ratio, 2)
-        results['pad_param'] = np.array(padding_list, dtype=np.float32)
+
+        if 'gt_masks' in results:
+            results['pad_param'] = np.array(
+                [padding_h / 2, padding_h / 2, padding_w / 2, padding_w / 2],
+                dtype=np.float32)
+        else:
+            # We found in object detection, using padding list with
+            # int type can get higher mAP.
+            results['pad_param'] = np.array(padding_list, dtype=np.float32)
 
     def _resize_masks(self, results: dict):
         """Resize masks with ``results['scale']``"""
