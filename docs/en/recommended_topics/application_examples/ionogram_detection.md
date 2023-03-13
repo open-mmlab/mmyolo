@@ -274,7 +274,7 @@ The results indicate that mosaic augmentation and random affine transformation c
 
 #### Using pre-trained models
 
-To not use pre-trained weights, simply set `load_from = None` in the config file. For experiments that do not use pre-trained weights, increase the base learning rate by four times and increase the number of training epochs to 200 to ensure the model is sufficiently trained.
+If you prefer not to use pre-trained weights, you can simply set `load_from = None` in the config file. For experiments that do not use pre-trained weights, it is recommended to increase the base learning rate by a factor of four and extend the number of training epochs to 200 to ensure adequate model training.
 
 | Model    | Epoch(best) | FLOPs(G) | Params(M) | Pretrain | Val mAP | Config                                                                                           |
 | -------- | ----------- | -------- | --------- | -------- | ------- | ------------------------------------------------------------------------------------------------ |
