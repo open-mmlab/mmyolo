@@ -166,7 +166,7 @@ With the config file, the parameters and FLOPs can be calculated by the script `
 python tools/analysis_tools/get_flops.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py
 ```
 
-The following output indicates that the model has 7.947G flops with the input shape (640, 640), and a total of 7.036M learnable parameters.
+The following output indicates that the model has 7.947G FLOPs with the input shape (640, 640), and a total of 7.036M learnable parameters.
 
 ```shell
 ==============================
