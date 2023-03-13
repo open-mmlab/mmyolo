@@ -110,7 +110,7 @@ The information obtained is as follows:
 +---------------+--------------+
 ```
 
-This indicate that the distribution of catogories in the dataset is unbalanced.
+This indicates that the distribution of categories in the dataset is unbalanced.
 
 <div align=center>
 <img width="100%" src="https://user-images.githubusercontent.com/67947949/223640412-4008a0a1-0626-419d-90bf-fb7ce6f26fc9.jpg"/>
