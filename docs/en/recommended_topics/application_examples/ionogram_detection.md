@@ -160,7 +160,7 @@ python tools/analysis_tools/optimize_anchors.py projects/misc/ionogram_detection
 
 4. Model complexity analysis
 
-With the config file, the params and flops can be calculated by the script `tools/analysis_tools/get_flops.py`. Take yolov5-s as an example:
+With the config file, the parameters and FLOPs can be calculated by the script `tools/analysis_tools/get_flops.py`. Take yolov5-s as an example:
 
 ```shell
 python tools/analysis_tools/get_flops.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1xb96-100e_ionogram.py
