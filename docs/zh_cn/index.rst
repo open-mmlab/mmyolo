@@ -21,13 +21,13 @@
    recommended_topics/contributing.md
    recommended_topics/model_design.md
    recommended_topics/algorithm_descriptions/index.rst
+   recommended_topics/application_examples/index.rst
    recommended_topics/replace_backbone.md
    recommended_topics/complexity_analysis.md
    recommended_topics/labeling_to_deployment_tutorials.md
    recommended_topics/visualization.md
    recommended_topics/deploy/index.rst
    recommended_topics/troubleshooting_steps.md
-   recommended_topics/industry_examples.md
    recommended_topics/mm_basics.md
    recommended_topics/dataset_preparation.md
 

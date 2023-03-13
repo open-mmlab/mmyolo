@@ -192,7 +192,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 - [Visualization](docs/en/recommended_topics/visualization.md)
 - [Model deployment](docs/en/recommended_topics/deploy/)
 - [Troubleshooting steps](docs/en/recommended_topics/troubleshooting_steps.md)
-- [MMYOLO industry examples](docs/en/recommended_topics/industry_examples.md)
+- [MMYOLO application examples](docs/en/recommended_topics/application_examples/)
 - [MM series repo essential basics](docs/en/recommended_topics/mm_basics.md)
 - [Dataset preparation and description](docs/en/recommended_topics/dataset_preparation.md)
 
