@@ -9,7 +9,6 @@ from mmdet.apis import init_detector
 from mmengine.config import ConfigDict
 from mmengine.utils.path import mkdir_or_exist
 
-from mmyolo.utils import register_all_modules
 from projects.easydeploy.model import DeployModel
 
 warnings.filterwarnings(action='ignore', category=torch.jit.TracerWarning)
@@ -77,8 +76,6 @@ def build_model_from_cfg(config_path, checkpoint_path, device):
 
 def main():
     args = parse_args()
-    register_all_modules()
-
     mkdir_or_exist(args.work_dir)
 
     if args.model_only:
