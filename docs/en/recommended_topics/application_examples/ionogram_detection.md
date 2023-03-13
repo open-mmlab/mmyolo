@@ -250,7 +250,7 @@ The proportion of data loading time to the total time of each step.
 
 </div>
 
-Based on the results above, we can condlude that
+Based on the results above, we can conclude that
 
 - AMP has little impact on the accuracy of the model, but can significantly reduce the memory usage while training.
 - Increasing batch size by three times does not reduce the training time by a corresponding factor of three. According to the `data_time` recorded during training, the larger the batch size, the larger the `data_time`, indicating that data loading has become the bottleneck limiting the training speed. Increasing `num_workers`, the number of processes used to load data, can accelerate the training speed.
