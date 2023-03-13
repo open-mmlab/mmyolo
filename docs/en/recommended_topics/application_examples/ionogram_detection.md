@@ -40,7 +40,7 @@ python tools/dataset_converters/labelme2coco.py --img-dir ./Iono4311/images \
                                                 --out ./Iono4311/annotations/annotations_all.json
 ```
 
-3. Check the converted COCO label
+3. Check the converted COCO labels
 
 Use the following command to display the COCO labels on the image, which verifies that the conversion has been problem-free.
 
