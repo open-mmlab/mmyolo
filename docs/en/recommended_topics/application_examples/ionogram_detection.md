@@ -42,7 +42,7 @@ python tools/dataset_converters/labelme2coco.py --img-dir ./Iono4311/images \
 
 3. Check the converted COCO labels
 
-Use the following command to display the COCO labels on the image, which verifies that the conversion has been problem-free.
+To confirm that the conversion process went successfully, use the following command to display the COCO labels on the images.
 
 ```shell
 python tools/analysis_tools/browse_coco_json.py --img-dir ./Iono4311/images \
