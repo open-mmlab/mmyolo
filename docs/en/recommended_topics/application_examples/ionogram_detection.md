@@ -223,7 +223,7 @@ python tools/test.py projects/misc/ionogram_detection/yolov5/yolov5_s-v61_fast_1
 ### Choose a suitable batch size
 
 - Often, the batch size governs the training speed, and the ideal batch size will be the largest batch size supported by the available hardware.
-- When the accelerators aren't yet saturated, if the batch size doubles, the training throughput should also double (or at least nearly double). Equivalently, the time per step should be constant (or at least nearly constant) as the batch size increases.
+- If the video memory is not yet fully utilized, doubling the batch size should result in a corresponding doubling (or close to doubling) of the training throughput. This is equivalent to maintaining a constant (or nearly constant) time per step as the batch size increases.
 - Automatic Mixed Precision (AMP) is a technique to accelerate the training with minimal loss in accuracy. To enable AMP training, add `--amp` to the end of the training command.
 
 Hardware information:
