@@ -299,11 +299,17 @@ class YOLOv5InsHead(YOLOv5Head):
                               flatten_objectness, flatten_coeff_preds,
                               proto_preds, batch_img_metas):
             ori_shape = img_meta['ori_shape']
-            scale_factor = img_meta['scale_factor']
+            batch_input_shape = img_meta['batch_input_shape']
             if 'pad_param' in img_meta:
                 pad_param = img_meta['pad_param']
+                input_shape_withoutpad = (batch_input_shape[0] - pad_param[0] -
+                                          pad_param[1], batch_input_shape[1] -
+                                          pad_param[2] - pad_param[3])
             else:
                 pad_param = None
+                input_shape_withoutpad = batch_input_shape
+            scale_factor = (input_shape_withoutpad[1] / ori_shape[1],
+                            input_shape_withoutpad[0] / ori_shape[0])
 
             score_thr = cfg.get('score_thr', -1)
             # yolox_style does not require the following operations
