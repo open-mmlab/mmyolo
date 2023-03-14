@@ -184,6 +184,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 <summary>Recommended Topics</summary>
 
 - [How to contribute code to MMYOLO](docs/en/recommended_topics/contributing.md)
+- [Training testing tricks](docs/en/recommended_topics/training_testing_tricks.md)
 - [MMYOLO model design](docs/en/recommended_topics/model_design.md)
 - [Algorithm principles and implementation](docs/en/recommended_topics/algorithm_descriptions/)
 - [Replace the backbone network](docs/en/recommended_topics/replace_backbone.md)
