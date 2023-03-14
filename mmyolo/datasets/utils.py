@@ -4,6 +4,7 @@ from typing import List, Sequence
 import numpy as np
 import torch
 from mmengine.dataset import COLLATE_FUNCTIONS
+from mmengine.dist import get_dist_info
 
 from ..registry import TASK_UTILS
 
@@ -71,10 +72,12 @@ class BatchShapePolicy:
                  img_size: int = 640,
                  size_divisor: int = 32,
                  extra_pad_ratio: float = 0.5):
-        self.batch_size = batch_size
         self.img_size = img_size
         self.size_divisor = size_divisor
         self.extra_pad_ratio = extra_pad_ratio
+        _, world_size = get_dist_info()
+        self.world_size = world_size
+        self.batch_size = batch_size * self.world_size
 
     def __call__(self, data_list: List[dict]) -> List[dict]:
         image_shapes = []
