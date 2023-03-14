@@ -15,7 +15,7 @@ If you are currently in the mmyolo project directory, you can use the following 
 
 ```shell
 cd mmyolo
-pip install -U openmom
+pip install -U openmim
 mim install -r requirements/mminstall.txt
 ```
 
