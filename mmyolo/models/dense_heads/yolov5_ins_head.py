@@ -409,7 +409,6 @@ class YOLOv5InsHead(YOLOv5Head):
 
                         if len(masks.shape) == 2:
                             masks = masks[:, :, None]
-
                         masks = torch.from_numpy(masks).permute(2, 0, 1)
 
                 results.bboxes[:, 0::2].clamp_(0, ori_shape[1])
@@ -535,7 +534,7 @@ class YOLOv5InsHead(YOLOv5Head):
                 loss_cls += cls_scores[i].sum() * 0
                 loss_obj += self.loss_obj(
                     objectnesses[i], target_obj) * self.obj_level_weights[i]
-                loss_mask += coeff_preds[i].sum() * 0
+                loss_mask += coeff_preds[i].sum() * 0 + proto_preds.sum() * 0
                 continue
 
             priors_base_sizes_i = self.priors_base_sizes[i]
@@ -559,7 +558,7 @@ class YOLOv5InsHead(YOLOv5Head):
                 loss_cls += cls_scores[i].sum() * 0
                 loss_obj += self.loss_obj(
                     objectnesses[i], target_obj) * self.obj_level_weights[i]
-                loss_mask += coeff_preds[i].sum() * 0
+                loss_mask += coeff_preds[i].sum() * 0 + proto_preds.sum() * 0
                 continue
 
             # 3. Positive samples with additional neighbors
@@ -635,15 +634,15 @@ class YOLOv5InsHead(YOLOv5Head):
                 batch_gt_masks = F.interpolate(
                     batch_gt_masks[None], (mask_h, mask_w), mode='nearest')[0]
 
-            nxywh = batch_targets_scaled[:, 2:6] / scaled_factor[2:6]
-            marea = nxywh[:, 2:].prod(1)
-            scale_xywh = nxywh * torch.tensor(
+            xywh_normed = batch_targets_scaled[:, 2:6] / scaled_factor[2:6]
+            area_normed = xywh_normed[:, 2:].prod(1)
+            xywh_scaled = xywh_normed * torch.tensor(
                 proto_preds.shape, device=device)[[3, 2, 3, 2]]
-            scale_xyxy = bbox_cxcywh_to_xyxy(scale_xywh)
+            xyxy_scaled = bbox_cxcywh_to_xyxy(xywh_scaled)
 
             for bs in range(batch_size):
                 match_inds = (img_inds == bs)  # matching index
-                if match_inds.any() is False:
+                if not match_inds.any():
                     continue
 
                 if self.overlap:
@@ -657,9 +656,10 @@ class YOLOv5InsHead(YOLOv5Head):
                               @ proto_preds[bs].float().view(c, -1)).view(
                                   -1, mask_h, mask_w)
                 loss_mask_full = self.loss_mask(mask_preds, mask_gti)
-                loss_mask += (self.crop_mask(
-                    loss_mask_full, scale_xyxy[match_inds]).mean(dim=(1, 2)) /
-                              marea[match_inds]).mean()
+                loss_mask += (
+                    self.crop_mask(loss_mask_full[None],
+                                   xyxy_scaled[match_inds]).mean(dim=(2, 3)) /
+                    area_normed[match_inds]).mean()
 
         _, world_size = get_dist_info()
         return dict(
@@ -679,11 +679,12 @@ class YOLOv5InsHead(YOLOv5Head):
             target_inds = []
             for i in range(batch_size):
                 # find number of targets of each image
-                num = (batch_gt_instances[:, 0] == i).sum()
+                num_gts = (batch_gt_instances[:, 0] == i).sum()
                 # (num_anchor, num_gts)
                 target_inds.append(
-                    torch.arange(num, device=batch_gt_instances.device).float(
-                    ).view(1, num).repeat(self.num_base_priors, 1) + 1)
+                    torch.arange(num_gts, device=batch_gt_instances.device).
+                    float().view(1, num_gts).repeat(self.num_base_priors, 1) +
+                    1)
             target_inds = torch.cat(target_inds, 1)
         else:
             num_gts = batch_gt_instances.shape[0]

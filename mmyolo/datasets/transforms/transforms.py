@@ -1677,7 +1677,8 @@ class Polygon2Mask(BaseTransform):
             masks, sorted_idx = self.polygons2masks_overlap(
                 (gt_masks.height, gt_masks.width), gt_masks)
             results['gt_bboxes'] = results['gt_bboxes'][sorted_idx]
-            results['gt_labels'] = results['gt_bboxes_labels'][sorted_idx]
+            results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
+                sorted_idx]
 
             # In this case we put gt_masks in gt_panoptic_seg
             results.pop('gt_masks')
@@ -1685,9 +1686,7 @@ class Polygon2Mask(BaseTransform):
         else:
             masks = self.polygons2masks((gt_masks.height, gt_masks.width),
                                         gt_masks,
-                                        color=1,
-                                        downsample_ratio=self.downsample_ratio,
-                                        coco_style=self.coco_style)
+                                        color=1)
             masks = torch.from_numpy(masks)
             # Consistent logic with mmdet
             results['gt_masks'] = masks

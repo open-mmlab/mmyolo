@@ -1,5 +1,9 @@
 _base_ = '../mask_refine/yolov5_s_mask-refine-v61_syncbn_fast_8xb16-300e_coco.py'  # noqa
 
+# Base learning rate for optim_wrapper. Corresponding to 2xb32=64 bs
+base_lr = 0.01 / 2
+# Batch size of a single GPU during training
+train_batch_size_per_gpu = 32
 # Batch size of a single GPU during validation
 val_batch_size_per_gpu = 16
 # Worker to pre-fetch data for each single GPU during validation
@@ -71,11 +75,6 @@ train_pipeline = [
         max_aspect_ratio=100,
         use_mask_refine=True),
     dict(
-        type='Polygon2Mask',
-        downsample_ratio=4,
-        mask_overlap=True,
-        coco_style=False),
-    dict(
         type='mmdet.Albu',
         transforms=_base_.albu_train_transforms,
         bbox_params=dict(
@@ -89,12 +88,18 @@ train_pipeline = [
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(
+        type='Polygon2Mask',
+        downsample_ratio=4,
+        mask_overlap=True,
+        coco_style=False),
+    dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
                    'flip_direction'))
 ]
 
-train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
+train_dataloader = dict(
+    batch_size=train_batch_size_per_gpu, dataset=dict(pipeline=train_pipeline))
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
@@ -103,3 +108,6 @@ test_dataloader = val_dataloader
 
 val_evaluator = dict(metric=['bbox', 'segm'])
 test_evaluator = val_evaluator
+
+optim_wrapper = dict(
+    optimizer=dict(lr=base_lr, batch_size_per_gpu=train_batch_size_per_gpu))
