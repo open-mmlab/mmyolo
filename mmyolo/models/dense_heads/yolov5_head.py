@@ -115,6 +115,7 @@ class YOLOv5HeadModule(BaseModule):
     def forward_single(self, x: Tensor,
                        convs: nn.Module) -> Tuple[Tensor, Tensor, Tensor]:
         """Forward feature of a single scale level."""
+
         pred_map = convs(x)
         bs, _, ny, nx = pred_map.shape
         pred_map = pred_map.view(bs, self.num_base_priors, self.num_out_attrib,
