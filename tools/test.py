@@ -36,6 +36,8 @@ def parse_args():
         action='store_true',
         help='Whether to use test time augmentation')
     parser.add_argument(
+        '--autoanchor', action='store_true', help='Whether to use autoanchor')
+    parser.add_argument(
         '--show', action='store_true', help='show prediction results')
     parser.add_argument(
         '--deploy',
@@ -98,6 +100,9 @@ def main():
     if args.deploy:
         cfg.custom_hooks.append(dict(type='SwitchToDeployHook'))
 
+    if args.autoanchor:
+        cfg.custom_hooks.append(cfg.autoanchor_hook)
+
     # add `format_only` and `outfile_prefix` into cfg
     if args.json_prefix is not None:
         cfg_json = {
@@ -125,6 +130,9 @@ def main():
         if 'batch_shapes_cfg' in test_data_cfg:
             test_data_cfg.batch_shapes_cfg = None
         test_data_cfg.pipeline = cfg.tta_pipeline
+
+    if args.autoanchor is not None:
+        cfg.custom_hooks.append(cfg.autoanchor_hook)
 
     # build the runner from config
     if 'runner_type' not in cfg:

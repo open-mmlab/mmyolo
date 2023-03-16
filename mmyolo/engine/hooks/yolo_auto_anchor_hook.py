@@ -19,17 +19,20 @@ class YOLOAutoAnchorHook(Hook):
 
         if runner.iter > 0:
             return
-
         model = runner.model
         if is_model_wrapper(model):
             model = model.module
 
         rank, _ = get_dist_info()
+        device_w = next(model.parameters()).device
+        anchors = torch.tensor(
+            runner.cfg.model.bbox_head.prior_generator.base_sizes,
+            device=device_w)
+        model.register_buffer('anchors', anchors)
 
         weights = model.state_dict()
-        key = 'bbox_head.prior_generator.anchors'
+        key = 'anchors'
         anchors_tensor = weights[key]
-        device_m = weights[key].device
         if rank == 0 and not runner._has_loaded:
             runner_dataset = runner.train_dataloader.dataset
             self.optimizer.update(
@@ -40,21 +43,20 @@ class YOLOAutoAnchorHook(Hook):
 
             optimizer = TASK_UTILS.build(self.optimizer)
             anchors = optimizer.optimize()
-            anchors_tensor = torch.tensor(anchors, device=device_m)
+            anchors_tensor = torch.tensor(anchors, device=device_w)
 
         broadcast(anchors_tensor)
         weights[key] = anchors_tensor
         model.load_state_dict(weights)
-        self.reinitialize_bbox_head(runner, model, device_m)
+
+        self.reinitialize_bbox_head(runner, model)
 
     def before_val(self, runner: Runner) -> None:
         model = runner.model
         if is_model_wrapper(model):
             model = model.module
 
-        prior_generator = model.bbox_head.prior_generator
-        device = prior_generator.anchors.device
-        self.reinitialize_bbox_head(runner, model, device)
+        self.reinitialize_bbox_head(runner, model)
 
     def before_test(self, runner: Runner) -> None:
 
@@ -62,15 +64,19 @@ class YOLOAutoAnchorHook(Hook):
         if is_model_wrapper(model):
             model = model.module
 
-        prior_generator = model.bbox_head.prior_generator
-        device = prior_generator.anchors.device
-        self.reinitialize_bbox_head(runner, model, device)
+        self.reinitialize_bbox_head(runner, model)
 
-    def reinitialize_bbox_head(self, runner: Runner, model, device) -> None:
+    def reinitialize_bbox_head(self, runner: Runner, model) -> None:
+        anchors_tensor = model.state_dict()['anchors']
+        base_sizes = anchors_tensor.tolist()
+        device = anchors_tensor.device
+        prior_generator = runner.cfg.model.bbox_head.prior_generator
+        prior_generator.update(base_sizes=base_sizes)
+
+        model.bbox_head.prior_generator = TASK_UTILS.build(prior_generator)
+
         priors_base_sizes = torch.tensor(
-            model.bbox_head.prior_generator.base_sizes,
-            dtype=torch.float,
-            device=device)
+            base_sizes, dtype=torch.float, device=device)
         featmap_strides = torch.tensor(
             model.bbox_head.featmap_strides, dtype=torch.float,
             device=device)[:, None, None]

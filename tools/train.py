@@ -22,6 +22,8 @@ def parse_args():
         default=False,
         help='enable automatic-mixed-precision training')
     parser.add_argument(
+        '--autoanchor', action='store_true', help='Whether to use autoanchor')
+    parser.add_argument(
         '--resume',
         nargs='?',
         type=str,
@@ -86,6 +88,9 @@ def main():
                 f'`OptimWrapper` but got {optim_wrapper}.')
             cfg.optim_wrapper.type = 'AmpOptimWrapper'
             cfg.optim_wrapper.loss_scale = 'dynamic'
+
+    if args.autoanchor:
+        cfg.custom_hooks.append(cfg.autoanchor_hook)
 
     # resume is determined in this priority: resume from > auto_resume
     if args.resume == 'auto':
