@@ -1586,6 +1586,13 @@ class RegularizeRotatedBox(BaseTransform):
 
 @TRANSFORMS.register_module()
 class Polygon2Mask(BaseTransform):
+    """Polygons to mask in YOLOv5.
+
+    Args:
+        downsample_ratio (int): Downsample ratio of mask.
+        mask_overlap (bool): Whether to use maskoverlap in mask process.
+        coco_style (bool): Whether to use mmlab style or official style.
+    """
 
     def __init__(self,
                  downsample_ratio: int = 4,
@@ -1600,7 +1607,7 @@ class Polygon2Mask(BaseTransform):
         Args:
             imgsz (tuple): The image size.
             polygons (np.ndarray): [N, M], N is the number of polygons,
-            M is the number of points(Be divided by 2).
+                M is the number of points(Be divided by 2).
             color (int): color
             downsample_ratio (int): downsample ratio
         """
@@ -1633,7 +1640,7 @@ class Polygon2Mask(BaseTransform):
         Args:
             imgsz (tuple): The image size.
             polygons (list[np.ndarray]): each polygon is [N, M],
-            N is number of polygons, M is number of points (M % 2 = 0)
+                N is number of polygons, M is number of points (M % 2 = 0)
             color (int): color
             downsample_ratio (int): downsample ratio
         """

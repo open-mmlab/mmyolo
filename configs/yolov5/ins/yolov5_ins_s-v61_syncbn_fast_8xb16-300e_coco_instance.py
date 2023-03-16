@@ -1,13 +1,9 @@
 _base_ = '../mask_refine/yolov5_s_mask-refine-v61_syncbn_fast_8xb16-300e_coco.py'  # noqa
 
-# Base learning rate for optim_wrapper. Corresponding to 2xb32=64 bs
-base_lr = 0.01 / 2
-# Batch size of a single GPU during training
-train_batch_size_per_gpu = 32
 # Batch size of a single GPU during validation
-val_batch_size_per_gpu = 16
+val_batch_size_per_gpu = 2
 # Worker to pre-fetch data for each single GPU during validation
-val_num_workers = 8
+val_num_workers = 2
 
 batch_shapes_cfg = dict(
     _delete_=True,
@@ -39,7 +35,7 @@ model_test_cfg = dict(
     # mask_thr_binary to determine which pixels belong to the
     # object , and then use opencv to upsample mask to origin
     # image shape. Default to False.
-    fast_test=True)
+    fast_test=False)
 model = dict(
     type='YOLODetector',
     bbox_head=dict(
@@ -54,7 +50,12 @@ model = dict(
             in_channels=[256, 512, 1024],
             widen_factor=_base_.widen_factor,
             featmap_strides=_base_.strides,
-            num_base_priors=3)),
+            num_base_priors=3),
+        loss_mask=dict(
+            type='mmdet.CrossEntropyLoss',
+            use_sigmoid=True,
+            loss_weight=0.05,
+            reduction='none')),
     test_cfg=model_test_cfg)
 
 train_pipeline = [
@@ -98,8 +99,7 @@ train_pipeline = [
                    'flip_direction'))
 ]
 
-train_dataloader = dict(
-    batch_size=train_batch_size_per_gpu, dataset=dict(pipeline=train_pipeline))
+train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
@@ -108,6 +108,3 @@ test_dataloader = val_dataloader
 
 val_evaluator = dict(metric=['bbox', 'segm'])
 test_evaluator = val_evaluator
-
-optim_wrapper = dict(
-    optimizer=dict(lr=base_lr, batch_size_per_gpu=train_batch_size_per_gpu))
