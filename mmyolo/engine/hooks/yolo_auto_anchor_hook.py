@@ -22,6 +22,7 @@ class YOLOAutoAnchorHook(Hook):
         model = runner.model
         if is_model_wrapper(model):
             model = model.module
+        print('begin reload optimized anchors')
 
         rank, _ = get_dist_info()
         device_w = next(model.parameters()).device
@@ -52,10 +53,11 @@ class YOLOAutoAnchorHook(Hook):
         self.reinitialize_bbox_head(runner, model)
 
     def before_val(self, runner: Runner) -> None:
+
         model = runner.model
         if is_model_wrapper(model):
             model = model.module
-
+        print('begin reload optimized anchors')
         self.reinitialize_bbox_head(runner, model)
 
     def before_test(self, runner: Runner) -> None:
@@ -63,7 +65,7 @@ class YOLOAutoAnchorHook(Hook):
         model = runner.model
         if is_model_wrapper(model):
             model = model.module
-
+        print('begin reload optimized anchors')
         self.reinitialize_bbox_head(runner, model)
 
     def reinitialize_bbox_head(self, runner: Runner, model) -> None:

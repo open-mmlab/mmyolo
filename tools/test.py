@@ -101,6 +101,8 @@ def main():
         cfg.custom_hooks.append(dict(type='SwitchToDeployHook'))
 
     if args.autoanchor:
+        assert cfg.model.bbox_head.prior_generator.type \
+                                        == 'mmdet.YOLOAnchorGenerator'
         cfg.custom_hooks.append(cfg.autoanchor_hook)
 
     # add `format_only` and `outfile_prefix` into cfg
