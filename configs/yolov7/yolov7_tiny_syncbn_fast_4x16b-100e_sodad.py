@@ -37,7 +37,6 @@ max_epochs = 100  # Maximum training epochs
 # -----data related-----
 img_scale = (1216, 1216)  # width, height
 # Dataset type, this will be used to define the dataset
-# dataset_type = 'YOLOv5SodadDataset'
 dataset_type = 'YOLOv5CocoDataset'
 # Batch size of a single GPU during validation
 val_batch_size_per_gpu = 1
@@ -93,8 +92,16 @@ val_dataloader = dict(
         ann_file=val_ann_file,
         batch_shapes_cfg=batch_shapes_cfg))
 
-test_dataloader = val_dataloader
-test_dataloader['dataset']['ann_file'] = test_ann_file
+test_dataloader = dict(
+    batch_size=val_batch_size_per_gpu,
+    num_workers=val_num_workers,
+    dataset=dict(
+        type=dataset_type,
+        metainfo=metainfo,
+        data_root=data_root,
+        data_prefix=dict(img=val_data_prefix),
+        ann_file=test_ann_file,
+        batch_shapes_cfg=batch_shapes_cfg))
 
 # optimizer
 optim_wrapper = dict(
@@ -108,3 +115,12 @@ optim_wrapper = dict(
         batch_size_per_gpu=train_batch_size_per_gpu),
     clip_grad=None,
     constructor='YOLOv7OptimWrapperConstructor')
+
+default_hooks = dict(param_scheduler=dict(max_epochs=max_epochs))
+val_evaluator = dict(ann_file=data_root + val_ann_file)
+test_evaluator = dict(ann_file=data_root + test_ann_file)
+
+train_cfg = dict(
+    max_epochs=max_epochs,
+    dynamic_intervals=[(max_epochs - _base_.num_epoch_stage2,
+                        _base_.val_interval_stage2)])
