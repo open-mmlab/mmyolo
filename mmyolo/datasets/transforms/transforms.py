@@ -694,7 +694,14 @@ class YOLOv5RandomAffine(BaseTransform):
         return results
 
     # TODO: Move to mmdet
-    def clip_polygons(self, gt_masks, height, width):
+    def clip_polygons(self, gt_masks: PolygonMasks, height: int, width: int):
+        """Function to clip points of polygons with height and width.
+
+        Args:
+            gt_masks (PolygonMasks): Annotations of instance segmentation.
+            height (int): height of clip border.
+            width (int): width of clip border.
+        """
         if len(gt_masks) == 0:
             clipped_masks = PolygonMasks([], height, width)
         else:
@@ -734,9 +741,6 @@ class YOLOv5RandomAffine(BaseTransform):
         poly = poly @ warp_matrix.T
         poly = poly[:, :2] / poly[:, 2:3]
 
-        # filter point outside image
-        # x, y = poly.T
-        # valid_ind_point = (x >= 0) & (y >= 0) & (x <= img_w) & (y <= img_h)
         return poly.reshape(-1)
 
     def warp_mask(self, gt_masks: PolygonMasks, warp_matrix: np.ndarray,
@@ -1591,7 +1595,13 @@ class Polygon2Mask(BaseTransform):
     Args:
         downsample_ratio (int): Downsample ratio of mask.
         mask_overlap (bool): Whether to use maskoverlap in mask process.
-        coco_style (bool): Whether to use mmlab style or official style.
+            When set to True, the implementation here is the same as the
+            official, with higher training speed. If set to True, all gt masks
+            will compress into one overlap mask, the value of mask indicates
+            the index of gt masks. If set to False, one mask is a binary mask.
+            Default to True.
+        coco_style (bool): Whether to use coco_style to convert the polygons
+            to bitmaps.
     """
 
     def __init__(self,
@@ -1602,10 +1612,13 @@ class Polygon2Mask(BaseTransform):
         self.mask_overlap = mask_overlap
         self.coco_style = coco_style
 
-    def polygon2mask(self, img_shape, polygons, color=1):
+    def polygon2mask(self,
+                     img_shape: Tuple[int, int],
+                     polygons: np.ndarray,
+                     color: int = 1):
         """
         Args:
-            imgsz (tuple): The image size.
+            img_shape (tuple): The image size.
             polygons (np.ndarray): [N, M], N is the number of polygons,
                 M is the number of points(Be divided by 2).
             color (int): color
@@ -1622,7 +1635,7 @@ class Polygon2Mask(BaseTransform):
             polygons = np.asarray(polygons).reshape(-1)
             mask = polygon_to_bitmap([polygons], img_shape[0],
                                      img_shape[1]).astype(np.uint8)
-            mask = cv2.resize(mask, (nw, nh))
+            mask = mmcv.imresize(mask, (nw, nh))
         else:
             mask = np.zeros(img_shape, dtype=np.uint8)
             polygons = np.asarray(polygons)
@@ -1632,18 +1645,14 @@ class Polygon2Mask(BaseTransform):
             cv2.fillPoly(mask, polygons, color=color)
             # NOTE: fillPoly firstly then resize is trying the keep the same
             #  way of loss calculation when mask-ratio=1.
-            mask = cv2.resize(mask, (nw, nh))
+            mask = mmcv.imresize(mask, (nw, nh))
         return mask
 
-    def polygons2masks(self, img_shape, polygons, color=1):
-        """
-        Args:
-            imgsz (tuple): The image size.
-            polygons (list[np.ndarray]): each polygon is [N, M],
-                N is number of polygons, M is number of points (M % 2 = 0)
-            color (int): color
-            downsample_ratio (int): downsample ratio
-        """
+    def polygons2masks(self,
+                       img_shape: Tuple[int, int],
+                       polygons: PolygonMasks,
+                       color: int = 1):
+        """Return (640, 640) non-overlap mask."""
         if self.coco_style:
             nh, nw = (img_shape[0] // self.downsample_ratio,
                       img_shape[1] // self.downsample_ratio)
@@ -1656,7 +1665,8 @@ class Polygon2Mask(BaseTransform):
                 masks.append(mask)
             return np.array(masks)
 
-    def polygons2masks_overlap(self, img_shape, polygons):
+    def polygons2masks_overlap(self, img_shape: Tuple[int, int],
+                               polygons: PolygonMasks):
         """Return a (640, 640) overlap mask."""
         masks = np.zeros((img_shape[0] // self.downsample_ratio,
                           img_shape[1] // self.downsample_ratio),

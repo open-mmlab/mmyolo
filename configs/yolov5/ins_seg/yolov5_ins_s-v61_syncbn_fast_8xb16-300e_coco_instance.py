@@ -1,19 +1,22 @@
-_base_ = '../mask_refine/yolov5_s_mask-refine-v61_syncbn_fast_8xb16-300e_coco.py'  # noqa
+_base_ = '../yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'  # noqa
 
-# Batch size of a single GPU during validation
-val_batch_size_per_gpu = 2
+# ========================modified parameters======================
+# YOLOv5RandomAffine
+use_mask2refine = True
+max_aspect_ratio = 100
+min_area_ratio = 0.01
+# Polygon2Mask
+downsample_ratio = 4
+mask_overlap = True
+
+# Batch size of per single GPU during validation
+# The official yolov5 set the batchsize as 32 during validation,
+# so we set the batchsize as 8(gpu)*4=32 to align with the official settings.
+val_batch_size_per_gpu = 1
 # Worker to pre-fetch data for each single GPU during validation
-val_num_workers = 2
+val_num_workers = 1
 
-batch_shapes_cfg = dict(
-    _delete_=True,
-    type='BatchShapePolicy',
-    batch_size=val_batch_size_per_gpu,
-    img_size=_base_.img_scale[0],
-    # The image scale of padding should be divided by pad_size_divisor
-    size_divisor=32,
-    # Additional paddings for pixel scale
-    extra_pad_ratio=0.5)
+batch_shapes_cfg = dict(batch_size=val_batch_size_per_gpu)
 
 # Testing take a long time due to model_test_cfg.
 # If you want to speed it up, you can increase score_thr
@@ -36,21 +39,15 @@ model_test_cfg = dict(
     # object , and then use opencv to upsample mask to origin
     # image shape. Default to False.
     fast_test=False)
+
+# ===============================Unmodified in most cases====================
 model = dict(
     type='YOLODetector',
     bbox_head=dict(
         type='YOLOv5InsHead',
         head_module=dict(
-            type='YOLOv5InsHeadModule',
-            mask_channels=32,
-            proto_channels=256,
-            norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
-            act_cfg=dict(type='SiLU', inplace=True),
-            num_classes=_base_.num_classes,
-            in_channels=[256, 512, 1024],
-            widen_factor=_base_.widen_factor,
-            featmap_strides=_base_.strides,
-            num_base_priors=3),
+            type='YOLOv5InsHeadModule', mask_channels=32, proto_channels=256),
+        mask_overlap=mask_overlap,
         loss_mask=dict(
             type='mmdet.CrossEntropyLoss',
             use_sigmoid=True,
@@ -58,13 +55,22 @@ model = dict(
             reduction='none')),
     test_cfg=model_test_cfg)
 
+pre_transform = [
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(
+        type='LoadAnnotations',
+        with_bbox=True,
+        with_mask=True,
+        mask2bbox=use_mask2refine)
+]
+
 train_pipeline = [
-    *_base_.pre_transform,
+    *pre_transform,
     dict(
         type='Mosaic',
         img_scale=_base_.img_scale,
         pad_val=114.0,
-        pre_transform=_base_.pre_transform),
+        pre_transform=pre_transform),
     dict(
         type='YOLOv5RandomAffine',
         max_rotate_degree=0.0,
@@ -72,9 +78,9 @@ train_pipeline = [
         scaling_ratio_range=(1 - _base_.affine_scale, 1 + _base_.affine_scale),
         border=(-_base_.img_scale[0] // 2, -_base_.img_scale[1] // 2),
         border_val=(114, 114, 114),
-        min_area_ratio=_base_.min_area_ratio,
-        max_aspect_ratio=100,
-        use_mask_refine=True),
+        min_area_ratio=min_area_ratio,
+        max_aspect_ratio=max_aspect_ratio,
+        use_mask_refine=use_mask2refine),
     dict(
         type='mmdet.Albu',
         transforms=_base_.albu_train_transforms,
@@ -90,8 +96,8 @@ train_pipeline = [
     dict(type='mmdet.RandomFlip', prob=0.5),
     dict(
         type='Polygon2Mask',
-        downsample_ratio=4,
-        mask_overlap=True,
+        downsample_ratio=downsample_ratio,
+        mask_overlap=mask_overlap,
         coco_style=False),
     dict(
         type='PackDetInputs',

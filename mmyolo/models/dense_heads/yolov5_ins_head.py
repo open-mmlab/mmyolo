@@ -2,7 +2,7 @@
 import copy
 from typing import List, Optional, Sequence, Tuple, Union
 
-import cv2
+import mmcv
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -36,13 +36,15 @@ class ProtoModule(BaseModule):
     """
 
     def __init__(self,
-                 in_channels: int,
+                 *args,
+                 in_channels: int = 32,
                  middle_channels: int = 256,
                  mask_channels: int = 32,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
-                 act_cfg: ConfigType = dict(type='SiLU', inplace=True)):
-        super().__init__()
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 **kwargs):
+        super().__init__(*args, **kwargs)
         self.conv1 = ConvModule(
             in_channels,
             middle_channels,
@@ -65,7 +67,7 @@ class ProtoModule(BaseModule):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
-    def forward(self, x):
+    def forward(self, x: Tensor):
         return self.conv3(self.conv2(self.upsample(self.conv1(x))))
 
 
@@ -104,12 +106,12 @@ class YOLOv5InsHeadModule(YOLOv5HeadModule):
         self.act_cfg = act_cfg
         super().__init__(
             *args,
-            **kwargs,
             num_classes=num_classes,
-            widen_factor=widen_factor)
+            widen_factor=widen_factor,
+            **kwargs)
 
     def _init_layers(self):
-        """initialize conv layers in YOLOv5 head."""
+        """initialize conv layers in YOLOv5 Ins head."""
         self.convs_pred = nn.ModuleList()
         for i in range(self.num_levels):
             conv_pred = nn.Conv2d(
@@ -118,9 +120,9 @@ class YOLOv5InsHeadModule(YOLOv5HeadModule):
             self.convs_pred.append(conv_pred)
 
         self.proto_preds = ProtoModule(
-            self.in_channels[0],
-            self.proto_channels,
-            self.mask_channels,
+            in_channels=self.in_channels[0],
+            middle_channels=self.proto_channels,
+            mask_channels=self.mask_channels,
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
 
@@ -199,6 +201,7 @@ class YOLOv5InsHead(YOLOv5Head):
         """
 
         if isinstance(batch_data_samples, list):
+            # TODO: support non-fast version ins segmention
             losses = super().loss(x, batch_data_samples)
         else:
             outs = self(x)
@@ -218,7 +221,7 @@ class YOLOv5InsHead(YOLOv5Head):
             coeff_preds: Sequence[Tensor],
             proto_preds: Tensor,
             batch_gt_instances: Sequence[InstanceData],
-            batch_gt_masks: Sequence[Tensor],
+            batch_gt_masks: Tensor,
             batch_img_metas: Sequence[dict],
             batch_gt_instances_ignore: OptInstanceList = None) -> dict:
         """Calculate the loss based on the features extracted by the detection
@@ -251,32 +254,6 @@ class YOLOv5InsHead(YOLOv5Head):
         Returns:
             dict[str, Tensor]: A dictionary of losses.
         """
-        if self.ignore_iof_thr != -1:
-            # TODO: Support fast version
-            # convert ignore gt
-            batch_target_ignore_list = []
-            for i, gt_instances_ignore in enumerate(batch_gt_instances_ignore):
-                bboxes = gt_instances_ignore.bboxes
-                labels = gt_instances_ignore.labels
-                index = bboxes.new_full((len(bboxes), 1), i)
-                # (batch_idx, label, bboxes)
-                target = torch.cat((index, labels[:, None].float(), bboxes),
-                                   dim=1)
-                batch_target_ignore_list.append(target)
-
-            # (num_bboxes, 6)
-            batch_gt_targets_ignore = torch.cat(
-                batch_target_ignore_list, dim=0)
-            if batch_gt_targets_ignore.shape[0] != 0:
-                # Consider regions with ignore in annotations
-                return self._loss_by_feat_with_ignore(
-                    cls_scores,
-                    bbox_preds,
-                    objectnesses,
-                    batch_gt_instances=batch_gt_instances,
-                    batch_img_metas=batch_img_metas,
-                    batch_gt_instances_ignore=batch_gt_targets_ignore)
-
         # 1. Convert gt to norm format
         batch_targets_normed = self._convert_gt_to_norm_format(
             batch_gt_instances, batch_img_metas)
@@ -298,7 +275,7 @@ class YOLOv5InsHead(YOLOv5Head):
                 loss_cls += cls_scores[i].sum() * 0
                 loss_obj += self.loss_obj(
                     objectnesses[i], target_obj) * self.obj_level_weights[i]
-                loss_mask += coeff_preds[i].sum() * 0 + proto_preds.sum() * 0
+                loss_mask += coeff_preds[i].sum() * 0
                 continue
 
             priors_base_sizes_i = self.priors_base_sizes[i]
@@ -322,7 +299,7 @@ class YOLOv5InsHead(YOLOv5Head):
                 loss_cls += cls_scores[i].sum() * 0
                 loss_obj += self.loss_obj(
                     objectnesses[i], target_obj) * self.obj_level_weights[i]
-                loss_mask += coeff_preds[i].sum() * 0 + proto_preds.sum() * 0
+                loss_mask += coeff_preds[i].sum() * 0
                 continue
 
             # 3. Positive samples with additional neighbors
@@ -687,7 +664,8 @@ class YOLOv5InsHead(YOLOv5Head):
                         masks = torch.as_tensor(masks, dtype=torch.uint8)
                         masks = masks[0].permute(1, 2,
                                                  0).contiguous().cpu().numpy()
-                        masks = cv2.resize(masks, (ori_shape[1], ori_shape[0]))
+                        masks = mmcv.imresize(masks,
+                                              (ori_shape[1], ori_shape[0]))
 
                         if len(masks.shape) == 2:
                             masks = masks[:, :, None]

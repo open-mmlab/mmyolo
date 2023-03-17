@@ -76,8 +76,10 @@ class BatchShapePolicy:
         self.size_divisor = size_divisor
         self.extra_pad_ratio = extra_pad_ratio
         _, world_size = get_dist_info()
-        self.world_size = world_size
-        self.batch_size = batch_size * self.world_size
+        # During multi-gpu testing, the batchsize should be multiplied by
+        # worldsize, so that the number of batches can be calculated correctly.
+        # The index of batches will affect the calculation of batch shape.
+        self.batch_size = batch_size * world_size
 
     def __call__(self, data_list: List[dict]) -> List[dict]:
         image_shapes = []
