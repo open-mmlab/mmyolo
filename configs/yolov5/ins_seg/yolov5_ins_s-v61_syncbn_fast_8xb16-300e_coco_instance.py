@@ -8,6 +8,8 @@ min_area_ratio = 0.01
 # Polygon2Mask
 downsample_ratio = 4
 mask_overlap = True
+# LeterResize
+half_pad_param = True
 
 # Batch size of per single GPU during validation
 # The official yolov5 set the batchsize as 32 during validation,
@@ -105,11 +107,27 @@ train_pipeline = [
                    'flip_direction'))
 ]
 
+test_pipeline = [
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='YOLOv5KeepRatioResize', scale=_base_.img_scale),
+    dict(
+        type='LetterResize',
+        scale=_base_.img_scale,
+        allow_scale_up=False,
+        half_pad_param=half_pad_param,
+        pad_val=dict(img=114)),
+    dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor', 'pad_param'))
+]
+
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
-    dataset=dict(batch_shapes_cfg=batch_shapes_cfg))
+    dataset=dict(pipeline=test_pipeline, batch_shapes_cfg=batch_shapes_cfg))
 test_dataloader = val_dataloader
 
 val_evaluator = dict(metric=['bbox', 'segm'])
