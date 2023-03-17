@@ -142,6 +142,11 @@ class LetterResize(MMDET_Resize):
         stretch_only (bool): Whether stretch to the specified size directly.
             Defaults to False
         allow_scale_up (bool): Allow scale up when ratio > 1. Defaults to True
+        half_pad_param (bool): If set to True, left and right pad_param will
+            be given by dividing padding_h by 2. If set to False, pad_param is
+            in int format. We recommend setting this to False for object
+            detection tasks, and True for instance segmentation tasks.
+            Default to False.
     """
 
     def __init__(self,
@@ -150,6 +155,7 @@ class LetterResize(MMDET_Resize):
                  use_mini_pad: bool = False,
                  stretch_only: bool = False,
                  allow_scale_up: bool = True,
+                 half_pad_param: bool = False,
                  **kwargs):
         super().__init__(scale=scale, keep_ratio=True, **kwargs)
 
@@ -162,6 +168,7 @@ class LetterResize(MMDET_Resize):
         self.use_mini_pad = use_mini_pad
         self.stretch_only = stretch_only
         self.allow_scale_up = allow_scale_up
+        self.half_pad_param = half_pad_param
 
     def _resize_img(self, results: dict):
         """Resize images with ``results['scale']``."""
@@ -248,7 +255,7 @@ class LetterResize(MMDET_Resize):
             results['pad_param_origin'] = results['pad_param'] * \
                                           np.repeat(ratio, 2)
 
-        if 'gt_masks' in results:
+        if self.half_pad_param:
             results['pad_param'] = np.array(
                 [padding_h / 2, padding_h / 2, padding_w / 2, padding_w / 2],
                 dtype=np.float32)
