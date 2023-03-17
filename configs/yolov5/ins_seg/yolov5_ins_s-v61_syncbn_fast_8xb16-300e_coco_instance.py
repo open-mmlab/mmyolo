@@ -40,7 +40,7 @@ model_test_cfg = dict(
     # mask_thr_binary to determine which pixels belong to the
     # object , and then use opencv to upsample mask to origin
     # image shape. Default to False.
-    fast_test=False)
+    fast_test=True)
 
 # ===============================Unmodified in most cases====================
 model = dict(
