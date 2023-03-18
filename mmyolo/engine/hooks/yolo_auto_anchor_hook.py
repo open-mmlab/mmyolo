@@ -1,10 +1,9 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import torch
 from mmengine.dist import broadcast, get_dist_info
-from mmengine.hooks import EMAHook, Hook
+from mmengine.hooks import Hook
 from mmengine.logging import MMLogger
 from mmengine.model import is_model_wrapper
-from mmengine.registry import MODELS
 from mmengine.runner import Runner
 
 from mmyolo.registry import HOOKS, TASK_UTILS
@@ -13,8 +12,26 @@ from mmyolo.registry import HOOKS, TASK_UTILS
 @HOOKS.register_module()
 class YOLOAutoAnchorHook(Hook):
 
+    priority = 48
+
     def __init__(self, optimizer):
         self.optimizer = optimizer
+
+    def before_run(self, runner) -> None:
+        """Create an ema copy of the model.
+
+        Args:
+            runner (Runner): The runner of the training process.
+        """
+        model = runner.model
+        if is_model_wrapper(model):
+            model = model.module
+
+        device = next(model.parameters()).device
+        anchors = torch.tensor(
+            runner.cfg.model.bbox_head.prior_generator.base_sizes,
+            device=device)
+        model.register_buffer('anchors', anchors)
 
     def before_train(self, runner: Runner) -> None:
 
@@ -26,15 +43,9 @@ class YOLOAutoAnchorHook(Hook):
         print('begin reloading optimized anchors')
 
         rank, _ = get_dist_info()
-        device_w = next(model.parameters()).device
-        anchors = torch.tensor(
-            runner.cfg.model.bbox_head.prior_generator.base_sizes,
-            device=device_w)
-        model.register_buffer('anchors', anchors)
 
         weights = model.state_dict()
-        key = 'anchors'
-        anchors_tensor = weights[key]
+        anchors_tensor = weights['anchors']
         if rank == 0 and not runner._has_loaded:
             runner_dataset = runner.train_dataloader.dataset
             self.optimizer.update(
@@ -45,10 +56,11 @@ class YOLOAutoAnchorHook(Hook):
 
             optimizer = TASK_UTILS.build(self.optimizer)
             anchors = optimizer.optimize()
-            anchors_tensor = torch.tensor(anchors, device=device_w)
+            device = next(model.parameters()).device
+            anchors_tensor = torch.tensor(anchors, device=device)
 
         broadcast(anchors_tensor)
-        weights[key] = anchors_tensor
+        weights['anchors'] = anchors_tensor
         model.load_state_dict(weights)
 
         self.reinitialize(runner, model)
@@ -84,8 +96,3 @@ class YOLOAutoAnchorHook(Hook):
             model.bbox_head.featmap_strides, dtype=torch.float,
             device=device)[:, None, None]
         model.bbox_head.priors_base_sizes = priors_base_sizes / featmap_strides
-
-        for hook in runner.hooks:
-            if isinstance(hook, EMAHook):
-                hook.ema_model = MODELS.build(
-                    hook.ema_cfg, default_args=dict(model=model))
