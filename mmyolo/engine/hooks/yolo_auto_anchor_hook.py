@@ -4,6 +4,7 @@ from mmengine.dist import broadcast, get_dist_info
 from mmengine.hooks import Hook
 from mmengine.logging import MMLogger
 from mmengine.model import is_model_wrapper
+from mmengine.registry import MODELS
 from mmengine.runner import Runner
 
 from mmyolo.registry import HOOKS, TASK_UTILS
@@ -22,7 +23,7 @@ class YOLOAutoAnchorHook(Hook):
         model = runner.model
         if is_model_wrapper(model):
             model = model.module
-        print('begin reload optimized anchors')
+        print('begin reloading optimized anchors')
 
         rank, _ = get_dist_info()
         device_w = next(model.parameters()).device
@@ -51,22 +52,28 @@ class YOLOAutoAnchorHook(Hook):
         model.load_state_dict(weights)
 
         self.reinitialize_bbox_head(runner, model)
+        runner.hooks[2].ema_model = MODELS.build(
+            runner.hooks[2].ema_cfg, default_args=dict(model=model))
 
     def before_val(self, runner: Runner) -> None:
 
         model = runner.model
         if is_model_wrapper(model):
             model = model.module
-        print('begin reload optimized anchors')
+        print('begin reloading optimized anchors')
         self.reinitialize_bbox_head(runner, model)
+        runner.hooks[2].ema_model = MODELS.build(
+            runner.hooks[2].ema_cfg, default_args=dict(model=model))
 
     def before_test(self, runner: Runner) -> None:
 
         model = runner.model
         if is_model_wrapper(model):
             model = model.module
-        print('begin reload optimized anchors')
+        print('begin reloading optimized anchors')
         self.reinitialize_bbox_head(runner, model)
+        runner.hooks[2].ema_model = MODELS.build(
+            runner.hooks[2].ema_cfg, default_args=dict(model=model))
 
     def reinitialize_bbox_head(self, runner: Runner, model) -> None:
         anchors_tensor = model.state_dict()['anchors']
