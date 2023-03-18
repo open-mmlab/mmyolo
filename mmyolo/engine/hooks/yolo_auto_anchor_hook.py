@@ -4,10 +4,10 @@ from mmengine.dist import broadcast, get_dist_info
 from mmengine.hooks import EMAHook, Hook
 from mmengine.logging import MMLogger
 from mmengine.model import is_model_wrapper
-from mmengine.registry import HOOKS, MODELS
+from mmengine.registry import MODELS
 from mmengine.runner import Runner
 
-from mmyolo.registry import TASK_UTILS
+from mmyolo.registry import HOOKS, TASK_UTILS
 
 
 @HOOKS.register_module()
@@ -23,7 +23,7 @@ class YOLOAutoAnchorHook(Hook):
         model = runner.model
         if is_model_wrapper(model):
             model = model.module
-        print('begin reload optimized anchors')
+        print('begin reloading optimized anchors')
 
         rank, _ = get_dist_info()
         device_w = next(model.parameters()).device
@@ -58,7 +58,7 @@ class YOLOAutoAnchorHook(Hook):
         model = runner.model
         if is_model_wrapper(model):
             model = model.module
-        print('begin reload optimized anchors')
+        print('begin reloading optimized anchors')
         self.reinitialize(runner, model)
 
     def before_test(self, runner: Runner) -> None:
@@ -66,7 +66,7 @@ class YOLOAutoAnchorHook(Hook):
         model = runner.model
         if is_model_wrapper(model):
             model = model.module
-        print('begin reload optimized anchors')
+        print('begin reloading optimized anchors')
         self.reinitialize(runner, model)
 
     def reinitialize(self, runner: Runner, model) -> None:
