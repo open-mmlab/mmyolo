@@ -136,9 +136,10 @@ def main():
         assert cfg.model.bbox_head.prior_generator.type \
                                         == 'mmdet.YOLOAnchorGenerator'
         assert args.autoanchor in [
-            'k_means_autoanchor_hook', 'de_autoanchor_hook',
-            'v5_k_means_autoanchor_hook'
-        ]
+            'k_means_autoanchor', 'de_autoanchor',
+            'v5_k_means_autoanchor'], \
+            'only k_means_autoanchor, de_autoanchor, v5_k_means_autoanchor ' \
+            'are supported !'
         cfg.custom_hooks.append(cfg.get(args.autoanchor))
 
     # build the runner from config

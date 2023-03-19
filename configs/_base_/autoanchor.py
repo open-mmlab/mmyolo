@@ -1,18 +1,18 @@
-k_means_autoanchor_hook = dict(
+k_means_autoanchor = dict(
     type='YOLOAutoAnchorHook',
     optimizer=dict(
         type='YOLOKMeansAnchorOptimizer',
         iters=1000,
         num_anchor_per_level=[3, 3, 3]))
 
-de_autoanchor_hook = dict(
+de_autoanchor = dict(
     type='YOLOAutoAnchorHook',
     optimizer=dict(
         type='YOLODEAnchorOptimizer',
         iters=1000,
         num_anchor_per_level=[3, 3, 3]))
 
-v5_k_means_autoanchor_hook = dict(
+v5_k_means_autoanchor = dict(
     type='YOLOAutoAnchorHook',
     optimizer=dict(
         type='YOLOV5KMeansAnchorOptimizer',
