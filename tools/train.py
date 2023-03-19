@@ -21,8 +21,7 @@ def parse_args():
         action='store_true',
         default=False,
         help='enable automatic-mixed-precision training')
-    parser.add_argument(
-        '--autoanchor', action='store_true', help='Whether to use autoanchor')
+    parser.add_argument('--autoanchor', help='types of autoanchor')
     parser.add_argument(
         '--resume',
         nargs='?',
@@ -92,7 +91,11 @@ def main():
     if args.autoanchor:
         assert cfg.model.bbox_head.prior_generator.type \
                                         == 'mmdet.YOLOAnchorGenerator'
-        cfg.custom_hooks.append(cfg.autoanchor_hook)
+        assert args.autoanchor in [
+            'k_means_autoanchor_hook', 'de_autoanchor_hook',
+            'v5_k_means_autoanchor_hook'
+        ]
+        cfg.custom_hooks.append(cfg.get(args.autoanchor))
 
     # resume is determined in this priority: resume from > auto_resume
     if args.resume == 'auto':

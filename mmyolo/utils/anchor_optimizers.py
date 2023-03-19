@@ -1,4 +1,33 @@
 # Copyright (c) OpenMMLab. All rights reserved.
+"""Optimize anchor settings on a specific dataset.
+
+This script provides three methods to optimize YOLO anchors including k-means
+anchor cluster, differential evolution and v5-k-means. You can use
+``--algorithm k-means``, ``--algorithm differential_evolution`` and
+``--algorithm v5-k-means`` to switch those methods.
+
+Example:
+    Use k-means anchor cluster::
+
+        python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
+        --algorithm k-means --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
+        --out-dir ${OUT_DIR}
+
+    Use differential evolution to optimize anchors::
+
+        python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
+        --algorithm differential_evolution \
+        --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
+        --out-dir ${OUT_DIR}
+
+    Use v5-k-means to optimize anchors::
+
+        python tools/analysis_tools/optimize_anchors.py ${CONFIG} \
+        --algorithm v5-k-means \
+        --input-shape ${INPUT_SHAPE [WIDTH HEIGHT]} \
+        --prior_match_thr ${PRIOR_MATCH_THR} \
+        --out-dir ${OUT_DIR}
+"""
 import os.path as osp
 import random
 from typing import Tuple
@@ -230,7 +259,8 @@ class YOLOV5KMeansAnchorOptimizer(BaseAnchorOptimizer):
         best_ratio, mean_matched = self.anchor_metric(bbox_whs, anchors)
         self.logger.info(f'{mean_matched:.2f} anchors/target {best_ratio:.3f} '
                          'Best Possible Recall (BPR). ')
-        self.save_result(anchors.tolist(), self.out_dir)
+        anchor_results = self.save_result(anchors.tolist(), self.out_dir)
+        return anchor_results
 
     def anchor_generate(self,
                         box_size: Tensor,
@@ -453,7 +483,8 @@ class YOLODEAnchorOptimizer(BaseAnchorOptimizer):
 
     def optimize(self):
         anchors = self.differential_evolution()
-        self.save_result(anchors, self.out_dir)
+        anchor_results = self.save_result(anchors, self.out_dir)
+        return anchor_results
 
     def differential_evolution(self):
         bboxes = self.get_zero_center_bbox_tensor()

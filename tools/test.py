@@ -35,8 +35,7 @@ def parse_args():
         '--tta',
         action='store_true',
         help='Whether to use test time augmentation')
-    parser.add_argument(
-        '--autoanchor', action='store_true', help='Whether to use autoanchor')
+    parser.add_argument('--autoanchor', help='types of autoanchor')
     parser.add_argument(
         '--show', action='store_true', help='show prediction results')
     parser.add_argument(
@@ -133,8 +132,14 @@ def main():
             test_data_cfg.batch_shapes_cfg = None
         test_data_cfg.pipeline = cfg.tta_pipeline
 
-    if args.autoanchor is not None:
-        cfg.custom_hooks.append(cfg.autoanchor_hook)
+    if args.autoanchor:
+        assert cfg.model.bbox_head.prior_generator.type \
+                                        == 'mmdet.YOLOAnchorGenerator'
+        assert args.autoanchor in [
+            'k_means_autoanchor_hook', 'de_autoanchor_hook',
+            'v5_k_means_autoanchor_hook'
+        ]
+        cfg.custom_hooks.append(cfg.get(args.autoanchor))
 
     # build the runner from config
     if 'runner_type' not in cfg:

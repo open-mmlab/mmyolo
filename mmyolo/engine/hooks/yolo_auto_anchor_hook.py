@@ -18,11 +18,7 @@ class YOLOAutoAnchorHook(Hook):
         self.optimizer = optimizer
 
     def before_run(self, runner) -> None:
-        """Create an ema copy of the model.
 
-        Args:
-            runner (Runner): The runner of the training process.
-        """
         model = runner.model
         if is_model_wrapper(model):
             model = model.module
