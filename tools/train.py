@@ -34,7 +34,6 @@ def parse_args():
         choices=[
             'k_means_autoanchor', 'de_autoanchor', 'v5_k_means_autoanchor'
         ],
-        default='v5_k_means_autoanchor',
         help='types of autoanchor')
     parser.add_argument(
         '--cfg-options',
