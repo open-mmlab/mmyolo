@@ -14,6 +14,8 @@ class YOLOAutoAnchorHook(Hook):
 
     priority = 48
 
+    # YOLOAutoAnchorHook takes priority over EMAHook.
+
     def __init__(self, optimizer):
         self.optimizer = optimizer
 
