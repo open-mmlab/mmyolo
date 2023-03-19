@@ -21,7 +21,6 @@ def parse_args():
         action='store_true',
         default=False,
         help='enable automatic-mixed-precision training')
-    parser.add_argument('--autoanchor', help='types of autoanchor')
     parser.add_argument(
         '--resume',
         nargs='?',
@@ -30,6 +29,13 @@ def parse_args():
         help='If specify checkpoint path, resume from it, while if not '
         'specify, try to auto resume from the latest checkpoint '
         'in the work directory.')
+    parser.add_argument(
+        '--autoanchor',
+        choices=[
+            'k_means_autoanchor', 'de_autoanchor', 'v5_k_means_autoanchor'
+        ],
+        default='v5_k_means_autoanchor',
+        help='types of autoanchor')
     parser.add_argument(
         '--cfg-options',
         nargs='+',

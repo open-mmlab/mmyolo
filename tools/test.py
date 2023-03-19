@@ -35,7 +35,13 @@ def parse_args():
         '--tta',
         action='store_true',
         help='Whether to use test time augmentation')
-    parser.add_argument('--autoanchor', help='types of autoanchor')
+    parser.add_argument(
+        '--autoanchor',
+        choices=[
+            'k_means_autoanchor', 'de_autoanchor', 'v5_k_means_autoanchor'
+        ],
+        default='v5_k_means_autoanchor',
+        help='types of autoanchor')
     parser.add_argument(
         '--show', action='store_true', help='show prediction results')
     parser.add_argument(
