@@ -13,8 +13,7 @@ MMYOLO 中已经支持了大部分 YOLO 系列目标检测相关算法。不同�
 1. 单尺度训练效果高。当训练 epoch 在 300 或者 500 时候训练效率是用户非常关注的，多尺度训练会比较慢
 2. 训练 pipeline 中隐含了多尺度增强，等价于应用了多尺度训练，典型的如 `Mosaic`、`RandomAffine` 和 `Resize` 等，故没有必要再次引入模型输入的多尺度训练
 
-在 COCO 数据集上进行了简单实验，如果直接在 YOLOv5 的 DataLoader 输出后再次引入多尺度训练增强实际性能提升非常小，但是这不代表用户自定义数据集微调模式下没有明显增益。
-如果想在 MMYOLO 中对 YOLO 系列算法开启多尺度训练，可以参考 [多尺度训练文档](../common_usage/ms_training_testing.md)
+在 COCO 数据集上进行了简单实验，如果直接在 YOLOv5 的 DataLoader 输出后再次引入多尺度训练增强实际性能提升非常小，但是这不代表用户自定义数据集微调模式下没有明显增益。如果想在 MMYOLO 中对 YOLO 系列算法开启多尺度训练，可以参考 [多尺度训练文档](../common_usage/ms_training_testing.md)
 
 #### 2 使用 mask 标注优化目标检测性能
 
@@ -30,7 +29,7 @@ MMYOLO 中已经支持了大部分 YOLO 系列目标检测相关算法。不同�
 <img src="https://user-images.githubusercontent.com/17425982/224922191-a52cb410-d08d-455a-bd38-08b83266cc5f.png" width="1000"/>
 </div>
 
-上述的 mask 表示实例分割标注发挥关键作用的数据增强变换，将该技巧应用到其他 YOLO 系列中均有不同程度涨点。
+上述的 Mask 表示实例分割标注发挥关键作用的数据增强变换，将该技巧应用到其他 YOLO 系列中均有不同程度涨点。
 
 #### 3 训练后期关闭强增强提升检测性能
 
@@ -60,7 +59,7 @@ MMYOLO 中已经支持了大部分 YOLO 系列目标检测相关算法。不同�
 从上表可以看出：
 
 - 大模型在 COCO 数据集训练 500 epoch 会过拟合，在过拟合情况下再关闭 Mosaic 等强增强效果没有效果
-- 使用 mask 标注可以缓解过拟合，并且提升性能
+- 使用 Mask 标注可以缓解过拟合，并且提升性能
 
 #### 4 加入纯背景图片抑制误报率
 
@@ -68,8 +67,7 @@ MMYOLO 中已经支持了大部分 YOLO 系列目标检测相关算法。不同�
 
 #### 5 试试 AdamW 也许效果显著
 
-YOLOv5，YOLOv6，YOLOv7 和 YOLOv8 等都是采用了 SGD 优化器，该参数器对参数的设置比较严格，而 AdamW 则正好相反，其对学习率设置等没有那么敏感。因此如果用户在自定义数据集微调可以尝试选择 AdamW 优化器。
-我们在 YOLOX 中进行了简单尝试，发现在 tiny、s 和 m 尺度摩西上将其优化器替换为 AdamW 均有一定程度涨点。
+YOLOv5，YOLOv6，YOLOv7 和 YOLOv8 等都是采用了 SGD 优化器，该参数器对参数的设置比较严格，而 AdamW 则正好相反，其对学习率设置等没有那么敏感。因此如果用户在自定义数据集微调可以尝试选择 AdamW 优化器。我们在 YOLOX 中进行了简单尝试，发现在 tiny、s 和 m 尺度摩西上将其优化器替换为 AdamW 均有一定程度涨点。
 
 |  Backbone  | Size | Batch Size | RTMDet-Hyp |   Box AP    |
 | :--------: | :--: | :--------: | :--------: | :---------: |
@@ -95,8 +93,7 @@ YOLOv5，YOLOv6，YOLOv7 和 YOLOv8 等都是采用了 SGD 优化器，该参数
 - 这个区域不是真的人，例如海报上的人
 - 该区域过于拥挤，很难标注
 
-在该场景下，你不能简单的将这类标注删掉，因为你一旦删掉就表示当做背景区域来训练了，但是其和背景是不一样的，首先海报上的人和真人很像，并且拥挤区域确实有人只是不好标注。如果你简单的将其当做背景训练，那么会造成漏报。最合适的做法应该是当做忽略区域即该区域的任何输出都
-直接忽略，不计算任何 Loss，不强迫模型拟合。
+在该场景下，你不能简单的将这类标注删掉，因为你一旦删掉就表示当做背景区域来训练了，但是其和背景是不一样的，首先海报上的人和真人很像，并且拥挤区域确实有人只是不好标注。如果你简单的将其当做背景训练，那么会造成漏报。最合适的做法应该是当做忽略区域即该区域的任何输出都直接忽略，不计算任何 Loss，不强迫模型拟合。
 
 MMYOLO 在 YOLOv5 上简单快速的验证了 `iscrowd` 标注的作用，性能如下所示：
 
@@ -109,7 +106,7 @@ MMYOLO 在 YOLOv5 上简单快速的验证了 `iscrowd` 标注的作用，性能
 
 #### 7 使用知识蒸馏
 
-知识蒸馏是一个被广泛使用的技巧，可以将大模型性能转移到小模型上从而提升小模型检测性能。 目前 MMYOLO 和 MMRazor 联合支持了该功能，并在 RTMDet 上进行了初步验证。
+知识蒸馏是一个被广泛使用的技巧，可以将大模型性能转移到小模型上从而提升小模型检测性能。 目前 MMYOLO 和 MMRazor 已支持了该功能，并在 RTMDet 上进行了初步验证。
 
 |     Model      |   box AP    |
 | :------------: | :---------: |
@@ -138,8 +135,7 @@ MMYOLO 在 YOLOv5 上简单快速的验证了 `iscrowd` 标注的作用，性能
 
 #### 1 单尺度训练开启 cudnn_benchmark
 
-YOLO 系列算法中大部分网络输入图片大小都是固定的即单尺度，此时可以开启 `cudnn_benchmark` 来加快训练速度。该参数主要针对 PyTorch 的 cuDNN 底层库进行设置, 设置这个标志可以让内置的 cuDNN 自动寻找最适合当前配置的高效算法来优化运行效率。
-如果是多尺度模式开启该标志则会不断的寻找最优算法，反而会拖慢训练速度。
+YOLO 系列算法中大部分网络输入图片大小都是固定的即单尺度，此时可以开启 `cudnn_benchmark` 来加快训练速度。该参数主要针对 PyTorch 的 cuDNN 底层库进行设置, 设置这个标志可以让内置的 cuDNN 自动寻找最适合当前配置的高效算法来优化运行效率。如果是多尺度模式开启该标志则会不断的寻找最优算法，反而会拖慢训练速度。
 
 在 MMYOLO 中开启 `cudnn_benchmark`，只需要在配置中设置 `env_cfg = dict(cudnn_benchmark=True)`
 
@@ -194,13 +190,12 @@ loss_obj=dict(
     ((img_scale[0] / 640)**2 * 3 / num_det_layers)),
 ```
 
-loss_cls 可以根据自定义类别数和检测层数对 loss_weight 进行自适应缩放，loss_bbox 可以根据检测层数进行自适应计算，而 loss_obj 可以根据输入图片大小和检测层数进行自适应缩放。这种策略可以让用户不用去设置 Loss 权重超参。
+`loss_cls` 可以根据自定义类别数和检测层数对 `loss_weight` 进行自适应缩放，`loss_bbox` 可以根据检测层数进行自适应计算，而 `loss_obj` 可以根据输入图片大小和检测层数进行自适应缩放。这种策略可以让用户不用去设置 Loss 权重超参。
 需要说明的是：这个只是经验规则，并不是说是最佳设置组合，只是作为一个参考。
 
 #### 2 Weight Decay 和 Loss 输出值基于 Batch Size 自适应， 少 2 个超参
 
-一般来说，在不同的 Batch Size 上进行训练，需要遵循学习率自动缩放规则。但是在各个数据集上验证表明 YOLOv5 实际上在改变 Batch Size 时候不缩放学习率也可以取得不错的效果，甚至有时候你缩放了效果还更差。原因就在于代码中存在 Weight Decay 和 Loss 输出值基于 Batch Size 自适应的技巧。
-在 YOLOv5 中会基于当前训练的总 Batch Size 来缩放 Weight Decay 和 Loss 输出值。对应代码为：
+一般来说，在不同的 `Batch Size` 上进行训练，需要遵循学习率自动缩放规则。但是在各个数据集上验证表明 YOLOv5 实际上在改变 `Batch Size` 时候不缩放学习率也可以取得不错的效果，甚至有时候你缩放了效果还更差。原因就在于代码中存在 `Weight Decay` 和 Loss 输出值基于 `Batch Size` 自适应的技巧。在 YOLOv5 中会基于当前训练的总 `Batch Size` 来缩放 `Weight Decay` 和 Loss 输出值。对应代码为：
 
 ```python
 # https://github.com/open-mmlab/mmyolo/blob/dev/mmyolo/engine/optimizers/yolov5_optim_constructor.py#L86
@@ -244,11 +239,10 @@ if 'batch_size_per_gpu' in optimizer_cfg:
 
 #### 1 推理时避免一个检测框输出多个类别
 
-YOLOv5 在训练分类分支时候采用的是 BCE Loss 即 `use_sigmoid=True`。假设物体类别数是 4，那么分类分支输出的类别数是 4 而不是 5，并且由于使用的是 sigmoid 而非 softmax 预测模式，很可能在某个预测位置出
-出现多个满足过滤阈值的检测框，也就是会出现一个预测 bbox 对应了多个预测 label。如下图所示
+YOLOv5 在训练分类分支时候采用的是 BCE Loss 即 `use_sigmoid=True`。假设物体类别数是 4，那么分类分支输出的类别数是 4 而不是 5，并且由于使用的是 sigmoid 而非 softmax 预测模式，很可能在某个预测位置出多个满足过滤阈值的检测框，也就是会出现一个预测 bbox 对应了多个预测 label。如下图所示
 
 <div align=center>
-<img alt="multi-lable" src="https://user-images.githubusercontent.com/17425982/226282295-8ef53a89-e33e-4fd5-8d60-417db2d5a140.png" width=800 />
+<img alt="multi-label" src="https://user-images.githubusercontent.com/17425982/226282295-8ef53a89-e33e-4fd5-8d60-417db2d5a140.png" width=800 />
 </div>
 
 一般在计算 mAP 时候过滤阈值为 0.001，由于 sigmoid 非竞争性预测模式会导致一个框对应多个 label。这种计算方式可以提高 mAP 计算时候的召回率，但是实际落地应用会不方便。
@@ -301,6 +295,7 @@ test_pipeline = [
 
 Batch Shape 是 YOLOv5 中提出的可以加快推理的一个测试技巧，其思路是不再强制要求整个测试过程图片都是 640x640，而是可以变尺度测试，只需要保证当前 batch 内的 shape 是一样的就行。这种方式可以减少额外的图片像素填充，从而实现加速推理过程。
 Batch Shape 的具体实现可以参考 [链接](https://github.com/open-mmlab/mmyolo/blob/main/mmyolo/datasets/utils.py#L55)。MMYOLO 中几乎所有算法在测试时候都是默认开启了 Batch Shape 策略。 如果用户想关闭该功能，可以设置 `val_dataloader.dataset.batch_shapes_cfg=None`。
+
 在实际落地场景下，因为动态 shape 没有固定 shape 快且高效，所以一般会不采用这个策略。
 
 ### TTA 提升测试精度
