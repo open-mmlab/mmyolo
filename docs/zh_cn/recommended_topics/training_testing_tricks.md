@@ -230,7 +230,8 @@ if 'batch_size_per_gpu' in optimizer_cfg:
      loss_bbox=loss_box * batch_size * world_size)
 ```
 
-在不同的 Batch Size 下 Loss 的权重是不一样大的，Batch Size 越大，Loss 就越大，梯度就越大，我个人猜测这可以等价于 Batch Size 增大时候，学习率线性增加的场合。上述两个策略是一个非常不错的训练技巧。
+在不同的 Batch Size 下 Loss 的权重是不一样大的，Batch Size 越大，Loss 就越大，梯度就越大，我个人猜测这可以等价于 Batch Size 增大时候，学习率线性增加的场合。
+实际上从 YOLOv5 的 [YOLOv5 Study: mAP vs Batch-Size](https://github.com/ultralytics/yolov5/discussions/2452) 中可以发现确实是希望用户在修改 Batch Size 时不需要修改其他参数也可以相近的性能。上述两个策略是一个非常不错的训练技巧。
 
 ### 减少训练显存
 
