@@ -248,7 +248,7 @@ YOLOv5 在训练分类分支时候采用的是 BCE Loss 即 `use_sigmoid=True`�
 出现多个满足过滤阈值的检测框，也就是会出现一个预测 bbox 对应了多个预测 label。如下图所示
 
 <div align=center>
-<img alt="multi-lable" src="https://user-images.githubusercontent.com/17425982/226272053-75b2bd2d-99ad-4d47-9a24-a20c742fd323.png" width=800 />
+<img alt="multi-lable" src="https://user-images.githubusercontent.com/17425982/226282295-8ef53a89-e33e-4fd5-8d60-417db2d5a140.png" width=800 />
 </div>
 
 一般在计算 mAP 时候过滤阈值为 0.001，由于 sigmoid 非竞争性预测模式会导致一个框对应多个 label。这种计算方式可以提高 mAP 计算时候的召回率，但是实际落地应用会不方便。
