@@ -30,11 +30,7 @@ def parse_args():
         'specify, try to auto resume from the latest checkpoint '
         'in the work directory.')
     parser.add_argument(
-        '--autoanchor',
-        choices=[
-            'k_means_autoanchor', 'de_autoanchor', 'v5_k_means_autoanchor'
-        ],
-        help='types of autoanchor')
+        '--autoanchor', action='store_true', help='types of autoanchor')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
@@ -96,12 +92,7 @@ def main():
     if args.autoanchor:
         assert cfg.model.bbox_head.prior_generator.type \
                                         == 'mmdet.YOLOAnchorGenerator'
-        assert args.autoanchor in [
-            'k_means_autoanchor', 'de_autoanchor',
-            'v5_k_means_autoanchor'], \
-            'only k_means_autoanchor, de_autoanchor, v5_k_means_autoanchor ' \
-            'are supported !'
-        cfg.custom_hooks.append(cfg.get(args.autoanchor))
+        cfg.custom_hooks.append(cfg.autoanchor_hook)
 
     # resume is determined in this priority: resume from > auto_resume
     if args.resume == 'auto':

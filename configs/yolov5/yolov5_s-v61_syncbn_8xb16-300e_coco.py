@@ -1,14 +1,11 @@
-_base_ = [
-    '../_base_/default_runtime.py', '../_base_/det_p5_tta.py',
-    '../_base_/autoanchor.py'
-]
+_base_ = ['../_base_/default_runtime.py', '../_base_/det_p5_tta.py']
 
 # ========================Frequently modified parameters======================
 # -----data related-----
-data_root = 'data/coco/'  # Root path of data
+data_root = '/Users/yechenzhi/data/coco/'  # Root path of data
 # Path of train annotation file
-train_ann_file = 'annotations/instances_train2017.json'
-train_data_prefix = 'train2017/'  # Prefix of train image path
+train_ann_file = 'annotations/instances_val2017.json'
+train_data_prefix = 'val2017/'  # Prefix of train image path
 # Path of val annotation file
 val_ann_file = 'annotations/instances_val2017.json'
 val_data_prefix = 'val2017/'  # Prefix of val image path
@@ -279,6 +276,33 @@ custom_hooks = [
         strict_load=False,
         priority=49)
 ]
+
+autoanchor_hook = dict(
+    type='YOLOAutoAnchorHook',
+    optimizer=dict(
+        type='YOLOV5KMeansAnchorOptimizer',
+        iters=1000,
+        num_anchor_per_level=[3, 3, 3],
+        prior_match_thr=4.0,
+        mutation_args=[0.9, 0.1],
+        augment_args=[0.9, 0.1]))
+
+# You can comment out the existing autoanchor hook,
+# and then select the autoanchor you want and uncomment it.
+
+# autoanchor_hook = dict(
+#     type='YOLOAutoAnchorHook',
+#     optimizer=dict(
+#         type='YOLOKMeansAnchorOptimizer',
+#         iters=1000,
+#         num_anchor_per_level=[3, 3, 3]))
+
+# autoanchor_hook = dict(
+#     type='YOLOAutoAnchorHook',
+#     optimizer=dict(
+#         type='YOLODEAnchorOptimizer',
+#         iters=1000,
+#         num_anchor_per_level=[3, 3, 3]))
 
 val_evaluator = dict(
     type='mmdet.CocoMetric',
