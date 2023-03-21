@@ -17,7 +17,11 @@ class YOLOAutoAnchorHook(Hook):
     # YOLOAutoAnchorHook takes priority over EMAHook.
 
     def __init__(self, optimizer):
+
         self.optimizer = optimizer
+        print('YOLOAutoAnchorHook should take priority over EMAHook, '
+              'the default priority of EMAHook is 49, so the priority of '
+              'YOLOAutoAnchorHook is 48')
 
     def before_run(self, runner) -> None:
 
@@ -27,8 +31,7 @@ class YOLOAutoAnchorHook(Hook):
 
         device = next(model.parameters()).device
         anchors = torch.tensor(
-            runner.cfg.model.bbox_head.prior_generator.base_sizes,
-            device=device)
+            model.bbox_head.prior_generator.base_sizes, device=device)
         model.register_buffer('anchors', anchors)
 
     def before_train(self, runner: Runner) -> None:
