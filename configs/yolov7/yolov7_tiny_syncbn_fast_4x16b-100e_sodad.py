@@ -117,8 +117,8 @@ optim_wrapper = dict(
     constructor='YOLOv7OptimWrapperConstructor')
 
 default_hooks = dict(param_scheduler=dict(max_epochs=max_epochs))
-val_evaluator = dict(ann_file=data_root + val_ann_file)
-test_evaluator = dict(ann_file=data_root + test_ann_file)
+val_evaluator = dict(type='SodadMetric', classwise=True, ann_file=data_root + val_ann_file)
+test_evaluator = dict(type='SodadMetric', classwise=True, ann_file=data_root + test_ann_file)
 
 train_cfg = dict(
     max_epochs=max_epochs,
