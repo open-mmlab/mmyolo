@@ -697,6 +697,9 @@ class YOLOv5RandomAffine(BaseTransform):
                 valid_index]
             results['gt_ignore_flags'] = results['gt_ignore_flags'][
                 valid_index]
+        else:
+            if 'gt_masks' in results:
+                results['gt_masks'] = PolygonMasks([], img_h, img_w)
 
         return results
 

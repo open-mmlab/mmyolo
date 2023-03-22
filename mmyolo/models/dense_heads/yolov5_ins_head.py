@@ -177,12 +177,13 @@ class YOLOv5InsHead(YOLOv5Head):
                  loss_mask: ConfigType = dict(
                      type='mmdet.CrossEntropyLoss',
                      use_sigmoid=True,
-                     loss_weight=0.05,
                      reduction='none'),
+                 loss_mask_weight=0.05,
                  **kwargs):
         super().__init__(*args, **kwargs)
         self.mask_overlap = mask_overlap
         self.loss_mask: nn.Module = MODELS.build(loss_mask)
+        self.loss_mask_weight = loss_mask_weight
 
     def loss(self, x: Tuple[Tensor], batch_data_samples: Union[list,
                                                                dict]) -> dict:
@@ -407,7 +408,7 @@ class YOLOv5InsHead(YOLOv5Head):
             loss_cls=loss_cls * batch_size * world_size,
             loss_obj=loss_obj * batch_size * world_size,
             loss_bbox=loss_box * batch_size * world_size,
-            loss_mask=loss_mask * world_size)
+            loss_mask=loss_mask * self.loss_mask_weight * world_size)
 
     def _convert_gt_to_norm_format(self,
                                    batch_gt_instances: Sequence[InstanceData],

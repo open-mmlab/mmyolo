@@ -51,10 +51,8 @@ model = dict(
             type='YOLOv5InsHeadModule', mask_channels=32, proto_channels=256),
         mask_overlap=mask_overlap,
         loss_mask=dict(
-            type='mmdet.CrossEntropyLoss',
-            use_sigmoid=True,
-            loss_weight=0.05,
-            reduction='none')),
+            type='mmdet.CrossEntropyLoss', use_sigmoid=True, reduction='none'),
+        loss_mask_weight=0.05),
     test_cfg=model_test_cfg)
 
 pre_transform = [
