@@ -205,6 +205,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 <summary>推荐专题</summary>
 
 - [如何给 MMYOLO 贡献代码](docs/zh_cn/recommended_topics/contributing.md)
+- [训练和测试技巧](docs/zh_cn/recommended_topics/training_testing_tricks.md)
 - [MMYOLO 模型结构设计](docs/zh_cn/recommended_topics/model_design.md)
 - [原理和实现全解析](docs/zh_cn/recommended_topics/algorithm_descriptions/)
 - [轻松更换主干网络](docs/zh_cn/recommended_topics/replace_backbone.md)
@@ -213,7 +214,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [关于可视化的一切](docs/zh_cn/recommended_topics/visualization.md)
 - [模型部署流程](docs/zh_cn/recommended_topics/deploy/)
 - [常见错误排查步骤](docs/zh_cn/recommended_topics/troubleshooting_steps.md)
-- [MMYOLO 产业范例介绍](docs/zh_cn/recommended_topics/industry_examples.md)
+- [MMYOLO 应用范例介绍](docs/zh_cn/recommended_topics/application_examples/)
 - [MM 系列 Repo 必备基础](docs/zh_cn/recommended_topics/mm_basics.md)
 - [数据集准备和说明](docs/zh_cn/recommended_topics/dataset_preparation.md)
 
