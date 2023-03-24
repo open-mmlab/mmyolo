@@ -169,7 +169,7 @@ As shown in the figure, N preloaded images and label data are stored in the cach
 
 YOLOv5 provides some practical methods for reducing the number of hyperparameter, which are described below.
 
-#### 1 Adaptive loss weighting reduces one hyperparameter
+#### 1 Adaptive loss weighting, reducing one hyperparameter
 
 In general, it can be challenging to set hyperparameters specifically for different tasks or categories. YOLOv5 proposes some adaptive methods for scaling loss weights based on the number of classes and the number of detection output layers have been proposed based on practical experience, as shown below:
 
