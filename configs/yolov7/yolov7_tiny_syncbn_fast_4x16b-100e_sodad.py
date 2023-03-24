@@ -71,6 +71,70 @@ model = dict(
                       ((img_scale[0] / 640)**2 * 3 / _base_.num_det_layers)),
     ))
 
+
+
+pre_transform = _base_.pre_transform
+max_translate_ratio = _base_.max_translate_ratio
+scaling_ratio_range = _base_.scaling_ratio_range
+randchoice_mosaic_prob = _base_.randchoice_mosaic_prob
+mixup_alpha = _base_.mixup_alpha
+mixup_beta = _base_.mixup_beta
+mixup_prob = _base_.mixup_prob
+
+mosiac4_pipeline = [
+    dict(
+        type='Mosaic',
+        img_scale=img_scale,
+        pad_val=114.0,
+        pre_transform=pre_transform),
+    dict(
+        type='YOLOv5RandomAffine',
+        max_rotate_degree=0.0,
+        max_shear_degree=0.0,
+        max_translate_ratio=max_translate_ratio,  # change
+        scaling_ratio_range=scaling_ratio_range,  # change
+        # img_scale is (width, height)
+        border=(-img_scale[0] // 2, -img_scale[1] // 2),
+        border_val=(114, 114, 114)),
+]
+mosiac9_pipeline = [
+    dict(
+        type='Mosaic9',
+        img_scale=img_scale,
+        pad_val=114.0,
+        pre_transform=pre_transform),
+    dict(
+        type='YOLOv5RandomAffine',
+        max_rotate_degree=0.0,
+        max_shear_degree=0.0,
+        max_translate_ratio=max_translate_ratio,  # change
+        scaling_ratio_range=scaling_ratio_range,  # change
+        border=(-img_scale[0] // 2, -img_scale[1] // 2),
+        border_val=(114, 114, 114)),
+]
+
+randchoice_mosaic_pipeline = dict(
+    type='RandomChoice',
+    transforms=[mosiac4_pipeline, mosiac9_pipeline],
+    prob=randchoice_mosaic_prob)
+
+train_pipeline = [
+    *pre_transform,
+    randchoice_mosaic_pipeline,
+    dict(
+        type='YOLOv5MixUp',
+        alpha=mixup_alpha,
+        beta=mixup_beta,
+        prob=mixup_prob,  # change
+        pre_transform=[*pre_transform, randchoice_mosaic_pipeline]),
+    dict(type='YOLOv5HSVRandomAug'),
+    dict(type='mmdet.RandomFlip', prob=0.5),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
+                   'flip_direction'))
+]
+
 train_dataloader = dict(
     batch_size=train_batch_size_per_gpu,
     num_workers=train_num_workers,
