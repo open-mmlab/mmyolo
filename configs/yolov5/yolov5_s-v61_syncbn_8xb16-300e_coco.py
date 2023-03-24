@@ -225,6 +225,19 @@ test_pipeline = [
                    'scale_factor', 'pad_param'))
 ]
 
+inference_only_pipeline = [
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(
+        type='LetterResize',
+        scale=img_scale,
+        allow_scale_up=True,
+        use_mini_pad=True),
+    dict(
+        type='mmdet.PackDetInputs',
+        meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
+                   'scale_factor', 'pad_param'))
+]
+
 val_dataloader = dict(
     batch_size=val_batch_size_per_gpu,
     num_workers=val_num_workers,
