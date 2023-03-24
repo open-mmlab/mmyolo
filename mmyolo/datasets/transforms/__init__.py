@@ -5,6 +5,7 @@ from .transforms import (LetterResize, LoadAnnotations, PPYOLOERandomCrop,
                          RemoveDataElement, YOLOv5CopyPaste,
                          YOLOv5HSVRandomAug, YOLOv5KeepRatioResize,
                          YOLOv5RandomAffine)
+from .fast_transforms import TVLetterResize, InferencePackDetInputs
 
 __all__ = [
     'YOLOv5KeepRatioResize', 'LetterResize', 'Mosaic', 'YOLOXMixUp',
