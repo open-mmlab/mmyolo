@@ -70,13 +70,13 @@ Without adding any new python code, and if you installed the MMYOLO by `mim inst
 
 ## How to use multiple versions of MMYOLO to develop?
 
-If you have multiple versions of the MMYOLO, such as mmyolo-v1 and mmyolo-v2. You can specify the target version of your MMYOLO by using this command in your shell:
+If users have multiple versions of the MMYOLO, such as mmyolo-v1 and mmyolo-v2. They can specify the target version of their MMYOLO by using this command in the shell:
 
 ```shell
 PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
 ```
 
-You can unset the `PYTHONPATH` when you want to reset to the default MMYOLO by this command:
+Users can unset the `PYTHONPATH` when they want to reset to the default MMYOLO by this command:
 
 ```shell
 unset PYTHONPATH
@@ -84,7 +84,7 @@ unset PYTHONPATH
 
 ## How to save the best checkpoints during the training?
 
-Users can choose what metrics to filter the best models by setting the `default_hooks.checkpoint.save_best` in the configuration. Take the COCO dataset detection task as an example. You can customize the `default_hooks.checkpoint.save_best` with these parameters:
+Users can choose what metrics to filter the best models by setting the `default_hooks.checkpoint.save_best` in the configuration. Take the COCO dataset detection task as an example. Users can customize the `default_hooks.checkpoint.save_best` with these parameters:
 
 1. `auto` works based on the first evaluation metric in the validation set.
 2. `coco/bbox_mAP` works based on `bbox_mAP`. 
@@ -98,4 +98,4 @@ In addition, users can also choose the filtering logic by setting `default_hooks
 
 ## How to train and test with non-square input sizes?
 
-The default configurations of the YOLO series algorithms are mostly squares like 640x640 or 1280x1280. However, if you want to train with a non-square shape, you can modify the `image_scale` to your desired value in the configuration. A more detailed example could be found at [yolov5_s-v61_fast_1xb12-40e_608x352_cat.py](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov5/yolov5_s-v61_fast_1xb12-40e_608x352_cat.py).
+The default configurations of the YOLO series algorithms are mostly squares like 640x640 or 1280x1280. However, if users want to train with a non-square shape, they can modify the `image_scale` to the desired value in the configuration. A more detailed example could be found at [yolov5_s-v61_fast_1xb12-40e_608x352_cat.py](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov5/yolov5_s-v61_fast_1xb12-40e_608x352_cat.py).
