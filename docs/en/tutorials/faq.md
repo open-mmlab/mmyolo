@@ -58,7 +58,7 @@ It is because the YOLO series algorithms are not very well suited for linear sca
 
 ## Why is the weight size of my trained model larger than the official one?
 
-The reason is that user-trained weights usually include extra data such as `optimizer`, 'ema_state_dict`, and `message_hub`, which are removed when we publish the models. While on the contrary, the weight users trained by themselves are kept. You can use the [publish_model.py](https://github.com/open-mmlab/mmyolo/blob/main/tools/misc/publish_model.py) to remove these unnecessary components.
+The reason is that user-trained weights usually include extra data such as `optimizer`, 'ema_state_dict`, and `message_hub\`, which are removed when we publish the models. While on the contrary, the weight users trained by themselves are kept. You can use the [publish_model.py](https://github.com/open-mmlab/mmyolo/blob/main/tools/misc/publish_model.py) to remove these unnecessary components.
 
 ## Why does the RTMDet cost more graphics memory during the training than YOLOv5?
 
@@ -87,10 +87,10 @@ unset PYTHONPATH
 Users can choose what metrics to filter the best models by setting the `default_hooks.checkpoint.save_best` in the configuration. Take the COCO dataset detection task as an example. Users can customize the `default_hooks.checkpoint.save_best` with these parameters:
 
 1. `auto` works based on the first evaluation metric in the validation set.
-2. `coco/bbox_mAP` works based on `bbox_mAP`. 
+2. `coco/bbox_mAP` works based on `bbox_mAP`.
 3. `coco/bbox_mAP_50` works based on `bbox_mAP_50`.
 4. `coco/bbox_mAP_75` works based on `bbox_mAP_75`.
-5. `coco/bbox_mAP_s` works based on `bbox_mAP_s`. 
+5. `coco/bbox_mAP_s` works based on `bbox_mAP_s`.
 6. `coco/bbox_mAP_m` works based on `bbox_mAP_m`.
 7. `coco/bbox_mAP_l` works based on `bbox_mAP_l`.
 
