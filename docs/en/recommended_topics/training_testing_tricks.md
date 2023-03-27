@@ -100,7 +100,7 @@ The image is sourced from [detectron2 issue](https://github.com/facebookresearch
 - This area is not a real person, such as the person on the poster
 - The area is too crowded to mark
 
-In this scenario, you cannot simply delete such annotations, because once you delete them, it means treating them as background areas during training. However, they are different from the background. Firstly, the people on the posters are very similar to real people, and there are indeed people in the crowded areas that are difficult to annotate. If you simply train them as background, it will cause false negatives. The best approach is to treat the crowded area as an ignored region, where any output in this area is directly ignored, with no loss calculated and no model fitting enforced.
+In this scenario, you cannot simply delete such annotations, because once you delete them, it means treating them as background areas during training. However, they are different from the background. Firstly, the people on the posters are very similar to real people, and there are indeed people in crowded areas that are difficult to annotate. If you simply train them as background, it will cause false negatives. The best approach is to treat the crowded area as an ignored region, where any output in this area is directly ignored, with no loss calculated and no model fitting enforced.
 
 MMYOLO quickly and easily verifies the function of 'iscrowd' annotation on YOLOv5. The performance is as follows:
 
@@ -163,7 +163,7 @@ Mosaic and MixUp involve mixing multiple images, and their time consumption is K
 <img alt="data cache" src="https://user-images.githubusercontent.com/33799979/192730011-90e2a28d-e163-4399-bf87-d3012007d8c3.png" width=800 />
 </div>
 
-As shown in the figure, N preloaded images and label data are stored in the cache queue. In each training step, only one new image and its label data need to be loaded and updated to the cache queue. (Images in the cache queue can be duplicated, as shown in the figure with img3 appearing twice.) If the length of the cache queue exceeds the preset length, a random image will be popped out. When it is necessary to perform mixed data augmentation, only the required images need to be randomly selected from the cache for concatenation or other processing, without the need to load all images from the hard disk, thus saving image loading time.
+As shown in the figure, N preloaded images and label data are stored in the cache queue. In each training step, only one new image and its label data need to be loaded and updated in the cache queue. (Images in the cache queue can be duplicated, as shown in the figure with img3 appearing twice.) If the length of the cache queue exceeds the preset length, a random image will be popped out. When it is necessary to perform mixed data augmentation, only the required images need to be randomly selected from the cache for concatenation or other processing, without the need to load all images from the hard disk, thus saving image loading time.
 
 ### Reduce the number of hyperparameter
 
@@ -246,7 +246,7 @@ In the YOLO series, it is possible to achieve a balance between speed and accura
 
 #### 1 Avoiding multiple class outputs for a single detection box during inference
 
-YOLOv5 uses BCE Loss (use_sigmoid=True)during the training of the classification branch. Assuming there are 4 object categories, the number of categories output by the classification branch is 4 instead of 5. Moreover, due to the use of sigmoid instead of softmax prediction, it is possible to predict multiple detection boxes that meet the filtering threshold at a certain position, which means that there may be a situation where one predicted bbox corresponds to multiple predicted labels. This is shown in the figure below:
+YOLOv5 uses BCE Loss (use_sigmoid=True) during the training of the classification branch. Assuming there are 4 object categories, the number of categories output by the classification branch is 4 instead of 5. Moreover, due to the use of sigmoid instead of softmax prediction, it is possible to predict multiple detection boxes that meet the filtering threshold at a certain position, which means that there may be a situation where one predicted bbox corresponds to multiple predicted labels. This is shown in the figure below:
 
 <div align=center>
 <img alt="multi-label" src="https://user-images.githubusercontent.com/17425982/226282295-8ef53a89-e33e-4fd5-8d60-417db2d5a140.png" width=800 />
@@ -305,6 +305,6 @@ Almost all algorithms in MMYOLO default to enabling the Batch Shape strategy dur
 
 In practical applications, because dynamic shape is not as fast and efficient as fixed shape. Therefore, this strategy is generally not used in real-world scenarios.
 
-### TTA improve test accuracy
+### TTA improves test accuracy
 
 Data augmentation with TTA (Test Time Augmentation) is a versatile trick that can improve the performance of object detection models and is particularly useful in competition scenarios. MMYOLO has already supported TTA, and it can be enabled simply by adding `--tta` when testing. For more details, please refer to the [TTA](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/common_usage/tta.md).
