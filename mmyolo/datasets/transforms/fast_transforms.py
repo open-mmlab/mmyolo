@@ -101,13 +101,11 @@ class TVLetterResize(BaseTransform):
             if isinstance(pad_val, int) and image.ndim == 3:
                 pad_val = tuple(pad_val for _ in range(image.shape[2]))
 
-            image = F.pad(image, self.padding, pad_val, 'constant')
+            image = F.pad(image, [padding_list[2], padding_list[0], padding_list[3], padding_list[1]], pad_val,
+                          'constant')
 
         results['img'] = image
         results['img_shape'] = image.shape
-        if 'pad_param' in results:
-            results['pad_param_origin'] = results['pad_param'] * \
-                                          np.repeat(ratio, 2)
         results['pad_param'] = np.array(padding_list, dtype=np.float32)
         return results
 

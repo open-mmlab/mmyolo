@@ -36,12 +36,12 @@ def parse_args():
 
 class FastDetInferencer(DetInferencer):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, scope='mmyolo', **kwargs)
+        switch_to_deploy(self.model)
+
     def _init_pipeline(self, cfg) -> Compose:
         return Compose(cfg.inference_only_pipeline)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        switch_to_deploy(self.model)
 
     def _inputs_to_list(self, path) -> list:
         # get file list
@@ -72,6 +72,7 @@ class FastDetInferencer(DetInferencer):
         inputs = self.preprocess(ori_inputs, batch_size=batch_size)
         for ori_inputs, data in track(inputs, description='Inference'):
             preds = self.forward(data)
+            print(preds)
             if save_pred_img:
                 self.save_pred_img(ori_inputs, preds, out_dir)
             if save_coco:

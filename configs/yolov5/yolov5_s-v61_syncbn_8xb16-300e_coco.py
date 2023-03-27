@@ -226,12 +226,12 @@ test_pipeline = [
 ]
 
 inference_only_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='mmdet.InferencerLoader', file_client_args=_base_.file_client_args),
     dict(
         type='TVLetterResize',
         scale=img_scale,
         allow_scale_up=True,
-        use_mini_pad=True),
+        use_mini_pad=False),
     dict(
         type='InferencePackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
