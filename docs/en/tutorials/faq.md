@@ -26,7 +26,7 @@ The projects folder is newly introduced in OpenMMLab 2.0. There are three primar
 2. facilitate rapid support for new algorithms: A long development cycle can also lead to another problem users may not be able to experience the latest algorithms as soon as possible.
 3. facilitate rapid support for new approaches and features: New approaches or new features may be incompatible with the current design of the codebases and cannot be quickly incorporated.
 
-In summary, introducing the projects folder solves the problems of slow support for new algorithms and complicated support for new features due to the long algorithm reproduction cycle. Each folder in projects is an entirely independent project, and community users can quickly support some algorithms in the current version through projects. This allows the community to quickly use new algorithms and features that are difficult to adapt in the current version. When the design is stable or the code meets the merge specification, it will be considered to merge into the main branch.
+In summary, the `projects` folder solves the problems of slow support for new algorithms and complicated support for new features due to the long algorithm reproduction cycle. Each folder in `projects` is an entirely independent project, and community users can quickly support some algorithms in the current version through `projects`. This allows the community to quickly use new algorithms and features that are difficult to adapt in the current version. When the design is stable or the code meets the merge specification, it will be considered to merge into the main branch.
 
 ## Why does the performance drop significantly by switching the YOLOv5 backbone to Swin?
 
