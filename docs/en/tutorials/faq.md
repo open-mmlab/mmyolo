@@ -58,7 +58,7 @@ It is because the YOLO series algorithms are not very well suited for linear sca
 
 ## Why is the weight size of my trained model larger than the official one?
 
-The reason is that user-trained weights usually include extra data such as `optimizer`, 'ema_state_dict`, and `message_hub\`, which are removed when we publish the models. While on the contrary, the weight users trained by themselves are kept. You can use the [publish_model.py](https://github.com/open-mmlab/mmyolo/blob/main/tools/misc/publish_model.py) to remove these unnecessary components.
+The reason is that user-trained weights usually include extra data such as `optimizer`, `ema_state_dict`, and `message_hub`, which are removed when we publish the models. While on the contrary, the weight users trained by themselves are kept. You can use the [publish_model.py](https://github.com/open-mmlab/mmyolo/blob/main/tools/misc/publish_model.py) to remove these unnecessary components.
 
 ## Why does the RTMDet cost more graphics memory during the training than YOLOv5?
 
