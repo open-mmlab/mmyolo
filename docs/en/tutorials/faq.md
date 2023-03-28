@@ -20,7 +20,7 @@ There is another far-reaching reason: **MMYOLO tasks are not limited to MMDetect
 
 ## What is the projects folder used for?
 
-The projects folder is newly introduced in OpenMMLab 2.0. There are three primary purposes:
+The `projects` folder is newly introduced in OpenMMLab 2.0. There are three primary purposes:
 
 1. facilitate community contributors: Since OpenMMLab series codebases have a rigorous code management process, this inevitably leads to long algorithm reproduction cycles, which is not friendly to community contributions.
 2. facilitate rapid support for new algorithms: A long development cycle can also lead to another problem users may not be able to experience the latest algorithms as soon as possible.
