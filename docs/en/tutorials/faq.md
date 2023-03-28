@@ -50,7 +50,7 @@ MMDeploy is developed and maintained by the OpenMMLab deployment team to provide
 
 ## How to check the AP of every category in COCOMetric?
 
-Just set `test_evaluator.classwise` to True or add `--cfg-options test_evaluator.classwise=True` when you need to run the test script.
+Just set `test_evaluator.classwise` to True or add `--cfg-options test_evaluator.classwise=True` when running the test script.
 
 ## Why doesn't MMYOLO support the auto-learning rate scaling feature as MMDet?
 
