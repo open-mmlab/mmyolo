@@ -505,25 +505,6 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         gt_masks = PolygonMasks([mask for mask in gt_masks], h, w)
         results['gt_masks'] = gt_masks
 
-    def _load_keypoints(self, results: dict) -> None:
-        pass
-
-    def _load_kps(self, results: dict) -> None:
-        """Private function to load keypoints annotations.
-
-        Args:
-            results (dict): Result dict from
-                :class:`mmengine.dataset.BaseDataset`.
-
-        Returns:
-            dict: The dict contains loaded keypoints annotations.
-        """
-        gt_keypoints = []
-        for instance in results['instances']:
-            gt_keypoints.append(instance['keypoints'])
-        results['gt_keypoints'] = np.array(gt_keypoints, np.float32).reshape(
-            (len(gt_keypoints), -1, 3))
-
     def __repr__(self) -> str:
         repr_str = self.__class__.__name__
         repr_str += f'(with_bbox={self.with_bbox}, '
