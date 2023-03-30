@@ -95,9 +95,6 @@ def main():
         cat=[
             'https://download.openmmlab.com/mmyolo/data/cat_dataset.zip'  # noqa
         ],
-        visdrone2019=[
-            'https://bj.bcebos.com/v1/ai-studio-online/e6443b5fcb79447b80bbdb0c8dc10ed0763921bfbca84a93bc11acdc3bea6acb?responseContentDisposition=attachment%3B%20filename%3Dvisdrone.zip&authorization=bce-auth-v1%2F5cfe9a5e1454405eb2a975c43eace6ec%2F2022-09-18T07%3A25%3A55Z%2F-1%2F%2F104606cd90872c0bd13c4ad23646b1fed78cbf9ab11925b2b3996648115ad5b6'  # noqa
-        ],
     )
     url = data2url.get(args.dataset_name, None)
     if url is None:

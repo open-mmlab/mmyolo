@@ -3,6 +3,8 @@ import cv2
 from tqdm import tqdm
 import json
 
+# Recommended dataset download address:https://cdn.opendatalab.com/Visdrone_DET/raw/Visdrone_DET.tar.gz
+
 
 def convert_visdrone_to_coco(ann_file, out_file, image_prefix):
     id_num = 0
@@ -46,7 +48,7 @@ def convert_visdrone_to_coco(ann_file, out_file, image_prefix):
     }]
     images = []
     annotations = []
-    print(f"start loading data...")
+    print("start loading data")
     set = os.listdir(ann_file)
     annotations_path = ann_file
     images_path = image_prefix
@@ -90,7 +92,7 @@ def convert_visdrone_to_coco(ann_file, out_file, image_prefix):
         json_file.write(json_str)
 
 
-print("json file write done...")
+print("json file write done")
 
 if __name__ == '__main__':
     convert_visdrone_to_coco(
