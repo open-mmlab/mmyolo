@@ -10,7 +10,7 @@ from mmengine.runner import Runner
 
 from mmyolo.registry import RUNNERS
 from mmyolo.utils import is_metainfo_lower
-
+from mmdet.utils import setup_cache_size_limit_of_dynamo
 
 # TODO: support fuse_conv_bn
 def parse_args():
@@ -72,6 +72,10 @@ def parse_args():
 
 def main():
     args = parse_args()
+
+    # Reduce the number of repeated compilations and improve
+    # training speed.
+    setup_cache_size_limit_of_dynamo()
 
     # load config
     cfg = Config.fromfile(args.config)
