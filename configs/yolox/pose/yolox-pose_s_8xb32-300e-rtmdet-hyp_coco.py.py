@@ -1,4 +1,4 @@
-_base_ = ['../yolox_s_fast_8xb8-300e_coco.py']
+_base_ = ['../yolox_s_fast_8xb32-300e-rtmdet-hyp_coco.py']
 
 # model settings
 model = dict(
@@ -46,8 +46,7 @@ model = dict(
 
 # pipelines
 pre_transform = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='PoseToDetConverter')
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args)
 ]
 
 img_scale = _base_.img_scale
@@ -71,7 +70,7 @@ train_pipeline_stage1 = [
         pre_transform=pre_transform),
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),
-    dict(type='FilterDetPoseAnnotations', keep_empty=False),
+    dict(type='FilterAnnotations', keep_empty=False),
     dict(
         type='PackDetPoseInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape'))
@@ -106,7 +105,7 @@ test_pipeline = [
 # dataset settings
 dataset_type = 'CocoPoseDataset'
 data_mode = 'bottomup'
-data_root = '/dataset/COCO/'
+data_root = '/data/coco/'
 
 train_dataloader = dict(
     _delete_=True,

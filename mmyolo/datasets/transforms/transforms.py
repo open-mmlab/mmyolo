@@ -19,7 +19,6 @@ from mmdet.structures.mask import PolygonMasks
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
-from .bbox_keypoint_structure import BBoxKeypoints
 
 # TODO: Waiting for MMCV support
 TRANSFORMS.register_module(module=Compose, force=True)
@@ -505,6 +504,25 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         h, w = results['ori_shape']
         gt_masks = PolygonMasks([mask for mask in gt_masks], h, w)
         results['gt_masks'] = gt_masks
+
+    def _load_keypoints(self, results: dict) -> None:
+        pass
+
+    def _load_kps(self, results: dict) -> None:
+        """Private function to load keypoints annotations.
+
+        Args:
+            results (dict): Result dict from
+                :class:`mmengine.dataset.BaseDataset`.
+
+        Returns:
+            dict: The dict contains loaded keypoints annotations.
+        """
+        gt_keypoints = []
+        for instance in results['instances']:
+            gt_keypoints.append(instance['keypoints'])
+        results['gt_keypoints'] = np.array(gt_keypoints, np.float32).reshape(
+            (len(gt_keypoints), -1, 3))
 
     def __repr__(self) -> str:
         repr_str = self.__class__.__name__
@@ -1561,40 +1579,6 @@ class RegularizeRotatedBox(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class PoseToDetConverter(BaseTransform):
-    """This transform converts the pose data element into a format that is
-    suitable for the mmdet transforms."""
-
-    def transform(self, results: dict) -> dict:
-
-        results['seg_map_path'] = None
-        results['height'] = results['img_shape'][0]
-        results['width'] = results['img_shape'][1]
-
-        num_instances = len(results.get('bbox', []))
-
-        if num_instances == 0:
-            results['bbox'] = np.empty((0, 4), dtype=np.float32)
-            results['keypoints'] = np.empty(
-                (0, len(results['flip_indices']), 2), dtype=np.float32)
-            results['keypoints_visible'] = np.empty(
-                (0, len(results['flip_indices'])), dtype=np.int32)
-            results['category_id'] = []
-
-        results['gt_bboxes'] = BBoxKeypoints(
-            data=results['bbox'],
-            keypoints=results['keypoints'],
-            keypoints_visible=results['keypoints_visible'],
-            flip_indices=results['flip_indices'],
-        )
-
-        results['gt_ignore_flags'] = np.array([False] * num_instances)
-        results['gt_bboxes_labels'] = np.array(results['category_id']) - 1
-
-        return results
-
-
-@TRANSFORMS.register_module()
 class PackDetPoseInputs(PackDetInputs):
     mapping_table = {
         'gt_bboxes': 'bboxes',
@@ -1627,7 +1611,7 @@ class PackDetPoseInputs(PackDetInputs):
 
 
 @TRANSFORMS.register_module()
-class FilterDetPoseAnnotations(FilterDetAnnotations):
+class FilterAnnotations(FilterDetAnnotations):
     """Filter invalid annotations.
 
     In addition to the conditions checked by ``FilterDetAnnotations``, this
