@@ -108,7 +108,7 @@
 | 🌟  | 自定义数据集从标注到部署保姆级教程 | [![Link](https://i2.hdslb.com/bfs/archive/13f566c89a18c9c881713b63ec14da952d4c0b14.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1RG4y137i5)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1RG4y137i5)](https://www.bilibili.com/video/BV1JG4y1d7GC) |                                                 [自定义数据集从标注到部署保姆级教程](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/user_guides/custom_dataset.md)                                                  |
 | 🌟  |      顶会第一步 · 模块自定义       | [![Link](http://i2.hdslb.com/bfs/archive/5b23d41ac57466824eaf185ef806ef734414e93b.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1yd4y1j7VD)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1yd4y1j7VD)](https://www.bilibili.com/video/BV1yd4y1j7VD)  |                                    [顶会第一步·模块自定义.ipynb](https://github.com/open-mmlab/OpenMMLabCourse/blob/main/codes/MMYOLO_tutorials/[实用类第四期]顶会第一步·模块自定义.ipynb)                                    |
 
-完整视频列表请参考 [资源汇总页面](https://mmyolo.readthedocs.io/zh_CN/latest/article.html)
+完整视频列表请参考 [中文解读资源汇总 - 视频](https://mmyolo.readthedocs.io/zh_CN/latest/get_started/article.html#id4)
 
 发布历史和更新细节请参考 [更新日志](https://mmyolo.readthedocs.io/zh_CN/latest/notes/changelog.html)
 
