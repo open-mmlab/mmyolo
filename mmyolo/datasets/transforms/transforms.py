@@ -501,6 +501,8 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                             # ignore
                             self._mask_ignore_flag.append(0)
                         else:
+                            if len(gt_mask) > 1:
+                                gt_mask = self.merge_multi_segment(gt_mask)
                             gt_masks.append(gt_mask)
                             gt_ignore_flags.append(instance['ignore_flag'])
                             self._mask_ignore_flag.append(1)
@@ -518,6 +520,68 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         h, w = results['ori_shape']
         gt_masks = PolygonMasks([mask for mask in gt_masks], h, w)
         results['gt_masks'] = gt_masks
+
+    def merge_multi_segment(self, gt_masks: List[np.array]):
+        """Merge multi segments to one list.
+
+        Find the coordinates with min distance between each segment,
+        then connect these coordinates with one thin line to merge all
+        segments into one.
+        Args:
+            segments(List(List)): original segmentations in coco's json file.
+                like [segmentation1, segmentation2,...],
+                each segmentation is a list of coordinates.
+        """
+        s = []
+        segments = [np.array(i).reshape(-1, 2) for i in gt_masks]
+        idx_list = [[] for _ in range(len(gt_masks))]
+
+        # record the indexes with min distance between each segment
+        for i in range(1, len(segments)):
+            idx1, idx2 = self.min_index(segments[i - 1], segments[i])
+            idx_list[i - 1].append(idx1)
+            idx_list[i].append(idx2)
+
+        # use two round to connect all the segments
+        for k in range(2):
+            # forward connection
+            if k == 0:
+                for i, idx in enumerate(idx_list):
+                    # middle segments have two indexes
+                    # reverse the index of middle segments
+                    if len(idx) == 2 and idx[0] > idx[1]:
+                        idx = idx[::-1]
+                        segments[i] = segments[i][::-1, :]
+
+                    segments[i] = np.roll(segments[i], -idx[0], axis=0)
+                    segments[i] = np.concatenate(
+                        [segments[i], segments[i][:1]])
+                    # deal with the first segment and the last one
+                    if i in [0, len(idx_list) - 1]:
+                        s.append(segments[i])
+                    else:
+                        idx = [0, idx[1] - idx[0]]
+                        s.append(segments[i][idx[0]:idx[1] + 1])
+
+            else:
+                for i in range(len(idx_list) - 1, -1, -1):
+                    if i not in [0, len(idx_list) - 1]:
+                        idx = idx_list[i]
+                        nidx = abs(idx[1] - idx[0])
+                        s.append(segments[i][nidx:])
+        return [np.concatenate(s).reshape(-1, )]
+
+    def min_index(self, arr1, arr2):
+        """Find a pair of indexes with the shortest distance.
+
+        Args:
+            arr1: (N, 2).
+            arr2: (M, 2).
+        Return:
+            a pair of indexes(tuple).
+        """
+        dis = ((arr1[:, None, :] - arr2[None, :, :])**2).sum(-1)
+        return np.unravel_index(np.argmin(dis, axis=None), dis.shape)
 
     def __repr__(self) -> str:
         repr_str = self.__class__.__name__
@@ -671,7 +735,7 @@ class YOLOv5RandomAffine(BaseTransform):
                                           img_h, img_w)
 
                 # refine bboxes by masks
-                bboxes = gt_masks.get_bboxes(dst_type='hbox')
+                bboxes = self.segment2box(gt_masks, height, width)
                 if self.bbox_clip_border:
                     bboxes.clip_([height, width])
                     gt_masks = self.clip_polygons(gt_masks, height, width)
@@ -702,6 +766,44 @@ class YOLOv5RandomAffine(BaseTransform):
                 results['gt_masks'] = PolygonMasks([], img_h, img_w)
 
         return results
+
+    def segment2box(self, gt_masks: PolygonMasks, height: int, width: int):
+        """
+        Convert 1 segment label to 1 box label, applying inside-image
+        constraint i.e. (xy1, xy2, ...) to (xyxy)
+        Args:
+            segment (torch.Tensor): the segment label
+            width (int): the width of the image. Defaults to 640
+            height (int): The height of the image. Defaults to 640
+        Returns:
+            (np.ndarray): the minimum and maximum x and y values
+                          of the segment.
+        """
+        bboxes = []
+        for idx, poly_per_obj in enumerate(gt_masks):
+            # simply use a number that is big enough for comparison with
+            # coordinates
+            xy_min = np.array([width * 2, height * 2], dtype=np.float32)
+            xy_max = np.zeros(2, dtype=np.float32) - 1
+
+            for p in poly_per_obj:
+                xy = np.array(p).reshape(-1, 2).astype(np.float32)
+                x, y = xy.T
+                inside = (x >= 0) & (y >= 0) & (x <= width) & (y <= height)
+                x, y = x[inside], y[inside]
+                if not any(x):
+                    continue
+                xy = np.stack([x, y], axis=0).T
+
+                xy_min = np.minimum(xy_min, np.min(xy, axis=0))
+                xy_max = np.maximum(xy_max, np.max(xy, axis=0))
+            if xy_max[0] == -1:
+                bbox = np.zeros(4, dtype=np.float32)
+            else:
+                bbox = np.concatenate([xy_min, xy_max], axis=0)
+            bboxes.append(bbox)
+
+        return HorizontalBoxes(np.stack(bboxes, axis=0))
 
     # TODO: Move to mmdet
     def clip_polygons(self, gt_masks: PolygonMasks, height: int, width: int):
