@@ -7,6 +7,7 @@ import cv2
 import mmcv
 import numpy as np
 import torch
+from mmcv.image.geometric import _scale_size
 from mmcv.transforms import BaseTransform, Compose
 from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import FilterAnnotations as FilterDetAnnotations
@@ -1763,3 +1764,40 @@ class RandomFlip(MMDET_RandomFlip):
                 results['gt_seg_map'], direction=results['flip_direction'])
 
         # record homography matrix for flip
+        self._record_homography_matrix(results)
+
+
+@TRANSFORMS.register_module()
+class Resize(MMDET_Resize):
+
+    def _resize_keypoints(self, results: dict) -> None:
+        """Resize bounding boxes with ``results['scale_factor']``."""
+        if results.get('gt_keypoints', None) is not None:
+            results['gt_keypoints'].rescale_(results['scale_factor'])
+            if self.clip_object_border:
+                results['gt_keypoints'].clip_(results['img_shape'])
+
+    @autocast_box_type()
+    def transform(self, results: dict) -> dict:
+        """Transform function to resize images, bounding boxes and semantic
+        segmentation map.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+        Returns:
+            dict: Resized results, 'img', 'gt_bboxes', 'gt_seg_map',
+            'scale', 'scale_factor', 'height', 'width', and 'keep_ratio' keys
+            are updated in result dict.
+        """
+        if self.scale:
+            results['scale'] = self.scale
+        else:
+            img_shape = results['img'].shape[:2]
+            results['scale'] = _scale_size(img_shape[::-1], self.scale_factor)
+        self._resize_img(results)
+        self._resize_bboxes(results)
+        self._resize_keypoints(results)
+        self._resize_masks(results)
+        self._resize_seg(results)
+        self._record_homography_matrix(results)
+        return results
