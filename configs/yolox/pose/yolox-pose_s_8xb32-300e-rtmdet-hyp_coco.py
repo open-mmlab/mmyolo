@@ -93,7 +93,7 @@ train_pipeline_stage2 = [
 
 test_pipeline = [
     *pre_transform,
-    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
+    dict(type='Resize', scale=img_scale, keep_ratio=True),
     dict(
         type='mmdet.Pad',
         pad_to_square=True,
@@ -107,7 +107,7 @@ test_pipeline = [
 # dataset settings
 dataset_type = 'CocoPoseDataset'
 data_mode = 'bottomup'
-data_root = 'data/coco/'
+data_root = '/Users/yechenzhi/data/coco/'
 
 train_dataloader = dict(
     _delete_=True,
