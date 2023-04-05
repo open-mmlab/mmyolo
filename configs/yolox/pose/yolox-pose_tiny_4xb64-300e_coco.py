@@ -34,11 +34,11 @@ train_pipeline_stage1 = [
         pad_val=114.0,
         pre_transform=pre_transform),
     dict(
-        type='mmdet.RandomAffine',
+        type='RandomAffine',
         scaling_ratio_range=(0.75, 1.0),
         border=(-img_scale[0] // 2, -img_scale[1] // 2)),
     dict(type='mmdet.YOLOXHSVRandomAug'),
-    dict(type='mmdet.RandomFlip', prob=0.5),
+    dict(type='RandomFlip', prob=0.5),
     dict(
         type='FilterDetPoseAnnotations',
         min_gt_bbox_wh=(1, 1),
@@ -50,7 +50,7 @@ train_pipeline_stage1 = [
 
 test_pipeline = [
     *pre_transform,
-    dict(type='mmdet.Resize', scale=(416, 416), keep_ratio=True),
+    dict(type='Resize', scale=(416, 416), keep_ratio=True),
     dict(
         type='mmdet.Pad',
         pad_to_square=True,

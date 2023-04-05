@@ -46,7 +46,9 @@ model = dict(
 
 # pipelines
 pre_transform = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args)
+    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadAnnotations', with_bbox=True, with_keypoints=True)
+    # dict(type='PoseToDetConverter')
 ]
 
 img_scale = _base_.img_scale
@@ -59,7 +61,7 @@ train_pipeline_stage1 = [
         pad_val=114.0,
         pre_transform=pre_transform),
     dict(
-        type='mmdet.RandomAffine',
+        type='RandomAffine',
         scaling_ratio_range=(0.75, 1.0),
         border=(-img_scale[0] // 2, -img_scale[1] // 2)),
     dict(
@@ -69,8 +71,8 @@ train_pipeline_stage1 = [
         pad_val=114.0,
         pre_transform=pre_transform),
     dict(type='mmdet.YOLOXHSVRandomAug'),
-    dict(type='mmdet.RandomFlip', prob=0.5),
-    dict(type='FilterAnnotations', keep_empty=False),
+    dict(type='RandomFlip', prob=0.5),
+    dict(type='FilterDetPoseAnnotations', keep_empty=False),
     dict(
         type='PackDetPoseInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape'))
@@ -78,13 +80,13 @@ train_pipeline_stage1 = [
 
 train_pipeline_stage2 = [
     *pre_transform,
-    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
+    dict(type='Resize', scale=img_scale, keep_ratio=True),
     dict(
         type='mmdet.Pad',
         pad_to_square=True,
         pad_val=dict(img=(114.0, 114.0, 114.0))),
     dict(type='mmdet.YOLOXHSVRandomAug'),
-    dict(type='mmdet.RandomFlip', prob=0.5),
+    dict(type='RandomFlip', prob=0.5),
     dict(type='FilterDetPoseAnnotations', keep_empty=False),
     dict(type='PackDetPoseInputs')
 ]
@@ -105,29 +107,29 @@ test_pipeline = [
 # dataset settings
 dataset_type = 'CocoPoseDataset'
 data_mode = 'bottomup'
-data_root = '/data/coco/'
+data_root = 'data/coco/'
 
 train_dataloader = dict(
     _delete_=True,
     batch_size=32,
-    num_workers=8,
-    persistent_workers=True,
+    num_workers=0,
+    persistent_workers=False,
     pin_memory=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
         data_mode=data_mode,
         data_root=data_root,
-        ann_file='annotations/person_keypoints_train2017.json',
-        data_prefix=dict(img='train2017/'),
+        ann_file='annotations/person_keypoints_val2017.json',
+        data_prefix=dict(img='val2017/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline_stage1))
 
 val_dataloader = dict(
     _delete_=True,
     batch_size=1,
-    num_workers=2,
-    persistent_workers=True,
+    num_workers=0,
+    persistent_workers=False,
     pin_memory=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
