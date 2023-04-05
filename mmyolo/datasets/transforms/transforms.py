@@ -12,6 +12,8 @@ from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import FilterAnnotations as FilterDetAnnotations
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
 from mmdet.datasets.transforms import PackDetInputs
+from mmdet.datasets.transforms import RandomAffine as MMDET_RandomAffine
+from mmdet.datasets.transforms import RandomFlip as MMDET_RandomFlip
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
@@ -19,6 +21,7 @@ from mmdet.structures.mask import PolygonMasks
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
+from .keypoint_structure import Keypoints
 
 # TODO: Waiting for MMCV support
 TRANSFORMS.register_module(module=Compose, force=True)
@@ -406,6 +409,9 @@ class LoadAnnotations(MMDET_LoadAnnotations):
             results['gt_bboxes'] = gt_bboxes
         else:
             results = super().transform(results)
+
+            if self.with_keypoints:
+                self._load_kps(results)
             self._update_mask_ignore_data(results)
         return results
 
@@ -504,6 +510,35 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         h, w = results['ori_shape']
         gt_masks = PolygonMasks([mask for mask in gt_masks], h, w)
         results['gt_masks'] = gt_masks
+
+    def _load_kps(self, results: dict) -> None:
+        """Private function to load keypoints annotations.
+
+        Args:
+            results (dict): Result dict from
+                :class:`mmengine.dataset.BaseDataset`.
+
+        Returns:
+            dict: The dict contains loaded keypoints annotations.
+        """
+        results['height'] = results['img_shape'][0]
+        results['width'] = results['img_shape'][1]
+        num_instances = len(results.get('bbox', []))
+
+        if num_instances == 0:
+            results['keypoints'] = np.empty(
+                (0, len(results['flip_indices']), 2), dtype=np.float32)
+            results['keypoints_visible'] = np.empty(
+                (0, len(results['flip_indices'])), dtype=np.int32)
+            results['category_id'] = []
+
+        results['gt_keypoints'] = Keypoints(
+            keypoints=results['keypoints'],
+            keypoints_visible=results['keypoints_visible'],
+            flip_indices=results['flip_indices'],
+        )
+
+        return results
 
     def __repr__(self) -> str:
         repr_str = self.__class__.__name__
@@ -1578,9 +1613,9 @@ class PackDetPoseInputs(PackDetInputs):
 
     def transform(self, results: dict) -> dict:
         # Add keypoints and their visibility to the results dictionary
-        results['gt_keypoints'] = results['gt_bboxes'].keypoints
         results['gt_keypoints_visible'] = results[
-            'gt_bboxes'].keypoints_visible
+            'gt_keypoints'].keypoints_visible
+        results['gt_keypoints'] = results['gt_keypoints'].keypoints
 
         # Ensure all keys in `self.meta_keys` are in the `results` dictionary,
         # which is necessary for `PackDetInputs` but not guaranteed during
@@ -1592,7 +1627,7 @@ class PackDetPoseInputs(PackDetInputs):
 
 
 @TRANSFORMS.register_module()
-class FilterAnnotations(FilterDetAnnotations):
+class FilterDetPoseAnnotations(FilterDetAnnotations):
     """Filter invalid annotations.
 
     In addition to the conditions checked by ``FilterDetAnnotations``, this
@@ -1618,7 +1653,7 @@ class FilterAnnotations(FilterDetAnnotations):
         if self.by_box:
             tests.append(((gt_bboxes.widths > self.min_gt_bbox_wh[0]) &
                           (gt_bboxes.heights > self.min_gt_bbox_wh[1]) &
-                          (gt_bboxes.num_keypoints > 0)).numpy())
+                          (results['num_keypoints'][0] > 0)).numpy())
 
         if self.by_mask:
             assert 'gt_masks' in results
@@ -1639,3 +1674,92 @@ class FilterAnnotations(FilterDetAnnotations):
                 results[key] = results[key][keep]
 
         return results
+
+
+# TODO: Check if it can be merged with mmdet.YOLOXHSVRandomAug
+@TRANSFORMS.register_module()
+class RandomAffine(MMDET_RandomAffine):
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+    @autocast_box_type()
+    def transform(self, results: dict) -> dict:
+        img = results['img']
+        height = img.shape[0] + self.border[1] * 2
+        width = img.shape[1] + self.border[0] * 2
+
+        warp_matrix = self._get_random_homography_matrix(height, width)
+
+        img = cv2.warpPerspective(
+            img,
+            warp_matrix,
+            dsize=(width, height),
+            borderValue=self.border_val)
+        results['img'] = img
+        results['img_shape'] = img.shape
+
+        bboxes = results['gt_bboxes']
+        num_bboxes = len(bboxes)
+        if num_bboxes:
+            bboxes.project_(warp_matrix)
+            if self.bbox_clip_border:
+                bboxes.clip_([height, width])
+            # remove outside bbox
+            valid_index = bboxes.is_inside([height, width]).numpy()
+            results['gt_bboxes'] = bboxes[valid_index]
+            results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
+                valid_index]
+            results['gt_ignore_flags'] = results['gt_ignore_flags'][
+                valid_index]
+
+            if 'gt_masks' in results:
+                raise NotImplementedError('RandomAffine only supports bbox.')
+
+            if 'gt_keypoints' in results:
+                results['gt_keypoints'].project_(warp_matrix)
+                if self.bbox_clip_border:
+                    results['gt_keypoints'].clip_([height, width])
+                results['gt_keypoints'] = results['gt_keypoints'][valid_index]
+        return results
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(hue_delta={self.hue_delta}, '
+        repr_str += f'saturation_delta={self.saturation_delta}, '
+        repr_str += f'value_delta={self.value_delta})'
+        return repr_str
+
+
+# TODO: Check if it can be merged with mmdet.YOLOXHSVRandomAug
+@TRANSFORMS.register_module()
+class RandomFlip(MMDET_RandomFlip):
+
+    @autocast_box_type()
+    def _flip(self, results: dict) -> None:
+        """Flip images, bounding boxes, and semantic segmentation map."""
+        # flip image
+        results['img'] = mmcv.imflip(
+            results['img'], direction=results['flip_direction'])
+
+        img_shape = results['img'].shape[:2]
+
+        # flip bboxes
+        if results.get('gt_bboxes', None) is not None:
+            results['gt_bboxes'].flip_(img_shape, results['flip_direction'])
+
+        # flip keypoints
+        if results.get('gt_keypoints', None) is not None:
+            results['gt_keypoints'].flip_(img_shape, results['flip_direction'])
+
+        # flip masks
+        if results.get('gt_masks', None) is not None:
+            results['gt_masks'] = results['gt_masks'].flip(
+                results['flip_direction'])
+
+        # flip segs
+        if results.get('gt_seg_map', None) is not None:
+            results['gt_seg_map'] = mmcv.imflip(
+                results['gt_seg_map'], direction=results['flip_direction'])
+
+        # record homography matrix for flip
