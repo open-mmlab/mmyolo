@@ -107,7 +107,7 @@ test_pipeline = [
 # dataset settings
 dataset_type = 'CocoPoseDataset'
 data_mode = 'bottomup'
-data_root = '/Users/yechenzhi/data/coco/'
+data_root = 'data/coco/'
 
 train_dataloader = dict(
     _delete_=True,
