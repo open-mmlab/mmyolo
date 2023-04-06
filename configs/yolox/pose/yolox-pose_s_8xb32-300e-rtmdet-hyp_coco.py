@@ -72,7 +72,7 @@ train_pipeline_stage1 = [
         pre_transform=pre_transform),
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='RandomFlip', prob=0.5),
-    dict(type='FilterDetPoseAnnotations', keep_empty=False),
+    dict(type='FilterAnnotations', by_keypoints=True, keep_empty=False),
     dict(
         type='PackDetPoseInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape'))
@@ -87,7 +87,7 @@ train_pipeline_stage2 = [
         pad_val=dict(img=(114.0, 114.0, 114.0))),
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='RandomFlip', prob=0.5),
-    dict(type='FilterDetPoseAnnotations', keep_empty=False),
+    dict(type='FilterAnnotations', by_keypoints=True, keep_empty=False),
     dict(type='PackDetPoseInputs')
 ]
 
@@ -120,16 +120,16 @@ train_dataloader = dict(
         type=dataset_type,
         data_mode=data_mode,
         data_root=data_root,
-        ann_file='annotations/person_keypoints_val2017.json',
-        data_prefix=dict(img='val2017/'),
+        ann_file='annotations/person_keypoints_train2017.json',
+        data_prefix=dict(img='train2017/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline_stage1))
 
 val_dataloader = dict(
     _delete_=True,
     batch_size=1,
-    num_workers=2,
-    persistent_workers=True,
+    num_workers=0,
+    persistent_workers=False,
     pin_memory=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),

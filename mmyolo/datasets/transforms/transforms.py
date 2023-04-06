@@ -1628,13 +1628,18 @@ class PackDetPoseInputs(PackDetInputs):
 
 
 @TRANSFORMS.register_module()
-class FilterDetPoseAnnotations(FilterDetAnnotations):
+class FilterAnnotations(FilterDetAnnotations):
     """Filter invalid annotations.
 
     In addition to the conditions checked by ``FilterDetAnnotations``, this
     filter adds a new condition requiring instances to have at least one
     visible keypoints.
     """
+
+    def __init__(self, by_keypoints: bool = True, **kwargs) -> None:
+        # TODO: add more filter options
+        super().__init__(**kwargs)
+        self.by_keypoints = by_keypoints
 
     @autocast_box_type()
     def transform(self, results: dict) -> Union[dict, None]:
@@ -1652,14 +1657,19 @@ class FilterDetPoseAnnotations(FilterDetAnnotations):
 
         tests = []
         if self.by_box:
-            tests.append(((gt_bboxes.widths > self.min_gt_bbox_wh[0]) &
-                          (gt_bboxes.heights > self.min_gt_bbox_wh[1]) &
-                          (results['num_keypoints'][0] > 0)).numpy())
+            tests.append(
+                ((gt_bboxes.widths > self.min_gt_bbox_wh[0]) &
+                 (gt_bboxes.heights > self.min_gt_bbox_wh[1])).numpy())
 
         if self.by_mask:
             assert 'gt_masks' in results
             gt_masks = results['gt_masks']
             tests.append(gt_masks.areas >= self.min_gt_mask_area)
+
+        if self.by_keypoints:
+            assert 'gt_keypoints' in results
+            num_keypoints = results['gt_keypoints'].num_keypoints
+            tests.append((num_keypoints > 0).numpy())
 
         keep = tests[0]
         for t in tests[1:]:

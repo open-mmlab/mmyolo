@@ -40,7 +40,8 @@ train_pipeline_stage1 = [
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='RandomFlip', prob=0.5),
     dict(
-        type='FilterDetPoseAnnotations',
+        type='FilterAnnotations',
+        by_keypoints=True,
         min_gt_bbox_wh=(1, 1),
         keep_empty=False),
     dict(
