@@ -54,3 +54,29 @@ class TestBatchTaskAlignedAssigner(TestCase):
         self.assertEqual(assigned_scores.shape,
                          torch.Size([batch_size, 84, num_classes]))
         self.assertEqual(fg_mask_pre_prior.shape, torch.Size([batch_size, 84]))
+        # test cpu assigner
+        assigner_cpu = BatchTaskAlignedAssigner(
+            num_classes=num_classes,
+            alpha=1,
+            beta=6,
+            topk=13,
+            eps=1e-9,
+            gpu_assign_thr=1)
+
+        assign_result_cpu = assigner_cpu.forward(pred_bboxes, pred_scores,
+                                                 priors, gt_labels, gt_bboxes,
+                                                 pad_bbox_flag)
+
+        assigned_labels_cpu = assign_result_cpu['assigned_labels']
+        assigned_bboxes_cpu = assign_result_cpu['assigned_bboxes']
+        assigned_scores_cpu = assign_result_cpu['assigned_scores']
+        fg_mask_pre_prior_cpu = assign_result_cpu['fg_mask_pre_prior']
+
+        self.assertEqual(assigned_labels_cpu.shape,
+                         torch.Size([batch_size, 84]))
+        self.assertEqual(assigned_bboxes_cpu.shape,
+                         torch.Size([batch_size, 84, 4]))
+        self.assertEqual(assigned_scores_cpu.shape,
+                         torch.Size([batch_size, 84, num_classes]))
+        self.assertEqual(fg_mask_pre_prior_cpu.shape,
+                         torch.Size([batch_size, 84]))

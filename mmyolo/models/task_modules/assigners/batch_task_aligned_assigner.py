@@ -35,6 +35,9 @@ class BatchTaskAlignedAssigner(nn.Module):
         eps (float): Eps to avoid log(0). Default set to 1e-9
         use_ciou (bool): Whether to use ciou while calculating iou.
             Defaults to False.
+        gpu_assign_thr (int): The upper bound of the number of GT for GPU
+            assign. When the number of gt is above this threshold, will assign
+            on CPU device. Negative values mean not assign on CPU.
     """
 
     def __init__(self,
@@ -43,7 +46,8 @@ class BatchTaskAlignedAssigner(nn.Module):
                  alpha: float = 1.0,
                  beta: float = 6.0,
                  eps: float = 1e-7,
-                 use_ciou: bool = False):
+                 use_ciou: bool = False,
+                 gpu_assign_thr: float = -1):
         super().__init__()
         self.num_classes = num_classes
         self.topk = topk
@@ -51,6 +55,8 @@ class BatchTaskAlignedAssigner(nn.Module):
         self.beta = beta
         self.eps = eps
         self.use_ciou = use_ciou
+        self.gpu_assign_thr = gpu_assign_thr
+        self.assign_on_cpu = False
 
     @torch.no_grad()
     def forward(
@@ -110,9 +116,18 @@ class BatchTaskAlignedAssigner(nn.Module):
             'fg_mask_pre_prior':
             gt_bboxes.new_full(pred_scores[..., 0].shape, 0)
         }
-
+        self.assign_on_cpu = True if (self.gpu_assign_thr > 0) and (
+            num_gt > self.gpu_assign_thr) else False
         if num_gt == 0:
             return assigned_result
+        elif self.assign_on_cpu:
+            device = pred_bboxes.device
+            pred_bboxes = pred_bboxes.cpu()
+            pred_scores = pred_scores.cpu().to(torch.float)
+            priors = priors.cpu().to(torch.float)
+            gt_labels = gt_labels.cpu()
+            gt_bboxes = gt_bboxes.cpu()
+            pad_bbox_flag = pad_bbox_flag.cpu()
 
         pos_mask, alignment_metrics, overlaps = self.get_pos_mask(
             pred_bboxes, pred_scores, priors, gt_labels, gt_bboxes,
@@ -134,11 +149,17 @@ class BatchTaskAlignedAssigner(nn.Module):
             alignment_metrics * pos_overlaps /
             (pos_align_metrics + self.eps)).max(-2)[0].unsqueeze(-1)
         assigned_scores = assigned_scores * norm_align_metric
-
-        assigned_result['assigned_labels'] = assigned_labels
-        assigned_result['assigned_bboxes'] = assigned_bboxes
-        assigned_result['assigned_scores'] = assigned_scores
-        assigned_result['fg_mask_pre_prior'] = fg_mask_pre_prior.bool()
+        if self.assign_on_cpu:
+            assigned_result['assigned_labels'] = assigned_labels.to(device)
+            assigned_result['assigned_bboxes'] = assigned_bboxes.to(device)
+            assigned_result['assigned_scores'] = assigned_scores.to(device)
+            fg_mask_pre_prior = fg_mask_pre_prior.bool().to(device)
+            assigned_result['fg_mask_pre_prior'] = fg_mask_pre_prior
+        else:
+            assigned_result['assigned_labels'] = assigned_labels
+            assigned_result['assigned_bboxes'] = assigned_bboxes
+            assigned_result['assigned_scores'] = assigned_scores
+            assigned_result['fg_mask_pre_prior'] = fg_mask_pre_prior.bool()
         return assigned_result
 
     def get_pos_mask(self, pred_bboxes: Tensor, pred_scores: Tensor,
@@ -180,9 +201,20 @@ class BatchTaskAlignedAssigner(nn.Module):
         is_in_gts = select_candidates_in_gts(priors, gt_bboxes)
 
         # get topk_metric mask
-        topk_metric = self.select_topk_candidates(
-            alignment_metrics * is_in_gts,
-            topk_mask=pad_bbox_flag.repeat([1, 1, self.topk]).bool())
+        if self.assign_on_cpu:
+            topk_metric = []
+            for alignment_gt_metric_, topk_mask_ in zip(
+                    alignment_metrics * is_in_gts,
+                    pad_bbox_flag.repeat([1, 1, self.topk]).bool()):
+                topk_metric_ = self.select_topk_candidates(
+                    alignment_gt_metric_.unsqueeze(0),
+                    topk_mask=topk_mask_.unsqueeze(0))
+                topk_metric.append(topk_metric_[0, :, :])
+            topk_metric = torch.stack(topk_metric, dim=0)
+        else:
+            topk_metric = self.select_topk_candidates(
+                alignment_metrics * is_in_gts,
+                topk_mask=pad_bbox_flag.repeat([1, 1, self.topk]).bool())
 
         # merge all mask to a final mask
         pos_mask = topk_metric * is_in_gts * pad_bbox_flag
