@@ -36,7 +36,7 @@ model = dict(
             center_radius=2.5,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             oks_calculator=dict(
-                type='OksLoss', metainfo='configs/_base_/datasets/coco.py'))),
+                type='OksLoss', metainfo='configs/_base_/pose/coco.py'))),
     test_cfg=dict(
         yolox_style=True,
         multi_label=False,
