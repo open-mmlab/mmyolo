@@ -128,8 +128,8 @@ train_dataloader = dict(
 val_dataloader = dict(
     _delete_=True,
     batch_size=1,
-    num_workers=0,
-    persistent_workers=False,
+    num_workers=2,
+    persistent_workers=True,
     pin_memory=True,
     drop_last=False,
     sampler=dict(type='DefaultSampler', shuffle=False),
