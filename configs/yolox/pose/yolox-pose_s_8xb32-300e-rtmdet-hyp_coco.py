@@ -28,7 +28,7 @@ model = dict(
         ),
         loss_pose=dict(
             type='OksLoss',
-            metainfo='configs/_base_/datasets/coco.py',
+            metainfo='configs/_base_/pose/coco.py',
             loss_weight=30.0)),
     train_cfg=dict(
         assigner=dict(
@@ -107,7 +107,7 @@ test_pipeline = [
 # dataset settings
 dataset_type = 'CocoPoseDataset'
 data_mode = 'bottomup'
-data_root = 'data/coco/'
+data_root = '/Users/yechenzhi/data/coco/'
 
 train_dataloader = dict(
     _delete_=True,
@@ -120,8 +120,8 @@ train_dataloader = dict(
         type=dataset_type,
         data_mode=data_mode,
         data_root=data_root,
-        ann_file='annotations/person_keypoints_train2017.json',
-        data_prefix=dict(img='train2017/'),
+        ann_file='annotations/person_keypoints_val2017.json',
+        data_prefix=dict(img='val2017/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline_stage1))
 
