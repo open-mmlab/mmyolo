@@ -13,6 +13,28 @@ from .base_yolo_neck import BaseYOLONeck
 
 
 @MODELS.register_module()
+class TempCLIPdownsampleneck(nn.Module):
+
+    def __init__(self, in_channels, output_channels, norm_cfg, act_cfg):
+        super().__init__()
+        self.layers = nn.ModuleList()
+        for in_channel, output_channel in zip(in_channels, output_channels):
+            self.layers.append(
+                ConvModule(
+                    in_channel,
+                    output_channel,
+                    kernel_size=1,
+                    norm_cfg=norm_cfg,
+                    act_cfg=act_cfg))
+
+    def forward(self, x):
+        res = []
+        for ind in range(len(x)):
+            res.append(self.layers[ind](x[ind]))
+        return res
+
+
+@MODELS.register_module()
 class YOLOv5PAFPN(BaseYOLONeck):
     """Path Aggregation Network used in YOLOv5.
 
