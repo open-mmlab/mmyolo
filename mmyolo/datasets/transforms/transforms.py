@@ -736,12 +736,12 @@ class YOLOv5RandomAffine(BaseTransform):
 
                 # refine bboxes by masks
                 bboxes = self.segment2box(gt_masks, height, width)
-                if self.bbox_clip_border:
-                    bboxes.clip_([height, width])
-                    gt_masks = self.clip_polygons(gt_masks, height, width)
                 # filter bboxes outside image
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
                                                     bboxes).numpy()
+                if self.bbox_clip_border:
+                    bboxes.clip_([height - 1e-3, width - 1e-3])
+                    gt_masks = self.clip_polygons(gt_masks, height, width)
                 results['gt_masks'] = gt_masks[valid_index]
             else:
                 bboxes.project_(warp_matrix)
@@ -822,8 +822,8 @@ class YOLOv5RandomAffine(BaseTransform):
                 clipped_poly_per_obj = []
                 for p in poly_per_obj:
                     p = p.copy()
-                    p[0::2].clip(0, width)
-                    p[1::2].clip(0, height)
+                    p[0::2] = p[0::2].clip(0, width)
+                    p[1::2] = p[1::2].clip(0, height)
                     clipped_poly_per_obj.append(p)
                 clipped_masks.append(clipped_poly_per_obj)
             clipped_masks = PolygonMasks(clipped_masks, height, width)

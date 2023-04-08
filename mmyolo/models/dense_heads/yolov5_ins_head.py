@@ -395,7 +395,7 @@ class YOLOv5InsHead(YOLOv5Head):
                     mask_gti = batch_gt_masks[targets_inds][match_inds]
 
                 mask_preds = (retained_coeff_preds[match_inds]
-                              @ proto_preds[bs].float().view(c, -1)).view(
+                              @ proto_preds[bs].view(c, -1)).view(
                                   -1, mask_h, mask_w)
                 loss_mask_full = self.loss_mask(mask_preds, mask_gti)
                 loss_mask += (
