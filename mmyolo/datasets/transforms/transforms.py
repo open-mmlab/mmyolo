@@ -408,11 +408,14 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                 self._update_mask_ignore_data(results)
             gt_bboxes = results['gt_masks'].get_bboxes(dst_type='hbox')
             results['gt_bboxes'] = gt_bboxes
+        elif self.with_keypoints:
+            self._load_kps(results)
+            _, box_type_cls = get_box_type(self.box_type)
+            results['gt_bboxes'] = box_type_cls(
+                results['bbox'], dtype=torch.float32)
         else:
             results = super().transform(results)
 
-            if self.with_keypoints:
-                self._load_kps(results)
             self._update_mask_ignore_data(results)
         return results
 
@@ -538,6 +541,9 @@ class LoadAnnotations(MMDET_LoadAnnotations):
             keypoints_visible=results['keypoints_visible'],
             flip_indices=results['flip_indices'],
         )
+
+        results['gt_ignore_flags'] = np.array([False] * num_instances)
+        results['gt_bboxes_labels'] = np.array(results['category_id']) - 1
 
         return results
 
@@ -1636,7 +1642,7 @@ class FilterAnnotations(FilterDetAnnotations):
     visible keypoints.
     """
 
-    def __init__(self, by_keypoints: bool = True, **kwargs) -> None:
+    def __init__(self, by_keypoints: bool = False, **kwargs) -> None:
         # TODO: add more filter options
         super().__init__(**kwargs)
         self.by_keypoints = by_keypoints
@@ -1728,10 +1734,11 @@ class RandomAffine(MMDET_RandomAffine):
                 raise NotImplementedError('RandomAffine only supports bbox.')
 
             if 'gt_keypoints' in results:
-                results['gt_keypoints'].project_(warp_matrix)
+                keypoints = results['gt_keypoints']
+                keypoints.project_(warp_matrix)
                 if self.bbox_clip_border:
-                    results['gt_keypoints'].clip_([height, width])
-                results['gt_keypoints'] = results['gt_keypoints'][valid_index]
+                    keypoints.clip_([height, width])
+                results['gt_keypoints'] = keypoints[valid_index]
         return results
 
     def __repr__(self) -> str:

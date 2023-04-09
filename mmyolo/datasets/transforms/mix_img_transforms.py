@@ -1060,6 +1060,7 @@ class YOLOXMixUp(BaseMixImageTransform):
         if results['mix_results'][0]['gt_bboxes'].shape[0] == 0:
             # empty bbox
             return results
+
         retrieve_results = results['mix_results'][0]
         retrieve_img = retrieve_results['img']
 
