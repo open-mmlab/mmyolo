@@ -1,5 +1,7 @@
 _base_ = ['../yolox_s_fast_8xb32-300e-rtmdet-hyp_coco.py']
 
+load_from = 'https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_fast_8xb32-300e-rtmdet-hyp_coco/yolox_s_fast_8xb32-300e-rtmdet-hyp_coco_20230210_134645-3a8dfbd7.pth'  # noqa
+
 # model settings
 model = dict(
     type='YOLODetector',
@@ -10,11 +12,11 @@ model = dict(
         'yolox_s_fast_8xb32-300e-rtmdet-hyp_coco/yolox_s_fast_'
         '8xb32-300e-rtmdet-hyp_coco_20230210_134645-3a8dfbd7.pth'),
     data_preprocessor=dict(
-        type='mmdet.DetDataPreprocessor',
+        type='YOLOv5DetDataPreprocessor',
         pad_size_divisor=32,
         batch_augments=[
             dict(
-                type='PoseBatchSyncRandomResize',
+                type='YOLOXBatchSyncRandomResize',
                 random_size_range=(480, 800),
                 size_divisor=32,
                 interval=1)
@@ -47,8 +49,7 @@ model = dict(
 # pipelines
 pre_transform = [
     dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
-    dict(type='LoadAnnotations', with_bbox=True, with_keypoints=True)
-    # dict(type='PoseToDetConverter')
+    dict(type='LoadAnnotations', with_keypoints=True)
 ]
 
 img_scale = _base_.img_scale
@@ -107,7 +108,7 @@ test_pipeline = [
 # dataset settings
 dataset_type = 'CocoPoseDataset'
 data_mode = 'bottomup'
-data_root = '/Users/yechenzhi/data/coco/'
+data_root = 'data/coco/'
 
 train_dataloader = dict(
     _delete_=True,
@@ -115,6 +116,7 @@ train_dataloader = dict(
     num_workers=8,
     persistent_workers=True,
     pin_memory=True,
+    collate_fn=dict(type='yolov5_collate'),
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,

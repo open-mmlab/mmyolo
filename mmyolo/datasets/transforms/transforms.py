@@ -1739,6 +1739,7 @@ class RandomAffine(MMDET_RandomAffine):
                 if self.bbox_clip_border:
                     keypoints.clip_([height, width])
                 results['gt_keypoints'] = keypoints[valid_index]
+
         return results
 
     def __repr__(self) -> str:

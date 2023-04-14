@@ -20,6 +20,8 @@ def yolov5_collate(data_batch: Sequence,
     batch_imgs = []
     batch_bboxes_labels = []
     batch_masks = []
+    batch_keyponits = []
+    batch_keypoints_visible = []
     for i in range(len(data_batch)):
         datasamples = data_batch[i]['data_samples']
         inputs = data_batch[i]['inputs']
@@ -31,11 +33,16 @@ def yolov5_collate(data_batch: Sequence,
             masks = datasamples.gt_instances.masks.to_tensor(
                 dtype=torch.bool, device=gt_bboxes.device)
             batch_masks.append(masks)
+        if 'keypoints' in datasamples.gt_instances:
+            keypoints = datasamples.gt_instances.keypoints
+            keypoints_visible = datasamples.gt_instances.keypoints_visible
+            batch_keyponits.append(keypoints)
+            batch_keypoints_visible.append(keypoints_visible)
+
         batch_idx = gt_labels.new_full((len(gt_labels), 1), i)
         bboxes_labels = torch.cat((batch_idx, gt_labels[:, None], gt_bboxes),
                                   dim=1)
         batch_bboxes_labels.append(bboxes_labels)
-
     collated_results = {
         'data_samples': {
             'bboxes_labels': torch.cat(batch_bboxes_labels, 0)
@@ -43,6 +50,12 @@ def yolov5_collate(data_batch: Sequence,
     }
     if len(batch_masks) > 0:
         collated_results['data_samples']['masks'] = torch.cat(batch_masks, 0)
+
+    if len(batch_keyponits) > 0:
+        collated_results['data_samples']['keypoints'] = torch.cat(
+            batch_keyponits, 0)
+        collated_results['data_samples']['keypoints_visible'] = torch.cat(
+            batch_keypoints_visible, 0)
 
     if use_ms_training:
         collated_results['inputs'] = batch_imgs

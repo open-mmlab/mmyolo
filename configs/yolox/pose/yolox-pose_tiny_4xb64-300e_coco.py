@@ -1,10 +1,9 @@
 _base_ = ['./yolox-pose_s_8xb32-300e-rtmdet-hyp_coco.py']
 
+load_from = 'https://download.openmmlab.com/mmyolo/v0/yolox/yolox_tiny_fast_8xb32-300e-rtmdet-hyp_coco/yolox_tiny_fast_8xb32-300e-rtmdet-hyp_coco_20230210_143637-4c338102.pth'  # noqa
+
 # model settings
 model = dict(
-    init_cfg=dict(checkpoint='https://download.openmmlab.com/mmyolo/v0/yolox/'
-                  'yolox_tiny_fast_8xb32-300e-rtmdet-hyp_coco/yolox_tiny_fast_'
-                  '8xb32-300e-rtmdet-hyp_coco_20230210_143637-4c338102.pth'),
     data_preprocessor=dict(batch_augments=[
         dict(
             type='PoseBatchSyncRandomResize',

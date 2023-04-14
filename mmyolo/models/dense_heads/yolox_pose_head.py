@@ -104,6 +104,22 @@ class YOLOXPoseHead(YOLOXHead):
         self.sampler.clear()
         self._log.clear()
 
+    def loss(self, x: Tuple[Tensor], batch_data_samples: Union[list,
+                                                               dict]) -> dict:
+
+        if isinstance(batch_data_samples, list):
+            losses = super().loss(x, batch_data_samples)
+        else:
+            outs = self(x)
+            # Fast version
+            loss_inputs = outs + (batch_data_samples['bboxes_labels'],
+                                  batch_data_samples['keypoints'],
+                                  batch_data_samples['keypoints_visible'],
+                                  batch_data_samples['img_metas'])
+            losses = self.loss_by_feat(*loss_inputs)
+
+        return losses
+
     def loss_by_feat(
             self,
             cls_scores: Sequence[Tensor],
@@ -111,7 +127,9 @@ class YOLOXPoseHead(YOLOXHead):
             objectnesses: Sequence[Tensor],
             kpt_preds: Sequence[Tensor],
             vis_preds: Sequence[Tensor],
-            batch_gt_instances: Sequence[InstanceData],
+            batch_gt_instances: Tensor,
+            batch_gt_keypoints: Tensor,
+            batch_gt_keypoints_visible: Tensor,
             batch_img_metas: Sequence[dict],
             batch_gt_instances_ignore: OptInstanceList = None) -> dict:
         """Calculate the loss based on the features extracted by the detection
@@ -122,6 +140,9 @@ class YOLOXPoseHead(YOLOXHead):
         """
 
         self._clear()
+        batch_gt_instances = self.gt_kps_instances_preprocess(
+            batch_gt_instances, batch_gt_keypoints, batch_gt_keypoints_visible,
+            len(batch_img_metas))
 
         # collect keypoints coordinates and visibility from model predictions
         kpt_preds = torch.cat([
@@ -350,6 +371,39 @@ class YOLOXPoseHead(YOLOXHead):
         offsets = offsets.reshape(*offsets.shape[:2], -1, 2)
         xy_coordinates = (offsets[..., :2] * strides) + grids.unsqueeze(1)
         return xy_coordinates
+
+    @staticmethod
+    def gt_kps_instances_preprocess(batch_gt_instances: Tensor,
+                                    batch_gt_keypoints,
+                                    batch_gt_keypoints_visible,
+                                    batch_size: int) -> List[InstanceData]:
+        """Split batch_gt_instances with batch size.
+
+        Args:
+            batch_gt_instances (Tensor): Ground truth
+                a 2D-Tensor for whole batch, shape [all_gt_bboxes, 6]
+            batch_size (int): Batch size.
+
+        Returns:
+            List: batch gt instances data, shape [batch_size, InstanceData]
+        """
+        # faster version
+        batch_instance_list = []
+        for i in range(batch_size):
+            batch_gt_instance_ = InstanceData()
+            single_batch_instance = \
+                batch_gt_instances[batch_gt_instances[:, 0] == i, :]
+            keypoints = \
+                batch_gt_keypoints[batch_gt_instances[:, 0] == i, :]
+            keypoints_visible = \
+                batch_gt_keypoints_visible[batch_gt_instances[:, 0] == i, :]
+            batch_gt_instance_.bboxes = single_batch_instance[:, 2:]
+            batch_gt_instance_.labels = single_batch_instance[:, 1]
+            batch_gt_instance_.keypoints = keypoints
+            batch_gt_instance_.keypoints_visible = keypoints_visible
+            batch_instance_list.append(batch_gt_instance_)
+
+        return batch_instance_list
 
     @staticmethod
     def gt_instances_preprocess(batch_gt_instances: List[InstanceData], *args,

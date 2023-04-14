@@ -18,6 +18,34 @@ CastData = Union[tuple, dict, BaseDataElement, torch.Tensor, list, bytes, str,
 
 
 @MODELS.register_module()
+class PoseBatchSyncRandomResize(BatchSyncRandomResize):
+    """Batch random resize which synchronizes the random size across ranks.
+
+    This transform is similar to `mmdet.BatchSyncRandomResize`, but it also
+    rescales the keypoints coordinates simultaneously.
+    """
+
+    def forward(
+        self, inputs: Tensor, data_samples: List[PoseDataSample]
+    ) -> Tuple[Tensor, List[PoseDataSample]]:
+
+        inputs = inputs.float()
+        h, w = inputs.shape[-2:]
+        if self._input_size is None:
+            self._input_size = (h, w)
+        scale_y = self._input_size[0] / h
+        scale_x = self._input_size[1] / w
+        if scale_x != 1 or scale_y != 1:
+            import pdb
+            pdb.set_trace()
+            for data_sample in data_samples:
+                data_sample.gt_instances.keypoints[..., 0] *= scale_x
+                data_sample.gt_instances.keypoints[..., 1] *= scale_y
+
+        return super().forward(inputs, data_samples)
+
+
+@MODELS.register_module()
 class YOLOXBatchSyncRandomResize(BatchSyncRandomResize):
     """YOLOX batch random resize.
 
@@ -50,6 +78,10 @@ class YOLOXBatchSyncRandomResize(BatchSyncRandomResize):
             data_samples['bboxes_labels'][:, 2::2] *= scale_x
             data_samples['bboxes_labels'][:, 3::2] *= scale_y
 
+            if 'keypoints' in data_samples:
+                data_samples['keypoints'][..., 0] *= scale_x
+                data_samples['keypoints'][..., 1] *= scale_y
+
         message_hub = MessageHub.get_current_instance()
         if (message_hub.get_info('iter') + 1) % self._interval == 0:
             self._input_size = self._get_random_size(
@@ -81,7 +113,6 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
         """
         if not training:
             return super().forward(data, training)
-
         data = self.cast_data(data)
         inputs, data_samples = data['inputs'], data['data_samples']
         assert isinstance(data['data_samples'], dict)
@@ -103,6 +134,10 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
         }
         if 'masks' in data_samples:
             data_samples_output['masks'] = data_samples['masks']
+        if 'keypoints' in data_samples:
+            data_samples_output['keypoints'] = data_samples['keypoints']
+            data_samples_output['keypoints_visible'] = data_samples[
+                'keypoints_visible']
 
         return {'inputs': inputs, 'data_samples': data_samples_output}
 
@@ -301,29 +336,3 @@ class PPYOLOEBatchRandomResize(BatchSyncRandomResize):
         else:
             interp_mode = None
         return input_size, interp_mode
-
-
-@MODELS.register_module()
-class PoseBatchSyncRandomResize(BatchSyncRandomResize):
-    """Batch random resize which synchronizes the random size across ranks.
-
-    This transform is similar to `mmdet.BatchSyncRandomResize`, but it also
-    rescales the keypoints coordinates simultaneously.
-    """
-
-    def forward(
-        self, inputs: Tensor, data_samples: List[PoseDataSample]
-    ) -> Tuple[Tensor, List[PoseDataSample]]:
-
-        inputs = inputs.float()
-        h, w = inputs.shape[-2:]
-        if self._input_size is None:
-            self._input_size = (h, w)
-        scale_y = self._input_size[0] / h
-        scale_x = self._input_size[1] / w
-        if scale_x != 1 or scale_y != 1:
-            for data_sample in data_samples:
-                data_sample.gt_instances.keypoints[..., 0] *= scale_x
-                data_sample.gt_instances.keypoints[..., 1] *= scale_y
-
-        return super().forward(inputs, data_samples)
