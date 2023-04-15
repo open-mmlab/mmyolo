@@ -412,7 +412,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
             self._load_kps(results)
             _, box_type_cls = get_box_type(self.box_type)
             results['gt_bboxes'] = box_type_cls(
-                results['bbox'], dtype=torch.float32)
+                results.get('bbox', []), dtype=torch.float32)
         else:
             results = super().transform(results)
 

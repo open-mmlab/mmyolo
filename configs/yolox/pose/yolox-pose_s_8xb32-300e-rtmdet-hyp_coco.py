@@ -11,6 +11,7 @@ model = dict(
         checkpoint='https://download.openmmlab.com/mmyolo/v0/yolox/'
         'yolox_s_fast_8xb32-300e-rtmdet-hyp_coco/yolox_s_fast_'
         '8xb32-300e-rtmdet-hyp_coco_20230210_134645-3a8dfbd7.pth'),
+    use_syncbn=False,
     data_preprocessor=dict(
         type='YOLOv5DetDataPreprocessor',
         pad_size_divisor=32,
