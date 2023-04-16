@@ -5,13 +5,6 @@ load_from = 'https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_fast_8xb32-3
 # model settings
 model = dict(
     type='YOLODetector',
-    init_cfg=dict(
-        _delete_=True,
-        type='Pretrained',
-        checkpoint='https://download.openmmlab.com/mmyolo/v0/yolox/'
-        'yolox_s_fast_8xb32-300e-rtmdet-hyp_coco/yolox_s_fast_'
-        '8xb32-300e-rtmdet-hyp_coco_20230210_134645-3a8dfbd7.pth'),
-    use_syncbn=False,
     data_preprocessor=dict(
         type='YOLOv5DetDataPreprocessor',
         pad_size_divisor=32,
@@ -123,8 +116,8 @@ train_dataloader = dict(
         type=dataset_type,
         data_mode=data_mode,
         data_root=data_root,
-        ann_file='annotations/person_keypoints_val2017.json',
-        data_prefix=dict(img='val2017/'),
+        ann_file='annotations/person_keypoints_train2017.json',
+        data_prefix=dict(img='train2017/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline_stage1))
 
