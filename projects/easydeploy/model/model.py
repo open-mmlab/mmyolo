@@ -195,7 +195,7 @@ class DeployModel(nn.Module):
                         outputs.append(torch.cat(feats, 1).permute(0, 2, 3, 1))
             else:
                 for feats in zip(*neck_outputs):
-                    outputs.extend(feats)
+                    outputs.append(torch.cat(feats, 1))
             return tuple(outputs)
 
     @staticmethod
