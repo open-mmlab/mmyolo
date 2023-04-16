@@ -12,10 +12,9 @@ from mmengine.config import ConfigDict
 from mmengine.logging import print_log
 from mmengine.utils.path import mkdir_or_exist
 
-from projects.easydeploy.model import DeployModel, MMYOLOBackend
-
 # Add MMYOLO ROOT to sys.path
 sys.path.append(str(Path(__file__).resolve().parents[3]))
+from projects.easydeploy.model import DeployModel, MMYOLOBackend  # noqa E402
 
 warnings.filterwarnings(action='ignore', category=torch.jit.TracerWarning)
 warnings.filterwarnings(action='ignore', category=torch.jit.ScriptWarning)
