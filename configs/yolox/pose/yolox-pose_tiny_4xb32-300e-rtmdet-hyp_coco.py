@@ -6,7 +6,7 @@ load_from = 'https://download.openmmlab.com/mmyolo/v0/yolox/yolox_tiny_fast_8xb3
 model = dict(
     data_preprocessor=dict(batch_augments=[
         dict(
-            type='PoseBatchSyncRandomResize',
+            type='YOLOXBatchSyncRandomResize',
             random_size_range=(320, 640),
             size_divisor=32,
             interval=1)
