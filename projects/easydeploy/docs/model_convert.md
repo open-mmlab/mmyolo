@@ -16,7 +16,7 @@
 
 ## 使用方法
 
-[模型导出脚本](./projects/easydeploy/tools/export.py)用于将 `MMYOLO` 模型转换为 `onnx` 。
+[模型导出脚本](./projects/easydeploy/tools/export_onnx.py)用于将 `MMYOLO` 模型转换为 `onnx` 。
 
 ### 参数介绍:
 
@@ -28,11 +28,12 @@
 - `--device`: 转换模型使用的设备，默认为 `cuda:0`。
 - `--simplify`: 是否简化导出的 `onnx` 模型，需要安装 [onnx-simplifier](https://github.com/daquexian/onnx-simplifier)，默认关闭。
 - `--opset`: 指定导出 `onnx` 的 `opset`，默认为 `11` 。
-- `--backend`: 指定导出 `onnx` 用于的后端 id，`ONNXRuntime`: `1`, `TensorRT8`: `2`, `TensorRT7`: `3`，默认为`1`即 `ONNXRuntime`。
+- `--backend`: 指定导出 `onnx` 用于的后端 id，`ONNXRuntime`: `onnxruntime`, `TensorRT8`: `tensorrt8`, `TensorRT7`: `tensorrt7`，默认为`onnxruntime`即 `ONNXRuntime`。
 - `--pre-topk`: 指定导出 `onnx` 的后处理筛选候选框个数阈值，默认为 `1000`。
 - `--keep-topk`: 指定导出 `onnx` 的非极大值抑制输出的候选框个数阈值，默认为 `100`。
 - `--iou-threshold`: 非极大值抑制中过滤重复候选框的 `iou` 阈值，默认为 `0.65`。
 - `--score-threshold`: 非极大值抑制中过滤候选框得分的阈值，默认为 `0.25`。
+- `--model-only`: 指定仅导出模型 backbone + neck, 不包含后处理，默认关闭。
 
 例子:
 
