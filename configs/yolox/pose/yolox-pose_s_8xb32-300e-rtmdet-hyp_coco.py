@@ -4,17 +4,6 @@ load_from = 'https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_fast_8xb32-3
 
 # model settings
 model = dict(
-    type='YOLODetector',
-    data_preprocessor=dict(
-        type='YOLOv5DetDataPreprocessor',
-        pad_size_divisor=32,
-        batch_augments=[
-            dict(
-                type='YOLOXBatchSyncRandomResize',
-                random_size_range=(480, 800),
-                size_divisor=32,
-                interval=1)
-        ]),
     bbox_head=dict(
         type='YOLOXPoseHead',
         head_module=dict(
@@ -33,12 +22,7 @@ model = dict(
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             oks_calculator=dict(
                 type='OksLoss', metainfo='configs/_base_/pose/coco.py'))),
-    test_cfg=dict(
-        yolox_style=True,
-        multi_label=False,
-        score_thr=0.001,
-        max_per_img=300,
-        nms=dict(type='nms', iou_threshold=0.65)))
+)
 
 # pipelines
 pre_transform = [
