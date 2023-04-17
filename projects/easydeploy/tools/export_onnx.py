@@ -132,7 +132,8 @@ def main():
         onnx.checker.check_model(onnx_model)
 
         # Fix tensorrt onnx output shape, just for view
-        if backend in (MMYOLOBackend.TENSORRT8, MMYOLOBackend.TENSORRT7):
+        if not args.model_only and backend in (MMYOLOBackend.TENSORRT8,
+                                               MMYOLOBackend.TENSORRT7):
             shapes = [
                 args.batch_size, 1, args.batch_size, args.keep_topk, 4,
                 args.batch_size, args.keep_topk, args.batch_size,
