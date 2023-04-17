@@ -8,16 +8,14 @@ train_batch_size_per_gpu = 32
 base_lr = _base_.base_lr * train_batch_size_per_gpu \
     / _base_.train_batch_size_per_gpu / 2
 train_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=dict(backend='disk')),
+    dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='Mosaic',
         img_scale=(640, 640),
         pad_val=114.0,
         pre_transform=[
-            dict(
-                type='LoadImageFromFile',
-                file_client_args=dict(backend='disk')),
+            dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotations', with_bbox=True)
         ]),
     dict(

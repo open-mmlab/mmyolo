@@ -1,4 +1,4 @@
-# TODO: Need to solve the problem of multiple file_client_args parameters
+# TODO: Need to solve the problem of multiple backend_args parameters
 # _backend_args = dict(
 #     backend='petrel',
 #     path_mapping=dict({

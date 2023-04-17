@@ -90,9 +90,10 @@ jobs:
           name: Run unittests
           command: |
             export LD_LIBRARY_PATH=/home/circleci/project/onnxruntime-linux-x64-1.8.1/lib:${LD_LIBRARY_PATH}
-            coverage run --branch --source mmyolo -m pytest tests/
-            coverage xml
-            coverage report -m
+            pytest tests/
+#            coverage run --branch --source mmyolo -m pytest tests/
+#            coverage xml
+#            coverage report -m
   build_cuda:
     parameters:
       torch:

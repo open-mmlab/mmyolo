@@ -64,15 +64,13 @@ mmyolo
 ```python
 dataset_type = 'YOLOv5DOTADataset'  # 数据集类型，这将被用来定义数据集
 data_root = 'data/split_ss_dota/'  # 数据的根路径
-file_client_args = dict(backend='disk')  # 文件读取后端的配置，默认从硬盘读取
 
 angle_version = 'le90' # 角度范围的定义，目前支持 oc, le90 和 le135
 
 train_pipeline = [
     # 训练数据读取流程
     dict(
-        type='LoadImageFromFile', # 第 1 个流程，从文件路径里加载图像
-        file_client_args=file_client_args),  # 文件读取后端的配置，默认从硬盘读取
+        type='LoadImageFromFile'), # 第 1 个流程，从文件路径里加载图像
     dict(type='LoadAnnotations', # 第 2 个流程，对于当前图像，加载它的注释信息
          with_bbox=True, # 是否使用标注框 (bounding box)，目标检测需要设置为 True
          box_type='qbox'), # 指定读取的标注格式，旋转框数据集默认的数据格式为四边形
@@ -205,8 +203,7 @@ dataset_type='YOLOv5CocoDataset'
 train_pipeline = [
     # 训练数据读取流程
     dict(
-        type='LoadImageFromFile', # 第 1 个流程，从文件路径里加载图像
-        file_client_args=file_client_args),  # 文件读取后端的配置，默认从硬盘读取
+        type='LoadImageFromFile'), # 第 1 个流程，从文件路径里加载图像
     dict(type='LoadAnnotations', # 第 2 个流程，对于当前图像，加载它的注释信息
          with_bbox=True, # 是否使用标注框 (bounding box)，目标检测需要设置为 True
          with_mask=True, # 读取储存在 segmentation 标注中的多边形标注

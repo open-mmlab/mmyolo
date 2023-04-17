@@ -31,7 +31,8 @@ resume = False
 
 # data_root = 's3://openmmlab/datasets/detection/coco/'
 
-# Method 2: Use `backend_args`, `file_client_args` in versions before 3.0.0rc6
+# Method 2: Use `backend_args`, `file_client_args` in versions
+# before MMDet 3.0.0rc6
 # backend_args = dict(
 #     backend='petrel',
 #     path_mapping=dict({
