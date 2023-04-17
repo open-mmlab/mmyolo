@@ -72,7 +72,9 @@ def get_file_list(source_root: str) -> [list, dict]:
     source_file_path_list = []
     if is_dir:
         # when input source is dir
-        for file in scandir(source_root, IMG_EXTENSIONS, recursive=True):
+        for file in scandir(
+                source_root, IMG_EXTENSIONS, recursive=True,
+                case_sensitive=False):
             source_file_path_list.append(os.path.join(source_root, file))
     elif is_url:
         # when input source is url
