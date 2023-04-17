@@ -1,6 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 from copy import deepcopy
-from enum import IntEnum
 from functools import partial
 from typing import List, Optional, Tuple
 
@@ -20,22 +19,6 @@ from ..bbox_code import (rtmdet_bbox_decoder, yolov5_bbox_decoder,
                          yolox_bbox_decoder)
 from ..nms import batched_nms, efficient_nms, onnx_nms
 from .backend import MMYOLOBackend
-
-
-class TASK_TYPE(IntEnum):
-    DET = 0
-    SEG = 1
-    POSE = 2
-
-
-class ModelType(IntEnum):
-    YOLOV5 = 0
-    YOLOX = 1
-    PPYOLOE = 2
-    YOLOV6 = 3
-    YOLOV7 = 4
-    RTMDET = 5
-    YOLOV8 = 6
 
 
 class DeployModel(nn.Module):
