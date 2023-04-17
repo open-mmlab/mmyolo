@@ -20,7 +20,7 @@ class Preprocess:
             is_rgb = False
         elif model_type == ModelType.PPYOLOE:
             mean = np.array([123.675, 116.28, 103.53], dtype=np.float32)
-            std = np.array([255, 255, 255], dtype=np.float32)
+            std = np.array([58.395, 57.12, 57.375], dtype=np.float32)
             is_rgb = True
 
         elif model_type == ModelType.PPYOLOEP:
