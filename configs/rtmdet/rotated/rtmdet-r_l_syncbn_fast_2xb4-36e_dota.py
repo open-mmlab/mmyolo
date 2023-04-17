@@ -169,7 +169,7 @@ model = dict(
 )
 
 train_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='LoadAnnotations', with_bbox=True, box_type='qbox'),
     dict(
         type='mmrotate.ConvertBoxType',
@@ -191,7 +191,7 @@ train_pipeline = [
 ]
 
 val_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(
@@ -209,7 +209,7 @@ val_pipeline = [
 ]
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='mmdet.Resize', scale=img_scale, keep_ratio=True),
     dict(type='mmdet.Pad', size=img_scale, pad_val=dict(img=(114, 114, 114))),
     dict(

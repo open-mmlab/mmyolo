@@ -122,7 +122,7 @@ RTMDet-R 测试阶段仅采用 Resize 和 Pad，在验证和评测时，都采�
 
 ```python
 val_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='mmdet.Resize', scale=(1024, 1024), keep_ratio=True),
     dict(
         type='mmdet.Pad', size=(1024, 1024),

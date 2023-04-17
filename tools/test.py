@@ -4,13 +4,14 @@ import os
 import os.path as osp
 
 from mmdet.engine.hooks.utils import trigger_visualization_hook
+from mmdet.utils import setup_cache_size_limit_of_dynamo
 from mmengine.config import Config, ConfigDict, DictAction
 from mmengine.evaluator import DumpResults
 from mmengine.runner import Runner
 
 from mmyolo.registry import RUNNERS
 from mmyolo.utils import is_metainfo_lower
-from mmdet.utils import setup_cache_size_limit_of_dynamo
+
 
 # TODO: support fuse_conv_bn
 def parse_args():
