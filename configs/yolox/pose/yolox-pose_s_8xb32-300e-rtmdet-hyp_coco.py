@@ -2,14 +2,17 @@ _base_ = ['../yolox_s_fast_8xb32-300e-rtmdet-hyp_coco.py']
 
 load_from = 'https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_fast_8xb32-300e-rtmdet-hyp_coco/yolox_s_fast_8xb32-300e-rtmdet-hyp_coco_20230210_134645-3a8dfbd7.pth'  # noqa
 
+num_classes = 80
+num_keypoints = 17
+
 # model settings
 model = dict(
     bbox_head=dict(
         type='YOLOXPoseHead',
         head_module=dict(
             type='YOLOXPoseHeadModule',
-            num_classes=1,
-            num_keypoints=17,
+            num_classes=num_classes,
+            num_keypoints=num_keypoints,
         ),
         loss_pose=dict(
             type='OksLoss',
