@@ -115,7 +115,7 @@ python ./projects/easydeploy/tools/export.py \
 
 ## 使用 `model-only` 导出的 ONNX 进行推理
 
-[模型推理脚本](./projects/easydeploy/examples/main.py)用于推理导出的 `ONNX` 模型，需要安装基础依赖环境:
+[模型推理脚本](./projects/easydeploy/examples/main_onnxruntime.py)用于推理导出的 `ONNX` 模型，需要安装基础依赖环境:
 
 [`onnxruntime`](https://github.com/microsoft/onnxruntime) 和 [`opencv-python`](https://github.com/opencv/opencv-python)
 
@@ -139,7 +139,7 @@ pip install opencv-python==4.7.0.72 # 建议使用最新的 opencv
 
 ```shell
 cd ./projects/easydeploy/examples
-python main.py \
+python main_onnxruntime.py \
 	"image_path_to_detect" \
 	yolov5_s_model-only.onnx \
 	--out-dir work_dir \
