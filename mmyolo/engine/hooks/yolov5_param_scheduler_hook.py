@@ -128,16 +128,3 @@ class YOLOv5ParamSchedulerHook(ParamSchedulerHook):
         for group_idx, param in enumerate(optimizer.param_groups):
             param['lr'] = self._base_lr[group_idx] * self.scheduler_fn(
                 cur_epoch)
-
-
-@HOOKS.register_module()
-class TempCLIPParamSchedulerHook(YOLOv5ParamSchedulerHook):
-
-    def __init__(self, backbone_lr_scale: float = 0.1, *args, **kwargs):
-        self.backbone_lr_scale = backbone_lr_scale
-        super().__init__(*args, **kwargs)
-
-    def before_train(self, runner: Runner):
-        super().before_train(runner)
-        # backbone 进行lr缩小
-        self._base_lr[3] *= self.backbone_lr_scale
