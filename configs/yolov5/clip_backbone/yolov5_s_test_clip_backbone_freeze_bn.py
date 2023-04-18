@@ -15,23 +15,19 @@ model = dict(
         layers=[3, 4, 6, 3],
         width=64,
         heads=64 * 32 // 64),
-    neck=[
-        dict(
-            type='TempCLIPdownsampleneck',
-            in_channels=[512, 1024, 2048],
-            output_channels=[128, 256, 512],
-            norm_cfg=_base_.norm_cfg,
-            act_cfg=dict(type='SiLU', inplace=True)),
-        dict(
-            type='YOLOv5PAFPN',
-            deepen_factor=_base_.deepen_factor,
-            widen_factor=_base_.widen_factor,
-            in_channels=[256, 512, 1024],
-            out_channels=[256, 512, 1024],
-            num_csp_blocks=3,
-            norm_cfg=_base_.norm_cfg,
-            act_cfg=dict(type='SiLU', inplace=True))
-    ])
+    neck=dict(
+        type='YOLOv5PAFPN',
+        deepen_factor=_base_.deepen_factor,
+        widen_factor=_base_.widen_factor,
+        in_channels=[
+            int(512 / _base_.widen_factor),
+            int(1024 / _base_.widen_factor),
+            int(2048 / _base_.widen_factor)
+        ],
+        out_channels=[256, 512, 1024],
+        num_csp_blocks=3,
+        norm_cfg=_base_.norm_cfg,
+        act_cfg=dict(type='SiLU', inplace=True)))
 
 base_lr = 0.004
 weight_decay = 0.05

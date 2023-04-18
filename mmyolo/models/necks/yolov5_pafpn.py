@@ -127,7 +127,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
             return CSPLayer(
                 make_divisible(self.in_channels[idx - 1] * 2,
                                self.widen_factor),
-                make_divisible(self.in_channels[idx - 1], self.widen_factor),
+                make_divisible(self.out_channels[idx - 1], self.widen_factor),
                 num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
                 add_identity=False,
                 norm_cfg=self.norm_cfg,
@@ -163,8 +163,8 @@ class YOLOv5PAFPN(BaseYOLONeck):
             nn.Module: The downsample layer.
         """
         return ConvModule(
-            make_divisible(self.in_channels[idx], self.widen_factor),
-            make_divisible(self.in_channels[idx], self.widen_factor),
+            make_divisible(self.out_channels[idx], self.widen_factor),
+            make_divisible(self.out_channels[idx], self.widen_factor),
             kernel_size=3,
             stride=2,
             padding=1,
@@ -181,8 +181,9 @@ class YOLOv5PAFPN(BaseYOLONeck):
             nn.Module: The bottom up layer.
         """
         return CSPLayer(
-            make_divisible(self.in_channels[idx] * 2, self.widen_factor),
-            make_divisible(self.in_channels[idx + 1], self.widen_factor),
+            make_divisible(self.in_channels[idx] + self.out_channels[idx],
+                           self.widen_factor),
+            make_divisible(self.out_channels[idx + 1], self.widen_factor),
             num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
             add_identity=False,
             norm_cfg=self.norm_cfg,
