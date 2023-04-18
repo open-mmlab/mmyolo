@@ -169,8 +169,11 @@ workflows:
             - lint
       - build_cpu:
           name: maximum_version_cpu
-          torch: 2.0.0
-          torchvision: 0.15.1
+          # mmdeploy not supported
+#          torch: 2.0.0
+#          torchvision: 0.15.1
+          torch: 1.12.1
+          torchvision: 0.13.1
           python: 3.9.0
           requires:
             - minimum_version_cpu
