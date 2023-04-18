@@ -28,7 +28,7 @@
 _base_ = '../../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(
         type='LetterResize',
         scale=_base_.img_scale,
@@ -113,7 +113,7 @@ batch_shapes_cfg = dict(
     extra_pad_ratio=0.5)
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',

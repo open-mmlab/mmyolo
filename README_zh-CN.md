@@ -108,7 +108,7 @@
 | 🌟  | 自定义数据集从标注到部署保姆级教程 | [![Link](https://i2.hdslb.com/bfs/archive/13f566c89a18c9c881713b63ec14da952d4c0b14.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1RG4y137i5)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1RG4y137i5)](https://www.bilibili.com/video/BV1JG4y1d7GC) |                                                 [自定义数据集从标注到部署保姆级教程](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/user_guides/custom_dataset.md)                                                  |
 | 🌟  |      顶会第一步 · 模块自定义       | [![Link](http://i2.hdslb.com/bfs/archive/5b23d41ac57466824eaf185ef806ef734414e93b.jpg@112w_63h_1c.webp)](https://www.bilibili.com/video/BV1yd4y1j7VD)  [![bilibili](https://img.shields.io/badge/dynamic/json?label=views&style=social&logo=bilibili&query=data.stat.view&url=https%3A%2F%2Fapi.bilibili.com%2Fx%2Fweb-interface%2Fview%3Fbvid%3DBV1yd4y1j7VD)](https://www.bilibili.com/video/BV1yd4y1j7VD)  |                                    [顶会第一步·模块自定义.ipynb](https://github.com/open-mmlab/OpenMMLabCourse/blob/main/codes/MMYOLO_tutorials/[实用类第四期]顶会第一步·模块自定义.ipynb)                                    |
 
-完整视频列表请参考 [资源汇总页面](https://mmyolo.readthedocs.io/zh_CN/latest/article.html)
+完整视频列表请参考 [中文解读资源汇总 - 视频](https://mmyolo.readthedocs.io/zh_CN/latest/get_started/article.html)
 
 发布历史和更新细节请参考 [更新日志](https://mmyolo.readthedocs.io/zh_CN/latest/notes/changelog.html)
 
@@ -205,6 +205,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 <summary>推荐专题</summary>
 
 - [如何给 MMYOLO 贡献代码](docs/zh_cn/recommended_topics/contributing.md)
+- [训练和测试技巧](docs/zh_cn/recommended_topics/training_testing_tricks.md)
 - [MMYOLO 模型结构设计](docs/zh_cn/recommended_topics/model_design.md)
 - [原理和实现全解析](docs/zh_cn/recommended_topics/algorithm_descriptions/)
 - [轻松更换主干网络](docs/zh_cn/recommended_topics/replace_backbone.md)
@@ -213,7 +214,7 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 - [关于可视化的一切](docs/zh_cn/recommended_topics/visualization.md)
 - [模型部署流程](docs/zh_cn/recommended_topics/deploy/)
 - [常见错误排查步骤](docs/zh_cn/recommended_topics/troubleshooting_steps.md)
-- [MMYOLO 产业范例介绍](docs/zh_cn/recommended_topics/industry_examples.md)
+- [MMYOLO 应用范例介绍](docs/zh_cn/recommended_topics/application_examples/)
 - [MM 系列 Repo 必备基础](docs/zh_cn/recommended_topics/mm_basics.md)
 - [数据集准备和说明](docs/zh_cn/recommended_topics/dataset_preparation.md)
 

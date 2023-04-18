@@ -18,17 +18,17 @@ import mmcv
 from mmengine import Config, DictAction, MessageHub
 from mmengine.utils import ProgressBar
 
-from mmyolo.utils.boxam_utils import (BoxAMDetectorVisualizer,
-                                      BoxAMDetectorWrapper, DetAblationLayer,
-                                      DetBoxScoreTarget, GradCAM,
-                                      GradCAMPlusPlus, reshape_transform)
-from mmyolo.utils.misc import get_file_list
-
 try:
     from pytorch_grad_cam import AblationCAM, EigenCAM
 except ImportError:
     raise ImportError('Please run `pip install "grad-cam"` to install '
                       'pytorch_grad_cam package.')
+
+from mmyolo.utils.boxam_utils import (BoxAMDetectorVisualizer,
+                                      BoxAMDetectorWrapper, DetAblationLayer,
+                                      DetBoxScoreTarget, GradCAM,
+                                      GradCAMPlusPlus, reshape_transform)
+from mmyolo.utils.misc import get_file_list
 
 GRAD_FREE_METHOD_MAP = {
     'ablationcam': AblationCAM,

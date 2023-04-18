@@ -129,7 +129,7 @@ model = dict(
         max_per_img=300))
 
 train_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='PPYOLOERandomDistort'),
     dict(type='mmdet.Expand', mean=(103.53, 116.28, 123.675)),
@@ -157,7 +157,7 @@ train_dataloader = dict(
         pipeline=train_pipeline))
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(
         type='mmdet.FixShapeResize',
         width=img_scale[0],

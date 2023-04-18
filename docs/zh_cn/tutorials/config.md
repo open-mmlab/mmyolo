@@ -86,12 +86,10 @@ YOLOv5 的训练与测试的数据流存在一定差异，这里我们分别进�
 ```python
 dataset_type = 'CocoDataset'  # 数据集类型，这将被用来定义数据集
 data_root = 'data/coco/'  # 数据的根路径
-file_client_args = dict(backend='disk')  # 文件读取后端的配置，默认从硬盘读取
 
 pre_transform = [ # 训练数据读取流程
     dict(
-        type='LoadImageFromFile', # 第 1 个流程，从文件路径里加载图像
-        file_client_args=file_client_args),  # 文件读取后端的配置，默认从硬盘读取
+        type='LoadImageFromFile'), # 第 1 个流程，从文件路径里加载图像
     dict(type='LoadAnnotations', # 第 2 个流程，对于当前图像，加载它的注释信息
          with_bbox=True) # 是否使用标注框(bounding box)，目标检测需要设置为 True
 ]
@@ -156,8 +154,7 @@ YOLOv5 测试阶段采用 [Letter Resize](https://github.com/open-mmlab/mmyolo/b
 ```python
 test_pipeline = [ # 测试数据处理流程
     dict(
-        type='LoadImageFromFile', # 第 1 个流程，从文件路径里加载图像
-        file_client_args=file_client_args),  # 文件读取后端的配置，默认从硬盘读取
+        type='LoadImageFromFile'), # 第 1 个流程，从文件路径里加载图像
     dict(type='YOLOv5KeepRatioResize', # 第 2 个流程，保持长宽比的图像大小缩放
          scale=img_scale), # 图像缩放的目标尺寸
     dict(
@@ -475,8 +472,7 @@ train_pipeline = [
 
 test_pipeline = [
     dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+        type='LoadImageFromFile'),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
@@ -515,7 +511,6 @@ model = dict(
 ```python
 _base_ = '../_base_/default_runtime.py'
 
-file_client_args = {{_base_.file_client_args}}  # 变量 file_client_args 等于 _base_ 中定义的 file_client_args
 pre_transform = _base_.pre_transform # 变量 pre_transform 等于 _base_ 中定义的 pre_transform
 ```
 

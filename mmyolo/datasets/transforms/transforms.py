@@ -592,7 +592,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         repr_str += f'mask2bbox={self.mask2bbox}, '
         repr_str += f'poly2mask={self.poly2mask}, '
         repr_str += f"imdecode_backend='{self.imdecode_backend}', "
-        repr_str += f'file_client_args={self.file_client_args})'
+        repr_str += f'backend_args={self.backend_args})'
         return repr_str
 
 

@@ -24,9 +24,7 @@ class TestMosaic(unittest.TestCase):
         tearDown() -> cleanUp()
         """
         self.pre_transform = [
-            dict(
-                type='LoadImageFromFile',
-                file_client_args=dict(backend='disk')),
+            dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotations', with_bbox=True)
         ]
 
@@ -107,9 +105,7 @@ class TestMosaic(unittest.TestCase):
     def test_transform_with_mask(self):
         rng = np.random.RandomState(0)
         pre_transform = [
-            dict(
-                type='LoadImageFromFile',
-                file_client_args=dict(backend='disk')),
+            dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotations', with_bbox=True, with_mask=True)
         ]
 
@@ -157,9 +153,7 @@ class TestMosaic9(unittest.TestCase):
         """
         rng = np.random.RandomState(0)
         self.pre_transform = [
-            dict(
-                type='LoadImageFromFile',
-                file_client_args=dict(backend='disk')),
+            dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotations', with_bbox=True)
         ]
 
@@ -249,9 +243,7 @@ class TestYOLOv5MixUp(unittest.TestCase):
         tearDown() -> cleanUp()
         """
         self.pre_transform = [
-            dict(
-                type='LoadImageFromFile',
-                file_client_args=dict(backend='disk')),
+            dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotations', with_bbox=True)
         ]
         self.dataset = YOLOv5CocoDataset(
@@ -307,9 +299,7 @@ class TestYOLOv5MixUp(unittest.TestCase):
     def test_transform_with_mask(self):
         rng = np.random.RandomState(0)
         pre_transform = [
-            dict(
-                type='LoadImageFromFile',
-                file_client_args=dict(backend='disk')),
+            dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotations', with_bbox=True, with_mask=True)
         ]
         dataset = YOLOv5CocoDataset(
@@ -357,9 +347,7 @@ class TestYOLOXMixUp(unittest.TestCase):
         """
         rng = np.random.RandomState(0)
         self.pre_transform = [
-            dict(
-                type='LoadImageFromFile',
-                file_client_args=dict(backend='disk')),
+            dict(type='LoadImageFromFile'),
             dict(type='LoadAnnotations', with_bbox=True)
         ]
         self.dataset = YOLOv5CocoDataset(
