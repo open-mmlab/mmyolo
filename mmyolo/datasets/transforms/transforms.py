@@ -392,7 +392,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                  mask2bbox: bool = False,
                  poly2mask: bool = False,
                  merge_polygons: bool = True,
-                 **kwargs) -> None:
+                 **kwargs):
         self.mask2bbox = mask2bbox
         self.merge_polygons = merge_polygons
         assert not poly2mask, 'Does not support BitmapMasks considering ' \
@@ -535,6 +535,8 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                 original segmentations in coco's json file.
                 like [segmentation1, segmentation2,...],
                 each segmentation is a list of coordinates.
+        Return:
+            gt_masks(List(np.array)): merged gt_masks
         """
         s = []
         segments = [np.array(i).reshape(-1, 2) for i in gt_masks]
@@ -582,7 +584,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
             arr1: (N, 2).
             arr2: (M, 2).
         Return:
-            a pair of indexes(tuple).
+            tuple: a pair of indexes.
         """
         dis = ((arr1[:, None, :] - arr2[None, :, :])**2).sum(-1)
         return np.unravel_index(np.argmin(dis, axis=None), dis.shape)
@@ -781,7 +783,7 @@ class YOLOv5RandomAffine(BaseTransform):
             width (int): the width of the image. Defaults to 640
             height (int): The height of the image. Defaults to 640
         Returns:
-            (HorizontalBoxes): the clip bboxes from gt_masks.
+            HorizontalBoxes: the clip bboxes from gt_masks.
         """
         bboxes = []
         for _, poly_per_obj in enumerate(gt_masks):
@@ -818,6 +820,9 @@ class YOLOv5RandomAffine(BaseTransform):
             gt_masks (PolygonMasks): Annotations of instance segmentation.
             height (int): height of clip border.
             width (int): width of clip border.
+        Return:
+            clipped_masks (PolygonMasks):
+                Clip annotations of instance segmentation.
         """
         if len(gt_masks) == 0:
             clipped_masks = PolygonMasks([], height, width)
@@ -1724,7 +1729,7 @@ class Polygon2Mask(BaseTransform):
     def __init__(self,
                  downsample_ratio: int = 4,
                  mask_overlap: bool = True,
-                 coco_style: bool = False) -> None:
+                 coco_style: bool = False):
         self.downsample_ratio = downsample_ratio
         self.mask_overlap = mask_overlap
         self.coco_style = coco_style
@@ -1740,7 +1745,7 @@ class Polygon2Mask(BaseTransform):
                 M is the number of points(Be divided by 2).
             color (int): color in fillPoly.
         Return:
-            (np.ndarray): the overlap mask.
+            np.ndarray: the overlap mask.
         """
         nh, nw = (img_shape[0] // self.downsample_ratio,
                   img_shape[1] // self.downsample_ratio)
@@ -1805,7 +1810,7 @@ class Polygon2Mask(BaseTransform):
             masks = np.clip(masks, a_min=0, a_max=i + 1)
         return masks, index
 
-    def transform(self, results: dict):
+    def transform(self, results: dict) -> dict:
         gt_masks = results['gt_masks']
         assert isinstance(gt_masks, PolygonMasks)
 
