@@ -67,7 +67,7 @@ class ProtoModule(BaseModule):
             norm_cfg=norm_cfg,
             act_cfg=act_cfg)
 
-    def forward(self, x: Tensor):
+    def forward(self, x: Tensor) -> Tensor:
         return self.conv3(self.conv2(self.upsample(self.conv1(x))))
 
 
@@ -119,7 +119,7 @@ class YOLOv5InsHeadModule(YOLOv5HeadModule):
                 self.num_base_priors * self.num_out_attrib_with_proto, 1)
             self.convs_pred.append(conv_pred)
 
-        self.proto_preds = ProtoModule(
+        self.proto_pred = ProtoModule(
             in_channels=self.in_channels[0],
             middle_channels=self.proto_channels,
             mask_channels=self.mask_channels,
@@ -139,7 +139,7 @@ class YOLOv5InsHeadModule(YOLOv5HeadModule):
         assert len(x) == self.num_levels
         cls_scores, bbox_preds, objectnesses, coeff_preds = multi_apply(
             self.forward_single, x, self.convs_pred)
-        mask_protos = self.proto_preds(x[0])
+        mask_protos = self.proto_pred(x[0])
         return cls_scores, bbox_preds, objectnesses, coeff_preds, mask_protos
 
     def forward_single(
@@ -169,6 +169,7 @@ class YOLOv5InsHead(YOLOv5Head):
     Args:
         mask_overlap(bool): Defaults to True.
         loss_mask (:obj:`ConfigDict` or dict): Config of mask loss.
+        loss_mask_weight (float): The weight of mask loss.
     """
 
     def __init__(self,
@@ -203,7 +204,7 @@ class YOLOv5InsHead(YOLOv5Head):
 
         if isinstance(batch_data_samples, list):
             # TODO: support non-fast version ins segmention
-            losses = super().loss(x, batch_data_samples)
+            raise NotImplementedError
         else:
             outs = self(x)
             # Fast version
@@ -222,7 +223,7 @@ class YOLOv5InsHead(YOLOv5Head):
             coeff_preds: Sequence[Tensor],
             proto_preds: Tensor,
             batch_gt_instances: Sequence[InstanceData],
-            batch_gt_masks: Tensor,
+            batch_gt_masks: Sequence[Tensor],
             batch_img_metas: Sequence[dict],
             batch_gt_instances_ignore: OptInstanceList = None) -> dict:
         """Calculate the loss based on the features extracted by the detection
@@ -246,6 +247,7 @@ class YOLOv5InsHead(YOLOv5Head):
             batch_gt_instances (Sequence[InstanceData]): Batch of
                 gt_instance. It usually includes ``bboxes`` and ``labels``
                 attributes.
+            batch_gt_masks (Sequence[Tensor]): Batch of gt_mask.
             batch_img_metas (Sequence[dict]): Meta information of each image,
                 e.g., image size, scaling factor, etc.
             batch_gt_instances_ignore (list[:obj:`InstanceData`], optional):
@@ -413,6 +415,7 @@ class YOLOv5InsHead(YOLOv5Head):
     def _convert_gt_to_norm_format(self,
                                    batch_gt_instances: Sequence[InstanceData],
                                    batch_img_metas: Sequence[dict]) -> Tensor:
+        """Add target_inds for instance segmentation."""
         batch_targets_normed = super()._convert_gt_to_norm_format(
             batch_gt_instances, batch_img_metas)
 
@@ -464,7 +467,7 @@ class YOLOv5InsHead(YOLOv5Head):
             coeff_preds (list[Tensor]): Mask coefficients predictions
                 for all scale levels, each is a 4D-tensor, has shape
                 (batch_size, mask_channels, H, W).
-            mask_protos (Tensor): Mask prototype features extracted from the
+            proto_preds (Tensor): Mask prototype features extracted from the
                 mask head, has shape (batch_size, mask_channels, H, W).
             batch_img_metas (list[dict], Optional): Batch image meta info.
                 Defaults to None.
@@ -689,7 +692,7 @@ class YOLOv5InsHead(YOLOv5Head):
                      mask_coeff_pred: Tensor,
                      bboxes: Tensor,
                      shape: Tuple[int, int],
-                     upsample: bool = False):
+                     upsample: bool = False) -> Tensor:
         """Generate mask logits results.
 
         Args:
@@ -715,7 +718,7 @@ class YOLOv5InsHead(YOLOv5Head):
         masks = self.crop_mask(masks, bboxes)
         return masks
 
-    def crop_mask(self, masks: Tensor, boxes: Tensor):
+    def crop_mask(self, masks: Tensor, boxes: Tensor) -> Tensor:
         """Crop mask by the bounding box.
 
         Args:
