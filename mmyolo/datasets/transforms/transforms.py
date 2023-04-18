@@ -391,8 +391,10 @@ class LoadAnnotations(MMDET_LoadAnnotations):
     def __init__(self,
                  mask2bbox: bool = False,
                  poly2mask: bool = False,
+                 merge_polygons: bool = True,
                  **kwargs) -> None:
         self.mask2bbox = mask2bbox
+        self.merge_polygons = merge_polygons
         assert not poly2mask, 'Does not support BitmapMasks considering ' \
                               'that bitmap consumes more memory.'
         super().__init__(poly2mask=poly2mask, **kwargs)
@@ -501,7 +503,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                             # ignore
                             self._mask_ignore_flag.append(0)
                         else:
-                            if len(gt_mask) > 1:
+                            if len(gt_mask) > 1 and self.merge_polygons:
                                 gt_mask = self.merge_multi_segment(gt_mask)
                             gt_masks.append(gt_mask)
                             gt_ignore_flags.append(instance['ignore_flag'])
@@ -521,14 +523,16 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         gt_masks = PolygonMasks([mask for mask in gt_masks], h, w)
         results['gt_masks'] = gt_masks
 
-    def merge_multi_segment(self, gt_masks: List[np.array]):
+    def merge_multi_segment(self,
+                            gt_masks: List[np.ndarray]) -> List[np.ndarray]:
         """Merge multi segments to one list.
 
         Find the coordinates with min distance between each segment,
         then connect these coordinates with one thin line to merge all
         segments into one.
         Args:
-            segments(List(List)): original segmentations in coco's json file.
+            gt_masks(List(np.array)):
+                original segmentations in coco's json file.
                 like [segmentation1, segmentation2,...],
                 each segmentation is a list of coordinates.
         """
@@ -571,7 +575,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                         s.append(segments[i][nidx:])
         return [np.concatenate(s).reshape(-1, )]
 
-    def min_index(self, arr1, arr2):
+    def min_index(self, arr1: np.ndarray, arr2: np.ndarray) -> Tuple[int, int]:
         """Find a pair of indexes with the shortest distance.
 
         Args:
@@ -767,20 +771,20 @@ class YOLOv5RandomAffine(BaseTransform):
 
         return results
 
-    def segment2box(self, gt_masks: PolygonMasks, height: int, width: int):
+    def segment2box(self, gt_masks: PolygonMasks, height: int,
+                    width: int) -> HorizontalBoxes:
         """
         Convert 1 segment label to 1 box label, applying inside-image
         constraint i.e. (xy1, xy2, ...) to (xyxy)
         Args:
-            segment (torch.Tensor): the segment label
+            gt_masks (torch.Tensor): the segment label
             width (int): the width of the image. Defaults to 640
             height (int): The height of the image. Defaults to 640
         Returns:
-            (np.ndarray): the minimum and maximum x and y values
-                          of the segment.
+            (HorizontalBoxes): the clip bboxes from gt_masks.
         """
         bboxes = []
-        for idx, poly_per_obj in enumerate(gt_masks):
+        for _, poly_per_obj in enumerate(gt_masks):
             # simply use a number that is big enough for comparison with
             # coordinates
             xy_min = np.array([width * 2, height * 2], dtype=np.float32)
@@ -806,7 +810,8 @@ class YOLOv5RandomAffine(BaseTransform):
         return HorizontalBoxes(np.stack(bboxes, axis=0))
 
     # TODO: Move to mmdet
-    def clip_polygons(self, gt_masks: PolygonMasks, height: int, width: int):
+    def clip_polygons(self, gt_masks: PolygonMasks, height: int,
+                      width: int) -> PolygonMasks:
         """Function to clip points of polygons with height and width.
 
         Args:
@@ -1702,7 +1707,7 @@ class RegularizeRotatedBox(BaseTransform):
 
 @TRANSFORMS.register_module()
 class Polygon2Mask(BaseTransform):
-    """Polygons to mask in YOLOv5.
+    """Polygons to bitmaps in YOLOv5.
 
     Args:
         downsample_ratio (int): Downsample ratio of mask.
@@ -1719,7 +1724,7 @@ class Polygon2Mask(BaseTransform):
     def __init__(self,
                  downsample_ratio: int = 4,
                  mask_overlap: bool = True,
-                 coco_style: bool = False):
+                 coco_style: bool = False) -> None:
         self.downsample_ratio = downsample_ratio
         self.mask_overlap = mask_overlap
         self.coco_style = coco_style
@@ -1727,14 +1732,15 @@ class Polygon2Mask(BaseTransform):
     def polygon2mask(self,
                      img_shape: Tuple[int, int],
                      polygons: np.ndarray,
-                     color: int = 1):
+                     color: int = 1) -> np.ndarray:
         """
         Args:
             img_shape (tuple): The image size.
             polygons (np.ndarray): [N, M], N is the number of polygons,
                 M is the number of points(Be divided by 2).
-            color (int): color
-            downsample_ratio (int): downsample ratio
+            color (int): color in fillPoly.
+        Return:
+            (np.ndarray): the overlap mask.
         """
         nh, nw = (img_shape[0] // self.downsample_ratio,
                   img_shape[1] // self.downsample_ratio)
@@ -1763,7 +1769,7 @@ class Polygon2Mask(BaseTransform):
     def polygons2masks(self,
                        img_shape: Tuple[int, int],
                        polygons: PolygonMasks,
-                       color: int = 1):
+                       color: int = 1) -> np.ndarray:
         """Return (640, 640) non-overlap mask."""
         if self.coco_style:
             nh, nw = (img_shape[0] // self.downsample_ratio,
@@ -1777,8 +1783,9 @@ class Polygon2Mask(BaseTransform):
                 masks.append(mask)
             return np.array(masks)
 
-    def polygons2masks_overlap(self, img_shape: Tuple[int, int],
-                               polygons: PolygonMasks):
+    def polygons2masks_overlap(
+            self, img_shape: Tuple[int, int],
+            polygons: PolygonMasks) -> Tuple[np.ndarray, np.ndarray]:
         """Return a (640, 640) overlap mask."""
         masks = np.zeros((img_shape[0] // self.downsample_ratio,
                           img_shape[1] // self.downsample_ratio),
