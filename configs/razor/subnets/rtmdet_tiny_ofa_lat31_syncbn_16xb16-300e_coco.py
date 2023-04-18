@@ -41,7 +41,7 @@ _base_.model.test_cfg = dict(
     max_per_img=100)
 
 train_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='Mosaic',
@@ -73,7 +73,7 @@ train_pipeline = [
 ]
 
 train_pipeline_stage2 = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='mmdet.RandomResize',
@@ -92,7 +92,7 @@ train_dataloader = dict(
     batch_size=train_batch_size_per_gpu, dataset=dict(pipeline=train_pipeline))
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='mmdet.Resize', scale=(960, 960), keep_ratio=True),
     dict(type='mmdet.Pad', size=(960, 960), pad_val=dict(img=(114, 114, 114))),
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),

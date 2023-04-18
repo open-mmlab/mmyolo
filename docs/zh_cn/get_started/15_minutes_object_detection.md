@@ -301,7 +301,7 @@ MMYOLO 中提供了特征图相关可视化脚本，用于分析当前模型训�
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+        backend_args=_base_.backend_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
@@ -322,7 +322,7 @@ test_pipeline = [
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+        backend_args=_base_.backend_args),
     dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # 删除 YOLOv5KeepRatioResize, 将 LetterResize 修改成 mmdet.Resize
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
@@ -488,7 +488,7 @@ python projects/easydeploy/tools/build_engine.py \
 
 成功执行后会在 `work-dir` 下生成 `end2end.engine` 文件：
 
-```shell
+```text
 work_dirs/yolov5_s-v61_fast_1xb12-40e_cat
 ├── 202302XX_XXXXXX
 │   ├── 202302XX_XXXXXX.log

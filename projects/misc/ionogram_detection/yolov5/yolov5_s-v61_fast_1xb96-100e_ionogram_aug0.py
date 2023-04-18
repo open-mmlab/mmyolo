@@ -3,7 +3,7 @@ _base_ = './yolov5_s-v61_fast_1xb96-100e_ionogram.py'
 # ======================= Modified parameters =====================
 # -----train val related-----
 train_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=dict(backend='disk')),
+    dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='YOLOv5KeepRatioResize', scale=(640, 640)),
     dict(
