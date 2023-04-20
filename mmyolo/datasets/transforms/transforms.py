@@ -1656,8 +1656,6 @@ class FilterAnnotations(FilterDetAnnotations):
         Returns:
             dict: Updated result dict.
         """
-        keys = ('gt_bboxes', 'gt_bboxes_labels', 'gt_masks', 'gt_ignore_flags')
-
         assert 'gt_bboxes' in results
         gt_bboxes = results['gt_bboxes']
         if gt_bboxes.shape[0] == 0:
@@ -1678,7 +1676,6 @@ class FilterAnnotations(FilterDetAnnotations):
             assert 'gt_keypoints' in results
             num_keypoints = results['gt_keypoints'].num_keypoints
             tests.append((num_keypoints > 0).numpy())
-            keys = keys + ('gt_keypoints', )
 
         keep = tests[0]
         for t in tests[1:]:
@@ -1688,6 +1685,8 @@ class FilterAnnotations(FilterDetAnnotations):
             if self.keep_empty:
                 return None
 
+        keys = ('gt_bboxes', 'gt_bboxes_labels', 'gt_masks', 'gt_ignore_flags',
+                'gt_keypoints')
         for key in keys:
             if key in results:
                 results[key] = results[key][keep]
