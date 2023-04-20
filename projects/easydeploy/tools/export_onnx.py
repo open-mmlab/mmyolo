@@ -7,8 +7,9 @@ from pathlib import Path
 
 import onnx
 import torch
+from torch.nn.parameter import Parameter
 from mmdet.apis import init_detector
-from mmengine.config import ConfigDict
+from mmengine.config import Config, ConfigDict
 from mmengine.logging import print_log
 from mmengine.utils.path import mkdir_or_exist
 
@@ -21,6 +22,30 @@ warnings.filterwarnings(action='ignore', category=torch.jit.ScriptWarning)
 warnings.filterwarnings(action='ignore', category=UserWarning)
 warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=ResourceWarning)
+
+
+def preprocess(config:Config, model:torch.nn.Module):
+    data_preprocess = config.get('model', {}).get('data_preprocessor', {})
+    mean = data_preprocess.get('mean', [0., 0., 0.])
+    std = data_preprocess.get('std', [1., 1., 1.])
+    mean_value = torch.tensor(mean, dtype=torch.float32).reshape(1, 3, 1, 1)
+    std_value = torch.tensor(std, dtype=torch.float32).reshape(1, 3, 1, 1)
+
+    class PreProcess(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.mean_value = Parameter(mean_value, requires_grad=False)
+            self.std_value = Parameter(std_value, requires_grad=False)
+            self.core_model = model
+
+        def forward(self, x:torch.Tensor):
+            assert x.ndim==4
+            x = x.float()
+            y = (x - self.mean_value) / self.std_value
+            y = self.core_model(y)
+            return y
+
+    return PreProcess().eval()
 
 
 def parse_args():
@@ -110,8 +135,13 @@ def main():
         baseModel=baseModel, backend=backend, postprocess_cfg=postprocess_cfg)
     deploy_model.eval()
 
+    # embed the preprocess into the model
+    cfg = Config.fromfile(args.config)
+    deploy_model = preprocess(cfg, deploy_model)
+    deploy_model.eval()
+
     fake_input = torch.randn(args.batch_size, 3,
-                             *args.img_size).to(args.device)
+                             *args.img_size).type(torch.uint8).to(args.device)
     # dry run
     deploy_model(fake_input)
 
