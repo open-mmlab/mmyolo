@@ -7,11 +7,11 @@ from pathlib import Path
 
 import onnx
 import torch
-from torch.nn.parameter import Parameter
 from mmdet.apis import init_detector
 from mmengine.config import Config, ConfigDict
 from mmengine.logging import print_log
 from mmengine.utils.path import mkdir_or_exist
+from torch.nn.parameter import Parameter
 
 # Add MMYOLO ROOT to sys.path
 sys.path.append(str(Path(__file__).resolve().parents[3]))
@@ -32,6 +32,7 @@ def preprocess(config: Config, model: torch.nn.Module):
     std_value = torch.tensor(std, dtype=torch.float32).reshape(1, 3, 1, 1)
 
     class PreProcess(torch.nn.Module):
+
         def __init__(self):
             super().__init__()
             self.mean_value = Parameter(mean_value, requires_grad=False)
