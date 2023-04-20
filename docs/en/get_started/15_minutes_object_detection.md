@@ -303,7 +303,7 @@ Due to the bias of direct visualization of `test_pipeline`, we need to `configs/
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+        backend_args=_base_.backend_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
@@ -324,7 +324,7 @@ modify to the following config:
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+        backend_args=_base_.backend_args),
     dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # modify the LetterResize to mmdet.Resize
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
