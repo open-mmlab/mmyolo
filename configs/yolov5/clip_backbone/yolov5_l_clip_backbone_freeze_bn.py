@@ -1,5 +1,7 @@
 _base_ = '../yolov5_l-v61_syncbn_fast_8xb16-300e_coco.py'
 
+find_unused_parameters = True
+
 model = dict(
     data_preprocessor=dict(
         type='YOLOv5DetDataPreprocessor',
