@@ -1555,3 +1555,31 @@ class RegularizeRotatedBox(BaseTransform):
         results['gt_bboxes'] = self.box_type(
             results['gt_bboxes'].regularize_boxes(self.angle_version))
         return results
+
+
+@TRANSFORMS.register_module()
+class Mask2Tensor(BaseTransform):
+    """Convert mask to tensor.
+
+    Required Keys:
+
+    - gt_masks (Masks)
+
+    Modified Keys:
+
+    - gt_masks
+    """
+
+    def __init__(self, downsample_stride=1) -> None:
+        assert downsample_stride >= 1
+        # downsample_stride should be divisible by 2
+        assert downsample_stride % 2 == 0
+        self.downsample_stride = downsample_stride
+
+    def transform(self, results: dict) -> dict:
+        mask = results['gt_masks'].to_tensor(dtype=torch.bool, device='cpu')
+        if self.downsample_stride > 1:
+            mask = mask[:, self.downsample_stride // 2::self.downsample_stride,
+                        self.downsample_stride // 2::self.downsample_stride]
+        results['gt_masks'] = mask
+        return results

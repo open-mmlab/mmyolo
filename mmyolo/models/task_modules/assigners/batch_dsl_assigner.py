@@ -119,9 +119,14 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
         self.batch_iou = batch_iou
 
     @torch.no_grad()
-    def forward(self, pred_bboxes: Tensor, pred_scores: Tensor, priors: Tensor,
-                gt_labels: Tensor, gt_bboxes: Tensor,
-                pad_bbox_flag: Tensor) -> dict:
+    def forward(self,
+                pred_bboxes: Tensor,
+                pred_scores: Tensor,
+                priors: Tensor,
+                gt_labels: Tensor,
+                gt_bboxes: Tensor,
+                pad_bbox_flag: Tensor,
+                gt_centers: Tensor = None) -> dict:
         num_gt = gt_bboxes.size(1)
         decoded_bboxes = pred_bboxes
         batch_size, num_bboxes, box_dim = decoded_bboxes.size()
@@ -155,11 +160,12 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
         # (B, N_points)
         valid_mask = is_in_gts.sum(dim=-1) > 0
 
-        gt_center = get_box_center(gt_bboxes, box_dim)
+        if gt_centers is None:
+            gt_centers = get_box_center(gt_bboxes, box_dim)
 
         strides = priors[..., 2]
         distance = (priors[None].unsqueeze(2)[..., :2] -
-                    gt_center[:, None, :, :]
+                    gt_centers[:, None, :, :]
                     ).pow(2).sum(-1).sqrt() / strides[None, :, None]
 
         # prevent overflow
@@ -224,7 +230,9 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
             assigned_labels=assigned_labels,
             assigned_labels_weights=assigned_labels_weights,
             assigned_bboxes=assigned_bboxes,
-            assign_metrics=assign_metrics)
+            assign_metrics=assign_metrics,
+            assigned_gt_inds=matched_gt_inds,
+            assigned_batch_index=batch_index)
 
     def dynamic_k_matching(
             self, cost_matrix: Tensor, pairwise_ious: Tensor,
@@ -269,4 +277,7 @@ class BatchDynamicSoftLabelAssigner(nn.Module):
         matched_pred_ious = (matching_matrix *
                              pairwise_ious).sum(2)[fg_mask_inboxes]
         matched_gt_inds = matching_matrix[fg_mask_inboxes, :].argmax(1)
+
+        # pad_bbox_flag.sum(-2).cumsum(0).reshape(-1)
+
         return matched_pred_ious, matched_gt_inds, fg_mask_inboxes
