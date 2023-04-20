@@ -31,7 +31,7 @@ model = dict(
         norm_cfg=_base_.norm_cfg,
         act_cfg=dict(type='SiLU', inplace=True)))
 
-base_lr = 0.004
+base_lr = 0.002
 weight_decay = 0.05
 optim_wrapper = dict(
     _delete_=True,
