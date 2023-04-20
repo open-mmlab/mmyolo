@@ -24,7 +24,7 @@ warnings.filterwarnings(action='ignore', category=FutureWarning)
 warnings.filterwarnings(action='ignore', category=ResourceWarning)
 
 
-def preprocess(config:Config, model:torch.nn.Module):
+def preprocess(config: Config, model: torch.nn.Module):
     data_preprocess = config.get('model', {}).get('data_preprocessor', {})
     mean = data_preprocess.get('mean', [0., 0., 0.])
     std = data_preprocess.get('std', [1., 1., 1.])
@@ -38,8 +38,8 @@ def preprocess(config:Config, model:torch.nn.Module):
             self.std_value = Parameter(std_value, requires_grad=False)
             self.core_model = model
 
-        def forward(self, x:torch.Tensor):
-            assert x.ndim==4
+        def forward(self, x: torch.Tensor):
+            assert x.ndim == 4
             x = x.float()
             y = (x - self.mean_value) / self.std_value
             y = self.core_model(y)
