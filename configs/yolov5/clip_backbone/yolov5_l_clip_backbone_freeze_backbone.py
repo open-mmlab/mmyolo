@@ -1,4 +1,4 @@
-_base_ = 'yolov5_s_test_clip_backbone_freeze_bn.py'
+_base_ = 'yolov5_l_clip_backbone_freeze_bn.py'
 
 model = dict(
     backbone=dict(

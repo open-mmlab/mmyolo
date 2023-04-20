@@ -29,7 +29,6 @@ class CLIPModifiedResNet(ModifiedResNet):
         x2 = self.layer3(x1)
         x3 = self.layer4(x2)
         # x = self.attnpool(x)
-        # print('!!!', x1.shape, x2.shape, x3.shape)
         return [x1, x2, x3]
 
     def train(self, mode=True):
@@ -37,6 +36,7 @@ class CLIPModifiedResNet(ModifiedResNet):
             for m in self.modules():
                 if isinstance(m, _BatchNorm):
                     m.eval()
-        elif self.freeze_backbone:
-            for m in self.modules():
-                m.eval()
+        elif self.freeze_backbone:  # 写法要优化
+            for ind, m in enumerate(self.modules()):
+                if ind != 0:
+                    m.eval()

@@ -1,4 +1,4 @@
-_base_ = '../yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py'
+_base_ = '../yolov5_l-v61_syncbn_fast_8xb16-300e_coco.py'
 
 model = dict(
     data_preprocessor=dict(
