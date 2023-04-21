@@ -1,9 +1,11 @@
-_base_ = ['../yolox_s_fast_8xb32-300e-rtmdet-hyp_coco.py']
+_base_ = '../yolox_s_fast_8xb32-300e-rtmdet-hyp_coco.py'
 
 load_from = 'https://download.openmmlab.com/mmyolo/v0/yolox/yolox_s_fast_8xb32-300e-rtmdet-hyp_coco/yolox_s_fast_8xb32-300e-rtmdet-hyp_coco_20230210_134645-3a8dfbd7.pth'  # noqa
 
-num_classes = 80
 num_keypoints = 17
+scaling_ratio_range = (0.75, 1.0)
+mixup_ratio_range = (0.8, 1.6)
+num_last_epochs = 20
 
 # model settings
 model = dict(
@@ -11,7 +13,7 @@ model = dict(
         type='YOLOXPoseHead',
         head_module=dict(
             type='YOLOXPoseHeadModule',
-            num_classes=num_classes,
+            num_classes=1,
             num_keypoints=num_keypoints,
         ),
         loss_pose=dict(
@@ -44,12 +46,12 @@ train_pipeline_stage1 = [
         pre_transform=pre_transform),
     dict(
         type='RandomAffine',
-        scaling_ratio_range=(0.75, 1.0),
+        scaling_ratio_range=scaling_ratio_range,
         border=(-img_scale[0] // 2, -img_scale[1] // 2)),
     dict(
         type='YOLOXMixUp',
         img_scale=img_scale,
-        ratio_range=(0.8, 1.6),
+        ratio_range=mixup_ratio_range,
         pad_val=114.0,
         pre_transform=pre_transform),
     dict(type='mmdet.YOLOXHSVRandomAug'),
@@ -88,73 +90,33 @@ test_pipeline = [
 
 # dataset settings
 dataset_type = 'CocoPoseDataset'
-data_mode = 'bottomup'
-data_root = 'data/coco/'
 
 train_dataloader = dict(
-    _delete_=True,
-    batch_size=32,
-    num_workers=8,
-    persistent_workers=True,
-    pin_memory=True,
-    collate_fn=dict(type='yolov5_collate'),
-    sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type=dataset_type,
-        data_mode=data_mode,
-        data_root=data_root,
+        data_mode='bottomup',
         ann_file='annotations/person_keypoints_train2017.json',
-        data_prefix=dict(img='train2017/'),
-        filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline_stage1))
 
 val_dataloader = dict(
-    _delete_=True,
-    batch_size=1,
-    num_workers=2,
-    persistent_workers=True,
-    pin_memory=True,
-    drop_last=False,
-    sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
         type=dataset_type,
-        data_mode=data_mode,
-        data_root=data_root,
+        data_mode='bottomup',
         ann_file='annotations/person_keypoints_val2017.json',
-        data_prefix=dict(img='val2017/'),
-        test_mode=True,
         pipeline=test_pipeline))
-
 test_dataloader = val_dataloader
 
 # evaluators
 val_evaluator = dict(
     _delete_=True,
     type='mmpose.CocoMetric',
-    ann_file=data_root + 'annotations/person_keypoints_val2017.json',
+    ann_file=_base_.data_root + 'annotations/person_keypoints_val2017.json',
     score_mode='bbox')
-
 test_evaluator = val_evaluator
 
-default_hooks = dict(
-    checkpoint=dict(save_best='coco/AP', rule='greater'),
-    visualization=dict(type='mmdet.DetVisualizationHook'))
+default_hooks = dict(checkpoint=dict(save_best='coco/AP', rule='greater'))
 
-vis_backends = [dict(type='LocalVisBackend')]
-visualizer = dict(
-    type='mmpose.PoseLocalVisualizer',
-    vis_backends=vis_backends,
-    name='visualizer')
-
-# optimizer
-base_lr = 0.004
-max_epochs = 300
-num_last_epochs = 20
-optim_wrapper = dict(
-    type='OptimWrapper',
-    optimizer=dict(_delete_=True, type='AdamW', lr=base_lr, weight_decay=0.05),
-    paramwise_cfg=dict(
-        norm_decay_mult=0, bias_decay_mult=0, bypass_duplicate=True))
+visualizer = dict(type='mmpose.PoseLocalVisualizer')
 
 custom_hooks = [
     dict(
@@ -171,5 +133,3 @@ custom_hooks = [
         strict_load=False,
         priority=49)
 ]
-
-auto_scale_lr = dict(base_batch_size=256)

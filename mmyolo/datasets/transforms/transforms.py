@@ -545,8 +545,6 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         results['gt_ignore_flags'] = np.array([False] * num_instances)
         results['gt_bboxes_labels'] = np.array(results['category_id']) - 1
 
-        return results
-
     def __repr__(self) -> str:
         repr_str = self.__class__.__name__
         repr_str += f'(with_bbox={self.with_bbox}, '

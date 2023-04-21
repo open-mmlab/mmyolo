@@ -1,6 +1,10 @@
-_base_ = ['./yolox-pose_s_8xb32-300e-rtmdet-hyp_coco.py']
+_base_ = './yolox-pose_s_8xb32-300e-rtmdet-hyp_coco.py'
 
 load_from = 'https://download.openmmlab.com/mmyolo/v0/yolox/yolox_tiny_fast_8xb32-300e-rtmdet-hyp_coco/yolox_tiny_fast_8xb32-300e-rtmdet-hyp_coco_20230210_143637-4c338102.pth'  # noqa
+
+deepen_factor = 0.33
+widen_factor = 0.375
+scaling_ratio_range = (0.75, 1.0)
 
 # model settings
 model = dict(
@@ -12,14 +16,14 @@ model = dict(
             interval=1)
     ]),
     backbone=dict(
-        deepen_factor=0.33,
-        widen_factor=0.375,
+        deepen_factor=deepen_factor,
+        widen_factor=widen_factor,
     ),
     neck=dict(
-        deepen_factor=0.33,
-        widen_factor=0.375,
+        deepen_factor=deepen_factor,
+        widen_factor=widen_factor,
     ),
-    bbox_head=dict(head_module=dict(widen_factor=0.375)))
+    bbox_head=dict(head_module=dict(widen_factor=deepen_factor)))
 
 # data settings
 img_scale = _base_.img_scale
@@ -29,12 +33,12 @@ train_pipeline_stage1 = [
     *pre_transform,
     dict(
         type='Mosaic',
-        img_scale=(img_scale),
+        img_scale=img_scale,
         pad_val=114.0,
         pre_transform=pre_transform),
     dict(
         type='RandomAffine',
-        scaling_ratio_range=(0.75, 1.0),
+        scaling_ratio_range=scaling_ratio_range,
         border=(-img_scale[0] // 2, -img_scale[1] // 2)),
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='RandomFlip', prob=0.5),
@@ -61,7 +65,6 @@ test_pipeline = [
                    'scale_factor', 'flip_indices'))
 ]
 
-train_dataloader = dict(
-    batch_size=32, dataset=dict(pipeline=train_pipeline_stage1))
+train_dataloader = dict(dataset=dict(pipeline=train_pipeline_stage1))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 test_dataloader = val_dataloader

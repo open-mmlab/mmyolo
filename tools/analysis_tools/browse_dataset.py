@@ -19,6 +19,7 @@ from mmyolo.registry import DATASETS, VISUALIZERS
 
 
 # TODO: Support for printing the change in key of results
+# TODO: Some bug. If you meet some bug, please use the original
 def parse_args():
     parser = argparse.ArgumentParser(description='Browse a dataset')
     parser.add_argument('config', help='train config file path')
