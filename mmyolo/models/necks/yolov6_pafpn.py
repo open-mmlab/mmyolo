@@ -320,8 +320,9 @@ class YOLOv6RepBiPAFPN(YOLOv6RepPAFPN):
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True),
                  block_cfg: ConfigType = dict(type='RepVGGBlock'),
                  init_cfg: OptMultiConfig = None):
+        self.extra_in_channel = in_channels[0]
         super().__init__(
-            in_channels=in_channels,
+            in_channels=in_channels[1:],
             out_channels=out_channels,
             deepen_factor=deepen_factor,
             widen_factor=widen_factor,
@@ -370,9 +371,11 @@ class YOLOv6RepBiPAFPN(YOLOv6RepPAFPN):
         Returns:
             nn.Module: The upsample layer.
         """
+        in_channels1 = self.in_channels[
+            idx - 2] * self.widen_factor if idx > 1 else self.extra_in_channel
         return BiFusion(
-            in_channels0=int(self.out_channels[idx] * self.widen_factor),
-            in_channels1=int(self.out_channels[idx - 1] * self.widen_factor),
+            in_channels0=int(self.in_channels[idx - 1] * self.widen_factor),
+            in_channels1=int(in_channels1),
             out_channels=int(self.out_channels[idx - 1] * self.widen_factor),
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)

@@ -1517,8 +1517,7 @@ class BiFusion(nn.Module):
     Compared with concatenation in PAN, it fuses an extra low-level feature.
 
     Args:
-        in_channels0 (int): The channels of current-level feature,
-        which is required to be equal to the channels of high-level feature.
+        in_channels0 (int): The channels of current-level feature.
         in_channels1 (int): The input channels of lower-level feature.
         out_channels (int): The out channels of the BiFusion module.
         norm_cfg (dict): Config dict for normalization layer.
@@ -1539,7 +1538,7 @@ class BiFusion(nn.Module):
         super().__init__()
         self.conv1 = ConvModule(
             in_channels0,
-            in_channels1,
+            out_channels,
             kernel_size=1,
             stride=1,
             padding=0,

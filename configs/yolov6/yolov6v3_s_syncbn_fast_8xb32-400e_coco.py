@@ -81,7 +81,7 @@ model = dict(
         type='YOLOv6RepBiPAFPN',
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
-        in_channels=[256, 512, 1024],
+        in_channels=[128, 256, 512, 1024],
         out_channels=[128, 256, 512],
         num_csp_blocks=12,
         norm_cfg=dict(type='BN', momentum=0.03, eps=0.001),
