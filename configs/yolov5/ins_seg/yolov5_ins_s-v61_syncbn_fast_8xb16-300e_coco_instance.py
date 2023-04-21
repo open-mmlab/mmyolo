@@ -56,7 +56,7 @@ model = dict(
     test_cfg=model_test_cfg)
 
 pre_transform = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile'),
     dict(
         type='LoadAnnotations',
         with_bbox=True,
@@ -106,7 +106,7 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile'),
     dict(type='YOLOv5KeepRatioResize', scale=_base_.img_scale),
     dict(
         type='LetterResize',
