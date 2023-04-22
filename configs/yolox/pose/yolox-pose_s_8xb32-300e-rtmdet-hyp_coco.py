@@ -27,7 +27,7 @@ model = dict(
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             oks_calculator=dict(
                 type='OksLoss', metainfo='configs/_base_/pose/coco.py'))),
-)
+    test_cfg=dict(score_thr=0.01))
 
 # pipelines
 pre_transform = [
