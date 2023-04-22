@@ -65,7 +65,7 @@ class YOLOXPoseHeadModule(YOLOXHeadModule):
             pose_feat = self.multi_level_pose_convs[i](x[i])
             offsets_pred.append(self.multi_level_conv_offsets[i](pose_feat))
             vis_pred.append(self.multi_level_conv_vis[i](pose_feat))
-        return *super().forward(x), offsets_pred, vis_pred
+        return (*super().forward(x), offsets_pred, vis_pred)
 
 
 @MODELS.register_module()

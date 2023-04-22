@@ -23,7 +23,7 @@ model = dict(
         deepen_factor=deepen_factor,
         widen_factor=widen_factor,
     ),
-    bbox_head=dict(head_module=dict(widen_factor=deepen_factor)))
+    bbox_head=dict(head_module=dict(widen_factor=widen_factor)))
 
 # data settings
 img_scale = _base_.img_scale
