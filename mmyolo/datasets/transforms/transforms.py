@@ -100,6 +100,10 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
 
             if ratio != 1:
                 # resize image according to the shape
+                # NOTE: We are currently testing on COCO that modifying
+                # this code will not affect the results.
+                # If you find that it has an effect on your results,
+                # please feel free to contact us.
                 image = mmcv.imresize(
                     img=image,
                     size=(int(original_w * ratio), int(original_h * ratio)),
@@ -386,7 +390,18 @@ class YOLOv5HSVRandomAug(BaseTransform):
 class LoadAnnotations(MMDET_LoadAnnotations):
     """Because the yolo series does not need to consider ignore bboxes for the
     time being, in order to speed up the pipeline, it can be excluded in
-    advance."""
+    advance.
+
+    Args:
+        mask2bbox (bool): Whether to use mask annotation to get bbox.
+            Defaults to False.
+        poly2mask (bool): Whether to transform the polygons to bitmaps.
+            Defaults to False.
+        merge_polygons (bool): Whether to merge polygons into one polygon.
+            If merged, the storage structure is simpler and training is more
+            effcient, especially if the mask inside a bbox is divided into
+            multiple polygons. Defaults to True.
+    """
 
     def __init__(self,
                  mask2bbox: bool = False,
@@ -549,8 +564,10 @@ class LoadAnnotations(MMDET_LoadAnnotations):
             idx_list[i].append(idx2)
 
         # use two round to connect all the segments
+        # first round: first to end, i.e. A->B(partial)->C
+        # second round: end to first, i.e. C->B(remaining)-A
         for k in range(2):
-            # forward connection
+            # forward first round
             if k == 0:
                 for i, idx in enumerate(idx_list):
                     # middle segments have two indexes
@@ -558,19 +575,24 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                     if len(idx) == 2 and idx[0] > idx[1]:
                         idx = idx[::-1]
                         segments[i] = segments[i][::-1, :]
-
+                    # add the idx[0] point for connect next segment
                     segments[i] = np.roll(segments[i], -idx[0], axis=0)
                     segments[i] = np.concatenate(
                         [segments[i], segments[i][:1]])
                     # deal with the first segment and the last one
                     if i in [0, len(idx_list) - 1]:
                         s.append(segments[i])
+                    # deal with the middle segment
+                    # Note that in the first round, only partial segment
+                    # are appended.
                     else:
                         idx = [0, idx[1] - idx[0]]
                         s.append(segments[i][idx[0]:idx[1] + 1])
-
+            # forward second round
             else:
                 for i in range(len(idx_list) - 1, -1, -1):
+                    # deal with the middle segment
+                    # append the remaining points
                     if i not in [0, len(idx_list) - 1]:
                         idx = idx_list[i]
                         nidx = abs(idx[1] - idx[0])
@@ -1722,8 +1744,9 @@ class Polygon2Mask(BaseTransform):
             will compress into one overlap mask, the value of mask indicates
             the index of gt masks. If set to False, one mask is a binary mask.
             Default to True.
-        coco_style (bool): Whether to use coco_style to convert the polygons
-            to bitmaps.
+        coco_style (bool): Whether to use coco_style to convert the polygons to
+            bitmaps. Note that this option is only used to test if there is an
+            improvement in training speed and we recommend setting it to False.
     """
 
     def __init__(self,
@@ -1775,7 +1798,15 @@ class Polygon2Mask(BaseTransform):
                        img_shape: Tuple[int, int],
                        polygons: PolygonMasks,
                        color: int = 1) -> np.ndarray:
-        """Return (640, 640) non-overlap mask."""
+        """Return a list of bitmap masks.
+
+        Args:
+            img_shape (tuple): The image size.
+            polygons (PolygonMasks): The mask annotations.
+            color (int): color in fillPoly.
+        Return:
+            List[np.ndarray]: the list of masks in bitmaps.
+        """
         if self.coco_style:
             nh, nw = (img_shape[0] // self.downsample_ratio,
                       img_shape[1] // self.downsample_ratio)
@@ -1791,7 +1822,16 @@ class Polygon2Mask(BaseTransform):
     def polygons2masks_overlap(
             self, img_shape: Tuple[int, int],
             polygons: PolygonMasks) -> Tuple[np.ndarray, np.ndarray]:
-        """Return a (640, 640) overlap mask."""
+        """Return a overlap mask and the sorted idx of area.
+
+        Args:
+            img_shape (tuple): The image size.
+            polygons (PolygonMasks): The mask annotations.
+            color (int): color in fillPoly.
+        Return:
+            Tuple[np.ndarray, np.ndarray]:
+                the overlap mask and the sorted idx of area.
+        """
         masks = np.zeros((img_shape[0] // self.downsample_ratio,
                           img_shape[1] // self.downsample_ratio),
                          dtype=np.int32 if len(polygons) > 255 else np.uint8)

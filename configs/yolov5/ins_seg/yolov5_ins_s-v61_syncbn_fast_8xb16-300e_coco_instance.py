@@ -9,16 +9,12 @@ min_area_ratio = 0.01
 downsample_ratio = 4
 mask_overlap = True
 # LeterResize
+# half_pad_param: if set to True, left and right pad_param will
+# be given by dividing padding_h by 2. If set to False, pad_param is
+# in int format. We recommend setting this to False for object
+# detection tasks, and True for instance segmentation tasks.
+# Default to False.
 half_pad_param = True
-
-# Batch size of per single GPU during validation
-# The official yolov5 set the batchsize as 32 during validation,
-# so we set the batchsize as 8(gpu)*4=32 to align with the official settings.
-val_batch_size_per_gpu = 1
-# Worker to pre-fetch data for each single GPU during validation
-val_num_workers = 1
-
-batch_shapes_cfg = dict(batch_size=val_batch_size_per_gpu)
 
 # Testing take a long time due to model_test_cfg.
 # If you want to speed it up, you can increase score_thr
@@ -56,7 +52,7 @@ model = dict(
     test_cfg=model_test_cfg)
 
 pre_transform = [
-    dict(type='LoadImageFromFile'),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(
         type='LoadAnnotations',
         with_bbox=True,
@@ -81,6 +77,8 @@ train_pipeline = [
         min_area_ratio=min_area_ratio,
         max_aspect_ratio=max_aspect_ratio,
         use_mask_refine=use_mask2refine),
+    # TODO: support mask transform in albu
+    # Geometric transformations are not supported in albu now.
     dict(
         type='mmdet.Albu',
         transforms=_base_.albu_train_transforms,
@@ -106,7 +104,7 @@ train_pipeline = [
 ]
 
 test_pipeline = [
-    dict(type='LoadImageFromFile'),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='YOLOv5KeepRatioResize', scale=_base_.img_scale),
     dict(
         type='LetterResize',
@@ -122,10 +120,7 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(dataset=dict(pipeline=train_pipeline))
-val_dataloader = dict(
-    batch_size=val_batch_size_per_gpu,
-    num_workers=val_num_workers,
-    dataset=dict(pipeline=test_pipeline, batch_shapes_cfg=batch_shapes_cfg))
+val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 test_dataloader = val_dataloader
 
 val_evaluator = dict(metric=['bbox', 'segm'])

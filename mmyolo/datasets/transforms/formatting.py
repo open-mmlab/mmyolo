@@ -78,18 +78,14 @@ class PackDetInputs(MMDET_PackDetInputs):
         data_sample.gt_instances = instance_data
         data_sample.ignored_instances = ignore_instance_data
 
-        if 'proposals' in results:
-            proposals = InstanceData(
-                bboxes=to_tensor(results['proposals']),
-                scores=to_tensor(results['proposals_scores']))
-            data_sample.proposals = proposals
-
         if 'gt_seg_map' in results:
             gt_sem_seg_data = dict(
                 sem_seg=to_tensor(results['gt_seg_map'][None, ...].copy()))
             data_sample.gt_sem_seg = PixelData(**gt_sem_seg_data)
 
-        # Only modified here
+        # In order to unify the support for the overlap mask annotations
+        # i.e. mask overlap annotations in (h,w) format,
+        # we use the gt_panoptic_seg field to unify the modeling
         if 'gt_panoptic_seg' in results:
             data_sample.gt_panoptic_seg = PixelData(
                 pan_seg=results['gt_panoptic_seg'])
