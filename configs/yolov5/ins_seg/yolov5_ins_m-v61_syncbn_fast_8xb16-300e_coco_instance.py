@@ -79,7 +79,7 @@ train_pipeline = [
         downsample_ratio=_base_.downsample_ratio,
         mask_overlap=_base_.mask_overlap),
     dict(
-        type='mmdet.PackDetInputs',
+        type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',
                    'flip_direction'))
 ]
