@@ -95,8 +95,7 @@ train_pipeline = [
     dict(
         type='Polygon2Mask',
         downsample_ratio=downsample_ratio,
-        mask_overlap=mask_overlap,
-        coco_style=False),
+        mask_overlap=mask_overlap),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',

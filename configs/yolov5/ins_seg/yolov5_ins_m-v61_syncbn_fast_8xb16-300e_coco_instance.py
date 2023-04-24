@@ -1,4 +1,4 @@
-_base_ = './yolov5_ins_s-v61_sync_bn_fast_8xb16-300e_coco_instance.py'
+_base_ = './yolov5_ins_s-v61_syncbn_fast_8xb16-300e_coco_instance.py'  # noqa
 
 # ========================modified parameters======================
 deepen_factor = 0.67
@@ -77,8 +77,7 @@ train_pipeline = [
     dict(
         type='Polygon2Mask',
         downsample_ratio=_base_.downsample_ratio,
-        mask_overlap=_base_.mask_overlap,
-        coco_style=False),
+        mask_overlap=_base_.mask_overlap),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'flip',

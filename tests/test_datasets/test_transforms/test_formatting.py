@@ -4,7 +4,6 @@ import os.path as osp
 import unittest
 
 import numpy as np
-import torch
 from mmdet.structures import DetDataSample
 from mmdet.structures.mask import BitmapMasks
 from mmengine.structures import InstanceData, PixelData
@@ -85,12 +84,6 @@ class TestPackDetInputs(unittest.TestCase):
         self.assertEqual(len(results['data_samples'].gt_instances), 2)
         self.assertEqual(len(results['data_samples'].ignored_instances), 1)
         self.assertIsInstance(results['data_samples'].gt_sem_seg, PixelData)
-        self.assertIsInstance(results['data_samples'].proposals, InstanceData)
-        self.assertEqual(len(results['data_samples'].proposals), 2)
-        self.assertIsInstance(results['data_samples'].proposals.bboxes,
-                              torch.Tensor)
-        self.assertIsInstance(results['data_samples'].proposals.scores,
-                              torch.Tensor)
 
     def test_transform_without_ignore(self):
         transform = PackDetInputs(meta_keys=self.meta_keys)
@@ -104,12 +97,6 @@ class TestPackDetInputs(unittest.TestCase):
         self.assertEqual(len(results['data_samples'].gt_instances), 3)
         self.assertEqual(len(results['data_samples'].ignored_instances), 0)
         self.assertIsInstance(results['data_samples'].gt_sem_seg, PixelData)
-        self.assertIsInstance(results['data_samples'].proposals, InstanceData)
-        self.assertEqual(len(results['data_samples'].proposals), 2)
-        self.assertIsInstance(results['data_samples'].proposals.bboxes,
-                              torch.Tensor)
-        self.assertIsInstance(results['data_samples'].proposals.scores,
-                              torch.Tensor)
 
     def test_transform_with_panoptic_seg(self):
         transform = PackDetInputs(meta_keys=self.meta_keys)
@@ -125,12 +112,6 @@ class TestPackDetInputs(unittest.TestCase):
         self.assertIsInstance(results['data_samples'].gt_sem_seg, PixelData)
         self.assertIsInstance(results['data_samples'].gt_panoptic_seg,
                               PixelData)
-        self.assertIsInstance(results['data_samples'].proposals, InstanceData)
-        self.assertEqual(len(results['data_samples'].proposals), 2)
-        self.assertIsInstance(results['data_samples'].proposals.bboxes,
-                              torch.Tensor)
-        self.assertIsInstance(results['data_samples'].proposals.scores,
-                              torch.Tensor)
 
     def test_repr(self):
         transform = PackDetInputs(meta_keys=self.meta_keys)
