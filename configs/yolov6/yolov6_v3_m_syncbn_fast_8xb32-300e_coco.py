@@ -1,4 +1,4 @@
-_base_ = './yolov6v3_s_syncbn_fast_8xb32-300e_coco.py'
+_base_ = './yolov6_v3_s_syncbn_fast_8xb32-300e_coco.py'
 
 # ======================= Possible modified parameters =======================
 # -----model related-----

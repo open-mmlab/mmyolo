@@ -21,7 +21,7 @@ persistent_workers = True
 # -----train val related-----
 # Base learning rate for optim_wrapper
 base_lr = 0.01
-max_epochs = 400  # Maximum training epochs
+max_epochs = 300  # Maximum training epochs
 num_last_epochs = 15  # Last epoch number to switch training pipeline
 
 # ======================= Possible modified parameters =======================
@@ -128,7 +128,7 @@ model = dict(
 # The training pipeline of YOLOv6 is basically the same as YOLOv5.
 # The difference is that Mosaic and RandomAffine will be closed in the last 15 epochs. # noqa
 pre_transform = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='LoadAnnotations', with_bbox=True)
 ]
 
@@ -195,7 +195,7 @@ train_dataloader = dict(
         pipeline=train_pipeline))
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',

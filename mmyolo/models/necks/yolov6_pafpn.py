@@ -372,10 +372,10 @@ class YOLOv6RepBiPAFPN(YOLOv6RepPAFPN):
             nn.Module: The upsample layer.
         """
         in_channels1 = self.in_channels[
-            idx - 2] * self.widen_factor if idx > 1 else self.extra_in_channel
+            idx - 2] if idx > 1 else self.extra_in_channel
         return BiFusion(
             in_channels0=int(self.in_channels[idx - 1] * self.widen_factor),
-            in_channels1=int(in_channels1),
+            in_channels1=int(in_channels1 * self.widen_factor),
             out_channels=int(self.out_channels[idx - 1] * self.widen_factor),
             norm_cfg=self.norm_cfg,
             act_cfg=self.act_cfg)
