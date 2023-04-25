@@ -24,6 +24,7 @@ model = dict(
         assigner=dict(
             type='PoseSimOTAAssigner',
             center_radius=2.5,
+            oks_weight=3.0,
             iou_calculator=dict(type='mmdet.BboxOverlaps2D'),
             oks_calculator=dict(
                 type='OksLoss', metainfo='configs/_base_/pose/coco.py'))),
