@@ -50,7 +50,7 @@ train_pipeline_stage1 = [
 ]
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='mmdet.Resize', scale=test_img_scale, keep_ratio=True),  # note
     dict(
         type='mmdet.Pad',
@@ -69,7 +69,7 @@ test_dataloader = val_dataloader
 
 # Config for Test Time Augmentation. (TTA)
 tta_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(
         type='TestTimeAug',
         transforms=[

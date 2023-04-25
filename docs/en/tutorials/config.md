@@ -86,12 +86,10 @@ The training and testing data flow of YOLOv5 have a certain difference. We will 
 ```python
 dataset_type = 'CocoDataset'  # Dataset type, this will be used to define the dataset
 data_root = 'data/coco/'  # Root path of data
-file_client_args = dict(backend='disk')  # file client arguments, default backend loads from local disk
 
 pre_transform = [ # Training data loading pipeline
     dict(
-        type='LoadImageFromFile', # First pipeline to load images from file path
-        file_client_args=file_client_args),  # file client arguments, default backend loads from local disk
+        type='LoadImageFromFile'), # First pipeline to load images from file path
     dict(type='LoadAnnotations', # Second pipeline to load annotations for current image
          with_bbox=True) # Whether to use bounding box, True for detection
 ]
@@ -156,8 +154,7 @@ In the testing phase of YOLOv5, the [Letter Resize](https://github.com/open-mmla
 ```python
 test_pipeline = [ # Validation/ Testing dataloader config
     dict(
-        type='LoadImageFromFile', # First pipeline to load images from file path
-        file_client_args=file_client_args),  # file client arguments, default backend loads from local disk
+        type='LoadImageFromFile'), # First pipeline to load images from file path
     dict(type='YOLOv5KeepRatioResize', # Second pipeline to resize images with the same aspect ratio
          scale=img_scale), # Pipeline that resizes the images
     dict(
@@ -475,8 +472,7 @@ train_pipeline = [
 
 test_pipeline = [
     dict(
-        type='LoadImageFromFile',
-        file_client_args={{_base_.file_client_args}}),
+        type='LoadImageFromFile'),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
@@ -517,7 +513,6 @@ E.g:
 ```python
 _base_ = '../_base_/default_runtime.py'
 
-file_client_args = {{_base_.file_client_args}}  # `file_client_args` equals to `file_client_args` that defined in the _base_ config
 pre_transform = _base_.pre_transform # `pre_transform` equals to `pre_transform` in the _base_ config
 ```
 

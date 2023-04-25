@@ -86,7 +86,6 @@ class BatchShapePolicy:
                  size_divisor: int = 32,
                  extra_pad_ratio: float = 0.5):
         self.img_size = img_size
-        self.img_size = img_size
         self.size_divisor = size_divisor
         self.extra_pad_ratio = extra_pad_ratio
         _, world_size = get_dist_info()

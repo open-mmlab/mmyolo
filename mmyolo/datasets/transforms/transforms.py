@@ -119,6 +119,9 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
             scale_ratio_h = resized_h / original_h
             scale_ratio_w = resized_w / original_w
             scale_factor = (scale_ratio_w, scale_ratio_h)
+            scale_ratio_h = resized_h / original_h
+            scale_ratio_w = resized_w / original_w
+            scale_factor = (scale_ratio_w, scale_ratio_h)
 
             results['img'] = image
             results['img_shape'] = image.shape[:2]
@@ -156,6 +159,11 @@ class LetterResize(MMDET_Resize):
             in int format. We recommend setting this to False for object
             detection tasks, and True for instance segmentation tasks.
             Default to False.
+        half_pad_param (bool): If set to True, left and right pad_param will
+            be given by dividing padding_h by 2. If set to False, pad_param is
+            in int format. We recommend setting this to False for object
+            detection tasks, and True for instance segmentation tasks.
+            Default to False.
     """
 
     def __init__(self,
@@ -177,6 +185,7 @@ class LetterResize(MMDET_Resize):
         self.use_mini_pad = use_mini_pad
         self.stretch_only = stretch_only
         self.allow_scale_up = allow_scale_up
+        self.half_pad_param = half_pad_param
         self.half_pad_param = half_pad_param
 
     def _resize_img(self, results: dict):
@@ -228,6 +237,8 @@ class LetterResize(MMDET_Resize):
                 interpolation=self.interpolation,
                 backend=self.backend)
 
+        scale_factor = (no_pad_shape[1] / image_shape[1],
+                        no_pad_shape[0] / image_shape[0])
         scale_factor = (no_pad_shape[1] / image_shape[1],
                         no_pad_shape[0] / image_shape[0])
 
@@ -414,6 +425,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                  **kwargs) -> None:
         self.mask2bbox = mask2bbox
         self.merge_polygons = merge_polygons
+        self.merge_polygons = merge_polygons
         assert not poly2mask, 'Does not support BitmapMasks considering ' \
                               'that bitmap consumes more memory.'
         super().__init__(poly2mask=poly2mask, **kwargs)
@@ -528,6 +540,8 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                             # ignore
                             self._mask_ignore_flag.append(0)
                         else:
+                            if len(gt_mask) > 1 and self.merge_polygons:
+                                gt_mask = self.merge_multi_segment(gt_mask)
                             if len(gt_mask) > 1 and self.merge_polygons:
                                 gt_mask = self.merge_multi_segment(gt_mask)
                             gt_masks.append(gt_mask)
@@ -660,7 +674,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         repr_str += f'mask2bbox={self.mask2bbox}, '
         repr_str += f'poly2mask={self.poly2mask}, '
         repr_str += f"imdecode_backend='{self.imdecode_backend}', "
-        repr_str += f'file_client_args={self.file_client_args})'
+        repr_str += f'backend_args={self.backend_args})'
         return repr_str
 
 
@@ -807,6 +821,9 @@ class YOLOv5RandomAffine(BaseTransform):
                 # filter bboxes outside image
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
                                                     bboxes).numpy()
+                if self.bbox_clip_border:
+                    bboxes.clip_([height - 1e-3, width - 1e-3])
+                    gt_masks = self.clip_polygons(gt_masks, height, width)
                 if self.bbox_clip_border:
                     bboxes.clip_([height - 1e-3, width - 1e-3])
                     gt_masks = self.clip_polygons(gt_masks, height, width)

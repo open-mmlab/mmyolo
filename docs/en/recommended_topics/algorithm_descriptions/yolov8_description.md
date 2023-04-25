@@ -201,7 +201,7 @@ In particular, to ensure that the feature map and image are shown aligned, the o
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+        backend_args=_base_.backend_args),
     dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # change
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(

@@ -79,7 +79,7 @@ EasyDeploy 支持的功能目前没有 MMDeploy 多，但是使用上更加简�
 
 ## 如何使用多个 MMYOLO 版本进行开发
 
-推荐你拥有多个 MMYOLO 工程文件夹，例如 mmyolo-v1, mmyolo-v2。 在使用不同版本 MMYOLO 时候，你可以在终端运行前设置
+若你拥有多个 MMYOLO 工程文件夹，例如 mmyolo-v1, mmyolo-v2。 在使用不同版本 MMYOLO 时候，你可以在终端运行前设置
 
 ```shell
 PYTHONPATH="$(dirname $0)/..":$PYTHONPATH
@@ -94,7 +94,7 @@ unset PYTHONPATH
 ## 训练中保存最好模型
 
 用户可以通过在配置中设置 `default_hooks.checkpoint.save_best` 参数来选择根据什么指标来筛选最优模型。以 `COCO` 数据集检测任务为例，
-则 `default_hooks.checkpoint.save_best` 可以选择输入的参数有:
+`default_hooks.checkpoint.save_best` 可以选择输入的参数有:
 
 1. `auto` 将会根据验证集中的第一个评价指标作为筛选条件。
 2. `coco/bbox_mAP` 将会根据 `bbox_mAP` 作为筛选条件。
@@ -106,6 +106,6 @@ unset PYTHONPATH
 
 此外用户还可以选择筛选的逻辑，通过设置配置中的 `default_hooks.checkpoint.rule` 来选择判断逻辑，如：`default_hooks.checkpoint.rule=greater` 表示指标越大越好。更详细的使用可以参考 [checkpoint_hook](https://github.com/open-mmlab/mmengine/blob/main/mmengine/hooks/checkpoint_hook.py) 来修改
 
-## 如何进行非正方形输入尺寸训练和测试 ?
+## 如何进行非正方形输入尺寸训练和测试?
 
 在 YOLO 系列算法中默认配置基本上都是 640x640 或者 1280x1280 正方形尺度输入训练的。用户如果想进行非正方形尺度训练，你可以修改配置中 `image_scale` 参数，并将其他对应位置进行修改即可。用户可以参考我们提供的 [yolov5_s-v61_fast_1xb12-40e_608x352_cat.py](https://github.com/open-mmlab/mmyolo/tree/dev/configs/yolov5/yolov5_s-v61_fast_1xb12-40e_608x352_cat.py) 配置。

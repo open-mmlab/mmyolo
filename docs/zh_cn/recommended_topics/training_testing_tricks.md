@@ -63,11 +63,11 @@ MMYOLO 中已经支持了大部分 YOLO 系列目标检测相关算法。不同�
 
 #### 4 加入纯背景图片抑制误报率
 
-对于非开放集目标检测而言，训练和测试都是在固定类别上进行，一旦应用到没有训练过的类别图片上有可能会产生误报，一个常见的缓解策略是加入一定比例的纯背景图片。 在大部分 YOLO 系列中都是默认开启了加入纯背景图片抑制误报率功能，用户只需要设置 `train_dataloader.dataset.filter_cfg.filter_empty_gt` 为 False 即可，表示将纯背景图片不过滤掉加入训练。
+对于非开放世界数据集目标检测而言，训练和测试都是在固定类别上进行，一旦应用到没有训练过的类别图片上有可能会产生误报，一个常见的缓解策略是加入一定比例的纯背景图片。 在大部分 YOLO 系列中都是默认开启了加入纯背景图片抑制误报率功能，用户只需要设置 `train_dataloader.dataset.filter_cfg.filter_empty_gt` 为 False 即可，表示将纯背景图片不过滤掉加入训练。
 
 #### 5 试试 AdamW 也许效果显著
 
-YOLOv5，YOLOv6，YOLOv7 和 YOLOv8 等都是采用了 SGD 优化器，该参数器对参数的设置比较严格，而 AdamW 则正好相反，其对学习率设置等没有那么敏感。因此如果用户在自定义数据集微调可以尝试选择 AdamW 优化器。我们在 YOLOX 中进行了简单尝试，发现在 tiny、s 和 m 尺度摩西上将其优化器替换为 AdamW 均有一定程度涨点。
+YOLOv5，YOLOv6，YOLOv7 和 YOLOv8 等都是采用了 SGD 优化器，该参数器对参数的设置比较严格，而 AdamW 则正好相反，其对学习率设置等没有那么敏感。因此如果用户在自定义数据集微调可以尝试选择 AdamW 优化器。我们在 YOLOX 中进行了简单尝试，发现在 tiny、s 和 m 尺度模型上将其优化器替换为 AdamW 均有一定程度涨点。
 
 |  Backbone  | Size | Batch Size | RTMDet-Hyp |   Box AP    |
 | :--------: | :--: | :--------: | :--------: | :---------: |
@@ -88,7 +88,7 @@ YOLOv5，YOLOv6，YOLOv7 和 YOLOv8 等都是采用了 SGD 优化器，该参数
 <img src="https://user-images.githubusercontent.com/17425982/224928241-89dac006-392b-445d-87e8-a9e268825401.png" width="1000"/>
 </div>
 
-图片来自 [detectron2 issue](https://github.com/facebookresearch/detectron2/issues/1909)。黄色打叉的区域表示 `iscrowd` 标注。原因有两个方便：
+图片来自 [detectron2 issue](https://github.com/facebookresearch/detectron2/issues/1909)。黄色打叉的区域表示 `iscrowd` 标注。原因有两个方面：
 
 - 这个区域不是真的人，例如海报上的人
 - 该区域过于拥挤，很难标注
@@ -234,12 +234,12 @@ if 'batch_size_per_gpu' in optimizer_cfg:
 
 ### 推理速度和测试精度的平衡
 
-在模型性能测试时候，我们一般是要求 mAP 越高越好，但是在实际应用或者推理时候我们希望在保证误报率和漏报率情况下模型推理越快越好，或者说测试只关注 mAP 而忽略了后处理和评估速度，而实际落地应用时候会追求速度和精度的平衡。
+在模型性能测试时候，我们一般是要求 mAP 越高越好，但是在实际应用或者推理时候我们希望在保证低误报率和漏报率情况下模型推理越快越好，或者说测试只关注 mAP 而忽略了后处理和评估速度，而实际落地应用时候会追求速度和精度的平衡。
 在 YOLO 系列中可以通过控制某些参数实现速度和精度平衡，下面以 YOLOv5 为例对其进行详细描述。
 
 #### 1 推理时避免一个检测框输出多个类别
 
-YOLOv5 在训练分类分支时候采用的是 BCE Loss 即 `use_sigmoid=True`。假设物体类别数是 4，那么分类分支输出的类别数是 4 而不是 5，并且由于使用的是 sigmoid 而非 softmax 预测模式，很可能在某个预测位置出多个满足过滤阈值的检测框，也就是会出现一个预测 bbox 对应了多个预测 label。如下图所示
+YOLOv5 在训练分类分支时候采用的是 BCE Loss 即 `use_sigmoid=True`。假设物体类别数是 4，那么分类分支输出的类别数是 4 而不是 5，并且由于使用的是 sigmoid 而非 softmax 预测模式，很可能在某个位置预测出多个满足过滤阈值的检测框，也就是会出现一个预测 bbox 对应多个预测 label 的情况。如下图所示
 
 <div align=center>
 <img alt="multi-label" src="https://user-images.githubusercontent.com/17425982/226282295-8ef53a89-e33e-4fd5-8d60-417db2d5a140.png" width=800 />

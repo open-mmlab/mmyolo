@@ -324,9 +324,6 @@ docstring 是对一个类、一个函数功能与 API 接口的详细描述，�
                specified, the ``out_dir`` will be the concatenation of
                ``out_dir`` and the last level directory of ``runner.work_dir``.
                Defaults to None. `Changed in version 1.3.15.`
-           file_client_args (dict, optional): Arguments to instantiate a
-               FileClient. See :class:`mmcv.fileio.FileClient` for details.
-               Defaults to None. `New in version 1.3.15.`
 
        Warning:
            Before v1.3.15, the ``out_dir`` argument indicates the path where the
