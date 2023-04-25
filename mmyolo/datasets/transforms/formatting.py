@@ -60,7 +60,7 @@ class PackDetInputs(MMDET_PackDetInputs):
         if 'gt_keypoints' in results:
             results['gt_keypoints_visible'] = results[
                 'gt_keypoints'].keypoints_visible
-        results['gt_keypoints'] = results['gt_keypoints'].keypoints
+            results['gt_keypoints'] = results['gt_keypoints'].keypoints
 
         data_sample = DetDataSample()
         instance_data = InstanceData()
