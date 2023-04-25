@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 from mmdet.utils import ConfigType, OptMultiConfig
 
-from mmyolo.models.layers.yolo_bricks import SPPFBottleneck
+from mmyolo.models.layers.yolo_bricks import CSPSPPFBottleneck, SPPFBottleneck
 from mmyolo.registry import MODELS
 from ..layers import BepC3StageBlock, RepStageBlock
 from ..utils import make_round
@@ -72,6 +72,7 @@ class YOLOv6EfficientRep(BaseBackbone):
                  input_channels: int = 3,
                  out_indices: Tuple[int] = (2, 3, 4),
                  frozen_stages: int = -1,
+                 use_cspsppf: bool = False,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='ReLU', inplace=True),
@@ -79,6 +80,7 @@ class YOLOv6EfficientRep(BaseBackbone):
                  block_cfg: ConfigType = dict(type='RepVGGBlock'),
                  init_cfg: OptMultiConfig = None):
         self.block_cfg = block_cfg
+        self.use_cspsppf = use_cspsppf
         super().__init__(
             self.arch_settings[arch],
             deepen_factor,
@@ -145,6 +147,13 @@ class YOLOv6EfficientRep(BaseBackbone):
                 kernel_sizes=5,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
+            if self.use_cspsppf:
+                spp = CSPSPPFBottleneck(
+                    in_channels=out_channels,
+                    out_channels=out_channels,
+                    kernel_sizes=5,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg)
             stage.append(spp)
         return stage
 
@@ -222,6 +231,7 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
                  hidden_ratio: float = 0.5,
                  out_indices: Tuple[int] = (2, 3, 4),
                  frozen_stages: int = -1,
+                 use_cspsppf: bool = False,
                  norm_cfg: ConfigType = dict(
                      type='BN', momentum=0.03, eps=0.001),
                  act_cfg: ConfigType = dict(type='SiLU', inplace=True),
@@ -229,6 +239,7 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
                  block_cfg: ConfigType = dict(type='ConvWrapper'),
                  init_cfg: OptMultiConfig = None):
         self.hidden_ratio = hidden_ratio
+        self.use_cspsppf = use_cspsppf
         super().__init__(
             arch=arch,
             deepen_factor=deepen_factor,
@@ -283,5 +294,12 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
                 kernel_sizes=5,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
+            if self.use_cspsppf:
+                spp = CSPSPPFBottleneck(
+                    in_channels=out_channels,
+                    out_channels=out_channels,
+                    kernel_sizes=5,
+                    norm_cfg=self.norm_cfg,
+                    act_cfg=self.act_cfg)
             stage.append(spp)
         return stage

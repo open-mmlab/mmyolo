@@ -34,6 +34,7 @@ class TestYOLOv6Head(TestCase):
                 nms=dict(type='nms', iou_threshold=0.65)))
 
         head = YOLOv6Head(head_module=self.head_module, test_cfg=test_cfg)
+        head.eval()
 
         feat = []
         for i in range(len(self.head_module['in_channels'])):
