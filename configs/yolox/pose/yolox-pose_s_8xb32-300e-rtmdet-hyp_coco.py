@@ -58,7 +58,7 @@ train_pipeline_stage1 = [
     dict(type='RandomFlip', prob=0.5),
     dict(type='FilterAnnotations', by_keypoints=True, keep_empty=False),
     dict(
-        type='PackDetPoseInputs',
+        type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape'))
 ]
 
@@ -72,7 +72,7 @@ train_pipeline_stage2 = [
     dict(type='mmdet.YOLOXHSVRandomAug'),
     dict(type='RandomFlip', prob=0.5),
     dict(type='FilterAnnotations', by_keypoints=True, keep_empty=False),
-    dict(type='PackDetPoseInputs')
+    dict(type='PackDetInputs')
 ]
 
 test_pipeline = [
@@ -83,7 +83,7 @@ test_pipeline = [
         pad_to_square=True,
         pad_val=dict(img=(114.0, 114.0, 114.0))),
     dict(
-        type='PackDetPoseInputs',
+        type='PackDetInputs',
         meta_keys=('id', 'img_id', 'img_path', 'ori_shape', 'img_shape',
                    'scale_factor', 'flip_indices'))
 ]

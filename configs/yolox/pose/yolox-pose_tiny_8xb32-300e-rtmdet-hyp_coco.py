@@ -48,7 +48,7 @@ train_pipeline_stage1 = [
         min_gt_bbox_wh=(1, 1),
         keep_empty=False),
     dict(
-        type='PackDetPoseInputs',
+        type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape'))
 ]
 
@@ -60,7 +60,7 @@ test_pipeline = [
         pad_to_square=True,
         pad_val=dict(img=(114.0, 114.0, 114.0))),
     dict(
-        type='PackDetPoseInputs',
+        type='PackDetInputs',
         meta_keys=('id', 'img_id', 'img_path', 'ori_shape', 'img_shape',
                    'scale_factor', 'flip_indices'))
 ]
