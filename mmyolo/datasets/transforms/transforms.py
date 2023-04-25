@@ -12,13 +12,12 @@ from mmcv.transforms import BaseTransform, Compose
 from mmcv.transforms.utils import cache_randomness
 from mmdet.datasets.transforms import FilterAnnotations as FilterDetAnnotations
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
-from mmdet.datasets.transforms import PackDetInputs
 from mmdet.datasets.transforms import RandomAffine as MMDET_RandomAffine
 from mmdet.datasets.transforms import RandomFlip as MMDET_RandomFlip
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
-from mmdet.structures.mask import PolygonMasks
+from mmdet.structures.mask import PolygonMasks, polygon_to_bitmap
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
@@ -105,17 +104,21 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
                                             self.scale)
 
             if ratio != 1:
-                # resize image according to the ratio
-                image = mmcv.imrescale(
+                # resize image according to the shape
+                # NOTE: We are currently testing on COCO that modifying
+                # this code will not affect the results.
+                # If you find that it has an effect on your results,
+                # please feel free to contact us.
+                image = mmcv.imresize(
                     img=image,
-                    scale=ratio,
+                    size=(int(original_w * ratio), int(original_h * ratio)),
                     interpolation='area' if ratio < 1 else 'bilinear',
                     backend=self.backend)
 
             resized_h, resized_w = image.shape[:2]
-            scale_ratio = resized_h / original_h
-
-            scale_factor = (scale_ratio, scale_ratio)
+            scale_ratio_h = resized_h / original_h
+            scale_ratio_w = resized_w / original_w
+            scale_factor = (scale_ratio_w, scale_ratio_h)
 
             results['img'] = image
             results['img_shape'] = image.shape[:2]
@@ -148,6 +151,11 @@ class LetterResize(MMDET_Resize):
         stretch_only (bool): Whether stretch to the specified size directly.
             Defaults to False
         allow_scale_up (bool): Allow scale up when ratio > 1. Defaults to True
+        half_pad_param (bool): If set to True, left and right pad_param will
+            be given by dividing padding_h by 2. If set to False, pad_param is
+            in int format. We recommend setting this to False for object
+            detection tasks, and True for instance segmentation tasks.
+            Default to False.
     """
 
     def __init__(self,
@@ -156,6 +164,7 @@ class LetterResize(MMDET_Resize):
                  use_mini_pad: bool = False,
                  stretch_only: bool = False,
                  allow_scale_up: bool = True,
+                 half_pad_param: bool = False,
                  **kwargs):
         super().__init__(scale=scale, keep_ratio=True, **kwargs)
 
@@ -168,6 +177,7 @@ class LetterResize(MMDET_Resize):
         self.use_mini_pad = use_mini_pad
         self.stretch_only = stretch_only
         self.allow_scale_up = allow_scale_up
+        self.half_pad_param = half_pad_param
 
     def _resize_img(self, results: dict):
         """Resize images with ``results['scale']``."""
@@ -218,7 +228,8 @@ class LetterResize(MMDET_Resize):
                 interpolation=self.interpolation,
                 backend=self.backend)
 
-        scale_factor = (ratio[1], ratio[0])  # mmcv scale factor is (w, h)
+        scale_factor = (no_pad_shape[1] / image_shape[1],
+                        no_pad_shape[0] / image_shape[0])
 
         if 'scale_factor' in results:
             results['scale_factor_origin'] = results['scale_factor']
@@ -252,7 +263,14 @@ class LetterResize(MMDET_Resize):
         if 'pad_param' in results:
             results['pad_param_origin'] = results['pad_param'] * \
                                           np.repeat(ratio, 2)
-        results['pad_param'] = np.array(padding_list, dtype=np.float32)
+        if self.half_pad_param:
+            results['pad_param'] = np.array(
+                [padding_h / 2, padding_h / 2, padding_w / 2, padding_w / 2],
+                dtype=np.float32)
+        else:
+            # We found in object detection, using padding list with
+            # int type can get higher mAP.
+            results['pad_param'] = np.array(padding_list, dtype=np.float32)
 
     def _resize_masks(self, results: dict):
         """Resize masks with ``results['scale']``"""
@@ -376,13 +394,26 @@ class YOLOv5HSVRandomAug(BaseTransform):
 class LoadAnnotations(MMDET_LoadAnnotations):
     """Because the yolo series does not need to consider ignore bboxes for the
     time being, in order to speed up the pipeline, it can be excluded in
-    advance."""
+    advance.
+
+    Args:
+        mask2bbox (bool): Whether to use mask annotation to get bbox.
+            Defaults to False.
+        poly2mask (bool): Whether to transform the polygons to bitmaps.
+            Defaults to False.
+        merge_polygons (bool): Whether to merge polygons into one polygon.
+            If merged, the storage structure is simpler and training is more
+            effcient, especially if the mask inside a bbox is divided into
+            multiple polygons. Defaults to True.
+    """
 
     def __init__(self,
                  mask2bbox: bool = False,
                  poly2mask: bool = False,
+                 merge_polygons: bool = True,
                  **kwargs) -> None:
         self.mask2bbox = mask2bbox
+        self.merge_polygons = merge_polygons
         assert not poly2mask, 'Does not support BitmapMasks considering ' \
                               'that bitmap consumes more memory.'
         super().__init__(poly2mask=poly2mask, **kwargs)
@@ -497,6 +528,8 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                             # ignore
                             self._mask_ignore_flag.append(0)
                         else:
+                            if len(gt_mask) > 1 and self.merge_polygons:
+                                gt_mask = self.merge_multi_segment(gt_mask)
                             gt_masks.append(gt_mask)
                             gt_ignore_flags.append(instance['ignore_flag'])
                             self._mask_ignore_flag.append(1)
@@ -514,6 +547,79 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         h, w = results['ori_shape']
         gt_masks = PolygonMasks([mask for mask in gt_masks], h, w)
         results['gt_masks'] = gt_masks
+
+    def merge_multi_segment(self,
+                            gt_masks: List[np.ndarray]) -> List[np.ndarray]:
+        """Merge multi segments to one list.
+
+        Find the coordinates with min distance between each segment,
+        then connect these coordinates with one thin line to merge all
+        segments into one.
+        Args:
+            gt_masks(List(np.array)):
+                original segmentations in coco's json file.
+                like [segmentation1, segmentation2,...],
+                each segmentation is a list of coordinates.
+        Return:
+            gt_masks(List(np.array)): merged gt_masks
+        """
+        s = []
+        segments = [np.array(i).reshape(-1, 2) for i in gt_masks]
+        idx_list = [[] for _ in range(len(gt_masks))]
+
+        # record the indexes with min distance between each segment
+        for i in range(1, len(segments)):
+            idx1, idx2 = self.min_index(segments[i - 1], segments[i])
+            idx_list[i - 1].append(idx1)
+            idx_list[i].append(idx2)
+
+        # use two round to connect all the segments
+        # first round: first to end, i.e. A->B(partial)->C
+        # second round: end to first, i.e. C->B(remaining)-A
+        for k in range(2):
+            # forward first round
+            if k == 0:
+                for i, idx in enumerate(idx_list):
+                    # middle segments have two indexes
+                    # reverse the index of middle segments
+                    if len(idx) == 2 and idx[0] > idx[1]:
+                        idx = idx[::-1]
+                        segments[i] = segments[i][::-1, :]
+                    # add the idx[0] point for connect next segment
+                    segments[i] = np.roll(segments[i], -idx[0], axis=0)
+                    segments[i] = np.concatenate(
+                        [segments[i], segments[i][:1]])
+                    # deal with the first segment and the last one
+                    if i in [0, len(idx_list) - 1]:
+                        s.append(segments[i])
+                    # deal with the middle segment
+                    # Note that in the first round, only partial segment
+                    # are appended.
+                    else:
+                        idx = [0, idx[1] - idx[0]]
+                        s.append(segments[i][idx[0]:idx[1] + 1])
+            # forward second round
+            else:
+                for i in range(len(idx_list) - 1, -1, -1):
+                    # deal with the middle segment
+                    # append the remaining points
+                    if i not in [0, len(idx_list) - 1]:
+                        idx = idx_list[i]
+                        nidx = abs(idx[1] - idx[0])
+                        s.append(segments[i][nidx:])
+        return [np.concatenate(s).reshape(-1, )]
+
+    def min_index(self, arr1: np.ndarray, arr2: np.ndarray) -> Tuple[int, int]:
+        """Find a pair of indexes with the shortest distance.
+
+        Args:
+            arr1: (N, 2).
+            arr2: (M, 2).
+        Return:
+            tuple: a pair of indexes.
+        """
+        dis = ((arr1[:, None, :] - arr2[None, :, :])**2).sum(-1)
+        return np.unravel_index(np.argmin(dis, axis=None), dis.shape)
 
     def _load_kps(self, results: dict) -> None:
         """Private function to load keypoints annotations.
@@ -613,7 +719,7 @@ class YOLOv5RandomAffine(BaseTransform):
         min_area_ratio (float): Threshold of area ratio between
             original bboxes and wrapped bboxes. If smaller than this value,
             the box will be removed. Defaults to 0.1.
-        use_mask_refine (bool): Whether to refine bbox by mask.
+        use_mask_refine (bool): Whether to refine bbox by mask. Deprecated.
         max_aspect_ratio (float): Aspect ratio of width and height
             threshold to filter bboxes. If max(h/w, w/h) larger than this
             value, the box will be removed. Defaults to 20.
@@ -645,6 +751,7 @@ class YOLOv5RandomAffine(BaseTransform):
         self.bbox_clip_border = bbox_clip_border
         self.min_bbox_size = min_bbox_size
         self.min_area_ratio = min_area_ratio
+        # The use_mask_refine parameter has been deprecated.
         self.use_mask_refine = use_mask_refine
         self.max_aspect_ratio = max_aspect_ratio
         self.resample_num = resample_num
@@ -686,7 +793,7 @@ class YOLOv5RandomAffine(BaseTransform):
         num_bboxes = len(bboxes)
         if num_bboxes:
             orig_bboxes = bboxes.clone()
-            if self.use_mask_refine and 'gt_masks' in results:
+            if 'gt_masks' in results:
                 # If the dataset has annotations of mask,
                 # the mask will be used to refine bbox.
                 gt_masks = results['gt_masks']
@@ -696,10 +803,13 @@ class YOLOv5RandomAffine(BaseTransform):
                                           img_h, img_w)
 
                 # refine bboxes by masks
-                bboxes = gt_masks.get_bboxes(dst_type='hbox')
+                bboxes = self.segment2box(gt_masks, height, width)
                 # filter bboxes outside image
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
                                                     bboxes).numpy()
+                if self.bbox_clip_border:
+                    bboxes.clip_([height - 1e-3, width - 1e-3])
+                    gt_masks = self.clip_polygons(gt_masks, height, width)
                 results['gt_masks'] = gt_masks[valid_index]
             else:
                 bboxes.project_(warp_matrix)
@@ -713,17 +823,83 @@ class YOLOv5RandomAffine(BaseTransform):
                 # otherwise it will raise out of bounds when len(valid_index)=1
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
                                                     bboxes).numpy()
-                if 'gt_masks' in results:
-                    results['gt_masks'] = PolygonMasks(
-                        results['gt_masks'].masks, img_h, img_w)
 
             results['gt_bboxes'] = bboxes[valid_index]
             results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
                 valid_index]
             results['gt_ignore_flags'] = results['gt_ignore_flags'][
                 valid_index]
+        else:
+            if 'gt_masks' in results:
+                results['gt_masks'] = PolygonMasks([], img_h, img_w)
 
         return results
+
+    def segment2box(self, gt_masks: PolygonMasks, height: int,
+                    width: int) -> HorizontalBoxes:
+        """
+        Convert 1 segment label to 1 box label, applying inside-image
+        constraint i.e. (xy1, xy2, ...) to (xyxy)
+        Args:
+            gt_masks (torch.Tensor): the segment label
+            width (int): the width of the image. Defaults to 640
+            height (int): The height of the image. Defaults to 640
+        Returns:
+            HorizontalBoxes: the clip bboxes from gt_masks.
+        """
+        bboxes = []
+        for _, poly_per_obj in enumerate(gt_masks):
+            # simply use a number that is big enough for comparison with
+            # coordinates
+            xy_min = np.array([width * 2, height * 2], dtype=np.float32)
+            xy_max = np.zeros(2, dtype=np.float32) - 1
+
+            for p in poly_per_obj:
+                xy = np.array(p).reshape(-1, 2).astype(np.float32)
+                x, y = xy.T
+                inside = (x >= 0) & (y >= 0) & (x <= width) & (y <= height)
+                x, y = x[inside], y[inside]
+                if not any(x):
+                    continue
+                xy = np.stack([x, y], axis=0).T
+
+                xy_min = np.minimum(xy_min, np.min(xy, axis=0))
+                xy_max = np.maximum(xy_max, np.max(xy, axis=0))
+            if xy_max[0] == -1:
+                bbox = np.zeros(4, dtype=np.float32)
+            else:
+                bbox = np.concatenate([xy_min, xy_max], axis=0)
+            bboxes.append(bbox)
+
+        return HorizontalBoxes(np.stack(bboxes, axis=0))
+
+    # TODO: Move to mmdet
+    def clip_polygons(self, gt_masks: PolygonMasks, height: int,
+                      width: int) -> PolygonMasks:
+        """Function to clip points of polygons with height and width.
+
+        Args:
+            gt_masks (PolygonMasks): Annotations of instance segmentation.
+            height (int): height of clip border.
+            width (int): width of clip border.
+        Return:
+            clipped_masks (PolygonMasks):
+                Clip annotations of instance segmentation.
+        """
+        if len(gt_masks) == 0:
+            clipped_masks = PolygonMasks([], height, width)
+        else:
+            clipped_masks = []
+            for poly_per_obj in gt_masks:
+                clipped_poly_per_obj = []
+                for p in poly_per_obj:
+                    p = p.copy()
+                    p[0::2] = p[0::2].clip(0, width)
+                    p[1::2] = p[1::2].clip(0, height)
+                    clipped_poly_per_obj.append(p)
+                clipped_masks.append(clipped_poly_per_obj)
+            clipped_masks = PolygonMasks(clipped_masks, height, width)
+        return clipped_masks
 
     @staticmethod
     def warp_poly(poly: np.ndarray, warp_matrix: np.ndarray, img_w: int,
@@ -749,10 +925,7 @@ class YOLOv5RandomAffine(BaseTransform):
         poly = poly @ warp_matrix.T
         poly = poly[:, :2] / poly[:, 2:3]
 
-        # filter point outside image
-        x, y = poly.T
-        valid_ind_point = (x >= 0) & (y >= 0) & (x <= img_w) & (y <= img_h)
-        return poly[valid_ind_point].reshape(-1)
+        return poly.reshape(-1)
 
     def warp_mask(self, gt_masks: PolygonMasks, warp_matrix: np.ndarray,
                   img_w: int, img_h: int) -> PolygonMasks:
@@ -1416,7 +1589,7 @@ class YOLOv5CopyPaste(BaseTransform):
         if len(results.get('gt_masks', [])) == 0:
             return results
         gt_masks = results['gt_masks']
-        assert isinstance(gt_masks, PolygonMasks),\
+        assert isinstance(gt_masks, PolygonMasks), \
             'only support type of PolygonMasks,' \
             ' but get type: %s' % type(gt_masks)
         gt_bboxes = results['gt_bboxes']
@@ -1600,35 +1773,145 @@ class RegularizeRotatedBox(BaseTransform):
 
 
 @TRANSFORMS.register_module()
-class PackDetPoseInputs(PackDetInputs):
-    mapping_table = {
-        'gt_bboxes': 'bboxes',
-        'gt_bboxes_labels': 'labels',
-        'gt_masks': 'masks',
-        'gt_keypoints': 'keypoints',
-        'gt_keypoints_visible': 'keypoints_visible'
-    }
+class Polygon2Mask(BaseTransform):
+    """Polygons to bitmaps in YOLOv5.
+
+    Args:
+        downsample_ratio (int): Downsample ratio of mask.
+        mask_overlap (bool): Whether to use maskoverlap in mask process.
+            When set to True, the implementation here is the same as the
+            official, with higher training speed. If set to True, all gt masks
+            will compress into one overlap mask, the value of mask indicates
+            the index of gt masks. If set to False, one mask is a binary mask.
+            Default to True.
+        coco_style (bool): Whether to use coco_style to convert the polygons to
+            bitmaps. Note that this option is only used to test if there is an
+            improvement in training speed and we recommend setting it to False.
+    """
 
     def __init__(self,
-                 meta_keys=('id', 'img_id', 'img_path', 'ori_shape',
-                            'img_shape', 'scale_factor', 'flip',
-                            'flip_direction', 'flip_indices', 'raw_ann_info'),
-                 pack_transformed=False):
-        self.meta_keys = meta_keys
+                 downsample_ratio: int = 4,
+                 mask_overlap: bool = True,
+                 coco_style: bool = False):
+        self.downsample_ratio = downsample_ratio
+        self.mask_overlap = mask_overlap
+        self.coco_style = coco_style
+
+    def polygon2mask(self,
+                     img_shape: Tuple[int, int],
+                     polygons: np.ndarray,
+                     color: int = 1) -> np.ndarray:
+        """
+        Args:
+            img_shape (tuple): The image size.
+            polygons (np.ndarray): [N, M], N is the number of polygons,
+                M is the number of points(Be divided by 2).
+            color (int): color in fillPoly.
+        Return:
+            np.ndarray: the overlap mask.
+        """
+        nh, nw = (img_shape[0] // self.downsample_ratio,
+                  img_shape[1] // self.downsample_ratio)
+        if self.coco_style:
+            # This practice can lead to the loss of small objects
+            # polygons = polygons.resize((nh, nw)).masks
+            # polygons = np.asarray(polygons).reshape(-1)
+            # mask = polygon_to_bitmap([polygons], nh, nw)
+
+            polygons = np.asarray(polygons).reshape(-1)
+            mask = polygon_to_bitmap([polygons], img_shape[0],
+                                     img_shape[1]).astype(np.uint8)
+            mask = mmcv.imresize(mask, (nw, nh))
+        else:
+            mask = np.zeros(img_shape, dtype=np.uint8)
+            polygons = np.asarray(polygons)
+            polygons = polygons.astype(np.int32)
+            shape = polygons.shape
+            polygons = polygons.reshape(shape[0], -1, 2)
+            cv2.fillPoly(mask, polygons, color=color)
+            # NOTE: fillPoly firstly then resize is trying the keep the same
+            #  way of loss calculation when mask-ratio=1.
+            mask = mmcv.imresize(mask, (nw, nh))
+        return mask
+
+    def polygons2masks(self,
+                       img_shape: Tuple[int, int],
+                       polygons: PolygonMasks,
+                       color: int = 1) -> np.ndarray:
+        """Return a list of bitmap masks.
+
+        Args:
+            img_shape (tuple): The image size.
+            polygons (PolygonMasks): The mask annotations.
+            color (int): color in fillPoly.
+        Return:
+            List[np.ndarray]: the list of masks in bitmaps.
+        """
+        if self.coco_style:
+            nh, nw = (img_shape[0] // self.downsample_ratio,
+                      img_shape[1] // self.downsample_ratio)
+            masks = polygons.resize((nh, nw)).to_ndarray()
+            return masks
+        else:
+            masks = []
+            for si in range(len(polygons)):
+                mask = self.polygon2mask(img_shape, polygons[si], color)
+                masks.append(mask)
+            return np.array(masks)
+
+    def polygons2masks_overlap(
+            self, img_shape: Tuple[int, int],
+            polygons: PolygonMasks) -> Tuple[np.ndarray, np.ndarray]:
+        """Return a overlap mask and the sorted idx of area.
+
+        Args:
+            img_shape (tuple): The image size.
+            polygons (PolygonMasks): The mask annotations.
+            color (int): color in fillPoly.
+        Return:
+            Tuple[np.ndarray, np.ndarray]:
+                the overlap mask and the sorted idx of area.
+        """
+        masks = np.zeros((img_shape[0] // self.downsample_ratio,
+                          img_shape[1] // self.downsample_ratio),
+                         dtype=np.int32 if len(polygons) > 255 else np.uint8)
+        areas = []
+        ms = []
+        for si in range(len(polygons)):
+            mask = self.polygon2mask(img_shape, polygons[si], color=1)
+            ms.append(mask)
+            areas.append(mask.sum())
+        areas = np.asarray(areas)
+        index = np.argsort(-areas)
+        ms = np.array(ms)[index]
+        for i in range(len(polygons)):
+            mask = ms[i] * (i + 1)
+            masks = masks + mask
+            masks = np.clip(masks, a_min=0, a_max=i + 1)
+        return masks, index
 
     def transform(self, results: dict) -> dict:
-        # Add keypoints and their visibility to the results dictionary
-        results['gt_keypoints_visible'] = results[
-            'gt_keypoints'].keypoints_visible
-        results['gt_keypoints'] = results['gt_keypoints'].keypoints
+        gt_masks = results['gt_masks']
+        assert isinstance(gt_masks, PolygonMasks)
 
-        # Ensure all keys in `self.meta_keys` are in the `results` dictionary,
-        # which is necessary for `PackDetInputs` but not guaranteed during
-        # inference with an inferencer
-        for key in self.meta_keys:
-            if key not in results:
-                results[key] = None
-        return super().transform(results)
+        if self.mask_overlap:
+            masks, sorted_idx = self.polygons2masks_overlap(
+                (gt_masks.height, gt_masks.width), gt_masks)
+            results['gt_bboxes'] = results['gt_bboxes'][sorted_idx]
+            results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
+                sorted_idx]
+
+            # In this case we put gt_masks in gt_panoptic_seg
+            results.pop('gt_masks')
+            results['gt_panoptic_seg'] = torch.from_numpy(masks[None])
+        else:
+            masks = self.polygons2masks((gt_masks.height, gt_masks.width),
+                                        gt_masks,
+                                        color=1)
+            masks = torch.from_numpy(masks)
+            # Consistent logic with mmdet
+            results['gt_masks'] = masks
+        return results
 
 
 @TRANSFORMS.register_module()
