@@ -16,6 +16,13 @@ class PackDetInputs(MMDET_PackDetInputs):
 
     Compared to mmdet, we just add the `gt_panoptic_seg` field and logic.
     """
+    mapping_table = {
+        'gt_bboxes': 'bboxes',
+        'gt_bboxes_labels': 'labels',
+        'gt_masks': 'masks',
+        'gt_keypoints': 'keypoints',
+        'gt_keypoints_visible': 'keypoints_visible'
+    }
 
     def transform(self, results: dict) -> dict:
         """Method to pack the input data.
@@ -50,7 +57,6 @@ class PackDetInputs(MMDET_PackDetInputs):
         if 'gt_ignore_flags' in results:
             valid_idx = np.where(results['gt_ignore_flags'] == 0)[0]
             ignore_idx = np.where(results['gt_ignore_flags'] == 1)[0]
-
         if 'gt_keypoints' in results:
             results['gt_keypoints_visible'] = results[
                 'gt_keypoints'].keypoints_visible

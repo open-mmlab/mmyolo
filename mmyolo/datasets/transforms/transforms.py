@@ -425,7 +425,6 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                  **kwargs) -> None:
         self.mask2bbox = mask2bbox
         self.merge_polygons = merge_polygons
-        self.merge_polygons = merge_polygons
         assert not poly2mask, 'Does not support BitmapMasks considering ' \
                               'that bitmap consumes more memory.'
         super().__init__(poly2mask=poly2mask, **kwargs)
