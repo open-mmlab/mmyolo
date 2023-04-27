@@ -263,6 +263,7 @@ class LetterResize(MMDET_Resize):
         if 'pad_param' in results:
             results['pad_param_origin'] = results['pad_param'] * \
                                           np.repeat(ratio, 2)
+
         if self.half_pad_param:
             results['pad_param'] = np.array(
                 [padding_h / 2, padding_h / 2, padding_w / 2, padding_w / 2],
@@ -411,7 +412,7 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                  mask2bbox: bool = False,
                  poly2mask: bool = False,
                  merge_polygons: bool = True,
-                 **kwargs) -> None:
+                 **kwargs):
         self.mask2bbox = mask2bbox
         self.merge_polygons = merge_polygons
         assert not poly2mask, 'Does not support BitmapMasks considering ' \
@@ -446,7 +447,6 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                 results.get('bbox', []), dtype=torch.float32)
         else:
             results = super().transform(results)
-
             self._update_mask_ignore_data(results)
         return results
 
@@ -528,8 +528,6 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                             # ignore
                             self._mask_ignore_flag.append(0)
                         else:
-                            if len(gt_mask) > 1 and self.merge_polygons:
-                                gt_mask = self.merge_multi_segment(gt_mask)
                             if len(gt_mask) > 1 and self.merge_polygons:
                                 gt_mask = self.merge_multi_segment(gt_mask)
                             gt_masks.append(gt_mask)
@@ -809,9 +807,6 @@ class YOLOv5RandomAffine(BaseTransform):
                 # filter bboxes outside image
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
                                                     bboxes).numpy()
-                if self.bbox_clip_border:
-                    bboxes.clip_([height - 1e-3, width - 1e-3])
-                    gt_masks = self.clip_polygons(gt_masks, height, width)
                 if self.bbox_clip_border:
                     bboxes.clip_([height - 1e-3, width - 1e-3])
                     gt_masks = self.clip_polygons(gt_masks, height, width)
