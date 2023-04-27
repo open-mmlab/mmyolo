@@ -1,5 +1,5 @@
 # Copyright (c) OpenMMLab. All rights reserved.
-from typing import Optional, Sequence, Tuple, Union
+from typing import List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import torch
@@ -1508,3 +1508,221 @@ class CSPLayerWithTwoConv(BaseModule):
         x_main = list(x_main.split((self.mid_channels, self.mid_channels), 1))
         x_main.extend(blocks(x_main[-1]) for blocks in self.blocks)
         return self.final_conv(torch.cat(x_main, 1))
+
+
+class BiFusion(nn.Module):
+    """BiFusion Block in YOLOv6.
+
+    BiFusion fuses current-, high- and low-level features.
+    Compared with concatenation in PAN, it fuses an extra low-level feature.
+
+    Args:
+        in_channels0 (int): The channels of current-level feature.
+        in_channels1 (int): The input channels of lower-level feature.
+        out_channels (int): The out channels of the BiFusion module.
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='SiLU', inplace=True).
+        init_cfg (dict or list[dict], optional): Initialization config dict.
+            Defaults to None.
+    """
+
+    def __init__(self,
+                 in_channels0: int,
+                 in_channels1: int,
+                 out_channels: int,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='ReLU', inplace=True)):
+        super().__init__()
+        self.conv1 = ConvModule(
+            in_channels0,
+            out_channels,
+            kernel_size=1,
+            stride=1,
+            padding=0,
+            bias=False,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+        self.conv2 = ConvModule(
+            in_channels1,
+            out_channels,
+            kernel_size=1,
+            stride=1,
+            padding=0,
+            bias=False,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+        self.conv3 = ConvModule(
+            out_channels * 3,
+            out_channels,
+            kernel_size=1,
+            stride=1,
+            padding=0,
+            bias=False,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+        self.upsample = nn.ConvTranspose2d(
+            out_channels, out_channels, kernel_size=2, stride=2, bias=True)
+        self.downsample = ConvModule(
+            out_channels,
+            out_channels,
+            kernel_size=3,
+            stride=2,
+            padding=1,
+            bias=False,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+    def forward(self, x: List[torch.Tensor]) -> Tensor:
+        """Forward process
+        Args:
+            x (List[torch.Tensor]): The tensor list of length 3.
+                x[0]: The high-level feature.
+                x[1]: The current-level feature.
+                x[2]: The low-level feature.
+        """
+        x0 = self.upsample(x[0])
+        x1 = self.conv1(x[1])
+        x2 = self.downsample(self.conv2(x[2]))
+        return self.conv3(torch.cat((x0, x1, x2), dim=1))
+
+
+class CSPSPPFBottleneck(BaseModule):
+    """The SPPF block having a CSP-like version in YOLOv6 3.0.
+
+    Args:
+        in_channels (int): The input channels of this Module.
+        out_channels (int): The output channels of this Module.
+        kernel_sizes (int, tuple[int]): Sequential or number of kernel
+            sizes of pooling layers. Defaults to 5.
+        use_conv_first (bool): Whether to use conv before pooling layer.
+            In YOLOv5 and YOLOX, the para set to True.
+            In PPYOLOE, the para set to False.
+            Defaults to True.
+        mid_channels_scale (float): Channel multiplier, multiply in_channels
+            by this amount to get mid_channels. This parameter is valid only
+            when use_conv_fist=True.Defaults to 0.5.
+        conv_cfg (dict): Config dict for convolution layer. Defaults to None.
+            which means using conv2d. Defaults to None.
+        norm_cfg (dict): Config dict for normalization layer.
+            Defaults to dict(type='BN', momentum=0.03, eps=0.001).
+        act_cfg (dict): Config dict for activation layer.
+            Defaults to dict(type='SiLU', inplace=True).
+        init_cfg (dict or list[dict], optional): Initialization config dict.
+            Defaults to None.
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 kernel_sizes: Union[int, Sequence[int]] = 5,
+                 use_conv_first: bool = True,
+                 mid_channels_scale: float = 0.5,
+                 conv_cfg: ConfigType = None,
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='SiLU', inplace=True),
+                 init_cfg: OptMultiConfig = None):
+        super().__init__(init_cfg)
+
+        if use_conv_first:
+            mid_channels = int(in_channels * mid_channels_scale)
+            self.conv1 = ConvModule(
+                in_channels,
+                mid_channels,
+                1,
+                stride=1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg)
+            self.conv3 = ConvModule(
+                mid_channels,
+                mid_channels,
+                3,
+                stride=1,
+                padding=1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg)
+            self.conv4 = ConvModule(
+                mid_channels,
+                mid_channels,
+                1,
+                stride=1,
+                conv_cfg=conv_cfg,
+                norm_cfg=norm_cfg,
+                act_cfg=act_cfg)
+        else:
+            mid_channels = in_channels
+            self.conv1 = None
+            self.conv3 = None
+            self.conv4 = None
+
+        self.conv2 = ConvModule(
+            in_channels,
+            mid_channels,
+            1,
+            stride=1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+        self.kernel_sizes = kernel_sizes
+
+        if isinstance(kernel_sizes, int):
+            self.poolings = nn.MaxPool2d(
+                kernel_size=kernel_sizes, stride=1, padding=kernel_sizes // 2)
+            conv2_in_channels = mid_channels * 4
+        else:
+            self.poolings = nn.ModuleList([
+                nn.MaxPool2d(kernel_size=ks, stride=1, padding=ks // 2)
+                for ks in kernel_sizes
+            ])
+            conv2_in_channels = mid_channels * (len(kernel_sizes) + 1)
+
+        self.conv5 = ConvModule(
+            conv2_in_channels,
+            mid_channels,
+            1,
+            stride=1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+        self.conv6 = ConvModule(
+            mid_channels,
+            mid_channels,
+            3,
+            stride=1,
+            padding=1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+        self.conv7 = ConvModule(
+            mid_channels * 2,
+            out_channels,
+            1,
+            conv_cfg=conv_cfg,
+            norm_cfg=norm_cfg,
+            act_cfg=act_cfg)
+
+    def forward(self, x: Tensor) -> Tensor:
+        """Forward process
+        Args:
+            x (Tensor): The input tensor.
+        """
+        x0 = self.conv4(self.conv3(self.conv1(x))) if self.conv1 else x
+        y = self.conv2(x)
+
+        if isinstance(self.kernel_sizes, int):
+            x1 = self.poolings(x0)
+            x2 = self.poolings(x1)
+            x3 = torch.cat([x0, x1, x2, self.poolings(x2)], dim=1)
+        else:
+            x3 = torch.cat(
+                [x0] + [pooling(x0) for pooling in self.poolings], dim=1)
+
+        x3 = self.conv6(self.conv5(x3))
+        x = self.conv7(torch.cat([y, x3], dim=1))
+        return x

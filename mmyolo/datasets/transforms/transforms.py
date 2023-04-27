@@ -119,9 +119,6 @@ class YOLOv5KeepRatioResize(MMDET_Resize):
             scale_ratio_h = resized_h / original_h
             scale_ratio_w = resized_w / original_w
             scale_factor = (scale_ratio_w, scale_ratio_h)
-            scale_ratio_h = resized_h / original_h
-            scale_ratio_w = resized_w / original_w
-            scale_factor = (scale_ratio_w, scale_ratio_h)
 
             results['img'] = image
             results['img_shape'] = image.shape[:2]
@@ -159,11 +156,6 @@ class LetterResize(MMDET_Resize):
             in int format. We recommend setting this to False for object
             detection tasks, and True for instance segmentation tasks.
             Default to False.
-        half_pad_param (bool): If set to True, left and right pad_param will
-            be given by dividing padding_h by 2. If set to False, pad_param is
-            in int format. We recommend setting this to False for object
-            detection tasks, and True for instance segmentation tasks.
-            Default to False.
     """
 
     def __init__(self,
@@ -185,7 +177,6 @@ class LetterResize(MMDET_Resize):
         self.use_mini_pad = use_mini_pad
         self.stretch_only = stretch_only
         self.allow_scale_up = allow_scale_up
-        self.half_pad_param = half_pad_param
         self.half_pad_param = half_pad_param
 
     def _resize_img(self, results: dict):
@@ -237,8 +228,6 @@ class LetterResize(MMDET_Resize):
                 interpolation=self.interpolation,
                 backend=self.backend)
 
-        scale_factor = (no_pad_shape[1] / image_shape[1],
-                        no_pad_shape[0] / image_shape[0])
         scale_factor = (no_pad_shape[1] / image_shape[1],
                         no_pad_shape[0] / image_shape[0])
 

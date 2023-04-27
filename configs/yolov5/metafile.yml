@@ -248,3 +248,67 @@ Models:
         Metrics:
           box AP: 50.9
     Weights: https://download.openmmlab.com/mmyolo/v0/yolov5/mask_refine/yolov5_x_mask-refine-v61_syncbn_fast_8xb16-300e_coco/yolov5_x_mask-refine-v61_syncbn_fast_8xb16-300e_coco_20230305_154321-07edeb62.pth
+  - Name: yolov5_ins_n-v61_syncbn_fast_8xb16-300e_coco_instance
+    In Collection: YOLOv5
+    Config: configs/yolov5/ins_seg/yolov5_ins_n-v61_syncbn_fast_8xb16-300e_coco_instance.py
+    Metadata:
+      Training Memory (GB): 3.3
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 27.9
+      - Task: Instance Segmentation
+        Dataset: COCO
+        Metrics:
+          mask AP: 23.7
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov5/ins_seg/yolov5_ins_n-v61_syncbn_fast_8xb16-300e_coco_instance/yolov5_ins_n-v61_syncbn_fast_8xb16-300e_coco_instance_20230424_104807-84cc9240.pth
+  - Name: yolov5_ins_s-v61_syncbn_fast_8xb16-300e_coco_instance
+    In Collection: YOLOv5
+    Config: configs/yolov5/ins_seg/yolov5_ins_s-v61_syncbn_fast_8xb16-300e_coco_instance.py
+    Metadata:
+      Training Memory (GB): 4.8
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 38.1
+      - Task: Instance Segmentation
+        Dataset: COCO
+        Metrics:
+          mask AP: 32.0
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov5/ins_seg/yolov5_ins_s-v61_syncbn_fast_8xb16-300e_coco_instance/yolov5_ins_s-v61_syncbn_fast_8xb16-300e_coco_instance_20230426_012542-3e570436.pth
+  - Name: yolov5_ins_s-v61_syncbn_fast_non_overlap_8xb16-300e_coco_instance
+    In Collection: YOLOv5
+    Config: configs/yolov5/ins_seg/yolov5_ins_s-v61_syncbn_fast_non_overlap_8xb16-300e_coco_instance.py
+    Metadata:
+      Training Memory (GB): 4.8
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 38.0
+      - Task: Instance Segmentation
+        Dataset: COCO
+        Metrics:
+          mask AP: 32.1
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov5/ins_seg/yolov5_ins_s-v61_syncbn_fast_non_overlap_8xb16-300e_coco_instance/yolov5_ins_s-v61_syncbn_fast_non_overlap_8xb16-300e_coco_instance_20230424_104642-6780d34e.pth
+  - Name: yolov5_ins_m-v61_syncbn_fast=_8xb16-300e_coco_instance
+    In Collection: YOLOv5
+    Config: configs/yolov5/ins_seg/yolov5_ins_m-v61_syncbn_fast=_8xb16-300e_coco_instance.py
+    Metadata:
+      Training Memory (GB): 7.3
+      Epochs: 300
+    Results:
+      - Task: Object Detection
+        Dataset: COCO
+        Metrics:
+          box AP: 45.1
+      - Task: Instance Segmentation
+        Dataset: COCO
+        Metrics:
+          mask AP: 37.3
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolov5/ins_seg/yolov5_ins_m-v61_syncbn_fast_8xb16-300e_coco_instance/yolov5_ins_m-v61_syncbn_fast_8xb16-300e_coco_instance_20230424_111529-ef5ba1a9.pth
