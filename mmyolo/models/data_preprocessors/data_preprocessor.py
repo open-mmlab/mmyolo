@@ -84,6 +84,7 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
         """
         if not training:
             return super().forward(data, training)
+
         data = self.cast_data(data)
         inputs, data_samples = data['inputs'], data['data_samples']
         assert isinstance(data['data_samples'], dict)
