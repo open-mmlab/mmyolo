@@ -88,7 +88,7 @@ train_pipeline = [
             label_fields=['gt_bboxes_labels', 'gt_ignore_flags']),
         keymap={
             'img': 'image',
-            'gt_bboxes': 'bboxes',
+            'gt_bboxes': 'bboxes'
         }),
     dict(type='YOLOv5HSVRandomAug'),
     dict(type='mmdet.RandomFlip', prob=0.5),

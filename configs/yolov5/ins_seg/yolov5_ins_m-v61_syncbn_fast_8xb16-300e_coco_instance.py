@@ -4,9 +4,10 @@ _base_ = './yolov5_ins_s-v61_syncbn_fast_8xb16-300e_coco_instance.py'  # noqa
 deepen_factor = 0.67
 widen_factor = 0.75
 lr_factor = 0.1
-affine_scale = 0.9
 loss_cls_weight = 0.3
 loss_obj_weight = 0.7
+
+affine_scale = 0.9
 mixup_prob = 0.1
 
 # =======================Unmodified in most cases==================
@@ -44,7 +45,7 @@ mosaic_affine_pipeline = [
         max_rotate_degree=0.0,
         max_shear_degree=0.0,
         scaling_ratio_range=(1 - affine_scale, 1 + affine_scale),
-        border=(-_base_.img_scale[0] // 2, -_base_.img_scale[1] // 2),
+        border=(-img_scale[0] // 2, -img_scale[1] // 2),
         border_val=(114, 114, 114),
         min_area_ratio=_base_.min_area_ratio,
         max_aspect_ratio=_base_.max_aspect_ratio,
