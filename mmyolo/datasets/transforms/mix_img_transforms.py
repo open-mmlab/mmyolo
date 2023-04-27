@@ -374,7 +374,7 @@ class Mosaic(BaseMixImageTransform):
             mosaic_ignore_flags.append(gt_ignore_flags_i)
             if with_mask and results_patch.get('gt_masks', None) is not None:
                 gt_masks_i = results_patch['gt_masks']
-                gt_masks_i = gt_masks_i.rescale(float(scale_ratio_i))
+                gt_masks_i = gt_masks_i.resize(img_i.shape[:2])
                 gt_masks_i = gt_masks_i.translate(
                     out_shape=(int(self.img_scale[0] * 2),
                                int(self.img_scale[1] * 2)),

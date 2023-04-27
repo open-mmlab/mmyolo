@@ -95,7 +95,12 @@ class YOLOv5HeadModule(BaseModule):
             b = mi.bias.data.view(self.num_base_priors, -1)
             # obj (8 objects per 640 image)
             b.data[:, 4] += math.log(8 / (640 / s)**2)
-            b.data[:, 5:] += math.log(0.6 / (self.num_classes - 0.999999))
+            # NOTE: The following initialization can only be performed on the
+            # bias of the category, if the following initialization is
+            # performed on the bias of mask coefficient,
+            # there will be a significant decrease in mask AP.
+            b.data[:, 5:5 + self.num_classes] += math.log(
+                0.6 / (self.num_classes - 0.999999))
 
             mi.bias.data = b.view(-1)
 

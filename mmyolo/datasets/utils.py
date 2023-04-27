@@ -4,6 +4,7 @@ from typing import List, Sequence
 import numpy as np
 import torch
 from mmengine.dataset import COLLATE_FUNCTIONS
+from mmengine.dist import get_dist_info
 
 from ..registry import TASK_UTILS
 
@@ -28,9 +29,10 @@ def yolov5_collate(data_batch: Sequence,
         gt_bboxes = datasamples.gt_instances.bboxes.tensor
         gt_labels = datasamples.gt_instances.labels
         if 'masks' in datasamples.gt_instances:
-            masks = datasamples.gt_instances.masks.to_tensor(
-                dtype=torch.bool, device=gt_bboxes.device)
+            masks = datasamples.gt_instances.masks
             batch_masks.append(masks)
+        if 'gt_panoptic_seg' in datasamples:
+            batch_masks.append(datasamples.gt_panoptic_seg.pan_seg)
         batch_idx = gt_labels.new_full((len(gt_labels), 1), i)
         bboxes_labels = torch.cat((batch_idx, gt_labels[:, None], gt_bboxes),
                                   dim=1)
@@ -70,10 +72,14 @@ class BatchShapePolicy:
                  img_size: int = 640,
                  size_divisor: int = 32,
                  extra_pad_ratio: float = 0.5):
-        self.batch_size = batch_size
         self.img_size = img_size
         self.size_divisor = size_divisor
         self.extra_pad_ratio = extra_pad_ratio
+        _, world_size = get_dist_info()
+        # During multi-gpu testing, the batchsize should be multiplied by
+        # worldsize, so that the number of batches can be calculated correctly.
+        # The index of batches will affect the calculation of batch shape.
+        self.batch_size = batch_size * world_size
 
     def __call__(self, data_list: List[dict]) -> List[dict]:
         image_shapes = []
