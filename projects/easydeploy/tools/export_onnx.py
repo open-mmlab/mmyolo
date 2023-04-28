@@ -142,7 +142,7 @@ def main():
     deploy_model.eval()
 
     fake_input = torch.randn(args.batch_size, 3,
-                             *args.img_size).type(torch.uint8).to(args.device)
+                             *args.img_size).float().to(args.device)
     # dry run
     deploy_model(fake_input)
 

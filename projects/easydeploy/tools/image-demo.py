@@ -79,7 +79,7 @@ def main():
             device=args.device)
         scale_factor = samples.get('scale_factor', [1., 1])
         scale_factor = torch.asarray(scale_factor * 2, device=args.device)
-        data = data[None].type(torch.uint8).to(args.device)
+        data = data[None].float().to(args.device)
 
         result = model(data)
         if source_type['is_dir']:
