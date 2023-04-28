@@ -30,6 +30,7 @@ def preprocess(config: Config, model: torch.nn.Module):
     std = data_preprocess.get('std', [1., 1., 1.])
     mean_value = torch.tensor(mean, dtype=torch.float32).reshape(1, 3, 1, 1)
     std_value = torch.tensor(std, dtype=torch.float32).reshape(1, 3, 1, 1)
+    device = next(model.parameters()).device
 
     class PreProcess(torch.nn.Module):
 
@@ -46,7 +47,7 @@ def preprocess(config: Config, model: torch.nn.Module):
             y = self.core_model(y)
             return y
 
-    return PreProcess().eval()
+    return PreProcess().to(device).eval()
 
 
 def parse_args():
@@ -142,7 +143,7 @@ def main():
     deploy_model.eval()
 
     fake_input = torch.randn(args.batch_size, 3,
-                             *args.img_size).float().to(args.device)
+                             *args.img_size).to(args.device)
     # dry run
     deploy_model(fake_input)
 
