@@ -34,7 +34,7 @@ from mmdet.evaluation.metrics.coco_metric import CocoMetric
 from mmengine.runner.loops import EpochBasedTrainLoop, TestLoop, ValLoop
 
 # dataset settings
-data_root = '/home/PJLAB/huanghaian/dataset/coco100/'
+data_root = 'data/coco/'
 
 # parameters that often need to be modified
 img_scale = (640, 640)  # width, height
@@ -244,7 +244,7 @@ default_hooks.merge(
 custom_hooks = [
     dict(
         type=EMAHook,
-        ema_type=ExpMomentumEMA,
+        ema_type='ExpMomentumEMA',  # Does not support having two class names.
         momentum=0.0002,
         update_buffers=True,
         strict_load=False,

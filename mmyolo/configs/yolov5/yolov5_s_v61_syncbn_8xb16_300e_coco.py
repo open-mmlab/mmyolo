@@ -295,7 +295,7 @@ default_hooks.merge(
 custom_hooks = [
     dict(
         type=EMAHook,
-        ema_type=ExpMomentumEMA,
+        ema_type='ExpMomentumEMA',
         momentum=0.0001,
         update_buffers=True,
         strict_load=False,
