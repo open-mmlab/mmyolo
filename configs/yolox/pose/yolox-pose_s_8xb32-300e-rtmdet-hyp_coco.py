@@ -90,7 +90,7 @@ test_pipeline = [
 ]
 
 # dataset settings
-dataset_type = 'CocoPoseDataset'
+dataset_type = 'PoseCocoDataset'
 
 train_dataloader = dict(
     dataset=dict(

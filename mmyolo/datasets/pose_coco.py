@@ -8,7 +8,7 @@ from ..registry import DATASETS
 
 
 @DATASETS.register_module()
-class CocoPoseDataset(MMPoseCocoDataset):
+class PoseCocoDataset(MMPoseCocoDataset):
 
     METAINFO: dict = dict(from_file='configs/_base_/pose/coco.py')
 

@@ -108,6 +108,7 @@ def get_dataset_name(config):
     name_map = dict(
         CityscapesDataset='Cityscapes',
         CocoDataset='COCO',
+        PoseCocoDataset='COCO Person',
         YOLOv5CocoDataset='COCO',
         CocoPanopticDataset='COCO',
         YOLOv5DOTADataset='DOTA 1.0',

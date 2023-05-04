@@ -116,3 +116,51 @@ Models:
         Metrics:
           box AP: 47.5
     Weights: https://download.openmmlab.com/mmyolo/v0/yolox/yolox_m_fast_8xb32-300e-rtmdet-hyp_coco/yolox_m_fast_8xb32-300e-rtmdet-hyp_coco_20230210_144328-e657e182.pth
+  - Name: yolox-pose_tiny_8xb32-300e-rtmdet-hyp_coco
+    In Collection: YOLOX
+    Config: yolox-pose_tiny_8xb32-300e-rtmdet-hyp_coco.py
+    Metadata:
+      Training Memory (GB): 5.3
+      Epochs: 300
+    Results:
+      - Task: Human Pose Estimation
+        Dataset: COCO
+        Metrics:
+          AP: 52.8
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolox/pose/yolox-pose_tiny_8xb32-300e-rtmdet-hyp_coco/yolox-pose_tiny_8xb32-300e-rtmdet-hyp_coco_20230427_080351-2117af67.pth
+  - Name: yolox-pose_s_8xb32-300e-rtmdet-hyp_coco
+    In Collection: YOLOX
+    Config: yolox-pose_s_8xb32-300e-rtmdet-hyp_coco.py
+    Metadata:
+      Training Memory (GB): 10.7
+      Epochs: 300
+    Results:
+      - Task: Human Pose Estimation
+        Dataset: COCO
+        Metrics:
+          AP: 63.7
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolox/pose/yolox-pose_s_8xb32-300e-rtmdet-hyp_coco/yolox-pose_s_8xb32-300e-rtmdet-hyp_coco_20230427_005150-e87d843a.pth
+  - Name: yolox-pose_m_8xb32-300e-rtmdet-hyp_coco
+    In Collection: YOLOX
+    Config: yolox-pose_m_8xb32-300e-rtmdet-hyp_coco.py
+    Metadata:
+      Training Memory (GB): 19.2
+      Epochs: 300
+    Results:
+      - Task: Human Pose Estimation
+        Dataset: COCO
+        Metrics:
+          AP: 69.3
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolox/pose/yolox-pose_m_8xb32-300e-rtmdet-hyp_coco/yolox-pose_m_8xb32-300e-rtmdet-hyp_coco_20230427_094024-bbeacc1c.pth
+  - Name: yolox-pose_l_8xb32-300e-rtmdet-hyp_coco
+    In Collection: YOLOX
+    Config: yolox-pose_l_8xb32-300e-rtmdet-hyp_coco.py
+    Metadata:
+      Training Memory (GB): 30.3
+      Epochs: 300
+    Results:
+      - Task: Human Pose Estimation
+        Dataset: COCO
+        Metrics:
+          AP: 71.1
+    Weights: https://download.openmmlab.com/mmyolo/v0/yolox/pose/yolox-pose_l_8xb32-300e-rtmdet-hyp_coco/yolox-pose_l_8xb32-300e-rtmdet-hyp_coco_20230427_041140-82d65ac8.pth
