@@ -2,7 +2,12 @@
 from typing import Any
 
 from mmengine.dataset import force_full_init
-from mmpose.datasets import CocoDataset as MMPoseCocoDataset
+
+try:
+    from mmpose.datasets import CocoDataset as MMPoseCocoDataset
+except ImportError:
+    raise ImportError('Please run "mim install -r requirements/mmpose.txt" '
+                      'to install mmpose first for rotated detection.')
 
 from ..registry import DATASETS
 

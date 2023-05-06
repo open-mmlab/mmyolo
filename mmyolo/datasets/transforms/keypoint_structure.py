@@ -14,23 +14,16 @@ IndexType = Union[slice, int, list, torch.LongTensor, torch.cuda.LongTensor,
 
 
 class Keypoints(metaclass=ABCMeta):
-    """The BBoxKeypoints class is a combination of bounding boxes and keypoints
-    representation. The box format used in BBoxKeypoints is the same as
-    HorizontalBoxes.
+    """The Keypoints class is for keypoints representation.
 
     Args:
-        data (Tensor or np.ndarray): The box data with shape of
-            (N, 4).
         keypoints (Tensor or np.ndarray): The keypoint data with shape of
             (N, K, 2).
         keypoints_visible (Tensor or np.ndarray): The visibility of keypoints
             with shape of (N, K).
-        dtype (torch.dtype, Optional): data type of boxes. Defaults to None.
-        device (str or torch.device, Optional): device of boxes.
+        device (str or torch.device, Optional): device of keypoints.
             Default to None.
-        clone (bool): Whether clone ``boxes`` or not. Defaults to True.
-        mode (str, Optional): the mode of boxes. If it is 'cxcywh', the
-            `data` will be converted to 'xyxy' mode. Defaults to None.
+        clone (bool): Whether clone ``keypoints`` or not. Defaults to True.
         flip_indices (list, Optional): The indices of keypoints when the
             images is flipped. Defaults to None.
 
@@ -42,10 +35,8 @@ class Keypoints(metaclass=ABCMeta):
     def __init__(self,
                  keypoints: Union[Tensor, np.ndarray],
                  keypoints_visible: Union[Tensor, np.ndarray],
-                 dtype: Optional[torch.dtype] = None,
                  device: Optional[DeviceType] = None,
                  clone: bool = True,
-                 in_mode: Optional[str] = None,
                  flip_indices: Optional[List] = None) -> None:
 
         assert len(keypoints_visible) == len(keypoints)

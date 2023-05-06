@@ -3,10 +3,15 @@ from typing import Optional
 
 import torch
 import torch.nn as nn
-from mmpose.datasets.datasets.utils import parse_pose_metainfo
 from torch import Tensor
 
 from mmyolo.registry import MODELS
+
+try:
+    from mmpose.datasets.datasets.utils import parse_pose_metainfo
+except ImportError:
+    raise ImportError('Please run "mim install -r requirements/mmpose.txt" '
+                      'to install mmpose first for rotated detection.')
 
 
 @MODELS.register_module()

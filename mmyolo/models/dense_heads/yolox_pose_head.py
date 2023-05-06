@@ -265,8 +265,12 @@ class YOLOXPoseHead(YOLOXHead):
         In addition to the base class method, keypoint predictions are also
         calculated in this method.
         """
+        """calculate predicted bboxes and get the kept instances indices.
 
-        # calculate predicted bboxes and get the kept instances indices
+        use OutputSaveFunctionWrapper as context manager to obtain
+        intermediate output from a parent class without copying a
+        arge block of code
+        """
         with OutputSaveFunctionWrapper(
                 filter_scores_and_topk,
                 super().predict_by_feat.__globals__) as outputs_1:
@@ -337,17 +341,8 @@ class YOLOXPoseHead(YOLOXHead):
             pred_instances.keypoints = kpts
             pred_instances.keypoint_scores = kpts_vis
 
+        results_list = [r.numpy() for r in results_list]
         return results_list
-
-    def predict(self,
-                x: Tuple[Tensor],
-                batch_data_samples,
-                rescale: bool = False):
-        predictions = [
-            pred_instances.numpy() for pred_instances in super().predict(
-                x, batch_data_samples, rescale)
-        ]
-        return predictions
 
     def decode_pose(self, grids: torch.Tensor, offsets: torch.Tensor,
                     strides: Union[torch.Tensor, int]) -> torch.Tensor:
