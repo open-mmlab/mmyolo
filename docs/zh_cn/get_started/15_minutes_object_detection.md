@@ -421,10 +421,10 @@ pip install onnx-simplifier # 如果需要使用 simplify 功能需要安装
 pip install tensorrt        # 如果有 GPU 环境并且需要输出 TensorRT 模型需要继续执行
 ```
 
-完成安装后就可以用以下命令对已经训练好的针对 cat 数据集的模型一键转换部署，当前设备的 ONNX 版本为 1.13.0，TensorRT 版本为 8.5.3.1，故可保持 `--opset` 为 11，其余各项参数的具体含义和参数值需要对照使用的 config 文件进行调整。此处我们先导出 CPU 版本的 ONNX 模型，`--backend` 为 1。
+完成安装后就可以用以下命令对已经训练好的针对 cat 数据集的模型一键转换部署，当前设备的 ONNX 版本为 1.13.0，TensorRT 版本为 8.5.3.1，故可保持 `--opset` 为 11，其余各项参数的具体含义和参数值需要对照使用的 config 文件进行调整。此处我们先导出 CPU 版本的 ONNX 模型，`--backend` 为 ONNXRUNTIME。
 
 ```shell
-python projects/easydeploy/tools/export.py \
+python projects/easydeploy/tools/export_onnx.py \
     configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
     work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
     --work-dir work_dirs/yolov5_s-v61_fast_1xb12-40e_cat \
@@ -433,7 +433,7 @@ python projects/easydeploy/tools/export.py \
     --device cpu \
     --simplify \
     --opset 11 \
-    --backend 1 \
+    --backend ONNXRUNTIME \
     --pre-topk 1000 \
     --keep-topk 100 \
     --iou-threshold 0.65 \
