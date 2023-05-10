@@ -67,6 +67,7 @@ YOLOv5-l-P6 model structure
 **Note**:
 
 1. `Non-overlap` refers to the instance-level masks being stored in the format (num_instances, h, w) instead of (h, w). Storing masks in overlap format consumes less memory and GPU memory.
+2. For the M model, the `affine_scale` parameter should be 0.9, but due to some reason, we set it to 0.5 and found that the mAP did not change. Therefore, the released M model has an `affine_scale` parameter of 0.5, which is inconsistent with the value of 0.9 in the configuration.
 
 ### VOC
 
