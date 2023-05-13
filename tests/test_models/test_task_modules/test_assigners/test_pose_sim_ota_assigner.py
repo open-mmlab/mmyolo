@@ -8,14 +8,15 @@ from mmengine.testing import assert_allclose
 from mmyolo.models.task_modules.assigners import PoseSimOTAAssigner
 
 
-class TestSimOTAAssigner(TestCase):
+class TestPoseSimOTAAssigner(TestCase):
 
     def test_assign(self):
         assigner = PoseSimOTAAssigner(
             center_radius=2.5,
             candidate_topk=1,
             iou_weight=3.0,
-            cls_weight=1.0)
+            cls_weight=1.0,
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D'))
         pred_instances = InstanceData(
             bboxes=torch.Tensor([[23, 23, 43, 43] + [1] * 51,
                                  [4, 5, 6, 7] + [1] * 51]),
