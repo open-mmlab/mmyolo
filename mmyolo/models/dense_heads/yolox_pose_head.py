@@ -281,8 +281,12 @@ class YOLOXPoseHead(YOLOXHead):
                                                        objectnesses,
                                                        batch_img_metas, cfg,
                                                        rescale, with_nms)
-                keep_indices_topk = [out[2] for out in outputs_1]
-                keep_indices_nms = [out[1] for out in outputs_2]
+                keep_indices_topk = [
+                    out[2][:cfg.max_per_img] for out in outputs_1
+                ]
+                keep_indices_nms = [
+                    out[1][:cfg.max_per_img] for out in outputs_2
+                ]
 
         num_imgs = len(batch_img_metas)
 
