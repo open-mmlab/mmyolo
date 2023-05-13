@@ -45,7 +45,8 @@ class TestPoseSimOTAAssigner(TestCase):
             center_radius=2.5,
             candidate_topk=1,
             iou_weight=3.0,
-            cls_weight=1.0)
+            cls_weight=1.0,
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D'))
         pred_instances = InstanceData(
             bboxes=torch.Tensor([[123, 123, 143, 143], [114, 151, 161, 171]]),
             scores=torch.FloatTensor([[0.2], [0.8]]),
@@ -66,7 +67,8 @@ class TestPoseSimOTAAssigner(TestCase):
             center_radius=2.5,
             candidate_topk=1,
             iou_weight=3.0,
-            cls_weight=1.0)
+            cls_weight=1.0,
+            iou_calculator=dict(type='mmdet.BboxOverlaps2D'))
         pred_instances = InstanceData(
             bboxes=torch.Tensor([[[30, 40, 50, 60]], [[4, 5, 6, 7]]]),
             scores=torch.FloatTensor([[0.2], [0.8]]),
