@@ -1,12 +1,12 @@
 # 15 分钟上手 MMYOLO 实例分割
 
-实例分割可以定义为寻找目标检测的任务同时解决语义分割。将每个分割后的对象分解为各自的子成分
+实例分割是计算机视觉中的一个任务，旨在将图像中的每个对象都分割出来，并为每个对象分配一个唯一的标识符。与语义分割不同，实例分割不仅分割出图像中的不同类别，还将同一类别的不同实例分开。
 
 <div align=center>
-<img src="https://user-images.githubusercontent.com/87774050/236993048-81019e1f-e67e-42ea-aebc-86320e0b8288.png" alt="Instance Segmentation" width="100%"/>
+<img src="https://github.com/open-mmlab/mmyolo/assets/87774050/c85afc05-c724-41d0-a238-24ec9c79945a" alt="Instance Segmentation" width="100%"/>
 </div>
 
-以我们提供的气球 balloon 小数据集为例，带大家 15 分钟轻松上手 MMYOLO 目标检测。整个流程包含如下步骤：
+以可供下载的气球 balloon 小数据集为例，带大家 15 分钟轻松上手 MMYOLO 实例分割。整个流程包含如下步骤：
 
 - [环境安装](#环境安装)
 - [数据集准备](#数据集准备)
