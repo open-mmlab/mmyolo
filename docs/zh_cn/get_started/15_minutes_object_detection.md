@@ -256,7 +256,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py
 
 #### 2 Tensorboard 可视化使用
 
-安装 Tensorboard 环境
+安装 Tensorboard 依赖
 
 ```shell
 pip install tensorboard
@@ -369,6 +369,12 @@ python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 **3. Grad-Based CAM 可视化**
 
 基于上述特征图可视化效果，我们可以分析特征层 bbox 级别的 Grad CAM。
+
+安装 `grad-cam` 依赖：
+
+```shell
+pip install "grad-cam"
+```
 
 (a) 查看 neck 输出的最小输出特征图的 Grad CAM
 
@@ -524,4 +530,4 @@ python projects/easydeploy/tools/image-demo.py \
 
 这样我们就完成了将训练完成的模型进行转换部署并且检查推理结果的工作。至此本教程结束。
 
-以上完整内容可以查看 [15_minutes_object_detection.ipynb](<>)。 如果你在训练或者测试过程中碰到问题，请先查看 [常见错误排除步骤](../recommended_topics/troubleshooting_steps.md)， 如果依然无法解决欢迎提 issue。
+以上完整内容可以查看 [15_minutes_object_detection.ipynb](https://github.com/open-mmlab/mmyolo/blob/dev/demo/15_minutes_object_detection.ipynb)。 如果你在训练或者测试过程中碰到问题，请先查看 [常见错误排除步骤](../recommended_topics/troubleshooting_steps.md)，如果依然无法解决欢迎提 [issue](https://github.com/open-mmlab/mmyolo/issues/new/choose)。

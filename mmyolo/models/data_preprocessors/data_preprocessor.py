@@ -49,6 +49,10 @@ class YOLOXBatchSyncRandomResize(BatchSyncRandomResize):
             data_samples['bboxes_labels'][:, 2::2] *= scale_x
             data_samples['bboxes_labels'][:, 3::2] *= scale_y
 
+            if 'keypoints' in data_samples:
+                data_samples['keypoints'][..., 0] *= scale_x
+                data_samples['keypoints'][..., 1] *= scale_y
+
         message_hub = MessageHub.get_current_instance()
         if (message_hub.get_info('iter') + 1) % self._interval == 0:
             self._input_size = self._get_random_size(
@@ -102,6 +106,10 @@ class YOLOv5DetDataPreprocessor(DetDataPreprocessor):
         }
         if 'masks' in data_samples:
             data_samples_output['masks'] = data_samples['masks']
+        if 'keypoints' in data_samples:
+            data_samples_output['keypoints'] = data_samples['keypoints']
+            data_samples_output['keypoints_visible'] = data_samples[
+                'keypoints_visible']
 
         return {'inputs': inputs, 'data_samples': data_samples_output}
 

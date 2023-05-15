@@ -7,9 +7,13 @@ import cv2
 import mmcv
 import numpy as np
 import torch
+from mmcv.image.geometric import _scale_size
 from mmcv.transforms import BaseTransform, Compose
 from mmcv.transforms.utils import cache_randomness
+from mmdet.datasets.transforms import FilterAnnotations as FilterDetAnnotations
 from mmdet.datasets.transforms import LoadAnnotations as MMDET_LoadAnnotations
+from mmdet.datasets.transforms import RandomAffine as MMDET_RandomAffine
+from mmdet.datasets.transforms import RandomFlip as MMDET_RandomFlip
 from mmdet.datasets.transforms import Resize as MMDET_Resize
 from mmdet.structures.bbox import (HorizontalBoxes, autocast_box_type,
                                    get_box_type)
@@ -17,6 +21,7 @@ from mmdet.structures.mask import PolygonMasks, polygon_to_bitmap
 from numpy import random
 
 from mmyolo.registry import TRANSFORMS
+from .keypoint_structure import Keypoints
 
 # TODO: Waiting for MMCV support
 TRANSFORMS.register_module(module=Compose, force=True)
@@ -435,6 +440,11 @@ class LoadAnnotations(MMDET_LoadAnnotations):
                 self._update_mask_ignore_data(results)
             gt_bboxes = results['gt_masks'].get_bboxes(dst_type='hbox')
             results['gt_bboxes'] = gt_bboxes
+        elif self.with_keypoints:
+            self._load_kps(results)
+            _, box_type_cls = get_box_type(self.box_type)
+            results['gt_bboxes'] = box_type_cls(
+                results.get('bbox', []), dtype=torch.float32)
         else:
             results = super().transform(results)
             self._update_mask_ignore_data(results)
@@ -610,6 +620,36 @@ class LoadAnnotations(MMDET_LoadAnnotations):
         """
         dis = ((arr1[:, None, :] - arr2[None, :, :])**2).sum(-1)
         return np.unravel_index(np.argmin(dis, axis=None), dis.shape)
+
+    def _load_kps(self, results: dict) -> None:
+        """Private function to load keypoints annotations.
+
+        Args:
+            results (dict): Result dict from
+                :class:`mmengine.dataset.BaseDataset`.
+
+        Returns:
+            dict: The dict contains loaded keypoints annotations.
+        """
+        results['height'] = results['img_shape'][0]
+        results['width'] = results['img_shape'][1]
+        num_instances = len(results.get('bbox', []))
+
+        if num_instances == 0:
+            results['keypoints'] = np.empty(
+                (0, len(results['flip_indices']), 2), dtype=np.float32)
+            results['keypoints_visible'] = np.empty(
+                (0, len(results['flip_indices'])), dtype=np.int32)
+            results['category_id'] = []
+
+        results['gt_keypoints'] = Keypoints(
+            keypoints=results['keypoints'],
+            keypoints_visible=results['keypoints_visible'],
+            flip_indices=results['flip_indices'],
+        )
+
+        results['gt_ignore_flags'] = np.array([False] * num_instances)
+        results['gt_bboxes_labels'] = np.array(results['category_id']) - 1
 
     def __repr__(self) -> str:
         repr_str = self.__class__.__name__
@@ -1871,4 +1911,193 @@ class Polygon2Mask(BaseTransform):
             masks = torch.from_numpy(masks)
             # Consistent logic with mmdet
             results['gt_masks'] = masks
+        return results
+
+
+@TRANSFORMS.register_module()
+class FilterAnnotations(FilterDetAnnotations):
+    """Filter invalid annotations.
+
+    In addition to the conditions checked by ``FilterDetAnnotations``, this
+    filter adds a new condition requiring instances to have at least one
+    visible keypoints.
+    """
+
+    def __init__(self, by_keypoints: bool = False, **kwargs) -> None:
+        # TODO: add more filter options
+        super().__init__(**kwargs)
+        self.by_keypoints = by_keypoints
+
+    @autocast_box_type()
+    def transform(self, results: dict) -> Union[dict, None]:
+        """Transform function to filter annotations.
+
+        Args:
+            results (dict): Result dict.
+        Returns:
+            dict: Updated result dict.
+        """
+        assert 'gt_bboxes' in results
+        gt_bboxes = results['gt_bboxes']
+        if gt_bboxes.shape[0] == 0:
+            return results
+
+        tests = []
+        if self.by_box:
+            tests.append(
+                ((gt_bboxes.widths > self.min_gt_bbox_wh[0]) &
+                 (gt_bboxes.heights > self.min_gt_bbox_wh[1])).numpy())
+
+        if self.by_mask:
+            assert 'gt_masks' in results
+            gt_masks = results['gt_masks']
+            tests.append(gt_masks.areas >= self.min_gt_mask_area)
+
+        if self.by_keypoints:
+            assert 'gt_keypoints' in results
+            num_keypoints = results['gt_keypoints'].num_keypoints
+            tests.append((num_keypoints > 0).numpy())
+
+        keep = tests[0]
+        for t in tests[1:]:
+            keep = keep & t
+
+        if not keep.any():
+            if self.keep_empty:
+                return None
+
+        keys = ('gt_bboxes', 'gt_bboxes_labels', 'gt_masks', 'gt_ignore_flags',
+                'gt_keypoints')
+        for key in keys:
+            if key in results:
+                results[key] = results[key][keep]
+
+        return results
+
+
+# TODO: Check if it can be merged with mmdet.YOLOXHSVRandomAug
+@TRANSFORMS.register_module()
+class RandomAffine(MMDET_RandomAffine):
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+    @autocast_box_type()
+    def transform(self, results: dict) -> dict:
+        img = results['img']
+        height = img.shape[0] + self.border[1] * 2
+        width = img.shape[1] + self.border[0] * 2
+
+        warp_matrix = self._get_random_homography_matrix(height, width)
+
+        img = cv2.warpPerspective(
+            img,
+            warp_matrix,
+            dsize=(width, height),
+            borderValue=self.border_val)
+        results['img'] = img
+        results['img_shape'] = img.shape
+
+        bboxes = results['gt_bboxes']
+        num_bboxes = len(bboxes)
+        if num_bboxes:
+            bboxes.project_(warp_matrix)
+            if self.bbox_clip_border:
+                bboxes.clip_([height, width])
+            # remove outside bbox
+            valid_index = bboxes.is_inside([height, width]).numpy()
+            results['gt_bboxes'] = bboxes[valid_index]
+            results['gt_bboxes_labels'] = results['gt_bboxes_labels'][
+                valid_index]
+            results['gt_ignore_flags'] = results['gt_ignore_flags'][
+                valid_index]
+
+            if 'gt_masks' in results:
+                raise NotImplementedError('RandomAffine only supports bbox.')
+
+            if 'gt_keypoints' in results:
+                keypoints = results['gt_keypoints']
+                keypoints.project_(warp_matrix)
+                if self.bbox_clip_border:
+                    keypoints.clip_([height, width])
+                results['gt_keypoints'] = keypoints[valid_index]
+
+        return results
+
+    def __repr__(self) -> str:
+        repr_str = self.__class__.__name__
+        repr_str += f'(hue_delta={self.hue_delta}, '
+        repr_str += f'saturation_delta={self.saturation_delta}, '
+        repr_str += f'value_delta={self.value_delta})'
+        return repr_str
+
+
+# TODO: Check if it can be merged with mmdet.YOLOXHSVRandomAug
+@TRANSFORMS.register_module()
+class RandomFlip(MMDET_RandomFlip):
+
+    @autocast_box_type()
+    def _flip(self, results: dict) -> None:
+        """Flip images, bounding boxes, and semantic segmentation map."""
+        # flip image
+        results['img'] = mmcv.imflip(
+            results['img'], direction=results['flip_direction'])
+
+        img_shape = results['img'].shape[:2]
+
+        # flip bboxes
+        if results.get('gt_bboxes', None) is not None:
+            results['gt_bboxes'].flip_(img_shape, results['flip_direction'])
+
+        # flip keypoints
+        if results.get('gt_keypoints', None) is not None:
+            results['gt_keypoints'].flip_(img_shape, results['flip_direction'])
+
+        # flip masks
+        if results.get('gt_masks', None) is not None:
+            results['gt_masks'] = results['gt_masks'].flip(
+                results['flip_direction'])
+
+        # flip segs
+        if results.get('gt_seg_map', None) is not None:
+            results['gt_seg_map'] = mmcv.imflip(
+                results['gt_seg_map'], direction=results['flip_direction'])
+
+        # record homography matrix for flip
+        self._record_homography_matrix(results)
+
+
+@TRANSFORMS.register_module()
+class Resize(MMDET_Resize):
+
+    def _resize_keypoints(self, results: dict) -> None:
+        """Resize bounding boxes with ``results['scale_factor']``."""
+        if results.get('gt_keypoints', None) is not None:
+            results['gt_keypoints'].rescale_(results['scale_factor'])
+            if self.clip_object_border:
+                results['gt_keypoints'].clip_(results['img_shape'])
+
+    @autocast_box_type()
+    def transform(self, results: dict) -> dict:
+        """Transform function to resize images, bounding boxes and semantic
+        segmentation map.
+
+        Args:
+            results (dict): Result dict from loading pipeline.
+        Returns:
+            dict: Resized results, 'img', 'gt_bboxes', 'gt_seg_map',
+            'scale', 'scale_factor', 'height', 'width', and 'keep_ratio' keys
+            are updated in result dict.
+        """
+        if self.scale:
+            results['scale'] = self.scale
+        else:
+            img_shape = results['img'].shape[:2]
+            results['scale'] = _scale_size(img_shape[::-1], self.scale_factor)
+        self._resize_img(results)
+        self._resize_bboxes(results)
+        self._resize_keypoints(results)
+        self._resize_masks(results)
+        self._resize_seg(results)
+        self._record_homography_matrix(results)
         return results
