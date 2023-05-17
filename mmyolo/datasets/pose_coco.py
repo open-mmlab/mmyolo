@@ -6,8 +6,7 @@ from mmengine.dataset import force_full_init
 try:
     from mmpose.datasets import CocoDataset as MMPoseCocoDataset
 except ImportError:
-    raise ImportError('Please run "mim install -r requirements/mmpose.txt" '
-                      'to install mmpose first for rotated detection.')
+    MMPoseCocoDataset = object
 
 from ..registry import DATASETS
 
@@ -16,6 +15,13 @@ from ..registry import DATASETS
 class PoseCocoDataset(MMPoseCocoDataset):
 
     METAINFO: dict = dict(from_file='configs/_base_/pose/coco.py')
+
+    def __init__(self, *args, **kwargs):
+        if MMPoseCocoDataset is object:
+            raise ImportError(
+                'Please run "mim install -r requirements/mmpose.txt" '
+                'to install mmpose first for PoseCocoDataset.')
+        super().__init__(*args, **kwargs)
 
     @force_full_init
     def prepare_data(self, idx) -> Any:

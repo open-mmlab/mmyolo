@@ -10,8 +10,7 @@ from mmyolo.registry import MODELS
 try:
     from mmpose.datasets.datasets.utils import parse_pose_metainfo
 except ImportError:
-    raise ImportError('Please run "mim install -r requirements/mmpose.txt" '
-                      'to install mmpose first for rotated detection.')
+    parse_pose_metainfo = None
 
 
 @MODELS.register_module()
@@ -39,6 +38,10 @@ class OksLoss(nn.Module):
         super().__init__()
 
         if metainfo is not None:
+            if parse_pose_metainfo is None:
+                raise ImportError(
+                    'Please run "mim install -r requirements/mmpose.txt" '
+                    'to install mmpose first for OksLossn.')
             metainfo = parse_pose_metainfo(dict(from_file=metainfo))
             sigmas = metainfo.get('sigmas', None)
             if sigmas is not None:
