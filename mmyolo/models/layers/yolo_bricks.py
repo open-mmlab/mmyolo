@@ -1207,7 +1207,7 @@ class CSPResLayer(nn.Module):
         assert attention_cfg is None or isinstance(attention_cfg, dict)
 
         if stride == 2:
-            conv1_in_channels = conv2_in_channels = conv3_in_channels = (
+            conv1_in_channels = conv2_in_channels = (
                 in_channels + out_channels) // 2
             blocks_channels = conv1_in_channels // 2
             self.conv_down = ConvModule(
@@ -1220,7 +1220,6 @@ class CSPResLayer(nn.Module):
                 act_cfg=act_cfg)
         else:
             conv1_in_channels = conv2_in_channels = in_channels
-            conv3_in_channels = out_channels
             blocks_channels = out_channels // 2
             self.conv_down = None
 
@@ -1241,7 +1240,7 @@ class CSPResLayer(nn.Module):
         self.blocks = self.build_blocks_layer(blocks_channels)
 
         self.conv3 = ConvModule(
-            conv3_in_channels,
+            blocks_channels * 2,
             out_channels,
             1,
             norm_cfg=norm_cfg,
