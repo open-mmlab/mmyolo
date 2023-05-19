@@ -103,8 +103,8 @@ class YOLOv5PAFPN(BaseYOLONeck):
 
         if idx == 1:
             return CSPLayer(
-                make_divisible(self.in_channels[idx - 1] * 2,
-                               self.widen_factor),
+                make_divisible(self.in_channels[idx - 1], self.widen_factor) *
+                2,
                 make_divisible(self.in_channels[idx - 1], self.widen_factor),
                 num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
                 add_identity=False,
@@ -113,8 +113,8 @@ class YOLOv5PAFPN(BaseYOLONeck):
         else:
             return nn.Sequential(
                 CSPLayer(
-                    make_divisible(self.in_channels[idx - 1] * 2,
-                                   self.widen_factor),
+                    make_divisible(self.in_channels[idx - 1],
+                                   self.widen_factor) * 2,
                     make_divisible(self.in_channels[idx - 1],
                                    self.widen_factor),
                     num_blocks=make_round(self.num_csp_blocks,
@@ -159,7 +159,7 @@ class YOLOv5PAFPN(BaseYOLONeck):
             nn.Module: The bottom up layer.
         """
         return CSPLayer(
-            make_divisible(self.in_channels[idx] * 2, self.widen_factor),
+            make_divisible(self.in_channels[idx], self.widen_factor) * 2,
             make_divisible(self.in_channels[idx + 1], self.widen_factor),
             num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
             add_identity=False,
