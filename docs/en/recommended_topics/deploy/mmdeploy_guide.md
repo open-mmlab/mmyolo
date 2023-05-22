@@ -4,7 +4,7 @@
 
 MMDeploy is an open-source deep learning model deployment toolset. It is a part of the [OpenMMLab](https://openmmlab.com/) project, and provides **a unified experience of exporting different models** to various platforms and devices of the OpenMMLab series libraries. Using MMDeploy, developers can easily export the specific compiled SDK they need from the training result, which saves a lot of effort.
 
-More detailed introduction and guides can be found [here](https://github.com/open-mmlab/mmdeploy/blob/dev-1.x/docs/en/get_started.md)
+More detailed introduction and guides can be found [here](https://github.com/open-mmlab/mmdeploy/blob/main/docs/en/get_started.md)
 
 ## Supported Algorithms
 
@@ -18,6 +18,14 @@ Currently our deployment kit supports on the following models and backends:
 | RTMDet | ObjectDetection |      Y      |    Y     | [config](https://github.com/open-mmlab/mmyolo/tree/main/configs/rtmdet) |
 
 Note: ncnn and other inference backends support are coming soon.
+
+## Installation
+
+Please install mmdeploy by following [this](https://github.com/open-mmlab/mmdeploy/blob/main/docs/en/get_started.md) guide.
+
+```{note}
+If you install mmdeploy prebuilt package, please also clone its repository by 'git clone https://github.com/open-mmlab/mmdeploy.git --depth=1' to get the deployment config files.
+```
 
 ## How to Write Config for MMYOLO
 
@@ -205,6 +213,7 @@ Note: Int8 quantization support will soon be released.
 ## How to Convert Model
 
 ### Usage
+#### MMDeploy Installed from Source Code
 
 Set the root directory of `MMDeploy` as an env parameter `MMDEPLOY_DIR` using `export MMDEPLOY_DIR=/the/root/path/of/MMDeploy` command.
 
@@ -236,6 +245,127 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
 - `--log-level`: set log level which in `'CRITICAL', 'FATAL', 'ERROR', 'WARN', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'`. If not specified, it will be set to `INFO`
 - `--show`: show the result on screen or not
 - `--dump-info`: output SDK information or not
+
+#
+#### MMDeploy Installed with pip install
+Suppose the working directory is the root path of mmyolo. Take [YoloV5](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) model as an example. You can download its checkpoint from [here](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth), and then convert it to onnx model as follows:
+```python
+from mmdeploy.apis import torch2onnx
+from mmdeploy.backend.sdk.export_info import export2SDK
+
+img = 'demo/demo.jpg'
+work_dir = 'mmdeploy_models/mmyolo/onnx'
+save_file = 'end2end.onnx'
+deploy_cfg = 'configs/deploy/detection_onnxruntime_dynamic.py'
+model_cfg = 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+model_checkpoint = 'checkpoints/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
+device = 'cpu'
+
+# 1. convert model to onnx
+torch2onnx(img, work_dir, save_file, deploy_cfg, model_cfg,
+           model_checkpoint, device)
+
+# 2. extract pipeline info for inference by MMDeploy SDK
+export2SDK(deploy_cfg, model_cfg, work_dir, pth=model_checkpoint,
+           device=device)
+```
+
+## Model specification
+
+Before moving on to model inference chapter, let's know more about the converted result structure which is very important for model inference. It is saved in the directory specified with `--wodk_dir`.
+
+The converted model locates in the working directory `mmdeploy_models/mmyolo/onnx` in the previous example. It includes:
+
+```
+mmdeploy_models/mmyolo/onnx
+├── deploy.json
+├── detail.json
+├── end2end.onnx
+└── pipeline.json
+```
+
+in which,
+
+- **end2end.onnx**: backend model which can be inferred by ONNX Runtime
+- ***xxx*.json**: the necessary information for mmdeploy SDK
+
+The whole package **mmdeploy_models/mmyolo/onnx** is defined as **mmdeploy SDK model**, i.e., **mmdeploy SDK model** includes both backend model and inference meta information.
+
+
+## Model inference
+
+### Backend model inference
+
+Take the previous converted `end2end.onnx` model as an example, you can use the following code to inference the model and visualize the results.
+
+```python
+from mmdeploy.apis.utils import build_task_processor
+from mmdeploy.utils import get_input_shape, load_config
+import torch
+
+deploy_cfg = 'configs/deploy/detection_onnxruntime_dynamic.py'
+model_cfg = 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+device = 'cpu'
+backend_model = ['mmdeploy_models/mmyolo/onnx/end2end.onnx']
+image = 'demo/demo.jpg'
+
+# read deploy_cfg and model_cfg
+deploy_cfg, model_cfg = load_config(deploy_cfg, model_cfg)
+
+# build task and backend model
+task_processor = build_task_processor(model_cfg, deploy_cfg, device)
+model = task_processor.build_backend_model(backend_model)
+
+# process input image
+input_shape = get_input_shape(deploy_cfg)
+model_inputs, _ = task_processor.create_input(image, input_shape)
+
+# do model inference
+with torch.no_grad():
+    result = model.test_step(model_inputs)
+
+# visualize results
+task_processor.visualize(
+    image=image,
+    model=model,
+    result=result[0],
+    window_name='visualize',
+    output_file='work_dir/output_detection.png')
+```
+
+With the above code, you can find the inference result `output_detection.png` in `work_dir`.
+
+
+### SDK model inference
+
+You can also perform SDK model inference like following,
+
+```python
+from mmdeploy_runtime import Detector
+import cv2
+
+img = cv2.imread('demo/demo.jpg')
+
+# create a detector
+detector = Detector(model_path='mmdeploy_models/mmyolo/onnx',
+                    device_name='cpu', device_id=0)
+# perform inference
+bboxes, labels, masks = detector(img)
+
+# visualize inference result
+indices = [i for i in range(len(bboxes))]
+for index, bbox, label_id in zip(indices, bboxes, labels):
+    [left, top, right, bottom], score = bbox[0:4].astype(int), bbox[4]
+    if score < 0.3:
+        continue
+
+    cv2.rectangle(img, (left, top), (right, bottom), (0, 255, 0))
+
+cv2.imwrite('work_dir/output_detection.png', img)
+```
+
+Besides python API, mmdeploy SDK also provides other FFI (Foreign Function Interface), such as C, C++, C#, Java and so on. You can learn their usage from [demos](https://github.com/open-mmlab/mmdeploy/tree/main/demo).
+
 
 ## How to Evaluate Model
 
