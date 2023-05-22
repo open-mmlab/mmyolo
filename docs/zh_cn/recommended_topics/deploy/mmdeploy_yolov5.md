@@ -431,8 +431,11 @@ python3 ${MMDEPLOY_DIR}/tools/profiler.py \
 ## 模型推理
 
 ### 后端模型推理
+
 #### ONNXRuntime
+
 以上述模型转换后的 `end2end.onnx` 为例，您可以使用如下代码进行推理：
+
 ```python
 from mmdeploy.apis.utils import build_task_processor
 from mmdeploy.utils import get_input_shape, load_config
@@ -469,7 +472,9 @@ task_processor.visualize(
 ```
 
 #### TensorRT
+
 以上述模型转换后的 `end2end.engine` 为例，您可以使用如下代码进行推理：
+
 ```python
 from mmdeploy.apis.utils import build_task_processor
 from mmdeploy.utils import get_input_shape, load_config
@@ -506,8 +511,11 @@ task_processor.visualize(
 ```
 
 ### SDK 模型推理
+
 #### ONNXRuntime
+
 以上述模型转换后的 `end2end.onnx` 为例，您可以使用如下代码进行 `SDK` 推理：
+
 ```python
 from mmdeploy_runtime import Detector
 import cv2
@@ -533,7 +541,9 @@ cv2.imwrite('work_dir/output_detection.png', img)
 ```
 
 #### TensorRT
+
 以上述模型转换后的 `end2end.engine` 为例，您可以使用如下代码进行 `SDK` 推理：
+
 ```python
 from mmdeploy_runtime import Detector
 import cv2

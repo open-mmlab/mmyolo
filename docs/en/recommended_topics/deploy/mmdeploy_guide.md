@@ -213,6 +213,7 @@ Note: Int8 quantization support will soon be released.
 ## How to Convert Model
 
 ### Usage
+
 #### MMDeploy Installed from Source Code
 
 Set the root directory of `MMDeploy` as an env parameter `MMDEPLOY_DIR` using `export MMDEPLOY_DIR=/the/root/path/of/MMDeploy` command.
@@ -246,9 +247,12 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
 - `--show`: show the result on screen or not
 - `--dump-info`: output SDK information or not
 
-#
+# 
+
 #### MMDeploy Installed with pip install
+
 Suppose the working directory is the root path of mmyolo. Take [YoloV5](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) model as an example. You can download its checkpoint from [here](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth), and then convert it to onnx model as follows:
+
 ```python
 from mmdeploy.apis import torch2onnx
 from mmdeploy.backend.sdk.export_info import export2SDK
@@ -290,7 +294,6 @@ in which,
 - ***xxx*.json**: the necessary information for mmdeploy SDK
 
 The whole package **mmdeploy_models/mmyolo/onnx** is defined as **mmdeploy SDK model**, i.e., **mmdeploy SDK model** includes both backend model and inference meta information.
-
 
 ## Model inference
 
@@ -335,7 +338,6 @@ task_processor.visualize(
 
 With the above code, you can find the inference result `output_detection.png` in `work_dir`.
 
-
 ### SDK model inference
 
 You can also perform SDK model inference like following,
@@ -365,7 +367,6 @@ cv2.imwrite('work_dir/output_detection.png', img)
 ```
 
 Besides python API, mmdeploy SDK also provides other FFI (Foreign Function Interface), such as C, C++, C#, Java and so on. You can learn their usage from [demos](https://github.com/open-mmlab/mmdeploy/tree/main/demo).
-
 
 ## How to Evaluate Model
 

@@ -432,8 +432,11 @@ python3 ${MMDEPLOY_DIR}/tools/profiler.py \
 ## Model Inference
 
 ### Backend Model Inference
+
 #### ONNXRuntime
+
 For the converted model `end2end.onnx`，you can do the inference with the following code：
+
 ```python
 from mmdeploy.apis.utils import build_task_processor
 from mmdeploy.utils import get_input_shape, load_config
@@ -470,7 +473,9 @@ task_processor.visualize(
 ```
 
 #### TensorRT
+
 For the converted model `end2end.engine`，you can do the inference with the following code：
+
 ```python
 from mmdeploy.apis.utils import build_task_processor
 from mmdeploy.utils import get_input_shape, load_config
@@ -507,8 +512,11 @@ task_processor.visualize(
 ```
 
 ### SDK Model Inference
+
 #### ONNXRuntime
+
 For the converted model `end2end.onnx`，you can do the SDK inference with the following code：
+
 ```python
 from mmdeploy_runtime import Detector
 import cv2
@@ -534,7 +542,9 @@ cv2.imwrite('work_dir/output_detection.png', img)
 ```
 
 #### TensorRT
+
 For the converted model `end2end.engine`，you can do the SDK inference with the following code：
+
 ```python
 from mmdeploy_runtime import Detector
 import cv2
@@ -558,5 +568,5 @@ for index, bbox, label_id in zip(indices, bboxes, labels):
 
 cv2.imwrite('work_dir/output_detection.png', img)
 ```
-Besides python API, mmdeploy SDK also provides other FFI (Foreign Function Interface), such as C, C++, C#, Java and so on. You can learn their usage from [demos](https://github.com/open-mmlab/mmdeploy/tree/main/demo).
 
+Besides python API, mmdeploy SDK also provides other FFI (Foreign Function Interface), such as C, C++, C#, Java and so on. You can learn their usage from [demos](https://github.com/open-mmlab/mmdeploy/tree/main/demo).

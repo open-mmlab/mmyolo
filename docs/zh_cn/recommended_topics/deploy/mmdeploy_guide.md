@@ -20,7 +20,9 @@ MMDeploy 是 [OpenMMLab](https://openmmlab.com/) 模型部署工具箱，**为�
 ncnn 和其他后端的支持会在后续支持。
 
 ## 安装
+
 按照[说明](https://github.com/open-mmlab/mmdeploy/blob/main/docs/zh_cn/get_started.md)安装 mmdeploy。
+
 ```{note}
 如果安装的是 mmdeploy 预编译包，那么也请通过 ‘git clone https://github.com/open-mmlab/mmdeploy.git –depth=1’ 下载 mmdeploy 源码。因为它包含了部署时要用到的配置文件
 ```
@@ -213,7 +215,9 @@ use_efficientnms = False
 ## 模型转换
 
 ### 使用方法
+
 #### 从源码安装的 MMDeploy
+
 设置 `MMDeploy` 根目录为环境变量 `MMDEPLOY_DIR` ，例如 `export MMDEPLOY_DIR=/the/root/path/of/MMDeploy`
 
 ```shell
@@ -245,9 +249,12 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
 - `--show` : 是否显示检测的结果。
 - `--dump-info` : 是否输出 SDK 信息。
 
-#
+# 
+
 #### 通过 pip install 安装的 MMDeploy
+
 假设当前的工作目录为 mmyolo 的根目录, 那么以 [YoloV5](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) 模型为例，你可以从[此处](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth)下载对应的 checkpoint，并使用以下代码将之转换为 onnx 模型：
+
 ```python
 from mmdeploy.apis import torch2onnx
 from mmdeploy.backend.sdk.export_info import export2SDK
@@ -290,9 +297,10 @@ mmdeploy_models/mmyolo/onnx
 
 整个文件夹被定义为**mmdeploy SDK model**。换言之，**mmdeploy SDK model**既包括推理引擎，也包括推理 meta 信息。
 
-
 ## 模型推理
+
 ### 后端模型推理
+
 以上述模型转换后的 `end2end.onnx` 为例，你可以使用如下代码进行推理：
 
 ```python
