@@ -1,5 +1,4 @@
-default_scope = None
-
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmdet.engine.hooks import DetVisualizationHook
 from mmdet.visualization import DetLocalVisualizer
 from mmengine.hooks import (CheckpointHook, DistSamplerSeedHook, IterTimerHook,
@@ -7,6 +6,7 @@ from mmengine.hooks import (CheckpointHook, DistSamplerSeedHook, IterTimerHook,
 from mmengine.runner import LogProcessor
 from mmengine.visualization import LocalVisBackend
 
+default_scope = None
 default_hooks = dict(
     timer=dict(type=IterTimerHook),
     logger=dict(type=LoggerHook, interval=50),
@@ -23,9 +23,7 @@ env_cfg = dict(
 
 vis_backends = [dict(type=LocalVisBackend)]
 visualizer = dict(
-    type=DetLocalVisualizer,
-    vis_backends=vis_backends,
-    name='visualizer')
+    type=DetLocalVisualizer, vis_backends=vis_backends, name='visualizer')
 log_processor = dict(type=LogProcessor, window_size=50, by_epoch=True)
 
 log_level = 'INFO'

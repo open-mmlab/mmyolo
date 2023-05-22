@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 if '_base_':
     from .rtmdet_l_syncbn_fast_8xb32_300e_coco import *
 

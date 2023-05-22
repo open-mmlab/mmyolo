@@ -1,3 +1,4 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 if '_base_':
     from .._base_.default_runtime import *
     from .._base_.det_p5_tta import *
@@ -13,6 +14,9 @@ from mmengine.dataset import DefaultSampler
 from mmengine.hooks import EMAHook
 from mmengine.optim import CosineAnnealingLR, LinearLR, OptimWrapper
 from mmengine.runner import EpochBasedTrainLoop, TestLoop, ValLoop
+from torch.nn import BatchNorm2d, SiLU
+from torch.optim import AdamW
+
 from mmyolo.datasets import (BatchShapePolicy, Mosaic, YOLOv5CocoDataset,
                              yolov5_collate)
 from mmyolo.datasets.transforms import LoadAnnotations, YOLOv5MixUp
@@ -21,8 +25,6 @@ from mmyolo.models import (CSPNeXt, CSPNeXtPAFPN, ExpMomentumEMA, RTMDetHead,
                            YOLOv5DetDataPreprocessor)
 from mmyolo.models.task_modules.assigners import BatchDynamicSoftLabelAssigner
 from mmyolo.models.task_modules.coders import DistancePointBBoxCoder
-from torch.nn import BatchNorm2d, SiLU
-from torch.optim import AdamW
 
 # -----data related-----
 data_root = 'data/coco/'

@@ -1,8 +1,10 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 from mmcv.ops import nms
 from mmcv.transforms import Compose, LoadImageFromFile, TestTimeAug
 from mmdet.datasets.transforms import (LoadAnnotations, PackDetInputs,
                                        RandomFlip)
 from mmdet.models import DetTTAModel
+
 from mmyolo.datasets.transforms import LetterResize, YOLOv5KeepRatioResize
 
 # TODO: Need to solve the problem of multiple file_client_args parameters
@@ -49,10 +51,9 @@ tta_pipeline = [
         type=TestTimeAug,
         transforms=[
             _multiscale_resize_transforms,
-            [
-                dict(type=RandomFlip, prob=1.),
-                dict(type=RandomFlip, prob=0.)
-            ], [dict(type=LoadAnnotations, with_bbox=True)],
+            [dict(type=RandomFlip, prob=1.),
+             dict(type=RandomFlip, prob=0.)],
+            [dict(type=LoadAnnotations, with_bbox=True)],
             [
                 dict(
                     type=PackDetInputs,

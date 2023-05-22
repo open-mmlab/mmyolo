@@ -1,6 +1,6 @@
+# Copyright (c) OpenMMLab. All rights reserved.
 if '_base_':
     from .rtmdet_s_syncbn_fast_8xb32_300e_coco import *
-
 
 checkpoint = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/cspnext_rsb_pretrain/cspnext-tiny_imagenet_600e.pth'  # noqa
 
