@@ -4,7 +4,7 @@
 
 MMDeploy 是 [OpenMMLab](https://openmmlab.com/) 模型部署工具箱，**为各算法库提供统一的部署体验**。基于 MMDeploy，开发者可以轻松从训练 repo 生成指定硬件所需 SDK，省去大量适配时间。
 
-更多介绍和使用指南见 https://github.com/open-mmlab/mmdeploy/blob/main/docs/zh_cn/get_started.md
+更多介绍和使用指南见 https://mmdeploy.readthedocs.io/zh_CN/latest/get_started.html
 
 ## 算法支持列表
 
@@ -21,7 +21,7 @@ ncnn 和其他后端的支持会在后续支持。
 
 ## 安装
 
-按照[说明](https://github.com/open-mmlab/mmdeploy/blob/main/docs/zh_cn/get_started.md)安装 mmdeploy。
+按照[说明](https://mmdeploy.readthedocs.io/zh_CN/latest/get_started.html)安装 mmdeploy。
 
 ```{note}
 如果安装的是 mmdeploy 预编译包，那么也请通过 ‘git clone https://github.com/open-mmlab/mmdeploy.git –depth=1’ 下载 mmdeploy 源码。因为它包含了部署时要用到的配置文件
@@ -249,8 +249,6 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
 - `--show` : 是否显示检测的结果。
 - `--dump-info` : 是否输出 SDK 信息。
 
-# 
-
 #### 通过 pip install 安装的 MMDeploy
 
 假设当前的工作目录为 mmyolo 的根目录, 那么以 [YoloV5](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) 模型为例，你可以从[此处](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth)下载对应的 checkpoint，并使用以下代码将之转换为 onnx 模型：
@@ -380,20 +378,19 @@ python3 ${MMDEPLOY_DIR}/tools/test.py \
     ${DEPLOY_CFG} \
     ${MODEL_CFG} \
     --model ${BACKEND_MODEL_FILES} \
-    [--out ${OUTPUT_PKL_FILE}] \
-    [--format-only] \
-    [--metrics ${METRICS}] \
+    --device ${DEVICE} \
+    --work-dir ${WORK_DIR} \
+    [--cfg-options ${CFG_OPTIONS}] \
     [--show] \
     [--show-dir ${OUTPUT_IMAGE_DIR}] \
-    [--show-score-thr ${SHOW_SCORE_THR}] \
-    --device ${DEVICE} \
-    [--cfg-options ${CFG_OPTIONS}] \
-    [--metric-options ${METRIC_OPTIONS}]
+    [--interval ${INTERVAL}] \
+    [--wait-time ${WAIT_TIME}] \
     [--log2file work_dirs/output.txt]
-    [--batch-size ${BATCH_SIZE}]
     [--speed-test] \
     [--warmup ${WARM_UP}] \
-    [--log-interval ${LOG_INTERVERL}]
+    [--log-interval ${LOG_INTERVERL}] \
+    [--batch-size ${BATCH_SIZE}] \
+    [--uri ${URI}]
 ```
 
 ### 参数描述
@@ -401,19 +398,18 @@ python3 ${MMDEPLOY_DIR}/tools/test.py \
 - `deploy_cfg`: 部署配置文件。
 - `model_cfg`: MMYOLO 模型配置文件。
 - `--model`: 导出的后端模型。 例如, 如果我们导出了 TensorRT 模型，我们需要传入后缀为 ".engine" 文件路径。
-- `--out`:  保存 pickle 格式的输出结果，仅当您传入这个参数时启用。
-- `--format-only`: 是否格式化输出结果而不进行评估。当您要将结果格式化为特定格式并将其提交到测试服务器时，它很有用。
-- `--metrics`: 用于评估 MMYOLO 中定义的模型的指标，如 COCO 标注格式的 "proposal"。
+- `--device`: 运行模型的设备。请注意，某些后端会限制设备。例如，TensorRT 必须在 cuda 上运行。
+- `--work-dir`: 模型转换、报告生成的路径。
+- `--cfg-options`: 传入额外的配置，将会覆盖当前部署配置。
 - `--show`: 是否在屏幕上显示评估结果。
 - `--show-dir`: 保存评估结果的目录。(只有给出这个参数才会保存结果)。
-- `--show-score-thr`: 确定是否显示检测边界框的阈值。
-- `--device`: 运行模型的设备。请注意，某些后端会限制设备。例如，TensorRT 必须在 cuda 上运行。
-- `--cfg-options`: 传入额外的配置，将会覆盖当前部署配置。
-- `--metric-options`: 用于评估的自定义选项。 xxx=yyy 中的键值对格式，将是 dataset.evaluate() 函数的 kwargs。
+- `--interval`: 屏幕上显示评估结果的间隔。
+- `--wait-time`: 每个窗口的显示时间
 - `--log2file`: 将评估结果（和速度）记录到文件中。
-- `--batch-size`: 推理的批量大小，它将覆盖数据配置中的 `samples_per_gpu`。默认为 `1`。请注意，并非所有模型都支持 `batch_size > 1`。
-- `--speed-test`:  是否开启速度测试。
+- `--speed-test`: 是否开启速度测试。
 - `--warmup`: 在计算推理时间之前进行预热，需要先开启 `speed-test`。
 - `--log-interval`: 每个日志之间的间隔，需要先设置 `speed-test`。
+- `--batch-size`: 推理的批量大小，它将覆盖数据配置中的 `samples_per_gpu`。默认为 `1`。请注意，并非所有模型都支持 `batch_size > 1`。
+- `--uri`: 在边缘设备上推理时的 ipv4 或 ipv6 端口号。
 
 注意：`${MMDEPLOY_DIR}/tools/test.py` 中的其他参数用于速度测试。他们不影响评估。

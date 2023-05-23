@@ -4,7 +4,7 @@
 
 MMDeploy is an open-source deep learning model deployment toolset. It is a part of the [OpenMMLab](https://openmmlab.com/) project, and provides **a unified experience of exporting different models** to various platforms and devices of the OpenMMLab series libraries. Using MMDeploy, developers can easily export the specific compiled SDK they need from the training result, which saves a lot of effort.
 
-More detailed introduction and guides can be found [here](https://github.com/open-mmlab/mmdeploy/blob/main/docs/en/get_started.md)
+More detailed introduction and guides can be found [here](https://mmdeploy.readthedocs.io/en/latest/get_started.html)
 
 ## Supported Algorithms
 
@@ -21,7 +21,7 @@ Note: ncnn and other inference backends support are coming soon.
 
 ## Installation
 
-Please install mmdeploy by following [this](https://github.com/open-mmlab/mmdeploy/blob/main/docs/en/get_started.md) guide.
+Please install mmdeploy by following [this](https://mmdeploy.readthedocs.io/en/latest/get_started.html) guide.
 
 ```{note}
 If you install mmdeploy prebuilt package, please also clone its repository by 'git clone https://github.com/open-mmlab/mmdeploy.git --depth=1' to get the deployment config files.
@@ -247,9 +247,7 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
 - `--show`: show the result on screen or not
 - `--dump-info`: output SDK information or not
 
-# 
-
-#### MMDeploy Installed with pip install
+#### Usage with MMDeploy API
 
 Suppose the working directory is the root path of mmyolo. Take [YoloV5](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) model as an example. You can download its checkpoint from [here](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth), and then convert it to onnx model as follows:
 
@@ -379,40 +377,38 @@ python3 ${MMDEPLOY_DIR}/tools/test.py \
     ${DEPLOY_CFG} \
     ${MODEL_CFG} \
     --model ${BACKEND_MODEL_FILES} \
-    [--out ${OUTPUT_PKL_FILE}] \
-    [--format-only] \
-    [--metrics ${METRICS}] \
+    --device ${DEVICE} \
+    --work-dir ${WORK_DIR} \
+    [--cfg-options ${CFG_OPTIONS}] \
     [--show] \
     [--show-dir ${OUTPUT_IMAGE_DIR}] \
-    [--show-score-thr ${SHOW_SCORE_THR}] \
-    --device ${DEVICE} \
-    [--cfg-options ${CFG_OPTIONS}] \
-    [--metric-options ${METRIC_OPTIONS}]
+    [--interval ${INTERVAL}] \
+    [--wait-time ${WAIT_TIME}] \
     [--log2file work_dirs/output.txt]
-    [--batch-size ${BATCH_SIZE}]
     [--speed-test] \
     [--warmup ${WARM_UP}] \
-    [--log-interval ${LOG_INTERVERL}]
+    [--log-interval ${LOG_INTERVERL}] \
+    [--batch-size ${BATCH_SIZE}] \
+    [--uri ${URI}]
 ```
 
 ### Parameter Description
 
-- `deploy_cfg`: set the deployment config file path
-- `model_cfg`: set the MMYOLO model config file path
-- `--model`: set the converted model. For example, if we exported a TensorRT model, we need to pass in the file path with the suffix ".engine"
-- `--out`: save the output result in pickle format, use only when you need it
-- `--format-only`: format the output without evaluating it. It is useful when you want to format the result into a specific format and submit it to a test server
-- `--metrics`: use the specific metric supported in MMYOLO to evaluate, such as "proposal" in COCO format data.
-- `--show`: show the evaluation result on screen or not
-- `--show-dir`: save the evaluation result to this directory, valid only when specified
-- `--show-score-thr`: show the threshold for the detected bboxes or not
-- `--device`: indicate the device to run the model. Note that some backends limit the running devices. For example, TensorRT must run on CUDA
-- `--cfg-options`: pass in additional configs, which will override the current deployment configs
-- `--metric-options`: add custom options for metrics. The key-value pair format in xxx=yyy will be the kwargs of the dataset.evaluate() method
-- `--log2file`: save the evaluation results (with the speed) to a file
-- `--batch-size`: set the batch size for inference, which will override the `samples_per_gpu` in data config. The default value is `1`, however, not every model supports `batch_size > 1`
-- `--speed-test`: test the inference speed or not
-- `--warmup`: warm up before speed test or not, works only when `speed-test` is specified
-- `--log-interval`: set the interval between each log, works only when `speed-test` is specified
+- `deploy_cfg`: set the deployment config file path.
+- `model_cfg`: set the MMYOLO model config file path.
+- `--model`: set the converted model. For example, if we exported a TensorRT model, we need to pass in the file path with the suffix ".engine".
+- `--device`: indicate the device to run the model. Note that some backends limit the running devices. For example, TensorRT must run on CUDA.
+- `--work-dir`: the directory to save the file containing evaluation metrics.
+- `--cfg-options`: pass in additional configs, which will override the current deployment configs.
+- `--show`: show the evaluation result on screen or not.
+- `--show-dir`: save the evaluation result to this directory, valid only when specified.
+- `--interval`: set the display interval between each two evaluation results.
+- `--wait-time`: set the display time of each window.
+- `--log2file`: log evaluation results and speed to file.
+- `--speed-test`: test the inference speed or not.
+- `--warmup`: warm up before speed test or not, works only when `speed-test` is specified.
+- `--log-interval`: the interval between each log, works only when `speed-test` is specified.
+- `--batch-size`: set the batch size for inference, which will override the `samples_per_gpu` in data config. The default value is `1`, however, not every model supports `batch_size > 1`.
+- `--uri`: Remote ipv4:port or ipv6:port for inference on edge device.
 
 Note: other parameters in `${MMDEPLOY_DIR}/tools/test.py` are used for speed test, they will not affect the evaluation results.
