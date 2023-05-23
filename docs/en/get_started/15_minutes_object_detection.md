@@ -270,7 +270,7 @@ Add the `tensorboard` config at the end of config file we just created: `configs
 visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='TensorboardVisBackend')])
 ```
 
-After re-running the training command, Tensorboard file will be generated in the visualization folder `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat.py/{timestamp}/vis_data`.
+After re-running the training command, Tensorboard file will be generated in the visualization folder `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/{timestamp}/vis_data`.
 We can use Tensorboard to view the loss, learning rate, and coco/bbox_mAP visualizations from a web link by running the following command:
 
 ```shell
