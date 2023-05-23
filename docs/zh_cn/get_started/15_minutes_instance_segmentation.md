@@ -3,7 +3,7 @@
 实例分割是计算机视觉中的一个任务，旨在将图像中的每个对象都分割出来，并为每个对象分配一个唯一的标识符。与语义分割不同，实例分割不仅分割出图像中的不同类别，还将同一类别的不同实例分开。
 
 <div align=center>
-<img src="https://github.com/open-mmlab/mmyolo/assets/87774050/c85afc05-c724-41d0-a238-24ec9c79945a" alt="Instance Segmentation" width="100%"/>
+<img src="https://github.com/open-mmlab/mmyolo/assets/87774050/6fd6316f-d78d-48a5-a413-86e7a74583fd" alt="Instance Segmentation" width="100%"/>
 </div>
 
 以可供下载的气球 balloon 小数据集为例，带大家 15 分钟轻松上手 MMYOLO 实例分割。整个流程包含如下步骤：
