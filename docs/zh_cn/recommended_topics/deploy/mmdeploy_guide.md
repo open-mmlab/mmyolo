@@ -24,7 +24,7 @@ ncnn 和其他后端的支持会在后续支持。
 按照[说明](https://mmdeploy.readthedocs.io/zh_CN/latest/get_started.html)安装 mmdeploy。
 
 ```{note}
-如果安装的是 mmdeploy 预编译包，那么也请通过 ‘git clone https://github.com/open-mmlab/mmdeploy.git –depth=1’ 下载 mmdeploy 源码。因为它包含了部署时要用到的配置文件
+如果安装的是 mmdeploy 预编译包，那么也请通过 ‘git clone https://github.com/open-mmlab/mmdeploy.git –depth=1’ 下载 mmdeploy 源码。因为它包含了部署时所需的 tools 文件夹。
 ```
 
 ## MMYOLO 中部署相关配置说明
@@ -117,7 +117,7 @@ codebase_config = dict(
 backend_config = dict(type='onnxruntime')
 ```
 
-`backend_config` 中指定了部署后端 `type=‘onnxruntime’`，其他信息可参考第三小节。
+`backend_config` 中指定了部署后端 `type='onnxruntime'`，其他信息可参考第三小节。
 
 `TensorRT` 部署 `YOLOv5` 可以使用 [`detection_tensorrt_static-640x640.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_tensorrt_static-640x640.py) 配置。
 

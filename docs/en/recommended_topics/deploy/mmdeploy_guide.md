@@ -24,7 +24,7 @@ Note: ncnn and other inference backends support are coming soon.
 Please install mmdeploy by following [this](https://mmdeploy.readthedocs.io/en/latest/get_started.html) guide.
 
 ```{note}
-If you install mmdeploy prebuilt package, please also clone its repository by 'git clone https://github.com/open-mmlab/mmdeploy.git --depth=1' to get the deployment config files.
+If you install mmdeploy prebuilt package, please also clone its repository by 'git clone https://github.com/open-mmlab/mmdeploy.git --depth=1' to get the 'tools' file for deployment.
 ```
 
 ## How to Write Config for MMYOLO
@@ -53,7 +53,7 @@ codebase_config = dict(
 
 - `score_threshold`: set the score threshold to filter candidate bboxes before `nms`
 - `confidence_threshold`: set the confidence threshold to filter candidate bboxes before `nms`
-- `iou_threshold`: set the `iou` threshold for removing duplicates in `nums`
+- `iou_threshold`: set the `iou` threshold for removing duplicates in `nms`
 - `max_output_boxes_per_class`: set the maximum number of bboxes for each class
 - `pre_top_k`: set the number of fixedcandidate bboxes before `nms`, sorted by scores
 - `keep_top_k`: set the number of output candidate bboxs after `nms`
@@ -95,7 +95,7 @@ test_dataloader = dict(
 
 #### 2. Deployment Config
 
-Here we still use the `YOLOv5` in MMYOLO as the example. We can use [`detection_onnxruntime_static.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_onnxruntime_static.py) as the config to deploy \`YOLOv5\` to \`ONNXRuntim\` with static inputs.
+Here we still use the `YOLOv5` in MMYOLO as the example. We can use [`detection_onnxruntime_static.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_onnxruntime_static.py) as the config to deploy `YOLOv5` to `ONNXRuntime` with static inputs.
 
 ```python
 _base_ = ['./base_static.py']
@@ -136,7 +136,7 @@ backend_config = dict(
 use_efficientnms = False
 ```
 
-`backend_config` indices the backend with `type=‘tensorrt’`.
+`backend_config` indices the backend with `type='tensorrt'`.
 
 Different from `ONNXRuntime` deployment configuration, `TensorRT` needs to specify the input image size and the parameters required to build the engine file, including:
 
@@ -214,7 +214,7 @@ Note: Int8 quantization support will soon be released.
 
 ### Usage
 
-#### MMDeploy Installed from Source Code
+#### Deploy with MMDeploy Tools
 
 Set the root directory of `MMDeploy` as an env parameter `MMDEPLOY_DIR` using `export MMDEPLOY_DIR=/the/root/path/of/MMDeploy` command.
 
@@ -247,7 +247,7 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
 - `--show`: show the result on screen or not
 - `--dump-info`: output SDK information or not
 
-#### Usage with MMDeploy API
+#### Deploy with MMDeploy API
 
 Suppose the working directory is the root path of mmyolo. Take [YoloV5](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) model as an example. You can download its checkpoint from [here](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth), and then convert it to onnx model as follows:
 
@@ -276,7 +276,7 @@ export2SDK(deploy_cfg, model_cfg, work_dir, pth=model_checkpoint,
 
 Before moving on to model inference chapter, let's know more about the converted result structure which is very important for model inference. It is saved in the directory specified with `--wodk_dir`.
 
-The converted model locates in the working directory `mmdeploy_models/mmyolo/onnx` in the previous example. It includes:
+The converted results are saved in the working directory `mmdeploy_models/mmyolo/onnx` in the previous example. It includes:
 
 ```
 mmdeploy_models/mmyolo/onnx
