@@ -271,11 +271,11 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
 
 When convert the model using the above commands, you will find the following files under the `work_dir` folder:
 
-![image](https://user-images.githubusercontent.com/92794867/199377596-605c3493-c1e0-435d-bc97-2e46846ac87d.png)
+![image](https://github.com/open-mmlab/mmdeploy/assets/110151316/760f3f7f-aa23-46cf-987c-717d3490246f)
 
 or
 
-![image](https://user-images.githubusercontent.com/92794867/199377848-a771f9c5-6bd6-49a1-9f58-e7e7b96c800f.png)
+![image](https://github.com/open-mmlab/mmdeploy/assets/110151316/732bcd9a-fca0-40ba-b5af-540a47eb9c35)
 
 After exporting to `onnxruntime`, you will get six files as shown in Figure 1, where `end2end.onnx` represents the exported `onnxruntime` model. The `xxx.json` are the meta info for `MMDeploy SDK` inference.
 

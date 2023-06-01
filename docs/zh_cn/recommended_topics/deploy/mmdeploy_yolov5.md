@@ -270,11 +270,11 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
 
 当您使用上述命令转换模型时，您将会在 `work_dir` 文件夹下发现以下文件：
 
-![image](https://user-images.githubusercontent.com/92794867/199377596-605c3493-c1e0-435d-bc97-2e46846ac87d.png)
+![image](https://github.com/open-mmlab/mmdeploy/assets/110151316/760f3f7f-aa23-46cf-987c-717d3490246f)
 
 或者
 
-![image](https://user-images.githubusercontent.com/92794867/199377848-a771f9c5-6bd6-49a1-9f58-e7e7b96c800f.png)
+![image](https://github.com/open-mmlab/mmdeploy/assets/110151316/732bcd9a-fca0-40ba-b5af-540a47eb9c35)
 
 在导出 `onnxruntime`模型后，您将得到图1的六个文件，其中 `end2end.onnx` 表示导出的`onnxruntime`模型，`xxx.json` 表示 `MMDeploy SDK` 推理所需要的 meta 信息。
 
