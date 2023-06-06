@@ -325,4 +325,6 @@ TODO
 
 TODO
 
-至此本教程结束。如果你在训练或者测试过程中碰到问题，请先查看 [常见错误排除步骤](../recommended_topics/troubleshooting_steps.md)， 如果依然无法解决欢迎提 issue。
+至此本教程结束。
+
+以上完整内容可以查看 [15_minutes_instance_segmentation.ipynb](../../../demo/15_minutes_instance_segmentation.ipynb)。 如果你在训练或者测试过程中碰到问题，请先查看 [常见错误排除步骤](../recommended_topics/troubleshooting_steps.md)， 如果依然无法解决欢迎提 issue。

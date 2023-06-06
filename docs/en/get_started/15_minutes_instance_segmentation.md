@@ -71,6 +71,8 @@ python ./tools/dataset_converters/balloon2coco.py
 
 The data for the MMYOLO project is located in the MMYOLO project directory. The `train.json` and `val.json` files store the annotations in COCO format, while the `data/balloon/train` and `data/balloon/val` directories contain all the images for the dataset.
 
+## Config
+
 Taking YOLOv5 algorithm as an example, considering the limited GPU memory of users, we need to modify some default training parameters to make them run smoothly. The key parameters to be modified are as follows:
 
 - YOLOv5 is an Anchor-Based algorithm, and different datasets need to calculate suitable anchors adaptively.
@@ -127,6 +129,8 @@ model = dict(bbox_head=dict(head_module=dict(num_classes=num_classes)))
 
 The above configuration inherits from `yolov5_ins_s-v61_syncbn_fast_8xb16-300e_coco_instance.py` and updates configurations such as `data_root`, `metainfo`, `train_dataloader`, `val_dataloader`, `num_classes`, etc., based on the characteristics of the balloon dataset.
 
+## Training
+
 ```shell
 python tools/train.py configs/yolov5/ins_seg/yolov5_ins_s-v61_syncbn_fast_8xb16-300e_balloon_instance.py
 ```
@@ -158,7 +162,7 @@ The above performance is obtained by printing using the COCO API, where -1 indic
 
 ### Some Notes
 
-Two key warnings are printed during training:
+The key warnings are printed during training:
 
 - You are using `YOLOv5Head` with num_classes == 1. The loss_cls will be 0. This is a normal phenomenon.
 
@@ -212,7 +216,7 @@ python tools/train.py configs/yolov5/ins_seg/yolov5_ins_s-v61_syncbn_fast_8xb16-
 
 #### 2 Tensorboard
 
-Install Tensorboard package:
+Install Tensorboard package using the following command:
 
 ```shell
 pip install tensorboard
@@ -290,6 +294,8 @@ test_pipeline = [
 
 Let's choose the `data/balloon/train/3927754171_9011487133_b.jpg` image as an example to visualize the output feature maps of YOLOv5 backbone and neck layers.
 
+**1. Visualize the three channels of YOLOv5s backbone**
+
 ```shell
 python demo/featmap_vis_demo.py data/balloon/train/3927754171_9011487133_b.jpg \
     configs/yolov5/ins_seg/yolov5_ins_s-v61_syncbn_fast_8xb16-300e_balloon_instance.py \
@@ -301,7 +307,7 @@ python demo/featmap_vis_demo.py data/balloon/train/3927754171_9011487133_b.jpg \
 <img src="https://user-images.githubusercontent.com/87774050/236997582-233e292f-5e96-4e44-9e92-9e0787f302fc.jpg" width="800" alt="image"/>
 </div>
 
-The result will be saved to the output folder in current path. Three output feature maps plotted in the above figure correspond to small, medium and large output feature maps. As the backbone of this training is not actually involved in training, it can be seen from the above figure that the big object cat is predicted on the small feature map, which is in line with the idea of hierarchical detection of object detection.
+The result will be saved to the output folder in current path. Three output feature maps plotted in the above figure correspond to small, medium and large output feature maps.
 
 **2. Visualize the three channels of YOLOv5 neck**
 
@@ -323,4 +329,4 @@ TODO
 
 TODO
 
-This is the end of the tutorial. If you encounter problems during training or testing, please check the [common troubleshooting steps](../recommended_topics/troubleshooting_steps.md) first and feel free to open an [issue](https://github.com/open-mmlab/mmyolo/issues/new/choose) if you still can't solve it.
+The full content above can be viewed in [15_minutes_object_detection.ipynb](../../../demo/15_minutes_object_detection.ipynb)。 This is the end of the tutorial. If you encounter problems during training or testing, please check the [common troubleshooting steps](../recommended_topics/troubleshooting_steps.md) first and feel free to open an [issue](https://github.com/open-mmlab/mmyolo/issues/new/choose) if you still can't solve it.
