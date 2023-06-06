@@ -329,4 +329,4 @@ TODO
 
 TODO
 
-The full content above can be viewed in [15_minutes_object_detection.ipynb](../../../demo/15_minutes_object_detection.ipynb)。 This is the end of the tutorial. If you encounter problems during training or testing, please check the [common troubleshooting steps](../recommended_topics/troubleshooting_steps.md) first and feel free to open an [issue](https://github.com/open-mmlab/mmyolo/issues/new/choose) if you still can't solve it.
+The full content above can be viewed in [15_minutes_object_detection.ipynb](../../../demo/15_minutes_object_detection.ipynb). This is the end of the tutorial. If you encounter problems during training or testing, please check the [common troubleshooting steps](../recommended_topics/troubleshooting_steps.md) first and feel free to open an [issue](https://github.com/open-mmlab/mmyolo/issues/new/choose) if you still can't solve it.
