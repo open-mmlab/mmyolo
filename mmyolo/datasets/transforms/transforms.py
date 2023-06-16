@@ -793,6 +793,7 @@ class YOLOv5RandomAffine(BaseTransform):
         num_bboxes = len(bboxes)
         if num_bboxes:
             orig_bboxes = bboxes.clone()
+            orig_bboxes.rescale_([scaling_ratio, scaling_ratio])
             if 'gt_masks' in results:
                 # If the dataset has annotations of mask,
                 # the mask will be used to refine bbox.
@@ -817,8 +818,6 @@ class YOLOv5RandomAffine(BaseTransform):
                     bboxes.clip_([height, width])
 
                 # filter bboxes
-                orig_bboxes.rescale_([scaling_ratio, scaling_ratio])
-
                 # Be careful: valid_index must convert to numpy,
                 # otherwise it will raise out of bounds when len(valid_index)=1
                 valid_index = self.filter_gt_bboxes(orig_bboxes,
