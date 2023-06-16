@@ -1499,8 +1499,8 @@ class PPYOLOERandomCrop(BaseTransform):
         overlap = np.prod(
             rightbottom - lefttop,
             axis=2) * (lefttop < rightbottom).all(axis=2)
-        area_gt_bbox = np.prod(gt_bbox[:, 2:] - crop_bbox[:, :2], axis=1)
-        area_crop_bbox = np.prod(gt_bbox[:, 2:] - crop_bbox[:, :2], axis=1)
+        area_gt_bbox = np.prod(gt_bbox[:, 2:] - gt_bbox[:, :2], axis=1)
+        area_crop_bbox = np.prod(crop_bbox[:, 2:] - crop_bbox[:, :2], axis=1)
         area_o = (area_gt_bbox[:, np.newaxis] + area_crop_bbox - overlap)
         return overlap / (area_o + eps)
 
