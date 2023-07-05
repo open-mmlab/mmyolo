@@ -1,16 +1,24 @@
-# TODO: Need to solve the problem of multiple backend_args parameters
-# _backend_args = dict(
+# Copyright (c) OpenMMLab. All rights reserved.
+from mmcv.ops import nms
+from mmcv.transforms import Compose, LoadImageFromFile, TestTimeAug
+from mmdet.datasets.transforms import (LoadAnnotations, PackDetInputs,
+                                       RandomFlip)
+from mmdet.models import DetTTAModel
+
+from mmyolo.datasets.transforms import LetterResize, YOLOv5KeepRatioResize
+
+# TODO: Need to solve the problem of multiple file_client_args parameters
+# _file_client_args = dict(
 #     backend='petrel',
 #     path_mapping=dict({
 #         './data/': 's3://openmmlab/datasets/detection/',
 #         'data/': 's3://openmmlab/datasets/detection/'
 #     }))
-
-_backend_args = None
+_file_client_args = dict(backend='disk')
 
 tta_model = dict(
-    type='mmdet.DetTTAModel',
-    tta_cfg=dict(nms=dict(type='nms', iou_threshold=0.65), max_per_img=300))
+    type=DetTTAModel,
+    tta_cfg=dict(nms=dict(type=nms, iou_threshold=0.65), max_per_img=300))
 
 img_scales = [(640, 640), (320, 320), (960, 960)]
 
@@ -26,11 +34,11 @@ img_scales = [(640, 640), (320, 320), (960, 960)]
 
 _multiscale_resize_transforms = [
     dict(
-        type='Compose',
+        type=Compose,
         transforms=[
-            dict(type='YOLOv5KeepRatioResize', scale=s),
+            dict(type=YOLOv5KeepRatioResize, scale=s),
             dict(
-                type='LetterResize',
+                type=LetterResize,
                 scale=s,
                 allow_scale_up=False,
                 pad_val=dict(img=114))
@@ -38,18 +46,17 @@ _multiscale_resize_transforms = [
 ]
 
 tta_pipeline = [
-    dict(type='LoadImageFromFile', backend_args=_backend_args),
+    dict(type=LoadImageFromFile, file_client_args=_file_client_args),
     dict(
-        type='TestTimeAug',
+        type=TestTimeAug,
         transforms=[
             _multiscale_resize_transforms,
-            [
-                dict(type='mmdet.RandomFlip', prob=1.),
-                dict(type='mmdet.RandomFlip', prob=0.)
-            ], [dict(type='mmdet.LoadAnnotations', with_bbox=True)],
+            [dict(type=RandomFlip, prob=1.),
+             dict(type=RandomFlip, prob=0.)],
+            [dict(type=LoadAnnotations, with_bbox=True)],
             [
                 dict(
-                    type='mmdet.PackDetInputs',
+                    type=PackDetInputs,
                     meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
                                'scale_factor', 'pad_param', 'flip',
                                'flip_direction'))
