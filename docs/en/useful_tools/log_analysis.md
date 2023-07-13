@@ -2,7 +2,7 @@
 
 ## Curve plotting
 
-`tools/analysis_tools/analyze_logs.py` plots loss/mAP curves given a training log file. Run `pip install seaborn` first to install the dependency.
+`tools/analysis_tools/analyze_logs.py` in MMDetection plots loss/mAP curves given a training log file. Run `pip install seaborn` first to install the dependency.
 
 ```shell
 mim run mmdet analyze_logs plot_curve \
