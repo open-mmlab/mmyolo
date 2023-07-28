@@ -15,7 +15,7 @@ If you are currently in the mmyolo project directory, you can use the following 
 
 ```shell
 cd mmyolo
-pip install -U openmom
+pip install -U openmim
 mim install -r requirements/mminstall.txt
 ```
 
@@ -27,7 +27,7 @@ b. If you would like to use `albumentations`, we suggest using `pip install -r r
 
 **Step 1.** Install MMYOLO.
 
-Case a: If you develop and run mmdet directly, install it from source:
+Case a: If you develop and run mmyolo directly, install it from source:
 
 ```shell
 git clone https://github.com/open-mmlab/mmyolo.git
