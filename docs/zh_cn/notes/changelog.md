@@ -1,5 +1,43 @@
 # 更新日志
 
+## v0.6.0 (15/8/2023)
+
+### 亮点
+
+- 支持 YOLOv5 实例分割
+- 基于 MMPose 支持 YOLOX-Pose
+- 添加 15 分钟的实例分割教程
+- YOLOv5 支持使用 mask 标注来优化边界框
+- 添加多尺度训练和测试文档
+
+### 新特性
+
+- 添加训练和测试技巧文档 (#659)
+- 支持设置 `cache_size_limit` 参数，并支持 mmdet 3.0.0 (#707)
+- 支持 YOLOv5u 和 YOLOv6 3.0 推理 (#624, #744)
+- 支持仅模型推断 (#733)
+- 添加 YOLOv8 deepstream 配置 (#633)
+- 在 MMYOLO 应用程序中添加电离图示例 (#643)
+
+### Bug 修复
+
+- 修复 browse_dataset 以可视化测试和验证集的问题 (#641)
+- 修复安装文档错误 (#662)
+- 修复 yolox-l ckpt 链接 (#677)
+- 修正 YOLOv7 和 YOLOv8 图表中的拼写错误 (#621, #710)
+- 调整 `boxam_vis_demo.py` 中包导入的顺序 (#655)
+
+### 完善
+
+- 优化 `convert_kd_ckpt_to_student.py` 文件 (#647)
+- 添加 FAQ 和 training_testing_tricks 的英文文档 (#691, #693)
+
+### 贡献者
+
+总共 21 位开发者参与了本次版本
+
+感谢 @Lum1104,@azure-wings,@FeiGeChuanShu,@Lingrui Gu,@Nioolek,@huayuan4396,@RangeKing,@danielhonies,@yechenzhi,@JosonChan1998,@kitecats,@Qingrenn,@triple-Mu,@kikefdezl,@zhangrui-wolf,@xin-li-67,@Ben-Louis,@zgzhengSEU,@VoyagerXvoyagerx,@tang576225574,@hhaAndroid
+
 ## v0.5.0 (2/3/2023)
 
 ### 亮点

@@ -78,17 +78,13 @@
 
 ## 🥳 🚀 最新进展 [🔝](#-table-of-contents)
 
-💎 **v0.5.0** 版本已经在 2023.3.2 发布：
+💎 **v0.6.0** 版本已经在 2023.8.15 发布：
 
-1. 支持了 [RTMDet-R](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md#rotated-object-detection) 旋转框目标检测任务和算法
-2. [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) 支持使用 mask 标注提升目标检测模型性能
-3. 支持 [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/razor/subnets/README.md) 搜索的 NAS 子网络作为 YOLO 系列算法的 backbone
-4. 支持调用 [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/distillation/README.md) 对 RTMDet 进行知识蒸馏
-5. [MMYOLO](https://mmyolo.readthedocs.io/zh_CN/dev/) 文档结构优化，内容全面升级
-6. 基于 RTMDet 训练超参提升 YOLOX 精度和训练速度
-7. 支持模型参数量、FLOPs 计算和提供 T4 设备上 GPU 延时数据，并更新了 [Model Zoo](https://github.com/open-mmlab/mmyolo/blob/dev/docs/zh_cn/model_zoo.md)
-8. 支持测试时增强 TTA
-9. 支持 RTMDet、YOLOv8 和 YOLOv7 assigner 可视化
+- 支持 YOLOv5 实例分割
+- 基于 MMPose 支持 YOLOX-Pose
+- 添加 15 分钟的实例分割教程
+- YOLOv5 支持使用 mask 标注来优化边界框
+- 添加多尺度训练和测试文档
 
 我们提供了实用的**脚本命令速查表**
 
@@ -171,7 +167,7 @@ conda activate mmyolo
 pip install openmim
 mim install "mmengine>=0.6.0"
 mim install "mmcv>=2.0.0rc4,<2.1.0"
-mim install "mmdet>=3.0.0rc6,<3.1.0"
+mim install "mmdet>=3.0.0,<4.0.0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
