@@ -28,7 +28,7 @@ Here is a example in [`yolov5_s-static.py`](https://github.com/open-mmlab/mmyolo
 _base_ = '../../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(
         type='LetterResize',
         scale=_base_.img_scale,
@@ -113,7 +113,7 @@ batch_shapes_cfg = dict(
     extra_pad_ratio=0.5)
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
@@ -252,6 +252,7 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
     --work-dir work_dir \
     --show \
     --device cpu
+    --dump-info
 ```
 
 #### TensorRT
@@ -265,19 +266,20 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
     --work-dir work_dir \
     --show \
     --device cuda:0
+    --dump-info
 ```
 
 When convert the model using the above commands, you will find the following files under the `work_dir` folder:
 
-![image](https://user-images.githubusercontent.com/92794867/199377596-605c3493-c1e0-435d-bc97-2e46846ac87d.png)
+![image](https://github.com/open-mmlab/mmdeploy/assets/110151316/760f3f7f-aa23-46cf-987c-717d3490246f)
 
 or
 
-![image](https://user-images.githubusercontent.com/92794867/199377848-a771f9c5-6bd6-49a1-9f58-e7e7b96c800f.png)
+![image](https://github.com/open-mmlab/mmdeploy/assets/110151316/732bcd9a-fca0-40ba-b5af-540a47eb9c35)
 
-After exporting to `onnxruntime`, you will get three files as shown in Figure 1, where `end2end.onnx` represents the exported `onnxruntime` model.
+After exporting to `onnxruntime`, you will get six files as shown in Figure 1, where `end2end.onnx` represents the exported `onnxruntime` model. The `xxx.json` are the meta info for `MMDeploy SDK` inference.
 
-After exporting to `TensorRT`, you will get the four files as shown in Figure 2, where `end2end.onnx` represents the exported intermediate model. `MMDeploy` uses this model to automatically continue to convert the `end2end.engine` model for `TensorRT `Deployment.
+After exporting to `TensorRT`, you will get the seven files as shown in Figure 2, where `end2end.onnx` represents the exported intermediate model. `MMDeploy` uses this model to automatically continue to convert the `end2end.engine` model for `TensorRT `Deployment. The `xxx.json` are the meta info for `MMDeploy SDK` inference.
 
 ## How to Evaluate Model
 
@@ -429,4 +431,142 @@ python3 ${MMDEPLOY_DIR}/tools/profiler.py \
 
 ## Model Inference
 
-TODO
+### Backend Model Inference
+
+#### ONNXRuntime
+
+For the converted model `end2end.onnx`，you can do the inference with the following code：
+
+```python
+from mmdeploy.apis.utils import build_task_processor
+from mmdeploy.utils import get_input_shape, load_config
+import torch
+
+deploy_cfg = './configs/deploy/detection_onnxruntime_dynamic.py'
+model_cfg = '../mmyolo/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+device = 'cpu'
+backend_model = ['./work_dir/end2end.onnx']
+image = '../mmyolo/demo/demo.jpg'
+
+# read deploy_cfg and model_cfg
+deploy_cfg, model_cfg = load_config(deploy_cfg, model_cfg)
+
+# build task and backend model
+task_processor = build_task_processor(model_cfg, deploy_cfg, device)
+model = task_processor.build_backend_model(backend_model)
+
+# process input image
+input_shape = get_input_shape(deploy_cfg)
+model_inputs, _ = task_processor.create_input(image, input_shape)
+
+# do model inference
+with torch.no_grad():
+    result = model.test_step(model_inputs)
+
+# visualize results
+task_processor.visualize(
+    image=image,
+    model=model,
+    result=result[0],
+    window_name='visualize',
+    output_file='work_dir/output_detection.png')
+```
+
+#### TensorRT
+
+For the converted model `end2end.engine`，you can do the inference with the following code：
+
+```python
+from mmdeploy.apis.utils import build_task_processor
+from mmdeploy.utils import get_input_shape, load_config
+import torch
+
+deploy_cfg = './configs/deploy/detection_tensorrt_dynamic-192x192-960x960.py'
+model_cfg = '../mmyolo/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+device = 'cuda:0'
+backend_model = ['./work_dir/end2end.engine']
+image = '../mmyolo/demo/demo.jpg'
+
+# read deploy_cfg and model_cfg
+deploy_cfg, model_cfg = load_config(deploy_cfg, model_cfg)
+
+# build task and backend model
+task_processor = build_task_processor(model_cfg, deploy_cfg, device)
+model = task_processor.build_backend_model(backend_model)
+
+# process input image
+input_shape = get_input_shape(deploy_cfg)
+model_inputs, _ = task_processor.create_input(image, input_shape)
+
+# do model inference
+with torch.no_grad():
+    result = model.test_step(model_inputs)
+
+# visualize results
+task_processor.visualize(
+    image=image,
+    model=model,
+    result=result[0],
+    window_name='visualize',
+    output_file='work_dir/output_detection.png')
+```
+
+### SDK Model Inference
+
+#### ONNXRuntime
+
+For the converted model `end2end.onnx`，you can do the SDK inference with the following code：
+
+```python
+from mmdeploy_runtime import Detector
+import cv2
+
+img = cv2.imread('../mmyolo/demo/demo.jpg')
+
+# create a detector
+detector = Detector(model_path='work_dir',
+                    device_name='cpu', device_id=0)
+# perform inference
+bboxes, labels, masks = detector(img)
+
+# visualize inference result
+indices = [i for i in range(len(bboxes))]
+for index, bbox, label_id in zip(indices, bboxes, labels):
+    [left, top, right, bottom], score = bbox[0:4].astype(int), bbox[4]
+    if score < 0.3:
+        continue
+
+    cv2.rectangle(img, (left, top), (right, bottom), (0, 255, 0))
+
+cv2.imwrite('work_dir/output_detection.png', img)
+```
+
+#### TensorRT
+
+For the converted model `end2end.engine`，you can do the SDK inference with the following code：
+
+```python
+from mmdeploy_runtime import Detector
+import cv2
+
+img = cv2.imread('../mmyolo/demo/demo.jpg')
+
+# create a detector
+detector = Detector(model_path='work_dir',
+                    device_name='cuda', device_id=0)
+# perform inference
+bboxes, labels, masks = detector(img)
+
+# visualize inference result
+indices = [i for i in range(len(bboxes))]
+for index, bbox, label_id in zip(indices, bboxes, labels):
+    [left, top, right, bottom], score = bbox[0:4].astype(int), bbox[4]
+    if score < 0.3:
+        continue
+
+    cv2.rectangle(img, (left, top), (right, bottom), (0, 255, 0))
+
+cv2.imwrite('work_dir/output_detection.png', img)
+```
+
+Besides python API, mmdeploy SDK also provides other FFI (Foreign Function Interface), such as C, C++, C#, Java and so on. You can learn their usage from [demos](https://github.com/open-mmlab/mmdeploy/tree/main/demo).

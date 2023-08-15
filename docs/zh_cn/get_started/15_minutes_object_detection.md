@@ -256,7 +256,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py
 
 #### 2 Tensorboard 可视化使用
 
-安装 Tensorboard 环境
+安装 Tensorboard 依赖
 
 ```shell
 pip install tensorboard
@@ -268,11 +268,11 @@ pip install tensorboard
 visualizer = dict(vis_backends=[dict(type='LocalVisBackend'), dict(type='TensorboardVisBackend')])
 ```
 
-重新运行训练命令后，Tensorboard 文件会生成在可视化文件夹 `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat.py/{timestamp}/vis_data` 下，
+重新运行训练命令后，Tensorboard 文件会生成在可视化文件夹 `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/{timestamp}/vis_data` 下，
 运行下面的命令便可以在网页链接使用 Tensorboard 查看 loss、学习率和 coco/bbox_mAP 等可视化数据了：
 
 ```shell
-tensorboard --logdir=work_dirs/yolov5_s-v61_fast_1xb12-40e_cat.py
+tensorboard --logdir=work_dirs/yolov5_s-v61_fast_1xb12-40e_cat
 ```
 
 ## 模型测试
@@ -301,7 +301,7 @@ MMYOLO 中提供了特征图相关可视化脚本，用于分析当前模型训�
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+        backend_args=_base_.backend_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
@@ -322,13 +322,13 @@ test_pipeline = [
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
-    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # 这里将 LetterResize 修改成 mmdet.Resize
+        backend_args=_base_.backend_args),
+    dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # 删除 YOLOv5KeepRatioResize, 将 LetterResize 修改成 mmdet.Resize
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
         type='mmdet.PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape',
-                   'scale_factor'))
+                   'scale_factor'))  # 删除 pad_param
 ]
 ```
 
@@ -369,6 +369,12 @@ python demo/featmap_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 **3. Grad-Based CAM 可视化**
 
 基于上述特征图可视化效果，我们可以分析特征层 bbox 级别的 Grad CAM。
+
+安装 `grad-cam` 依赖：
+
+```shell
+pip install "grad-cam"
+```
 
 (a) 查看 neck 输出的最小输出特征图的 Grad CAM
 
@@ -416,28 +422,28 @@ python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 首先需要在当前 MMYOLO 的虚拟环境中按照 EasyDeploy 的 [基本文档](../../../projects/easydeploy/docs/model_convert.md) 对照自己的设备安装好所需的各个库。
 
 ```shell
-pip install onnx
+pip install onnx onnxruntime
 pip install onnx-simplifier # 如果需要使用 simplify 功能需要安装
 pip install tensorrt        # 如果有 GPU 环境并且需要输出 TensorRT 模型需要继续执行
 ```
 
-完成安装后就可以用以下命令对已经训练好的针对 cat 数据集的模型一键转换部署，当前设备的 ONNX 版本为 1.13.0，TensorRT 版本为 8.5.3.1，故可保持 `--opset` 为 11，其余各项参数的具体含义和参数值需要对照使用的 config 文件进行调整。此处我们先导出 CPU 版本的 ONNX 模型，`--backend` 为 1。
+完成安装后就可以用以下命令对已经训练好的针对 cat 数据集的模型一键转换部署，当前设备的 ONNX 版本为 1.13.0，TensorRT 版本为 8.5.3.1，故可保持 `--opset` 为 11，其余各项参数的具体含义和参数值需要对照使用的 config 文件进行调整。此处我们先导出 CPU 版本的 ONNX 模型，`--backend` 为 ONNXRUNTIME。
 
 ```shell
-python projects/easydeploy/tools/export.py \
-	configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-	work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
-	--work-dir work_dirs/yolov5_s-v61_fast_1xb12-40e_cat \
+python projects/easydeploy/tools/export_onnx.py \
+    configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+    work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
+    --work-dir work_dirs/yolov5_s-v61_fast_1xb12-40e_cat \
     --img-size 640 640 \
     --batch 1 \
     --device cpu \
     --simplify \
-	--opset 11 \
-	--backend 1 \
-	--pre-topk 1000 \
-	--keep-topk 100 \
-	--iou-threshold 0.65 \
-	--score-threshold 0.25
+    --opset 11 \
+    --backend ONNXRUNTIME \
+    --pre-topk 1000 \
+    --keep-topk 100 \
+    --iou-threshold 0.65 \
+    --score-threshold 0.25
 ```
 
 成功运行后就可以在 `work-dir` 下得到转换后的 ONNX 模型，默认使用 `end2end.onnx` 命名。
@@ -446,7 +452,7 @@ python projects/easydeploy/tools/export.py \
 
 ```shell
 python projects/easydeploy/tools/image-demo.py \
-    data/cat/images/IMG_20210728_205312.jpg \
+    data/cat/images/IMG_20210728_205117.jpg \
     configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
     work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/end2end.onnx \
     --device cpu
@@ -488,7 +494,7 @@ python projects/easydeploy/tools/build_engine.py \
 
 成功执行后会在 `work-dir` 下生成 `end2end.engine` 文件：
 
-```shell
+```text
 work_dirs/yolov5_s-v61_fast_1xb12-40e_cat
 ├── 202302XX_XXXXXX
 │   ├── 202302XX_XXXXXX.log
@@ -524,4 +530,4 @@ python projects/easydeploy/tools/image-demo.py \
 
 这样我们就完成了将训练完成的模型进行转换部署并且检查推理结果的工作。至此本教程结束。
 
-以上完整内容可以查看 [15_minutes_object_detection.ipynb](<>)。 如果你在训练或者测试过程中碰到问题，请先查看 [常见错误排除步骤](../recommended_topics/troubleshooting_steps.md)， 如果依然无法解决欢迎提 issue。
+以上完整内容可以查看 [15_minutes_object_detection.ipynb](../../..//demo/15_minutes_object_detection.ipynb)。 如果你在训练或者测试过程中碰到问题，请先查看 [常见错误排除步骤](../recommended_topics/troubleshooting_steps.md)，如果依然无法解决欢迎提 [issue](https://github.com/open-mmlab/mmyolo/issues/new/choose)。

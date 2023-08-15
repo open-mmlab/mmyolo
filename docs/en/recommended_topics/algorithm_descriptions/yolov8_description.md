@@ -3,7 +3,7 @@
 ## 0 Introduction
 
 <div align=center >
-<img alt="YOLOv8-P5_structure" src="https://user-images.githubusercontent.com/27466624/211974251-8de633c8-090c-47c9-ba52-4941dc9e3a48.jpg"/>
+<img alt="YOLOv8-P5_structure" src="https://user-images.githubusercontent.com/27466624/222869864-1955f054-aa6d-4a80-aed3-92f30af28849.jpg"/>
 Figure 1：YOLOv8-P5
 </div>
 
@@ -201,7 +201,7 @@ In particular, to ensure that the feature map and image are shown aligned, the o
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+        backend_args=_base_.backend_args),
     dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # change
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(

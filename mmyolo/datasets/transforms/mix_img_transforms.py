@@ -318,7 +318,9 @@ class Mosaic(BaseMixImageTransform):
         mosaic_bboxes_labels = []
         mosaic_ignore_flags = []
         mosaic_masks = []
+        mosaic_kps = []
         with_mask = True if 'gt_masks' in results else False
+        with_kps = True if 'gt_keypoints' in results else False
         # self.img_scale is wh format
         img_scale_w, img_scale_h = self.img_scale
 
@@ -374,7 +376,7 @@ class Mosaic(BaseMixImageTransform):
             mosaic_ignore_flags.append(gt_ignore_flags_i)
             if with_mask and results_patch.get('gt_masks', None) is not None:
                 gt_masks_i = results_patch['gt_masks']
-                gt_masks_i = gt_masks_i.rescale(float(scale_ratio_i))
+                gt_masks_i = gt_masks_i.resize(img_i.shape[:2])
                 gt_masks_i = gt_masks_i.translate(
                     out_shape=(int(self.img_scale[0] * 2),
                                int(self.img_scale[1] * 2)),
@@ -386,6 +388,12 @@ class Mosaic(BaseMixImageTransform):
                     offset=padh,
                     direction='vertical')
                 mosaic_masks.append(gt_masks_i)
+            if with_kps and results_patch.get('gt_keypoints',
+                                              None) is not None:
+                gt_kps_i = results_patch['gt_keypoints']
+                gt_kps_i.rescale_([scale_ratio_i, scale_ratio_i])
+                gt_kps_i.translate_([padw, padh])
+                mosaic_kps.append(gt_kps_i)
 
         mosaic_bboxes = mosaic_bboxes[0].cat(mosaic_bboxes, 0)
         mosaic_bboxes_labels = np.concatenate(mosaic_bboxes_labels, 0)
@@ -396,6 +404,10 @@ class Mosaic(BaseMixImageTransform):
             if with_mask:
                 mosaic_masks = mosaic_masks[0].cat(mosaic_masks)
                 results['gt_masks'] = mosaic_masks
+            if with_kps:
+                mosaic_kps = mosaic_kps[0].cat(mosaic_kps, 0)
+                mosaic_kps.clip_([2 * img_scale_h, 2 * img_scale_w])
+                results['gt_keypoints'] = mosaic_kps
         else:
             # remove outside bboxes
             inside_inds = mosaic_bboxes.is_inside(
@@ -406,6 +418,10 @@ class Mosaic(BaseMixImageTransform):
             if with_mask:
                 mosaic_masks = mosaic_masks[0].cat(mosaic_masks)[inside_inds]
                 results['gt_masks'] = mosaic_masks
+            if with_kps:
+                mosaic_kps = mosaic_kps[0].cat(mosaic_kps, 0)
+                mosaic_kps = mosaic_kps[inside_inds]
+                results['gt_keypoints'] = mosaic_kps
 
         results['img'] = mosaic_img
         results['img_shape'] = mosaic_img.shape
@@ -1130,6 +1146,31 @@ class YOLOXMixUp(BaseMixImageTransform):
             mixup_gt_bboxes = mixup_gt_bboxes[inside_inds]
             mixup_gt_bboxes_labels = mixup_gt_bboxes_labels[inside_inds]
             mixup_gt_ignore_flags = mixup_gt_ignore_flags[inside_inds]
+
+        if 'gt_keypoints' in results:
+            # adjust kps
+            retrieve_gt_keypoints = retrieve_results['gt_keypoints']
+            retrieve_gt_keypoints.rescale_([scale_ratio, scale_ratio])
+            if self.bbox_clip_border:
+                retrieve_gt_keypoints.clip_([origin_h, origin_w])
+
+            if is_filp:
+                retrieve_gt_keypoints.flip_([origin_h, origin_w],
+                                            direction='horizontal')
+
+            # filter
+            cp_retrieve_gt_keypoints = retrieve_gt_keypoints.clone()
+            cp_retrieve_gt_keypoints.translate_([-x_offset, -y_offset])
+            if self.bbox_clip_border:
+                cp_retrieve_gt_keypoints.clip_([target_h, target_w])
+
+            # mixup
+            mixup_gt_keypoints = cp_retrieve_gt_keypoints.cat(
+                (results['gt_keypoints'], cp_retrieve_gt_keypoints), dim=0)
+            if not self.bbox_clip_border:
+                # remove outside bbox
+                mixup_gt_keypoints = mixup_gt_keypoints[inside_inds]
+            results['gt_keypoints'] = mixup_gt_keypoints
 
         results['img'] = mixup_img.astype(np.uint8)
         results['img_shape'] = mixup_img.shape

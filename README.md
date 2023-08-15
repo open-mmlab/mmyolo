@@ -77,17 +77,13 @@ English | [简体中文](README_zh-CN.md)
 
 ## 🥳 🚀 What's New [🔝](#-table-of-contents)
 
-💎 **v0.5.0** was released on 2/3/2023:
+💎 **v0.6.0** was released on 15/8/2023:
 
-1. Support [RTMDet-R](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md#rotated-object-detection) rotated object detection
-2. Support for using mask annotation to improve [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) object detection performance
-3. Support [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/razor/subnets/README.md) searchable NAS sub-network as the backbone of YOLO series algorithm
-4. Support calling [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/distillation/README.md) to distill the knowledge of RTMDet
-5. [MMYOLO](https://mmyolo.readthedocs.io/zh_CN/dev/) document structure optimization, comprehensive content upgrade
-6. Improve YOLOX mAP and training speed based on RTMDet training hyperparameters
-7. Support calculation of model parameters and FLOPs, provide GPU latency data on T4 devices, and update [Model Zoo](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/model_zoo.md)
-8. Support test-time augmentation (TTA)
-9. Support RTMDet, YOLOv8 and YOLOv7 assigner visualization
+- Support YOLOv5 instance segmentation
+- Support YOLOX-Pose based on MMPose
+- Add 15 minutes instance segmentation tutorial.
+- YOLOv5 supports using mask annotation to optimize bbox
+- Add Multi-scale training and testing docs
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
@@ -150,7 +146,7 @@ conda activate mmyolo
 pip install openmim
 mim install "mmengine>=0.6.0"
 mim install "mmcv>=2.0.0rc4,<2.1.0"
-mim install "mmdet>=3.0.0rc6,<3.1.0"
+mim install "mmdet>=3.0.0,<4.0.0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
@@ -184,6 +180,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 <summary>Recommended Topics</summary>
 
 - [How to contribute code to MMYOLO](docs/en/recommended_topics/contributing.md)
+- [Training testing tricks](docs/en/recommended_topics/training_testing_tricks.md)
 - [MMYOLO model design](docs/en/recommended_topics/model_design.md)
 - [Algorithm principles and implementation](docs/en/recommended_topics/algorithm_descriptions/)
 - [Replace the backbone network](docs/en/recommended_topics/replace_backbone.md)
@@ -192,7 +189,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 - [Visualization](docs/en/recommended_topics/visualization.md)
 - [Model deployment](docs/en/recommended_topics/deploy/)
 - [Troubleshooting steps](docs/en/recommended_topics/troubleshooting_steps.md)
-- [MMYOLO industry examples](docs/en/recommended_topics/industry_examples.md)
+- [MMYOLO application examples](docs/en/recommended_topics/application_examples/)
 - [MM series repo essential basics](docs/en/recommended_topics/mm_basics.md)
 - [Dataset preparation and description](docs/en/recommended_topics/dataset_preparation.md)
 
@@ -204,6 +201,7 @@ For different parts from MMDetection, we have also prepared user guides and adva
 - [Resume training](docs/en/common_usage/resume_training.md)
 - [Enabling and disabling SyncBatchNorm](docs/en/common_usage/syncbn.md)
 - [Enabling AMP](docs/en/common_usage/amp_training.md)
+- [Multi-scale training and testing](docs/en/common_usage/ms_training_testing.md)
 - [TTA Related Notes](docs/en/common_usage/tta.md)
 - [Add plugins to the backbone network](docs/en/common_usage/plugins.md)
 - [Freeze layers](docs/en/common_usage/freeze_layers.md)
@@ -283,6 +281,7 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 <summary><b>Supported Algorithms</b></summary>
 
 - [x] [YOLOv5](configs/yolov5)
+- [ ] [YOLOv5u](configs/yolov5/yolov5u) (Inference only)
 - [x] [YOLOX](configs/yolox)
 - [x] [RTMDet](configs/rtmdet)
 - [x] [RTMDet-Rotated](configs/rtmdet)
@@ -405,8 +404,8 @@ This project is released under the [GPL 3.0 license](LICENSE).
 
 - [MMEngine](https://github.com/open-mmlab/mmengine): OpenMMLab foundational library for training deep learning models.
 - [MMCV](https://github.com/open-mmlab/mmcv): OpenMMLab foundational library for computer vision.
-- [MIM](https://github.com/open-mmlab/mim): MIM installs OpenMMLab packages.
-- [MMClassification](https://github.com/open-mmlab/mmclassification): OpenMMLab image classification toolbox and benchmark.
+- [MMPreTrain](https://github.com/open-mmlab/mmpretrain): OpenMMLab pre-training toolbox and benchmark.
+- [MMagic](https://github.com/open-mmlab/mmagic): Open**MM**Lab **A**dvanced, **G**enerative and **I**ntelligent **C**reation toolbox.
 - [MMDetection](https://github.com/open-mmlab/mmdetection): OpenMMLab detection toolbox and benchmark.
 - [MMDetection3D](https://github.com/open-mmlab/mmdetection3d): OpenMMLab's next-generation platform for general 3D object detection.
 - [MMRotate](https://github.com/open-mmlab/mmrotate): OpenMMLab rotated object detection toolbox and benchmark.
@@ -424,4 +423,6 @@ This project is released under the [GPL 3.0 license](LICENSE).
 - [MMEditing](https://github.com/open-mmlab/mmediting): OpenMMLab image and video editing toolbox.
 - [MMGeneration](https://github.com/open-mmlab/mmgeneration): OpenMMLab image and video generative models toolbox.
 - [MMDeploy](https://github.com/open-mmlab/mmdeploy): OpenMMLab model deployment framework.
+- [MIM](https://github.com/open-mmlab/mim): MIM installs OpenMMLab packages.
 - [MMEval](https://github.com/open-mmlab/mmeval): OpenMMLab machine learning evaluation library.
+- [Playground](https://github.com/open-mmlab/playground): A central hub for gathering and showcasing amazing projects built upon OpenMMLab.

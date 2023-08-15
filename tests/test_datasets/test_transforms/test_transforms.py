@@ -148,18 +148,21 @@ class TestLetterResize(unittest.TestCase):
             self.assertIn('pad_param', data_info)
             pad_param = data_info['pad_param'].reshape(-1, 2).sum(
                 1)  # (top, b, l, r) -> (h, w)
-            scale_factor = np.asarray(
-                data_info['scale_factor'])[::-1]  # (w, h) -> (h, w)
-            scale_factor_keepratio = np.min(
-                np.asarray((32, 32)) / (input_h, input_w))
-            validate_shape = np.floor(
-                np.asarray((input_h, input_w)) * scale_factor_keepratio + 0.5)
-            scale_factor_keepratio = np.floor(scale_factor_keepratio *
-                                              input_h + 0.5) / input_h
-            scale_factor_letter = (output_h, output_w) / validate_shape
-            scale_factor_letter = (
-                scale_factor_letter -
-                (pad_param / validate_shape))[np.argmin(scale_factor_letter)]
+            scale_factor = np.asarray(data_info['scale_factor'])  # (w, h)
+
+            max_long_edge = max((32, 32))
+            max_short_edge = min((32, 32))
+            scale_factor_keepratio = min(
+                max_long_edge / max(input_h, input_w),
+                max_short_edge / min(input_h, input_w))
+            validate_shape = np.asarray(
+                (int(input_h * scale_factor_keepratio),
+                 int(input_w * scale_factor_keepratio)))
+            scale_factor_keepratio = np.asarray(
+                (validate_shape[1] / input_w, validate_shape[0] / input_h))
+
+            scale_factor_letter = ((np.asarray(
+                (output_h, output_w)) - pad_param) / validate_shape)[::-1]
             self.assertTrue(data_info['img_shape'][:2] == (output_h, output_w))
             self.assertTrue((scale_factor == (scale_factor_keepratio *
                                               scale_factor_letter)).all())

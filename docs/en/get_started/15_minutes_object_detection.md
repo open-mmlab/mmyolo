@@ -15,11 +15,15 @@ Take the small dataset of cat as an example, you can easily learn MMYOLO object 
 - [Testing](#testing)
 - [EasyDeploy](#easydeploy-deployment)
 
-In this article, we take YOLOv5-s as an example. For the rest of the YOLO series algorithms, please see the corresponding algorithm configuration folder.
+In this tutorial, we take YOLOv5-s as an example. For the rest of the YOLO series algorithms, please see the corresponding algorithm configuration folder.
 
 ## Installation
 
-Assuming you've already installed Conda in advance, install PyTorch
+Assuming you've already installed Conda in advance, then install PyTorch using the following commands.
+
+```{note}
+Note: Since this repo uses OpenMMLab 2.0, it is better to create a new conda virtual environment to prevent conflicts with the repo installed in OpenMMLab 1.0.
+```
 
 ```shell
 conda create -n mmyolo python=3.8 -y
@@ -30,7 +34,7 @@ conda install pytorch torchvision -c pytorch
 # conda install pytorch torchvision cpuonly -c pytorch
 ```
 
-Install MMYOLO and dependency libraries
+Install MMYOLO and dependency libraries using the following commands.
 
 ```shell
 git clone https://github.com/open-mmlab/mmyolo.git
@@ -46,11 +50,7 @@ mim install -v -e .
 # thus any local modifications made to the code will take effect without reinstallation.
 ```
 
-```{note}
-Note: Since this repo uses OpenMMLab 2.0, it is better to create a new conda virtual environment to prevent conflicts with the repo installed in OpenMMLab 1.0.
-```
-
-For details about how to configure the environment, see [Installation and verification](./installation.md)
+For details about how to configure the environment, see [Installation and verification](./installation.md).
 
 ## Dataset
 
@@ -106,7 +106,7 @@ anchors = [
 ]
 # Max training 40 epoch
 max_epochs = 40
-# bs = 12
+# Set batch size to 12
 train_batch_size_per_gpu = 12
 # dataloader num workers
 train_num_workers = 4
@@ -258,7 +258,7 @@ python tools/train.py configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py
 
 #### 2 Tensorboard
 
-Install Tensorboard environment
+Install Tensorboard package:
 
 ```shell
 pip install tensorboard
@@ -270,11 +270,11 @@ Add the `tensorboard` config at the end of config file we just created: `configs
 visualizer = dict(vis_backends=[dict(type='LocalVisBackend'),dict(type='TensorboardVisBackend')])
 ```
 
-After re-running the training command, Tensorboard file will be generated in the visualization folder `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat.py/{timestamp}/vis_data`.
+After re-running the training command, Tensorboard file will be generated in the visualization folder `work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/{timestamp}/vis_data`.
 We can use Tensorboard to view the loss, learning rate, and coco/bbox_mAP visualizations from a web link by running the following command:
 
 ```shell
-tensorboard --logdir=work_dirs/yolov5_s-v61_fast_1xb12-40e_cat.py
+tensorboard --logdir=work_dirs/yolov5_s-v61_fast_1xb12-40e_cat
 ```
 
 ## Testing
@@ -297,13 +297,13 @@ You can also visualize model inference results in a browser window if you use 'W
 
 MMYOLO provides visualization scripts for feature map to analyze the current model training. Please refer to [Feature Map Visualization](../recommended_topics/visualization.md)
 
-Due to the bias of direct visualization of `test_pipeline`, we need to `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py` of `test_pipeline`
+Due to the bias of direct visualization of `test_pipeline`, we need to modify the `test_pipeline` of `configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py`
 
 ```python
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+        backend_args=_base_.backend_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
@@ -318,13 +318,13 @@ test_pipeline = [
 ]
 ```
 
-modify to the following config:
+to the following config:
 
 ```python
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+        backend_args=_base_.backend_args),
     dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # modify the LetterResize to mmdet.Resize
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(
@@ -372,13 +372,19 @@ As can be seen from the above figure, because neck is involved in training, and 
 
 Based on the above feature map visualization, we can analyze Grad CAM at the feature layer of bbox level.
 
+Install `grad-cam` package:
+
+```shell
+pip install "grad-cam"
+```
+
 (a) View Grad CAM of the minimum output feature map of the neck
 
 ```shell
 python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
-                                configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-                                work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
-                                --target-layer neck.out_layers[2]
+                              configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                              work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
+                              --target-layer neck.out_layers[2]
 ```
 
 <div align=center>
@@ -389,9 +395,9 @@ python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 
 ```shell
 python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
-                                configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-                                work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
-                                --target-layer neck.out_layers[1]
+                              configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                              work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
+                              --target-layer neck.out_layers[1]
 ```
 
 <div align=center>
@@ -402,9 +408,9 @@ python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
 
 ```shell
 python demo/boxam_vis_demo.py data/cat/images/IMG_20221020_112705.jpg \
-                                configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
-                                work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
-                                --target-layer neck.out_layers[0]
+                              configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
+                              work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
+                              --target-layer neck.out_layers[0]
 ```
 
 <div align=center>
@@ -526,4 +532,4 @@ Here we choose to save the inference results under `output` instead of displayin
 
 This completes the transformation deployment of the trained model and checks the inference results. This is the end of the tutorial.
 
-The full content above can be viewed: [15_minutes_object_detection.ipynb](<>). If you encounter problems during training or testing, please check the \[common troubleshooting steps\](... /recommended_topics/troubleshooting_steps.md) first and feel free to raise an issue if you still can't solve it.
+The full content above can be viewed in [15_minutes_object_detection.ipynb](https://github.com/open-mmlab/mmyolo/blob/dev/demo/15_minutes_object_detection.ipynb). If you encounter problems during training or testing, please check the [common troubleshooting steps](../recommended_topics/troubleshooting_steps.md) first and feel free to open an [issue](https://github.com/open-mmlab/mmyolo/issues/new/choose) if you still can't solve it.

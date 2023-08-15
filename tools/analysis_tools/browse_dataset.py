@@ -19,6 +19,7 @@ from mmyolo.registry import DATASETS, VISUALIZERS
 
 
 # TODO: Support for printing the change in key of results
+# TODO: Some bug. If you meet some bug, please use the original
 def parse_args():
     parser = argparse.ArgumentParser(description='Browse a dataset')
     parser.add_argument('config', help='train config file path')
@@ -140,6 +141,18 @@ def make_grid(imgs, names):
     return visualizer.get_image()
 
 
+def swap_pipeline_position(dataset_cfg):
+    load_ann_tfm_name = 'LoadAnnotations'
+    pipeline = dataset_cfg.get('pipeline')
+    if (pipeline is None):
+        return dataset_cfg
+    all_transform_types = [tfm['type'] for tfm in pipeline]
+    if load_ann_tfm_name in all_transform_types:
+        load_ann_tfm_index = all_transform_types.index(load_ann_tfm_name)
+        load_ann_tfm = pipeline.pop(load_ann_tfm_index)
+        pipeline.insert(1, load_ann_tfm)
+
+
 class InspectCompose(Compose):
     """Compose multiple transforms sequentially.
 
@@ -185,6 +198,8 @@ def main():
     init_default_scope(cfg.get('default_scope', 'mmyolo'))
 
     dataset_cfg = cfg.get(args.phase + '_dataloader').get('dataset')
+    if (args.phase in ['test', 'val']):
+        swap_pipeline_position(dataset_cfg)
     dataset = DATASETS.build(dataset_cfg)
     visualizer = VISUALIZERS.build(cfg.visualizer)
     visualizer.dataset_meta = dataset.metainfo

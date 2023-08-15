@@ -8,7 +8,7 @@
 pip install -U openmim
 mim install "mmengine>=0.6.0"
 mim install "mmcv>=2.0.0rc4,<2.1.0"
-mim install "mmdet>=3.0.0rc6,<3.1.0"
+mim install "mmdet>=3.0.0,<4.0.0"
 ```
 
 如果你当前已经处于 mmyolo 工程目录下，则可以采用如下简化写法

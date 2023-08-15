@@ -3,7 +3,7 @@
 ## 0 简介
 
 <div align=center >
-<img alt="YOLOv8-P5_structure" src="https://user-images.githubusercontent.com/27466624/211974251-8de633c8-090c-47c9-ba52-4941dc9e3a48.jpg"/>
+<img alt="YOLOv8-P5_structure" src="https://user-images.githubusercontent.com/27466624/222869864-1955f054-aa6d-4a80-aed3-92f30af28849.jpg"/>
 图 1：YOLOv8-P5 模型结构
 </div>
 
@@ -203,7 +203,7 @@ python demo/featmap_vis_demo.py demo/demo.jpg configs/yolov8/yolov8_s_syncbn_fas
 test_pipeline = [
     dict(
         type='LoadImageFromFile',
-        file_client_args=_base_.file_client_args),
+        backend_args=_base_.backend_args),
     dict(type='mmdet.Resize', scale=img_scale, keep_ratio=False), # 这里将 LetterResize 修改成 mmdet.Resize
     dict(type='LoadAnnotations', with_bbox=True, _scope_='mmdet'),
     dict(

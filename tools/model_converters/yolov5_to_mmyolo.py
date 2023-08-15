@@ -25,6 +25,7 @@ convert_dict_p5 = {
     'model.21': 'neck.downsample_layers.1',
     'model.23': 'neck.bottom_up_layers.1',
     'model.24.m': 'bbox_head.head_module.convs_pred',
+    'model.24.proto': 'bbox_head.head_module.proto_preds',
 }
 
 convert_dict_p6 = {
@@ -54,6 +55,7 @@ convert_dict_p6 = {
     'model.30': 'neck.downsample_layers.2',
     'model.32': 'neck.bottom_up_layers.2',
     'model.33.m': 'bbox_head.head_module.convs_pred',
+    'model.33.proto': 'bbox_head.head_module.proto_preds',
 }
 
 
@@ -94,6 +96,10 @@ def convert(src, dst):
         if '.m.' in new_key:
             new_key = new_key.replace('.m.', '.blocks.')
             new_key = new_key.replace('.cv', '.conv')
+        elif 'bbox_head.head_module.proto_preds.cv' in new_key:
+            new_key = new_key.replace(
+                'bbox_head.head_module.proto_preds.cv',
+                'bbox_head.head_module.proto_preds.conv')
         else:
             new_key = new_key.replace('.cv1', '.main_conv')
             new_key = new_key.replace('.cv2', '.short_conv')

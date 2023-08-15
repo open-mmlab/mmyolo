@@ -1,11 +1,12 @@
-# TODO: Need to solve the problem of multiple file_client_args parameters
-# _file_client_args = dict(
+# TODO: Need to solve the problem of multiple backend_args parameters
+# _backend_args = dict(
 #     backend='petrel',
 #     path_mapping=dict({
 #         './data/': 's3://openmmlab/datasets/detection/',
 #         'data/': 's3://openmmlab/datasets/detection/'
 #     }))
-_file_client_args = dict(backend='disk')
+
+_backend_args = None
 
 tta_model = dict(
     type='mmdet.DetTTAModel',
@@ -24,7 +25,7 @@ img_scales = [(640, 640), (320, 320), (960, 960)]
 #  PackDetIn  PackDetIn         PackDetIn  PackDetIn        PackDetIn  PackDetIn # noqa
 
 tta_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_backend_args),
     dict(
         type='TestTimeAug',
         transforms=[

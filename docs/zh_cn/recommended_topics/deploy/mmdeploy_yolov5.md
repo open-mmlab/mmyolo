@@ -28,7 +28,7 @@
 _base_ = '../../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(
         type='LetterResize',
         scale=_base_.img_scale,
@@ -113,7 +113,7 @@ batch_shapes_cfg = dict(
     extra_pad_ratio=0.5)
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(type='YOLOv5KeepRatioResize', scale=img_scale),
     dict(
         type='LetterResize',
@@ -251,6 +251,7 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
     --work-dir work_dir \
     --show \
     --device cpu
+    --dump-info
 ```
 
 #### TensorRT
@@ -264,19 +265,20 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
     --work-dir work_dir \
     --show \
     --device cuda:0
+    --dump-info
 ```
 
 当您使用上述命令转换模型时，您将会在 `work_dir` 文件夹下发现以下文件：
 
-![image](https://user-images.githubusercontent.com/92794867/199377596-605c3493-c1e0-435d-bc97-2e46846ac87d.png)
+![image](https://github.com/open-mmlab/mmdeploy/assets/110151316/760f3f7f-aa23-46cf-987c-717d3490246f)
 
 或者
 
-![image](https://user-images.githubusercontent.com/92794867/199377848-a771f9c5-6bd6-49a1-9f58-e7e7b96c800f.png)
+![image](https://github.com/open-mmlab/mmdeploy/assets/110151316/732bcd9a-fca0-40ba-b5af-540a47eb9c35)
 
-在导出 `onnxruntime`模型后，您将得到图1的三个文件，其中 `end2end.onnx` 表示导出的`onnxruntime`模型。
+在导出 `onnxruntime`模型后，您将得到图1的六个文件，其中 `end2end.onnx` 表示导出的`onnxruntime`模型，`xxx.json` 表示 `MMDeploy SDK` 推理所需要的 meta 信息。
 
-在导出 `TensorRT`模型后，您将得到图2的四个文件，其中 `end2end.onnx` 表示导出的中间模型，`MMDeploy`利用该模型自动继续转换获得 `end2end.engine` 模型用于 `TensorRT `部署。
+在导出 `TensorRT`模型后，您将得到图2的七个文件，其中 `end2end.onnx` 表示导出的中间模型，`MMDeploy`利用该模型自动继续转换获得 `end2end.engine` 模型用于 `TensorRT `部署，`xxx.json` 表示 `MMDeploy SDK` 推理所需要的 meta 信息。
 
 ## 模型评测
 
@@ -428,4 +430,143 @@ python3 ${MMDEPLOY_DIR}/tools/profiler.py \
 
 ## 模型推理
 
-TODO
+### 后端模型推理
+
+#### ONNXRuntime
+
+以上述模型转换后的 `end2end.onnx` 为例，您可以使用如下代码进行推理：
+
+```python
+from mmdeploy.apis.utils import build_task_processor
+from mmdeploy.utils import get_input_shape, load_config
+import torch
+
+deploy_cfg = './configs/deploy/detection_onnxruntime_dynamic.py'
+model_cfg = '../mmyolo/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+device = 'cpu'
+backend_model = ['./work_dir/end2end.onnx']
+image = '../mmyolo/demo/demo.jpg'
+
+# read deploy_cfg and model_cfg
+deploy_cfg, model_cfg = load_config(deploy_cfg, model_cfg)
+
+# build task and backend model
+task_processor = build_task_processor(model_cfg, deploy_cfg, device)
+model = task_processor.build_backend_model(backend_model)
+
+# process input image
+input_shape = get_input_shape(deploy_cfg)
+model_inputs, _ = task_processor.create_input(image, input_shape)
+
+# do model inference
+with torch.no_grad():
+    result = model.test_step(model_inputs)
+
+# visualize results
+task_processor.visualize(
+    image=image,
+    model=model,
+    result=result[0],
+    window_name='visualize',
+    output_file='work_dir/output_detection.png')
+```
+
+#### TensorRT
+
+以上述模型转换后的 `end2end.engine` 为例，您可以使用如下代码进行推理：
+
+```python
+from mmdeploy.apis.utils import build_task_processor
+from mmdeploy.utils import get_input_shape, load_config
+import torch
+
+deploy_cfg = './configs/deploy/detection_tensorrt_dynamic-192x192-960x960.py'
+model_cfg = '../mmyolo/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+device = 'cuda:0'
+backend_model = ['./work_dir/end2end.engine']
+image = '../mmyolo/demo/demo.jpg'
+
+# read deploy_cfg and model_cfg
+deploy_cfg, model_cfg = load_config(deploy_cfg, model_cfg)
+
+# build task and backend model
+task_processor = build_task_processor(model_cfg, deploy_cfg, device)
+model = task_processor.build_backend_model(backend_model)
+
+# process input image
+input_shape = get_input_shape(deploy_cfg)
+model_inputs, _ = task_processor.create_input(image, input_shape)
+
+# do model inference
+with torch.no_grad():
+    result = model.test_step(model_inputs)
+
+# visualize results
+task_processor.visualize(
+    image=image,
+    model=model,
+    result=result[0],
+    window_name='visualize',
+    output_file='work_dir/output_detection.png')
+```
+
+### SDK 模型推理
+
+#### ONNXRuntime
+
+以上述模型转换后的 `end2end.onnx` 为例，您可以使用如下代码进行 `SDK` 推理：
+
+```python
+from mmdeploy_runtime import Detector
+import cv2
+
+img = cv2.imread('../mmyolo/demo/demo.jpg')
+
+# create a detector
+detector = Detector(model_path='work_dir',
+                    device_name='cpu', device_id=0)
+# perform inference
+bboxes, labels, masks = detector(img)
+
+# visualize inference result
+indices = [i for i in range(len(bboxes))]
+for index, bbox, label_id in zip(indices, bboxes, labels):
+    [left, top, right, bottom], score = bbox[0:4].astype(int), bbox[4]
+    if score < 0.3:
+        continue
+
+    cv2.rectangle(img, (left, top), (right, bottom), (0, 255, 0))
+
+cv2.imwrite('work_dir/output_detection.png', img)
+```
+
+#### TensorRT
+
+以上述模型转换后的 `end2end.engine` 为例，您可以使用如下代码进行 `SDK` 推理：
+
+```python
+from mmdeploy_runtime import Detector
+import cv2
+
+img = cv2.imread('../mmyolo/demo/demo.jpg')
+
+# create a detector
+detector = Detector(model_path='work_dir',
+                    device_name='cuda', device_id=0)
+# perform inference
+bboxes, labels, masks = detector(img)
+
+# visualize inference result
+indices = [i for i in range(len(bboxes))]
+for index, bbox, label_id in zip(indices, bboxes, labels):
+    [left, top, right, bottom], score = bbox[0:4].astype(int), bbox[4]
+    if score < 0.3:
+        continue
+
+    cv2.rectangle(img, (left, top), (right, bottom), (0, 255, 0))
+
+cv2.imwrite('work_dir/output_detection.png', img)
+```
+
+除了python API，mmdeploy SDK 还提供了诸如 C、C++、C#、Java等多语言接口。
+你可以参考[样例](https://github.com/open-mmlab/mmdeploy/tree/main/demo)学习其他语言接口的使用方法。

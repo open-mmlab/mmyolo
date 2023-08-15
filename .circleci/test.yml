@@ -67,7 +67,7 @@ jobs:
           command: |
             pip install -U openmim
             mim install git+https://github.com/open-mmlab/mmengine.git@main
-            mim install 'mmcv >= 2.0.0rc4'
+            mim install 'mmcv >= 2.0.0'
             mim install git+https://github.com/open-mmlab/mmdetection.git@dev-3.x
             pip install -r requirements/albu.txt
             pip install -r requirements/tests.txt
@@ -90,16 +90,17 @@ jobs:
           name: Run unittests
           command: |
             export LD_LIBRARY_PATH=/home/circleci/project/onnxruntime-linux-x64-1.8.1/lib:${LD_LIBRARY_PATH}
-            coverage run --branch --source mmyolo -m pytest tests/
-            coverage xml
-            coverage report -m
+            pytest tests/
+#            coverage run --branch --source mmyolo -m pytest tests/
+#            coverage xml
+#            coverage report -m
   build_cuda:
     parameters:
       torch:
         type: string
       cuda:
         type: enum
-        enum: ["10.1", "10.2", "11.1", "11.0"]
+        enum: ["10.1", "10.2", "11.0", "11.7"]
       cudnn:
         type: integer
         default: 7
@@ -125,7 +126,7 @@ jobs:
           command: |
             docker exec mmyolo pip install -U openmim
             docker exec mmyolo mim install -e /mmengine
-            docker exec mmyolo mim install 'mmcv >= 2.0.0rc4'
+            docker exec mmyolo mim install 'mmcv >= 2.0.0'
             docker exec mmyolo pip install -e /mmdetection
             docker exec mmyolo pip install -r requirements/albu.txt
             docker exec mmyolo pip install -r requirements/tests.txt
@@ -168,6 +169,9 @@ workflows:
             - lint
       - build_cpu:
           name: maximum_version_cpu
+          # mmdeploy not supported
+#          torch: 2.0.0
+#          torchvision: 0.15.1
           torch: 1.12.1
           torchvision: 0.13.1
           python: 3.9.0
@@ -183,6 +187,13 @@ workflows:
           # Use double quotation mark to explicitly specify its type
           # as string instead of number
           cuda: "10.2"
+          requires:
+            - hold
+      - build_cuda:
+          name: maximum_version_gpu
+          torch: 2.0.0
+          cuda: "11.7"
+          cudnn: 8
           requires:
             - hold
   merge_stage_test:

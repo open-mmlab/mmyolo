@@ -4,7 +4,7 @@
 
 MMDeploy 是 [OpenMMLab](https://openmmlab.com/) 模型部署工具箱，**为各算法库提供统一的部署体验**。基于 MMDeploy，开发者可以轻松从训练 repo 生成指定硬件所需 SDK，省去大量适配时间。
 
-更多介绍和使用指南见 https://github.com/open-mmlab/mmdeploy/blob/dev-1.x/docs/zh_cn/get_started.md
+更多介绍和使用指南见 https://mmdeploy.readthedocs.io/zh_CN/latest/get_started.html
 
 ## 算法支持列表
 
@@ -18,6 +18,14 @@ MMDeploy 是 [OpenMMLab](https://openmmlab.com/) 模型部署工具箱，**为�
 | RTMDet | ObjectDetection |      Y      |    Y     | [config](https://github.com/open-mmlab/mmyolo/tree/main/configs/rtmdet) |
 
 ncnn 和其他后端的支持会在后续支持。
+
+## 安装
+
+按照[说明](https://mmdeploy.readthedocs.io/zh_CN/latest/get_started.html)安装 mmdeploy。
+
+```{note}
+如果安装的是 mmdeploy 预编译包，那么也请通过 ‘git clone https://github.com/open-mmlab/mmdeploy.git –depth=1’ 下载 mmdeploy 源码。因为它包含了部署时所需的 tools 文件夹。
+```
 
 ## MMYOLO 中部署相关配置说明
 
@@ -61,7 +69,7 @@ codebase_config = dict(
 _base_ = '../../yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
 
 test_pipeline = [
-    dict(type='LoadImageFromFile', file_client_args=_base_.file_client_args),
+    dict(type='LoadImageFromFile', backend_args=_base_.backend_args),
     dict(
         type='LetterResize',
         scale=_base_.img_scale,
@@ -109,7 +117,7 @@ codebase_config = dict(
 backend_config = dict(type='onnxruntime')
 ```
 
-`backend_config` 中指定了部署后端 `type=‘onnxruntime’`，其他信息可参考第三小节。
+`backend_config` 中指定了部署后端 `type='onnxruntime'`，其他信息可参考第三小节。
 
 `TensorRT` 部署 `YOLOv5` 可以使用 [`detection_tensorrt_static-640x640.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_tensorrt_static-640x640.py) 配置。
 
@@ -208,6 +216,8 @@ use_efficientnms = False
 
 ### 使用方法
 
+#### 从源码安装的 MMDeploy
+
 设置 `MMDeploy` 根目录为环境变量 `MMDEPLOY_DIR` ，例如 `export MMDEPLOY_DIR=/the/root/path/of/MMDeploy`
 
 ```shell
@@ -239,6 +249,126 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
 - `--show` : 是否显示检测的结果。
 - `--dump-info` : 是否输出 SDK 信息。
 
+#### 通过 pip install 安装的 MMDeploy
+
+假设当前的工作目录为 mmyolo 的根目录, 那么以 [YoloV5](https://github.com/open-mmlab/mmyolo/blob/main/configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py) 模型为例，你可以从[此处](https://download.openmmlab.com/mmyolo/v0/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth)下载对应的 checkpoint，并使用以下代码将之转换为 onnx 模型：
+
+```python
+from mmdeploy.apis import torch2onnx
+from mmdeploy.backend.sdk.export_info import export2SDK
+
+img = 'demo/demo.jpg'
+work_dir = 'mmdeploy_models/mmyolo/onnx'
+save_file = 'end2end.onnx'
+deploy_cfg = 'configs/deploy/detection_onnxruntime_dynamic.py'
+model_cfg = 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+model_checkpoint = 'checkpoints/yolov5_s-v61_syncbn_fast_8xb16-300e_coco_20220918_084700-86e02187.pth'
+device = 'cpu'
+
+# 1. convert model to onnx
+torch2onnx(img, work_dir, save_file, deploy_cfg, model_cfg,
+           model_checkpoint, device)
+
+# 2. extract pipeline info for inference by MMDeploy SDK
+export2SDK(deploy_cfg, model_cfg, work_dir, pth=model_checkpoint,
+           device=device)
+```
+
+## 模型规范
+
+在使用转换后的模型进行推理之前，有必要了解转换结果的结构。 它存放在 `--work-dir` 指定的路路径下。
+
+上例中的`mmdeploy_models/mmyolo/onnx`，结构如下：
+
+```
+mmdeploy_models/mmyolo/onnx
+├── deploy.json
+├── detail.json
+├── end2end.onnx
+└── pipeline.json
+```
+
+重要的是：
+
+- **end2end.onnx**: 推理引擎文件。可用 ONNX Runtime 推理
+- ***xxx*.json**:  mmdeploy SDK 推理所需的 meta 信息
+
+整个文件夹被定义为**mmdeploy SDK model**。换言之，**mmdeploy SDK model**既包括推理引擎，也包括推理 meta 信息。
+
+## 模型推理
+
+### 后端模型推理
+
+以上述模型转换后的 `end2end.onnx` 为例，你可以使用如下代码进行推理：
+
+```python
+from mmdeploy.apis.utils import build_task_processor
+from mmdeploy.utils import get_input_shape, load_config
+import torch
+
+deploy_cfg = 'configs/deploy/detection_onnxruntime_dynamic.py'
+model_cfg = 'configs/yolov5/yolov5_s-v61_syncbn_8xb16-300e_coco.py'
+device = 'cpu'
+backend_model = ['mmdeploy_models/mmyolo/onnx/end2end.onnx']
+image = 'demo/demo.jpg'
+
+# read deploy_cfg and model_cfg
+deploy_cfg, model_cfg = load_config(deploy_cfg, model_cfg)
+
+# build task and backend model
+task_processor = build_task_processor(model_cfg, deploy_cfg, device)
+model = task_processor.build_backend_model(backend_model)
+
+# process input image
+input_shape = get_input_shape(deploy_cfg)
+model_inputs, _ = task_processor.create_input(image, input_shape)
+
+# do model inference
+with torch.no_grad():
+    result = model.test_step(model_inputs)
+
+# visualize results
+task_processor.visualize(
+    image=image,
+    model=model,
+    result=result[0],
+    window_name='visualize',
+    output_file='work_dir/output_detection.png')
+```
+
+运行上述代码后，你可以在 `work_dir` 中看到推理的结果图片 `output_detection.png`。
+
+### SDK模型推理
+
+你也可以参考如下代码，对 SDK model 进行推理：
+
+```python
+from mmdeploy_runtime import Detector
+import cv2
+
+img = cv2.imread('demo/demo.jpg')
+
+# create a detector
+detector = Detector(model_path='mmdeploy_models/mmyolo/onnx',
+                    device_name='cpu', device_id=0)
+# perform inference
+bboxes, labels, masks = detector(img)
+
+# visualize inference result
+indices = [i for i in range(len(bboxes))]
+for index, bbox, label_id in zip(indices, bboxes, labels):
+    [left, top, right, bottom], score = bbox[0:4].astype(int), bbox[4]
+    if score < 0.3:
+        continue
+
+    cv2.rectangle(img, (left, top), (right, bottom), (0, 255, 0))
+
+cv2.imwrite('work_dir/output_detection.png', img)
+```
+
+除了python API，mmdeploy SDK 还提供了诸如 C、C++、C#、Java等多语言接口。
+你可以参考[样例](https://github.com/open-mmlab/mmdeploy/tree/main/demo)学习其他语言接口的使用方法。
+
 ## 模型评测
 
 当您将 PyTorch 模型转换为后端支持的模型后，您可能需要验证模型的精度，使用 `${MMDEPLOY_DIR}/tools/test.py`
@@ -248,20 +378,19 @@ python3 ${MMDEPLOY_DIR}/tools/test.py \
     ${DEPLOY_CFG} \
     ${MODEL_CFG} \
     --model ${BACKEND_MODEL_FILES} \
-    [--out ${OUTPUT_PKL_FILE}] \
-    [--format-only] \
-    [--metrics ${METRICS}] \
+    --device ${DEVICE} \
+    --work-dir ${WORK_DIR} \
+    [--cfg-options ${CFG_OPTIONS}] \
     [--show] \
     [--show-dir ${OUTPUT_IMAGE_DIR}] \
-    [--show-score-thr ${SHOW_SCORE_THR}] \
-    --device ${DEVICE} \
-    [--cfg-options ${CFG_OPTIONS}] \
-    [--metric-options ${METRIC_OPTIONS}]
+    [--interval ${INTERVAL}] \
+    [--wait-time ${WAIT_TIME}] \
     [--log2file work_dirs/output.txt]
-    [--batch-size ${BATCH_SIZE}]
     [--speed-test] \
     [--warmup ${WARM_UP}] \
-    [--log-interval ${LOG_INTERVERL}]
+    [--log-interval ${LOG_INTERVERL}] \
+    [--batch-size ${BATCH_SIZE}] \
+    [--uri ${URI}]
 ```
 
 ### 参数描述
@@ -269,19 +398,18 @@ python3 ${MMDEPLOY_DIR}/tools/test.py \
 - `deploy_cfg`: 部署配置文件。
 - `model_cfg`: MMYOLO 模型配置文件。
 - `--model`: 导出的后端模型。 例如, 如果我们导出了 TensorRT 模型，我们需要传入后缀为 ".engine" 文件路径。
-- `--out`:  保存 pickle 格式的输出结果，仅当您传入这个参数时启用。
-- `--format-only`: 是否格式化输出结果而不进行评估。当您要将结果格式化为特定格式并将其提交到测试服务器时，它很有用。
-- `--metrics`: 用于评估 MMYOLO 中定义的模型的指标，如 COCO 标注格式的 "proposal" 。
+- `--device`: 运行模型的设备。请注意，某些后端会限制设备。例如，TensorRT 必须在 cuda 上运行。
+- `--work-dir`: 模型转换、报告生成的路径。
+- `--cfg-options`: 传入额外的配置，将会覆盖当前部署配置。
 - `--show`: 是否在屏幕上显示评估结果。
 - `--show-dir`: 保存评估结果的目录。(只有给出这个参数才会保存结果)。
-- `--show-score-thr`: 确定是否显示检测边界框的阈值。
-- `--device`: 运行模型的设备。请注意，某些后端会限制设备。例如，TensorRT 必须在 cuda 上运行。
-- `--cfg-options`: 传入额外的配置，将会覆盖当前部署配置。
-- `--metric-options`: 用于评估的自定义选项。 xxx=yyy 中的键值对格式，将是 dataset.evaluate() 函数的 kwargs。
+- `--interval`: 屏幕上显示评估结果的间隔。
+- `--wait-time`: 每个窗口的显示时间
 - `--log2file`: 将评估结果（和速度）记录到文件中。
-- `--batch-size`: 推理的批量大小，它将覆盖数据配置中的 `samples_per_gpu`。默认为 `1`。请注意，并非所有模型都支持 `batch_size > 1`。
-- `--speed-test`:  是否开启速度测试。
+- `--speed-test`: 是否开启速度测试。
 - `--warmup`: 在计算推理时间之前进行预热，需要先开启 `speed-test`。
 - `--log-interval`: 每个日志之间的间隔，需要先设置 `speed-test`。
+- `--batch-size`: 推理的批量大小，它将覆盖数据配置中的 `samples_per_gpu`。默认为 `1`。请注意，并非所有模型都支持 `batch_size > 1`。
+- `--uri`: 在边缘设备上推理时的 ipv4 或 ipv6 端口号。
 
 注意：`${MMDEPLOY_DIR}/tools/test.py` 中的其他参数用于速度测试。他们不影响评估。
