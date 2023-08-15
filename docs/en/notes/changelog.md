@@ -1,5 +1,43 @@
 # Changelog
 
+## v0.6.0 (15/8/2023)
+
+### Highlights
+
+- Support YOLOv5 instance segmentation
+- Support YOLOX-Pose based on MMPose
+- Add 15 minutes instance segmentation tutorial.
+- YOLOv5 supports using mask annotation to optimize bbox
+- Add Multi-scale training and testing docs
+
+### New Features
+
+- Add training and testing tricks doc (#659)
+- Support setting the cache_size_limit parameter and support mmdet 3.0.0 (#707)
+- Support YOLOv5u and YOLOv6 3.0 inference (#624, #744)
+- Support model-only inference (#733)
+- Add YOLOv8 deepstream config (#633)
+- Add ionogram example in MMYOLO application (#643)
+
+### Bug Fixes
+
+- Fix the browse_dataset for visualization of test and val (#641)
+- Fix installation doc error (#662)
+- Fix yolox-l ckpt link (#677)
+- Fix typos in the YOLOv7 and YOLOv8 diagram (#621, #710)
+- Adjust the order of package imports in `boxam_vis_demo.py` (#655)
+
+### Improvements
+
+- Optimize the `convert_kd_ckpt_to_student.py` file (#647)
+- Add en doc of `FAQ` and `training_testing_tricks` (#691,#693)
+
+### Contributors
+
+A total of 21 developers contributed to this release.
+
+Thank @Lum1104,@azure-wings,@FeiGeChuanShu,@Lingrui Gu,@Nioolek,@huayuan4396,@RangeKing,@danielhonies,@yechenzhi,@JosonChan1998,@kitecats,@Qingrenn,@triple-Mu,@kikefdezl,@zhangrui-wolf,@xin-li-67,@Ben-Louis,@zgzhengSEU,@VoyagerXvoyagerx,@tang576225574,@hhaAndroid
+
 ## v0.5.0 (2/3/2023)
 
 ### Highlights

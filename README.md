@@ -77,17 +77,13 @@ English | [简体中文](README_zh-CN.md)
 
 ## 🥳 🚀 What's New [🔝](#-table-of-contents)
 
-💎 **v0.5.0** was released on 2/3/2023:
+💎 **v0.6.0** was released on 15/8/2023:
 
-1. Support [RTMDet-R](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/README.md#rotated-object-detection) rotated object detection
-2. Support for using mask annotation to improve [YOLOv8](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md) object detection performance
-3. Support [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/razor/subnets/README.md) searchable NAS sub-network as the backbone of YOLO series algorithm
-4. Support calling [MMRazor](https://github.com/open-mmlab/mmyolo/blob/dev/configs/rtmdet/distillation/README.md) to distill the knowledge of RTMDet
-5. [MMYOLO](https://mmyolo.readthedocs.io/zh_CN/dev/) document structure optimization, comprehensive content upgrade
-6. Improve YOLOX mAP and training speed based on RTMDet training hyperparameters
-7. Support calculation of model parameters and FLOPs, provide GPU latency data on T4 devices, and update [Model Zoo](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/model_zoo.md)
-8. Support test-time augmentation (TTA)
-9. Support RTMDet, YOLOv8 and YOLOv7 assigner visualization
+- Support YOLOv5 instance segmentation
+- Support YOLOX-Pose based on MMPose
+- Add 15 minutes instance segmentation tutorial.
+- YOLOv5 supports using mask annotation to optimize bbox
+- Add Multi-scale training and testing docs
 
 For release history and update details, please refer to [changelog](https://mmyolo.readthedocs.io/en/latest/notes/changelog.html).
 
@@ -150,7 +146,7 @@ conda activate mmyolo
 pip install openmim
 mim install "mmengine>=0.6.0"
 mim install "mmcv>=2.0.0rc4,<2.1.0"
-mim install "mmdet>=3.0.0rc6,<3.1.0"
+mim install "mmdet>=3.0.0,<4.0.0"
 git clone https://github.com/open-mmlab/mmyolo.git
 cd mmyolo
 # Install albumentations
