@@ -7,17 +7,19 @@ import torch
 from mmengine.utils import scandir
 from prettytable import PrettyTable
 
-from mmyolo.models import RepVGGBlock
+from mmyolo.models import QARepVGGBlock, QARepVGGBlockV2, RepVGGBlock
 
 IMG_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm', '.tif',
                   '.tiff', '.webp')
+DEPLOYABLE_ALGOS = (RepVGGBlock, QARepVGGBlock, QARepVGGBlockV2)
 
 
 def switch_to_deploy(model):
     """Model switch to deploy status."""
     for layer in model.modules():
-        if isinstance(layer, RepVGGBlock):
-            layer.switch_to_deploy()
+        for block in DEPLOYABLE_ALGOS:
+            if isinstance(layer, block):
+                layer.switch_to_deploy()
 
     print('Switch model to deploy modality.')
 

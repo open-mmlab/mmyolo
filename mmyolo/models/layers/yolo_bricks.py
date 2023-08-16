@@ -1726,3 +1726,348 @@ class CSPSPPFBottleneck(BaseModule):
         x3 = self.conv6(self.conv5(x3))
         x = self.conv7(torch.cat([y, x3], dim=1))
         return x
+
+
+@MODELS.register_module()
+class QARepVGGBlock(RepVGGBlock):
+    """RepVGGBlock is a basic rep-style block, including training and deploy
+    status This code is based on https://arxiv.org/abs/2212.01593.
+
+    Args:
+        in_channels (int): Number of channels in the input image
+        out_channels (int): Number of channels produced by the convolution
+        kernel_size (int or tuple): Size of the convolving kernel
+        stride (int or tuple): Stride of the convolution. Default: 1
+        padding (int, tuple): Padding added to all four sides of
+            the input. Default: 1
+        dilation (int or tuple): Spacing between kernel elements. Default: 1
+        groups (int, optional): Number of blocked connections from input
+            channels to output channels. Default: 1
+        padding_mode (string, optional): Default: 'zeros'
+        use_se (bool): Whether to use se. Default: False
+        use_alpha (bool): Whether to use `alpha` parameter at 1x1 conv.
+            In PPYOLOE+ model backbone, `use_alpha` will be set to True.
+            Default: False.
+        use_bn_first (bool): Whether to use bn layer before conv.
+            In YOLOv6 and YOLOv7, this will be set to True.
+            In PPYOLOE, this will be set to False.
+            Default: True.
+        deploy (bool): Whether in deploy mode. Default: False
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 kernel_size: int | Tuple[int] = 3,
+                 stride: int | Tuple[int] = 1,
+                 padding: int | Tuple[int] = 1,
+                 dilation: int | Tuple[int] = 1,
+                 groups: int | None = 1,
+                 padding_mode: str | None = 'zeros',
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='ReLU', inplace=True),
+                 use_se: bool = False,
+                 use_alpha: bool = False,
+                 use_bn_first=True,
+                 deploy: bool = False):
+        super().__init__(in_channels, out_channels, kernel_size, stride,
+                         padding, dilation, groups, padding_mode, norm_cfg,
+                         act_cfg, use_se, use_alpha, use_bn_first, deploy)
+
+        if not deploy:
+            self.bn = nn.BatchNorm2d(out_channels)
+            self.rbr_1x1 = nn.Conv2d(
+                in_channels,
+                out_channels,
+                kernel_size=1,
+                stride=stride,
+                groups=groups,
+                bias=False)
+            if use_bn_first and (out_channels == in_channels) and stride == 1:
+                self.rbr_identity = nn.Identity()
+            else:
+                self.rbr_identity = None
+        self._id_tensor = None
+
+    def forward(self, inputs: Tensor) -> Tensor:
+        """Forward process.
+        Args:
+            inputs (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output tensor.
+        """
+        if hasattr(self, 'rbr_reparam'):
+            return self.nonlinearity(
+                self.bn(self.se(self.rbr_reparam(inputs))))
+
+        if self.rbr_identity is None:
+            id_out = 0
+        else:
+            id_out = self.rbr_identity(inputs)
+
+        if self.alpha:
+            return self.nonlinearity(
+                self.bn(
+                    self.se(
+                        self.rbr_dense(inputs) +
+                        self.alpha * self.rbr_1x1(inputs) + id_out)))
+        else:
+            return self.nonlinearity(
+                self.bn(
+                    self.se(
+                        self.rbr_dense(inputs) + self.rbr_1x1(inputs) +
+                        id_out)))
+
+    def get_equivalent_kernel_bias(self):
+        """Derives the equivalent kernel and bias in a differentiable way.
+
+        Returns:
+            tuple: Equivalent kernel and bias
+        """
+        kernel3x3, bias3x3 = self._fuse_bn_tensor(self.rbr_dense)
+
+        if self.alpha:
+            kernel = kernel3x3 + self.alpha * self._pad_1x1_to_3x3_tensor(
+                self.rbr_1x1.weight)
+        else:
+            kernel = kernel3x3 + self._pad_1x1_to_3x3_tensor(
+                self.rbr_1x1.weight)
+        bias = bias3x3
+
+        if self.rbr_identity is not None:
+            input_dim = self.in_channels // self.groups
+            kernel_value = np.zeros((self.in_channels, input_dim, 3, 3),
+                                    dtype=np.float32)
+            for i in range(self.in_channels):
+                kernel_value[i, i % input_dim, 1, 1] = 1
+            id_tensor = torch.from_numpy(kernel_value).to(
+                self.rbr_1x1.weight.device)
+            kernel = kernel + id_tensor
+        return kernel, bias
+
+    def _fuse_extra_bn_tensor(self, kernel, bias, branch):
+        assert isinstance(branch, nn.BatchNorm2d)
+        running_mean = branch.running_mean - bias  # remove bias
+        running_var = branch.running_var
+        gamma = branch.weight
+        beta = branch.bias
+        eps = branch.eps
+        std = (running_var + eps).sqrt()
+        t = (gamma / std).reshape(-1, 1, 1, 1)
+        return kernel * t, beta - running_mean * gamma / std
+
+    def switch_to_deploy(self):
+        """Switch to deploy mode."""
+        if hasattr(self, 'rbr_reparam'):
+            return
+        kernel, bias = self.get_equivalent_kernel_bias()
+        self.rbr_reparam = nn.Conv2d(
+            in_channels=self.rbr_dense.conv.in_channels,
+            out_channels=self.rbr_dense.conv.out_channels,
+            kernel_size=self.rbr_dense.conv.kernel_size,
+            stride=self.rbr_dense.conv.stride,
+            padding=self.rbr_dense.conv.padding,
+            dilation=self.rbr_dense.conv.dilation,
+            groups=self.rbr_dense.conv.groups,
+            bias=True)
+        self.rbr_reparam.weight.data = kernel
+        self.rbr_reparam.bias.data = bias
+        for para in self.parameters():
+            para.detach_()
+        self.__delattr__('rbr_dense')
+        self.__delattr__('rbr_1x1')
+        if hasattr(self, 'rbr_identity'):
+            self.__delattr__('rbr_identity')
+        if hasattr(self, 'id_tensor'):
+            self.__delattr__('id_tensor')
+        # keep post bn for QAT
+        # if hasattr(self, 'bn'):
+        #     self.__delattr__('bn')
+        self.deploy = True
+
+
+@MODELS.register_module()
+class QARepVGGBlockV2(RepVGGBlock):
+    """RepVGGBlock is a basic rep-style block, including training and deploy
+    status This code is based on https://arxiv.org/abs/2212.01593.
+
+    Args:
+        in_channels (int): Number of channels in the input image
+        out_channels (int): Number of channels produced by the convolution
+        kernel_size (int or tuple): Size of the convolving kernel
+        stride (int or tuple): Stride of the convolution. Default: 1
+        padding (int, tuple): Padding added to all four sides of
+            the input. Default: 1
+        dilation (int or tuple): Spacing between kernel elements. Default: 1
+        groups (int, optional): Number of blocked connections from input
+            channels to output channels. Default: 1
+        padding_mode (string, optional): Default: 'zeros'
+        use_se (bool): Whether to use se. Default: False
+        use_alpha (bool): Whether to use `alpha` parameter at 1x1 conv.
+            In PPYOLOE+ model backbone, `use_alpha` will be set to True.
+            Default: False.
+        use_bn_first (bool): Whether to use bn layer before conv.
+            In YOLOv6 and YOLOv7, this will be set to True.
+            In PPYOLOE, this will be set to False.
+            Default: True.
+        deploy (bool): Whether in deploy mode. Default: False
+    """
+
+    def __init__(self,
+                 in_channels: int,
+                 out_channels: int,
+                 kernel_size: int | Tuple[int] = 3,
+                 stride: int | Tuple[int] = 1,
+                 padding: int | Tuple[int] = 1,
+                 dilation: int | Tuple[int] = 1,
+                 groups: int | None = 1,
+                 padding_mode: str | None = 'zeros',
+                 norm_cfg: ConfigType = dict(
+                     type='BN', momentum=0.03, eps=0.001),
+                 act_cfg: ConfigType = dict(type='ReLU', inplace=True),
+                 use_se: bool = False,
+                 use_alpha: bool = False,
+                 use_bn_first=True,
+                 deploy: bool = False):
+        super().__init__(in_channels, out_channels, kernel_size, stride,
+                         padding, dilation, groups, padding_mode, norm_cfg,
+                         act_cfg, use_se, use_alpha, use_bn_first, deploy)
+
+        if not deploy:
+            self.bn = nn.BatchNorm2d(out_channels)
+            self.rbr_1x1 = nn.Conv2d(
+                in_channels,
+                out_channels,
+                kernel_size=1,
+                stride=stride,
+                groups=groups,
+                bias=False)
+            if use_bn_first and (out_channels == in_channels) and stride == 1:
+                self.rbr_identity = nn.Identity()
+            else:
+                self.rbr_identity = None
+            if (out_channels == in_channels) and stride == 1:
+                self.rbr_avg = nn.AvgPool2d(
+                    kernel_size=kernel_size, stride=stride, padding=padding)
+            else:
+                self.rbr_avg = None
+        self._id_tensor = None
+
+    def forward(self, inputs: Tensor) -> Tensor:
+        """Forward process.
+        Args:
+            inputs (Tensor): The input tensor.
+
+        Returns:
+            Tensor: The output tensor.
+        """
+        if hasattr(self, 'rbr_reparam'):
+            return self.nonlinearity(
+                self.bn(self.se(self.rbr_reparam(inputs))))
+
+        if self.rbr_identity is None:
+            id_out = 0
+        else:
+            id_out = self.rbr_identity(inputs)
+        if self.rbr_avg is None:
+            avg_out = 0
+        else:
+            avg_out = self.rbr_avg(inputs)
+
+        if self.alpha:
+            return self.nonlinearity(
+                self.bn(
+                    self.se(
+                        self.rbr_dense(inputs) +
+                        self.alpha * self.rbr_1x1(inputs) + id_out + avg_out)))
+        else:
+            return self.nonlinearity(
+                self.bn(
+                    self.se(
+                        self.rbr_dense(inputs) + self.rbr_1x1(inputs) +
+                        id_out + avg_out)))
+
+    def _avg_to_3x3_tensor(self, avgp):
+        channels = self.in_channels
+        groups = self.groups
+        kernel_size = avgp.kernel_size
+        input_dim = channels // groups
+        k = torch.zeros((channels, input_dim, kernel_size, kernel_size))
+        k[np.arange(channels),
+          np.tile(np.arange(input_dim), groups), :, :] = 1.0 / kernel_size**2
+        return k
+
+    def get_equivalent_kernel_bias(self):
+        """Derives the equivalent kernel and bias in a differentiable way.
+
+        Returns:
+            tuple: Equivalent kernel and bias
+        """
+        kernel3x3, bias3x3 = self._fuse_bn_tensor(self.rbr_dense)
+
+        if self.alpha:
+            kernel = kernel3x3 + self.alpha * self._pad_1x1_to_3x3_tensor(
+                self.rbr_1x1.weight)
+        else:
+            kernel = kernel3x3 + self._pad_1x1_to_3x3_tensor(
+                self.rbr_1x1.weight)
+        bias = bias3x3
+
+        if self.rbr_avg is not None:
+            kernelavg = self._avg_to_3x3_tensor(self.rbr_avg)
+            kernel = kernel + kernelavg.to(self.rbr_1x1.weight.device)
+
+        if self.rbr_identity is not None:
+            input_dim = self.in_channels // self.groups
+            kernel_value = np.zeros((self.in_channels, input_dim, 3, 3),
+                                    dtype=np.float32)
+            for i in range(self.in_channels):
+                kernel_value[i, i % input_dim, 1, 1] = 1
+            id_tensor = torch.from_numpy(kernel_value).to(
+                self.rbr_1x1.weight.device)
+            kernel = kernel + id_tensor
+        return kernel, bias
+
+    def _fuse_extra_bn_tensor(self, kernel, bias, branch):
+        assert isinstance(branch, nn.BatchNorm2d)
+        running_mean = branch.running_mean - bias  # remove bias
+        running_var = branch.running_var
+        gamma = branch.weight
+        beta = branch.bias
+        eps = branch.eps
+        std = (running_var + eps).sqrt()
+        t = (gamma / std).reshape(-1, 1, 1, 1)
+        return kernel * t, beta - running_mean * gamma / std
+
+    def switch_to_deploy(self):
+        """Switch to deploy mode."""
+        if hasattr(self, 'rbr_reparam'):
+            return
+        kernel, bias = self.get_equivalent_kernel_bias()
+        self.rbr_reparam = nn.Conv2d(
+            in_channels=self.rbr_dense.conv.in_channels,
+            out_channels=self.rbr_dense.conv.out_channels,
+            kernel_size=self.rbr_dense.conv.kernel_size,
+            stride=self.rbr_dense.conv.stride,
+            padding=self.rbr_dense.conv.padding,
+            dilation=self.rbr_dense.conv.dilation,
+            groups=self.rbr_dense.conv.groups,
+            bias=True)
+        self.rbr_reparam.weight.data = kernel
+        self.rbr_reparam.bias.data = bias
+        for para in self.parameters():
+            para.detach_()
+        self.__delattr__('rbr_dense')
+        self.__delattr__('rbr_1x1')
+        if hasattr(self, 'rbr_identity'):
+            self.__delattr__('rbr_identity')
+        if hasattr(self, 'rbr_avg'):
+            self.__delattr__('rbr_avg')
+        if hasattr(self, 'id_tensor'):
+            self.__delattr__('id_tensor')
+        # keep post bn for QAT
+        # if hasattr(self, 'bn'):
+        #     self.__delattr__('bn')
+        self.deploy = True

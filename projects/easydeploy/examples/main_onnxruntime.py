@@ -37,7 +37,7 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument(
         'img', help='Image path, include image file, dir and URL.')
-    parser.add_argument('onnx', type=str, help='Onnx file')
+    parser.add_argument('onnx', type=str, help='Exported onnx file')
     parser.add_argument('--type', type=str, help='Model type')
     parser.add_argument(
         '--img-size',

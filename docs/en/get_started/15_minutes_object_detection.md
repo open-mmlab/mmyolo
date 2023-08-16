@@ -453,7 +453,7 @@ On success, you will get the converted ONNX model under `work-dir`, which is nam
 Let's use `end2end.onnx` model to perform a basic image inference:
 
 ```shell
-python projects/easydeploy/tools/image-demo.py \
+python projects/easydeploy/tools/image_demo.py \
     data/cat/images/IMG_20210728_205312.jpg \
     configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
     work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/end2end.onnx \
@@ -514,10 +514,10 @@ work_dirs/yolov5_s-v61_fast_1xb12-40e_cat
 └── yolov5_s-v61_fast_1xb12-40e_cat.py
 ```
 
-Let's continue use `image-demo.py` for image inference:
+Let's continue use `image_demo.py` for image inference:
 
 ```shell
-python projects/easydeploy/tools/image-demo.py \
+python projects/easydeploy/tools/image_demo.py \
     data/cat/images/IMG_20210728_205312.jpg \
     configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
     work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/end2end.engine \

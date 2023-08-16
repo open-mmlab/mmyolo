@@ -16,11 +16,28 @@ from mmengine.utils import ProgressBar, path
 from mmyolo.utils import register_all_modules
 from mmyolo.utils.misc import get_file_list
 
+# if you are using a custom dataset and you did not add class names
+# into your model config file, feel free to modify this part if necessary.
+CLASS_NAMES = ('person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
+               'train', 'truck', 'boat', 'traffic light', 'fire hydrant',
+               'stop sign', 'parking meter', 'bench', 'bird', 'cat', 'dog',
+               'horse', 'sheep', 'cow', 'elephant', 'bear', 'zebra', 'giraffe',
+               'backpack', 'umbrella', 'handbag', 'tie', 'suitcase', 'frisbee',
+               'skis', 'snowboard', 'sports ball', 'kite', 'baseball bat',
+               'baseball glove', 'skateboard', 'surfboard', 'tennis racket',
+               'bottle', 'wine glass', 'cup', 'fork', 'knife', 'spoon', 'bowl',
+               'banana', 'apple', 'sandwich', 'orange', 'broccoli', 'carrot',
+               'hot dog', 'pizza', 'donut', 'cake', 'chair', 'couch',
+               'potted plant', 'bed', 'dining table', 'toilet', 'tv', 'laptop',
+               'mouse', 'remote', 'keyboard', 'cell phone', 'microwave',
+               'oven', 'toaster', 'sink', 'refrigerator', 'book', 'clock',
+               'vase', 'scissors', 'teddy bear', 'hair drier', 'toothbrush')
+
 
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument(
-        'img', help='Image path, include image file, dir and URL.')
+        'img', help='Image path, supports image file, dir and URL.')
     parser.add_argument('config', help='Config file')
     parser.add_argument('checkpoint', help='Checkpoint file')
     parser.add_argument(
@@ -74,7 +91,8 @@ def main():
     model.to(args.device)
 
     cfg = Config.fromfile(args.config)
-    class_names = cfg.get('class_name')
+    class_names = CLASS_NAMES if cfg.get('class_name') is None else cfg.get(
+        'class_name')
 
     test_pipeline = get_test_pipeline_cfg(cfg)
     test_pipeline[0] = ConfigDict({'type': 'mmdet.LoadImageFromNDArray'})
@@ -127,19 +145,16 @@ def main():
             bbox = bbox.tolist()
             color = colors[label]
 
-            if class_names is not None:
-                label_name = class_names[label]
-                name = f'cls:{label_name}_score:{score:0.4f}'
-            else:
-                name = f'cls:{label}_score:{score:0.4f}'
+            label_name = class_names[label]
+            name = f'{label_name}: {score:.2f}'
 
             cv2.rectangle(bgr, bbox[:2], bbox[2:], color, 2)
             cv2.putText(
                 bgr,
                 name, (bbox[0], bbox[1] - 2),
                 cv2.FONT_HERSHEY_SIMPLEX,
-                2.0, [225, 255, 255],
-                thickness=3)
+                1.0, [225, 255, 255],
+                thickness=2)
 
         if args.show:
             mmcv.imshow(bgr, 'result', 0)

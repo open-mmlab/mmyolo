@@ -1,8 +1,8 @@
 # MMYOLO 模型 ONNX 转换
 
-## 1. 导出后端支持的 ONNX
+## 1. 导出 end2end 的 ONNX
 
-## 环境依赖
+### 环境依赖
 
 - [onnx](https://github.com/onnx/onnx)
 
@@ -10,7 +10,7 @@
   pip install onnx
   ```
 
-  [onnx-simplifier](https://github.com/daquexian/onnx-simplifier) (可选，用于简化模型)
+- [onnx-simplifier](https://github.com/daquexian/onnx-simplifier) (可选，用于简化模型)
 
   ```shell
   pip install onnx-simplifier
@@ -18,11 +18,11 @@
 
 \*\*\* 请确保您在 `MMYOLO` 根目录下运行相关脚本，避免无法找到相关依赖包。\*\*\*
 
-## 使用方法
+### 使用方法
 
 [模型导出脚本](./projects/easydeploy/tools/export_onnx.py)用于将 `MMYOLO` 模型转换为 `onnx` 。
 
-### 参数介绍:
+参数介绍:
 
 - `config` : 构建模型使用的配置文件，如 [`yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py`](./configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py) 。
 - `checkpoint` : 训练得到的权重文件，如 `yolov5s.pth` 。
@@ -51,16 +51,16 @@ python ./projects/easydeploy/tools/export.py \
     --device cpu \
     --simplify \
 	--opset 11 \
-	--backend 1 \
+	--backend onnxruntime \
 	--pre-topk 1000 \
 	--keep-topk 100 \
 	--iou-threshold 0.65 \
 	--score-threshold 0.25
 ```
 
-然后利用后端支持的工具如 `TensorRT` 读取 `onnx` 再次转换为后端支持的模型格式如 `.engine/.plan` 等。
+然后利用后端支持的工具如 `TensorRT` 读取转换出的 `onnx` 并再次转换为后端支持的模型格式如 `.engine/.plan` 等。
 
-`MMYOLO` 目前支持 `TensorRT8`, `TensorRT7`, `ONNXRuntime` 后端的端到端模型转换，目前仅支持静态 shape 模型的导出和转换，动态 batch 或动态长宽的模型端到端转换会在未来继续支持。
+`easydeploy` 当前提供了 [TensorRT 转化脚本](../tools/build_engine.py) ，支持 `TensorRT8` 和 `TensorRT7` 后端的端到端模型转换，目前仅支持静态 shape 模型的导出和转换，动态 batch 或动态长宽的模型端到端转换会在未来继续支持。
 
 端到端转换得到的 `onnx` 模型输入输出如图：
 
@@ -80,7 +80,7 @@ python ./projects/easydeploy/tools/export.py \
 
 可以利用 `num_dets` 中的个数对 `boxes`, `scores`, `labels` 进行截断，从 100 个检测结果中抽取前 `num_dets` 个目标作为最终检测结果。
 
-## 2. 仅导出模型 Backbone + Neck
+## 2. 导出仅包含 Backbone + Neck 的 ONNX
 
 当您需要部署在非 `TensorRT`, `ONNXRuntime` 等支持端到端部署的平台时，您可以考虑使用`--model-only` 参数并且不要传递 `--backend` 参数，您将会导出仅包含 `Backbone` + `neck` 的模型，模型的部分输出如图:
 
@@ -96,12 +96,12 @@ python ./projects/easydeploy/tools/export.py \
 也有如下缺点:
 
 - 后处理逻辑需要单独完成，会有额外的 `decode` + `nms` 的操作需要实现。
-- 与 `TensorRT` 相比，由于 `TensorRT` 可以利用多核优势并行进行后处理，使用 `--model-only` 方式导出的模型性能会差很多。
+- 由于 `TensorRT` 可以利用多核优势并行进行后处理，使用 `--model-only` 方式导出的模型相比原生 `TensorRT` 性能会差很多。
 
 ### 使用方法
 
 ```shell
-python ./projects/easydeploy/tools/export.py \
+python ./projects/easydeploy/tools/export_onnx.py \
 	configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
 	yolov5s.pth \
 	--work-dir work_dir \
@@ -113,7 +113,7 @@ python ./projects/easydeploy/tools/export.py \
 	--model-only
 ```
 
-## 使用 `model-only` 导出的 ONNX 进行推理
+## 3. 使用 `model-only` 导出的 ONNX 进行推理
 
 [模型推理脚本](./projects/easydeploy/examples/main_onnxruntime.py)用于推理导出的 `ONNX` 模型，需要安装基础依赖环境:
 
@@ -135,11 +135,10 @@ pip install opencv-python==4.7.0.72 # 建议使用最新的 opencv
 - `--score-thr`: 模型检测后处理的置信度分数 。
 - `--iou-thr`: 模型检测后处理的 IOU 分数 。
 
-## 使用方法
+### 使用方法
 
 ```shell
-cd ./projects/easydeploy/examples
-python main_onnxruntime.py \
+python ./projects/easydeploy/examples/main_onnxruntime.py \
 	"image_path_to_detect" \
 	yolov5_s_model-only.onnx \
 	--out-dir work_dir \
