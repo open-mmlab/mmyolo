@@ -42,7 +42,7 @@
 例子:
 
 ```shell
-python ./projects/easydeploy/tools/export.py \
+python ./projects/easydeploy/tools/export_onnx.py \
 	configs/yolov5/yolov5_s-v61_syncbn_fast_8xb16-300e_coco.py \
 	yolov5s.pth \
 	--work-dir work_dir \

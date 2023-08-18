@@ -467,7 +467,7 @@ python projects/easydeploy/tools/image_demo.py \
 我们继续转换对应 TensorRT 的 engine 文件，因为 TensorRT 需要对应当前环境以及部署使用的版本进行，所以一定要确认导出参数，这里我们导出对应 TensorRT8 版本的文件，`--backend` 为 2。
 
 ```shell
-python projects/easydeploy/tools/export.py \
+python projects/easydeploy/tools/export_onnx.py \
     configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
     work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
     --work-dir work_dirs/yolov5_s-v61_fast_1xb12-40e_cat \

@@ -432,7 +432,7 @@ pip install tensorrt        # If you have GPU environment and need to output Ten
 Once installed, you can use the following command to transform and deploy the trained model on the cat dataset with one click. The current ONNX version is 1.13.0 and TensorRT version is 8.5.3.1, so keep the `--opset` value of 11. The remaining parameters need to be adjusted according to the config used. Here we export the CPU version of ONNX with the `--backend` set to 1.
 
 ```shell
-python projects/easydeploy/tools/export.py \
+python projects/easydeploy/tools/export_onnx.py \
 	configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
 	work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
 	--work-dir work_dirs/yolov5_s-v61_fast_1xb12-40e_cat \
@@ -469,7 +469,7 @@ After successful inference, the result image will be generated in the `output` f
 Let's go on to convert the engine file for TensorRT, because TensorRT needs to be specific to the current environment and deployment version, so make sure to export the parameters, here we export the TensorRT8 file, the `--backend` is 2.
 
 ```shell
-python projects/easydeploy/tools/export.py \
+python projects/easydeploy/tools/export_onnx.py \
     configs/yolov5/yolov5_s-v61_fast_1xb12-40e_cat.py \
     work_dirs/yolov5_s-v61_fast_1xb12-40e_cat/epoch_40.pth \
     --work-dir work_dirs/yolov5_s-v61_fast_1xb12-40e_cat \
