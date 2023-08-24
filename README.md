@@ -68,6 +68,7 @@ English | [简体中文](README_zh-CN.md)
 - [🛠️ Installation](#%EF%B8%8F-installation-)
 - [👨‍🏫 Tutorial](#-tutorial-)
 - [📊 Overview of Benchmark and Model Zoo](#-overview-of-benchmark-and-model-zoo-)
+- [🧰 Projects Based on MMYOLO](#-projects-based-on-mmyolo-)
 - [❓ FAQ](#-faq-)
 - [🙌 Contributing](#-contributing-)
 - [🤝 Acknowledgement](#-acknowledgement-)
@@ -365,6 +366,33 @@ Results and models are available in the [model zoo](docs/en/model_zoo.md).
 </table>
 
 </details>
+
+## 🧰 Projects Based on MMYOLO [🔝](#-table-of-contents)
+
+### Algorithm
+
+- [YOLO-MS](https://github.com/FishAndWasabi/YOLO-MS)
+  Rethinking Multi-Scale Representation Learning for Real-Time Object Detection
+
+- [RSPrompter](https://github.com/KyanChen/RSPrompter)
+  Learning to Prompt for Remote Sensing Instance Segmentation based on Visual Foundation Model
+
+- [EAEFNet](https://github.com/FreeformRobotics/EAEFNet)
+  Explicit Attention-Enhanced Fusion for RGB-Thermal Perception Tasks
+
+- [CVPRW2023 Track 1: Multi-Camera People Tracking](https://github.com/ipl-uw/AIC23_Track1_UWIPL_ETRI)
+  Enhancing Multi-Camera People Tracking with Anchor-Guided Clustering and Spatio-Temporal Consistency ID Re-Assignment
+
+### Deployment
+
+- [EdgeLab](https://github.com/Seeed-Studio/EdgeLab)
+  Seeed Studio EdgeLab is an open-source project focused on embedded AI. They have optimized excellent algorithms from OpenMMLab for real-world scenarios and made implementation more user-friendly, achieving faster and more accurate inference on embedded devices.
+
+- [AX-Samples](https://github.com/AXERA-TECH/ax-samples/tree/main/examples/ax620)
+  AX-Samples is developed by Axera. This project implements the sample code of common deep learning open source algorithms on Axera's AI SoC. There're some MMYOLO case examples in this project.
+
+- [PPQ ONNX Quantization Model Zoo](https://github.com/openppl-public/ppq/blob/master/ppq/samples/QuantZoo/Readme.md#33-%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B)
+  OnnxQuant is the largest model quantization dataset available that contains ONNX models, dataset, and associated test scripts. They use MMYOLO to build the object detection benchmark.
 
 ## ❓ FAQ [🔝](#-table-of-contents)
 
