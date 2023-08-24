@@ -68,6 +68,7 @@
 - [🛠️ 安装](#️%EF%B8%8F-安装-)
 - [👨‍🏫 教程](#-教程-)
 - [📊 基准测试和模型库](#-基准测试和模型库-)
+- [🧰 基于 MMYOLO 开发的项目](#-基于-mmyolo-开发的项目-)
 - [❓ 常见问题](#-常见问题-)
 - [🙌 贡献指南](#-贡献指南-)
 - [🤝 致谢](#🤝-致谢-)
@@ -387,6 +388,33 @@ MMYOLO 用法和 MMDetection 几乎一致，所有教程都是通用的，你也
 </table>
 
 </details>
+
+## 🧰 基于 MMYOLO 开发的项目 [🔝](#-table-of-contents)
+
+### 算法
+
+- [YOLO-MS](https://github.com/FishAndWasabi/YOLO-MS)
+  实时物体检测的多尺度表征学习
+
+- [RSPrompter](https://github.com/KyanChen/RSPrompter)
+  基于视觉基础模型的遥感实例分割提示学习
+
+- [EAEFNet](https://github.com/FreeformRobotics/EAEFNet)
+  针对 RGB 热感知任务的显式注意力增强融合
+
+- [CVPRW2023 Track 1: Multi-Camera People Tracking](https://github.com/ipl-uw/AIC23_Track1_UWIPL_ETRI)
+  利用锚点引导聚类和时空一致性 ID 重新分配增强多摄像头人员跟踪能力
+
+### 部署
+
+- [EdgeLab](https://github.com/Seeed-Studio/EdgeLab)
+  Seeed Studio EdgeLab 是一个专注于嵌入式人工智能的开源项目。他们对 OpenMMLab 中的优秀算法进行了优化，使其适用于实际应用场景，并使实现过程更加友好，从而在嵌入式设备上实现更快、更准确的推理。
+
+- [AX-Samples](https://github.com/AXERA-TECH/ax-samples/tree/main/examples/ax620)
+  AX-Samples 由 爱芯元智 主导开发。该项目实现了常见的 深度学习开源算法 在 爱芯元智 的 AI SoC 上的示例代码，其中也包含了 MMYOLO 的相关示例。
+
+- [PPQ ONNX Quantization Model Zoo](https://github.com/openppl-public/ppq/blob/master/ppq/samples/QuantZoo/Readme.md#33-%E7%9B%AE%E6%A0%87%E6%A3%80%E6%B5%8B)
+  OnnxQuant 是目前最大的模型量化数据集，它包含 ONNX 模型，数据，以及相关的测试脚本。 他们使用 MMYOLO 作为目标检测量化算法的基准测试。
 
 ## ❓ 常见问题 [🔝](#-table-of-contents)
 
