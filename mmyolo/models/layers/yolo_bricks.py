@@ -183,6 +183,7 @@ class RepVGGBlock(nn.Module):
         else:
             self.se = nn.Identity()
 
+        self.use_alpha = use_alpha
         if use_alpha:
             alpha = torch.ones([
                 1,
@@ -246,7 +247,7 @@ class RepVGGBlock(nn.Module):
             id_out = 0
         else:
             id_out = self.rbr_identity(inputs)
-        if self.alpha:
+        if self.use_alpha:
             return self.nonlinearity(
                 self.se(
                     self.rbr_dense(inputs) +
@@ -265,7 +266,7 @@ class RepVGGBlock(nn.Module):
         kernel3x3, bias3x3 = self._fuse_bn_tensor(self.rbr_dense)
         kernel1x1, bias1x1 = self._fuse_bn_tensor(self.rbr_1x1)
         kernelid, biasid = self._fuse_bn_tensor(self.rbr_identity)
-        if self.alpha:
+        if self.use_alpha:
             return kernel3x3 + self.alpha * self._pad_1x1_to_3x3_tensor(
                 kernel1x1) + kernelid, bias3x3 + self.alpha * bias1x1 + biasid
         else:
