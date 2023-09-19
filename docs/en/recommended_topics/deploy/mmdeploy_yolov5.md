@@ -146,7 +146,7 @@ val_dataloader = dict(
 
 We use `allow_scale_up=False` to control when the input small images will be upsampled or not in the initialization of `LetterResize`. At the same time, the default `use_mini_pad=False` turns off the minimum padding strategy of the image, and `val_dataloader['dataset']` is passed in` batch_shapes_cfg=batch_shapes_cfg` to ensure that the minimum padding is performed according to the input size in `batch`. These configs will change the dimensions of the input image, so the converted model can support dynamic inputs according to the above dataset loader when testing.
 
-#### 2. Deployment Cofnig
+#### 2. Deployment Config
 
 To deploy the model to `ONNXRuntime`, please refer to the [`detection_onnxruntime_dynamic.py`](https://github.com/open-mmlab/mmyolo/blob/main/configs/deploy/detection_onnxruntime_dynamic.py) for more details.
 
@@ -271,11 +271,11 @@ python3 ${MMDEPLOY_DIR}/tools/deploy.py \
 
 When convert the model using the above commands, you will find the following files under the `work_dir` folder:
 
-![image](https://github.com/open-mmlab/mmdeploy/assets/110151316/760f3f7f-aa23-46cf-987c-717d3490246f)
+![image](https://github-production-user-asset-6210df.s3.amazonaws.com/110151316/242459821-760f3f7f-aa23-46cf-987c-717d3490246f.png)
 
 or
 
-![image](https://github.com/open-mmlab/mmdeploy/assets/110151316/732bcd9a-fca0-40ba-b5af-540a47eb9c35)
+![image](https://github-production-user-asset-6210df.s3.amazonaws.com/110151316/242460083-732bcd9a-fca0-40ba-b5af-540a47eb9c35.png)
 
 After exporting to `onnxruntime`, you will get six files as shown in Figure 1, where `end2end.onnx` represents the exported `onnxruntime` model. The `xxx.json` are the meta info for `MMDeploy SDK` inference.
 
