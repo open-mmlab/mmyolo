@@ -277,6 +277,33 @@ custom_hooks = [
         priority=49)
 ]
 
+autoanchor_hook = dict(
+    type='YOLOAutoAnchorHook',
+    optimizer=dict(
+        type='YOLOV5KMeansAnchorOptimizer',
+        iters=1000,
+        num_anchor_per_level=[3, 3, 3],
+        prior_match_thr=4.0,
+        mutation_args=[0.9, 0.1],
+        augment_args=[0.9, 0.1]))
+
+# You can comment out the existing autoanchor hook,
+# and then select the autoanchor you want and uncomment it.
+
+# autoanchor_hook = dict(
+#     type='YOLOAutoAnchorHook',
+#     optimizer=dict(
+#         type='YOLOKMeansAnchorOptimizer',
+#         iters=1000,
+#         num_anchor_per_level=[3, 3, 3]))
+
+# autoanchor_hook = dict(
+#     type='YOLOAutoAnchorHook',
+#     optimizer=dict(
+#         type='YOLODEAnchorOptimizer',
+#         iters=1000,
+#         num_anchor_per_level=[3, 3, 3]))
+
 val_evaluator = dict(
     type='mmdet.CocoMetric',
     proposal_nums=(100, 1, 10),

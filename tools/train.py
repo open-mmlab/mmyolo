@@ -31,6 +31,8 @@ def parse_args():
         'specify, try to auto resume from the latest checkpoint '
         'in the work directory.')
     parser.add_argument(
+        '--autoanchor', action='store_true', help='types of autoanchor')
+    parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
@@ -94,6 +96,11 @@ def main():
                 f'`OptimWrapper` but got {optim_wrapper}.')
             cfg.optim_wrapper.type = 'AmpOptimWrapper'
             cfg.optim_wrapper.loss_scale = 'dynamic'
+
+    if args.autoanchor:
+        assert cfg.model.bbox_head.prior_generator.type \
+                                        == 'mmdet.YOLOAnchorGenerator'
+        cfg.custom_hooks.append(cfg.autoanchor_hook)
 
     # resume is determined in this priority: resume from > auto_resume
     if args.resume == 'auto':
