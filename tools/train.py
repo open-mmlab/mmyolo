@@ -40,6 +40,7 @@ def parse_args():
         'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
         'Note that the quotation marks are necessary and that no white space '
         'is allowed.')
+    parser.add_argument('--lazy-import', action='store_true')
     parser.add_argument(
         '--launcher',
         choices=['none', 'pytorch', 'slurm', 'mpi'],
