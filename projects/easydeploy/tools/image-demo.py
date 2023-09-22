@@ -33,27 +33,6 @@ def parse_args():
     return args
 
 
-def preprocess(config):
-    data_preprocess = config.get('model', {}).get('data_preprocessor', {})
-    mean = data_preprocess.get('mean', [0., 0., 0.])
-    std = data_preprocess.get('std', [1., 1., 1.])
-    mean = torch.tensor(mean, dtype=torch.float32).reshape(1, 3, 1, 1)
-    std = torch.tensor(std, dtype=torch.float32).reshape(1, 3, 1, 1)
-
-    class PreProcess(torch.nn.Module):
-
-        def __init__(self):
-            super().__init__()
-
-        def forward(self, x):
-            x = x[None].float()
-            x -= mean.to(x.device)
-            x /= std.to(x.device)
-            return x
-
-    return PreProcess().eval()
-
-
 def main():
     args = parse_args()
 
@@ -80,8 +59,6 @@ def main():
     test_pipeline[0] = ConfigDict({'type': 'mmdet.LoadImageFromNDArray'})
     test_pipeline = Compose(test_pipeline)
 
-    pre_pipeline = preprocess(cfg)
-
     if not args.show:
         path.mkdir_or_exist(args.out_dir)
 
@@ -102,7 +79,7 @@ def main():
             device=args.device)
         scale_factor = samples.get('scale_factor', [1., 1])
         scale_factor = torch.asarray(scale_factor * 2, device=args.device)
-        data = pre_pipeline(data).to(args.device)
+        data = data[None].float().to(args.device)
 
         result = model(data)
         if source_type['is_dir']:
