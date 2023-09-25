@@ -1,9 +1,12 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os
 import urllib
+from copy import deepcopy
+from typing import List, Union
 
 import numpy as np
 import torch
+from mmengine.config import ConfigDict
 from mmengine.utils import scandir
 from prettytable import PrettyTable
 
@@ -55,7 +58,7 @@ def auto_arrange_images(image_list: list, image_column: int = 2) -> np.ndarray:
     return image_show
 
 
-def get_file_list(source_root: str) -> [list, dict]:
+def get_file_list(source_root: str) -> Union[list, dict]:
     """Get file list.
 
     Args:
@@ -133,3 +136,33 @@ def is_metainfo_lower(cfg):
     judge_keys(cfg.get('train_dataloader', {}))
     judge_keys(cfg.get('val_dataloader', {}))
     judge_keys(cfg.get('test_dataloader', {}))
+
+
+def get_cfg_class_name(cfg_type: str):
+    return cfg_type.split('.')[-1]
+
+
+def convert_to_val_pipeline(data_cfg: ConfigDict,
+                            val_pipeline: List) -> ConfigDict:
+
+    if get_cfg_class_name(data_cfg.get('type')) in [
+            'MultiImageMixDataset', 'ClassBalancedDataset'
+    ]:
+        # While evaluation, there shouldn't use multi image or oversample.
+        data_cfg = deepcopy(data_cfg.get('dataset'))
+        data_cfg['pipeline'] = val_pipeline
+    elif 'dataset' in data_cfg:
+        data = deepcopy(data_cfg.get('dataset'))
+        if isinstance(data, list):
+            # concat dataset
+            data_cfg['dataset'] = [
+                convert_to_val_pipeline(d, val_pipeline) for d in data
+            ]
+        else:
+            # Deal with other dataset wrapper
+            data_cfg['dataset'] = convert_to_val_pipeline(data, val_pipeline)
+    else:
+        # Regular dataset
+        data_cfg['pipeline'] = val_pipeline
+    data_cfg['test_mode'] = True
+    return data_cfg
