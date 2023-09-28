@@ -20,6 +20,6 @@ __all__ = [
     'YOLOv7HeadModule', 'YOLOv7p6HeadModule', 'YOLOv8Head', 'YOLOv8HeadModule',
     'RTMDetRotatedHead', 'RTMDetRotatedSepBNHeadModule', 'RTMDetInsSepBNHead',
     'RTMDetInsSepBNHeadModule', 'YOLOv5InsHead', 'YOLOv5InsHeadModule',
-    'RTMDetInsSepBNHeadModule', 'YOLOv8InsHead', 'YOLOv8InsHeadModule',
-    'YOLOXPoseHead', 'YOLOXPoseHeadModule'
+    'YOLOv8InsHead', 'YOLOv8InsHeadModule', 'YOLOXPoseHead',
+    'YOLOXPoseHeadModule'
 ]
