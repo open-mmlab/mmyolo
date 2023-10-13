@@ -400,6 +400,13 @@ If you find this project useful in your research, please consider citing:
 
 This project is released under the [GPL 3.0 license](LICENSE).
 
+## 💻 How to Guides
+
+This section lists guides that show how to use MMYOLO.
+
+- [How to train RTMDet on a custom dataset](https://blog.roboflow.com/how-to-train-rtmdet-on-a-custom-dataset/): Learn how to train an RTMDet model on a custom dataset.
+- [How to Use MMDetection | Train RTMDet on a Custom Dataset](https://www.youtube.com/watch?v=5kgWyo6Sg4E): A video walking through how to use MMDetection with MMYOLO.
+
 ## 🏗️ Projects in OpenMMLab [🔝](#-table-of-contents)
 
 - [MMEngine](https://github.com/open-mmlab/mmengine): OpenMMLab foundational library for training deep learning models.
