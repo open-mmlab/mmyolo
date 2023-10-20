@@ -1,7 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import json
-import random
 from pathlib import Path
 
 import numpy as np
@@ -71,7 +70,7 @@ def split_coco_dataset(coco_json_path: str, save_dir: str, ratios: list,
 
     if shuffle:
         print('shuffle dataset.')
-        random.shuffle(coco_image_ids)
+        np.random.shuffle(coco_image_ids)
 
     # split each dataset
     train_image_ids = coco_image_ids[:train_image_num]
