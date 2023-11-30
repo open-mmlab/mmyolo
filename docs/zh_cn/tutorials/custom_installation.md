@@ -76,7 +76,7 @@ pip install "mmcv>=2.0.0rc4" -f https://download.openmmlab.com/mmcv/dist/cu116/t
 ```shell
 !pip3 install openmim
 !mim install "mmengine>=0.6.0"
-!mim install "mmcv>=2.0.0rc4,<2.1.0"
+!mim install "mmcv>=2.0.0rc4,<=2.1.0"
 !mim install "mmdet>=3.0.0,<4.0.0"
 ```
 
