@@ -74,7 +74,7 @@ thus we only need to install MMEngine, MMCV, MMDetection, and MMYOLO with the fo
 ```shell
 !pip3 install openmim
 !mim install "mmengine>=0.6.0"
-!mim install "mmcv>=2.0.0rc4,<2.1.0"
+!mim install "mmcv>=2.0.0rc4,<=2.1.0"
 !mim install "mmdet>=3.0.0,<4.0.0"
 ```
 
