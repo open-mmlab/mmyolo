@@ -119,6 +119,8 @@ class BaseBackbone(BaseModule, metaclass=ABCMeta):
             self.add_module(f'stage{idx + 1}', nn.Sequential(*stage))
             self.layers.append(f'stage{idx + 1}')
 
+        self._freeze_stages()
+
     @abstractmethod
     def build_stem_layer(self):
         """Build a stem layer."""
