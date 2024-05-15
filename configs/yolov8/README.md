@@ -4,7 +4,7 @@
 
 ## Abstract
 
-Ultralytics YOLOv8, developed by Ultralytics, is a cutting-edge, state-of-the-art (SOTA) model that builds upon the success of previous YOLO versions and introduces new features and improvements to further boost performance and flexibility. YOLOv8 is designed to be fast, accurate, and easy to use, making it an excellent choice for a wide range of object detection, image segmentation and image classification tasks.
+Ultralytics [YOLOv8](https://docs.ultralytics.com/models/yolov8/), developed by [Ultralytics](https://github.com/ultralytics/ultralytics), is a cutting-edge, state-of-the-art (SOTA) model that builds upon the success of previous YOLO versions and introduces new features and improvements to further boost performance and flexibility. YOLOv8 is designed to be fast, accurate, and easy to use, making it an excellent choice for a wide range of object detection, image segmentation and image classification tasks.
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/17425982/212812246-51dc029c-e892-455d-86b4-946b5d03957a.png"/>
@@ -43,3 +43,15 @@ YOLOv8-P5 model structure
 6. `TTA` means that Test Time Augmentation. It's perform 3 multi-scaling transformations on the image, followed by 2 flipping transformations (flipping and not flipping). You only need to specify `--tta` when testing to enable.  see [TTA](https://github.com/open-mmlab/mmyolo/blob/dev/docs/en/common_usage/tta.md) for details.
 
 ## Citation
+
+```bibtex
+@software{yolov8_ultralytics,
+  author = {Glenn Jocher and Ayush Chaurasia and Jing Qiu},
+  title = {Ultralytics YOLOv8},
+  version = {8.0.0},
+  year = {2023},
+  url = {https://github.com/ultralytics/ultralytics},
+  orcid = {0000-0001-5950-6979, 0000-0002-7603-6750, 0000-0003-3783-7069},
+  license = {AGPL-3.0}
+}
+```
