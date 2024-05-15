@@ -1207,8 +1207,8 @@ class CSPResLayer(nn.Module):
         assert attention_cfg is None or isinstance(attention_cfg, dict)
 
         if stride == 2:
-            conv1_in_channels = conv2_in_channels = conv3_in_channels = (
-                in_channels + out_channels) // 2
+            conv1_in_channels = conv2_in_channels = (in_channels +
+                                                     out_channels) // 2
             blocks_channels = conv1_in_channels // 2
             self.conv_down = ConvModule(
                 in_channels,
@@ -1220,7 +1220,6 @@ class CSPResLayer(nn.Module):
                 act_cfg=act_cfg)
         else:
             conv1_in_channels = conv2_in_channels = in_channels
-            conv3_in_channels = out_channels
             blocks_channels = out_channels // 2
             self.conv_down = None
 
@@ -1241,7 +1240,7 @@ class CSPResLayer(nn.Module):
         self.blocks = self.build_blocks_layer(blocks_channels)
 
         self.conv3 = ConvModule(
-            conv3_in_channels,
+            blocks_channels * 2,
             out_channels,
             1,
             norm_cfg=norm_cfg,
@@ -1505,9 +1504,12 @@ class CSPLayerWithTwoConv(BaseModule):
     def forward(self, x: Tensor) -> Tensor:
         """Forward process."""
         x_main = self.main_conv(x)
-        x_main = list(x_main.split((self.mid_channels, self.mid_channels), 1))
-        x_main.extend(blocks(x_main[-1]) for blocks in self.blocks)
-        return self.final_conv(torch.cat(x_main, 1))
+        x=x_main[:,self.mid_channels:,...]
+        tmp=[x_main]
+        for block in self.blocks:
+            x=block(x)
+            tmp.append(x)
+        return self.final_conv(torch.cat(tmp, 1))
 
 
 class BiFusion(nn.Module):

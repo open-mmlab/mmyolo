@@ -107,9 +107,9 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
         block_cfg = self.block_cfg.copy()
 
         layer0 = RepStageBlock(
-            in_channels=int(
-                (self.out_channels[idx - 1] + self.in_channels[idx - 1]) *
-                self.widen_factor),
+            in_channels=sum(
+                map(lambda x: int(x * self.widen_factor),
+                    (self.out_channels[idx - 1], self.in_channels[idx - 1]))),
             out_channels=int(self.out_channels[idx - 1] * self.widen_factor),
             num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
             block_cfg=block_cfg)
@@ -156,7 +156,7 @@ class YOLOv6RepPAFPN(BaseYOLONeck):
         block_cfg = self.block_cfg.copy()
 
         return RepStageBlock(
-            in_channels=int(self.out_channels[idx] * 2 * self.widen_factor),
+            in_channels=int(self.out_channels[idx] * self.widen_factor) * 2,
             out_channels=int(self.out_channels[idx + 1] * self.widen_factor),
             num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
             block_cfg=block_cfg)
@@ -241,9 +241,9 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
         block_cfg = self.block_cfg.copy()
 
         layer0 = BepC3StageBlock(
-            in_channels=int(
-                (self.out_channels[idx - 1] + self.in_channels[idx - 1]) *
-                self.widen_factor),
+            in_channels=sum(
+                map(lambda x: int(x * self.widen_factor),
+                    (self.out_channels[idx - 1], self.in_channels[idx - 1]))),
             out_channels=int(self.out_channels[idx - 1] * self.widen_factor),
             num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
             block_cfg=block_cfg,
@@ -276,7 +276,7 @@ class YOLOv6CSPRepPAFPN(YOLOv6RepPAFPN):
         block_cfg = self.block_cfg.copy()
 
         return BepC3StageBlock(
-            in_channels=int(self.out_channels[idx] * 2 * self.widen_factor),
+            in_channels=int(self.out_channels[idx] * self.widen_factor) * 2,
             out_channels=int(self.out_channels[idx + 1] * self.widen_factor),
             num_blocks=make_round(self.num_csp_blocks, self.deepen_factor),
             block_cfg=block_cfg,
