@@ -37,9 +37,9 @@ YOLOv8 是 Ultralytics 公司在 2023 年 1月 10 号开源的 YOLOv5 的下一�
 
 阅读本文前，如果你对 YOLOv5、YOLOv6 和 RTMDet 不熟悉，可以先看下如下文档：
 
-1. [YOLOv5 原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/yolov5_description.html)
-2. [YOLOv6 原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/yolov6_description.html)
-3. [RTMDet 原理和实现全解析](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/rtmdet_description.html)
+1. [YOLOv5 原理和实现全解析](yolov5_description.md)
+2. [YOLOv6 原理和实现全解析](yolov6_description.md)
+3. [RTMDet 原理和实现全解析](rtmdet_description.md)
 
 ## 1 YOLOv8 概述
 
@@ -129,7 +129,7 @@ Loss 计算包括 2 个分支： **分类和回归分支，没有了之前的 ob
 图 7：results
 </div>
 
-上述效果可以运行 [browse_dataset](https://github.com/open-mmlab/mmyolo/blob/dev/tools/analysis_tools/browse_dataset.py) 脚本得到。由于每个 pipeline 都是比较常规的操作，本文不再赘述。如果想了解每个 pipeline 的细节，可以查看 MMYOLO 中 [YOLOv5 的算法解析文档](https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/yolov5_description.html#id2) 。
+上述效果可以运行 [browse_dataset](https://github.com/open-mmlab/mmyolo/blob/dev/tools/analysis_tools/browse_dataset.py) 脚本得到。由于每个 pipeline 都是比较常规的操作，本文不再赘述。如果想了解每个 pipeline 的细节，可以查看 MMYOLO 中 [YOLOv5 的算法解析文档](yolov5_description.md) 。
 
 ## 5 训练策略
 
@@ -241,4 +241,4 @@ python demo/featmap_vis_demo.py demo/demo.jpg configs/yolov8/yolov8_s_syncbn_fas
 
 MMYOLO 开源地址： https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/README.md
 
-MMYOLO 算法解析教程：https://mmyolo.readthedocs.io/zh_CN/latest/algorithm_descriptions/index.html#id2
+MMYOLO 算法解析教程：https://mmyolo.readthedocs.io/zh-cn/latest/recommended_topics/algorithm_descriptions/index.html

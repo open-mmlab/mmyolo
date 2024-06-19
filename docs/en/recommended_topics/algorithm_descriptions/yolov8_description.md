@@ -42,7 +42,7 @@ The following table shows the official results of mAP, number of parameters and 
 
 It is worth mentioning that the recent YOLO series have shown significant performance improvements on the COCO dataset. However, their generalizability on custom datasets has not been extensively tested, which thereby will be a focus in the future development of MMYOLO.
 
-Before reading this article, if you are not familiar with YOLOv5, YOLOv6 and RTMDet, you can read the detailed explanation of [YOLOv5 and its implementation](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/yolov5_description.html).
+Before reading this article, if you are not familiar with YOLOv5, YOLOv6 and RTMDet, you can read the detailed explanation of [YOLOv5 and its implementation](yolov5_description.md).
 
 ## 1 YOLOv8 Overview
 
@@ -133,7 +133,7 @@ Figure 8：results
 
 The above visualization result can be obtained by running the [browse_dataset](https://github.com/open-mmlab/mmyolo/blob/dev/tools/analysis_tools/browse_dataset.py) script.
 
-As the data augmentation process utilized in YOLOv8 is similar to YOLOv5, we will not delve into the specifics within this article. For a more in-depth understanding of each data transformation, we recommend reviewing the [YOLOv5 algorithm analysis document](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/yolov5_description.html#id2) in MMYOLO.
+As the data augmentation process utilized in YOLOv8 is similar to YOLOv5, we will not delve into the specifics within this article. For a more in-depth understanding of each data transformation, we recommend reviewing the [YOLOv5 algorithm analysis document](yolov5_description.md) in MMYOLO.
 
 ## 5 Training strategy
 
@@ -238,4 +238,4 @@ In summary, YOLOv8 is a highly efficient algorithm that incorporates image class
 
 MMYOLO open source address for YOLOV8 [this](https://github.com/open-mmlab/mmyolo/blob/dev/configs/yolov8/)
 
-MMYOLO Algorithm Analysis Tutorial address is [yolov5_description](https://mmyolo.readthedocs.io/en/latest/algorithm_descriptions/yolov5_description.html)
+MMYOLO Algorithm Analysis Tutorial address is [yolov5_description](yolov5_description.md)

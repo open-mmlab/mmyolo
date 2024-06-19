@@ -1,6 +1,6 @@
 # Learn about Configs with YOLOv5
 
-MMYOLO and other OpenMMLab repositories use [MMEngine's config system](https://mmengine.readthedocs.io/en/latest/tutorials/config.html). It has a modular and inheritance design, which is convenient to conduct various experiments.
+MMYOLO and other OpenMMLab repositories use [MMEngine's config system](https://mmengine.readthedocs.io/en/latest/advanced_tutorials/config.html). It has a modular and inheritance design, which is convenient to conduct various experiments.
 
 ## Config file content
 

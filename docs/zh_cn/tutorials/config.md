@@ -1,6 +1,6 @@
 # 学习 YOLOv5 配置文件
 
-MMYOLO 和其他 OpenMMLab 仓库使用 [MMEngine 的配置文件系统](https://mmengine.readthedocs.io/zh_cn/latest/tutorials/config.md)。 配置文件使用了模块化和继承设计，以便于进行各类实验。
+MMYOLO 和其他 OpenMMLab 仓库使用 [MMEngine 的配置文件系统](https://mmengine.readthedocs.io/zh-cn/latest/advanced_tutorials/config.html)。 配置文件使用了模块化和继承设计，以便于进行各类实验。
 
 ## 配置文件的内容
 

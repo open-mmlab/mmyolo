@@ -10,7 +10,7 @@
 本教程所有指令是在 Linux 上面完成，Windows 也是完全可用的，但是命令和操作稍有不同。
 ```
 
-本教程默认您已经完成 MMYOLO 的安装，如果未安装，请参考文档 [开始你的第一步](https://mmyolo.readthedocs.io/zh_CN/latest/get_started.html#id1) 进行安装。
+本教程默认您已经完成 MMYOLO 的安装，如果未安装，请参考文档 [开启MMYOLO之旅](https://mmyolo.readthedocs.io/zh-cn/latest/index.html)，从依赖一节开始进行安装。
 
 本教程涵盖从 用户自定义图片数据集标注 到 最终进行训练和部署 的整体流程。步骤概览如下：
 
