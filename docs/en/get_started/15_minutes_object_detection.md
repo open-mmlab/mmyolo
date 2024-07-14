@@ -375,7 +375,7 @@ Based on the above feature map visualization, we can analyze Grad CAM at the fea
 Install `grad-cam` package:
 
 ```shell
-pip install "grad-cam"
+pip install "grad-cam==1.4.8"
 ```
 
 (a) View Grad CAM of the minimum output feature map of the neck
