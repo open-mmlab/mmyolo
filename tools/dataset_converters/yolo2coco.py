@@ -45,12 +45,14 @@ Note:
     `tools/analysis_tools/browse_coco_json.py` script to visualize
     whether it is correct.
 """
+
 import argparse
 import os
 import os.path as osp
 
 import mmcv
 import mmengine
+import numpy as np
 
 IMG_EXTENSIONS = ('.jpg', '.png', '.jpeg')
 
@@ -72,36 +74,39 @@ def get_image_info(yolo_image_dir, idx, file_name):
         'file_name': file_name,
         'id': idx,
         'width': width,
-        'height': height
+        'height': height,
     }
     return img_info_dict, height, width
 
 
-def convert_bbox_info(label, idx, obj_count, image_height, image_width):
-    """Convert yolo-style bbox info to the coco format."""
+def convert_label_info(label, idx, obj_count, image_height, image_width):
+    """Convert yolo-style label info to the coco format."""
     label = label.strip().split()
-    x = float(label[1])
-    y = float(label[2])
-    w = float(label[3])
-    h = float(label[4])
-
-    # convert x,y,w,h to x1,y1,x2,y2
-    x1 = (x - w / 2) * image_width
-    y1 = (y - h / 2) * image_height
-    x2 = (x + w / 2) * image_width
-    y2 = (y + h / 2) * image_height
-
+    if len(label) < 7:  # box case
+        xc, yc, w, h = map(float, label[1:5])
+        xmin = (xc - w / 2) * image_width
+        ymin = (yc - h / 2) * image_height
+        xmax = (xc + w / 2) * image_width
+        ymax = (yc + h / 2) * image_height
+        vertices = [xmin, ymin, xmax, ymin, xmax, ymax, xmin, ymax]
+    else:  # polygon case
+        vertices = np.array(label[1:]).astype(float)
+        vertices = vertices.reshape(-1, 2) * [image_width, image_height]
+        xmin, ymin = vertices.min(axis=0)
+        xmax, ymax = vertices.max(axis=0)
+        vertices = list(vertices.flatten())
+        
     cls_id = int(label[0])
-    width = max(0., x2 - x1)
-    height = max(0., y2 - y1)
+    width = max(0.0, xmax - xmin)
+    height = max(0.0, ymax - ymin)
     coco_format_info = {
         'image_id': idx,
         'id': obj_count,
         'category_id': cls_id,
-        'bbox': [x1, y1, width, height],
+        'bbox': [xmin, ymin, width, height],
         'area': width * height,
-        'segmentation': [[x1, y1, x2, y1, x2, y2, x1, y2]],
-        'iscrowd': 0
+        'segmentation': [vertices],
+        'iscrowd': 0,
     }
     obj_count += 1
     return coco_format_info, obj_count
@@ -226,7 +231,7 @@ def convert_yolo_to_coco(image_dir: str):
         with open(label_path) as f:
             labels = f.readlines()
             for label in labels:
-                coco_info, obj_count = convert_bbox_info(
+                coco_info, obj_count = convert_label_info(
                     label, idx, obj_count, image_height, image_width)
                 dataset['annotations'].append(coco_info)
         converted += 1
