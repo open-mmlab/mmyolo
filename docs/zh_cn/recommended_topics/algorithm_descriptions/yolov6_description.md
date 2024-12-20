@@ -14,7 +14,7 @@
 
 以上结构图由 wzr-skn@github 绘制。
 
-YOLOv6 提出了一系列适用于各种工业场景的模型，包括 N/T/S/M/L，考虑到模型的大小，其架构有所不同，以获得更好的精度-速度权衡。本算法专注于检测的精度和推理效率，并在网络结构、训练策略等算法层面进行了多项改进和优化。
+YOLOv6 提出了一系列适用于各种工业场景的模型，包括 N/T/S/M/L，考虑到模型的大小，其架构有所不同，以获得更好的精度 - 速度权衡。本算法专注于检测的精度和推理效率，并在网络结构、训练策略等算法层面进行了多项改进和优化。
 
 简单来说 YOLOv6 开源库的主要特点为：
 
@@ -99,9 +99,9 @@ Neck 部分结构仍然在 YOLOv5 基础上进行了模块的改动，同样采�
 ### 1.3 正负样本匹配策略
 
 YOLOv6 采用的标签匹配策略与 [TOOD](https://arxiv.org/abs/2108.07755)
-相同, 前 4 个 epoch 采用 `ATSSAssigner` 作为标签匹配策略的 `warm-up` ,
-后续使用 `TaskAlignedAssigner` 算法选择正负样本, 基于官方开源代码,  `MMYOLO` 中也对两个 assigner 算法进行了优化, 改进为 `Batch` 维度进行计算，
-能够一定程度的加快速度。 下面会对每个部分进行详细说明。
+相同，前 4 个 epoch 采用 `ATSSAssigner` 作为标签匹配策略的 `warm-up` ,
+后续使用 `TaskAlignedAssigner` 算法选择正负样本，基于官方开源代码， `MMYOLO` 中也对两个 assigner 算法进行了优化，改进为 `Batch` 维度进行计算，
+能够一定程度的加快速度。下面会对每个部分进行详细说明。
 
 #### 1.3.1 Anchor 设置
 
@@ -136,7 +136,7 @@ def decode(points: torch.Tensor, pred_bboxes: torch.Tensor, stride: torch.Tensor
         将预测值解码转化 bbox 的 xyxy
         points (Tensor): 生成的 anchor point [x, y]，Shape (B, N, 2) or (N, 2).
         pred_bboxes (Tensor): 预测距离四边的距离。(left, top, right, bottom). Shape (B, N, 4) or (N, 4)
-        stride (Tensor): 特征图下采样倍率.
+        stride (Tensor): 特征图下采样倍率。
     """
     # 首先将预测值转化为原图尺度
     distance = pred_bboxes * stride[None, :, None]
@@ -159,11 +159,11 @@ def decode(points: torch.Tensor, pred_bboxes: torch.Tensor, stride: torch.Tensor
 #### ATSSAssigner
 
 ATSSAssigner 是 [ATSS](https://arxiv.org/abs/1912.02424) 中提出的标签匹配策略。
-ATSS 的匹配策略简单总结为：**通过中心点距离先验对样本进行初筛,然后自适应生成 IoU 阈值筛选正样本。**
-YOLOv6 的实现种主要包括如下三个核心步骤：
+ATSS 的匹配策略简单总结为：**通过中心点距离先验对样本进行初筛，然后自适应生成 IoU 阈值筛选正样本。**
+YOLOv6 的实现中主要包括如下三个核心步骤：
 
 1. 因为 YOLOv6 是 Anchor-free，所以首先将 `anchor point` 转化为大小为 `5*strdie` 的 `anchor`。
-2. 对于每一个 `GT`，在 `FPN` 的每一个特征层上， 计算与该层所有 `anchor` 中心点距离(位置先验)，
+2. 对于每一个 `GT`，在 `FPN` 的每一个特征层上，计算与该层所有 `anchor` 中心点距离 (位置先验)，
    然后优先选取距离 `topK` 近的样本，作为 **初筛样本**。
 3. 对于每一个 `GT`，计算其 **初筛样本** 的 `IoU` 的均值 `mean`与标准差 `std`，将 `mean + std`
    作为该 `GT` 的正样本的 **自适应 IoU 阈值** ，大于该 **自适应阈值** 且中心点在 `GT` 内部的 `anchor`
@@ -176,8 +176,8 @@ YOLOv6 的实现种主要包括如下三个核心步骤：
 </div>
 
 ```python
-# 1. 首先将anchor points 转化为 anchors
-# priors为(point_x,point_y,stride_w,stride_h), shape 为(N,4)
+# 1. 首先将 anchor points 转化为 anchors
+# priors 为 (point_x,point_y,stride_w,stride_h), shape 为 (N,4)
 cell_half_size = priors[:, 2:] * 2.5
 priors_gen = torch.zeros_like(priors)
 priors_gen[:, :2] = priors[:, :2] - cell_half_size
@@ -191,7 +191,7 @@ distances, priors_points = bbox_center_distance(
 # 4. 根据中心点距离，在 FPN 的每一层选取 TopK 临近的样本作为初筛样本
 is_in_candidate, candidate_idxs = self.select_topk_candidates(
         distances, num_level_priors, pad_bbox_flag)
-# 5. 对于每一个 GT 计算其对应初筛样本的均值与标准差的和, 作为该GT的样本阈值
+# 5. 对于每一个 GT 计算其对应初筛样本的均值与标准差的和，作为该 GT 的样本阈值
 overlaps_thr_per_gt, iou_candidates = self.threshold_calculator(
         is_in_candidate, candidate_idxs, overlaps, num_priors, batch_size,
         num_gt)
@@ -212,11 +212,11 @@ TaskAlignedAssigner 是 [TOOD](https://arxiv.org/abs/2108.07755) 中提出的一
 
 `TaskAlignedAssigner` 的匹配策略简单总结为： **根据分类与回归的分数加权的分数选择正样本**。
 
-1. 对于每一个 `GT`，对所有的 `预测框` 基于 **GT类别对应分类分数** 与 **预测框与 GT 的 IoU** 的加权得到一个关联分类以及回归的对齐分数 `alignment_metrics`。
+1. 对于每一个 `GT`，对所有的 `预测框` 基于 **GT 类别对应分类分数** 与 **预测框与 GT 的 IoU** 的加权得到一个关联分类以及回归的对齐分数 `alignment_metrics`。
 2. 对于每一个 `GT`，直接基于 `alignment_metrics` 对齐分数选取 `topK` 大的作为正样本。
 
 因为在网络初期参数随机， `分类分数` 和 `预测框与 GT 的 IoU` 都不准确，所以需要经过前 4 个 `epoch` 的 `ATSSAssigner`
-的 `warm-up`。经过预热之后的 `TaskAlignedAssigner` 标签匹配策略就不使用中心距离的先验,
+的 `warm-up`。经过预热之后的 `TaskAlignedAssigner` 标签匹配策略就不使用中心距离的先验，
 而是直接对每一个`GT` 选取 `alignment_metrics` 中 `topK` 大的样本作为正样本。
 
 ```python
@@ -236,7 +236,7 @@ topk_metric = self.select_topk_candidates(
 参与 Loss 计算的共有两个值：loss_cls 和 loss_bbox，其各自使用的 Loss 方法如下：
 
 - Classes loss：使用的是 `mmdet.VarifocalLoss`
-- BBox loss：l/m/s使用的是 `GIoULoss`,  t/n 用的是 `SIoULoss`
+- BBox loss：l/m/s 使用的是 `GIoULoss`,  t/n 用的是 `SIoULoss`
 
 权重比例是：`loss_cls` : `loss_bbox` = `1 : 2.5`
 
@@ -249,7 +249,7 @@ Varifocal Loss (VFL) 是 [VarifocalNet: An IoU-aware Dense Object Detector](http
 <img src="https://user-images.githubusercontent.com/52028100/204796751-3b1ed7d7-9185-4894-9832-147f84220cdf.png" alt="image"/>
 </div>
 
-`VFL` 是在 `GFL` 的基础上做的改进，`GFL`详情请看 [GFL详解](rtmdet_description.md)
+`VFL` 是在 `GFL` 的基础上做的改进，`GFL`详情请看 [GFL 详解](rtmdet_description.md)
 
 在上述标签匹配策略中提到过选择样本应该优先考虑分类回归都友好的样本点，
 这是由于目标检测包含的分类与回归两个子任务都是作用于同一个物体。
@@ -276,7 +276,7 @@ Varifocal Loss 原本的公式：
    即 `IoU` 作为 `focal weight`, 使得聚焦到具有高质量的样本上。
 
 但是 YOLOv6 中的 Varifocal Loss 公式采用 `TOOD` 中的 `Task ALignment Learning (TAL)`,
-将预测的 `IoU` 根据之前标签匹配策略中的分类对齐度 `alignment_metrics` 进行了归一化,
+将预测的 `IoU` 根据之前标签匹配策略中的分类对齐度 `alignment_metrics` 进行了归一化，
 得到归一化 {math}`\hat{t}`。
 具体实现方式为：
 
@@ -300,16 +300,16 @@ MMDetection 实现源码的核心部分：
 ```python
 def varifocal_loss(pred, target, alpha=0.75, gamma=2.0, iou_weighted=True):
     """
-        pred (torch.Tensor): 预测的分类分数，形状为 (B,N,C) , N 表示 anchor 数量， C 表示类别数
+        pred (torch.Tensor): 预测的分类分数，形状为 (B,N,C) , N 表示 anchor 数量，C 表示类别数
         target (torch.Tensor): 经过对齐度归一化后的 IoU 分数，形状为 (B,N,C)，数值范围为 0~1
         alpha (float, optional): 调节正负样本之间的平衡因子，默认 0.75.
-        gamma (float, optional): 负样本 focal 权重因子， 默认 2.0.
+        gamma (float, optional): 负样本 focal 权重因子，默认 2.0.
         iou_weighted (bool, optional): 正样本是否用 IoU 加权
     """
     pred_sigmoid = pred.sigmoid()
     target = target.type_as(pred)
     if iou_weighted:
-        # 计算权重，正样本(target > 0)中权重为 target,
+        # 计算权重，正样本 (target > 0) 中权重为 target,
         # 负样本权重为 alpha*pred_simogid^2
         focal_weight = target * (target > 0.0).float() + \
             alpha * (pred_sigmoid - target).abs().pow(gamma) * \
@@ -327,9 +327,9 @@ def varifocal_loss(pred, target, alpha=0.75, gamma=2.0, iou_weighted=True):
 
 #### 回归损失函数 GIoU Loss / SIoU Loss
 
-在 YOLOv6 中，针对不同大小的模型采用了不同的回归损失函数，其中 l/m/s使用的是 `GIoULoss`,  t/n 用的是 `SIoULoss`。
+在 YOLOv6 中，针对不同大小的模型采用了不同的回归损失函数，其中 l/m/s 使用的是 `GIoULoss`,  t/n 用的是 `SIoULoss`。
 
-其中` GIoULoss` 详情请看 [GIoU详解](rtmdet_description.md)。
+其中` GIoULoss` 详情请看 [GIoU 详解](rtmdet_description.md)。
 
 ##### SIou Loss
 
@@ -339,14 +339,14 @@ SIoU 损失函数是 [SIoU Loss: More Powerful Learning for Bounding Box Regress
 
 SIoU 损失主要由四个度量方面组成：
 
-- IoU成本
+- IoU 成本
 - 角度成本
 - 距离成本
 - 形状成本
 
 如下图所示，**角度成本** 就是指图中预测框 {math}`B` 向 {math}`B^{GT}` 的回归过程中，
 尽可能去使得优化过程中的不确定性因素减少，比如现将图中的角度 {math}`\alpha` 或者 {math}`\beta`
-变为 0 ，再去沿着 `x` 轴或者 `y` 轴去回归边界。
+变为 0，再去沿着 `x` 轴或者 `y` 轴去回归边界。
 
 <div align=center>
 <img src="https://user-images.githubusercontent.com/52028100/207532021-6a4660bf-be94-4c21-a608-a44fc3b3ccb8.png" alt="image"/>
@@ -357,7 +357,7 @@ MMYOLO 实现源码的核心部分：
 ```python
 
 def bbox_overlaps(bboxes1, bboxes2, mode='siou', is_aligned=False, eps=1e-6):
-    # 两个box的顶点x1,y1,x2,y2
+    # 两个 box 的顶点 x1,y1,x2,y2
     bbox1_x1, bbox1_y1 = pred[:, 0], pred[:, 1]
     bbox1_x2, bbox1_y2 = pred[:, 2], pred[:, 3]
     bbox2_x1, bbox2_y1 = target[:, 0], target[:, 1]
@@ -380,8 +380,8 @@ def bbox_overlaps(bboxes1, bboxes2, mode='siou', is_aligned=False, eps=1e-6):
     enclose_w = enclose_wh[:, 0]  # enclose_w
     enclose_h = enclose_wh[:, 1]  # enclose_h
     elif iou_mode == 'siou':
-        # 1.计算 σ （两个box中心点距离）:
-        # sigma_cw，sigma_ch：上图中cw,ch
+        # 1.计算 σ（两个 box 中心点距离）:
+        # sigma_cw，sigma_ch：上图中 cw,ch
         sigma_cw = (bbox2_x1 + bbox2_x2) / 2 - (bbox1_x1 + bbox1_x2) / 2 + eps
         sigma_ch = (bbox2_y1 + bbox2_y2) / 2 - (bbox1_y1 + bbox1_y2) / 2 + eps
         sigma = torch.pow(sigma_cw**2 + sigma_ch**2, 0.5)
@@ -398,15 +398,15 @@ def bbox_overlaps(bboxes1, bboxes2, mode='siou', is_aligned=False, eps=1e-6):
 
         # 3.这里将角度损失与距离损失进行融合
         # Distance cost = Σ_(t=x,y) (1 - e ^ (- γ ρ_t))
-        rho_x = (sigma_cw / enclose_w)**2  # ρ_x:x轴中心点距离距离损失
-        rho_y = (sigma_ch / enclose_h)**2  # ρ_y:y轴中心点距离距离损失
+        rho_x = (sigma_cw / enclose_w)**2  # ρ_x:x 轴中心点距离距离损失
+        rho_y = (sigma_ch / enclose_h)**2  # ρ_y:y 轴中心点距离距离损失
         gamma = 2 - angle_cost  # γ
         # 当 α=0, angle_cost=0, gamma=2, dis_cost_x =  1 - e ^ (-2 p_x)，因为 ρ_x>0, 主要优化距离
         # 当 α=45°，angle_cost=1, gamma=1, dis_cost_x =  1 - e ^ (-1* p_x)，因为 ρ_x<1, 主要优化角度
         distance_cost = (1 - torch.exp(-1 * gamma * rho_x)) + (
             1 - torch.exp(-1 * gamma * rho_y))
 
-        # 4.形状损失 就是两个box之间的宽高比
+        # 4.形状损失 就是两个 box 之间的宽高比
         # Shape cost = Ω = Σ_(t=w,h) ( ( 1 - ( e ^ (-ω_t) ) ) ^ θ )
         omiga_w = torch.abs(w1 - w2) / torch.max(w1, w2)  # ω_w
         omiga_h = torch.abs(h1 - h2) / torch.max(h1, h2)  # ω_h
