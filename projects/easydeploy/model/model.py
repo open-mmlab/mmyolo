@@ -17,7 +17,7 @@ from mmyolo.models.layers import ImplicitA, ImplicitM
 from ..backbone import DeployFocus, GConvFocus, NcnnFocus
 from ..bbox_code import (rtmdet_bbox_decoder, yolov5_bbox_decoder,
                          yolox_bbox_decoder)
-from ..nms import batched_nms, efficient_nms, onnx_nms
+from ..nms import agnostic_nms, batched_nms, efficient_nms, onnx_nms
 from .backend import MMYOLOBackend
 
 
@@ -38,6 +38,7 @@ class DeployModel(nn.Module):
             self.with_postprocess = True
             self.__init_sub_attributes()
             self.detector_type = type(self.baseHead)
+            self.agnostic_nms = postprocess_cfg.get('agnostic_nms', False)
             self.pre_top_k = postprocess_cfg.get('pre_top_k', 1000)
             self.keep_top_k = postprocess_cfg.get('keep_top_k', 100)
             self.iou_threshold = postprocess_cfg.get('iou_threshold', 0.65)
@@ -150,7 +151,10 @@ class DeployModel(nn.Module):
         if self.backend in (MMYOLOBackend.ONNXRUNTIME, MMYOLOBackend.OPENVINO):
             nms_func = onnx_nms
         elif self.backend == MMYOLOBackend.TENSORRT8:
-            nms_func = efficient_nms
+            if self.agnostic_nms:
+                nms_func = agnostic_nms
+            else:
+                nms_func = efficient_nms
         elif self.backend == MMYOLOBackend.TENSORRT7:
             nms_func = batched_nms
         else:
