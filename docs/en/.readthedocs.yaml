@@ -1,0 +1,15 @@
+version: 2
+
+formats: all
+
+sphinx:
+  configuration: docs/en/conf.py
+
+build:
+  os: "ubuntu-22.04"
+  tools:
+    python: "3.7"
+
+python:
+  install:
+    - requirements: requirements/docs.txt
