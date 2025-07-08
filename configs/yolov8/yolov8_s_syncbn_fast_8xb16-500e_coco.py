@@ -13,6 +13,11 @@ val_data_prefix = 'val2017/'  # Prefix of val image path
 num_classes = 80  # Number of classes for classification
 # Batch size of a single GPU during training
 train_batch_size_per_gpu = 16
+
+metainfo = dict(
+    classes=('class_name_1','class_name_2','class_name_3'),  # Class names
+    palette=[[220, 20, 60]])  # Color palette for visualization
+
 # Worker to pre-fetch data for each single GPU during training
 train_num_workers = 8
 # persistent_workers must be False if num_workers is 0
@@ -240,6 +245,7 @@ train_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         ann_file=train_ann_file,
+        metainfo=metainfo,
         data_prefix=dict(img=train_data_prefix),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline))
@@ -272,6 +278,7 @@ val_dataloader = dict(
         test_mode=True,
         data_prefix=dict(img=val_data_prefix),
         ann_file=val_ann_file,
+        metainfo=metainfo,
         pipeline=test_pipeline,
         batch_shapes_cfg=batch_shapes_cfg))
 
