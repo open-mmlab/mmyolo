@@ -10,6 +10,11 @@ train_data_prefix = 'train2017/'  # Prefix of train image path
 val_ann_file = 'annotations/instances_val2017.json'
 val_data_prefix = 'val2017/'  # Prefix of train image path
 
+class_names = ('lass_name_1','class_name_2', 'class_name_3',)
+metainfo = dict(
+    classes= class_names,  # Class names for the dataset
+    palette=[(220, 20, 60)])  # Color palette for visualization
+
 num_classes = 80  # Number of classes for classification
 # Batch size of a single GPU during training
 train_batch_size_per_gpu = 8
@@ -212,6 +217,7 @@ train_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         ann_file=train_ann_file,
+        metainfo=metainfo,
         data_prefix=dict(img=train_data_prefix),
         filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline_stage1))
@@ -241,6 +247,7 @@ val_dataloader = dict(
         type=dataset_type,
         data_root=data_root,
         ann_file=val_ann_file,
+        metainfo=metainfo,
         data_prefix=dict(img=val_data_prefix),
         test_mode=True,
         pipeline=test_pipeline))
