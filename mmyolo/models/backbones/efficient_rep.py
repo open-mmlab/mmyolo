@@ -32,6 +32,9 @@ class YOLOv6EfficientRep(BaseBackbone):
             Defaults to (2, 3, 4).
         frozen_stages (int): Stages to be frozen (stop grad and set eval
             mode). -1 means not freezing any parameters. Defaults to -1.
+        use_cspsppf (bool): Whether to use CSPSPPFBottleneck. It is only valid
+            when `use_spp`=True, i.e. it may be used in the last stage of the
+            backbone. Defaults to False.
         norm_cfg (dict): Dictionary to construct and config norm layer.
             Defaults to dict(type='BN', requires_grad=True).
         act_cfg (dict): Config dict for activation layer.
@@ -188,6 +191,9 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
             Defaults to (2, 3, 4).
         frozen_stages (int): Stages to be frozen (stop grad and set eval
             mode). -1 means not freezing any parameters. Defaults to -1.
+        use_cspsppf (bool): Whether to use CSPSPPFBottleneck. It is only valid
+            when `use_spp`=True, i.e. it may be used in the last stage of the
+            backbone. Defaults to False.
         norm_cfg (dict): Dictionary to construct and config norm layer.
             Defaults to dict(type='BN', requires_grad=True).
         act_cfg (dict): Config dict for activation layer.
@@ -239,7 +245,6 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
                  block_cfg: ConfigType = dict(type='ConvWrapper'),
                  init_cfg: OptMultiConfig = None):
         self.hidden_ratio = hidden_ratio
-        self.use_cspsppf = use_cspsppf
         super().__init__(
             arch=arch,
             deepen_factor=deepen_factor,
@@ -248,6 +253,7 @@ class YOLOv6CSPBep(YOLOv6EfficientRep):
             out_indices=out_indices,
             plugins=plugins,
             frozen_stages=frozen_stages,
+            use_cspsppf=use_cspsppf,
             norm_cfg=norm_cfg,
             act_cfg=act_cfg,
             norm_eval=norm_eval,
